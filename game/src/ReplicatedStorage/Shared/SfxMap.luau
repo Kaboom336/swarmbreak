@@ -5,6 +5,15 @@ local soundByEvent: { [string]: string } = {
 	["wave clear"] = "WaveClear",
 	["quest done"] = "Coin",
 	["kit equip"] = "Buy",
+	["wave start"] = "WaveStart",
+	["boss spawn"] = "BossRoar",
+	["card pick"] = "Buy",
+	["crate open"] = "Crate",
+	["pickup"] = "Coin",
+	["level up"] = "Buy",
+	["low hp"] = "Hurt",
+	["victory"] = "WaveClear",
+	["defeat"] = "GameOver",
 }
 
 local SfxMap = {}
