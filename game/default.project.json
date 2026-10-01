@@ -97,6 +97,24 @@
           "$properties": {
             "Value": 0
           }
+        },
+        "MutationId": {
+          "$className": "StringValue",
+          "$properties": {
+            "Value": ""
+          }
+        },
+        "MutationLabel": {
+          "$className": "StringValue",
+          "$properties": {
+            "Value": ""
+          }
+        },
+        "MutationBlurb": {
+          "$className": "StringValue",
+          "$properties": {
+            "Value": ""
+          }
         }
       }
     },

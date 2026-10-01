@@ -138,11 +138,14 @@ local waveLabel = text(screen, "Wave", UDim2.new(0.5, -200, 0, 8), UDim2.new(0, 
 local phaseLabel =
 	text(screen, "Phase", UDim2.new(0.5, -200, 0, 42), UDim2.new(0, 400, 0, 22), "", 18)
 phaseLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+local mutationLabel =
+	text(screen, "Mutation", UDim2.new(0.5, -240, 0, 64), UDim2.new(0, 480, 0, 18), "", 14)
+mutationLabel.TextColor3 = Color3.fromRGB(255, 200, 60)
 
 -- Boss bar
 local bossFrame = Instance.new("Frame")
 bossFrame.Size = UDim2.new(0, 480, 0, 22)
-bossFrame.Position = UDim2.new(0.5, -240, 0, 70)
+bossFrame.Position = UDim2.new(0.5, -240, 0, 88)
 bossFrame.BackgroundColor3 = Color3.fromRGB(30, 10, 10)
 bossFrame.BorderSizePixel = 0
 bossFrame.Visible = false
@@ -984,6 +987,10 @@ onState("Phase", function(phase)
 end)
 onState("TimeLeft", refreshPhase)
 onState("Alive", refreshPhase)
+onState("MutationLabel", function(label)
+	mutationLabel.Text = "Today: " .. label
+	mutationLabel.Visible = label ~= ""
+end)
 onState("BossName", function(name)
 	bossFrame.Visible = name ~= ""
 	bossLabel.Text = name

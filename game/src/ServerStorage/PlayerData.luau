@@ -15,6 +15,7 @@ local ProfileSchema = require(ReplicatedStorage.Shared.ProfileSchema)
 local Goals = require(ReplicatedStorage.Shared.Goals)
 local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
 local Daily = require(ReplicatedStorage.Shared.Daily)
+local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local Profile = require(script.Parent.Profile)
 local WeaponModels = require(script.Parent.WeaponModels)
 
@@ -116,10 +117,12 @@ end
 -- ---------- coins / kills ----------
 function PlayerData.addCoins(plr: Player, n: number)
 	local r = PlayerData.get(plr)
+	local mutationId = Mutations.forDay(Daily.dayIndex(os.time()))
+	local coinAmount = Mutations.apply({ Coin = n }, mutationId).Coin
 	local bonus = 1
 		+ ProfileSchema.perkValue(Profile.get(plr), "CoinBonus") / 100
 		+ r.Boosts.CoinMult
-	r.Coins += math.floor(n * bonus + 0.5)
+	r.Coins += math.floor(coinAmount * bonus + 0.5)
 	push(plr)
 end
 
@@ -274,7 +277,9 @@ end
 function PlayerData.damageMultiplier(plr: Player): number
 	local r = PlayerData.get(plr)
 	local evoDmg = Evolutions.multipliers(PlayerData.equippedEvo(plr))
-	return Upgrades.valueAt("Damage", r.Levels.Damage) * evoDmg * (1 + r.Boosts.DamageMult)
+	local base = Upgrades.valueAt("Damage", r.Levels.Damage) * evoDmg * (1 + r.Boosts.DamageMult)
+	local mutationId = Mutations.forDay(Daily.dayIndex(os.time()))
+	return Mutations.apply({ PlayerDamage = base }, mutationId).PlayerDamage
 end
 
 function PlayerData.fireRateMultiplier(plr: Player): number
