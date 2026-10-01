@@ -10,6 +10,7 @@ local Economy = require(ReplicatedStorage.Shared.Economy)
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
+local SpawnPicker = require(ReplicatedStorage.Shared.SpawnPicker)
 local EnemyAI = require(ServerStorage.EnemyAI)
 local PlayerData = require(ServerStorage.PlayerData)
 local GameState = require(ServerStorage.GameState)
@@ -42,8 +43,25 @@ local function publishMutation()
 end
 
 local function randomSpawnCFrame(): CFrame
-	local parts = spawns:GetChildren()
-	local p = parts[rng:NextInteger(1, #parts)] :: BasePart
+	local parts: { BasePart } = {}
+	local portalPositions = {}
+	for _, child in spawns:GetChildren() do
+		if child:IsA("BasePart") then
+			table.insert(parts, child)
+			table.insert(portalPositions, { x = child.Position.X, z = child.Position.Z })
+		end
+	end
+
+	local playerPositions = {}
+	for _, player in Players:GetPlayers() do
+		local character = player.Character
+		local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+		if root and root:IsA("BasePart") then
+			table.insert(playerPositions, { x = root.Position.X, z = root.Position.Z })
+		end
+	end
+
+	local p = parts[SpawnPicker.pick(portalPositions, playerPositions, rng:NextNumber())]
 	return p.CFrame + Vector3.new(0, 4, 0)
 end
 
