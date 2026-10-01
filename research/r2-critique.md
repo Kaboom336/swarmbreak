@@ -1,0 +1,10 @@
+# R2 critique (completeness check, 2026-10-01)
+
+Spot-check: 8 URLs fetched, all loaded (rolimons BaKZ 139,882 peak; build-and-kill-zombies.github.io; pockettactics codes; create.roblox.com/docs/discovery; gamesbeat 8.5% qPTR; zehn-studio26 co-play; note.com 28 pitfalls; survive-the-swarm.wiki double rewards). Notes: NEWBOSSNEXTWEEK is EXPIRED on pockettactics (IAMPRO active, 5k cash, needs 1k studs); the note.com article names the 28 pitfalls but does not list them, so "biggest quality lever" is the author's framing, not a measurement.
+
+## Missing items (max 5)
+1. **First-time experience in 5 minutes.** Roblox says a brief tutorial should reach the core loop within about 5 minutes, avoid long tutorials, and track completion of each onboarding step with in-game markers. Evidence: https://create.roblox.com/docs/production/analytics/retention (verified). Build: Telemetry step events (FTUE_Move, FTUE_FirstKill, FTUE_FirstCard) + a 3-prompt wordless tutorial; matches release exit "stranger fights in 3 s".
+2. **Mobile controls and layout.** Not covered anywhere in r2. Evidence NOT yet verified (fetch of https://create.roblox.com/docs/production/game-design/mobile-design was blocked). Build: auto-aim or move-only controls, thumb-reachable buttons, HUD test at phone size; verify claim before building.
+3. **Sound and music pass.** Only c2 mentions pitch layering. Evidence NOT yet verified (https://create.roblox.com/docs/audio fetch blocked). Build: SoundGroups (music/sfx/ui), kill-chain pitch, boss sting, mute setting.
+4. **Update cadence plan with dates.** Evidence: Survive the Swarm last listed update 20 Aug 2026 (https://survive-the-swarm.wiki/wiki/, verified) shows even leaders slip; Final Swarm updated about monthly (r2-competitors.md). Build: a calendar of 4 weekly drops with owners.
+5. **Group and social surface.** Release step 3 mentions a Roblox group and Discord but there is no task. Evidence: co-play is a weighted ranking signal (https://zehn-studio26.com/news/recommended-for-you-retention-update/, verified). Build: group join reward code, in-lobby Discord/group prompt (check policy rules first).

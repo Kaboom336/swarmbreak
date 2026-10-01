@@ -42,3 +42,72 @@ What the top games had that we lacked, and what was built for it (all four accep
 Still open from the judges' ranked list (not built yet): daily quests, late-join catch-up and ready-up (belongs with the Base lobby), a HUD leaderboard with a weekly board, daily mutations as a stand-in for worlds, classes / kits.
 
 Sources for the 'top games do' claims are in RESEARCH.md; anything a judge stated from memory is marked 'I believe' in the journal, not here.
+
+## Research round 2 (2026-10-01): beat the inspo games
+
+Sources: research/r2-*.md (each claim below carries its URL; "est." = our judgement). Already built and not repeated: pick-1-of-3 (WaveRewards.luau), daily reward, lighting post-effects (ArenaBuilder: Atmosphere, Bloom, ColorCorrection). Codex wave 1 (research/codex-wave1.md) already covers daily quests, daily mutations, weekly board.
+
+### a. Reference games
+| Game | URL | What they do better | Our answer |
+|---|---|---|---|
+| Build and Kill Zombies | https://www.rolimons.com/game/105011592530400 | 139,882 peak 6 weeks after launch; "NEXT BOSS IN" HUD countdown; codes that need a milestone (IAMPRO after 1K studs; NEWBOSSNEXTWEEK now expired) or tease the next update | Boss-in-N chip (#2), codes with requirements and hype codes (#1) |
+| Final Swarm | https://www.rolimons.com/game/99521272836282 | Named update about monthly; chest codes; passes are convenience only (Quick Chest Open 149, Lucky Grading 99, VIP 799 R$) | Convenience-only pass lineup (#11), crate rewards from codes (#1) |
+| Survive The Swarm | https://www.roblox.com/games/100227226022278 | Weekly updates, 6 classes, pets from code eggs, "double end-of-run rewards" Robux option | Double-rewards product (#11); ship weekly with tests instead of "bugs expected" |
+| Zombie Rush Survival | https://allthings.how/zombie-rush-survival-classes-guide-costs-and-equipment/ | Mid-run deployables; classes as a grind ladder (Medic 50K to Demolitionist 400K) | Turret pads (map #9); first kits cheap enough for session 1-2 |
+| Survive the Apocalypse | https://survivetheapocalypse.wiki/ | Named escape goal, Hard Mode, weekly leaderboards | Second mode (#10), weekly board (Codex wave 1) |
+| Hunty Zombie | https://progameguides.com/roblox/hunty-zombie-payload-update-complete-guide/ | Payload as a second objective mode | "Hold the gate" on our arena (#10) |
+| 100 Waves Later | https://www.rolimons.com/game/92371631484540 | 11,301 peak, 98.3% rating, now 184 live: rating does not stop decay | Weekly drop plan; 28-day retention focus (release d) |
+| Vampire Survivors (PC reference) | https://www.kokutech.com/blog/gamedev/design-patterns/power-fantasy/vampire-survivors | Constant reward cadence, power growth you can see, stages unlocked by progress with one rule modifier each | Game feel (c), Map 2/3 unlock ladder (c) |
+
+### b. Design changes (backlog)
+1. **Codes with a requirement and hype codes.** Why: BaKZ IAMPRO / NEWBOSSNEXTWEEK, STS HYPETMRW (https://www.pockettactics.com/build-and-kill-zombies-codes, https://www.destructoid.com/survive-the-swarm-codes/). Build: Shared/Codes.luau (code -> reward {Gems, Shards, Crate}, MinWave, expiry), ProfileSchema `Redeemed`, Shop.server redeem remote, HUD text box. S. Codex.
+2. **"Boss in N waves" chip.** Why: BaKZ HUD countdown (https://build-and-kill-zombies.github.io/). Build: pure `WaveTable.wavesUntilBoss(wave)` + label under waveLabel in Hud.client.luau. S. Codex.
+3. **Spawn telegraph and 30-stud exclusion.** Why: unannounced spawns read as cheating (https://reigncreativellc.com/blog/wave-survival-game-design/). Build: Shared/SpawnPicker.luau (choose portal not within 30 studs of any player, fall back to farthest); WaveManager.randomSpawnCFrame uses it; 2 s charge ring FX in Effects.client. M. Codex (picker) + Claude (FX).
+4. **Arena layout as data.** Why: agents fail at spatial placement; numeric rules testable in Lune (https://medium.com/@andy.a.g/i-built-a-roblox-game-using-only-ai-agents-heres-what-happened-ed57b553facc). Build: Shared/ArenaLayout.luau (spawns, props, ring, bunkers) read by ArenaBuilder; tests enforce spacing. M. Codex.
+5. **Run length 12-15 min to the wave-25 win (est. target).** Why: genre playtime 10.7-19.1 min (Final Swarm 10.7, 100 Waves Later 14.5, BaKZ 19.1; rolimons, see research/r2-competitors.md). Build: log run time per wave in PlayerData; tune WaveTable counts / IntermissionSeconds on the laptop. S. Claude (tuning is human judgement).
+6. **Co-play bonus and invite prompt.** Why: intentional co-play is a ranking signal (https://zehn-studio26.com/news/recommended-for-you-retention-update/). Build: Shared/CoPlay.luau `coinMult(friendsInArena)`; SocialService invite button on the run summary. M. Codex (pure) + Claude (UI).
+7. **Feel budget.** Why: hit stop on heavy hits only, capped damage numbers (https://egmatic.com/blog/how-to-make-your-game-feel-good, https://mtw1man2.itch.io/godot-4-combat-hit-feel-toolkit-hitstop-screen-shake-damage-numbers). Build: Shared/Feel.luau (event size -> freeze ms, shake, number cap per second); HitMarkers/ClientFX read it; shake setting. M. Codex (pure) + Claude (tuning).
+8. **Analytics funnel events.** Why: Roblox ranks on bounce, D1/D2-7/D8-28 play days (https://create.roblox.com/docs/discovery). Build: Shared/Telemetry.luau event names and payload builders; AnalyticsService calls in WaveManager / PlayerData (wave reached, quit time, card picked, purchase). S. Codex.
+9. **3x3 Gem skill tree (damage / survival / crate luck).** Why: BaKZ Luck, Final Swarm and Hunty skill trees (r2-competitors.md section 3). Build: Shared/SkillTree.luau, ProfileSchema `Skills`, lobby panel. M. Codex (pure) + Claude (panel).
+10. **Second mode: "Hold the gate" or Hard Mode.** Why: Hunty Payload, Survive the Apocalypse Hard Mode (table a). Build: mode flag in GameState, WaveTable variant. L. Claude designs, then Codex.
+11. **Convenience-only pass lineup + double end-of-run rewards.** Why: Final Swarm passes (rolimons), STS double rewards (https://survive-the-swarm.wiki/wiki/), starter 25-50 R$ (https://generalistprogrammer.com/tutorials/roblox-game-pass-pricing-guide). Build: Monetization.luau entries (QuickCrate, LuckyCrate, VIP, StarterPack, DoubleRunRewards); prices placeholder per PLAYBOOK. S. Codex.
+12. **Five thumbnails + icon from our renders.** Why: thumbnail personalization, avg +8.5% qPTR (https://gamesbeat.com/roblox-will-let-game-devs-personalize-thumbnails-to-attract-more-players/); icon read at ~150 px (https://create.roblox.com/docs/production/publishing/experience-icons). Build: Blender scene renders, tested at 128 px. M. Claude.
+13. **Enemy attack telegraphs and projectile colour split.** Why: VS-likes fail to separate player from clutter (https://en.wikipedia.org/wiki/Vampire_Survivors%E2%80%93like). Build: Theme.luau colour sets (player cool, enemy projectiles warm) with a test that they never overlap; 0.4-0.6 s ground ring in EnemyAI. M. Codex (Theme test) + Claude (VFX).
+14. **Solo arena shrink.** Why: smaller maps are denser and harder (https://steamcommunity.com/sharedfiles/filedetails/?id=1928595692). Build: `ArenaLayout.playArea(players)` 120x120 under 4 players, 160x160 at 4+; shutter pieces in arena2.py. M. Codex (pure) + Claude (meshes).
+15. **Pitfalls files.** Why: a 28-pitfall manual was the biggest quality lever in the AI obby test (https://note.com/hottarita/n/nb972e1eb21db?hl=en). Build: game/PITFALLS-LUAU.md, game/tools/blender/PITFALLS.md, loaded into every Codex brief. S. Claude.
+
+### c. Map changes (Outpost 9, from r2-map.md; 4-stud grid of arena2.py)
+- Fog: FogStart 90 -> 200, FogEnd 420 -> 600; keep mood with Ambient (portals sit 70-100 studs out).
+- Corners: 4 bunker blocks 20x6x20 at (+-66,+-66); corner spawns move to (+-58,+-58); edge spawns stay (https://final-swarm.wiki/how-to-survive-waves/).
+- Centre kiting ring: wall 5 high, 3 thick, 44 outer diameter, four 10-wide gaps, 14-wide lanes.
+- Towers: 8x8 reward pad on top (heal or chest), 8-wide ramp, split into an L of two 14x16x7 slabs.
+- Cover: 24 clusters, all <= 5 tall, >= 18 apart, none within 25 of the ring (counts est.).
+- Landmarks: 4 beacons 30 tall, 3 wide, cyan N / amber E / magenta S / green W; boss gate stays red; 30-stud orbit lane in front of it.
+- Annex: 12-wide door to a 40x40 room with a crate, open waves 5-10. Turret pads 6x6 at (+-30,0). Solo shrink 120x120.
+- Map 2 "The Nest Floor" (140x200, two 60x60 chambers, 16-wide neck; unlock wave 10) and Map 3 "Orbit Dock" (rings r25/50/75) as an unlock ladder with one rule modifier each (https://rogueranker.com/vampire-survivors-stages/).
+
+### c2. Game feel (from r2-process.md section C; we already have damage numbers, shake, FOV kick, death bursts)
+- Hit stop 40-80 ms on heavy hits only (boss hits, big crits); on Roblox emulate by pausing enemy animation and velocity.
+- Scale effects to event size; stack 5-8 responses inside ~100 ms per hit (https://atskills.one/gamedev-skills/game-feel).
+- Cap damage numbers per second; colour normal / crit / heal; shake off/low setting.
+- Pitch up on chained kills; random pitch on rapid fire; separate fire / impact / kill / pickup / level-up layers.
+- Pickup magnet with rising pitch; a rare screen-wide vacuum pickup.
+- New weapon or evolution must visibly change the screen within seconds; input buffer under 150 ms; instant retry with "one more run".
+
+### d. Release process
+1. Week 0-1: playable slice (feel items, lobby + 8-player arena via TeleportService); Zion publishes private. Exit: a stranger fights in 3 s with no text.
+2. Week 1-2: 5 kids on private servers, watch silently, log quit points; fix top 3, retest within 48 h; telemetry (#8) in before widening.
+3. Week 2-3: Discord + Roblox group, 20-50 testers, invite prompt and co-play bonus live.
+4. Week 3-4: soft launch, honest title, 3-5 thumbnails with personalization on; read bounce, D1, session in Creator Analytics. No ads until bounce and D1 hold (https://create.roblox.com/docs/discovery).
+5. Launch week: content drop + code, hype code the day before, clips of the biggest screen-filling moment.
+6. Then weekly: one update + one code + patch note, analytics every Monday; if D1 and bounce do not improve after 2 weeks and 2 updates, fix the first 3 minutes before more content.
+
+### e. Art/UI changes (RECIPE-level rules)
+1. One rarity colour ladder everywhere: Common grey, Rare blue, Epic purple, Legendary gold, on weapons, cards, crates, drops, hotbar frames (https://www.pcgamer.com/games/sim/one-of-robloxs-biggest-experiences-right-now-is-a-bizarre-italian-brainrot-character-stealing-simulator-and-lord-help-me-i-now-understand-why-its-so-popular/).
+2. 40-stud silhouette test: each enemy as a 64x64 silhouette on the floor colour, a judge must name it (https://en.wikipedia.org/wiki/Vampire_Survivors%E2%80%93like).
+3. Player side cool (cyan/white), enemy projectiles warm (red/magenta) and large with a dark edge; never overlap (https://survivetheswarm.wiki/progression/survive-the-swarm-beginner-guide).
+4. Floor value clearly lighter than enemy bodies, or a rim light; test inverted-hull outline on one enemy first (est., r2-look.md).
+5. HUD: wave + enemies-left top centre (boss bar replaces it), health bottom centre, currencies top left, shop column right edge; one chunky font, 2 px dark text outline, rounded dark-glass panels, no default grey (https://adrianart.itch.io/gag-ui-pack).
+6. Muzzle flash and trail per element (4 hues), bright core plus dim halo; hotbar icons rendered 3/4 on a rarity disc.
+7. Boss intro adds a screen tint and an arena light pulse; no strobing (PC Gamer, above).
+8. Icon: one focal point, hero mid-fire plus swarm plus boss, saturated accent on dark purple, 0-3 words, checked at 128 px (https://creatorxp.gg/guides/roblox-game-icon-mistakes, https://vizzbees.com/blog/how-to-make-a-roblox-thumbnail).

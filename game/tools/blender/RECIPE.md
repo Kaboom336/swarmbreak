@@ -43,3 +43,12 @@ Same helpers. Weapons: two-tone bodies (dark base + bright panel colour) before 
 the receiver, huge magazines, three-step barrels), rarity by material (gold body for Legendary, not gold trim), layered
 glow (bright core, dimmer halo). Arena: dark tiles, glow seams and Nest light actually visible, props at R15 scale (a
 crate is 4 studs), CC0 KayKit Space Base Bits pieces may be kitbashed with `sb2.import_kit` (bakes their palette to vertex colours).
+
+## Round 2 additions (2026-10-01, sources in COMPARISON.md "Research round 2" e)
+- Silhouette test: render each enemy as a 64x64 black shape on the arena floor colour; if a judge cannot name it, redo the glyph.
+- Rarity ladder is one set of hues everywhere: Common grey, Rare blue, Epic purple, Legendary gold (body, frames, crates, drops).
+- Player-side colours stay cool (cyan/white); enemy projectiles and telegraphs stay warm (red/magenta) and never reuse a player hue.
+- No two enemies that share a wave share an accent hue.
+- Floor and tiles must be clearly lighter in value than enemy bodies, or the enemy gets a rim light; inverted-hull outline only after a one-enemy test.
+- Weapon glow per element (4 hues) as bright core plus dim halo; hotbar icons rendered 3/4 view on a flat rarity-colour disc, same angle for all.
+- Icon and thumbnails: one focal point, hero + swarm + boss, 0-3 words, judged at 128 px before upload.
