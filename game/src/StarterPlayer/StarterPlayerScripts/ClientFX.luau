@@ -5,6 +5,7 @@ local RunService = game:GetService("RunService")
 local Debris = game:GetService("Debris")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
+local Feel = require(ReplicatedStorage.Shared.Feel)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Settings = require(ReplicatedStorage.Shared.Settings)
 
@@ -89,6 +90,10 @@ RunService:BindToRenderStep("SwarmShake", Enum.RenderPriority.Camera.Value + 1, 
 end)
 function ClientFX.shake(amount: number)
 	shake = math.min(shake + amount, 6)
+end
+
+function ClientFX.shakeFor(event: Feel.EventName, setting: Feel.ShakeSetting)
+	ClientFX.shake(Feel.shakeFor(event, setting))
 end
 
 -- ---------- FOV kick ----------
