@@ -19,11 +19,8 @@ local Daily = require(ReplicatedStorage.Shared.Daily)
 local Quests = require(ReplicatedStorage.Shared.Quests)
 local Kits = require(ReplicatedStorage.Shared.Kits)
 local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
-<<<<<<< HEAD
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
-=======
 local Settings = require(ReplicatedStorage.Shared.Settings)
->>>>>>> codex/settings
 local ClientFX = require(script.Parent.ClientFX)
 
 local player = Players.LocalPlayer
