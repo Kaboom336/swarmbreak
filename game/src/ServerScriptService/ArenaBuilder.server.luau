@@ -4,6 +4,10 @@
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Theme = require(ReplicatedStorage.Shared.Theme)
+local arenaLayoutModule = ReplicatedStorage.Shared:FindFirstChild("ArenaLayout")
+local ArenaLayout = if arenaLayoutModule and arenaLayoutModule:IsA("ModuleScript")
+	then require(arenaLayoutModule)
+	else nil
 
 local arena = workspace:WaitForChild("Arena")
 local rng = Random.new(7)
@@ -198,6 +202,19 @@ local function props()
 	local metal = c3(Theme.Metal)
 	local dark = c3(Theme.MetalDark)
 	local amber = c3(Theme.NeonAmber)
+	if ArenaLayout then
+		for _, spec in ArenaLayout.Props do
+			part(
+				spec.Kind,
+				Vector3.new(spec.Width, spec.Height, spec.Depth),
+				CFrame.new(spec.x, 1 + spec.Height / 2, spec.z),
+				if spec.Kind == "Crate" then metal else dark,
+				if spec.Kind == "Crate" then Enum.Material.DiamondPlate else Enum.Material.Metal
+			).CanCollide =
+				true
+		end
+		return
+	end
 	local spots = {
 		{ 20, 20 },
 		{ -22, -18 },
@@ -270,6 +287,76 @@ local function props()
 			).CanCollide =
 				true
 		end
+	end
+end
+
+-- Build the v2 pieces from data when it is available. The checked-in model JSON remains
+-- the fallback, so an older place without ArenaLayout still starts with its existing arena.
+local function applyArenaLayout()
+	if not ArenaLayout then
+		return
+	end
+
+	local floor = arena:FindFirstChild("Floor") :: BasePart?
+	if floor then
+		floor.Size = Vector3.new(ArenaLayout.Floor, floor.Size.Y, ArenaLayout.Floor)
+	end
+
+	local spawnFolder = arena:FindFirstChild("EnemySpawns")
+	if spawnFolder then
+		for i, position in ArenaLayout.Spawns do
+			local spawn = spawnFolder:FindFirstChild("Spawn" .. i)
+			if spawn and spawn:IsA("BasePart") then
+				spawn.Position = Vector3.new(position.x, spawn.Position.Y, position.z)
+			end
+		end
+	end
+
+	for i, spec in ArenaLayout.Bunkers do
+		part(
+			"Bunker" .. i,
+			Vector3.new(spec.Width, spec.Height, spec.Depth),
+			CFrame.new(spec.x, 1 + spec.Height / 2, spec.z),
+			c3(Theme.MetalDark),
+			Enum.Material.DiamondPlate
+		).CanCollide =
+			true
+	end
+
+	local ring = ArenaLayout.Ring
+	local ringRadius = (ring.OuterDiameter - ring.Thickness) / 2
+	local segmentCount = 12
+	local arcStride = 2 * math.pi * ringRadius / segmentCount
+	local segmentLength = 2 * arcStride - ring.Gap
+	for i = 0, segmentCount - 1 do
+		-- Four omitted segments make the compass-point gaps.
+		if i % 3 ~= 0 then
+			local angle = i * 2 * math.pi / segmentCount
+			local ringPart = part(
+				"Ring",
+				Vector3.new(segmentLength, ring.Height, ring.Thickness),
+				CFrame.new(
+					ringRadius * math.cos(angle),
+					1 + ring.Height / 2,
+					ringRadius * math.sin(angle)
+				) * CFrame.Angles(0, -angle - math.pi / 2, 0),
+				c3(Theme.Metal),
+				Enum.Material.Metal
+			)
+			ringPart.CanCollide = true
+		end
+	end
+
+	for _, spec in ArenaLayout.Beacons do
+		local beacon = part(
+			"Beacon" .. spec.Name,
+			Vector3.new(spec.Width, spec.Height, spec.Width),
+			CFrame.new(spec.x, 1 + spec.Height / 2, spec.z),
+			c3(spec.Color),
+			Enum.Material.Neon
+		)
+		beacon.CanCollide = false
+		beacon.CanQuery = false
 	end
 end
 
@@ -359,6 +446,7 @@ end
 
 setupLighting()
 retexture()
+applyArenaLayout()
 floorGrid()
 wallsAndRails()
 props()
