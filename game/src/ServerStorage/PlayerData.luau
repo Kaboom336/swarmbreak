@@ -15,6 +15,7 @@ local ProfileSchema = require(ReplicatedStorage.Shared.ProfileSchema)
 local Goals = require(ReplicatedStorage.Shared.Goals)
 local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
 local Daily = require(ReplicatedStorage.Shared.Daily)
+local Quests = require(ReplicatedStorage.Shared.Quests)
 local Profile = require(script.Parent.Profile)
 local WeaponModels = require(script.Parent.WeaponModels)
 
@@ -72,6 +73,7 @@ local function push(plr: Player)
 			CratesSinceLegendary = p.CratesSinceLegendary,
 			Streak = p.Streak,
 			DailyPopup = r.DailyPopup,
+			Quests = p.Quests,
 		})
 	end
 end
@@ -123,9 +125,25 @@ function PlayerData.addCoins(plr: Player, n: number)
 	push(plr)
 end
 
-function PlayerData.addKill(plr: Player)
+local function progressQuest(plr: Player, stat: string, amount: number)
+	local p = Profile.get(plr)
+	p.Quests = Quests.evaluate(p.Quests, os.time(), plr.UserId)
+	p.Quests = Quests.progress(p.Quests, stat, amount)
+	Profile.markDirty(plr)
+end
+
+function PlayerData.addKill(plr: Player, boss: boolean?)
 	local r = PlayerData.get(plr)
 	r.Kills += 1
+	progressQuest(plr, "Kills", 1)
+	if boss then
+		progressQuest(plr, "BossKills", 1)
+	end
+	push(plr)
+end
+
+function PlayerData.addMeleeDamage(plr: Player, amount: number)
+	progressQuest(plr, "MeleeDamage", amount)
 	push(plr)
 end
 
@@ -203,6 +221,7 @@ function PlayerData.openCrate(plr: Player, crateKey: string)
 	if not crate then
 		return
 	end
+	progressQuest(plr, "Crates", 1)
 	local p = Profile.get(plr)
 	local rarity = Weapons.rollRarity(rng:NextNumber(), crate.Odds)
 	if crate.Pity then
@@ -366,6 +385,7 @@ end
 -- Roll this player's three cards for the intermission after `wave` and send them down.
 function PlayerData.offerRewards(plr: Player, wave: number)
 	local r = PlayerData.get(plr)
+	progressQuest(plr, "Wave", wave)
 	r.Offer = WaveRewards.offer(
 		wave,
 		r.Boosts.Stacks,
@@ -386,6 +406,7 @@ function PlayerData.pickReward(plr: Player, id: string): (boolean, string)
 	end
 	local _, healNow = WaveRewards.apply(r.Boosts, id)
 	r.Offer = {}
+	progressQuest(plr, "WaveRewards", 1)
 	applyStats(plr)
 	if healNow then
 		local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
@@ -435,6 +456,17 @@ function PlayerData.endRun(plr: Player, wave: number, won: boolean): RunSummary
 	p.Runs += 1
 	p.BestWave = math.max(p.BestWave, wave)
 	p.Gems += gemsEarned
+	progressQuest(plr, "Wave", wave)
+	progressQuest(plr, "Runs", 1)
+	for _, other in Players:GetPlayers() do
+		if other ~= plr then
+			local ok, isFriend = pcall(plr.IsFriendsWith, plr, other.UserId)
+			if ok and isFriend then
+				progressQuest(plr, "FriendRuns", 1)
+				break
+			end
+		end
+	end
 	Profile.markDirty(plr)
 	local ls = plr:FindFirstChild("leaderstats")
 	local best = ls and ls:FindFirstChild("Best Wave") :: IntValue?
@@ -543,6 +575,12 @@ local function claimDaily(plr: Player)
 	end
 end
 
+local function evaluateQuests(plr: Player)
+	local p = Profile.get(plr)
+	p.Quests = Quests.evaluate(p.Quests, os.time(), plr.UserId)
+	Profile.markDirty(plr)
+end
+
 local function setupLeaderstats(plr: Player)
 	local ls = Instance.new("Folder")
 	ls.Name = "leaderstats"
@@ -557,6 +595,7 @@ Profile.OnLoaded = function(plr: Player)
 	setupLeaderstats(plr)
 	loadPasses(plr)
 	claimDaily(plr)
+	evaluateQuests(plr)
 	applyStats(plr)
 	attachWeapon(plr)
 	push(plr)

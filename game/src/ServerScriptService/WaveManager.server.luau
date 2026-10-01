@@ -50,7 +50,7 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 				currentWave
 			)
 			PlayerData.addCoins(killer, coins)
-			PlayerData.addKill(killer)
+			PlayerData.addKill(killer, def.Boss == true)
 		end
 		if def.Boss then
 			-- bosses drop a shard of their element to everyone alive at the kill

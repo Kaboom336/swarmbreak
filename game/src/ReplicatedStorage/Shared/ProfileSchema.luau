@@ -2,6 +2,7 @@
 -- Shape of the saved player profile (shared by the lobby and the arena). Pure + tested.
 local Weapons = require(script.Parent.Weapons)
 local Evolutions = require(script.Parent.Evolutions)
+local Quests = require(script.Parent.Quests)
 
 export type Profile = {
 	Version: number,
@@ -17,6 +18,7 @@ export type Profile = {
 	Flags: { [string]: boolean }, -- one-time events already paid out (see FlagKeys)
 	LastClaimDay: number, -- UTC day number (Daily.dayIndex) of the last daily reward, 0 = never
 	Streak: number, -- days in a row the daily reward was claimed
+	Quests: Quests.State,
 }
 
 local ProfileSchema = { Version = 1 }
@@ -49,6 +51,7 @@ function ProfileSchema.default(): Profile
 		Flags = {},
 		LastClaimDay = 0,
 		Streak = 0,
+		Quests = { Day = 0, Ids = {}, Progress = {}, Claimed = {} },
 	}
 end
 
@@ -125,6 +128,38 @@ function ProfileSchema.sanitize(raw: any): Profile
 	end
 	if type(raw.Streak) == "number" then
 		p.Streak = math.max(0, math.floor(raw.Streak))
+	end
+	if type(raw.Quests) == "table" then
+		local quests = raw.Quests
+		if type(quests.Day) == "number" and quests.Day >= 0 then
+			p.Quests.Day = math.floor(quests.Day)
+		end
+		if type(quests.Ids) == "table" then
+			for _, id in quests.Ids do
+				if
+					type(id) == "string"
+					and Quests.Defs[id]
+					and not table.find(p.Quests.Ids, id)
+					and #p.Quests.Ids < 3
+				then
+					table.insert(p.Quests.Ids, id)
+				end
+			end
+		end
+		for _, id in p.Quests.Ids do
+			local def = Quests.Defs[id]
+			local value = if type(quests.Progress) == "table" then quests.Progress[id] else nil
+			if type(value) == "number" and value >= 0 then
+				p.Quests.Progress[id] = math.min(def.Target, math.floor(value))
+			end
+			if
+				type(quests.Claimed) == "table"
+				and quests.Claimed[id] == true
+				and p.Quests.Progress[id] == def.Target
+			then
+				p.Quests.Claimed[id] = true
+			end
+		end
 	end
 	return p
 end

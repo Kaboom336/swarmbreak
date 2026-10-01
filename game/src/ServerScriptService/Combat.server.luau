@@ -102,6 +102,7 @@ local function doMelee(
 	end
 	local center = root.Position + flatDir * (if weapon.Slam then 0 else weapon.Range * 0.4)
 	local hits = {}
+	local damageDealt = 0
 	local cosLimit = math.cos(math.rad(weapon.Spread))
 	for _, model in enemiesNear(center, weapon.Range) do
 		local eroot = model.PrimaryPart :: BasePart
@@ -111,7 +112,11 @@ local function doMelee(
 			or (Vector3.new(to.X, 0, to.Z).Unit:Dot(flatDir) >= cosLimit)
 		if ok and damageEnemy(plr, model, damage, eroot.Position) then
 			table.insert(hits, eroot.Position)
+			damageDealt += damage
 		end
+	end
+	if damageDealt > 0 then
+		PlayerData.addMeleeDamage(plr, damageDealt)
 	end
 	FX:FireAllClients("swing", {
 		Shooter = plr,
