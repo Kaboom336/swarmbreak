@@ -221,7 +221,7 @@ local function runWave(wave: number): boolean
 	if techShard then
 		Toast:FireAllClients("Wave " .. wave .. " cleared: +1 Tech shard", 4)
 	end
-	FX:FireAllClients("sound", { Name = "WaveClear" })
+	FX:FireAllClients("sound", { Event = "wave clear" })
 	return true
 end
 

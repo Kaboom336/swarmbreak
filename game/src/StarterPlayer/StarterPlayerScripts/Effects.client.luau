@@ -3,6 +3,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local ClientFX = require(script.Parent.ClientFX)
 
 local player = Players.LocalPlayer
@@ -168,7 +169,9 @@ handlers.death = function(d)
 		if d.Boss then 30 else d.Size,
 		if d.Boss then 0.8 else 0.4
 	)
-	ClientFX.sound(if d.Boss then "Explosion" else "Kill", d.Position)
+	if d.Boss then
+		ClientFX.sound("Explosion", d.Position)
+	end
 	if d.Boss then
 		ClientFX.shake(5)
 		ClientFX.fovKick(12, 0.9)
@@ -190,7 +193,10 @@ handlers.boss = function(d)
 end
 
 handlers.sound = function(d)
-	ClientFX.sound(d.Name, d.Position)
+	local soundName = if d.Event then SfxMap.forEvent(d.Event) else d.Name
+	if soundName then
+		ClientFX.sound(soundName, d.Position)
+	end
 end
 
 -- Evolution effects (Arc / Chain): a bright thread between the enemies it jumped through.

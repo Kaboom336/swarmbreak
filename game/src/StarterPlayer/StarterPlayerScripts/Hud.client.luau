@@ -19,6 +19,7 @@ local Daily = require(ReplicatedStorage.Shared.Daily)
 local Quests = require(ReplicatedStorage.Shared.Quests)
 local Kits = require(ReplicatedStorage.Shared.Kits)
 local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
+local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local ClientFX = require(script.Parent.ClientFX)
 
 local player = Players.LocalPlayer
@@ -687,7 +688,10 @@ for _, id in Kits.Order do
 	kitButtons[id] = b
 	b.MouseButton1Click:Connect(function()
 		local ok, why = ChooseKit:InvokeServer(id)
-		ClientFX.sound(if ok then "Buy" else "Deny")
+		local soundName = if ok then SfxMap.forEvent("kit equip") else "Deny"
+		if soundName then
+			ClientFX.sound(soundName)
+		end
 		flashButton(b, ok == true)
 		if not ok and typeof(why) == "string" and why ~= "" then
 			flash(toast, why, 2.5)
@@ -1112,7 +1116,22 @@ local function refreshStats()
 	rebuildHotbar()
 end
 
+local receivedStats = false
 StatsChanged.OnClientEvent:Connect(function(s)
+	if receivedStats then
+		local oldClaimed = (stats.Quests and stats.Quests.Claimed) or {}
+		local newClaimed = (s.Quests and s.Quests.Claimed) or {}
+		for questId, claimed in newClaimed do
+			if claimed and not oldClaimed[questId] then
+				local soundName = SfxMap.forEvent("quest done")
+				if soundName then
+					ClientFX.sound(soundName)
+				end
+			end
+		end
+	else
+		receivedStats = true
+	end
 	stats = s
 	refreshStats()
 	onDailyPopup(s.DailyPopup)

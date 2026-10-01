@@ -3,9 +3,17 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
+local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
+local ClientFX = require(script.Parent.ClientFX)
 local HitMarker = ReplicatedStorage:WaitForChild("Remotes").HitMarker :: RemoteEvent
 
 HitMarker.OnClientEvent:Connect(function(pos: Vector3, damage: number, killed: boolean)
+	if killed then
+		local soundName = SfxMap.forEvent("enemy kill")
+		if soundName then
+			ClientFX.sound(soundName)
+		end
+	end
 	local anchor = Instance.new("Part")
 	anchor.Anchored = true
 	anchor.CanCollide = false
