@@ -21,6 +21,7 @@ local Kits = require(ReplicatedStorage.Shared.Kits)
 local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local Settings = require(ReplicatedStorage.Shared.Settings)
+local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
 local ClientFX = require(script.Parent.ClientFX)
 
 local player = Players.LocalPlayer
@@ -142,17 +143,20 @@ end
 
 -- Top: wave / phase / alive
 local waveLabel = text(screen, "Wave", UDim2.new(0.5, -200, 0, 8), UDim2.new(0, 400, 0, 34), "", 28)
+local bossChipLabel =
+	text(screen, "BossChip", UDim2.new(0.5, -100, 0, 42), UDim2.new(0, 200, 0, 18), "", 13)
+bossChipLabel.TextColor3 = Color3.fromRGB(255, 160, 80)
 local phaseLabel =
-	text(screen, "Phase", UDim2.new(0.5, -200, 0, 42), UDim2.new(0, 400, 0, 22), "", 18)
+	text(screen, "Phase", UDim2.new(0.5, -200, 0, 60), UDim2.new(0, 400, 0, 22), "", 18)
 phaseLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
 local mutationLabel =
-	text(screen, "Mutation", UDim2.new(0.5, -240, 0, 64), UDim2.new(0, 480, 0, 18), "", 14)
+	text(screen, "Mutation", UDim2.new(0.5, -240, 0, 82), UDim2.new(0, 480, 0, 18), "", 14)
 mutationLabel.TextColor3 = Color3.fromRGB(255, 200, 60)
 
 -- Boss bar
 local bossFrame = Instance.new("Frame")
 bossFrame.Size = UDim2.new(0, 480, 0, 22)
-bossFrame.Position = UDim2.new(0.5, -240, 0, 88)
+bossFrame.Position = UDim2.new(0.5, -240, 0, 106)
 bossFrame.BackgroundColor3 = Color3.fromRGB(30, 10, 10)
 bossFrame.BorderSizePixel = 0
 bossFrame.Visible = false
@@ -1263,6 +1267,7 @@ refreshStats()
 -- State -> top labels
 onState("Wave", function(w)
 	waveLabel.Text = if w > 0 then string.format("WAVE %d", w) else "SWARM BREAK"
+	bossChipLabel.Text = if w > 0 then WaveTable.bossChipText(w) else ""
 end)
 local function refreshPhase()
 	local phase = stateValue("Phase")
