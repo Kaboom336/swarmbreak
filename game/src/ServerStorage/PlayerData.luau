@@ -51,6 +51,7 @@ export type RunSummary = {
 }
 
 local runs: { [Player]: Run } = {}
+local waiting: { [Player]: boolean } = {}
 local PlayerData = {}
 PlayerData.OnEquipChanged = nil :: ((Player) -> ())?
 
@@ -100,6 +101,20 @@ function PlayerData.get(plr: Player): Run
 		runs[plr] = r
 	end
 	return r
+end
+
+function PlayerData.setWaiting(plr: Player, value: boolean)
+	waiting[plr] = if value then true else nil
+	plr:SetAttribute("WaitingForIntermission", value)
+end
+
+function PlayerData.isWaiting(plr: Player): boolean
+	return waiting[plr] == true
+end
+
+function PlayerData.setRunCoins(plr: Player, coins: number)
+	PlayerData.get(plr).Coins = coins
+	push(plr)
 end
 
 function PlayerData.profile(plr: Player): ProfileSchema.Profile
@@ -444,6 +459,7 @@ end
 function PlayerData.resetRun(plr: Player)
 	local r = PlayerData.get(plr)
 	local p = Profile.get(plr)
+	PlayerData.setWaiting(plr, false)
 	r.Coins = ProfileSchema.perkValue(p, "StartCoins") + (if r.Passes.StarterPack then 300 else 0)
 	r.Kills = 0
 	r.ShardsEarned = 0
@@ -630,6 +646,7 @@ end
 
 Players.PlayerRemoving:Connect(function(plr)
 	runs[plr] = nil
+	waiting[plr] = nil
 end)
 
 return PlayerData

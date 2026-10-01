@@ -73,7 +73,9 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 			local element = Evolutions.BossShards[typeName]
 			if element then
 				for _, plr in Players:GetPlayers() do
-					PlayerData.addShard(plr, element, 1)
+					if not PlayerData.isWaiting(plr) then
+						PlayerData.addShard(plr, element, 1)
+					end
 				end
 				Toast:FireAllClients(typeName .. " down! +1 " .. element .. " shard", 4)
 			end
@@ -81,7 +83,11 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 			-- second weapon without Robux. Once per profile, so only once it has loaded.
 			for _, plr in Players:GetPlayers() do
 				local p = PlayerData.profile(plr)
-				if PlayerData.isLoaded(plr) and not p.Flags.FirstBossCrate then
+				if
+					not PlayerData.isWaiting(plr)
+					and PlayerData.isLoaded(plr)
+					and not p.Flags.FirstBossCrate
+				then
 					p.Flags.FirstBossCrate = true
 					PlayerData.markDirty(plr)
 					PlayerData.openCrate(plr, "Gem")
@@ -103,15 +109,36 @@ end
 local function anyPlayersAlive(): boolean
 	for _, plr in Players:GetPlayers() do
 		local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
-		if hum and hum.Health > 0 then
+		if not PlayerData.isWaiting(plr) and hum and hum.Health > 0 then
 			return true
 		end
 	end
 	return false
 end
 
+local function admitWaitingPlayers()
+	local aliveCoins = {}
+	for _, plr in Players:GetPlayers() do
+		local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+		if not PlayerData.isWaiting(plr) and hum and hum.Health > 0 then
+			table.insert(aliveCoins, PlayerData.get(plr).Coins)
+		end
+	end
+	local catchUpCoins = Economy.catchUpCoins(aliveCoins)
+	for _, plr in Players:GetPlayers() do
+		if PlayerData.isWaiting(plr) then
+			PlayerData.setRunCoins(plr, catchUpCoins)
+			PlayerData.setWaiting(plr, false)
+			plr:LoadCharacter()
+		end
+	end
+end
+
 local function respawnAll()
 	for _, plr in Players:GetPlayers() do
+		if PlayerData.isWaiting(plr) then
+			continue
+		end
 		local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
 		if not hum or hum.Health <= 0 then
 			plr:LoadCharacter()
@@ -184,9 +211,11 @@ local function runWave(wave: number): boolean
 	end
 	local techShard = wave % Evolutions.TechShardEveryWaves == 0
 	for _, plr in Players:GetPlayers() do
-		PlayerData.addCoins(plr, Economy.waveClearBonus(wave))
-		if techShard then
-			PlayerData.addShard(plr, "Tech", 1)
+		if not PlayerData.isWaiting(plr) then
+			PlayerData.addCoins(plr, Economy.waveClearBonus(wave))
+			if techShard then
+				PlayerData.addShard(plr, "Tech", 1)
+			end
 		end
 	end
 	if techShard then
@@ -201,8 +230,10 @@ local function endRun(won: boolean, reachedWave: number)
 	GameState.set("BossName", "")
 	-- each player gets their own run summary (Gems earned, next goal) for the results panel
 	for _, plr in Players:GetPlayers() do
-		local summary = PlayerData.endRun(plr, reachedWave, won)
-		GameOver:FireClient(plr, summary)
+		if not PlayerData.isWaiting(plr) then
+			local summary = PlayerData.endRun(plr, reachedWave, won)
+			GameOver:FireClient(plr, summary)
+		end
 	end
 	FX:FireAllClients("sound", { Name = if won then "WaveClear" else "GameOver" })
 	EnemyAI.clearAll()
@@ -232,6 +263,7 @@ local function gameLoop()
 					Toast:FireAllClients("Normal mode cleared! Infinite mode begins.", 5)
 				end
 				GameState.set("Phase", "intermission")
+				admitWaitingPlayers()
 				respawnAll()
 				-- pick 1 of 3 reward cards: a slow pick costs shop time, never the wave
 				for _, plr in Players:GetPlayers() do
@@ -248,9 +280,11 @@ local function gameLoop()
 end
 
 local function onPlayerAdded(plr: Player)
-	-- late joiners (and players already present in Studio) get a character right away
+	local joinedDuringWave = GameState.isWaveActive()
+	PlayerData.setWaiting(plr, joinedDuringWave)
+	-- Players joining an active wave stay unspawned until its intermission.
 	task.wait(1)
-	if not plr.Character then
+	if not joinedDuringWave and not plr.Character then
 		plr:LoadCharacter()
 	end
 	-- joining mid-intermission: roll this wave's reward cards too, so the panel is not

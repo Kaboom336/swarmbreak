@@ -2,6 +2,18 @@ local Config = load("Config")
 local Upgrades = load("Upgrades")
 local Economy = load("Economy")
 
+test("catch-up coins use the rounded average", function()
+	eq(Economy.catchUpCoins({ 10, 20, 30 }), 20, "average")
+	eq(Economy.catchUpCoins({ 2, 3 }), 3, "round half up")
+end)
+
+test("catch-up coins ignore invalid entries", function()
+	local coins = { [1] = 10, [2] = -4, [3] = "bad", [5] = 20 }
+	eq(Economy.catchUpCoins(coins), 15, "only non-negative numbers")
+	eq(Economy.catchUpCoins({}), 0, "empty list")
+	eq(Economy.catchUpCoins({ nil, -1, "bad" }), 0, "no valid entries")
+end)
+
 test("upgrade cost rises and stops at max level", function()
 	for _, name in Config.UpgradeOrder do
 		local u = Upgrades.def(name)

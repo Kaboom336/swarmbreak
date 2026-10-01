@@ -17,4 +17,9 @@ function GameState.get(name: string): any
 	return if v then (v :: any).Value else nil
 end
 
+function GameState.isWaveActive(): boolean
+	local phase = GameState.get("Phase")
+	return phase == "starting" or phase == "fighting"
+end
+
 return GameState
