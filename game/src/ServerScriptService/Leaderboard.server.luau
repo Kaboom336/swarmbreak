@@ -1,7 +1,40 @@
 --!strict
 -- Global top-10 best wave board on the arena wall. Refreshes every 60 s.
+local DataStoreService = game:GetService("DataStoreService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+
+local WeeklyBoard = require(ReplicatedStorage.Shared.WeeklyBoard)
 local PlayerData = require(ServerStorage.PlayerData)
+
+-- Keep a separate OrderedDataStore for each Monday-based UTC week. The all-time board below
+-- continues to use PlayerData's existing store and display.
+local state = ReplicatedStorage:WaitForChild("State")
+local phase = state:WaitForChild("Phase") :: StringValue
+local wave = state:WaitForChild("Wave") :: IntValue
+local runStartedAt: number? = nil
+
+phase:GetPropertyChangedSignal("Value"):Connect(function()
+	if phase.Value == "starting" and wave.Value == 1 then
+		runStartedAt = os.time()
+	elseif phase.Value == "over" and runStartedAt then
+		local finishedAt = os.time()
+		local runScore = WeeklyBoard.score(wave.Value, math.max(0, finishedAt - runStartedAt))
+		runStartedAt = nil
+		for _, plr in Players:GetPlayers() do
+			task.spawn(function()
+				pcall(function()
+					local weeklyStore =
+						DataStoreService:GetOrderedDataStore(WeeklyBoard.key(finishedAt))
+					weeklyStore:UpdateAsync(tostring(plr.UserId), function(old)
+						return math.max(old or 0, runScore)
+					end)
+				end)
+			end)
+		end
+	end
+end)
 
 local arena = workspace:WaitForChild("Arena")
 local board = arena:WaitForChild("LeaderboardWall") :: BasePart
