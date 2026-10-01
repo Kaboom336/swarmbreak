@@ -19,6 +19,7 @@ local Daily = require(ReplicatedStorage.Shared.Daily)
 local Quests = require(ReplicatedStorage.Shared.Quests)
 local Kits = require(ReplicatedStorage.Shared.Kits)
 local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
+local Settings = require(ReplicatedStorage.Shared.Settings)
 local ClientFX = require(script.Parent.ClientFX)
 
 local player = Players.LocalPlayer
@@ -37,6 +38,7 @@ local BuyPerk = Remotes.BuyPerk :: RemoteFunction
 local ChooseKit = Remotes.ChooseKit :: RemoteFunction
 local GemCrate = Remotes.GemCrate :: RemoteFunction
 local PickReward = Remotes.PickReward :: RemoteFunction
+local UpdateSettings = Remotes.UpdateSettings :: RemoteEvent
 
 local function stateValue(name: string): any
 	return (State:WaitForChild(name) :: any).Value
@@ -273,6 +275,121 @@ local function refreshQuests(state: any)
 		reward.TextColor3 = if row.Done then OK else ClientFX.c3(Theme.NeonAmber)
 	end
 end
+
+-- Top-right settings panel. Volume changes take effect while dragging and save on release.
+local settingsToggle = button(screen, "Settings", UDim2.new(0, 120, 0, 34))
+settingsToggle.Name = "SettingsToggle"
+settingsToggle.Position = UDim2.new(1, -404, 0, 8)
+
+local settingsPanel = Instance.new("Frame")
+settingsPanel.Name = "Settings"
+settingsPanel.Size = UDim2.new(0, 260, 0, 116)
+settingsPanel.Position = UDim2.new(1, -544, 0, 50)
+settingsPanel.BackgroundColor3 = PANEL
+settingsPanel.BackgroundTransparency = 0.1
+settingsPanel.BorderSizePixel = 0
+settingsPanel.Visible = false
+settingsPanel.Parent = screen
+local settingsCorner = Instance.new("UICorner")
+settingsCorner.CornerRadius = UDim.new(0, 8)
+settingsCorner.Parent = settingsPanel
+
+type SliderSetter = (number, boolean?) -> ()
+
+local function makeSlider(
+	label: string,
+	y: number,
+	onChanged: (number, boolean) -> ()
+): SliderSetter
+	local valueLabel =
+		text(settingsPanel, label, UDim2.new(0, 12, 0, y), UDim2.new(1, -24, 0, 24), label, 14)
+	valueLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+	local track = Instance.new("TextButton")
+	track.Name = label .. " Slider"
+	track.Position = UDim2.new(0, 12, 0, y + 27)
+	track.Size = UDim2.new(1, -24, 0, 12)
+	track.Text = ""
+	track.AutoButtonColor = false
+	track.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+	track.BorderSizePixel = 0
+	track.Parent = settingsPanel
+	local trackCorner = Instance.new("UICorner")
+	trackCorner.CornerRadius = UDim.new(1, 0)
+	trackCorner.Parent = track
+
+	local fill = Instance.new("Frame")
+	fill.Name = "Fill"
+	fill.BackgroundColor3 = ClientFX.c3(Theme.NeonTeal)
+	fill.BorderSizePixel = 0
+	fill.Parent = track
+	local fillCorner = Instance.new("UICorner")
+	fillCorner.CornerRadius = UDim.new(1, 0)
+	fillCorner.Parent = fill
+
+	local value = Settings.DefaultVolume
+	local dragging = false
+	local dragInput: InputObject? = nil
+	local function setValue(nextValue: number, persist: boolean?)
+		value = Settings.clamp(nextValue)
+		fill.Size = UDim2.fromScale(value, 1)
+		valueLabel.Text = string.format("%s  %d%%", label, math.floor(value * 100 + 0.5))
+		onChanged(value, persist == true)
+	end
+	local function updateAt(x: number)
+		setValue((x - track.AbsolutePosition.X) / math.max(track.AbsoluteSize.X, 1), false)
+	end
+
+	track.InputBegan:Connect(function(input)
+		if
+			input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch
+		then
+			dragging = true
+			dragInput = input
+			updateAt(input.Position.X)
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if
+			dragging
+			and (input == dragInput or input.UserInputType == Enum.UserInputType.MouseMovement)
+		then
+			updateAt(input.Position.X)
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if
+			dragging
+			and (input == dragInput or input.UserInputType == Enum.UserInputType.MouseButton1)
+		then
+			dragging = false
+			dragInput = nil
+			onChanged(value, true)
+		end
+	end)
+
+	setValue(value, false)
+	return setValue
+end
+
+local setMusicSlider = makeSlider("Music volume", 8, function(value, persist)
+	ClientFX.setMusicVolume(value)
+	if persist then
+		UpdateSettings:FireServer({ MusicVolume = value })
+	end
+end)
+local setSfxSlider = makeSlider("SFX volume", 62, function(value, persist)
+	ClientFX.setSfxVolume(value)
+	if persist then
+		UpdateSettings:FireServer({ SfxVolume = value })
+	end
+end)
+
+settingsToggle.MouseButton1Click:Connect(function()
+	settingsPanel.Visible = not settingsPanel.Visible
+	settingsToggle.Text = if settingsPanel.Visible then "Settings  -" else "Settings"
+end)
 
 -- Bottom-right: weapon hotbar
 local hotbar = Instance.new("Frame")
@@ -981,6 +1098,8 @@ stats = {
 	Offer = {},
 	Quests = {},
 	Flags = {},
+	MusicVolume = Settings.DefaultVolume,
+	SfxVolume = Settings.DefaultVolume,
 }
 
 local function rebuildHotbar()
@@ -1114,6 +1233,8 @@ end
 
 StatsChanged.OnClientEvent:Connect(function(s)
 	stats = s
+	setMusicSlider(s.MusicVolume)
+	setSfxSlider(s.SfxVolume)
 	refreshStats()
 	onDailyPopup(s.DailyPopup)
 end)

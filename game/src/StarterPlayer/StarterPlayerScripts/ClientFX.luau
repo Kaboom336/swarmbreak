@@ -6,9 +6,23 @@ local Debris = game:GetService("Debris")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
+local Settings = require(ReplicatedStorage.Shared.Settings)
 
 local ClientFX = {}
 local camera = workspace.CurrentCamera
+local sfxVolume = Settings.DefaultVolume
+local musicVolume = Settings.DefaultVolume
+
+local music = Instance.new("Sound")
+music.Name = "Music"
+music.SoundId = Sounds.Music.Id
+music.Volume = Sounds.Music.Volume * musicVolume
+music.PlaybackSpeed = Sounds.Music.Pitch
+music.Looped = true
+music.Parent = SoundService
+if music.SoundId ~= "" then
+	music:Play()
+end
 
 local fxFolder = Instance.new("Folder")
 fxFolder.Name = "ClientFX"
@@ -16,6 +30,15 @@ fxFolder.Parent = workspace
 
 function ClientFX.c3(t: { number }): Color3
 	return Color3.fromRGB(t[1], t[2], t[3])
+end
+
+function ClientFX.setMusicVolume(value: any)
+	musicVolume = Settings.clamp(value)
+	music.Volume = Sounds.Music.Volume * musicVolume
+end
+
+function ClientFX.setSfxVolume(value: any)
+	sfxVolume = Settings.clamp(value)
 end
 
 -- ---------- sounds ----------
@@ -26,7 +49,7 @@ function ClientFX.sound(name: string, at: Vector3?, pitchJitter: number?)
 	end
 	local s = Instance.new("Sound")
 	s.SoundId = def.Id
-	s.Volume = def.Volume
+	s.Volume = def.Volume * sfxVolume
 	s.PlaybackSpeed = def.Pitch * (1 + (math.random() - 0.5) * (pitchJitter or 0.1))
 	s.RollOffMaxDistance = 120
 	if at then
