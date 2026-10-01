@@ -129,6 +129,12 @@ local function progressQuest(plr: Player, stat: string, amount: number)
 	local p = Profile.get(plr)
 	p.Quests = Quests.evaluate(p.Quests, os.time(), plr.UserId)
 	p.Quests = Quests.progress(p.Quests, stat, amount)
+	-- Completed quests pay out at once (no claim button yet).
+	for _, id in p.Quests.Ids do
+		local gems
+		p.Quests, gems = Quests.claim(p.Quests, id)
+		p.Gems += gems
+	end
 	Profile.markDirty(plr)
 end
 
