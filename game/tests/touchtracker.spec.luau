@@ -1,0 +1,37 @@
+local TouchTracker = load("TouchTracker")
+
+test("a stick touch ending does not stop the fire touch", function()
+	local state = TouchTracker.new()
+	state = TouchTracker.began(state, 1, true)
+	state = TouchTracker.began(state, 2, false)
+	eq(TouchTracker.isFiring(state), true, "fire touch starts firing")
+	eq(TouchTracker.fireTouch(state), 2, "fire touch tracked")
+
+	state = TouchTracker.ended(state, 1)
+	eq(TouchTracker.isFiring(state), true, "stick ending keeps firing")
+	eq(TouchTracker.fireTouch(state), 2, "same fire touch")
+end)
+
+test("ending the fire touch stops firing", function()
+	local state = TouchTracker.began(TouchTracker.new(), 2, false)
+	state = TouchTracker.ended(state, 2)
+	eq(TouchTracker.isFiring(state), false, "fire touch ended")
+	eq(TouchTracker.fireTouch(state), nil, "fire touch cleared")
+end)
+
+test("a GUI touch never fires", function()
+	local state = TouchTracker.began(TouchTracker.new(), 1, true)
+	eq(TouchTracker.isFiring(state), false, "GUI ignored")
+	eq(TouchTracker.fireTouch(state), nil, "no fire touch")
+end)
+
+test("state transitions do not mutate earlier state", function()
+	local empty = TouchTracker.new()
+	local firing = TouchTracker.began(empty, 4, false)
+	eq(TouchTracker.isFiring(empty), false, "original begin state unchanged")
+	eq(TouchTracker.isFiring(firing), true, "new begin state fires")
+
+	local ended = TouchTracker.ended(firing, 4)
+	eq(TouchTracker.isFiring(firing), true, "original end state unchanged")
+	eq(TouchTracker.isFiring(ended), false, "new end state stopped")
+end)
