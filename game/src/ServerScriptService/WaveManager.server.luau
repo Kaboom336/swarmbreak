@@ -11,11 +11,8 @@ local Economy = require(ReplicatedStorage.Shared.Economy)
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
-<<<<<<< HEAD
 local SpawnPicker = require(ReplicatedStorage.Shared.SpawnPicker)
-=======
 local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
->>>>>>> codex/w6-telemetry
 local EnemyAI = require(ServerStorage.EnemyAI)
 local PlayerData = require(ServerStorage.PlayerData)
 local GameState = require(ServerStorage.GameState)
