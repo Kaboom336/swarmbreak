@@ -17,11 +17,8 @@ local Theme = require(ReplicatedStorage.Shared.Theme)
 local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Quests = require(ReplicatedStorage.Shared.Quests)
-<<<<<<< HEAD
 local Kits = require(ReplicatedStorage.Shared.Kits)
-=======
 local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
->>>>>>> codex/first-run
 local ClientFX = require(script.Parent.ClientFX)
 
 local player = Players.LocalPlayer

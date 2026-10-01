@@ -17,11 +17,8 @@ local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Quests = require(ReplicatedStorage.Shared.Quests)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
-<<<<<<< HEAD
 local Kits = require(ReplicatedStorage.Shared.Kits)
-=======
 local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
->>>>>>> codex/first-run
 local Profile = require(script.Parent.Profile)
 local WeaponModels = require(script.Parent.WeaponModels)
 
@@ -81,12 +78,9 @@ local function push(plr: Player)
 			Streak = p.Streak,
 			DailyPopup = r.DailyPopup,
 			Quests = p.Quests,
-<<<<<<< HEAD
 			Kit = p.Kit,
 			KitsOwned = p.KitsOwned,
-=======
 			Flags = p.Flags,
->>>>>>> codex/first-run
 		})
 	end
 end
