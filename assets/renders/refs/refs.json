@@ -1,0 +1,1197 @@
+{
+ "RobotExpressive": {
+  "file": "raw/RobotExpressive.glb",
+  "objects": 15,
+  "polys": 3314,
+  "tris": 3314,
+  "flat_fraction": 0.81,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 3,
+  "textures": [],
+  "vertex_colors": false,
+  "size": [
+   3.1,
+   2.79,
+   5.03
+  ],
+  "palette": [
+   [
+    12,
+    12,
+    12
+   ],
+   [
+    95,
+    95,
+    85
+   ],
+   [
+    151,
+    74,
+    10
+   ]
+  ],
+  "object_names": [
+   "Foot.L",
+   "Torso",
+   "Head",
+   "Shoulder.L",
+   "Arm.L",
+   "Shoulder.R",
+   "Arm.R",
+   "Leg.L",
+   "LowerLeg.L",
+   "Leg.R",
+   "LowerLeg.R",
+   "Foot.R",
+   "Hand.R",
+   "Hand.L",
+   "Icosphere"
+  ]
+ },
+ "Fox": {
+  "file": "raw/Fox.glb",
+  "objects": 2,
+  "polys": 656,
+  "tris": 656,
+  "flat_fraction": 1.0,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "Image_0"
+  ],
+  "vertex_colors": false,
+  "size": [
+   41.02,
+   141.65,
+   75.59
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "fox",
+   "Icosphere"
+  ]
+ },
+ "alien": {
+  "file": "raw/alien.glb",
+  "objects": 6,
+  "polys": 292,
+  "tris": 292,
+  "flat_fraction": 0.82,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 5,
+  "textures": [],
+  "vertex_colors": false,
+  "size": [
+   0.48,
+   0.33,
+   0.84
+  ],
+  "palette": [
+   [
+    47,
+    224,
+    151
+   ],
+   [
+    70,
+    76,
+    87
+   ],
+   [
+    172,
+    181,
+    197
+   ],
+   [
+    215,
+    222,
+    232
+   ],
+   [
+    255,
+    160,
+    52
+   ]
+  ],
+  "object_names": [
+   "armLeft",
+   "armRight",
+   "body",
+   "head",
+   "legLeft",
+   "legRight"
+  ]
+ },
+ "PrimaryIonDrive": {
+  "file": "raw/PrimaryIonDrive.glb",
+  "objects": 6,
+  "polys": 52072,
+  "tris": 52072,
+  "flat_fraction": 0.11,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 3,
+  "textures": [],
+  "vertex_colors": true,
+  "size": [
+   4.08,
+   2.25,
+   2.24
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "circle_constant1_0",
+   "circle_HoloFillDark_0",
+   "geo1_constant1_0",
+   "geo1_HoloFillDark_0",
+   "circle1_constant2_0",
+   "circle2_constant2_0"
+  ]
+ },
+ "blaster-repeater": {
+  "file": "Starter-Kit-FPS/models/blaster-repeater.glb",
+  "objects": 2,
+  "polys": 700,
+  "tris": 700,
+  "flat_fraction": 0.34,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "colormap"
+  ],
+  "vertex_colors": false,
+  "size": [
+   0.79,
+   1.88,
+   0.85
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "blaster-repeater",
+   "Group"
+  ]
+ },
+ "blaster": {
+  "file": "Starter-Kit-FPS/models/blaster.glb",
+  "objects": 1,
+  "polys": 624,
+  "tris": 624,
+  "flat_fraction": 0.27,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "colormap"
+  ],
+  "vertex_colors": false,
+  "size": [
+   0.88,
+   1.6,
+   0.9
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "blaster"
+  ]
+ },
+ "enemy-flying": {
+  "file": "Starter-Kit-FPS/models/enemy-flying.glb",
+  "objects": 4,
+  "polys": 544,
+  "tris": 544,
+  "flat_fraction": 0.3,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "colormap"
+  ],
+  "vertex_colors": false,
+  "size": [
+   1.2,
+   0.76,
+   0.88
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "torso",
+   "antenna",
+   "blaster-left",
+   "blaster-right"
+  ]
+ },
+ "wall-high": {
+  "file": "Starter-Kit-FPS/models/wall-high.glb",
+  "objects": 1,
+  "polys": 208,
+  "tris": 208,
+  "flat_fraction": 0.48,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "colormap"
+  ],
+  "vertex_colors": false,
+  "size": [
+   1.5,
+   0.7,
+   1.7
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "wall-high"
+  ]
+ },
+ "character": {
+  "file": "Starter-Kit-3D-Platformer/models/character.glb",
+  "objects": 6,
+  "polys": 550,
+  "tris": 550,
+  "flat_fraction": 0.21,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "colormap"
+  ],
+  "vertex_colors": false,
+  "size": [
+   1.2,
+   0.63,
+   1.1
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "leg-left",
+   "leg-right",
+   "torso",
+   "arm-left",
+   "arm-right",
+   "antenna"
+  ]
+ },
+ "coin": {
+  "file": "Starter-Kit-3D-Platformer/models/coin.glb",
+  "objects": 1,
+  "polys": 252,
+  "tris": 252,
+  "flat_fraction": 0.48,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "colormap"
+  ],
+  "vertex_colors": false,
+  "size": [
+   0.42,
+   0.17,
+   0.42
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "coin"
+  ]
+ },
+ "platform-medium": {
+  "file": "Starter-Kit-3D-Platformer/models/platform-medium.glb",
+  "objects": 1,
+  "polys": 188,
+  "tris": 188,
+  "flat_fraction": 0.4,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "colormap"
+  ],
+  "vertex_colors": false,
+  "size": [
+   3.0,
+   3.0,
+   0.55
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "platform-medium"
+  ]
+ },
+ "basemodule_A": {
+  "file": "KayKit-Space-Base-Bits/addons/kaykit_space_base_bits/Assets/gltf/basemodule_A.gltf",
+  "objects": 1,
+  "polys": 586,
+  "tris": 586,
+  "flat_fraction": 0.68,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "spacebits_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   2.25,
+   2.18,
+   1.0
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "basemodule_A"
+  ]
+ },
+ "cargo_A": {
+  "file": "KayKit-Space-Base-Bits/addons/kaykit_space_base_bits/Assets/gltf/cargo_A.gltf",
+  "objects": 1,
+  "polys": 128,
+  "tris": 128,
+  "flat_fraction": 0.27,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "spacebits_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   0.5,
+   0.52,
+   0.52
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "cargo_A"
+  ]
+ },
+ "containers_A": {
+  "file": "KayKit-Space-Base-Bits/addons/kaykit_space_base_bits/Assets/gltf/containers_A.gltf",
+  "objects": 1,
+  "polys": 280,
+  "tris": 280,
+  "flat_fraction": 0.05,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "spacebits_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   0.5,
+   0.5,
+   0.2
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "containers_A"
+  ]
+ },
+ "lights": {
+  "file": "KayKit-Space-Base-Bits/addons/kaykit_space_base_bits/Assets/gltf/lights.gltf",
+  "objects": 1,
+  "polys": 356,
+  "tris": 356,
+  "flat_fraction": 0.15,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "spacebits_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   0.68,
+   0.68,
+   1.0
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "lights"
+  ]
+ },
+ "lander_A": {
+  "file": "KayKit-Space-Base-Bits/addons/kaykit_space_base_bits/Assets/gltf/lander_A.gltf",
+  "objects": 1,
+  "polys": 1464,
+  "tris": 1464,
+  "flat_fraction": 0.45,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "spacebits_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   1.37,
+   1.42,
+   1.19
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "lander_A"
+  ]
+ },
+ "structure_tall": {
+  "file": "KayKit-Space-Base-Bits/addons/kaykit_space_base_bits/Assets/gltf/structure_tall.gltf",
+  "objects": 1,
+  "polys": 670,
+  "tris": 670,
+  "flat_fraction": 0.34,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "spacebits_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   1.75,
+   1.75,
+   2.0
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "structure_tall"
+  ]
+ },
+ "tunnel_straight_A": {
+  "file": "KayKit-Space-Base-Bits/addons/kaykit_space_base_bits/Assets/gltf/tunnel_straight_A.gltf",
+  "objects": 1,
+  "polys": 608,
+  "tris": 608,
+  "flat_fraction": 0.81,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "spacebits_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   2.0,
+   0.93,
+   0.6
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "tunnel_straight_A"
+  ]
+ },
+ "drill_structure": {
+  "file": "KayKit-Space-Base-Bits/addons/kaykit_space_base_bits/Assets/gltf/drill_structure.gltf",
+  "objects": 2,
+  "polys": 1198,
+  "tris": 1198,
+  "flat_fraction": 0.32,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "spacebits_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   1.75,
+   1.75,
+   2.0
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "drill_structure",
+   "drill_module"
+  ]
+ },
+ "landingpad_small": {
+  "file": "KayKit-Space-Base-Bits/addons/kaykit_space_base_bits/Assets/gltf/landingpad_small.gltf",
+  "objects": 1,
+  "polys": 454,
+  "tris": 454,
+  "flat_fraction": 0.39,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "spacebits_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   1.9,
+   1.9,
+   0.5
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "landingpad_small"
+  ]
+ },
+ "rock_A": {
+  "file": "KayKit-Space-Base-Bits/addons/kaykit_space_base_bits/Assets/gltf/rock_A.gltf",
+  "objects": 1,
+  "polys": 30,
+  "tris": 30,
+  "flat_fraction": 0.1,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "spacebits_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   0.53,
+   0.5,
+   0.25
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "rock_A"
+  ]
+ },
+ "spacetruck": {
+  "file": "KayKit-Space-Base-Bits/addons/kaykit_space_base_bits/Assets/gltf/spacetruck.gltf",
+  "objects": 5,
+  "polys": 1118,
+  "tris": 1118,
+  "flat_fraction": 0.08,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "spacebits_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   0.49,
+   0.89,
+   0.57
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "spacetruck",
+   "spacetruck_wheel_front_left",
+   "spacetruck_wheel_front_right",
+   "spacetruck_wheel_rear_left",
+   "spacetruck_wheel_rear_right"
+  ]
+ },
+ "roofmodule_solarpanels": {
+  "file": "KayKit-Space-Base-Bits/addons/kaykit_space_base_bits/Assets/gltf/roofmodule_solarpanels.gltf",
+  "objects": 1,
+  "polys": 284,
+  "tris": 284,
+  "flat_fraction": 0.64,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "spacebits_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   1.4,
+   1.4,
+   0.57
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "roofmodule_solarpanels"
+  ]
+ },
+ "banner_blue.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/banner_blue.gltf.glb",
+  "objects": 1,
+  "polys": 97,
+  "tris": 97,
+  "flat_fraction": 0.1,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   1.5,
+   0.31,
+   3.2
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "banner_blue"
+  ]
+ },
+ "banner_shield_blue.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/banner_shield_blue.gltf.glb",
+  "objects": 1,
+  "polys": 639,
+  "tris": 639,
+  "flat_fraction": 0.02,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   2.23,
+   0.37,
+   3.2
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "banner_shield_blue"
+  ]
+ },
+ "barrel_large.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/barrel_large.gltf.glb",
+  "objects": 1,
+  "polys": 561,
+  "tris": 561,
+  "flat_fraction": 0.09,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   1.8,
+   1.8,
+   2.0
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "barrel_large"
+  ]
+ },
+ "barrier_column.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/barrier_column.gltf.glb",
+  "objects": 1,
+  "polys": 110,
+  "tris": 110,
+  "flat_fraction": 0.88,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   4.0,
+   0.7,
+   1.4
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "barrier_column"
+  ]
+ },
+ "bed_decorated.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/bed_decorated.gltf.glb",
+  "objects": 1,
+  "polys": 1410,
+  "tris": 1410,
+  "flat_fraction": 0.06,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   2.61,
+   3.06,
+   1.7
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "bed_decorated"
+  ]
+ },
+ "bed_floor.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/bed_floor.gltf.glb",
+  "objects": 1,
+  "polys": 232,
+  "tris": 232,
+  "flat_fraction": 0.05,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   1.5,
+   3.0,
+   0.56
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "bed_floor"
+  ]
+ },
+ "chest": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/chest.glb",
+  "objects": 2,
+  "polys": 728,
+  "tris": 728,
+  "flat_fraction": 0.31,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   1.7,
+   1.45,
+   1.3
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "chest",
+   "chest_lid"
+  ]
+ },
+ "coin.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/coin.gltf.glb",
+  "objects": 1,
+  "polys": 80,
+  "tris": 80,
+  "flat_fraction": 0.26,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   0.36,
+   0.36,
+   0.13
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "coin"
+  ]
+ },
+ "crates_stacked.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/crates_stacked.gltf.glb",
+  "objects": 1,
+  "polys": 1331,
+  "tris": 1331,
+  "flat_fraction": 0.06,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   2.09,
+   2.25,
+   2.14
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "crates_stacked"
+  ]
+ },
+ "key.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/key.gltf.glb",
+  "objects": 1,
+  "polys": 160,
+  "tris": 160,
+  "flat_fraction": 0.02,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   0.9,
+   0.14,
+   0.4
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "key"
+  ]
+ },
+ "pillar.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/pillar.gltf.glb",
+  "objects": 1,
+  "polys": 136,
+  "tris": 136,
+  "flat_fraction": 0.24,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   1.5,
+   1.5,
+   4.0
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "pillar"
+  ]
+ },
+ "stairs.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/stairs.gltf.glb",
+  "objects": 1,
+  "polys": 358,
+  "tris": 358,
+  "flat_fraction": 0.27,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   5.0,
+   4.0,
+   5.1
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "stairs"
+  ]
+ },
+ "stairs_wall_left.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/stairs_wall_left.gltf.glb",
+  "objects": 1,
+  "polys": 574,
+  "tris": 574,
+  "flat_fraction": 0.28,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   4.0,
+   5.0,
+   5.1
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "stairs_wall_left"
+  ]
+ },
+ "sword_shield.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/sword_shield.gltf.glb",
+  "objects": 1,
+  "polys": 542,
+  "tris": 542,
+  "flat_fraction": 0.0,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   2.23,
+   0.34,
+   1.67
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "sword_shield"
+  ]
+ },
+ "table_long.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/table_long.gltf.glb",
+  "objects": 1,
+  "polys": 280,
+  "tris": 280,
+  "flat_fraction": 0.25,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   2.0,
+   4.0,
+   1.0
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "table_long"
+  ]
+ },
+ "torch.gltf": {
+  "file": "KayKit-Dungeon-Remastered/addons/kaykit_dungeon_remastered/Assets/gltf/torch.gltf.glb",
+  "objects": 1,
+  "polys": 216,
+  "tris": 216,
+  "flat_fraction": 0.0,
+  "quads": 0,
+  "ngons": 0,
+  "materials": 1,
+  "textures": [
+   "dungeon_texture"
+  ],
+  "vertex_colors": false,
+  "size": [
+   0.55,
+   0.55,
+   1.04
+  ],
+  "palette": [
+   [
+    204,
+    204,
+    204
+   ]
+  ],
+  "object_names": [
+   "torch"
+  ]
+ }
+}

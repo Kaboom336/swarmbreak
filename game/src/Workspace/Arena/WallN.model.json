@@ -1,0 +1,33 @@
+{
+ "className": "Part",
+ "properties": {
+  "Name": "WallN",
+  "Anchored": true,
+  "Size": [
+   160,
+   20,
+   2
+  ],
+  "Color": [
+   0.25,
+   0.25,
+   0.3
+  ],
+  "Material": "SmoothPlastic",
+  "TopSurface": "Smooth",
+  "BottomSurface": "Smooth",
+  "CFrame": {
+   "position": [
+    0,
+    10,
+    -80
+   ],
+   "orientation": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "children": []
+}

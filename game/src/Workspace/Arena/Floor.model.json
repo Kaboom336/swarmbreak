@@ -1,0 +1,33 @@
+{
+ "className": "Part",
+ "properties": {
+  "Name": "Floor",
+  "Anchored": true,
+  "Size": [
+   160,
+   2,
+   160
+  ],
+  "Color": [
+   0.35,
+   0.4,
+   0.35
+  ],
+  "Material": "SmoothPlastic",
+  "TopSurface": "Smooth",
+  "BottomSurface": "Smooth",
+  "CFrame": {
+   "position": [
+    0,
+    0,
+    0
+   ],
+   "orientation": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "children": []
+}

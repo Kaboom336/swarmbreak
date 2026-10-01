@@ -1,0 +1,1091 @@
+--!strict
+-- The whole HUD, built in code so it lives in files. Reads ReplicatedStorage.State.
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local Config = require(ReplicatedStorage.Shared.Config)
+local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
+local Weapons = require(ReplicatedStorage.Shared.Weapons)
+local Monetization = require(ReplicatedStorage.Shared.Monetization)
+local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
+local ProfileSchema = require(ReplicatedStorage.Shared.ProfileSchema)
+local Goals = require(ReplicatedStorage.Shared.Goals)
+local Theme = require(ReplicatedStorage.Shared.Theme)
+local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
+local Daily = require(ReplicatedStorage.Shared.Daily)
+local ClientFX = require(script.Parent.ClientFX)
+
+local player = Players.LocalPlayer
+local gui = player:WaitForChild("PlayerGui")
+local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+local State = ReplicatedStorage:WaitForChild("State")
+local StatsChanged = Remotes.StatsChanged :: RemoteEvent
+local GameOver = Remotes.GameOver :: RemoteEvent
+local Toast = Remotes.Toast :: RemoteEvent
+local CrateResult = Remotes.CrateResult :: RemoteEvent
+local BuyUpgrade = Remotes.BuyUpgrade :: RemoteFunction
+local EquipWeapon = Remotes.EquipWeapon :: RemoteEvent
+local Prompt = Remotes.Prompt :: RemoteEvent
+local Evolve = Remotes.Evolve :: RemoteFunction
+local BuyPerk = Remotes.BuyPerk :: RemoteFunction
+local GemCrate = Remotes.GemCrate :: RemoteFunction
+local PickReward = Remotes.PickReward :: RemoteFunction
+
+local function stateValue(name: string): any
+	return (State:WaitForChild(name) :: any).Value
+end
+local function onState(name: string, fn: (any) -> ())
+	local v = State:WaitForChild(name) :: any
+	v.Changed:Connect(fn)
+	fn(v.Value)
+end
+
+local WHITE = Color3.new(1, 1, 1)
+local PANEL = Color3.fromRGB(18, 18, 26)
+local BUTTON = Color3.fromRGB(50, 90, 160)
+local OK = Color3.fromRGB(40, 160, 80)
+local BAD = Color3.fromRGB(160, 40, 40)
+local GREY = Color3.fromRGB(60, 60, 70) -- a button you cannot afford yet
+
+local screen = Instance.new("ScreenGui")
+screen.Name = "Hud"
+screen.ResetOnSpawn = false
+screen.Parent = gui
+
+local function text(
+	parent: Instance,
+	name: string,
+	pos: UDim2,
+	size: UDim2,
+	str: string,
+	textSize: number
+): TextLabel
+	local l = Instance.new("TextLabel")
+	l.Name = name
+	l.Position = pos
+	l.Size = size
+	l.BackgroundTransparency = 1
+	l.TextColor3 = WHITE
+	l.TextStrokeTransparency = 0.4
+	l.Font = Enum.Font.GothamBold
+	l.TextSize = textSize
+	l.Text = str
+	l.Parent = parent
+	return l
+end
+
+local function button(parent: Instance, str: string, size: UDim2): TextButton
+	local b = Instance.new("TextButton")
+	b.Size = size
+	b.Text = str
+	b.Font = Enum.Font.Gotham
+	b.TextSize = 16
+	b.TextColor3 = WHITE
+	b.BackgroundColor3 = BUTTON
+	b.AutoButtonColor = true
+	b.Parent = parent
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = b
+	return b
+end
+
+local function flashButton(b: TextButton, ok: boolean)
+	b.BackgroundColor3 = if ok then OK else BAD
+	task.delay(0.25, function()
+		b.BackgroundColor3 = BUTTON
+	end)
+end
+
+-- Low-HP vignette + hurt flash (four edge frames with gradients)
+local vignette = Instance.new("Frame")
+vignette.Name = "Vignette"
+vignette.Size = UDim2.fromScale(1, 1)
+vignette.BackgroundTransparency = 1
+vignette.Visible = false
+vignette.ZIndex = 0
+vignette.Parent = screen
+for _, side in { "Top", "Bottom", "Left", "Right" } do
+	local f = Instance.new("Frame")
+	f.BackgroundColor3 = Color3.fromRGB(200, 20, 20)
+	f.BorderSizePixel = 0
+	if side == "Top" then
+		f.Size = UDim2.new(1, 0, 0.22, 0)
+	elseif side == "Bottom" then
+		f.Size = UDim2.new(1, 0, 0.22, 0)
+		f.Position = UDim2.new(0, 0, 0.78, 0)
+	elseif side == "Left" then
+		f.Size = UDim2.new(0.18, 0, 1, 0)
+	else
+		f.Size = UDim2.new(0.18, 0, 1, 0)
+		f.Position = UDim2.new(0.82, 0, 0, 0)
+	end
+	local g = Instance.new("UIGradient")
+	g.Transparency = NumberSequence.new(
+		if side == "Top" or side == "Left" then 0.45 else 1,
+		if side == "Top" or side == "Left" then 1 else 0.45
+	)
+	g.Rotation = if side == "Top" or side == "Bottom" then 90 else 0
+	g.Parent = f
+	f.Parent = vignette
+end
+
+-- Top: wave / phase / alive
+local waveLabel = text(screen, "Wave", UDim2.new(0.5, -200, 0, 8), UDim2.new(0, 400, 0, 34), "", 28)
+local phaseLabel =
+	text(screen, "Phase", UDim2.new(0.5, -200, 0, 42), UDim2.new(0, 400, 0, 22), "", 18)
+phaseLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+
+-- Boss bar
+local bossFrame = Instance.new("Frame")
+bossFrame.Size = UDim2.new(0, 480, 0, 22)
+bossFrame.Position = UDim2.new(0.5, -240, 0, 70)
+bossFrame.BackgroundColor3 = Color3.fromRGB(30, 10, 10)
+bossFrame.BorderSizePixel = 0
+bossFrame.Visible = false
+bossFrame.Parent = screen
+local bossFill = Instance.new("Frame")
+bossFill.Size = UDim2.fromScale(1, 1)
+bossFill.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+bossFill.BorderSizePixel = 0
+bossFill.Parent = bossFrame
+local bossLabel = text(bossFrame, "BossName", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), "", 16)
+
+-- Bottom-left: HP + stats + dash
+local hpBack = Instance.new("Frame")
+hpBack.Size = UDim2.new(0, 260, 0, 18)
+hpBack.Position = UDim2.new(0, 12, 1, -80)
+hpBack.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+hpBack.BorderSizePixel = 0
+hpBack.Parent = screen
+local hpFill = Instance.new("Frame")
+hpFill.Size = UDim2.fromScale(1, 1)
+hpFill.BackgroundColor3 = OK
+hpFill.BorderSizePixel = 0
+hpFill.Parent = hpBack
+local hpText = text(hpBack, "HP", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), "", 14)
+local statsLabel = text(screen, "Stats", UDim2.new(0, 12, 1, -66), UDim2.new(0, 420, 0, 58), "", 16)
+statsLabel.TextXAlignment = Enum.TextXAlignment.Left
+statsLabel.TextYAlignment = Enum.TextYAlignment.Top
+
+-- Bottom-right: weapon hotbar
+local hotbar = Instance.new("Frame")
+hotbar.Size = UDim2.new(0, 420, 0, 46)
+hotbar.Position = UDim2.new(1, -432, 1, -72)
+hotbar.BackgroundTransparency = 1
+hotbar.Parent = screen
+local hotLayout = Instance.new("UIListLayout")
+hotLayout.FillDirection = Enum.FillDirection.Horizontal
+hotLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+hotLayout.Padding = UDim.new(0, 4)
+hotLayout.Parent = hotbar
+-- Under the hotbar: this run's reward cards as "Sharp x2  Greed x1" (empty until a pick)
+local boostsLabel =
+	text(screen, "Boosts", UDim2.new(1, -432, 1, -24), UDim2.new(0, 420, 0, 14), "", 12)
+boostsLabel.TextXAlignment = Enum.TextXAlignment.Right
+boostsLabel.TextColor3 = ClientFX.c3(Theme.NeonTeal)
+
+-- Banner + toast
+local banner =
+	text(screen, "Banner", UDim2.new(0.5, -300, 0.38, 0), UDim2.new(0, 600, 0, 80), "", 48)
+banner.Visible = false
+local toast = text(screen, "Toast", UDim2.new(0.5, -300, 0.2, 0), UDim2.new(0, 600, 0, 30), "", 20)
+toast.Visible = false
+-- the banner and the toast float above everything else, the reward cards included
+banner.ZIndex = 4
+toast.ZIndex = 4
+
+local function flash(label: TextLabel, str: string, seconds: number)
+	label.Text = str
+	label.Visible = true
+	label.TextTransparency = 0
+	label.TextStrokeTransparency = 0.4
+	task.delay(seconds, function()
+		if label.Text ~= str then
+			return
+		end
+		TweenService
+			:Create(label, TweenInfo.new(0.5), { TextTransparency = 1, TextStrokeTransparency = 1 })
+			:Play()
+		task.delay(0.5, function()
+			if label.Text == str then
+				label.Visible = false
+			end
+		end)
+	end)
+end
+
+-- Latest stats snapshot from the server (filled by StatsChanged below)
+local stats: any
+
+-- The parts of the stats snapshot that the pure profile helpers (perk costs, next goal) read.
+local function profileSnapshot(): any
+	return {
+		Gems = stats.Gems or 0,
+		Shards = stats.Shards or {},
+		Equipped = stats.Equipped or "Starter",
+		Evolutions = stats.Evolutions or {},
+		Perks = stats.Perks or {},
+	}
+end
+
+-- Wave reward cards: pick 1 of 3 after every wave clear (Shared/WaveRewards). They sit over
+-- the open shop during the intermission while the server holds an offer for us; a click or
+-- keys 1-3 pick one, and the server takes the first card for us when the countdown runs out.
+local cardPanel = Instance.new("Frame")
+cardPanel.Name = "RewardCards"
+cardPanel.Size = UDim2.new(0, 600, 0, 200)
+cardPanel.Position = UDim2.new(0.5, -300, 0.3, 0)
+cardPanel.BackgroundTransparency = 1
+cardPanel.Visible = false
+cardPanel.ZIndex = 2 -- above the shop panel
+cardPanel.Parent = screen
+local cardLayout = Instance.new("UIListLayout")
+cardLayout.FillDirection = Enum.FillDirection.Horizontal
+cardLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+cardLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+cardLayout.SortOrder = Enum.SortOrder.LayoutOrder
+cardLayout.Padding = UDim.new(0, 12)
+cardLayout.Parent = cardPanel
+
+local CARD_STRIPE: { [string]: Color3 } = {
+	Stat = ClientFX.c3(Theme.NeonTeal),
+	Weapon = ClientFX.c3(Theme.NeonAmber),
+	Utility = OK,
+}
+local cardIds: { string } = {} -- ids on offer in card order (key 1 = first card)
+local cardKey = "" -- the offer the cards were last built from
+local cardPending = false -- our pick is in flight
+
+local function pickCard(id: string)
+	if cardPending then
+		return
+	end
+	cardPending = true
+	-- pcall: a failed invoke (server error, remote gone on teleport) must never leave cardPending
+	-- stuck and every later offer unpickable. The server's auto-pick still saves the reward.
+	local called, ok, why = pcall(function()
+		return PickReward:InvokeServer(id)
+	end)
+	cardPending = false
+	if not called then
+		warn("PickReward failed:", ok)
+	end
+	if called and ok == true then
+		local def = WaveRewards.Defs[id]
+		ClientFX.sound("Buy")
+		flash(toast, "Picked: " .. (if def then def.Label else id), 2)
+		cardIds = {}
+		cardPanel.Visible = false
+	else
+		ClientFX.sound("Deny")
+		if called and typeof(why) == "string" and why ~= "" then
+			flash(toast, why, 2.5)
+		end
+	end
+end
+
+local function rebuildCards(offer: { string })
+	for _, c in cardPanel:GetChildren() do
+		if c:IsA("TextButton") then
+			c:Destroy()
+		end
+	end
+	cardIds = {}
+	for _, id in offer do
+		local def = WaveRewards.Defs[id]
+		if def and #cardIds < WaveRewards.OfferSize then
+			table.insert(cardIds, id)
+			local i = #cardIds
+			local b = Instance.new("TextButton")
+			b.Name = "Card" .. i
+			b.Size = UDim2.new(0, 184, 0, 180)
+			b.Text = ""
+			b.BackgroundColor3 = PANEL
+			b.BorderSizePixel = 0
+			b.AutoButtonColor = true
+			b.LayoutOrder = i
+			b.Parent = cardPanel
+			local corner = Instance.new("UICorner")
+			corner.CornerRadius = UDim.new(0, 10)
+			corner.Parent = b
+			local stripe = Instance.new("Frame") -- 4 px top stripe coloured by card kind
+			stripe.Name = "Stripe"
+			stripe.Size = UDim2.new(1, -20, 0, 4)
+			stripe.Position = UDim2.new(0, 10, 0, 0)
+			stripe.BackgroundColor3 = CARD_STRIPE[def.Kind] or WHITE
+			stripe.BorderSizePixel = 0
+			stripe.Parent = b
+			text(b, "Label", UDim2.new(0, 10, 0, 18), UDim2.new(1, -20, 0, 26), def.Label, 18)
+			local blurb =
+				text(b, "Blurb", UDim2.new(0, 10, 0, 50), UDim2.new(1, -20, 0, 90), def.Blurb, 13)
+			blurb.Font = Enum.Font.Gotham
+			blurb.TextWrapped = true
+			blurb.TextYAlignment = Enum.TextYAlignment.Top
+			blurb.TextColor3 = Color3.fromRGB(210, 210, 220)
+			local hint = text(
+				b,
+				"Key",
+				UDim2.new(0, 10, 1, -28),
+				UDim2.new(1, -20, 0, 20),
+				"Press " .. i,
+				12
+			)
+			hint.TextColor3 = Color3.fromRGB(160, 160, 175)
+			b.MouseButton1Click:Connect(function()
+				pickCard(id)
+			end)
+		end
+	end
+end
+
+-- Rebuild when the offer changes; show only while the intermission lasts.
+local function refreshCards()
+	local offer: { string } = stats.Offer or {}
+	local offerKey = table.concat(offer, "|")
+	if offerKey ~= cardKey then
+		cardKey = offerKey
+		rebuildCards(offer)
+	end
+	cardPanel.Visible = #cardIds > 0 and stateValue("Phase") == "intermission"
+end
+
+UserInputService.InputBegan:Connect(function(input, gp)
+	if gp or not cardPanel.Visible then
+		return
+	end
+	local n = input.KeyCode.Value - Enum.KeyCode.One.Value + 1
+	if n >= 1 and n <= #cardIds then
+		pickCard(cardIds[n])
+	end
+end)
+
+-- Lobby perk buttons (Gems, forever). One helper builds them for both the shop and the run
+-- summary panel; refreshPerkButtons repaints every one from the latest stats.
+local perkButtons: { { Key: string, Button: TextButton } } = {}
+local function refreshPerkButtons()
+	local p = profileSnapshot()
+	for _, row in perkButtons do
+		local def = ProfileSchema.PerkDefs[row.Key]
+		local cost = ProfileSchema.perkCost(p, row.Key)
+		if cost then
+			local lvl = ProfileSchema.perkLevel(p, row.Key)
+			row.Button.Text = string.format("%s  Lv %d  ->  %d Gems", def.Label, lvl + 1, cost)
+			row.Button.BackgroundColor3 = if p.Gems >= cost then BUTTON else GREY
+		else
+			row.Button.Text = string.format("%s  MAX", def.Label)
+			row.Button.BackgroundColor3 = GREY
+		end
+	end
+end
+local function perkRow(parent: Instance, key: string, height: number): TextButton
+	local b = button(parent, ProfileSchema.PerkDefs[key].Label, UDim2.new(1, 0, 0, height))
+	b.Name = "Perk" .. key
+	table.insert(perkButtons, { Key = key, Button = b })
+	b.MouseButton1Click:Connect(function()
+		local ok, why = BuyPerk:InvokeServer(key)
+		ClientFX.sound(if ok then "Buy" else "Deny")
+		flashButton(b, ok == true)
+		if not ok and typeof(why) == "string" and why ~= "" then
+			flash(toast, why, 2.5)
+		end
+		task.delay(0.3, refreshPerkButtons) -- back to its real colour after the flash
+	end)
+	return b
+end
+
+-- Shop panel
+local shop = Instance.new("ScrollingFrame")
+shop.Name = "Shop"
+shop.Size = UDim2.new(0, 360, 0.9, 0)
+shop.Position = UDim2.new(1, -372, 0.05, 0)
+shop.BackgroundColor3 = PANEL
+shop.BackgroundTransparency = 0.1
+shop.BorderSizePixel = 0
+shop.ScrollBarThickness = 6
+shop.CanvasSize = UDim2.new()
+shop.AutomaticCanvasSize = Enum.AutomaticSize.Y
+shop.Visible = false
+shop.Parent = screen
+local shopCorner = Instance.new("UICorner")
+shopCorner.CornerRadius = UDim.new(0, 10)
+shopCorner.Parent = shop
+local shopPad = Instance.new("UIPadding")
+shopPad.PaddingLeft = UDim.new(0, 10)
+shopPad.PaddingRight = UDim.new(0, 10)
+shopPad.PaddingTop = UDim.new(0, 8)
+shopPad.Parent = shop
+local shopLayout = Instance.new("UIListLayout")
+shopLayout.Padding = UDim.new(0, 5)
+shopLayout.SortOrder = Enum.SortOrder.LayoutOrder
+shopLayout.Parent = shop
+
+local order = 0
+local function section(str: string)
+	order += 1
+	local l = text(shop, "Sec" .. str, UDim2.new(), UDim2.new(1, 0, 0, 22), str, 16)
+	l.TextXAlignment = Enum.TextXAlignment.Left
+	l.TextColor3 = Color3.fromRGB(255, 200, 60)
+	l.LayoutOrder = order
+end
+local function shopButton(str: string): TextButton
+	order += 1
+	local b = button(shop, str, UDim2.new(1, 0, 0, 34))
+	b.LayoutOrder = order
+	return b
+end
+
+section("UPGRADES (coins)")
+local upgradeButtons: { [string]: TextButton } = {}
+for _, name in Config.UpgradeOrder do
+	local b = shopButton(name)
+	upgradeButtons[name] = b
+	b.MouseButton1Click:Connect(function()
+		local ok = BuyUpgrade:InvokeServer(name) == true
+		ClientFX.sound(if ok then "Buy" else "Deny")
+		flashButton(b, ok)
+	end)
+end
+
+-- One row per crate: the Gem crate (the free path, paid in Gems earned in runs) and the Robux
+-- crates. Every row shows its odds and the pity rule in words (Roblox policy for paid random items).
+section("WEAPON CRATES")
+local crateRows: { { Cost: number, Button: TextButton } } = {} -- the Gem-priced rows
+local gemCratePending = false -- our own Gem crate request is in flight
+local function refreshCrateButtons()
+	for _, row in crateRows do
+		row.Button.BackgroundColor3 = if (stats.Gems or 0) >= row.Cost then BUTTON else GREY
+	end
+end
+for _, key in Weapons.CrateOrder do
+	local crate = Weapons.Crates[key]
+	local cost = crate.Gems
+	if cost then
+		local b = shopButton(string.format("%s  %d Gems", crate.Label, cost))
+		table.insert(crateRows, { Cost = cost, Button = b })
+		b.MouseButton1Click:Connect(function()
+			if gemCratePending then
+				return
+			end
+			gemCratePending = true
+			local ok, why = GemCrate:InvokeServer()
+			gemCratePending = false
+			ClientFX.sound(if ok then "Crate" else "Deny")
+			flashButton(b, ok == true)
+			if not ok and typeof(why) == "string" and why ~= "" then
+				flash(toast, why, 2.5)
+			end
+			task.delay(0.3, refreshCrateButtons) -- back to its real colour after the flash
+		end)
+	else
+		local product = crate.Product or ""
+		local b = shopButton(crate.Label .. " (Robux)")
+		b.MouseButton1Click:Connect(function()
+			Prompt:FireServer("product", product)
+		end)
+	end
+	order += 1
+	local odds = text(
+		shop,
+		"Odds" .. key,
+		UDim2.new(),
+		UDim2.new(1, 0, 0, 18),
+		"Odds: " .. Weapons.oddsText(key),
+		12
+	)
+	odds.LayoutOrder = order
+	odds.TextWrapped = true
+	odds.AutomaticSize = Enum.AutomaticSize.Y
+	odds.TextColor3 = Color3.fromRGB(200, 200, 200)
+end
+
+section("WEAPON EVOLUTION (Gems + shards, forever)")
+order += 1
+local evoInfo = text(shop, "EvoInfo", UDim2.new(), UDim2.new(1, 0, 0, 36), "", 12)
+evoInfo.LayoutOrder = order
+evoInfo.TextXAlignment = Enum.TextXAlignment.Left
+evoInfo.TextYAlignment = Enum.TextYAlignment.Top
+evoInfo.TextWrapped = true
+evoInfo.TextColor3 = Color3.fromRGB(200, 200, 200)
+local evoButtons: { [string]: TextButton } = {}
+for _, element in Evolutions.Order do
+	local b = shopButton(element)
+	evoButtons[element] = b
+	b.MouseButton1Click:Connect(function()
+		local equipped = (stats :: any).Equipped
+		local ok, why = Evolve:InvokeServer(equipped, element)
+		ClientFX.sound(if ok then "Buy" else "Deny")
+		flashButton(b, ok == true)
+		if not ok and typeof(why) == "string" and why ~= "" then
+			flash(toast, why, 2.5)
+		end
+	end)
+end
+
+section("PERKS (Gems, forever)")
+for _, key in Goals.PerkOrder do
+	order += 1
+	perkRow(shop, key, 34).LayoutOrder = order
+end
+
+section("COINS (Robux)")
+for _, key in { "Coins500", "Coins1500" } do
+	local b = shopButton(Monetization.DeveloperProducts[key].Name)
+	b.MouseButton1Click:Connect(function()
+		Prompt:FireServer("product", key)
+	end)
+end
+
+section("PASSES (Robux, forever)")
+local passButtons: { [string]: TextButton } = {}
+for _, key in { "DoubleCoins", "ExtraDash", "StarterPack" } do
+	local b = shopButton(Monetization.GamePasses[key].Name)
+	passButtons[key] = b
+	b.MouseButton1Click:Connect(function()
+		Prompt:FireServer("pass", key)
+	end)
+end
+
+local closeBtn = shopButton("Close  [B]")
+closeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
+
+-- Shop toggle button (always visible) + revive button (only when dead mid-wave)
+local shopToggle = button(screen, "SHOP [B]", UDim2.new(0, 110, 0, 34))
+shopToggle.Position = UDim2.new(1, -122, 0, 8)
+local reviveBtn = button(screen, "REVIVE NOW (Robux)", UDim2.new(0, 220, 0, 40))
+reviveBtn.Position = UDim2.new(0.5, -110, 0.6, 0)
+reviveBtn.BackgroundColor3 = Color3.fromRGB(200, 120, 30)
+reviveBtn.Visible = false
+reviveBtn.MouseButton1Click:Connect(function()
+	Prompt:FireServer("product", "Revive")
+end)
+
+local function setShop(open: boolean)
+	shop.Visible = open
+end
+shopToggle.MouseButton1Click:Connect(function()
+	ClientFX.sound("Buy", nil, 0.3)
+	setShop(not shop.Visible)
+end)
+closeBtn.MouseButton1Click:Connect(function()
+	setShop(false)
+end)
+UserInputService.InputBegan:Connect(function(input, gp)
+	if gp then
+		return
+	end
+	if input.KeyCode == Enum.KeyCode.B then
+		setShop(not shop.Visible)
+	end
+end)
+
+-- Run summary panel: what the run earned, the next forever-unlock, and perks to buy right here.
+-- Shown on GameOver, hidden when the Phase leaves "over".
+local summaryPanel = Instance.new("Frame")
+summaryPanel.Name = "RunSummary"
+summaryPanel.Size = UDim2.new(0, 460, 0, 380)
+summaryPanel.Position = UDim2.new(0.5, -230, 0.5, -190)
+summaryPanel.BackgroundColor3 = PANEL
+summaryPanel.BorderSizePixel = 0
+summaryPanel.Visible = false
+summaryPanel.Parent = screen
+local summaryCorner = Instance.new("UICorner")
+summaryCorner.CornerRadius = UDim.new(0, 12)
+summaryCorner.Parent = summaryPanel
+local summaryPad = Instance.new("UIPadding")
+summaryPad.PaddingLeft = UDim.new(0, 12)
+summaryPad.PaddingRight = UDim.new(0, 12)
+summaryPad.PaddingTop = UDim.new(0, 12)
+summaryPad.PaddingBottom = UDim.new(0, 12)
+summaryPad.Parent = summaryPanel
+local summaryLayout = Instance.new("UIListLayout")
+summaryLayout.Padding = UDim.new(0, 6)
+summaryLayout.SortOrder = Enum.SortOrder.LayoutOrder
+summaryLayout.Parent = summaryPanel
+
+local summaryOrder = 0
+local function summaryRow(name: string, height: number, textSize: number): TextLabel
+	summaryOrder += 1
+	local l = text(summaryPanel, name, UDim2.new(), UDim2.new(1, 0, 0, height), "", textSize)
+	l.LayoutOrder = summaryOrder
+	return l
+end
+local summaryTitle = summaryRow("Title", 36, 34)
+local summaryBest = summaryRow("NewBest", 20, 16)
+summaryBest.Text = "NEW BEST"
+summaryBest.TextColor3 = ClientFX.c3(Theme.NeonAmber)
+summaryBest.Visible = false
+local summaryKills = summaryRow("Kills", 18, 16)
+local summaryCoins = summaryRow("Coins", 18, 16)
+local summaryGems = summaryRow("Gems", 18, 16)
+local summaryShards = summaryRow("Shards", 18, 16)
+local goalLabel = summaryRow("Goal", 20, 16)
+goalLabel.TextColor3 = Color3.fromRGB(255, 200, 60)
+for _, l in { summaryKills, summaryCoins, summaryGems, summaryShards, goalLabel } do
+	l.TextXAlignment = Enum.TextXAlignment.Left
+end
+summaryOrder += 1
+local goalBar = Instance.new("Frame")
+goalBar.Name = "GoalBar"
+goalBar.Size = UDim2.new(1, 0, 0, 14)
+goalBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+goalBar.BorderSizePixel = 0
+goalBar.LayoutOrder = summaryOrder
+goalBar.Parent = summaryPanel
+local goalFill = Instance.new("Frame")
+goalFill.Name = "Fill"
+goalFill.Size = UDim2.fromScale(0, 1)
+goalFill.BackgroundColor3 = OK
+goalFill.BorderSizePixel = 0
+goalFill.Parent = goalBar
+local goalText = summaryRow("GoalText", 18, 14)
+goalText.TextXAlignment = Enum.TextXAlignment.Left
+for _, key in Goals.PerkOrder do
+	summaryOrder += 1
+	perkRow(summaryPanel, key, 28).LayoutOrder = summaryOrder
+end
+local summaryFooter = summaryRow("Footer", 20, 14)
+summaryFooter.TextColor3 = Color3.fromRGB(200, 200, 200)
+
+local summaryEarned = 0 -- Gems this run paid, kept for the row after the count-up
+local summaryCounting = 0 -- token: a newer summary cancels an older count-up
+
+local function commas(n: number): string
+	local s = tostring(math.floor(n)):reverse():gsub("(%d%d%d)", "%1,"):reverse()
+	return if s:sub(1, 1) == "," then s:sub(2) else s
+end
+
+local function refreshGoal(goal: any)
+	if not goal then
+		goalLabel.Text = "Everything unlocked. Chase the board."
+		goalBar.Visible = false
+		goalText.Visible = false
+		return
+	end
+	goalBar.Visible = true
+	goalText.Visible = true
+	goalLabel.Text = "Next: " .. tostring(goal.Label)
+	local have = goal.Have or 0
+	local need = math.max(goal.Need or 1, 1)
+	goalFill.Size = UDim2.fromScale(math.clamp(have / need, 0, 1), 1)
+	goalText.Text = if have >= need
+		then "Ready to buy"
+		else string.format("%d / %d Gems", have, need)
+end
+
+-- Daily reward strip: the server pays today's login streak slot when the profile loads and the
+-- popup rides on StatsChanged (PlayerData.claimDaily). It shows once per session and never over
+-- a fight: a popup that lands mid-wave waits for the next phase, and a wave that starts while
+-- the strip is still up hides it until the wave ends.
+local DAILY_LATER = Color3.fromRGB(40, 40, 50) -- a day not reached yet
+local dailyStrip = Instance.new("Frame")
+dailyStrip.Name = "DailyReward"
+dailyStrip.Size = UDim2.new(0, 540, 0, 130)
+dailyStrip.Position = UDim2.new(0.5, -270, 0.12, 0)
+dailyStrip.BackgroundColor3 = PANEL
+dailyStrip.BorderSizePixel = 0
+dailyStrip.Visible = false
+dailyStrip.ZIndex = 3 -- over the shop and the reward cards, under the banner and the toast
+dailyStrip.Parent = screen
+local dailyCorner = Instance.new("UICorner")
+dailyCorner.CornerRadius = UDim.new(0, 10)
+dailyCorner.Parent = dailyStrip
+-- an invisible button that fills the strip, so a click anywhere on it dismisses it
+local dailyBody = Instance.new("TextButton")
+dailyBody.Name = "Body"
+dailyBody.Size = UDim2.fromScale(1, 1)
+dailyBody.BackgroundTransparency = 1
+dailyBody.Text = ""
+dailyBody.AutoButtonColor = false
+dailyBody.Parent = dailyStrip
+local dailyTitle =
+	text(dailyBody, "Title", UDim2.new(0, 14, 0, 8), UDim2.new(1, -104, 0, 22), "", 18)
+dailyTitle.TextXAlignment = Enum.TextXAlignment.Left
+local dailyOk = button(dailyBody, "OK", UDim2.new(0, 64, 0, 26))
+dailyOk.Position = UDim2.new(1, -78, 0, 6)
+local dailyRow = Instance.new("Frame")
+dailyRow.Name = "Days"
+dailyRow.Size = UDim2.new(1, -28, 0, 54)
+dailyRow.Position = UDim2.new(0, 14, 0, 36)
+dailyRow.BackgroundTransparency = 1
+dailyRow.Parent = dailyBody
+local dailyLayout = Instance.new("UIListLayout")
+dailyLayout.FillDirection = Enum.FillDirection.Horizontal
+dailyLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+dailyLayout.SortOrder = Enum.SortOrder.LayoutOrder
+dailyLayout.Padding = UDim.new(0, 6)
+dailyLayout.Parent = dailyRow
+local dailyBoxes: { Frame } = {} -- one box per slot, in slot order
+for i, reward in Daily.Rewards do
+	local box = Instance.new("Frame")
+	box.Name = "Day" .. i
+	box.Size = UDim2.new(0, 62, 0, 54)
+	box.BackgroundColor3 = DAILY_LATER
+	box.BorderSizePixel = 0
+	box.LayoutOrder = i
+	box.Parent = dailyRow
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = box
+	text(box, "Day", UDim2.new(0, 0, 0, 4), UDim2.new(1, 0, 0, 16), "Day " .. i, 12)
+	local r = text(
+		box,
+		"Reward",
+		UDim2.new(0, 2, 0, 22),
+		UDim2.new(1, -4, 0, 28),
+		Daily.shortText(reward),
+		12
+	)
+	r.Font = Enum.Font.Gotham
+	r.TextWrapped = true
+	table.insert(dailyBoxes, box)
+end
+local dailyNext = text(dailyBody, "Next", UDim2.new(0, 14, 0, 98), UDim2.new(1, -28, 0, 20), "", 14)
+dailyNext.TextXAlignment = Enum.TextXAlignment.Left
+dailyNext.TextColor3 = Color3.fromRGB(200, 200, 200)
+
+local dailyShown = false -- once per session: the popup stays in every stats push
+local dailyPopup: Daily.Popup? = nil -- this session's popup, once StatsChanged brought it
+local dailyPending = false -- the strip waits for the current wave to end
+local dailySounded = false -- the appearance sound plays on the first showing only
+
+local function showDaily(popup: Daily.Popup)
+	dailyTitle.Text = string.format("DAY %d STREAK   %s", popup.Streak, popup.Text)
+	dailyNext.Text = "Come back tomorrow for " .. popup.NextText
+	for i, box in dailyBoxes do
+		box.BackgroundColor3 = if i < popup.Slot
+			then OK
+			else if i == popup.Slot then ClientFX.c3(Theme.NeonAmber) else DAILY_LATER
+	end
+	dailyStrip.Visible = true
+	if not dailySounded then
+		dailySounded = true
+		ClientFX.sound("Buy")
+	end
+end
+local function hideDaily()
+	dailyStrip.Visible = false
+end
+dailyOk.MouseButton1Click:Connect(hideDaily)
+dailyBody.MouseButton1Click:Connect(hideDaily)
+
+-- From StatsChanged: the snapshot's DailyPopup (nil until the server paid today's reward).
+local function onDailyPopup(popup: Daily.Popup?)
+	if not popup or dailyShown then
+		return
+	end
+	dailyShown = true
+	dailyPopup = popup
+	if stateValue("Phase") == "fighting" then
+		dailyPending = true
+	else
+		showDaily(popup)
+	end
+end
+
+-- Phase changes: hold the strip through a fight, bring it back once the wave is over.
+local function onDailyPhase(phase: string)
+	if phase == "fighting" then
+		if dailyStrip.Visible then
+			dailyPending = true
+			hideDaily()
+		end
+	elseif dailyPending and dailyPopup then
+		dailyPending = false
+		showDaily(dailyPopup)
+	end
+end
+
+-- Stats -> labels, upgrade buttons, hotbar
+stats = {
+	Coins = 0,
+	Kills = 0,
+	Levels = {},
+	Weapons = { "Starter" },
+	Equipped = "Starter",
+	Passes = {},
+	Gems = 0,
+	Shards = {},
+	Evolutions = {},
+	Perks = {},
+	Offer = {},
+}
+
+local function rebuildHotbar()
+	for _, c in hotbar:GetChildren() do
+		if c:IsA("TextButton") then
+			c:Destroy()
+		end
+	end
+	local ids = {}
+	for _, id in stats.Weapons do
+		if Weapons.Defs[id] then
+			table.insert(ids, id)
+		end
+	end
+	table.sort(ids, function(a, b)
+		return Weapons.power(Weapons.Defs[a]) < Weapons.power(Weapons.Defs[b])
+	end)
+	for i, id in ids do
+		local def = Weapons.Defs[id]
+		local b = button(
+			hotbar,
+			string.format("%d  %s\n%s", i, def.Name, def.Kind),
+			UDim2.new(0, 100, 1, 0)
+		)
+		b.TextSize = 11
+		b.TextWrapped = true
+		local c = Weapons.RarityColor[def.Rarity]
+		b.BackgroundColor3 = if id == stats.Equipped
+			then Color3.fromRGB(c[1], c[2], c[3])
+			else Color3.fromRGB(40, 40, 50)
+		b.MouseButton1Click:Connect(function()
+			EquipWeapon:FireServer(id)
+		end)
+	end
+	-- number keys
+	stats._hotIds = ids
+end
+
+UserInputService.InputBegan:Connect(function(input, gp)
+	if gp or not stats._hotIds or cardPanel.Visible then
+		return -- while reward cards are up, the number keys pick a card instead
+	end
+	local n = input.KeyCode.Value - Enum.KeyCode.One.Value + 1
+	if n >= 1 and n <= 9 and stats._hotIds[n] then
+		EquipWeapon:FireServer(stats._hotIds[n])
+	end
+end)
+
+local function refreshStats()
+	local dash = (player:GetAttribute("DashReady") :: number?) or 0
+	local shards = stats.Shards or {}
+	statsLabel.Text = string.format(
+		"Coins %d    Kills %d    Dash %d\nGems %d    Shards  Nature %d  Tech %d  Lightning %d  Dark %d",
+		stats.Coins,
+		stats.Kills,
+		dash,
+		stats.Gems or 0,
+		shards.Nature or 0,
+		shards.Tech or 0,
+		shards.Lightning or 0,
+		shards.Dark or 0
+	)
+	-- Evolution section follows the equipped weapon
+	local equippedDef = Weapons.Defs[stats.Equipped]
+	local evo = (stats.Evolutions or {})[stats.Equipped]
+	evoInfo.Text = string.format(
+		"%s: %s\nOne path per weapon. Shards drop from bosses (Dark, Nature, Lightning) and every 5th wave (Tech).",
+		if equippedDef then equippedDef.Name else "?",
+		if evo then string.format("%s tier %d", evo.Element, evo.Tier) else "no path yet"
+	)
+	for element, b in evoButtons do
+		local el = Evolutions.Elements[element]
+		local ok, why, tier = Evolutions.canBuy(evo, element, stats.Gems or 0, shards[element] or 0)
+		local c = el.Color
+		if tier then
+			b.Text = string.format(
+				"%s  T%d  %d Gems + %d shard%s   %s",
+				element,
+				tier.Tier,
+				tier.GemsCost,
+				tier.ShardsCost,
+				if tier.ShardsCost == 1 then "" else "s",
+				tier.Label
+			)
+			b.BackgroundColor3 = if ok
+				then Color3.fromRGB(c[1], c[2], c[3]):Lerp(Color3.new(), 0.45)
+				else Color3.fromRGB(60, 60, 70)
+		else
+			b.Text = string.format("%s  %s", element, why)
+			b.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+		end
+		b.TextSize = 12
+	end
+	for name, b in upgradeButtons do
+		local level = (stats.Levels and stats.Levels[name]) or 0
+		local cost = Upgrades.costAt(name, level)
+		local u = Upgrades.def(name)
+		local label = if u then u.Label else name
+		if cost then
+			b.Text = string.format("%s  Lv %d  ->  %d coins", label, level, cost)
+			b.BackgroundColor3 = if stats.Coins >= cost then BUTTON else Color3.fromRGB(60, 60, 70)
+		else
+			b.Text = string.format("%s  MAX", label)
+			b.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+		end
+	end
+	for key, b in passButtons do
+		if stats.Passes and stats.Passes[key] then
+			b.Text = Monetization.GamePasses[key].Name .. "  (owned)"
+			b.BackgroundColor3 = OK
+		end
+	end
+	refreshPerkButtons()
+	refreshCrateButtons()
+	boostsLabel.Text = WaveRewards.stacksText((stats.Boosts and stats.Boosts.Stacks) or {})
+	refreshCards()
+	if summaryPanel.Visible then
+		-- a perk bought from the panel moves the goal on and updates the Gems total
+		refreshGoal(Goals.next(profileSnapshot()))
+		if summaryCounting == 0 then
+			summaryGems.Text = string.format("Gems +%d  (now %d)", summaryEarned, stats.Gems or 0)
+		end
+	end
+	rebuildHotbar()
+end
+
+StatsChanged.OnClientEvent:Connect(function(s)
+	stats = s
+	refreshStats()
+	onDailyPopup(s.DailyPopup)
+end)
+player:GetAttributeChangedSignal("DashReady"):Connect(refreshStats)
+refreshStats()
+
+-- State -> top labels
+onState("Wave", function(w)
+	waveLabel.Text = if w > 0 then string.format("WAVE %d", w) else "SWARM BREAK"
+end)
+local function refreshPhase()
+	local phase = stateValue("Phase")
+	local t = stateValue("TimeLeft")
+	local alive = stateValue("Alive")
+	if phase == "idle" then
+		phaseLabel.Text = "Waiting for players"
+	elseif phase == "starting" then
+		phaseLabel.Text = string.format("Get ready  %d", t)
+	elseif phase == "fighting" then
+		phaseLabel.Text = string.format("Enemies left: %d", alive)
+	elseif phase == "intermission" then
+		phaseLabel.Text = string.format("Shop open  %ds", t)
+	elseif phase == "over" then
+		phaseLabel.Text = string.format("Restarting in %d", t)
+		summaryFooter.Text = string.format("Play again in %d", t)
+	end
+end
+onState("Phase", function(phase)
+	refreshPhase()
+	refreshCards() -- the cards only show during the intermission
+	onDailyPhase(phase) -- the daily reward strip never covers a fight
+	if phase ~= "over" then
+		summaryPanel.Visible = false
+	end
+	if phase == "intermission" then
+		setShop(true)
+		flash(banner, "WAVE CLEARED", 2)
+	elseif phase == "starting" then
+		setShop(false)
+		flash(banner, "WAVE " .. tostring(stateValue("Wave")), 2)
+	end
+end)
+onState("TimeLeft", refreshPhase)
+onState("Alive", refreshPhase)
+onState("BossName", function(name)
+	bossFrame.Visible = name ~= ""
+	bossLabel.Text = name
+end)
+local function refreshBoss()
+	local max = stateValue("BossMaxHealth")
+	local h = stateValue("BossHealth")
+	bossFill.Size = UDim2.fromScale(if max > 0 then math.clamp(h / max, 0, 1) else 0, 1)
+end
+onState("BossHealth", refreshBoss)
+onState("BossMaxHealth", refreshBoss)
+
+-- HP bar + revive visibility
+local lastHealth = 0
+RunService.Heartbeat:Connect(function()
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		if hum.Health < lastHealth - 0.5 then
+			ClientFX.shake(1.5)
+			ClientFX.sound("Hurt", nil, 0.3)
+		end
+		lastHealth = hum.Health
+		local frac = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
+		hpFill.Size = UDim2.fromScale(frac, 1)
+		hpFill.BackgroundColor3 = if frac > 0.5
+			then OK
+			else if frac > 0.25 then Color3.fromRGB(220, 160, 40) else BAD
+		hpText.Text = string.format("%d / %d", math.floor(hum.Health), math.floor(hum.MaxHealth))
+		reviveBtn.Visible = hum.Health <= 0 and stateValue("Phase") == "fighting"
+		local low = frac < 0.35 and hum.Health > 0
+		vignette.Visible = low
+		if low then
+			vignette.BackgroundTransparency = 1
+			for _, f in vignette:GetChildren() do
+				if f:IsA("Frame") then
+					f.BackgroundTransparency = 0.35 + 0.25 * math.sin(os.clock() * 5)
+				end
+			end
+		end
+	else
+		hpText.Text = ""
+		reviveBtn.Visible = stateValue("Phase") == "fighting"
+	end
+end)
+
+-- End of run: the server sends each player their own summary (see PlayerData.endRun).
+GameOver.OnClientEvent:Connect(function(summary: any)
+	setShop(false)
+	cardPanel.Visible = false
+	local wave = summary.Wave or 0
+	summaryTitle.Text = if summary.Won
+		then string.format("SURVIVED TO WAVE %d", wave)
+		else string.format("FELL ON WAVE %d", wave)
+	summaryBest.Visible = summary.NewBest == true
+	summaryKills.Text = "Kills " .. commas(summary.Kills or 0)
+	summaryCoins.Text = "Coins " .. commas(summary.Coins or 0)
+	summaryShards.Text = string.format("Shards +%d", summary.ShardsEarned or 0)
+	refreshGoal(summary.Goal)
+	refreshPerkButtons()
+	summaryPanel.Visible = true
+	-- Gems count up from 0 to what the run paid over one second, a coin tick per step
+	summaryEarned = summary.GemsEarned or 0
+	local total = summary.Gems or 0
+	summaryCounting += 1
+	local token = summaryCounting
+	task.spawn(function()
+		for step = 1, 10 do
+			if token ~= summaryCounting or not summaryPanel.Visible then
+				return
+			end
+			local shown = math.floor(summaryEarned * step / 10 + 0.5)
+			summaryGems.Text = string.format("Gems +%d  (now %d)", shown, total)
+			ClientFX.sound("Coin")
+			task.wait(0.1)
+		end
+		if token == summaryCounting then
+			summaryCounting = 0
+		end
+	end)
+end)
+
+Toast.OnClientEvent:Connect(function(msg: string, seconds: number)
+	flash(toast, msg, seconds or 3)
+end)
+
+CrateResult.OnClientEvent:Connect(
+	function(id: string, rarity: string, isNew: boolean, gemsBack: number, crateKey: string)
+		local def = Weapons.Defs[id]
+		local c = Weapons.RarityColor[rarity]
+		banner.TextColor3 = Color3.fromRGB(c[1], c[2], c[3])
+		local msg = if isNew
+			then string.format("%s: %s!", rarity, def.Name)
+			else string.format("Duplicate %s: +%d Gems", def.Name, gemsBack)
+		flash(banner, msg, 4)
+		-- crates we did not click open here (Robux receipts, the free first-boss crate) sound
+		-- now; a Gem crate we asked for sounds once, when its request comes back
+		if not (crateKey == "Gem" and gemCratePending) then
+			ClientFX.sound("Crate")
+		end
+		task.delay(4.5, function()
+			banner.TextColor3 = WHITE
+		end)
+	end
+)

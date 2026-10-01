@@ -1,0 +1,30 @@
+{
+ "className": "Part",
+ "properties": {
+  "Name": "LeaderboardWall",
+  "Anchored": true,
+  "Size": [
+   24,
+   14,
+   1
+  ],
+  "Color": [
+   0.12,
+   0.12,
+   0.16
+  ],
+  "Material": "SmoothPlastic",
+  "CFrame": {
+   "position": [
+    0,
+    9,
+    78.4
+   ],
+   "orientation": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

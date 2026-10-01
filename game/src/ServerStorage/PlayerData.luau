@@ -1,0 +1,585 @@
+--!strict
+-- Per-player run data (coins, kills, run upgrades) on top of the persistent Profile
+-- (Gems, shards, owned weapons, evolutions, perks). Arena place only.
+local Players = game:GetService("Players")
+local DataStoreService = game:GetService("DataStoreService")
+local MarketplaceService = game:GetService("MarketplaceService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Config = require(ReplicatedStorage.Shared.Config)
+local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
+local Weapons = require(ReplicatedStorage.Shared.Weapons)
+local Monetization = require(ReplicatedStorage.Shared.Monetization)
+local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
+local ProfileSchema = require(ReplicatedStorage.Shared.ProfileSchema)
+local Goals = require(ReplicatedStorage.Shared.Goals)
+local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
+local Daily = require(ReplicatedStorage.Shared.Daily)
+local Profile = require(script.Parent.Profile)
+local WeaponModels = require(script.Parent.WeaponModels)
+
+local StatsChanged = ReplicatedStorage:WaitForChild("Remotes").StatsChanged :: RemoteEvent
+local CrateResult = ReplicatedStorage:WaitForChild("Remotes").CrateResult :: RemoteEvent
+local topStore = DataStoreService:GetOrderedDataStore("SwarmBreak_top_v1")
+local rng = Random.new()
+
+export type Run = {
+	Coins: number,
+	Kills: number,
+	ShardsEarned: number, -- shards picked up this run (for the run summary)
+	Levels: { [string]: number },
+	Passes: { [string]: boolean },
+	Boosts: WaveRewards.Boosts, -- wave reward cards picked this run
+	Offer: { string }, -- card ids on offer right now ({} when there is nothing to pick)
+	DailyPopup: Daily.Popup?, -- today's daily reward, once paid; kept for the session so no push loses it
+}
+
+-- What the run summary panel shows at the end of a run (sent per player over GameOver).
+export type RunSummary = {
+	Won: boolean,
+	Wave: number,
+	Kills: number,
+	Coins: number,
+	GemsEarned: number,
+	Gems: number, -- Gems after this run's payout
+	ShardsEarned: number,
+	BestWave: number,
+	NewBest: boolean,
+	Goal: Goals.Goal?,
+}
+
+local runs: { [Player]: Run } = {}
+local PlayerData = {}
+PlayerData.OnEquipChanged = nil :: ((Player) -> ())?
+
+local function push(plr: Player)
+	local r = runs[plr]
+	local p = Profile.get(plr)
+	if r then
+		StatsChanged:FireClient(plr, {
+			Coins = r.Coins,
+			Kills = r.Kills,
+			Levels = r.Levels,
+			Weapons = p.Weapons,
+			Equipped = p.Equipped,
+			Passes = r.Passes,
+			Boosts = r.Boosts,
+			Offer = r.Offer,
+			Gems = p.Gems,
+			Shards = p.Shards,
+			Evolutions = p.Evolutions,
+			Perks = p.Perks,
+			CratesSinceLegendary = p.CratesSinceLegendary,
+			Streak = p.Streak,
+			DailyPopup = r.DailyPopup,
+		})
+	end
+end
+PlayerData.push = push
+
+function PlayerData.get(plr: Player): Run
+	local r = runs[plr]
+	if not r then
+		local levels = {}
+		for _, name in Config.UpgradeOrder do
+			levels[name] = 0
+		end
+		r = {
+			Coins = 0,
+			Kills = 0,
+			ShardsEarned = 0,
+			Levels = levels,
+			Passes = {},
+			Boosts = WaveRewards.newBoosts(),
+			Offer = {},
+			DailyPopup = nil,
+		}
+		runs[plr] = r
+	end
+	return r
+end
+
+function PlayerData.profile(plr: Player): ProfileSchema.Profile
+	return Profile.get(plr)
+end
+
+-- True once the saved profile is in (before that, Profile.get hands out a blank default).
+function PlayerData.isLoaded(plr: Player): boolean
+	return Profile.isLoaded(plr)
+end
+
+-- For callers that change the profile directly (flags), so the next autosave writes it.
+function PlayerData.markDirty(plr: Player)
+	Profile.markDirty(plr)
+end
+
+-- ---------- coins / kills ----------
+function PlayerData.addCoins(plr: Player, n: number)
+	local r = PlayerData.get(plr)
+	local bonus = 1
+		+ ProfileSchema.perkValue(Profile.get(plr), "CoinBonus") / 100
+		+ r.Boosts.CoinMult
+	r.Coins += math.floor(n * bonus + 0.5)
+	push(plr)
+end
+
+function PlayerData.addKill(plr: Player)
+	local r = PlayerData.get(plr)
+	r.Kills += 1
+	push(plr)
+end
+
+function PlayerData.hasPass(plr: Player, key: string): boolean
+	return PlayerData.get(plr).Passes[key] == true
+end
+
+-- ---------- persistent rewards ----------
+function PlayerData.addGems(plr: Player, n: number)
+	local p = Profile.get(plr)
+	p.Gems += n
+	Profile.markDirty(plr)
+	push(plr)
+end
+
+function PlayerData.addShard(plr: Player, element: string, n: number)
+	local p = Profile.get(plr)
+	if p.Shards[element] == nil then
+		return
+	end
+	p.Shards[element] += n
+	PlayerData.get(plr).ShardsEarned += n
+	Profile.markDirty(plr)
+	push(plr)
+end
+
+-- Spend Gems (forever). False and nothing spent when the player has too few.
+function PlayerData.spendGems(plr: Player, n: number): boolean
+	local p = Profile.get(plr)
+	if p.Gems < n then
+		return false
+	end
+	p.Gems -= n
+	Profile.markDirty(plr)
+	push(plr)
+	return true
+end
+
+-- ---------- weapons ----------
+-- The equipped weapon with this run's reward boosts folded in (range, pellets/orbs, swing).
+function PlayerData.equippedWeapon(plr: Player): Weapons.WeaponDef
+	local def = Weapons.Defs[Profile.get(plr).Equipped] or Weapons.Defs.Starter
+	return WaveRewards.weaponWith(PlayerData.get(plr).Boosts, def)
+end
+
+function PlayerData.equippedEvo(plr: Player): Evolutions.WeaponEvo?
+	local p = Profile.get(plr)
+	return p.Evolutions[p.Equipped]
+end
+
+function PlayerData.ownsWeapon(plr: Player, id: string): boolean
+	return table.find(Profile.get(plr).Weapons, id) ~= nil
+end
+
+function PlayerData.grantWeapon(plr: Player, id: string): boolean
+	if not Weapons.Defs[id] then
+		return false
+	end
+	local p = Profile.get(plr)
+	if table.find(p.Weapons, id) then
+		return false -- duplicate
+	end
+	table.insert(p.Weapons, id)
+	Profile.markDirty(plr)
+	push(plr)
+	return true
+end
+
+-- ---------- crates ----------
+-- Open one crate (Weapons.Crates key) that is already paid for: roll a rarity (Robux crates
+-- also move the pity counter), pick a weapon of that rarity, grant it, and pay Gems back for
+-- a duplicate. The client hears about it over CrateResult. Shop and WaveManager both call this.
+function PlayerData.openCrate(plr: Player, crateKey: string)
+	local crate = Weapons.Crates[crateKey]
+	if not crate then
+		return
+	end
+	local p = Profile.get(plr)
+	local rarity = Weapons.rollRarity(rng:NextNumber(), crate.Odds)
+	if crate.Pity then
+		rarity = Weapons.applyPity(rarity, p.CratesSinceLegendary)
+		p.CratesSinceLegendary = Weapons.nextPityCount(rarity, p.CratesSinceLegendary)
+		Profile.markDirty(plr)
+	end
+	local ids = Weapons.idsOfRarity(rarity)
+	local id = ids[rng:NextInteger(1, #ids)]
+	local isNew = PlayerData.grantWeapon(plr, id)
+	local gemsBack = 0
+	if not isNew then
+		gemsBack = Weapons.DuplicateGems[rarity]
+		PlayerData.addGems(plr, gemsBack)
+	end
+	CrateResult:FireClient(plr, id, rarity, isNew, gemsBack, crateKey)
+end
+
+local function attachWeapon(plr: Player)
+	local p = Profile.get(plr)
+	if plr.Character then
+		WeaponModels.attach(plr.Character, p.Equipped, p.Evolutions[p.Equipped])
+	end
+end
+
+function PlayerData.equip(plr: Player, id: string): boolean
+	if not PlayerData.ownsWeapon(plr, id) then
+		return false
+	end
+	local p = Profile.get(plr)
+	p.Equipped = id
+	Profile.markDirty(plr)
+	attachWeapon(plr)
+	PlayerData.applyStats(plr)
+	if PlayerData.OnEquipChanged then
+		PlayerData.OnEquipChanged(plr)
+	end
+	push(plr)
+	return true
+end
+
+-- Evolve a weapon one tier down an element. Returns ok, reason.
+function PlayerData.evolve(plr: Player, id: string, element: string): (boolean, string)
+	if not PlayerData.ownsWeapon(plr, id) then
+		return false, "You don't own that weapon."
+	end
+	local p = Profile.get(plr)
+	local current = p.Evolutions[id]
+	local ok, why, tier = Evolutions.canBuy(current, element, p.Gems, p.Shards[element] or 0)
+	if not ok or not tier then
+		return false, why
+	end
+	p.Gems -= tier.GemsCost
+	p.Shards[element] -= tier.ShardsCost
+	p.Evolutions[id] = { Element = element, Tier = tier.Tier }
+	Profile.markDirty(plr)
+	if p.Equipped == id then
+		attachWeapon(plr)
+		PlayerData.applyStats(plr)
+		if PlayerData.OnEquipChanged then
+			PlayerData.OnEquipChanged(plr)
+		end
+	end
+	push(plr)
+	return true, ""
+end
+
+-- ---------- multipliers used by combat ----------
+function PlayerData.damageMultiplier(plr: Player): number
+	local r = PlayerData.get(plr)
+	local evoDmg = Evolutions.multipliers(PlayerData.equippedEvo(plr))
+	return Upgrades.valueAt("Damage", r.Levels.Damage) * evoDmg * (1 + r.Boosts.DamageMult)
+end
+
+function PlayerData.fireRateMultiplier(plr: Player): number
+	local r = PlayerData.get(plr)
+	local _, evoRate = Evolutions.multipliers(PlayerData.equippedEvo(plr))
+	return Upgrades.valueAt("FireRate", r.Levels.FireRate) * evoRate * (1 + r.Boosts.FireRateMult)
+end
+
+function PlayerData.activeEffects(plr: Player): { string }
+	return Evolutions.effects(PlayerData.equippedEvo(plr))
+end
+
+function PlayerData.hasEffect(plr: Player, key: string): boolean
+	return table.find(PlayerData.activeEffects(plr), key) ~= nil
+end
+
+-- ---------- character stats ----------
+-- Max HP from the run's upgrades, the forever perk and this run's reward cards.
+local function maxHealthFor(plr: Player): number
+	local r = PlayerData.get(plr)
+	return Upgrades.valueAt("MaxHealth", r.Levels.MaxHealth)
+		+ ProfileSchema.perkValue(Profile.get(plr), "MaxHealth")
+		+ r.Boosts.MaxHealth
+end
+
+local function applyStats(plr: Player)
+	local r = PlayerData.get(plr)
+	local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+	if hum then
+		local speed = Upgrades.valueAt("Speed", r.Levels.Speed) + r.Boosts.Speed
+		if PlayerData.hasEffect(plr, "Haste") then
+			speed *= 1 + Evolutions.Effects.Haste.Value
+		end
+		hum.WalkSpeed = speed
+		local maxHp = maxHealthFor(plr)
+		local ratio = hum.Health / math.max(hum.MaxHealth, 1)
+		hum.MaxHealth = maxHp
+		hum.Health = math.max(hum.Health, maxHp * ratio)
+	end
+	local charges = if r.Passes.ExtraDash then Config.Dash.ExtraDashCharges else Config.Dash.Charges
+	plr:SetAttribute("DashCharges", charges)
+	-- Movement.client scales Config.Dash.Cooldown by this (the Fast Dash card)
+	plr:SetAttribute("DashCooldownMult", 1 - r.Boosts.DashCooldown)
+end
+PlayerData.applyStats = applyStats
+
+function PlayerData.buyUpgrade(plr: Player, name: string): boolean
+	local r = PlayerData.get(plr)
+	local level = r.Levels[name]
+	if level == nil then
+		return false
+	end
+	local ok, newCoins = Upgrades.tryBuy(name, level, r.Coins)
+	if not ok then
+		return false
+	end
+	r.Coins = newCoins
+	r.Levels[name] = level + 1
+	if name == "MaxHealth" then
+		local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+		if hum then
+			hum.MaxHealth = maxHealthFor(plr)
+			hum.Health = hum.MaxHealth
+		end
+	else
+		applyStats(plr)
+	end
+	push(plr)
+	return true
+end
+
+-- Buy the next level of a lobby perk with Gems (forever). Returns ok, reason.
+function PlayerData.buyPerk(plr: Player, key: string): (boolean, string)
+	local p = Profile.get(plr)
+	local ok, why = ProfileSchema.canBuyPerk(p, key)
+	if not ok then
+		return false, why
+	end
+	local cost = ProfileSchema.perkCost(p, key) or 0
+	p.Gems -= cost
+	p.Perks[key] = ProfileSchema.perkLevel(p, key) + 1
+	Profile.markDirty(plr)
+	applyStats(plr) -- a Max HP perk raises the character's max HP right away
+	push(plr)
+	return true, ""
+end
+
+-- ---------- wave rewards (pick 1 of 3 on a wave clear) ----------
+-- Roll this player's three cards for the intermission after `wave` and send them down.
+function PlayerData.offerRewards(plr: Player, wave: number)
+	local r = PlayerData.get(plr)
+	r.Offer = WaveRewards.offer(
+		wave,
+		r.Boosts.Stacks,
+		PlayerData.equippedWeapon(plr).Kind,
+		{ rng:NextNumber(), rng:NextNumber(), rng:NextNumber() }
+	)
+	push(plr)
+end
+
+-- Take one of the offered cards. Returns ok, reason.
+function PlayerData.pickReward(plr: Player, id: string): (boolean, string)
+	local r = PlayerData.get(plr)
+	if #r.Offer == 0 then
+		return false, "No reward offered."
+	end
+	if not table.find(r.Offer, id) then
+		return false, "Not in your offer."
+	end
+	local _, healNow = WaveRewards.apply(r.Boosts, id)
+	r.Offer = {}
+	applyStats(plr)
+	if healNow then
+		local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+		if hum then
+			hum.Health = hum.MaxHealth
+		end
+	end
+	if WaveRewards.Defs[id].Kind == "Weapon" and PlayerData.OnEquipChanged then
+		PlayerData.OnEquipChanged(plr) -- rebuilds the orbit for Extra Orb
+	end
+	push(plr)
+	return true, ""
+end
+
+-- Intermission over: whoever has not picked takes the first card, so nobody misses a reward.
+function PlayerData.autoPick(plr: Player)
+	local r = PlayerData.get(plr)
+	if #r.Offer > 0 then
+		PlayerData.pickReward(plr, r.Offer[1])
+	end
+end
+
+-- New run: coins, levels and reward boosts reset; profile persists.
+function PlayerData.resetRun(plr: Player)
+	local r = PlayerData.get(plr)
+	local p = Profile.get(plr)
+	r.Coins = ProfileSchema.perkValue(p, "StartCoins") + (if r.Passes.StarterPack then 300 else 0)
+	r.Kills = 0
+	r.ShardsEarned = 0
+	for name in r.Levels do
+		r.Levels[name] = 0
+	end
+	r.Boosts = WaveRewards.newBoosts()
+	r.Offer = {}
+	applyStats(plr) -- a survivor keeps their character, so last run's stats go now
+	push(plr)
+end
+
+-- End of run: gems, best wave, leaderboard. Returns the summary the results panel shows.
+function PlayerData.endRun(plr: Player, wave: number, won: boolean): RunSummary
+	local r = PlayerData.get(plr)
+	local p = Profile.get(plr)
+	local previousBest = p.BestWave
+	-- gemsForRun before Runs counts this one; the Lucky card adds its share on top
+	local gemsEarned =
+		math.floor(Evolutions.gemsForRun(wave, won, p.Runs) * (1 + r.Boosts.GemMult) + 0.5)
+	p.Runs += 1
+	p.BestWave = math.max(p.BestWave, wave)
+	p.Gems += gemsEarned
+	Profile.markDirty(plr)
+	local ls = plr:FindFirstChild("leaderstats")
+	local best = ls and ls:FindFirstChild("Best Wave") :: IntValue?
+	if best and wave > best.Value then
+		best.Value = wave
+	end
+	task.spawn(function()
+		pcall(function()
+			topStore:UpdateAsync(tostring(plr.UserId), function(old)
+				return math.max(old or 0, wave)
+			end)
+		end)
+	end)
+	push(plr)
+	return {
+		Won = won,
+		Wave = wave,
+		Kills = r.Kills,
+		Coins = r.Coins,
+		GemsEarned = gemsEarned,
+		Gems = p.Gems,
+		ShardsEarned = r.ShardsEarned,
+		BestWave = p.BestWave,
+		NewBest = wave > previousBest,
+		Goal = Goals.next(p),
+	}
+end
+
+function PlayerData.topWaves(n: number): { { Name: string, Wave: number } }
+	local out = {}
+	local ok, pages = pcall(function()
+		return topStore:GetSortedAsync(false, n)
+	end)
+	if not ok then
+		return out
+	end
+	for _, entry in pages:GetCurrentPage() do
+		local userId = tonumber(entry.key)
+		local name = "?"
+		if userId then
+			local okName, n2 = pcall(Players.GetNameFromUserIdAsync, Players, userId)
+			if okName then
+				name = n2
+			end
+		end
+		table.insert(out, { Name = name, Wave = entry.value })
+	end
+	return out
+end
+
+-- ---------- passes ----------
+local function loadPasses(plr: Player)
+	local r = PlayerData.get(plr)
+	for key, id in Monetization.passIds() do
+		if id ~= 0 then
+			local ok, owns =
+				pcall(MarketplaceService.UserOwnsGamePassAsync, MarketplaceService, plr.UserId, id)
+			r.Passes[key] = ok and owns == true
+		end
+	end
+	if r.Passes.StarterPack then
+		PlayerData.grantWeapon(plr, "Scatter")
+	end
+end
+
+function PlayerData.onPassPurchased(plr: Player, key: string)
+	local r = PlayerData.get(plr)
+	r.Passes[key] = true
+	if key == "StarterPack" then
+		PlayerData.grantWeapon(plr, "Scatter")
+		PlayerData.addCoins(plr, 300)
+	end
+	applyStats(plr)
+	push(plr)
+end
+
+-- ---------- daily reward ----------
+-- Pay today's login streak slot (Shared/Daily) the moment the profile is in, before the first
+-- push, so the Gems already show in the HUD. The popup rides on StatsChanged for the whole
+-- session (no remote of its own), so the client cannot miss it by listening late; it shows once.
+local function claimDaily(plr: Player)
+	local p = Profile.get(plr)
+	local d = Daily.evaluate(p.LastClaimDay, p.Streak, os.time())
+	if not d.Claimable then
+		return
+	end
+	local evo = p.Evolutions[p.Equipped]
+	local element: string? = if evo then evo.Element else nil
+	local reward = Daily.reward(d.Slot, element)
+	p.Gems += reward.Gems
+	local shard = reward.Shard
+	if shard and p.Shards[shard] ~= nil then
+		p.Shards[shard] += 1
+	end
+	p.LastClaimDay = d.Today
+	p.Streak = d.NewStreak
+	Profile.markDirty(plr)
+	PlayerData.get(plr).DailyPopup = {
+		Slot = d.Slot,
+		Streak = d.NewStreak,
+		Text = Daily.rewardText(reward),
+		NextText = Daily.rewardText(Daily.reward(Daily.nextSlot(d.Slot), element)),
+	}
+	if reward.Crate then
+		PlayerData.openCrate(plr, reward.Crate) -- the free crate on slot 7, rolled like a bought one
+	end
+end
+
+local function setupLeaderstats(plr: Player)
+	local ls = Instance.new("Folder")
+	ls.Name = "leaderstats"
+	local best = Instance.new("IntValue")
+	best.Name = "Best Wave"
+	best.Value = Profile.get(plr).BestWave
+	best.Parent = ls
+	ls.Parent = plr
+end
+
+Profile.OnLoaded = function(plr: Player)
+	setupLeaderstats(plr)
+	loadPasses(plr)
+	claimDaily(plr)
+	applyStats(plr)
+	attachWeapon(plr)
+	push(plr)
+end
+
+local function onPlayerAdded(plr: Player)
+	PlayerData.get(plr)
+	plr.CharacterAdded:Connect(function(char)
+		local hum = char:WaitForChild("Humanoid") :: Humanoid
+		hum.MaxHealth = maxHealthFor(plr)
+		hum.Health = hum.MaxHealth
+		applyStats(plr)
+		attachWeapon(plr)
+		push(plr)
+	end)
+end
+Players.PlayerAdded:Connect(onPlayerAdded)
+for _, plr in Players:GetPlayers() do
+	task.spawn(onPlayerAdded, plr)
+end
+
+Players.PlayerRemoving:Connect(function(plr)
+	runs[plr] = nil
+end)
+
+return PlayerData

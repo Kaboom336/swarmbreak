@@ -1,0 +1,216 @@
+<title>Swarm Break Models</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+  :root {
+    --bg: #0c0d14; --panel: #151726; --panel2: #1c1f33; --fg: #eceaf6; --muted: #9a9bb5; --line: #2a2d47;
+    --accent: #b04cff; --teal: #2cdcc8; --common: #bebec8; --rare: #468cff; --epic: #aa50ff; --legendary: #ffaa1e;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) { --bg: #0c0d14; --panel: #151726; --panel2: #1c1f33; --fg: #eceaf6; --muted: #9a9bb5; --line: #2a2d47; color-scheme: dark; }
+  }
+  :root[data-theme="light"] { --bg: #0c0d14; --panel: #151726; --panel2: #1c1f33; --fg: #eceaf6; --muted: #9a9bb5; --line: #2a2d47; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: "IBM Plex Sans", system-ui, sans-serif; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding-block: 16px; padding-inline: 16px; }
+  h1 { font-family: Rajdhani, system-ui, sans-serif; font-size: 34px; letter-spacing: 0.02em; margin: 0 0 4px; text-wrap: balance; }
+  h2 { font-family: Rajdhani, system-ui, sans-serif; font-size: 22px; margin: 22px 0 8px; }
+  .sub { color: var(--muted); margin: 0 0 14px; max-width: 65ch; }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tab { background: var(--panel); border: 1px solid var(--line); color: var(--fg); padding: 8px 14px; border-radius: 8px; cursor: pointer; font: inherit; font-weight: 600; }
+  .tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .layout { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 860px) { .layout { grid-template-columns: 300px minmax(0, 1fr); } }
+  .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; align-content: start; max-height: 70vh; overflow-y: auto; min-width: 0; }
+  @media (min-width: 860px) { .list { grid-template-columns: 1fr 1fr; } }
+  .item { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px; cursor: pointer; text-align: left; color: var(--fg); font: inherit; min-width: 0; }
+  .item[aria-selected="true"] { border-color: var(--teal); box-shadow: 0 0 0 1px var(--teal) inset; }
+  .item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: #000; display: block; }
+  .item .n { font-weight: 600; font-size: 13px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .r { font-size: 11px; color: var(--muted); }
+  .viewer { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; min-width: 0; }
+  .viewer canvas { display: block; width: 100%; height: 100%; }
+  .stage { position: relative; aspect-ratio: 4 / 3; max-height: 70vh; background: radial-gradient(ellipse at 50% 60%, #1e2140 0%, #0b0c15 70%); }
+  .stage .hint { position: absolute; left: 10px; bottom: 8px; font-size: 12px; color: var(--muted); pointer-events: none; }
+  .caption { padding: 10px 12px; display: flex; gap: 16px; flex-wrap: wrap; align-items: baseline; border-top: 1px solid var(--line); }
+  .caption b { font-family: Rajdhani, system-ui, sans-serif; font-size: 22px; }
+  .caption span { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .badge { padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #000; }
+  .sheet { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); display: block; }
+  .note { background: var(--panel2); border-left: 3px solid var(--teal); padding: 10px 12px; border-radius: 6px; color: var(--fg); font-size: 14px; max-width: 70ch; }
+  .note p { margin: 6px 0; }
+  .hero { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); display: block; margin-bottom: 14px; }
+  .pairs { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .pair { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px; min-width: 0; }
+  .pair .imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .pair img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: #000; display: block; }
+  .pair .lbl { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .pair .n { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .v2 { color: var(--teal); font-weight: 600; }
+  [hidden] { display: none !important; }
+</style>
+
+<div class="wrap">
+  <h1>Swarm Break: the models so far</h1>
+  <p class="sub">Every enemy, weapon and arena piece here was built in Blender by our own scripts, then rendered. Drag to turn a model, scroll to zoom. Sizes are in studs. Models marked v2 use the new recipe; the rest are still being rebuilt.</p>
+  <div id="hero"></div>
+  <div id="beforeafter"></div>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="layout">
+    <div class="list" id="list"></div>
+    <div class="viewer">
+      <div class="stage" id="stage"><div class="hint">drag: rotate, scroll: zoom, right-drag: pan</div></div>
+      <div class="caption" id="caption"></div>
+    </div>
+  </div>
+  <h2>Contact sheets (the rendered stills)</h2>
+  <div id="sheets"></div>
+  <h2>What changed and what is next</h2>
+  <div class="note">
+    <p><b>Why the models changed</b>: the first passes looked like balloon animals next to real games. We rendered 39 open-licence game models (Kenney, KayKit, the Khronos fox) in our own lighting as the bar, measured them (100 to 1500 triangles, big flat colour shapes, huge heads) and rebuilt the recipe: faceted low-poly, armour cut from the body, big glowing eyes, dark body with one bright accent, baked shading, a thumbnail-style render. Judge agents score every model against that sheet; nothing ships under 8 of 10.</p>
+    <p><b>Names</b> are plain: Nature, Tech, Lightning, Dark for the four evolution paths; Gems and Shards for the forever currencies; the lobby is the Base; the station is Outpost 9; the hive under it is the Nest.</p>
+    <p><b>Next</b>: walk cycles (skinned animation), particle textures, the Base lobby place, music. Then the laptop step: import the FBX files, playtest, publish.</p>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  var DATA = __DATA__;
+  var RAR = { Common: "var(--common)", Rare: "var(--rare)", Epic: "var(--epic)", Legendary: "var(--legendary)" };
+  var stage = document.getElementById("stage");
+  var renderer, scene, camera, controls, current, loader = new THREE.GLTFLoader();
+
+  function initThree() {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    stage.insertBefore(renderer.domElement, stage.firstChild);
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(40, 4 / 3, 0.05, 2000);
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    var key = new THREE.DirectionalLight(0xfff2e0, 1.4); key.position.set(4, 6, 5); scene.add(key);
+    var fill = new THREE.DirectionalLight(0x9fb8ff, 0.5); fill.position.set(-6, 3, 2); scene.add(fill);
+    var rim = new THREE.DirectionalLight(0x8ff0ff, 0.9); rim.position.set(-2, 4, -6); scene.add(rim);
+    scene.add(new THREE.HemisphereLight(0x8890c0, 0x101018, 0.6));
+    var grid = new THREE.GridHelper(40, 40, 0x2a2d47, 0x1b1d30); grid.position.y = 0; scene.add(grid);
+    resize();
+    window.addEventListener("resize", resize);
+    (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+  }
+  function resize() {
+    var w = stage.clientWidth, h = stage.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  function b64ToBuf(b) {
+    var s = atob(b), a = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i);
+    return a.buffer;
+  }
+  function show(group, item) {
+    if (current) { scene.remove(current); current = null; }
+    loader.load(item.glb_url, function (g) {
+      var root = g.scene;
+      root.traverse(function (o) {
+        if (o.isMesh && o.material) {
+          o.material.side = THREE.DoubleSide;
+          if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
+          var col = o.material.color.clone();
+          var ca = o.geometry.attributes.color;
+          if (ca) { // average the vertex colours so glow parts glow in their own colour
+            var n = Math.min(ca.count, 300), r = 0, gg = 0, b = 0;
+            for (var i = 0; i < n; i++) { r += ca.getX(i); gg += ca.getY(i); b += ca.getZ(i); }
+            col.setRGB(r / n, gg / n, b / n);
+            o.material.vertexColors = true;
+          }
+          if (o.name.indexOf("_Glow") >= 0) { o.material.emissive = col; o.material.emissiveIntensity = 1.2; }
+          if (o.material.emissiveIntensity > 2) o.material.emissiveIntensity = 1.5;
+          if (o.material.opacity < 1) { o.material.transparent = true; }
+        }
+      });
+      var box = new THREE.Box3().setFromObject(root);
+      var size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+      root.position.sub(center); root.position.y += size.y / 2; // rest on the grid
+      // face the camera: models point +Y in Blender = -Z in glTF, so look from -Z side
+      scene.add(root); current = root;
+      var d = Math.max(size.x, size.y, size.z) * 1.9 + 1;
+      camera.position.set(d * 0.55, d * 0.55, -d * 0.75);
+      controls.target.set(0, size.y / 2, 0);
+      camera.near = d / 200; camera.far = d * 20; camera.updateProjectionMatrix();
+      controls.update();
+    }, function (e) { console.error(e); });
+    var cap = document.getElementById("caption");
+    cap.innerHTML = "";
+    var b = document.createElement("b"); b.textContent = item.name; cap.appendChild(b);
+    if (item.rarity) { var r = document.createElement("span"); r.className = "badge"; r.style.background = RAR[item.rarity] || "#888"; r.textContent = item.rarity; cap.appendChild(r); }
+    if (item.size) { var s = document.createElement("span"); s.textContent = item.size[0].toFixed(1) + " wide, " + item.size[1].toFixed(1) + " tall, " + item.size[2].toFixed(1) + " deep (studs)"; cap.appendChild(s); }
+    if (item.tris) { var t = document.createElement("span"); t.textContent = item.tris.toLocaleString() + " triangles, " + item.parts.length + " parts"; cap.appendChild(t); }
+  }
+  function buildList(group) {
+    var list = document.getElementById("list"); list.innerHTML = "";
+    group.items.forEach(function (item, i) {
+      var btn = document.createElement("button"); btn.className = "item"; btn.setAttribute("role", "option");
+      if (item.thumb) { var img = document.createElement("img"); img.src = item.thumb; img.alt = item.name; btn.appendChild(img); }
+      var n = document.createElement("div"); n.className = "n"; n.textContent = item.name; btn.appendChild(n);
+      var r = document.createElement("div"); r.className = "r"; r.textContent = (item.recipe === "v2" ? "v2 · " : "") + (item.rarity ? item.rarity + " · " : "") + (item.tris ? item.tris.toLocaleString() + " tris" : ""); if (item.recipe === "v2") r.className += " v2"; btn.appendChild(r);
+      btn.addEventListener("click", function () { select(group, item, btn); });
+      list.appendChild(btn);
+      if (i === 0) select(group, item, btn);
+    });
+  }
+  function select(group, item, btn) {
+    Array.prototype.forEach.call(document.querySelectorAll(".item"), function (e) { e.setAttribute("aria-selected", "false"); });
+    btn.setAttribute("aria-selected", "true");
+    show(group, item);
+  }
+  function buildTabs() {
+    var tabs = document.getElementById("tabs");
+    DATA.groups.forEach(function (g, i) {
+      var t = document.createElement("button"); t.className = "tab"; t.setAttribute("role", "tab"); t.textContent = g.title + " (" + g.items.length + ")";
+      t.addEventListener("click", function () {
+        Array.prototype.forEach.call(tabs.children, function (c) { c.setAttribute("aria-selected", "false"); });
+        t.setAttribute("aria-selected", "true"); buildList(g);
+      });
+      tabs.appendChild(t);
+      if (i === 0) { t.setAttribute("aria-selected", "true"); }
+    });
+  }
+  function buildHero() {
+    if (DATA.sheets.hero) { var img = document.createElement("img"); img.className = "hero"; img.src = DATA.sheets.hero; img.alt = "gameplay shot: the arena with enemies"; document.getElementById("hero").appendChild(img); }
+    var ba = document.getElementById("beforeafter");
+    if (DATA.before_after && DATA.before_after.length) {
+      var h = document.createElement("h2"); h.textContent = "Before and after (v1 this morning, v2 now)"; ba.appendChild(h);
+      var grid = document.createElement("div"); grid.className = "pairs";
+      DATA.before_after.forEach(function (p) {
+        var d = document.createElement("div"); d.className = "pair";
+        var n = document.createElement("div"); n.className = "n"; n.textContent = p.name; d.appendChild(n);
+        var imgs = document.createElement("div"); imgs.className = "imgs";
+        var a = document.createElement("img"); a.src = p.before; a.alt = p.name + " before"; imgs.appendChild(a);
+        var b = document.createElement("img"); b.src = p.after; b.alt = p.name + " after"; imgs.appendChild(b);
+        d.appendChild(imgs);
+        var l = document.createElement("div"); l.className = "lbl"; l.innerHTML = "<span>before</span><span class=\"v2\">after</span>"; d.appendChild(l);
+        grid.appendChild(d);
+      });
+      ba.appendChild(grid);
+    }
+  }
+  function buildSheets() {
+    var holder = document.getElementById("sheets");
+    ["lineup", "enemies", "weapons", "arena", "refs"].forEach(function (k) {
+      if (!DATA.sheets[k]) return;
+      var h = document.createElement("h2"); h.textContent = k === "lineup" ? "Arena corner (kit assembled)" : k === "refs" ? "The reference bar: open-licence game models rendered in our lighting (not ours)" : k.charAt(0).toUpperCase() + k.slice(1);
+      var img = document.createElement("img"); img.className = "sheet"; img.src = DATA.sheets[k]; img.alt = k + " renders";
+      holder.appendChild(h); holder.appendChild(img);
+    });
+  }
+  initThree(); buildHero(); buildTabs(); buildSheets();
+  if (DATA.groups.length) buildList(DATA.groups[0]);
+})();
+</script>

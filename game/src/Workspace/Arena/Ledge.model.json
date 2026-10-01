@@ -1,0 +1,33 @@
+{
+ "className": "Part",
+ "properties": {
+  "Name": "Ledge",
+  "Anchored": true,
+  "Size": [
+   30,
+   2,
+   10
+  ],
+  "Color": [
+   0.6,
+   0.6,
+   0.7
+  ],
+  "Material": "SmoothPlastic",
+  "TopSurface": "Smooth",
+  "BottomSurface": "Smooth",
+  "CFrame": {
+   "position": [
+    0,
+    12,
+    50
+   ],
+   "orientation": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "children": []
+}

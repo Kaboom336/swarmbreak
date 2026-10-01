@@ -1,0 +1,33 @@
+{
+ "className": "Part",
+ "properties": {
+  "Name": "TowerB_Step",
+  "Anchored": true,
+  "Size": [
+   6,
+   10,
+   16
+  ],
+  "Color": [
+   0.5,
+   0.5,
+   0.6
+  ],
+  "Material": "SmoothPlastic",
+  "TopSurface": "Smooth",
+  "BottomSurface": "Smooth",
+  "CFrame": {
+   "position": [
+    -29,
+    5,
+    35
+   ],
+   "orientation": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "children": []
+}

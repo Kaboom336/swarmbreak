@@ -1,0 +1,1351 @@
+{
+ "arena/Barrel": {
+  "display": "Barrel",
+  "name": "arena/Barrel",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 316
+   },
+   {
+    "glow": true,
+    "name": "Leak_Glow",
+    "tris": 132
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   4.0,
+   3.62,
+   3.54
+  ],
+  "tris": 448
+ },
+ "arena/BossGate": {
+  "display": "BossGate",
+  "name": "arena/BossGate",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 876
+   },
+   {
+    "glow": true,
+    "name": "Seam_Glow",
+    "tris": 24
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   17.5,
+   14.4,
+   3.15
+  ],
+  "tris": 900
+ },
+ "arena/Crate": {
+  "display": "Crate",
+  "name": "arena/Crate",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 320
+   },
+   {
+    "glow": true,
+    "name": "Label_Glow",
+    "tris": 24
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   4.15,
+   4.4,
+   4.2
+  ],
+  "tris": 344
+ },
+ "arena/CrateB": {
+  "kind": "arena",
+  "name": "arena/CrateB",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 2496
+   },
+   {
+    "glow": true,
+    "name": "Label_Glow",
+    "tris": 24
+   }
+  ],
+  "size_studs": [
+   4.16,
+   4.16,
+   4.24
+  ],
+  "tris": 2520
+ },
+ "arena/FloorGrate": {
+  "display": "FloorGrate",
+  "name": "arena/FloorGrate",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 1220
+   },
+   {
+    "glow": true,
+    "name": "Under_Glow",
+    "tris": 96
+   },
+   {
+    "glow": true,
+    "name": "Haze_Glow",
+    "tris": 12
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   8.0,
+   2.42,
+   8.0
+  ],
+  "tris": 1328
+ },
+ "arena/FloorTile": {
+  "display": "FloorTile",
+  "name": "arena/FloorTile",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 280
+   },
+   {
+    "glow": true,
+    "name": "Groove_Glow",
+    "tris": 24
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   8.0,
+   1.02,
+   8.0
+  ],
+  "tris": 304
+ },
+ "arena/FloorTileB": {
+  "kind": "arena",
+  "name": "arena/FloorTileB",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 1236
+   },
+   {
+    "glow": true,
+    "name": "Groove_Glow",
+    "tris": 24
+   }
+  ],
+  "size_studs": [
+   8.0,
+   1.15,
+   8.0
+  ],
+  "tris": 1260
+ },
+ "arena/FloorTileC": {
+  "kind": "arena",
+  "name": "arena/FloorTileC",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 636
+   },
+   {
+    "glow": true,
+    "name": "Groove_Glow",
+    "tris": 12
+   }
+  ],
+  "size_studs": [
+   8.0,
+   1.15,
+   8.0
+  ],
+  "tris": 648
+ },
+ "arena/Gate": {
+  "display": "Gate",
+  "name": "arena/Gate",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 720
+   },
+   {
+    "glow": true,
+    "name": "Sign_Glow",
+    "tris": 52
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   13.2,
+   11.4,
+   4.22
+  ],
+  "tris": 772
+ },
+ "arena/Lamp": {
+  "display": "Lamp",
+  "name": "arena/Lamp",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 422
+   },
+   {
+    "glow": true,
+    "name": "Bulb_Glow",
+    "tris": 68
+   },
+   {
+    "glow": true,
+    "name": "Beam_Glow",
+    "tris": 44
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   6.8,
+   6.89,
+   6.8
+  ],
+  "tris": 534
+ },
+ "arena/NestRoot": {
+  "display": "NestRoot",
+  "name": "arena/NestRoot",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 2754
+   },
+   {
+    "glow": true,
+    "name": "Nodes_Glow",
+    "tris": 532
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   10.18,
+   9.63,
+   11.23
+  ],
+  "tris": 3286
+ },
+ "arena/Pillar": {
+  "display": "Pillar",
+  "name": "arena/Pillar",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 424
+   },
+   {
+    "glow": true,
+    "name": "Ring_Glow",
+    "tris": 76
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   5.75,
+   12.0,
+   5.75
+  ],
+  "tris": 500
+ },
+ "arena/Railing": {
+  "display": "Railing",
+  "name": "arena/Railing",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 588
+   },
+   {
+    "glow": false,
+    "name": "Mesh",
+    "tris": 72
+   },
+   {
+    "glow": true,
+    "name": "Line_Glow",
+    "tris": 12
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   8.4,
+   8.39,
+   0.9
+  ],
+  "tris": 672
+ },
+ "arena/SpawnHole": {
+  "display": "SpawnHole",
+  "name": "arena/SpawnHole",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 580
+   },
+   {
+    "glow": false,
+    "name": "Roots",
+    "tris": 2336
+   },
+   {
+    "glow": true,
+    "name": "Inner_Glow",
+    "tris": 360
+   },
+   {
+    "glow": true,
+    "name": "Column_Glow",
+    "tris": 44
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   9.76,
+   8.1,
+   9.76
+  ],
+  "tris": 3320
+ },
+ "arena/Wall": {
+  "display": "Wall",
+  "name": "arena/Wall",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 580
+   },
+   {
+    "glow": true,
+    "name": "Strip_Glow",
+    "tris": 12
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   8.0,
+   10.0,
+   2.25
+  ],
+  "tris": 592
+ },
+ "arena/Wall_Door": {
+  "kind": "arena",
+  "name": "arena/Wall_Door",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 888
+   },
+   {
+    "glow": true,
+    "name": "Strip_Glow",
+    "tris": 24
+   }
+  ],
+  "size_studs": [
+   8.4,
+   8.4,
+   1.8
+  ],
+  "tris": 912
+ },
+ "enemies/Brute": {
+  "accent": [
+   240,
+   70,
+   60
+  ],
+  "kind": "enemy",
+  "name": "enemies/Brute",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Torso",
+    "tris": 3316
+   },
+   {
+    "glow": false,
+    "name": "Head",
+    "tris": 1572
+   },
+   {
+    "glow": true,
+    "name": "Eyes_Glow",
+    "tris": 160
+   },
+   {
+    "glow": false,
+    "name": "Jaw",
+    "tris": 428
+   },
+   {
+    "glow": false,
+    "name": "Arm_L",
+    "tris": 356
+   },
+   {
+    "glow": false,
+    "name": "Leg_L",
+    "tris": 432
+   },
+   {
+    "glow": false,
+    "name": "Arm_R",
+    "tris": 356
+   },
+   {
+    "glow": false,
+    "name": "Leg_R",
+    "tris": 432
+   },
+   {
+    "glow": true,
+    "name": "Core_Glow",
+    "tris": 156
+   },
+   {
+    "glow": true,
+    "name": "Crown_Glow",
+    "tris": 858
+   }
+  ],
+  "size_studs": [
+   13.4,
+   14.08,
+   10.84
+  ],
+  "tris": 8066
+ },
+ "enemies/Flyer": {
+  "display": "Flyer",
+  "name": "enemies/Flyer",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Torso",
+    "tris": 1482
+   },
+   {
+    "glow": true,
+    "name": "Core_Glow",
+    "tris": 460
+   },
+   {
+    "glow": false,
+    "name": "Head",
+    "tris": 980
+   },
+   {
+    "glow": true,
+    "name": "Eyes_Glow",
+    "tris": 400
+   },
+   {
+    "glow": false,
+    "name": "Wing_1",
+    "tris": 68
+   },
+   {
+    "glow": false,
+    "name": "Wing_2",
+    "tris": 68
+   },
+   {
+    "glow": false,
+    "name": "Wing_3",
+    "tris": 68
+   },
+   {
+    "glow": false,
+    "name": "Wing_4",
+    "tris": 68
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   3.84,
+   1.97,
+   4.4
+  ],
+  "tris": 3594
+ },
+ "enemies/Queen": {
+  "display": "Queen",
+  "name": "enemies/Queen",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Torso",
+    "tris": 1044
+   },
+   {
+    "glow": false,
+    "name": "Abdomen",
+    "tris": 1880
+   },
+   {
+    "glow": true,
+    "name": "Eggs_Glow",
+    "tris": 880
+   },
+   {
+    "glow": false,
+    "name": "Head",
+    "tris": 1120
+   },
+   {
+    "glow": true,
+    "name": "Eyes_Glow",
+    "tris": 216
+   },
+   {
+    "glow": false,
+    "name": "Leg_1",
+    "tris": 328
+   },
+   {
+    "glow": false,
+    "name": "Leg_2",
+    "tris": 301
+   },
+   {
+    "glow": false,
+    "name": "Leg_3",
+    "tris": 302
+   },
+   {
+    "glow": false,
+    "name": "Leg_4",
+    "tris": 301
+   },
+   {
+    "glow": false,
+    "name": "Leg_5",
+    "tris": 302
+   },
+   {
+    "glow": false,
+    "name": "Leg_6",
+    "tris": 306
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   11.14,
+   8.05,
+   16.21
+  ],
+  "tris": 6980
+ },
+ "enemies/Runner": {
+  "display": "Runner",
+  "name": "enemies/Runner",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Torso",
+    "tris": 1436
+   },
+   {
+    "glow": false,
+    "name": "Head",
+    "tris": 958
+   },
+   {
+    "glow": true,
+    "name": "Eyes_Glow",
+    "tris": 88
+   },
+   {
+    "glow": false,
+    "name": "Jaw",
+    "tris": 114
+   },
+   {
+    "glow": false,
+    "name": "Leg_1",
+    "tris": 528
+   },
+   {
+    "glow": false,
+    "name": "Leg_2",
+    "tris": 528
+   },
+   {
+    "glow": false,
+    "name": "Leg_3",
+    "tris": 528
+   },
+   {
+    "glow": false,
+    "name": "Leg_4",
+    "tris": 528
+   },
+   {
+    "glow": true,
+    "name": "Dots_Glow",
+    "tris": 128
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   3.69,
+   2.81,
+   7.46
+  ],
+  "tris": 4836
+ },
+ "enemies/Spitter": {
+  "display": "Spitter",
+  "name": "enemies/Spitter",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Torso",
+    "tris": 1382
+   },
+   {
+    "glow": true,
+    "name": "Sacs_Glow",
+    "tris": 240
+   },
+   {
+    "glow": false,
+    "name": "Head",
+    "tris": 628
+   },
+   {
+    "glow": true,
+    "name": "Eyes_Glow",
+    "tris": 132
+   },
+   {
+    "glow": true,
+    "name": "Spout_Glow",
+    "tris": 36
+   },
+   {
+    "glow": false,
+    "name": "Jaw",
+    "tris": 262
+   },
+   {
+    "glow": false,
+    "name": "Leg_1",
+    "tris": 488
+   },
+   {
+    "glow": false,
+    "name": "Leg_2",
+    "tris": 488
+   },
+   {
+    "glow": false,
+    "name": "Leg_3",
+    "tris": 488
+   },
+   {
+    "glow": false,
+    "name": "Leg_4",
+    "tris": 488
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   4.57,
+   4.5,
+   6.22
+  ],
+  "tris": 4632
+ },
+ "enemies/Tank": {
+  "display": "Tank",
+  "name": "enemies/Tank",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Torso",
+    "tris": 1425
+   },
+   {
+    "glow": true,
+    "name": "Seam_Glow",
+    "tris": 320
+   },
+   {
+    "glow": false,
+    "name": "Head",
+    "tris": 828
+   },
+   {
+    "glow": true,
+    "name": "Eyes_Glow",
+    "tris": 88
+   },
+   {
+    "glow": false,
+    "name": "Leg_1",
+    "tris": 482
+   },
+   {
+    "glow": false,
+    "name": "Leg_2",
+    "tris": 482
+   },
+   {
+    "glow": false,
+    "name": "Leg_3",
+    "tris": 482
+   },
+   {
+    "glow": false,
+    "name": "Leg_4",
+    "tris": 482
+   },
+   {
+    "glow": false,
+    "name": "Leg_5",
+    "tris": 482
+   },
+   {
+    "glow": false,
+    "name": "Leg_6",
+    "tris": 482
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   7.32,
+   5.18,
+   7.25
+  ],
+  "tris": 5553
+ },
+ "enemies/Walker": {
+  "display": "Walker",
+  "name": "enemies/Walker",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Torso",
+    "tris": 2000
+   },
+   {
+    "glow": false,
+    "name": "Head",
+    "tris": 648
+   },
+   {
+    "glow": true,
+    "name": "Eyes_Glow",
+    "tris": 88
+   },
+   {
+    "glow": false,
+    "name": "Jaw",
+    "tris": 42
+   },
+   {
+    "glow": false,
+    "name": "Arm_L",
+    "tris": 1261
+   },
+   {
+    "glow": false,
+    "name": "Arm_R",
+    "tris": 1262
+   },
+   {
+    "glow": false,
+    "name": "Leg_L",
+    "tris": 980
+   },
+   {
+    "glow": false,
+    "name": "Leg_R",
+    "tris": 976
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   6.76,
+   5.83,
+   6.24
+  ],
+  "tris": 7257
+ },
+ "enemies/Warden": {
+  "display": "Warden",
+  "name": "enemies/Warden",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Torso",
+    "tris": 2314
+   },
+   {
+    "glow": false,
+    "name": "Talons",
+    "tris": 936
+   },
+   {
+    "glow": true,
+    "name": "Eye_Glow",
+    "tris": 320
+   },
+   {
+    "glow": true,
+    "name": "Iris_Glow",
+    "tris": 52
+   },
+   {
+    "glow": false,
+    "name": "Pupil",
+    "tris": 44
+   },
+   {
+    "glow": true,
+    "name": "Halo_Glow",
+    "tris": 556
+   },
+   {
+    "glow": false,
+    "name": "Wing_1",
+    "tris": 380
+   },
+   {
+    "glow": false,
+    "name": "Wing_2",
+    "tris": 378
+   },
+   {
+    "glow": false,
+    "name": "Wing_3",
+    "tris": 380
+   },
+   {
+    "glow": false,
+    "name": "Wing_4",
+    "tris": 380
+   }
+  ],
+  "recipe": "v2",
+  "size_studs": [
+   13.91,
+   9.93,
+   7.8
+  ],
+  "tris": 5740
+ },
+ "weapons/Arc": {
+  "display": "Laser Rifle",
+  "forward": "+Y (Blender)",
+  "kind": "Hitscan",
+  "name": "weapons/Arc",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 1016
+   },
+   {
+    "glow": true,
+    "name": "Accent_Glow",
+    "tris": 224
+   },
+   {
+    "glow": true,
+    "name": "Halo_Glow",
+    "tris": 224
+   }
+  ],
+  "rarity": "Epic",
+  "recipe": "v2",
+  "size_studs": [
+   0.92,
+   1.94,
+   3.91
+  ],
+  "tris": 1464
+ },
+ "weapons/Blade": {
+  "display": "Rusty Blade",
+  "forward": "+Y (Blender)",
+  "kind": "Melee",
+  "name": "weapons/Blade",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 484
+   },
+   {
+    "glow": true,
+    "name": "Edge_Glow",
+    "tris": 60
+   },
+   {
+    "glow": true,
+    "name": "Halo_Glow",
+    "tris": 60
+   }
+  ],
+  "rarity": "Common",
+  "recipe": "v2",
+  "size_studs": [
+   0.36,
+   4.1,
+   1.52
+  ],
+  "tris": 604
+ },
+ "weapons/Burst": {
+  "display": "Burst SMG",
+  "forward": "+Y (Blender)",
+  "kind": "Hitscan",
+  "name": "weapons/Burst",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 1272
+   },
+   {
+    "glow": true,
+    "name": "Accent_Glow",
+    "tris": 52
+   },
+   {
+    "glow": true,
+    "name": "Halo_Glow",
+    "tris": 52
+   }
+  ],
+  "rarity": "Common",
+  "recipe": "v2",
+  "size_studs": [
+   0.75,
+   2.17,
+   3.61
+  ],
+  "tris": 1376
+ },
+ "weapons/Guardian": {
+  "display": "Spinning Blades",
+  "forward": "+Y (Blender)",
+  "kind": "Orbital",
+  "name": "weapons/Guardian",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 200
+   },
+   {
+    "glow": true,
+    "name": "Accent_Glow",
+    "tris": 200
+   },
+   {
+    "glow": true,
+    "name": "Halo_Glow",
+    "tris": 140
+   },
+   {
+    "glow": false,
+    "name": "Orb",
+    "tris": 556
+   },
+   {
+    "glow": true,
+    "name": "Orb_Glow",
+    "tris": 360
+   }
+  ],
+  "rarity": "Rare",
+  "recipe": "v2",
+  "size_studs": [
+   4.32,
+   2.99,
+   1.96
+  ],
+  "tris": 1456
+ },
+ "weapons/Halo": {
+  "display": "Sun Orbs",
+  "forward": "+Y (Blender)",
+  "kind": "weapon",
+  "name": "weapons/Halo",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 2000
+   },
+   {
+    "glow": true,
+    "name": "Accent_Glow",
+    "tris": 1616
+   },
+   {
+    "glow": true,
+    "name": "Orb_Glow",
+    "tris": 796
+   }
+  ],
+  "rarity": "Legendary",
+  "size_studs": [
+   4.13,
+   2.18,
+   1.8
+  ],
+  "tris": 4412
+ },
+ "weapons/Hammer": {
+  "display": "Shock Hammer",
+  "forward": "+Y (Blender)",
+  "kind": "Melee",
+  "name": "weapons/Hammer",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 604
+   },
+   {
+    "glow": true,
+    "name": "Accent_Glow",
+    "tris": 284
+   },
+   {
+    "glow": true,
+    "name": "Halo_Glow",
+    "tris": 284
+   }
+  ],
+  "rarity": "Rare",
+  "recipe": "v2",
+  "size_studs": [
+   2.2,
+   4.21,
+   1.67
+  ],
+  "tris": 1172
+ },
+ "weapons/Hornet": {
+  "display": "Triple Rocket",
+  "forward": "+Y (Blender)",
+  "kind": "Hitscan",
+  "name": "weapons/Hornet",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 936
+   },
+   {
+    "glow": true,
+    "name": "Accent_Glow",
+    "tris": 330
+   },
+   {
+    "glow": true,
+    "name": "Halo_Glow",
+    "tris": 192
+   }
+  ],
+  "rarity": "Epic",
+  "recipe": "v2",
+  "size_studs": [
+   1.16,
+   2.15,
+   3.67
+  ],
+  "tris": 1458
+ },
+ "weapons/Ion": {
+  "display": "Laser Beam",
+  "forward": "+Y (Blender)",
+  "kind": "Beam",
+  "name": "weapons/Ion",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 912
+   },
+   {
+    "glow": true,
+    "name": "Accent_Glow",
+    "tris": 284
+   },
+   {
+    "glow": true,
+    "name": "Halo_Glow",
+    "tris": 224
+   }
+  ],
+  "rarity": "Epic",
+  "recipe": "v2",
+  "size_studs": [
+   1.35,
+   2.29,
+   3.64
+  ],
+  "tris": 1420
+ },
+ "weapons/Marksman": {
+  "display": "Sniper Rifle",
+  "forward": "+Y (Blender)",
+  "kind": "Hitscan",
+  "name": "weapons/Marksman",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 1276
+   },
+   {
+    "glow": true,
+    "name": "Accent_Glow",
+    "tris": 80
+   },
+   {
+    "glow": true,
+    "name": "Halo_Glow",
+    "tris": 80
+   }
+  ],
+  "rarity": "Rare",
+  "recipe": "v2",
+  "size_studs": [
+   0.61,
+   2.1,
+   4.49
+  ],
+  "tris": 1436
+ },
+ "weapons/Nova": {
+  "display": "Heavy Cannon",
+  "forward": "+Y (Blender)",
+  "kind": "Hitscan",
+  "name": "weapons/Nova",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 1246
+   },
+   {
+    "glow": true,
+    "name": "Accent_Glow",
+    "tris": 96
+   },
+   {
+    "glow": true,
+    "name": "Halo_Glow",
+    "tris": 96
+   }
+  ],
+  "rarity": "Legendary",
+  "recipe": "v2",
+  "size_studs": [
+   1.31,
+   2.47,
+   4.22
+  ],
+  "tris": 1438
+ },
+ "weapons/Reaper": {
+  "display": "Dark Scythe",
+  "forward": "+Y (Blender)",
+  "kind": "weapon",
+  "name": "weapons/Reaper",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 1466
+   },
+   {
+    "glow": true,
+    "name": "Accent_Glow",
+    "tris": 3344
+   }
+  ],
+  "rarity": "Legendary",
+  "size_studs": [
+   1.0,
+   4.0,
+   3.04
+  ],
+  "tris": 4810
+ },
+ "weapons/Saber": {
+  "display": "Energy Sword",
+  "forward": "+Y (Blender)",
+  "kind": "Melee",
+  "name": "weapons/Saber",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 536
+   },
+   {
+    "glow": true,
+    "name": "Accent_Glow",
+    "tris": 44
+   },
+   {
+    "glow": true,
+    "name": "Halo_Glow",
+    "tris": 44
+   },
+   {
+    "glow": true,
+    "name": "Blade_Glow",
+    "tris": 188
+   }
+  ],
+  "rarity": "Epic",
+  "recipe": "v2",
+  "size_studs": [
+   0.49,
+   4.85,
+   2.3
+  ],
+  "tris": 812
+ },
+ "weapons/Scatter": {
+  "display": "Shotgun",
+  "forward": "+Y (Blender)",
+  "kind": "Hitscan",
+  "name": "weapons/Scatter",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 1276
+   },
+   {
+    "glow": true,
+    "name": "Accent_Glow",
+    "tris": 80
+   },
+   {
+    "glow": true,
+    "name": "Halo_Glow",
+    "tris": 80
+   }
+  ],
+  "rarity": "Rare",
+  "recipe": "v2",
+  "size_studs": [
+   0.98,
+   1.67,
+   3.78
+  ],
+  "tris": 1436
+ },
+ "weapons/Starter": {
+  "display": "Starter Pistol",
+  "forward": "+Y (Blender)",
+  "kind": "Hitscan",
+  "name": "weapons/Starter",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 1164
+   },
+   {
+    "glow": true,
+    "name": "Accent_Glow",
+    "tris": 68
+   },
+   {
+    "glow": true,
+    "name": "Halo_Glow",
+    "tris": 68
+   }
+  ],
+  "rarity": "Common",
+  "recipe": "v2",
+  "size_studs": [
+   0.61,
+   2.12,
+   2.74
+  ],
+  "tris": 1300
+ },
+ "weapons/Storm": {
+  "display": "Lightning Orbs",
+  "forward": "+Y (Blender)",
+  "kind": "weapon",
+  "name": "weapons/Storm",
+  "parts": [
+   {
+    "glow": false,
+    "name": "Body",
+    "tris": 2724
+   },
+   {
+    "glow": true,
+    "name": "Accent_Glow",
+    "tris": 4012
+   },
+   {
+    "glow": true,
+    "name": "Orb_Glow",
+    "tris": 568
+   }
+  ],
+  "rarity": "Epic",
+  "size_studs": [
+   3.12,
+   2.61,
+   1.43
+  ],
+  "tris": 7304
+ }
+}

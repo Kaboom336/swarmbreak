@@ -1,0 +1,173 @@
+--!strict
+-- Shape of the saved player profile (shared by the lobby and the arena). Pure + tested.
+local Weapons = require(script.Parent.Weapons)
+local Evolutions = require(script.Parent.Evolutions)
+
+export type Profile = {
+	Version: number,
+	Gems: number,
+	Shards: { [string]: number }, -- per element
+	Weapons: { string }, -- owned weapon ids
+	Equipped: string,
+	Evolutions: { [string]: { Element: string, Tier: number } }, -- per weapon id
+	Perks: { [string]: number }, -- lobby perks (levels)
+	BestWave: number,
+	Runs: number,
+	CratesSinceLegendary: number, -- Robux crates opened since the last Legendary (pity counter)
+	Flags: { [string]: boolean }, -- one-time events already paid out (see FlagKeys)
+	LastClaimDay: number, -- UTC day number (Daily.dayIndex) of the last daily reward, 0 = never
+	Streak: number, -- days in a row the daily reward was claimed
+}
+
+local ProfileSchema = { Version = 1 }
+
+ProfileSchema.PerkDefs = {
+	StartCoins = { Label = "Start coins", PerLevel = 100, MaxLevel = 5, GemsCost = 80 },
+	MaxHealth = { Label = "Max HP", PerLevel = 10, MaxLevel = 5, GemsCost = 200 },
+	CoinBonus = { Label = "Coin bonus %", PerLevel = 5, MaxLevel = 5, GemsCost = 250 },
+}
+
+-- The only flags a profile may carry. FirstBossCrate: the free Gem crate for the first boss kill.
+ProfileSchema.FlagKeys = { "FirstBossCrate" }
+
+function ProfileSchema.default(): Profile
+	local shards = {}
+	for _, el in Evolutions.Order do
+		shards[el] = 0
+	end
+	return {
+		Version = ProfileSchema.Version,
+		Gems = 0,
+		Shards = shards,
+		Weapons = { "Starter" },
+		Equipped = "Starter",
+		Evolutions = {},
+		Perks = {},
+		BestWave = 0,
+		Runs = 0,
+		CratesSinceLegendary = 0,
+		Flags = {},
+		LastClaimDay = 0,
+		Streak = 0,
+	}
+end
+
+-- Takes whatever came out of the DataStore and returns a valid profile, dropping junk.
+function ProfileSchema.sanitize(raw: any): Profile
+	local p = ProfileSchema.default()
+	if type(raw) ~= "table" then
+		return p
+	end
+	if type(raw.Gems) == "number" and raw.Gems >= 0 then
+		p.Gems = math.floor(raw.Gems)
+	end
+	if type(raw.Shards) == "table" then
+		for _, el in Evolutions.Order do
+			local n = raw.Shards[el]
+			if type(n) == "number" and n >= 0 then
+				p.Shards[el] = math.floor(n)
+			end
+		end
+	end
+	if type(raw.Weapons) == "table" then
+		for _, id in raw.Weapons do
+			if type(id) == "string" and Weapons.Defs[id] and not table.find(p.Weapons, id) then
+				table.insert(p.Weapons, id)
+			end
+		end
+	end
+	if type(raw.Equipped) == "string" and table.find(p.Weapons, raw.Equipped) then
+		p.Equipped = raw.Equipped
+	end
+	if type(raw.Evolutions) == "table" then
+		for id, evo in raw.Evolutions do
+			if
+				type(id) == "string"
+				and Weapons.Defs[id]
+				and type(evo) == "table"
+				and Evolutions.Elements[evo.Element]
+			then
+				local tier = if type(evo.Tier) == "number"
+					then math.clamp(math.floor(evo.Tier), 0, 3)
+					else 0
+				if tier > 0 then
+					p.Evolutions[id] = { Element = evo.Element, Tier = tier }
+				end
+			end
+		end
+	end
+	if type(raw.Perks) == "table" then
+		for k, lvl in raw.Perks do
+			local def = ProfileSchema.PerkDefs[k]
+			if def and type(lvl) == "number" then
+				p.Perks[k] = math.clamp(math.floor(lvl), 0, def.MaxLevel)
+			end
+		end
+	end
+	if type(raw.BestWave) == "number" then
+		p.BestWave = math.max(0, math.floor(raw.BestWave))
+	end
+	if type(raw.Runs) == "number" then
+		p.Runs = math.max(0, math.floor(raw.Runs))
+	end
+	if type(raw.CratesSinceLegendary) == "number" then
+		p.CratesSinceLegendary = math.clamp(math.floor(raw.CratesSinceLegendary), 0, 9999)
+	end
+	if type(raw.Flags) == "table" then
+		for _, k in ProfileSchema.FlagKeys do
+			if raw.Flags[k] == true then
+				p.Flags[k] = true
+			end
+		end
+	end
+	if type(raw.LastClaimDay) == "number" then
+		p.LastClaimDay = math.max(0, math.floor(raw.LastClaimDay))
+	end
+	if type(raw.Streak) == "number" then
+		p.Streak = math.max(0, math.floor(raw.Streak))
+	end
+	return p
+end
+
+function ProfileSchema.perkLevel(p: Profile, key: string): number
+	return p.Perks[key] or 0
+end
+
+function ProfileSchema.perkValue(p: Profile, key: string): number
+	local def = ProfileSchema.PerkDefs[key]
+	if not def then
+		return 0
+	end
+	return def.PerLevel * ProfileSchema.perkLevel(p, key)
+end
+
+-- Returns ok, reason. Does not mutate.
+function ProfileSchema.canBuyPerk(p: Profile, key: string): (boolean, string)
+	local def = ProfileSchema.PerkDefs[key]
+	if not def then
+		return false, "Unknown perk."
+	end
+	local lvl = ProfileSchema.perkLevel(p, key)
+	if lvl >= def.MaxLevel then
+		return false, "Maxed."
+	end
+	local cost = def.GemsCost * (lvl + 1)
+	if p.Gems < cost then
+		return false, string.format("Need %d Gems.", cost)
+	end
+	return true, ""
+end
+
+function ProfileSchema.perkCost(p: Profile, key: string): number?
+	local def = ProfileSchema.PerkDefs[key]
+	if not def then
+		return nil
+	end
+	local lvl = ProfileSchema.perkLevel(p, key)
+	if lvl >= def.MaxLevel then
+		return nil
+	end
+	return def.GemsCost * (lvl + 1)
+end
+
+return ProfileSchema

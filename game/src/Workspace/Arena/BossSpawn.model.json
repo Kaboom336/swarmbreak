@@ -1,0 +1,35 @@
+{
+ "className": "Part",
+ "properties": {
+  "Name": "BossSpawn",
+  "Anchored": true,
+  "Size": [
+   12,
+   1,
+   12
+  ],
+  "Color": [
+   0.6,
+   0.1,
+   0.1
+  ],
+  "Material": "SmoothPlastic",
+  "TopSurface": "Smooth",
+  "BottomSurface": "Smooth",
+  "Transparency": 0.5,
+  "CanCollide": false,
+  "CFrame": {
+   "position": [
+    0,
+    1.5,
+    -70
+   ],
+   "orientation": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "children": []
+}

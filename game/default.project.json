@@ -1,0 +1,170 @@
+{
+  "name": "SwarmBreak",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "src/ReplicatedStorage/Shared"
+      },
+      "Remotes": {
+        "$className": "Folder",
+        "BossIntro": {
+          "$className": "RemoteEvent"
+        },
+        "GameOver": {
+          "$className": "RemoteEvent"
+        },
+        "HitMarker": {
+          "$className": "RemoteEvent"
+        },
+        "Shoot": {
+          "$className": "RemoteEvent"
+        },
+        "BuyUpgrade": {
+          "$className": "RemoteFunction"
+        },
+        "EquipWeapon": {
+          "$className": "RemoteEvent"
+        },
+        "Prompt": {
+          "$className": "RemoteEvent"
+        },
+        "CrateResult": {
+          "$className": "RemoteEvent"
+        },
+        "Toast": {
+          "$className": "RemoteEvent"
+        },
+        "StatsChanged": {
+          "$className": "RemoteEvent"
+        },
+        "FX": {
+          "$className": "RemoteEvent"
+        },
+        "Evolve": {
+          "$className": "RemoteFunction"
+        },
+        "BuyPerk": {
+          "$className": "RemoteFunction"
+        },
+        "GemCrate": {
+          "$className": "RemoteFunction"
+        },
+        "PickReward": {
+          "$className": "RemoteFunction"
+        }
+      },
+      "State": {
+        "$className": "Folder",
+        "Wave": {
+          "$className": "IntValue",
+          "$properties": {
+            "Value": 0
+          }
+        },
+        "Phase": {
+          "$className": "StringValue",
+          "$properties": {
+            "Value": "idle"
+          }
+        },
+        "TimeLeft": {
+          "$className": "NumberValue",
+          "$properties": {
+            "Value": 0
+          }
+        },
+        "BossName": {
+          "$className": "StringValue",
+          "$properties": {
+            "Value": ""
+          }
+        },
+        "BossHealth": {
+          "$className": "NumberValue",
+          "$properties": {
+            "Value": 0
+          }
+        },
+        "BossMaxHealth": {
+          "$className": "NumberValue",
+          "$properties": {
+            "Value": 0
+          }
+        },
+        "Alive": {
+          "$className": "IntValue",
+          "$properties": {
+            "Value": 0
+          }
+        }
+      }
+    },
+    "ServerScriptService": {
+      "$path": "src/ServerScriptService"
+    },
+    "ServerStorage": {
+      "$path": "src/ServerStorage"
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$path": "src/StarterPlayer/StarterPlayerScripts"
+      },
+      "$properties": {
+        "CharacterJumpPower": 50,
+        "CharacterWalkSpeed": 20,
+        "EnableMouseLockOption": true,
+        "CameraMaxZoomDistance": 28,
+        "CameraMinZoomDistance": 6
+      }
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "Arena": {
+        "$path": "src/Workspace/Arena"
+      }
+    },
+    "Players": {
+      "$className": "Players",
+      "$properties": {
+        "CharacterAutoLoads": false,
+        "RespawnTime": 2
+      }
+    },
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "ClockTime": 18.6,
+        "Brightness": 2,
+        "GlobalShadows": true,
+        "EnvironmentDiffuseScale": 0.6,
+        "EnvironmentSpecularScale": 0.8,
+        "ShadowSoftness": 0.3,
+        "Ambient": [
+          0.16,
+          0.16,
+          0.22
+        ],
+        "OutdoorAmbient": [
+          0.28,
+          0.26,
+          0.36
+        ],
+        "FogColor": [
+          0.06,
+          0.06,
+          0.1
+        ],
+        "FogStart": 80,
+        "FogEnd": 400
+      }
+    },
+    "SoundService": {
+      "$className": "SoundService",
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    }
+  }
+}

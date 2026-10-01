@@ -1,0 +1,286 @@
+{
+ "className": "Folder",
+ "properties": {},
+ "children": [
+  {
+   "name": "Spawn1",
+   "className": "Part",
+   "properties": {
+    "Name": "Spawn1",
+    "Anchored": true,
+    "Size": [
+     6,
+     1,
+     6
+    ],
+    "Color": [
+     0.2,
+     0.2,
+     0.2
+    ],
+    "Material": "SmoothPlastic",
+    "TopSurface": "Smooth",
+    "BottomSurface": "Smooth",
+    "Transparency": 1,
+    "CanCollide": false,
+    "CFrame": {
+     "position": [
+      -70,
+      1.5,
+      -70
+     ],
+     "orientation": [
+      0,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  {
+   "name": "Spawn2",
+   "className": "Part",
+   "properties": {
+    "Name": "Spawn2",
+    "Anchored": true,
+    "Size": [
+     6,
+     1,
+     6
+    ],
+    "Color": [
+     0.2,
+     0.2,
+     0.2
+    ],
+    "Material": "SmoothPlastic",
+    "TopSurface": "Smooth",
+    "BottomSurface": "Smooth",
+    "Transparency": 1,
+    "CanCollide": false,
+    "CFrame": {
+     "position": [
+      70,
+      1.5,
+      -70
+     ],
+     "orientation": [
+      0,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  {
+   "name": "Spawn3",
+   "className": "Part",
+   "properties": {
+    "Name": "Spawn3",
+    "Anchored": true,
+    "Size": [
+     6,
+     1,
+     6
+    ],
+    "Color": [
+     0.2,
+     0.2,
+     0.2
+    ],
+    "Material": "SmoothPlastic",
+    "TopSurface": "Smooth",
+    "BottomSurface": "Smooth",
+    "Transparency": 1,
+    "CanCollide": false,
+    "CFrame": {
+     "position": [
+      70,
+      1.5,
+      70
+     ],
+     "orientation": [
+      0,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  {
+   "name": "Spawn4",
+   "className": "Part",
+   "properties": {
+    "Name": "Spawn4",
+    "Anchored": true,
+    "Size": [
+     6,
+     1,
+     6
+    ],
+    "Color": [
+     0.2,
+     0.2,
+     0.2
+    ],
+    "Material": "SmoothPlastic",
+    "TopSurface": "Smooth",
+    "BottomSurface": "Smooth",
+    "Transparency": 1,
+    "CanCollide": false,
+    "CFrame": {
+     "position": [
+      -70,
+      1.5,
+      70
+     ],
+     "orientation": [
+      0,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  {
+   "name": "Spawn5",
+   "className": "Part",
+   "properties": {
+    "Name": "Spawn5",
+    "Anchored": true,
+    "Size": [
+     6,
+     1,
+     6
+    ],
+    "Color": [
+     0.2,
+     0.2,
+     0.2
+    ],
+    "Material": "SmoothPlastic",
+    "TopSurface": "Smooth",
+    "BottomSurface": "Smooth",
+    "Transparency": 1,
+    "CanCollide": false,
+    "CFrame": {
+     "position": [
+      0,
+      1.5,
+      -72
+     ],
+     "orientation": [
+      0,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  {
+   "name": "Spawn6",
+   "className": "Part",
+   "properties": {
+    "Name": "Spawn6",
+    "Anchored": true,
+    "Size": [
+     6,
+     1,
+     6
+    ],
+    "Color": [
+     0.2,
+     0.2,
+     0.2
+    ],
+    "Material": "SmoothPlastic",
+    "TopSurface": "Smooth",
+    "BottomSurface": "Smooth",
+    "Transparency": 1,
+    "CanCollide": false,
+    "CFrame": {
+     "position": [
+      72,
+      1.5,
+      0
+     ],
+     "orientation": [
+      0,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  {
+   "name": "Spawn7",
+   "className": "Part",
+   "properties": {
+    "Name": "Spawn7",
+    "Anchored": true,
+    "Size": [
+     6,
+     1,
+     6
+    ],
+    "Color": [
+     0.2,
+     0.2,
+     0.2
+    ],
+    "Material": "SmoothPlastic",
+    "TopSurface": "Smooth",
+    "BottomSurface": "Smooth",
+    "Transparency": 1,
+    "CanCollide": false,
+    "CFrame": {
+     "position": [
+      0,
+      1.5,
+      72
+     ],
+     "orientation": [
+      0,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  {
+   "name": "Spawn8",
+   "className": "Part",
+   "properties": {
+    "Name": "Spawn8",
+    "Anchored": true,
+    "Size": [
+     6,
+     1,
+     6
+    ],
+    "Color": [
+     0.2,
+     0.2,
+     0.2
+    ],
+    "Material": "SmoothPlastic",
+    "TopSurface": "Smooth",
+    "BottomSurface": "Smooth",
+    "Transparency": 1,
+    "CanCollide": false,
+    "CFrame": {
+     "position": [
+      -72,
+      1.5,
+      0
+     ],
+     "orientation": [
+      0,
+      0,
+      0
+     ]
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,399 @@
+<title>Swarm Break</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one dark column, a 3D viewer up top with a chip rail, then dense reference sections. Single dark look by choice: it previews a neon game. */
+:root {
+  --bg: #0c0d14;
+  --panel: #14161f;
+  --panel-2: #1b1e2a;
+  --line: #2a2e3d;
+  --fg: #e8eaf2;
+  --muted: #9aa0b4;
+  --teal: #2fd9d1;
+  --amber: #ffaa28;
+  --swarm: #b04ce0;
+  --red: #ff4d4d;
+  --display: "Chakra Petch", "Barlow", system-ui, sans-serif;
+  --body: "Barlow", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 28px 64px; padding-inline: 18px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 22px; border-bottom: 1px solid var(--line); padding-bottom: 16px; margin-bottom: 22px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 6vw, 44px); letter-spacing: 0.06em; margin: 0; color: var(--teal); text-shadow: 0 0 18px rgba(47,217,209,.35); }
+header p { margin: 0; color: var(--muted); max-width: 60ch; }
+.note { border-left: 3px solid var(--amber); background: var(--panel); padding: 10px 14px; margin: 0 0 22px; color: var(--fg); max-width: 70ch; }
+h2 { font-family: var(--display); font-weight: 500; font-size: 20px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); margin: 36px 0 12px; }
+h2 small { color: var(--muted); letter-spacing: 0; text-transform: none; font-family: var(--body); font-size: 15px; margin-left: 12px; }
+h3 { font-family: var(--display); font-weight: 500; font-size: 17px; margin: 0 0 6px; }
+p { max-width: 70ch; }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+
+/* viewer */
+.viewer { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; }
+@media (max-width: 760px) { .viewer { grid-template-columns: 1fr; } }
+.stage { position: relative; background: radial-gradient(ellipse at 50% 40%, #1a1d2b 0%, #0c0d14 70%); border: 1px solid var(--line); aspect-ratio: 16 / 10; max-width: 100%; overflow: hidden; touch-action: none; }
+.stage canvas { display: block; width: 100%; height: 100%; }
+.stage .hint { position: absolute; left: 10px; bottom: 8px; font-family: var(--mono); font-size: 11px; color: var(--muted); pointer-events: none; }
+.tabs { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.tab { font-family: var(--display); letter-spacing: 0.08em; text-transform: uppercase; font-size: 13px; background: var(--panel); color: var(--muted); border: 1px solid var(--line); padding: 7px 14px; cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--bg); background: var(--teal); border-color: var(--teal); }
+.tab:focus-visible, .chip:focus-visible, button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chip { font-family: var(--body); font-weight: 600; font-size: 13px; background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-left: 4px solid var(--chipc, var(--line)); padding: 5px 10px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--panel-2); border-color: var(--chipc, var(--teal)); }
+.card { background: var(--panel); border: 1px solid var(--line); padding: 14px 16px; min-width: 0; }
+.card .name { font-family: var(--display); font-size: 22px; font-weight: 700; margin: 2px 0 4px; }
+.card .lore { color: var(--muted); font-size: 15px; margin: 0 0 12px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-family: var(--mono); font-size: 13px; }
+.stats div span { display: block; color: var(--muted); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; }
+.stats div { font-variant-numeric: tabular-nums; }
+
+/* waves */
+.waves { display: grid; grid-template-columns: repeat(15, minmax(0, 1fr)); gap: 4px; }
+.wave { background: var(--panel); border: 1px solid var(--line); padding: 6px 4px; text-align: center; min-width: 0; }
+.wave .n { font-family: var(--display); font-size: 14px; }
+.wave.boss { border-color: var(--red); box-shadow: inset 0 0 0 1px rgba(255,77,77,.3); }
+.wave .bar { display: flex; height: 26px; margin-top: 6px; overflow: hidden; }
+.wave .bar i { display: block; height: 100%; }
+.wave .b { font-family: var(--mono); font-size: 9px; color: var(--red); letter-spacing: .06em; text-transform: uppercase; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 10px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px; }
+@media (max-width: 760px) { .waves { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+
+/* tables */
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); background: var(--panel); }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.pill { display: inline-block; padding: 1px 8px; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; border: 1px solid currentColor; }
+
+/* grids */
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.el { border-top: 3px solid var(--elc); }
+.el .tier { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 6px 0; border-top: 1px dashed var(--line); font-size: 14px; }
+.el .tier b { font-family: var(--display); color: var(--elc); }
+.el .cost { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.zone { border-left: 3px solid var(--zc); }
+ul { padding-left: 18px; }
+li { margin: 4px 0; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+footer { margin-top: 40px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 12px; }
+@media (prefers-reduced-motion: reduce) { .stage { --spin: 0; } }
+</style>
+
+<div class="wrap">
+<header>
+  <h1>SWARM BREAK</h1>
+  <p>Preview of the game as built so far. Every model below is drawn from the exact part data the game's code builds. Nothing has run in Roblox Studio yet.</p>
+</header>
+<p class="note">What this is for: to see the shapes, the roster and the systems before the laptop playtest. Drag any model to spin it. The look in Studio will be richer: lights, particles, atmosphere and the animations are not shown here.</p>
+
+<section>
+  <h2>Models <small>drag to orbit, wheel or pinch to zoom</small></h2>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="enemies" aria-selected="true">Enemies</button>
+    <button class="tab" role="tab" data-tab="weapons" aria-selected="false">Weapons</button>
+    <button class="tab" role="tab" data-tab="arena" aria-selected="false">Arena</button>
+  </div>
+  <div class="viewer">
+    <div class="stage" id="stage"><canvas id="c"></canvas><div class="hint" id="hint">auto-spin on. drag to take over.</div></div>
+    <div class="card" id="card"></div>
+  </div>
+  <div class="chips" id="chips"></div>
+</section>
+
+<section>
+  <h2>A run <small>15 waves, a boss every 5, then Infinite mode</small></h2>
+  <div class="waves" id="waves"></div>
+  <div class="legend" id="legend"></div>
+  <p style="margin-top:12px">Between waves the shop opens for 12 seconds. Coins from kills buy Damage, Fire rate, Speed and Max HP for that run. Reach wave 15 and the run continues as Infinite mode with scaling enemies for the leaderboard.</p>
+</section>
+
+<section>
+  <h2>Weapon catalog <small>15 weapons, 4 kinds, 4 rarities</small></h2>
+  <div class="tablewrap"><table id="wtable"></table></div>
+  <p style="margin-top:10px">Crate odds shown in the shop: <span id="odds" class="pill"></span>. Duplicates refund 150 coins.</p>
+</section>
+
+<section>
+  <h2>Rift elements <small>weapon evolution trees, one path per weapon, three tiers</small></h2>
+  <div class="grid" id="elements"></div>
+  <p style="margin-top:12px">Paid with Gems (kept forever, earned by the wave you reach) plus element shards from bosses: the Brute drops Void, the Queen drops Verdant, the Warden drops Storm, and Circuit shards come with wave clears.</p>
+</section>
+
+<section>
+  <h2>The Break Room <small>the lobby hub, each zone themed to what it does</small></h2>
+  <div class="grid" id="zones"></div>
+</section>
+
+<section>
+  <h2>The story <small>why nothing bleeds</small></h2>
+  <div class="two">
+    <div class="card"><h3>Aster-9</h3><p>A research station drilled into a fracture under the ice. The crew called it the Rift. It leaks rift-light: raw energy that takes a body when it touches something living or built. Left alone it becomes the Swarm. Caught and shaped, it becomes a weapon.</p></div>
+    <div class="card"><h3>Breakers</h3><p>The survivors sealed the lower decks and opened the Break Room. From there, Breakers drop into the arena decks below. Every enemy is rift-light wearing a body: when it dies it breaks back into motes of light. Bosses break into a storm of it.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Robux <small>placeholder prices, to finalize later</small></h2>
+  <div class="tablewrap"><table id="money"></table></div>
+</section>
+
+<section>
+  <h2>Decided and next</h2>
+  <div class="two">
+    <div class="card"><h3>Decided</h3><ul>
+      <li>Name: Swarm Break.</li>
+      <li>No blood. Enemies break into light.</li>
+      <li>Lobby first, then drop into a match with friends. Bigger lobby servers, small co-op matches.</li>
+      <li>Evolution trees by element: Verdant, Circuit, Storm, Void. Three tiers, easy to read.</li>
+      <li>Placeholder prices for now.</li>
+    </ul></div>
+    <div class="card"><h3>Next</h3><ul>
+      <li>Laptop: install Roblox Studio, sync, playtest, screenshots and a short clip.</li>
+      <li>Music: a distinctive licensed track picked in the Creator Store on the laptop. Chart songs can't be licensed for a game.</li>
+      <li>Mesh models: decide after seeing these in Studio. Free CC0 packs can replace any rig.</li>
+      <li>Later weapons: drones, boomerangs, more evolutions.</li>
+    </ul></div>
+  </div>
+</section>
+
+<footer>Built from /mnt/project-files/roblox/game. Regenerate this page with the export tool after code changes.</footer>
+</div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  var D = JSON.parse(document.getElementById('data').textContent);
+  var LORE = {
+    Walker: "A hull of station steel the Rift pulled into a body. Slow, hits hard.",
+    Runner: "Four-legged, built from severed cable and bone-light. Fast, weak.",
+    Flyer: "A floating lantern of rift-light with paper-thin wings. Dives.",
+    Tank: "A beetle-shell of fused armor plates. Soaks damage.",
+    Spitter: "Sacs of unstable rift-light on its back. Spits it from range.",
+    Brute: "Wave 5. The first thing that came through. A Walker grown to the size of a door.",
+    Queen: "Wave 10. A nest that walks. Hatches Runners while she lives.",
+    Warden: "Wave 15. The Rift's eye. Four wings, a ring of lights, fire from above."
+  };
+  var ENEMY_COLORS = { Walker: "#ff5a78", Runner: "#ffe678", Flyer: "#9678ff", Tank: "#78ff8c", Spitter: "#beff5a", Brute: "#ff2828", Queen: "#ff5aff", Warden: "#5ac8ff" };
+  var RARITY = D.data.rarityColor;
+  function rgb(a) { return 'rgb(' + Math.round(a[0]) + ',' + Math.round(a[1]) + ',' + Math.round(a[2]) + ')'; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  // ---------- three.js viewer ----------
+  var canvas = document.getElementById('c');
+  var stage = document.getElementById('stage');
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(40, 1.6, 0.1, 2000);
+  scene.add(new THREE.HemisphereLight(0x8890c0, 0x101018, 0.9));
+  var sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(30, 50, 20); scene.add(sun);
+  var fill = new THREE.DirectionalLight(0x2fd9d1, 0.25); fill.position.set(-40, 10, -30); scene.add(fill);
+  var group = new THREE.Group(); scene.add(group);
+
+  function wedgeGeometry(sx, sy, sz) {
+    // Roblox WedgePart: vertical face at +Z, slope down toward -Z.
+    var x = sx / 2, y = sy / 2, z = sz / 2;
+    var v = [
+      -x, -y, -z,  x, -y, -z,  x, -y, z,  -x, -y, z,   // bottom 0-3
+      -x,  y,  z,  x,  y,  z                            // top back edge 4-5
+    ];
+    var idx = [0, 2, 1, 0, 3, 2,  3, 4, 5, 3, 5, 2,  0, 1, 5, 0, 5, 4,  0, 4, 3,  1, 2, 5];
+    var g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+    g.setIndex(idx); g.computeVertexNormals();
+    return g;
+  }
+  function geometryFor(p) {
+    var s = p.size;
+    switch (p.shape) {
+      case 'Ball': { var r = Math.min(s[0], s[1], s[2]) / 2; return new THREE.SphereGeometry(r, 20, 14); }
+      case 'Sphere': { var g = new THREE.SphereGeometry(0.5, 20, 14); g.scale(s[0], s[1], s[2]); return g; }
+      case 'Cylinder': { var rr = Math.min(s[1], s[2]) / 2; var c = new THREE.CylinderGeometry(rr, rr, s[0], 24); c.rotateZ(-Math.PI / 2); return c; }
+      case 'Wedge': return wedgeGeometry(s[0], s[1], s[2]);
+      default: return new THREE.BoxGeometry(s[0], s[1], s[2]);
+    }
+  }
+  function materialFor(p) {
+    var col = new THREE.Color(p.color[0], p.color[1], p.color[2]);
+    var opts = { color: col, transparent: p.transparency > 0, opacity: 1 - p.transparency };
+    if (p.material === 'Neon') { return new THREE.MeshBasicMaterial(opts); }
+    var m = new THREE.MeshStandardMaterial(opts);
+    if (p.material === 'Metal') { m.metalness = 0.8; m.roughness = 0.35; }
+    else if (p.material === 'DiamondPlate') { m.metalness = 0.6; m.roughness = 0.5; }
+    else if (p.material === 'Slate' || p.material === 'Concrete') { m.metalness = 0.05; m.roughness = 0.95; }
+    else { m.metalness = 0.1; m.roughness = 0.6; }
+    return m;
+  }
+  function build(parts) {
+    while (group.children.length) group.remove(group.children[0]);
+    var box = new THREE.Box3();
+    parts.forEach(function (p) {
+      if (p.transparency >= 1) return;
+      var mesh = new THREE.Mesh(geometryFor(p), materialFor(p));
+      var r = p.rot;
+      var m = new THREE.Matrix4();
+      m.set(r[0], r[1], r[2], p.pos[0],  r[3], r[4], r[5], p.pos[1],  r[6], r[7], r[8], p.pos[2],  0, 0, 0, 1);
+      mesh.matrixAutoUpdate = false; mesh.matrix.copy(m); mesh.updateMatrixWorld(true);
+      group.add(mesh);
+      box.expandByObject(mesh);
+    });
+    var center = box.getCenter(new THREE.Vector3());
+    var size = box.getSize(new THREE.Vector3());
+    group.position.set(-center.x, -center.y, -center.z);
+    var radius = Math.max(size.x, size.y, size.z) * 0.5;
+    orbit.dist = radius * 2.6 + 2;
+    orbit.theta = 0.6; orbit.phi = 1.15;
+    orbit.auto = true;
+  }
+  var orbit = { theta: 0.6, phi: 1.15, dist: 20, auto: true };
+  function resize() {
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (canvas.width !== w || canvas.height !== h) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+  }
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function frame() {
+    resize();
+    if (orbit.auto && !reduced) orbit.theta += 0.004;
+    var p = Math.max(0.15, Math.min(Math.PI - 0.15, orbit.phi));
+    camera.position.set(Math.sin(p) * Math.sin(orbit.theta) * orbit.dist, Math.cos(p) * orbit.dist, Math.sin(p) * Math.cos(orbit.theta) * orbit.dist);
+    camera.lookAt(0, 0, 0);
+    renderer.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+  var drag = null;
+  stage.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y: e.clientY }; orbit.auto = false; stage.setPointerCapture(e.pointerId); document.getElementById('hint').textContent = 'drag to orbit. wheel or pinch to zoom.'; });
+  stage.addEventListener('pointermove', function (e) { if (!drag) return; orbit.theta += (e.clientX - drag.x) * 0.008; orbit.phi -= (e.clientY - drag.y) * 0.008; drag = { x: e.clientX, y: e.clientY }; });
+  stage.addEventListener('pointerup', function () { drag = null; });
+  stage.addEventListener('pointercancel', function () { drag = null; });
+  stage.addEventListener('wheel', function (e) { e.preventDefault(); orbit.dist *= (1 + Math.sign(e.deltaY) * 0.08); }, { passive: false });
+  var pinch = null;
+  stage.addEventListener('touchstart', function (e) { if (e.touches.length === 2) pinch = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }, { passive: true });
+  stage.addEventListener('touchmove', function (e) { if (e.touches.length === 2 && pinch) { var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); orbit.dist *= pinch / d; pinch = d; } }, { passive: true });
+  stage.addEventListener('touchend', function () { pinch = null; }, { passive: true });
+
+  // ---------- chips + cards ----------
+  var chips = document.getElementById('chips'), card = document.getElementById('card');
+  var current = { tab: 'enemies', id: null };
+  function stat(label, value) { return '<div><span>' + esc(label) + '</span>' + esc(value) + '</div>'; }
+  function showEnemy(e) {
+    build(e.parts);
+    card.innerHTML = '<div class="eyebrow">' + (e.boss ? 'Boss' : (e.flying ? 'Flying' : (e.ranged ? 'Ranged' : 'Ground'))) + '</div>' +
+      '<div class="name" style="color:' + ENEMY_COLORS[e.id] + '">' + esc(e.name) + '</div>' +
+      '<p class="lore">' + esc(LORE[e.id] || '') + '</p>' +
+      '<div class="stats">' + stat('Health', e.health) + stat('Speed', e.speed + ' studs/s') + stat('Hit', e.damage) + stat('Coins', e.coins) + stat('Parts', e.parts.length) + stat('Ground gap', e.hip.toFixed(1) + ' studs') + '</div>';
+  }
+  function showWeapon(w) {
+    build(w.parts);
+    var c = rgb(RARITY[w.rarity]);
+    card.innerHTML = '<div class="eyebrow" style="color:' + c + '">' + esc(w.rarity) + ' · ' + esc(w.kind) + '</div>' +
+      '<div class="name" style="color:' + c + '">' + esc(w.name) + '</div>' +
+      '<p class="lore">' + esc(w.description) + '</p>' +
+      '<div class="stats">' + stat('Damage', w.damage) + stat(w.kind === 'Orbital' ? 'Orbs' : 'Rays', w.pellets) + stat('Rate', w.fireRate + '/s') + stat('Range', w.range + ' studs') + stat('DPS est.', Math.round(w.power)) + '</div>';
+  }
+  function showArena() {
+    build(D.arena);
+    orbit.phi = 0.9; orbit.dist = 190;
+    card.innerHTML = '<div class="eyebrow">Arena deck</div><div class="name" style="color:var(--teal)">Overrun Station</div>' +
+      '<p class="lore">160 by 160 studs. Slate floor with a neon grid, two catwalks with steps, a ledge, crates, barrels and broken pillars for cover. Eight swarm portals on the edges and the red boss gate at the far end. Leaderboard wall opposite.</p>' +
+      '<div class="stats">' + stat('Parts', D.arena.length) + stat('Portals', 8) + stat('Bosses enter', 'north gate') + stat('Players', 'up to 8 per match') + '</div>';
+  }
+  function renderChips() {
+    chips.innerHTML = '';
+    if (current.tab === 'arena') { showArena(); return; }
+    var list = current.tab === 'enemies' ? D.enemies : D.weapons;
+    list.forEach(function (item, i) {
+      var b = document.createElement('button');
+      b.className = 'chip'; b.type = 'button'; b.textContent = item.name;
+      b.style.setProperty('--chipc', current.tab === 'enemies' ? ENEMY_COLORS[item.id] : rgb(RARITY[item.rarity]));
+      b.setAttribute('aria-pressed', String(i === 0));
+      b.addEventListener('click', function () {
+        Array.prototype.forEach.call(chips.children, function (c) { c.setAttribute('aria-pressed', 'false'); });
+        b.setAttribute('aria-pressed', 'true');
+        current.tab === 'enemies' ? showEnemy(item) : showWeapon(item);
+      });
+      chips.appendChild(b);
+    });
+    current.tab === 'enemies' ? showEnemy(list[0]) : showWeapon(list[0]);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (t) {
+    t.addEventListener('click', function () {
+      Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (x) { x.setAttribute('aria-selected', 'false'); });
+      t.setAttribute('aria-selected', 'true');
+      current.tab = t.getAttribute('data-tab');
+      renderChips();
+    });
+  });
+
+  // ---------- waves ----------
+  var wavesEl = document.getElementById('waves');
+  var bossAt = { 5: 'The Brute', 10: 'Swarm Queen', 15: 'Sky Warden' };
+  var order = ['Walker', 'Runner', 'Flyer', 'Tank', 'Spitter'];
+  for (var w = 1; w <= 15; w++) {
+    var weights = D.data.weightsByWave[w - 1] || D.data.weightsByWave[String(w)] || {};
+    var total = 0; order.forEach(function (k) { total += weights[k] || 0; });
+    var bar = order.map(function (k) { var v = weights[k] || 0; return v ? '<i style="width:' + (100 * v / total).toFixed(1) + '%;background:' + ENEMY_COLORS[k] + '"></i>' : ''; }).join('');
+    var count = 6 + 3 * (w - 1);
+    var div = document.createElement('div');
+    div.className = 'wave' + (bossAt[w] ? ' boss' : '');
+    div.innerHTML = '<div class="n">' + w + '</div><div class="bar">' + bar + '</div><div class="eyebrow" style="margin-top:4px">' + count + '</div>' + (bossAt[w] ? '<div class="b">' + esc(bossAt[w]) + '</div>' : '');
+    wavesEl.appendChild(div);
+  }
+  document.getElementById('legend').innerHTML = order.map(function (k) { return '<span><i style="background:' + ENEMY_COLORS[k] + '"></i>' + k + '</span>'; }).join('') + '<span>number = enemies in the wave · red frame = boss wave</span>';
+
+  // ---------- weapon table ----------
+  var rows = D.weapons.map(function (w) {
+    var c = rgb(RARITY[w.rarity]);
+    return '<tr><td style="color:' + c + ';font-weight:600">' + esc(w.name) + '</td><td><span class="pill" style="color:' + c + '">' + esc(w.rarity) + '</span></td><td>' + esc(w.kind) + '</td><td class="num">' + w.damage + '</td><td class="num">' + w.fireRate + '</td><td class="num">' + w.range + '</td><td class="num">' + Math.round(w.power) + '</td><td style="white-space:normal;min-width:220px;color:var(--muted)">' + esc(w.description) + '</td></tr>';
+  }).join('');
+  document.getElementById('wtable').innerHTML = '<thead><tr><th>Weapon</th><th>Rarity</th><th>Kind</th><th>Dmg</th><th>Rate/s</th><th>Range</th><th>DPS est.</th><th>What it does</th></tr></thead><tbody>' + rows + '</tbody>';
+  var odds = D.data.rarityOdds;
+  document.getElementById('odds').textContent = ['Common', 'Rare', 'Epic', 'Legendary'].map(function (r) { return r + ' ' + odds[r] + '%'; }).join('  ');
+
+  // ---------- elements ----------
+  var elEl = document.getElementById('elements');
+  D.data.elementOrder.forEach(function (name) {
+    var e = D.data.elements[name];
+    var c = rgb(e.Color);
+    var tiers = e.Tiers.map(function (t) {
+      return '<div class="tier"><b>' + t.Tier + '</b><div>' + esc(t.Label) + ' <span class="cost">+' + Math.round(t.DamageMult * 100) + '% dmg' + (t.FireRateMult ? ', +' + Math.round(t.FireRateMult * 100) + '% rate' : '') + ' · ' + t.GemsCost + ' gems, ' + t.ShardsCost + ' shard' + (t.ShardsCost > 1 ? 's' : '') + '</span></div></div>';
+    }).join('');
+    var d = document.createElement('div');
+    d.className = 'card el'; d.style.setProperty('--elc', c);
+    d.innerHTML = '<h3 style="color:' + c + '">' + esc(e.Name) + '</h3><p class="lore" style="margin-bottom:8px">' + esc(e.Blurb) + '</p>' + tiers;
+    elEl.appendChild(d);
+  });
+
+  // ---------- lobby zones ----------
+  var zones = [
+    ['Armory', 'var(--teal)', 'Weapon racks under hard-light. Equip, compare, and evolve weapons down a Rift element. Each element corner glows its color.'],
+    ['Forge', 'var(--amber)', 'Furnace and anvils. Spend Gems on permanent perks: start-of-run coins, extra dash, more max HP.'],
+    ['Vault', 'var(--swarm)', 'A sealed strongroom with crate pedestals. Open weapon crates here with the odds on the wall.'],
+    ['Pass Kiosk', 'var(--red)', 'A ticket booth by the drop pads. The three passes and coin packs, with what each does.'],
+    ['Drop Pads', '#5ac8ff', 'Glass elevators down to the arena decks. Stand on one with friends, a countdown starts, and the party drops into its own match.'],
+    ['Records Wall', '#e8eaf2', 'Global best-wave board and the party board so you can see who is online and gear up together.']
+  ];
+  var zEl = document.getElementById('zones');
+  zones.forEach(function (z) {
+    var d = document.createElement('div'); d.className = 'card zone'; d.style.setProperty('--zc', z[1]);
+    d.innerHTML = '<h3 style="color:' + z[1] + '">' + esc(z[0]) + '</h3><p class="lore" style="margin:0">' + esc(z[2]) + '</p>';
+    zEl.appendChild(d);
+  });
+
+  // ---------- money ----------
+  var prices = { DoubleCoins: 199, ExtraDash: 149, StarterPack: 249, Coins500: 49, Coins1500: 129, Revive: 25, WeaponCrate: 99 };
+  var mrows = '';
+  Object.keys(D.data.passes).forEach(function (k) { mrows += '<tr><td>' + esc(D.data.passes[k].Name) + '</td><td>Pass, one time</td><td class="num">' + prices[k] + '</td></tr>'; });
+  Object.keys(D.data.products).forEach(function (k) { mrows += '<tr><td>' + esc(D.data.products[k].Name) + '</td><td>Product, repeatable</td><td class="num">' + prices[k] + '</td></tr>'; });
+  document.getElementById('money').innerHTML = '<thead><tr><th>Item</th><th>Type</th><th>Robux (placeholder)</th></tr></thead><tbody>' + mrows + '</tbody>';
+
+  renderChips();
+  frame();
+})();
+</script>

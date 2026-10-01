@@ -1,0 +1,2 @@
+# Preferred: std = "roblox" (selene downloads the API dump). Fallback when offline: the bundled minimal std.
+std = "roblox_min"

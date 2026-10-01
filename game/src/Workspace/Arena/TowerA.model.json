@@ -1,0 +1,33 @@
+{
+ "className": "Part",
+ "properties": {
+  "Name": "TowerA",
+  "Anchored": true,
+  "Size": [
+   14,
+   16,
+   14
+  ],
+  "Color": [
+   0.5,
+   0.5,
+   0.6
+  ],
+  "Material": "SmoothPlastic",
+  "TopSurface": "Smooth",
+  "BottomSurface": "Smooth",
+  "CFrame": {
+   "position": [
+    45,
+    8,
+    -15
+   ],
+   "orientation": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "children": []
+}

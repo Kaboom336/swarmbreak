@@ -1,0 +1,91 @@
+# Minimal Roblox globals for selene when the full API dump can't be fetched.
+# Everything is typed "any": selene still catches unused/undefined/shadowed names.
+---
+base: luau
+globals:
+  game:
+    any: true
+  workspace:
+    any: true
+  script:
+    any: true
+  plugin:
+    any: true
+  Instance:
+    any: true
+  Enum:
+    any: true
+  Vector2:
+    any: true
+  Vector3:
+    any: true
+  CFrame:
+    any: true
+  Color3:
+    any: true
+  UDim:
+    any: true
+  UDim2:
+    any: true
+  Random:
+    any: true
+  TweenInfo:
+    any: true
+  RaycastParams:
+    any: true
+  task:
+    any: true
+  typeof:
+    any: true
+  tick:
+    any: true
+  wait:
+    any: true
+  warn:
+    any: true
+  settings:
+    any: true
+  DateTime:
+    any: true
+  NumberRange:
+    any: true
+  Region3:
+    any: true
+  BrickColor:
+    any: true
+  Ray:
+    any: true
+  Rect:
+    any: true
+  Font:
+    any: true
+  utf8:
+    any: true
+  shared:
+    any: true
+  elapsedTime:
+    any: true
+  os:
+    any: true
+  ColorSequence:
+    any: true
+  ColorSequenceKeypoint:
+    any: true
+  NumberSequence:
+    any: true
+  NumberSequenceKeypoint:
+    any: true
+  PhysicalProperties:
+    any: true
+  Axes:
+    any: true
+  Faces:
+    any: true
+  PathWaypoint:
+    any: true
+  OverlapParams:
+    any: true
+  Vector3int16:
+    any: true
+  Vector2int16:
+    any: true
