@@ -17,7 +17,11 @@ local Theme = require(ReplicatedStorage.Shared.Theme)
 local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Quests = require(ReplicatedStorage.Shared.Quests)
+<<<<<<< HEAD
 local Kits = require(ReplicatedStorage.Shared.Kits)
+=======
+local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
+>>>>>>> codex/first-run
 local ClientFX = require(script.Parent.ClientFX)
 
 local player = Players.LocalPlayer
@@ -289,6 +293,23 @@ local boostsLabel =
 	text(screen, "Boosts", UDim2.new(1, -432, 1, -24), UDim2.new(0, 420, 0, 14), "", 12)
 boostsLabel.TextXAlignment = Enum.TextXAlignment.Right
 boostsLabel.TextColor3 = ClientFX.c3(Theme.NeonTeal)
+
+-- Bottom-center first-run hint. Only the first unfinished tutorial step is visible.
+local tutorialPill = Instance.new("Frame")
+tutorialPill.Name = "TutorialHint"
+tutorialPill.AnchorPoint = Vector2.new(0.5, 1)
+tutorialPill.Size = UDim2.new(0, 300, 0, 38)
+tutorialPill.Position = UDim2.new(0.5, 0, 1, -24)
+tutorialPill.BackgroundColor3 = PANEL
+tutorialPill.BackgroundTransparency = 0.08
+tutorialPill.BorderSizePixel = 0
+tutorialPill.Parent = screen
+local tutorialCorner = Instance.new("UICorner")
+tutorialCorner.CornerRadius = UDim.new(1, 0)
+tutorialCorner.Parent = tutorialPill
+local tutorialHint =
+	text(tutorialPill, "Text", UDim2.new(0, 12, 0, 0), UDim2.new(1, -24, 1, 0), "", 17)
+tutorialHint.TextColor3 = ClientFX.c3(Theme.NeonTeal)
 
 -- Banner + toast
 local banner =
@@ -962,6 +983,7 @@ stats = {
 	KitsOwned = { Soldier = true },
 	Offer = {},
 	Quests = {},
+	Flags = {},
 }
 
 local function rebuildHotbar()
@@ -1080,6 +1102,9 @@ local function refreshStats()
 	boostsLabel.Text = WaveRewards.stacksText((stats.Boosts and stats.Boosts.Stacks) or {})
 	refreshCards()
 	refreshQuests(stats.Quests)
+	local tutorialStep = Tutorial.next(stats.Flags or {})
+	tutorialPill.Visible = tutorialStep ~= nil
+	tutorialHint.Text = if tutorialStep then tutorialStep.Hint else ""
 	if summaryPanel.Visible then
 		-- a perk bought from the panel moves the goal on and updates the Gems total
 		refreshGoal(Goals.next(profileSnapshot()))

@@ -33,7 +33,15 @@ ProfileSchema.PerkDefs = {
 }
 
 -- The only flags a profile may carry. FirstBossCrate: the free Gem crate for the first boss kill.
-ProfileSchema.FlagKeys = { "FirstBossCrate" }
+ProfileSchema.FlagKeys = {
+	"FirstBossCrate",
+	"Tut_Move",
+	"Tut_Shoot",
+	"Tut_Dash",
+	"Tut_Pick",
+	"Tut_Upgrade",
+	"Tut_Crate",
+}
 
 function ProfileSchema.default(): Profile
 	local shards = {}

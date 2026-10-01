@@ -8,6 +8,9 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local ClientFX = require(script.Parent.ClientFX)
 
 local player = Players.LocalPlayer
+local Dash = (ReplicatedStorage:WaitForChild("Remotes") :: Folder):WaitForChild(
+		"Dash"
+	) :: RemoteEvent
 
 local function bind(char: Model)
 	local hum = char:WaitForChild("Humanoid") :: Humanoid
@@ -38,6 +41,7 @@ local function bind(char: Model)
 			return
 		end
 		charges -= 1
+		Dash:FireServer()
 		player:SetAttribute("DashReady", charges)
 		ClientFX.sound("Dash")
 		ClientFX.fovKick(10, 0.35)

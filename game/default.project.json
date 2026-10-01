@@ -20,6 +20,9 @@
         "Shoot": {
           "$className": "RemoteEvent"
         },
+        "Dash": {
+          "$className": "RemoteEvent"
+        },
         "BuyUpgrade": {
           "$className": "RemoteFunction"
         },
