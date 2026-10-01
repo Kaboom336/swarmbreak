@@ -3,17 +3,27 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
+local Feel = require(ReplicatedStorage.Shared.Feel)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local ClientFX = require(script.Parent.ClientFX)
 local HitMarker = ReplicatedStorage:WaitForChild("Remotes").HitMarker :: RemoteEvent
+local numberState: Feel.NumberState = {}
 
 HitMarker.OnClientEvent:Connect(function(pos: Vector3, damage: number, killed: boolean)
+	local event: Feel.EventName = if killed then "Kill" else "Hit"
 	if killed then
 		local soundName = SfxMap.forEvent("enemy kill")
 		if soundName then
 			ClientFX.sound(soundName)
 		end
 	end
+	ClientFX.shakeFor(event, "Full")
+	local allowed: boolean
+	numberState, allowed = Feel.allowNumber(numberState, os.clock())
+	if not allowed then
+		return
+	end
+	local budget = Feel.Events[event]
 	local anchor = Instance.new("Part")
 	anchor.Anchored = true
 	anchor.CanCollide = false
@@ -30,7 +40,7 @@ HitMarker.OnClientEvent:Connect(function(pos: Vector3, damage: number, killed: b
 	t.Size = UDim2.fromScale(1, 1)
 	t.BackgroundTransparency = 1
 	t.Font = Enum.Font.GothamBlack
-	t.TextSize = if killed then 26 else 18
+	t.TextSize = math.round(18 * budget.NumberScale)
 	t.TextColor3 = if killed then Color3.fromRGB(255, 80, 80) else Color3.fromRGB(255, 240, 150)
 	t.TextStrokeTransparency = 0.3
 	t.Text = tostring(damage)

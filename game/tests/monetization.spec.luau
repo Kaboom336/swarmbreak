@@ -17,6 +17,36 @@ test("every pass and product has a name", function()
 	assert(Monetization.DeveloperProducts.Coins500.Coins == 500, "coin pack amount")
 end)
 
+test("convenience passes and double run rewards are placeholders", function()
+	for _, key in { "QuickCrate", "LuckyCrate", "VIP", "StarterPack" } do
+		local pass = Monetization.GamePasses[key]
+		assert(pass, key)
+		eq(pass.Id, 0, key .. " id")
+		eq(pass.Price, 0, key .. " price")
+		assert(type(pass.Name) == "string" and #pass.Name > 0, key .. " label")
+	end
+
+	local doubleRewards = Monetization.DeveloperProducts.DoubleRunRewards
+	assert(doubleRewards, "DoubleRunRewards")
+	eq(doubleRewards.Id, 0, "DoubleRunRewards id")
+	eq(doubleRewards.Price, 0, "DoubleRunRewards price")
+	assert(
+		type(doubleRewards.Name) == "string" and #doubleRewards.Name > 0,
+		"DoubleRunRewards label"
+	)
+end)
+
+test("monetization never sells damage or health", function()
+	for key, pass in Monetization.GamePasses do
+		eq(pass.DamageMult, nil, key .. " damage")
+		eq(pass.MaxHealth, nil, key .. " health")
+	end
+	for key, product in Monetization.DeveloperProducts do
+		eq(product.DamageMult, nil, key .. " damage")
+		eq(product.MaxHealth, nil, key .. " health")
+	end
+end)
+
 local Weapons = load("Weapons")
 
 test("the Epic crate is a product and every Robux crate names a real product", function()

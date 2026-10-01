@@ -1,5 +1,6 @@
 --!strict
 local Players = game:GetService("Players")
+local AnalyticsService = game:GetService("AnalyticsService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
@@ -10,6 +11,8 @@ local Economy = require(ReplicatedStorage.Shared.Economy)
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
+local SpawnPicker = require(ReplicatedStorage.Shared.SpawnPicker)
+local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local EnemyAI = require(ServerStorage.EnemyAI)
 local PlayerData = require(ServerStorage.PlayerData)
 local GameState = require(ServerStorage.GameState)
@@ -27,6 +30,14 @@ local bossSpawn = arena:WaitForChild("BossSpawn") :: BasePart
 local rng = Random.new()
 
 local currentWave = 0
+local runStartedAt = 0
+
+local function sendTelemetry(plr: Player, name: string, fields: Telemetry.Fields)
+	pcall(function()
+		local event = Telemetry.build(name, fields)
+		AnalyticsService:LogCustomEvent(plr, event.name, nil, event.fields)
+	end)
+end
 
 local function todaysMutation(): (string, Mutations.Definition)
 	local id = Mutations.forDay(Daily.dayIndex(os.time()))
@@ -42,8 +53,25 @@ local function publishMutation()
 end
 
 local function randomSpawnCFrame(): CFrame
-	local parts = spawns:GetChildren()
-	local p = parts[rng:NextInteger(1, #parts)] :: BasePart
+	local parts: { BasePart } = {}
+	local portalPositions = {}
+	for _, child in spawns:GetChildren() do
+		if child:IsA("BasePart") then
+			table.insert(parts, child)
+			table.insert(portalPositions, { x = child.Position.X, z = child.Position.Z })
+		end
+	end
+
+	local playerPositions = {}
+	for _, player in Players:GetPlayers() do
+		local character = player.Character
+		local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+		if root and root:IsA("BasePart") then
+			table.insert(playerPositions, { x = root.Position.X, z = root.Position.Z })
+		end
+	end
+
+	local p = parts[SpawnPicker.pick(portalPositions, playerPositions, rng:NextNumber())]
 	return p.CFrame + Vector3.new(0, 4, 0)
 end
 
@@ -174,6 +202,15 @@ local function runWave(wave: number): boolean
 	currentWave = wave
 	publishMutation()
 	GameState.set("Wave", wave)
+	for _, plr in Players:GetPlayers() do
+		if not PlayerData.isWaiting(plr) then
+			PlayerData.setRunWave(plr, wave)
+			sendTelemetry(plr, "WaveReached", {
+				wave = wave,
+				seconds = os.clock() - runStartedAt,
+			})
+		end
+	end
 	GameState.set("Phase", "starting")
 	FX:FireAllClients("sound", { Name = "WaveStart" })
 	countdown(Config.WaveStartDelay)
@@ -248,8 +285,16 @@ local function gameLoop()
 		while #Players:GetPlayers() == 0 do
 			task.wait(1)
 		end
+		runStartedAt = os.clock()
+		local playerCount = #Players:GetPlayers()
 		for _, plr in Players:GetPlayers() do
 			PlayerData.resetRun(plr)
+			local profile = PlayerData.profile(plr)
+			sendTelemetry(plr, "RunStart", {
+				players = playerCount,
+				weapon = profile.Equipped,
+				kit = profile.Kit,
+			})
 		end
 		respawnAll()
 
