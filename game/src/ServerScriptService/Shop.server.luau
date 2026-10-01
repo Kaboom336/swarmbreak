@@ -11,6 +11,8 @@ local Monetization = require(ReplicatedStorage.Shared.Monetization)
 local Weapons = require(ReplicatedStorage.Shared.Weapons)
 local ProfileSchema = require(ReplicatedStorage.Shared.ProfileSchema)
 local Kits = require(ReplicatedStorage.Shared.Kits)
+local Codes = require(ReplicatedStorage.Shared.Codes)
+local Daily = require(ReplicatedStorage.Shared.Daily)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local BuyUpgrade = Remotes.BuyUpgrade :: RemoteFunction
@@ -23,8 +25,46 @@ local PickReward = Remotes.PickReward :: RemoteFunction
 local UpdateSettings = Remotes.UpdateSettings :: RemoteEvent
 local Toast = Remotes.Toast :: RemoteEvent
 local Evolve = Remotes.Evolve :: RemoteFunction
+local RedeemCode = Remotes.RedeemCode :: RemoteFunction
 local FX = Remotes.FX :: RemoteEvent
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
+
+local lastCodeAttempt: { [Player]: number } = {}
+
+Players.PlayerRemoving:Connect(function(plr)
+	lastCodeAttempt[plr] = nil
+end)
+
+RedeemCode.OnServerInvoke = function(plr, code)
+	local now = os.clock()
+	local lastAttempt = lastCodeAttempt[plr]
+	if lastAttempt ~= nil and now - lastAttempt < 2 then
+		return false, "Please wait before trying another code."
+	end
+	lastCodeAttempt[plr] = now
+	if typeof(code) ~= "string" then
+		return false, "Bad request."
+	end
+	if not PlayerData.isLoaded(plr) then
+		return false, "Loading..."
+	end
+
+	local profile = PlayerData.profile(plr)
+	local ok, why = Codes.check(code, profile, Daily.dayIndex(os.time()))
+	if not ok then
+		return false, why
+	end
+	local updated, reward = Codes.redeem(profile, code, Daily.dayIndex(os.time()))
+	profile.Gems = updated.Gems
+	profile.Shards = updated.Shards
+	profile.Redeemed = updated.Redeemed
+	PlayerData.markDirty(plr)
+	PlayerData.push(plr)
+	if reward and reward.Crate then
+		PlayerData.openCrate(plr, reward.Crate)
+	end
+	return true, ""
+end
 
 UpdateSettings.OnServerEvent:Connect(function(plr, changes)
 	if typeof(changes) == "table" then

@@ -18,6 +18,7 @@ export type Profile = {
 	Runs: number,
 	CratesSinceLegendary: number, -- Robux crates opened since the last Legendary (pity counter)
 	Flags: { [string]: boolean }, -- one-time events already paid out (see FlagKeys)
+	Redeemed: { [string]: boolean }, -- redeemable codes already paid out
 	LastClaimDay: number, -- UTC day number (Daily.dayIndex) of the last daily reward, 0 = never
 	Streak: number, -- days in a row the daily reward was claimed
 	Quests: Quests.State,
@@ -63,6 +64,7 @@ function ProfileSchema.default(): Profile
 		Runs = 0,
 		CratesSinceLegendary = 0,
 		Flags = {},
+		Redeemed = {},
 		LastClaimDay = 0,
 		Streak = 0,
 		Quests = { Day = 0, Ids = {}, Progress = {}, Claimed = {} },
@@ -138,6 +140,13 @@ function ProfileSchema.sanitize(raw: any): Profile
 		for _, k in ProfileSchema.FlagKeys do
 			if raw.Flags[k] == true then
 				p.Flags[k] = true
+			end
+		end
+	end
+	if type(raw.Redeemed) == "table" then
+		for code, redeemed in raw.Redeemed do
+			if type(code) == "string" and redeemed == true then
+				p.Redeemed[code] = true
 			end
 		end
 	end
