@@ -422,6 +422,7 @@ tutorialPill.Position = UDim2.new(0.5, 0, 1, -24)
 tutorialPill.BackgroundColor3 = PANEL
 tutorialPill.BackgroundTransparency = 0.08
 tutorialPill.BorderSizePixel = 0
+tutorialPill.Visible = false
 tutorialPill.Parent = screen
 local tutorialCorner = Instance.new("UICorner")
 tutorialCorner.CornerRadius = UDim.new(1, 0)
@@ -1110,6 +1111,43 @@ stats = {
 	SfxVolume = Settings.DefaultVolume,
 }
 
+local tutorialContext: Tutorial.Context = "arena"
+local tutorialContextStartedAt = os.clock()
+
+local function currentTutorialContext(): Tutorial.Context
+	if cardPanel.Visible then
+		return "cards"
+	elseif shop.Visible then
+		return "shop"
+	end
+	return "arena"
+end
+
+local function currentTutorialPlatform(): Tutorial.Platform
+	if UserInputService.TouchEnabled then
+		return "touch"
+	elseif UserInputService.GamepadEnabled then
+		return "gamepad"
+	end
+	return "keyboard"
+end
+
+local function refreshTutorial()
+	local context = currentTutorialContext()
+	local now = os.clock()
+	if context ~= tutorialContext then
+		tutorialContext = context
+		tutorialContextStartedAt = now
+	end
+	local tutorialStep = Tutorial.pick(stats.Flags or {}, context)
+	local visible = tutorialStep ~= nil
+		and Tutorial.shouldShow(tutorialStep.Id, now - tutorialContextStartedAt)
+	tutorialPill.Visible = visible
+	tutorialHint.Text = if visible and tutorialStep
+		then Tutorial.hintFor(tutorialStep.Id, currentTutorialPlatform())
+		else ""
+end
+
 local function rebuildHotbar()
 	for _, c in hotbar:GetChildren() do
 		if c:IsA("TextButton") then
@@ -1226,9 +1264,7 @@ local function refreshStats()
 	boostsLabel.Text = WaveRewards.stacksText((stats.Boosts and stats.Boosts.Stacks) or {})
 	refreshCards()
 	refreshQuests(stats.Quests)
-	local tutorialStep = Tutorial.next(stats.Flags or {})
-	tutorialPill.Visible = tutorialStep ~= nil
-	tutorialHint.Text = if tutorialStep then tutorialStep.Hint else ""
+	refreshTutorial()
 	if summaryPanel.Visible then
 		-- a perk bought from the panel moves the goal on and updates the Gems total
 		refreshGoal(Goals.next(profileSnapshot()))
@@ -1322,6 +1358,7 @@ onState("BossMaxHealth", refreshBoss)
 -- HP bar + revive visibility
 local lastHealth = 0
 RunService.Heartbeat:Connect(function()
+	refreshTutorial()
 	local char = player.Character
 	local hum = char and char:FindFirstChildOfClass("Humanoid")
 	if hum then
