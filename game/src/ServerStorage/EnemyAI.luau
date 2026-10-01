@@ -5,6 +5,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PathfindingService = game:GetService("PathfindingService")
 local Enemies = require(ReplicatedStorage.Shared.Enemies)
+local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local EnemyBuilder = require(script.Parent.EnemyBuilder)
 local FX = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("FX") :: RemoteEvent
@@ -20,6 +21,7 @@ type Live = {
 	Root: BasePart,
 	Humanoid: Humanoid,
 	Def: EnemyDef,
+	Speed: number,
 	Damage: number,
 	AttackCooldown: number,
 	SummonCooldown: number,
@@ -112,7 +114,7 @@ local function groundMover(e: Live)
 	while hum.Health > 0 and e.Model.Parent do
 		-- Nature poison: slowed while SlowUntil (set by CombatEffects) is in the future
 		local slowUntil = (e.Model:GetAttribute("SlowUntil") :: number?) or 0
-		hum.WalkSpeed = if os.clock() < slowUntil then def.Speed * 0.7 else def.Speed
+		hum.WalkSpeed = if os.clock() < slowUntil then e.Speed * 0.7 else e.Speed
 		local target, dist = nearestPlayerRoot(e.Root.Position)
 		if target then
 			if def.Ranged and dist < (def.Range or 40) * 0.8 then
@@ -156,10 +158,16 @@ function EnemyAI.spawn(
 	cf: CFrame,
 	healthScale: number,
 	damageScale: number,
+	mutationId: string,
 	onDeath: (Player?) -> ()
 ): Model
 	local def = Enemies.Defs[typeName]
-	local size = v3(def.Size)
+	local stats = Mutations.apply({
+		EnemySpeed = def.Speed,
+		EnemyHealth = def.Health * healthScale,
+		BossScale = 1,
+	}, mutationId)
+	local size = v3(def.Size) * (if def.Boss then stats.BossScale else 1)
 	local rig = EnemyBuilder.build(typeName, size, cf)
 	local model = rig.Model
 	local root = rig.Root
@@ -169,9 +177,9 @@ function EnemyAI.spawn(
 	local hum = Instance.new("Humanoid")
 	hum.RigType = Enum.HumanoidRigType.R15
 	hum.HipHeight = rig.HipHeight
-	hum.MaxHealth = math.floor(def.Health * healthScale + 0.5)
+	hum.MaxHealth = math.floor(stats.EnemyHealth + 0.5)
 	hum.Health = hum.MaxHealth
-	hum.WalkSpeed = def.Speed
+	hum.WalkSpeed = stats.EnemySpeed
 	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	hum.AutoRotate = true
 	hum.RequiresNeck = false
@@ -192,6 +200,7 @@ function EnemyAI.spawn(
 		Root = root,
 		Humanoid = hum,
 		Def = def,
+		Speed = stats.EnemySpeed,
 		Damage = math.floor(def.Damage * damageScale + 0.5),
 		AttackCooldown = 1,
 		SummonCooldown = def.SummonEvery or 0,
@@ -271,7 +280,7 @@ RunService.Heartbeat:Connect(function(dt)
 			local dir = goal - e.Root.Position
 			if dir.Magnitude > 1 then
 				local slowUntil = (e.Model:GetAttribute("SlowUntil") :: number?) or 0
-				local speed = if os.clock() < slowUntil then def.Speed * 0.7 else def.Speed
+				local speed = if os.clock() < slowUntil then e.Speed * 0.7 else e.Speed
 				local step = math.min(speed * dt, dir.Magnitude)
 				e.Root.CFrame = CFrame.lookAt(e.Root.Position + dir.Unit * step, target.Position)
 			end

@@ -8,6 +8,8 @@ local Enemies = require(ReplicatedStorage.Shared.Enemies)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
 local Economy = require(ReplicatedStorage.Shared.Economy)
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
+local Daily = require(ReplicatedStorage.Shared.Daily)
+local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local EnemyAI = require(ServerStorage.EnemyAI)
 local PlayerData = require(ServerStorage.PlayerData)
 local GameState = require(ServerStorage.GameState)
@@ -26,6 +28,19 @@ local rng = Random.new()
 
 local currentWave = 0
 
+local function todaysMutation(): (string, Mutations.Definition)
+	local id = Mutations.forDay(Daily.dayIndex(os.time()))
+	return id, Mutations.Defs[id]
+end
+
+local function publishMutation()
+	local id, mutation = todaysMutation()
+	GameState.set("MutationId", id)
+	GameState.set("MutationLabel", mutation.Label)
+	GameState.set("MutationBlurb", mutation.Blurb)
+	workspace.Gravity = mutation.Gravity
+end
+
 local function randomSpawnCFrame(): CFrame
 	local parts = spawns:GetChildren()
 	local p = parts[rng:NextInteger(1, #parts)] :: BasePart
@@ -35,13 +50,14 @@ end
 local function spawnEnemy(typeName: string, cf: CFrame?)
 	local def = Enemies.Defs[typeName]
 	local hs, ds = WaveTable.scaling(currentWave)
+	local mutationId = todaysMutation()
 	local at = cf or randomSpawnCFrame()
 	local accent = (Theme.Enemy[typeName] or Theme.Enemy.Walker).Accent
 	FX:FireAllClients(
 		if def.Boss then "boss" else "spawn",
 		{ Position = at.Position, Color = accent }
 	)
-	local model = EnemyAI.spawn(typeName, at, hs, ds, function(killer: Player?)
+	local model = EnemyAI.spawn(typeName, at, hs, ds, mutationId, function(killer: Player?)
 		GameState.set("Alive", EnemyAI.aliveCount())
 		if killer then
 			local coins = Economy.coinsForKill(
@@ -129,6 +145,7 @@ end
 -- Returns true if the wave was cleared, false on team wipe.
 local function runWave(wave: number): boolean
 	currentWave = wave
+	publishMutation()
 	GameState.set("Wave", wave)
 	GameState.set("Phase", "starting")
 	FX:FireAllClients("sound", { Name = "WaveStart" })
@@ -142,7 +159,9 @@ local function runWave(wave: number): boolean
 	end
 
 	GameState.set("Phase", "fighting")
-	local count = WaveTable.enemyCount(wave)
+	local mutationId = todaysMutation()
+	local count =
+		math.floor(Mutations.apply({ Spawn = WaveTable.enemyCount(wave) }, mutationId).Spawn + 0.5)
 	local weights = Enemies.weightsForWave(wave)
 	for _ = 1, count do
 		while EnemyAI.aliveCount() >= Config.MaxAlive do
@@ -245,4 +264,5 @@ for _, plr in Players:GetPlayers() do
 	task.spawn(onPlayerAdded, plr)
 end
 
+publishMutation()
 task.spawn(gameLoop)
