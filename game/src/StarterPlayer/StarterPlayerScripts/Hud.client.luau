@@ -16,6 +16,7 @@ local Goals = require(ReplicatedStorage.Shared.Goals)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
 local Daily = require(ReplicatedStorage.Shared.Daily)
+local Quests = require(ReplicatedStorage.Shared.Quests)
 local ClientFX = require(script.Parent.ClientFX)
 
 local player = Players.LocalPlayer
@@ -173,6 +174,102 @@ local hpText = text(hpBack, "HP", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), 
 local statsLabel = text(screen, "Stats", UDim2.new(0, 12, 1, -66), UDim2.new(0, 420, 0, 58), "", 16)
 statsLabel.TextXAlignment = Enum.TextXAlignment.Left
 statsLabel.TextYAlignment = Enum.TextYAlignment.Top
+
+-- Top-right daily quests, tucked under the existing controls.
+local questToggle = button(screen, "Quests", UDim2.new(0, 260, 0, 34))
+questToggle.Name = "QuestToggle"
+questToggle.Position = UDim2.new(1, -272, 0, 50)
+local questPanel = Instance.new("Frame")
+questPanel.Name = "Quests"
+questPanel.Size = UDim2.new(0, 260, 0, 0)
+questPanel.Position = UDim2.new(1, -272, 0, 88)
+questPanel.BackgroundColor3 = PANEL
+questPanel.BackgroundTransparency = 0.1
+questPanel.BorderSizePixel = 0
+questPanel.Parent = screen
+local questCorner = Instance.new("UICorner")
+questCorner.CornerRadius = UDim.new(0, 8)
+questCorner.Parent = questPanel
+local questPadding = Instance.new("UIPadding")
+questPadding.PaddingTop = UDim.new(0, 6)
+questPadding.PaddingBottom = UDim.new(0, 6)
+questPadding.PaddingLeft = UDim.new(0, 6)
+questPadding.PaddingRight = UDim.new(0, 6)
+questPadding.Parent = questPanel
+local questLayout = Instance.new("UIListLayout")
+questLayout.Padding = UDim.new(0, 6)
+questLayout.SortOrder = Enum.SortOrder.LayoutOrder
+questLayout.Parent = questPanel
+
+local questsOpen = true
+local function setQuestsOpen(open: boolean)
+	questsOpen = open
+	questPanel.Visible = open
+	questToggle.Text = if open then "Quests  -" else "Quests  +"
+end
+questToggle.MouseButton1Click:Connect(function()
+	setQuestsOpen(not questsOpen)
+end)
+
+local function refreshQuests(state: any)
+	for _, child in questPanel:GetChildren() do
+		if child:IsA("Frame") then
+			child:Destroy()
+		end
+	end
+
+	local rows = Quests.rows(state)
+	questPanel.Size = UDim2.new(0, 260, 0, 12 + #rows * 64)
+	for order, row in rows do
+		local item = Instance.new("Frame")
+		item.Name = row.Id
+		item.Size = UDim2.new(1, 0, 0, 58)
+		item.BackgroundColor3 = Color3.fromRGB(32, 32, 44)
+		item.BorderSizePixel = 0
+		item.LayoutOrder = order
+		item.Parent = questPanel
+		local itemCorner = Instance.new("UICorner")
+		itemCorner.CornerRadius = UDim.new(0, 6)
+		itemCorner.Parent = item
+
+		local title =
+			text(item, "Text", UDim2.new(0, 8, 0, 3), UDim2.new(1, -16, 0, 22), row.Text, 13)
+		title.TextXAlignment = Enum.TextXAlignment.Left
+
+		local bar = Instance.new("Frame")
+		bar.Name = "Progress"
+		bar.Size = UDim2.new(0, 156, 0, 16)
+		bar.Position = UDim2.new(0, 8, 0, 31)
+		bar.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+		bar.BorderSizePixel = 0
+		bar.Parent = item
+		local fill = Instance.new("Frame")
+		fill.Name = "Fill"
+		fill.Size = UDim2.fromScale(row.Progress / row.Target, 1)
+		fill.BackgroundColor3 = if row.Done then OK else ClientFX.c3(Theme.NeonTeal)
+		fill.BorderSizePixel = 0
+		fill.Parent = bar
+		local progressText = text(
+			bar,
+			"Value",
+			UDim2.new(),
+			UDim2.fromScale(1, 1),
+			string.format("%d / %d", row.Progress, row.Target),
+			11
+		)
+		progressText.ZIndex = fill.ZIndex + 1
+
+		local reward = text(
+			item,
+			"Reward",
+			UDim2.new(0, 170, 0, 28),
+			UDim2.new(1, -178, 0, 22),
+			if row.Done then "Done" else string.format("+%d Gems", row.Gems),
+			12
+		)
+		reward.TextColor3 = if row.Done then OK else ClientFX.c3(Theme.NeonAmber)
+	end
+end
 
 -- Bottom-right: weapon hotbar
 local hotbar = Instance.new("Frame")
@@ -815,6 +912,7 @@ stats = {
 	Evolutions = {},
 	Perks = {},
 	Offer = {},
+	Quests = {},
 }
 
 local function rebuildHotbar()
@@ -931,6 +1029,7 @@ local function refreshStats()
 	refreshCrateButtons()
 	boostsLabel.Text = WaveRewards.stacksText((stats.Boosts and stats.Boosts.Stacks) or {})
 	refreshCards()
+	refreshQuests(stats.Quests)
 	if summaryPanel.Visible then
 		-- a perk bought from the panel moves the goal on and updates the Gems total
 		refreshGoal(Goals.next(profileSnapshot()))

@@ -17,6 +17,15 @@ export type State = {
 	Claimed: { [string]: boolean },
 }
 
+export type Row = {
+	Id: string,
+	Text: string,
+	Progress: number,
+	Target: number,
+	Gems: number,
+	Done: boolean,
+}
+
 local Quests = {}
 
 local function quest(def: QuestDef): QuestDef
@@ -150,6 +159,37 @@ function Quests.claim(state: State, id: string): (State, number)
 		return nextState, def.Gems
 	end
 	return nextState, 0
+end
+
+-- Turn a replicated quest snapshot into display-ready rows without trusting client data.
+function Quests.rows(state: any): { Row }
+	if typeof(state) ~= "table" or typeof(state.Ids) ~= "table" then
+		return {}
+	end
+
+	local progress = if typeof(state.Progress) == "table" then state.Progress else {}
+	local claimed = if typeof(state.Claimed) == "table" then state.Claimed else {}
+	local rows = {}
+	for _, id in state.Ids do
+		if typeof(id) == "string" then
+			local def = Quests.Defs[id]
+			if def then
+				local value = progress[id]
+				if typeof(value) ~= "number" or value ~= value then
+					value = 0
+				end
+				table.insert(rows, {
+					Id = id,
+					Text = def.Text,
+					Progress = math.clamp(value, 0, def.Target),
+					Target = def.Target,
+					Gems = def.Gems,
+					Done = claimed[id] == true,
+				})
+			end
+		end
+	end
+	return rows
 end
 
 -- userId is optional for pure callers; the server supplies it for per-player picks.

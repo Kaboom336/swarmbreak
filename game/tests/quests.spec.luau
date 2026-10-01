@@ -70,6 +70,44 @@ test("a complete quest can be claimed only once", function()
 	eq(incomplete.Claimed["Clear the Crowd"], nil, "incomplete not claimed")
 end)
 
+test("quest rows follow id order and cap display progress", function()
+	local state = {
+		Day = 10,
+		Ids = { "Finish a Run", "Clear the Crowd" },
+		Progress = { ["Finish a Run"] = 1, ["Clear the Crowd"] = 500 },
+		Claimed = { ["Finish a Run"] = true },
+	}
+	local rows = Quests.rows(state)
+	eq(#rows, 2, "row count")
+	eq(rows[1].Id, "Finish a Run", "first id")
+	eq(rows[1].Text, Quests.Defs["Finish a Run"].Text, "quest text")
+	eq(rows[1].Progress, 1, "first progress")
+	eq(rows[1].Target, 1, "first target")
+	eq(rows[1].Gems, Quests.Defs["Finish a Run"].Gems, "first gems")
+	eq(rows[1].Done, true, "claimed is done")
+	eq(rows[2].Id, "Clear the Crowd", "second id")
+	eq(rows[2].Progress, Quests.Defs["Clear the Crowd"].Target, "progress capped")
+	eq(rows[2].Done, false, "unclaimed is not done")
+	eq(state.Progress["Clear the Crowd"], 500, "input untouched")
+end)
+
+test("quest rows tolerate missing and junk state", function()
+	eq(#Quests.rows(nil), 0, "nil state")
+	eq(#Quests.rows("junk"), 0, "non-table state")
+	eq(#Quests.rows({}), 0, "missing ids")
+	eq(#Quests.rows({ Ids = "junk" }), 0, "junk ids")
+
+	local rows = Quests.rows({
+		Ids = { "Bogus", 42, "Open a Crate" },
+		Progress = { ["Open a Crate"] = "junk" },
+		Claimed = "junk",
+	})
+	eq(#rows, 1, "valid rows survive junk fields")
+	eq(rows[1].Id, "Open a Crate", "known id kept")
+	eq(rows[1].Progress, 0, "junk progress defaults to zero")
+	eq(rows[1].Done, false, "junk claims default to false")
+end)
+
 test("profile sanitize repairs junk quest state", function()
 	local p = ProfileSchema.sanitize({
 		Quests = {
