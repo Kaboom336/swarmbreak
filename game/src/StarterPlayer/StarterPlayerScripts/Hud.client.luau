@@ -17,6 +17,7 @@ local Theme = require(ReplicatedStorage.Shared.Theme)
 local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Quests = require(ReplicatedStorage.Shared.Quests)
+local Kits = require(ReplicatedStorage.Shared.Kits)
 local ClientFX = require(script.Parent.ClientFX)
 
 local player = Players.LocalPlayer
@@ -32,6 +33,7 @@ local EquipWeapon = Remotes.EquipWeapon :: RemoteEvent
 local Prompt = Remotes.Prompt :: RemoteEvent
 local Evolve = Remotes.Evolve :: RemoteFunction
 local BuyPerk = Remotes.BuyPerk :: RemoteFunction
+local ChooseKit = Remotes.ChooseKit :: RemoteFunction
 local GemCrate = Remotes.GemCrate :: RemoteFunction
 local PickReward = Remotes.PickReward :: RemoteFunction
 
@@ -329,6 +331,8 @@ local function profileSnapshot(): any
 		Equipped = stats.Equipped or "Starter",
 		Evolutions = stats.Evolutions or {},
 		Perks = stats.Perks or {},
+		Kit = stats.Kit or "Soldier",
+		KitsOwned = stats.KitsOwned or { Soldier = true },
 	}
 end
 
@@ -631,6 +635,49 @@ for _, key in Goals.PerkOrder do
 	perkRow(shop, key, 34).LayoutOrder = order
 end
 
+section("KITS")
+order += 1
+local kitsRow = Instance.new("Frame")
+kitsRow.Name = "Kits"
+kitsRow.Size = UDim2.new(1, 0, 0, 100)
+kitsRow.BackgroundTransparency = 1
+kitsRow.LayoutOrder = order
+kitsRow.Parent = shop
+local kitsLayout = Instance.new("UIListLayout")
+kitsLayout.FillDirection = Enum.FillDirection.Horizontal
+kitsLayout.Padding = UDim.new(0, 4)
+kitsLayout.Parent = kitsRow
+local kitButtons: { [string]: TextButton } = {}
+local function refreshKitButtons()
+	local owned = stats.KitsOwned or {}
+	for _, id in Kits.Order do
+		local def = Kits.Defs[id]
+		local b = kitButtons[id]
+		local isOwned = owned[id] == true
+		local cost = if isOwned then "Owned" else string.format("%d Gems", def.UnlockGems)
+		b.Text = string.format("%s\n%s\n%s", def.Label, def.Blurb, cost)
+		b.BackgroundColor3 = if stats.Kit == id
+			then OK
+			else if isOwned or (stats.Gems or 0) >= def.UnlockGems then BUTTON else GREY
+	end
+end
+for _, id in Kits.Order do
+	local b = button(kitsRow, id, UDim2.new(0.25, -3, 1, 0))
+	b.Name = "Kit" .. id
+	b.TextSize = 10
+	b.TextWrapped = true
+	kitButtons[id] = b
+	b.MouseButton1Click:Connect(function()
+		local ok, why = ChooseKit:InvokeServer(id)
+		ClientFX.sound(if ok then "Buy" else "Deny")
+		flashButton(b, ok == true)
+		if not ok and typeof(why) == "string" and why ~= "" then
+			flash(toast, why, 2.5)
+		end
+		task.delay(0.3, refreshKitButtons)
+	end)
+end
+
 section("COINS (Robux)")
 for _, key in { "Coins500", "Coins1500" } do
 	local b = shopButton(Monetization.DeveloperProducts[key].Name)
@@ -911,6 +958,8 @@ stats = {
 	Shards = {},
 	Evolutions = {},
 	Perks = {},
+	Kit = "Soldier",
+	KitsOwned = { Soldier = true },
 	Offer = {},
 	Quests = {},
 }
@@ -1026,6 +1075,7 @@ local function refreshStats()
 		end
 	end
 	refreshPerkButtons()
+	refreshKitButtons()
 	refreshCrateButtons()
 	boostsLabel.Text = WaveRewards.stacksText((stats.Boosts and stats.Boosts.Stacks) or {})
 	refreshCards()

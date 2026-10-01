@@ -3,6 +3,7 @@
 local Weapons = require(script.Parent.Weapons)
 local Evolutions = require(script.Parent.Evolutions)
 local Quests = require(script.Parent.Quests)
+local Kits = require(script.Parent.Kits)
 
 export type Profile = {
 	Version: number,
@@ -19,6 +20,8 @@ export type Profile = {
 	LastClaimDay: number, -- UTC day number (Daily.dayIndex) of the last daily reward, 0 = never
 	Streak: number, -- days in a row the daily reward was claimed
 	Quests: Quests.State,
+	Kit: string,
+	KitsOwned: { [string]: boolean },
 }
 
 local ProfileSchema = { Version = 1 }
@@ -52,6 +55,8 @@ function ProfileSchema.default(): Profile
 		LastClaimDay = 0,
 		Streak = 0,
 		Quests = { Day = 0, Ids = {}, Progress = {}, Claimed = {} },
+		Kit = "Soldier",
+		KitsOwned = { Soldier = true },
 	}
 end
 
@@ -160,6 +165,16 @@ function ProfileSchema.sanitize(raw: any): Profile
 				p.Quests.Claimed[id] = true
 			end
 		end
+	end
+	if type(raw.KitsOwned) == "table" then
+		for _, id in Kits.Order do
+			if raw.KitsOwned[id] == true then
+				p.KitsOwned[id] = true
+			end
+		end
+	end
+	if type(raw.Kit) == "string" and Kits.isUnlocked(p, raw.Kit) then
+		p.Kit = raw.Kit
 	end
 	return p
 end

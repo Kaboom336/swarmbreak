@@ -10,10 +10,12 @@ local GameState = require(ServerStorage.GameState)
 local Monetization = require(ReplicatedStorage.Shared.Monetization)
 local Weapons = require(ReplicatedStorage.Shared.Weapons)
 local ProfileSchema = require(ReplicatedStorage.Shared.ProfileSchema)
+local Kits = require(ReplicatedStorage.Shared.Kits)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local BuyUpgrade = Remotes.BuyUpgrade :: RemoteFunction
 local BuyPerk = Remotes.BuyPerk :: RemoteFunction
+local ChooseKit = Remotes.ChooseKit :: RemoteFunction
 local EquipWeapon = Remotes.EquipWeapon :: RemoteEvent
 local Prompt = Remotes.Prompt :: RemoteEvent
 local GemCrate = Remotes.GemCrate :: RemoteFunction
@@ -48,6 +50,21 @@ BuyPerk.OnServerInvoke = function(plr, key)
 		local def = ProfileSchema.PerkDefs[key]
 		local lvl = ProfileSchema.perkLevel(PlayerData.profile(plr), key)
 		Toast:FireClient(plr, string.format("%s Lv %d", def.Label, lvl), 3)
+	end
+	return ok, why
+end
+
+-- Kits: buy with Gems on the first choice, then equip immediately.
+ChooseKit.OnServerInvoke = function(plr, id)
+	if typeof(id) ~= "string" or not Kits.Defs[id] then
+		return false, "Bad request."
+	end
+	if not PlayerData.isLoaded(plr) then
+		return false, "Loading..."
+	end
+	local ok, why = PlayerData.chooseKit(plr, id)
+	if ok then
+		Toast:FireClient(plr, Kits.Defs[id].Label .. " equipped", 3)
 	end
 	return ok, why
 end

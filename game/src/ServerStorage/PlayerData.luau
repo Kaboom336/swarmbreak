@@ -17,6 +17,7 @@ local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Quests = require(ReplicatedStorage.Shared.Quests)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
+local Kits = require(ReplicatedStorage.Shared.Kits)
 local Profile = require(script.Parent.Profile)
 local WeaponModels = require(script.Parent.WeaponModels)
 
@@ -76,6 +77,8 @@ local function push(plr: Player)
 			Streak = p.Streak,
 			DailyPopup = r.DailyPopup,
 			Quests = p.Quests,
+			Kit = p.Kit,
+			KitsOwned = p.KitsOwned,
 		})
 	end
 end
@@ -159,6 +162,13 @@ end
 function PlayerData.addKill(plr: Player, boss: boolean?)
 	local r = PlayerData.get(plr)
 	r.Kills += 1
+	local p = Profile.get(plr)
+	local weapon = Weapons.Defs[p.Equipped] or Weapons.Defs.Starter
+	local _, _, _, _, healOnKill = Kits.mods(p.Kit, weapon.Kind)
+	local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+	if hum and hum.Health > 0 and healOnKill > 0 then
+		hum.Health = math.min(hum.MaxHealth, hum.Health + healOnKill)
+	end
 	progressQuest(plr, "Kills", 1)
 	if boss then
 		progressQuest(plr, "BossKills", 1)
@@ -209,8 +219,14 @@ end
 -- ---------- weapons ----------
 -- The equipped weapon with this run's reward boosts folded in (range, pellets/orbs, swing).
 function PlayerData.equippedWeapon(plr: Player): Weapons.WeaponDef
-	local def = Weapons.Defs[Profile.get(plr).Equipped] or Weapons.Defs.Starter
-	return WaveRewards.weaponWith(PlayerData.get(plr).Boosts, def)
+	local p = Profile.get(plr)
+	local def = Weapons.Defs[p.Equipped] or Weapons.Defs.Starter
+	local weapon = WaveRewards.weaponWith(PlayerData.get(plr).Boosts, def)
+	if weapon.Kind == "Orbital" then
+		local _, _, _, orbsAdd = Kits.mods(p.Kit, weapon.Kind)
+		weapon.Pellets += orbsAdd
+	end
+	return weapon
 end
 
 function PlayerData.equippedEvo(plr: Player): Evolutions.WeaponEvo?
@@ -316,8 +332,14 @@ end
 -- ---------- multipliers used by combat ----------
 function PlayerData.damageMultiplier(plr: Player): number
 	local r = PlayerData.get(plr)
+	local p = Profile.get(plr)
+	local weapon = Weapons.Defs[p.Equipped] or Weapons.Defs.Starter
 	local evoDmg = Evolutions.multipliers(PlayerData.equippedEvo(plr))
-	local base = Upgrades.valueAt("Damage", r.Levels.Damage) * evoDmg * (1 + r.Boosts.DamageMult)
+	local kitDmg = Kits.mods(p.Kit, weapon.Kind)
+	local base = Upgrades.valueAt("Damage", r.Levels.Damage)
+		* evoDmg
+		* (1 + r.Boosts.DamageMult)
+		* kitDmg
 	local mutationId = Mutations.forDay(Daily.dayIndex(os.time()))
 	return Mutations.apply({ PlayerDamage = base }, mutationId).PlayerDamage
 end
@@ -340,16 +362,23 @@ end
 -- Max HP from the run's upgrades, the forever perk and this run's reward cards.
 local function maxHealthFor(plr: Player): number
 	local r = PlayerData.get(plr)
+	local p = Profile.get(plr)
+	local weapon = Weapons.Defs[p.Equipped] or Weapons.Defs.Starter
+	local _, kitMaxHealth = Kits.mods(p.Kit, weapon.Kind)
 	return Upgrades.valueAt("MaxHealth", r.Levels.MaxHealth)
-		+ ProfileSchema.perkValue(Profile.get(plr), "MaxHealth")
+		+ ProfileSchema.perkValue(p, "MaxHealth")
 		+ r.Boosts.MaxHealth
+		+ kitMaxHealth
 end
 
 local function applyStats(plr: Player)
 	local r = PlayerData.get(plr)
 	local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
 	if hum then
-		local speed = Upgrades.valueAt("Speed", r.Levels.Speed) + r.Boosts.Speed
+		local p = Profile.get(plr)
+		local weapon = Weapons.Defs[p.Equipped] or Weapons.Defs.Starter
+		local _, _, kitSpeed = Kits.mods(p.Kit, weapon.Kind)
+		local speed = Upgrades.valueAt("Speed", r.Levels.Speed) + r.Boosts.Speed + kitSpeed
 		if PlayerData.hasEffect(plr, "Haste") then
 			speed *= 1 + Evolutions.Effects.Haste.Value
 		end
@@ -403,6 +432,28 @@ function PlayerData.buyPerk(plr: Player, key: string): (boolean, string)
 	p.Perks[key] = ProfileSchema.perkLevel(p, key) + 1
 	Profile.markDirty(plr)
 	applyStats(plr) -- a Max HP perk raises the character's max HP right away
+	push(plr)
+	return true, ""
+end
+
+-- Buy a permanent kit when needed, then equip it. Returns ok, reason.
+function PlayerData.chooseKit(plr: Player, id: string): (boolean, string)
+	local p = Profile.get(plr)
+	if not Kits.Defs[id] then
+		return false, "Unknown kit."
+	end
+	if not Kits.isUnlocked(p, id) then
+		local _, ok, why = Kits.unlock(p, id)
+		if not ok then
+			return false, why
+		end
+	end
+	p.Kit = id
+	Profile.markDirty(plr)
+	applyStats(plr)
+	if PlayerData.OnEquipChanged then
+		PlayerData.OnEquipChanged(plr)
+	end
 	push(plr)
 	return true, ""
 end

@@ -47,6 +47,9 @@
         "BuyPerk": {
           "$className": "RemoteFunction"
         },
+        "ChooseKit": {
+          "$className": "RemoteFunction"
+        },
         "GemCrate": {
           "$className": "RemoteFunction"
         },
