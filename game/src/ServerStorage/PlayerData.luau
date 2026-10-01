@@ -4,6 +4,7 @@
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
 local MarketplaceService = game:GetService("MarketplaceService")
+local AnalyticsService = game:GetService("AnalyticsService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
@@ -20,6 +21,7 @@ local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local Kits = require(ReplicatedStorage.Shared.Kits)
 local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
 local Settings = require(ReplicatedStorage.Shared.Settings)
+local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local Profile = require(script.Parent.Profile)
 local WeaponModels = require(script.Parent.WeaponModels)
 
@@ -37,6 +39,9 @@ export type Run = {
 	Boosts: WaveRewards.Boosts, -- wave reward cards picked this run
 	Offer: { string }, -- card ids on offer right now ({} when there is nothing to pick)
 	DailyPopup: Daily.Popup?, -- today's daily reward, once paid; kept for the session so no push loses it
+	StartedAt: number,
+	Wave: number,
+	Active: boolean,
 }
 
 -- What the run summary panel shows at the end of a run (sent per player over GameOver).
@@ -57,6 +62,13 @@ local runs: { [Player]: Run } = {}
 local waiting: { [Player]: boolean } = {}
 local PlayerData = {}
 PlayerData.OnEquipChanged = nil :: ((Player) -> ())?
+
+local function sendTelemetry(plr: Player, name: string, fields: Telemetry.Fields)
+	pcall(function()
+		local event = Telemetry.build(name, fields)
+		AnalyticsService:LogCustomEvent(plr, event.name, nil, event.fields)
+	end)
+end
 
 local function push(plr: Player)
 	local r = runs[plr]
@@ -105,6 +117,9 @@ function PlayerData.get(plr: Player): Run
 			Boosts = WaveRewards.newBoosts(),
 			Offer = {},
 			DailyPopup = nil,
+			StartedAt = 0,
+			Wave = 0,
+			Active = false,
 		}
 		runs[plr] = r
 	end
@@ -308,6 +323,12 @@ function PlayerData.openCrate(plr: Player, crateKey: string)
 		PlayerData.addGems(plr, gemsBack)
 	end
 	CrateResult:FireClient(plr, id, rarity, isNew, gemsBack, crateKey)
+	sendTelemetry(plr, "CrateOpened", {
+		crate = crateKey,
+		rarity = rarity,
+		weapon = id,
+		result = if isNew then "new" else "duplicate",
+	})
 end
 
 local function attachWeapon(plr: Player)
@@ -526,6 +547,11 @@ function PlayerData.pickReward(plr: Player, id: string): (boolean, string)
 	if WaveRewards.Defs[id].Kind == "Weapon" and PlayerData.OnEquipChanged then
 		PlayerData.OnEquipChanged(plr) -- rebuilds the orbit for Extra Orb
 	end
+	sendTelemetry(plr, "CardPicked", {
+		wave = r.Wave,
+		card = id,
+		seconds = os.clock() - r.StartedAt,
+	})
 	push(plr)
 	return true, ""
 end
@@ -551,8 +577,15 @@ function PlayerData.resetRun(plr: Player)
 	end
 	r.Boosts = WaveRewards.newBoosts()
 	r.Offer = {}
+	r.StartedAt = os.clock()
+	r.Wave = 0
+	r.Active = true
 	applyStats(plr) -- a survivor keeps their character, so last run's stats go now
 	push(plr)
+end
+
+function PlayerData.setRunWave(plr: Player, wave: number)
+	PlayerData.get(plr).Wave = wave
 end
 
 -- End of run: gems, best wave, leaderboard. Returns the summary the results panel shows.
@@ -578,6 +611,15 @@ function PlayerData.endRun(plr: Player, wave: number, won: boolean): RunSummary
 		end
 	end
 	Profile.markDirty(plr)
+	sendTelemetry(plr, "RunEnd", {
+		result = if won then "won" else "lost",
+		wave = wave,
+		kills = r.Kills,
+		coins = r.Coins,
+		gems = gemsEarned,
+		seconds = os.clock() - r.StartedAt,
+	})
+	r.Active = false
 	local ls = plr:FindFirstChild("leaderstats")
 	local best = ls and ls:FindFirstChild("Best Wave") :: IntValue?
 	if best and wave > best.Value then
@@ -728,6 +770,13 @@ for _, plr in Players:GetPlayers() do
 end
 
 Players.PlayerRemoving:Connect(function(plr)
+	local r = runs[plr]
+	if r and r.Active then
+		sendTelemetry(plr, "QuitMidRun", {
+			wave = r.Wave,
+			seconds = os.clock() - r.StartedAt,
+		})
+	end
 	runs[plr] = nil
 	waiting[plr] = nil
 end)

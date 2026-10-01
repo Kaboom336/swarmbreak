@@ -1,5 +1,6 @@
 --!strict
 local Players = game:GetService("Players")
+local AnalyticsService = game:GetService("AnalyticsService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
@@ -10,6 +11,7 @@ local Economy = require(ReplicatedStorage.Shared.Economy)
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
+local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local EnemyAI = require(ServerStorage.EnemyAI)
 local PlayerData = require(ServerStorage.PlayerData)
 local GameState = require(ServerStorage.GameState)
@@ -27,6 +29,14 @@ local bossSpawn = arena:WaitForChild("BossSpawn") :: BasePart
 local rng = Random.new()
 
 local currentWave = 0
+local runStartedAt = 0
+
+local function sendTelemetry(plr: Player, name: string, fields: Telemetry.Fields)
+	pcall(function()
+		local event = Telemetry.build(name, fields)
+		AnalyticsService:LogCustomEvent(plr, event.name, nil, event.fields)
+	end)
+end
 
 local function todaysMutation(): (string, Mutations.Definition)
 	local id = Mutations.forDay(Daily.dayIndex(os.time()))
@@ -174,6 +184,15 @@ local function runWave(wave: number): boolean
 	currentWave = wave
 	publishMutation()
 	GameState.set("Wave", wave)
+	for _, plr in Players:GetPlayers() do
+		if not PlayerData.isWaiting(plr) then
+			PlayerData.setRunWave(plr, wave)
+			sendTelemetry(plr, "WaveReached", {
+				wave = wave,
+				seconds = os.clock() - runStartedAt,
+			})
+		end
+	end
 	GameState.set("Phase", "starting")
 	FX:FireAllClients("sound", { Name = "WaveStart" })
 	countdown(Config.WaveStartDelay)
@@ -248,8 +267,16 @@ local function gameLoop()
 		while #Players:GetPlayers() == 0 do
 			task.wait(1)
 		end
+		runStartedAt = os.clock()
+		local playerCount = #Players:GetPlayers()
 		for _, plr in Players:GetPlayers() do
 			PlayerData.resetRun(plr)
+			local profile = PlayerData.profile(plr)
+			sendTelemetry(plr, "RunStart", {
+				players = playerCount,
+				weapon = profile.Equipped,
+				kit = profile.Kit,
+			})
 		end
 		respawnAll()
 
