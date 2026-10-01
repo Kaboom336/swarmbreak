@@ -20,10 +20,17 @@ local EquipWeapon = Remotes.EquipWeapon :: RemoteEvent
 local Prompt = Remotes.Prompt :: RemoteEvent
 local GemCrate = Remotes.GemCrate :: RemoteFunction
 local PickReward = Remotes.PickReward :: RemoteFunction
+local UpdateSettings = Remotes.UpdateSettings :: RemoteEvent
 local Toast = Remotes.Toast :: RemoteEvent
 local Evolve = Remotes.Evolve :: RemoteFunction
 local FX = Remotes.FX :: RemoteEvent
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
+
+UpdateSettings.OnServerEvent:Connect(function(plr, changes)
+	if typeof(changes) == "table" then
+		PlayerData.updateSettings(plr, changes)
+	end
+end)
 
 local function canRevive(plr: Player): boolean
 	local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")

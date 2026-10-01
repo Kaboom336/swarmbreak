@@ -19,6 +19,7 @@ local Quests = require(ReplicatedStorage.Shared.Quests)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local Kits = require(ReplicatedStorage.Shared.Kits)
 local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
+local Settings = require(ReplicatedStorage.Shared.Settings)
 local Profile = require(script.Parent.Profile)
 local WeaponModels = require(script.Parent.WeaponModels)
 
@@ -81,6 +82,8 @@ local function push(plr: Player)
 			Kit = p.Kit,
 			KitsOwned = p.KitsOwned,
 			Flags = p.Flags,
+			MusicVolume = p.MusicVolume,
+			SfxVolume = p.SfxVolume,
 		})
 	end
 end
@@ -134,6 +137,15 @@ end
 -- For callers that change the profile directly (flags), so the next autosave writes it.
 function PlayerData.markDirty(plr: Player)
 	Profile.markDirty(plr)
+end
+
+function PlayerData.updateSettings(plr: Player, changes: any)
+	if not Profile.isLoaded(plr) then
+		return
+	end
+	Settings.apply(Profile.get(plr), changes)
+	Profile.markDirty(plr)
+	push(plr)
 end
 
 function PlayerData.completeTutorial(plr: Player, stepId: string)

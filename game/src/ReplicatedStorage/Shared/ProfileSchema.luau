@@ -4,6 +4,7 @@ local Weapons = require(script.Parent.Weapons)
 local Evolutions = require(script.Parent.Evolutions)
 local Quests = require(script.Parent.Quests)
 local Kits = require(script.Parent.Kits)
+local Settings = require(script.Parent.Settings)
 
 export type Profile = {
 	Version: number,
@@ -22,6 +23,8 @@ export type Profile = {
 	Quests: Quests.State,
 	Kit: string,
 	KitsOwned: { [string]: boolean },
+	MusicVolume: number,
+	SfxVolume: number,
 }
 
 local ProfileSchema = { Version = 1 }
@@ -65,6 +68,8 @@ function ProfileSchema.default(): Profile
 		Quests = { Day = 0, Ids = {}, Progress = {}, Claimed = {} },
 		Kit = "Soldier",
 		KitsOwned = { Soldier = true },
+		MusicVolume = Settings.DefaultVolume,
+		SfxVolume = Settings.DefaultVolume,
 	}
 end
 
@@ -184,6 +189,8 @@ function ProfileSchema.sanitize(raw: any): Profile
 	if type(raw.Kit) == "string" and Kits.isUnlocked(p, raw.Kit) then
 		p.Kit = raw.Kit
 	end
+	p.MusicVolume = Settings.clamp(raw.MusicVolume)
+	p.SfxVolume = Settings.clamp(raw.SfxVolume)
 	return p
 end
 

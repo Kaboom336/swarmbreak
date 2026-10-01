@@ -41,6 +41,9 @@
         "StatsChanged": {
           "$className": "RemoteEvent"
         },
+        "UpdateSettings": {
+          "$className": "RemoteEvent"
+        },
         "FX": {
           "$className": "RemoteEvent"
         },
