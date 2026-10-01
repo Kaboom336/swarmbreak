@@ -17,6 +17,7 @@ local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Quests = require(ReplicatedStorage.Shared.Quests)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
+local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
 local Profile = require(script.Parent.Profile)
 local WeaponModels = require(script.Parent.WeaponModels)
 
@@ -76,6 +77,7 @@ local function push(plr: Player)
 			Streak = p.Streak,
 			DailyPopup = r.DailyPopup,
 			Quests = p.Quests,
+			Flags = p.Flags,
 		})
 	end
 end
@@ -129,6 +131,21 @@ end
 -- For callers that change the profile directly (flags), so the next autosave writes it.
 function PlayerData.markDirty(plr: Player)
 	Profile.markDirty(plr)
+end
+
+function PlayerData.completeTutorial(plr: Player, stepId: string)
+	local p = Profile.get(plr)
+	local key = Tutorial.flagKey(stepId)
+	if p.Flags[key] then
+		return
+	end
+	local flags = Tutorial.complete(p.Flags, stepId)
+	if flags[key] ~= true then
+		return
+	end
+	p.Flags = flags
+	Profile.markDirty(plr)
+	push(plr)
 end
 
 -- ---------- coins / kills ----------
@@ -245,6 +262,7 @@ function PlayerData.openCrate(plr: Player, crateKey: string)
 	if not crate then
 		return
 	end
+	PlayerData.completeTutorial(plr, "Crate")
 	progressQuest(plr, "Crates", 1)
 	local p = Profile.get(plr)
 	local rarity = Weapons.rollRarity(rng:NextNumber(), crate.Odds)
@@ -378,6 +396,7 @@ function PlayerData.buyUpgrade(plr: Player, name: string): boolean
 	end
 	r.Coins = newCoins
 	r.Levels[name] = level + 1
+	PlayerData.completeTutorial(plr, "Upgrade")
 	if name == "MaxHealth" then
 		local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
 		if hum then
@@ -432,6 +451,7 @@ function PlayerData.pickReward(plr: Player, id: string): (boolean, string)
 	end
 	local _, healNow = WaveRewards.apply(r.Boosts, id)
 	r.Offer = {}
+	PlayerData.completeTutorial(plr, "Pick")
 	progressQuest(plr, "WaveRewards", 1)
 	applyStats(plr)
 	if healNow then

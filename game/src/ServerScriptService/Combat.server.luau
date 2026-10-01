@@ -183,6 +183,7 @@ Shoot.OnServerEvent:Connect(function(plr, origin: Vector3, dir: Vector3)
 		return -- rate guard (small tolerance for latency)
 	end
 	lastAction[plr] = now
+	PlayerData.completeTutorial(plr, "Shoot")
 	local damage = weapon.Damage * PlayerData.damageMultiplier(plr)
 	dir = dir.Unit
 	if weapon.Kind == "Hitscan" then
