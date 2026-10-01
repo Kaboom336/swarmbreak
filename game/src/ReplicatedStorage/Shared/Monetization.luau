@@ -6,7 +6,14 @@ local Monetization = {
 	GamePasses = {
 		DoubleCoins = { Id = 0, Name = "2x Coins" },
 		ExtraDash = { Id = 0, Name = "Extra Dash" },
-		StarterPack = { Id = 0, Name = "Starter Pack (Shotgun + 300 coins)" },
+		QuickCrate = { Id = 0, Name = "Quick Crate", Price = 0 }, -- placeholder
+		LuckyCrate = { Id = 0, Name = "Lucky Crate", Price = 0 }, -- placeholder
+		VIP = { Id = 0, Name = "VIP", Price = 0 }, -- placeholder
+		StarterPack = {
+			Id = 0,
+			Name = "Starter Pack (Shotgun + 300 coins)",
+			Price = 0, -- placeholder
+		},
 	},
 	DeveloperProducts = {
 		Coins500 = { Id = 0, Name = "500 Coins", Coins = 500 },
@@ -14,6 +21,11 @@ local Monetization = {
 		Revive = { Id = 0, Name = "Revive" },
 		WeaponCrate = { Id = 0, Name = "Weapon Crate" },
 		EpicCrate = { Id = 0, Name = "Epic Crate" },
+		DoubleRunRewards = {
+			Id = 0,
+			Name = "Double Run Rewards",
+			Price = 0, -- placeholder
+		},
 	},
 }
 
