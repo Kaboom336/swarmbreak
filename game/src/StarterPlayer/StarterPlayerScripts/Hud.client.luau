@@ -22,6 +22,7 @@ local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local Settings = require(ReplicatedStorage.Shared.Settings)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
+local HudLayout = require(ReplicatedStorage.Shared.HudLayout)
 local ClientFX = require(script.Parent.ClientFX)
 
 local player = Players.LocalPlayer
@@ -61,7 +62,31 @@ local GREY = Color3.fromRGB(60, 60, 70) -- a button you cannot afford yet
 local screen = Instance.new("ScreenGui")
 screen.Name = "Hud"
 screen.ResetOnSpawn = false
+screen.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
 screen.Parent = gui
+
+local platform: HudLayout.Platform = if UserInputService.TouchEnabled
+	then "touch"
+	else if UserInputService.GamepadEnabled then "gamepad" else "keyboard"
+local camera = workspace.CurrentCamera
+local viewport = if camera then camera.ViewportSize else Vector2.new(1280, 720) -- placeholder
+local currentScale = HudLayout.scaleFor(viewport.X, viewport.Y, platform)
+local hudScale = Instance.new("UIScale")
+hudScale.Scale = currentScale
+hudScale.Parent = screen
+local managedButtons: { { Button: TextButton, BaseHeight: number } } = {}
+
+local function resizeManagedButtons()
+	for _, managed in managedButtons do
+		local size = managed.Button.Size
+		managed.Button.Size = UDim2.new(
+			size.X.Scale,
+			size.X.Offset,
+			size.Y.Scale,
+			math.max(managed.BaseHeight, HudLayout.buttonHeightFor(currentScale, platform))
+		)
+	end
+end
 
 local function text(
 	parent: Instance,
@@ -95,6 +120,10 @@ local function button(parent: Instance, str: string, size: UDim2): TextButton
 	b.BackgroundColor3 = BUTTON
 	b.AutoButtonColor = true
 	b.Parent = parent
+	if size.Y.Scale == 0 then
+		table.insert(managedButtons, { Button = b, BaseHeight = size.Y.Offset })
+		resizeManagedButtons()
+	end
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 6)
 	corner.Parent = b
@@ -189,13 +218,16 @@ statsLabel.TextYAlignment = Enum.TextYAlignment.Top
 local questToggle = button(screen, "Quests", UDim2.new(0, 260, 0, 34))
 questToggle.Name = "QuestToggle"
 questToggle.Position = UDim2.new(1, -272, 0, 50)
-local questPanel = Instance.new("Frame")
+local questPanel = Instance.new("ScrollingFrame")
 questPanel.Name = "Quests"
 questPanel.Size = UDim2.new(0, 260, 0, 0)
 questPanel.Position = UDim2.new(1, -272, 0, 88)
 questPanel.BackgroundColor3 = PANEL
 questPanel.BackgroundTransparency = 0.1
 questPanel.BorderSizePixel = 0
+questPanel.ScrollBarThickness = 4
+questPanel.CanvasSize = UDim2.new()
+questPanel.AutomaticCanvasSize = Enum.AutomaticSize.Y
 questPanel.Parent = screen
 local questCorner = Instance.new("UICorner")
 questCorner.CornerRadius = UDim.new(0, 8)
@@ -229,11 +261,10 @@ local function refreshQuests(state: any)
 	end
 
 	local rows = Quests.rows(state)
-	questPanel.Size = UDim2.new(0, 260, 0, 12 + #rows * 64)
 	for order, row in rows do
 		local item = Instance.new("Frame")
 		item.Name = row.Id
-		item.Size = UDim2.new(1, 0, 0, 58)
+		item.Size = UDim2.new(1, 0, 0, 50)
 		item.BackgroundColor3 = Color3.fromRGB(32, 32, 44)
 		item.BorderSizePixel = 0
 		item.LayoutOrder = order
@@ -319,6 +350,8 @@ local function makeSlider(
 	track.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
 	track.BorderSizePixel = 0
 	track.Parent = settingsPanel
+	table.insert(managedButtons, { Button = track, BaseHeight = 12 })
+	resizeManagedButtons()
 	local trackCorner = Instance.new("UICorner")
 	trackCorner.CornerRadius = UDim.new(1, 0)
 	trackCorner.Parent = track
@@ -851,6 +884,91 @@ reviveBtn.BackgroundColor3 = Color3.fromRGB(200, 120, 30)
 reviveBtn.Visible = false
 reviveBtn.MouseButton1Click:Connect(function()
 	Prompt:FireServer("product", "Revive")
+end)
+
+local PANEL_GAP = 8 -- placeholder
+
+local function applyHudLayout()
+	local activeCamera = workspace.CurrentCamera
+	if activeCamera then
+		viewport = activeCamera.ViewportSize
+	end
+	currentScale = HudLayout.scaleFor(viewport.X, viewport.Y, platform)
+	hudScale.Scale = currentScale
+	resizeManagedButtons()
+
+	local rects = HudLayout.rects(viewport.X, viewport.Y, platform)
+	local function logical(value: number): number
+		return value / currentScale
+	end
+
+	local wave = rects.wave
+	waveLabel.Position = UDim2.fromOffset(logical(wave.x), logical(wave.y))
+	waveLabel.Size = UDim2.fromOffset(logical(wave.w), 34)
+	bossChipLabel.Position =
+		UDim2.fromOffset(logical(wave.x + (wave.w - 200 * currentScale) / 2), logical(wave.y) + 34)
+	bossChipLabel.Size = UDim2.fromOffset(200, 18)
+	phaseLabel.Position = UDim2.fromOffset(logical(wave.x), logical(wave.y) + 52)
+	phaseLabel.Size = UDim2.fromOffset(logical(wave.w), 22)
+	mutationLabel.Position = UDim2.fromOffset(logical(wave.x), logical(wave.y) + 74)
+	mutationLabel.Size = UDim2.fromOffset(logical(wave.w), 18)
+	bossFrame.Position = UDim2.fromOffset(logical(wave.x), logical(wave.y) + 98)
+	bossFrame.Size = UDim2.fromOffset(logical(wave.w), 22)
+
+	local health = rects.health
+	hpBack.Position = UDim2.fromOffset(logical(health.x), logical(health.y))
+	hpBack.Size = UDim2.fromOffset(math.min(260, logical(health.w)), 18)
+	statsLabel.Position = UDim2.fromOffset(logical(health.x), logical(health.y) + 20)
+	statsLabel.Size = UDim2.fromOffset(logical(health.w), 58)
+
+	local buttonHeight = HudLayout.buttonHeightFor(currentScale, platform)
+	local quest = rects.quest
+	questToggle.Position = UDim2.fromOffset(logical(quest.x), logical(quest.y))
+	questToggle.Size = UDim2.fromOffset(logical(quest.w), buttonHeight)
+	questPanel.Position =
+		UDim2.fromOffset(logical(quest.x), logical(quest.y) + buttonHeight + PANEL_GAP)
+	questPanel.Size =
+		UDim2.fromOffset(logical(quest.w), math.max(0, logical(quest.h) - buttonHeight - PANEL_GAP))
+	questPanel.ClipsDescendants = true
+
+	local settings = rects.settings
+	settingsToggle.Position = UDim2.fromOffset(logical(settings.x), logical(settings.y))
+	settingsToggle.Size = UDim2.fromOffset(logical(settings.w), buttonHeight)
+	settingsPanel.Position =
+		UDim2.fromOffset(logical(settings.x), logical(settings.y) + buttonHeight + PANEL_GAP)
+	settingsPanel.Size = UDim2.fromOffset(
+		logical(settings.w),
+		math.max(0, logical(settings.h) - buttonHeight - PANEL_GAP)
+	)
+
+	local shopRect = rects.shop
+	shopToggle.Position = UDim2.fromOffset(logical(shopRect.x), logical(shopRect.y))
+	shopToggle.Size = UDim2.fromOffset(logical(shopRect.w), buttonHeight)
+	shop.Position =
+		UDim2.fromOffset(logical(shopRect.x), logical(shopRect.y) + buttonHeight + PANEL_GAP)
+	shop.Size = UDim2.fromOffset(
+		logical(shopRect.w),
+		math.max(0, logical(shopRect.h) - buttonHeight - PANEL_GAP)
+	)
+
+	local hotbarRect = rects.hotbar
+	hotbar.Position = UDim2.fromOffset(logical(hotbarRect.x), logical(hotbarRect.y))
+	hotbar.Size = UDim2.fromOffset(logical(hotbarRect.w), buttonHeight)
+	boostsLabel.Position =
+		UDim2.fromOffset(logical(hotbarRect.x), logical(hotbarRect.y) + buttonHeight)
+	boostsLabel.Size = UDim2.fromOffset(logical(hotbarRect.w), 14)
+end
+
+applyHudLayout()
+if camera then
+	camera:GetPropertyChangedSignal("ViewportSize"):Connect(applyHudLayout)
+end
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+	camera = workspace.CurrentCamera
+	applyHudLayout()
+	if camera then
+		camera:GetPropertyChangedSignal("ViewportSize"):Connect(applyHudLayout)
+	end
 end)
 
 local function setShop(open: boolean)
