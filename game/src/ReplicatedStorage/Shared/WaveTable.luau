@@ -25,6 +25,20 @@ function WaveTable.isBossWave(wave: number): boolean
 	return wave % Config.BossEvery == 0
 end
 
+function WaveTable.wavesUntilBoss(wave: number): number
+	return (Config.BossEvery - wave % Config.BossEvery) % Config.BossEvery
+end
+
+function WaveTable.bossChipText(wave: number): string
+	local waves = WaveTable.wavesUntilBoss(wave)
+	if waves == 0 then
+		return "BOSS WAVE"
+	elseif waves == 1 then
+		return "Boss next wave"
+	end
+	return string.format("Boss in %d waves", waves)
+end
+
 function WaveTable.isFinalNormalWave(wave: number): boolean
 	return wave == Config.NormalWaves
 end
