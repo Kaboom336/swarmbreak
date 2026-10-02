@@ -109,6 +109,7 @@ local function push(plr: Player)
 			Flags = p.Flags,
 			MusicVolume = p.MusicVolume,
 			SfxVolume = p.SfxVolume,
+			Mute = p.Mute,
 			MouseLockEnabled = p.MouseLockEnabled,
 		})
 	end

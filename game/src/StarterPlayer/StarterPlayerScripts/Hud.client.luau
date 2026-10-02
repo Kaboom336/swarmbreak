@@ -439,7 +439,7 @@ settingsToggle.Position = UDim2.new(1, -404, 0, 8)
 
 local settingsPanel = UiKit.Panel(screen, "Settings")
 settingsPanel.Name = "Settings"
-settingsPanel.Size = UDim2.new(0, 260, 0, 152)
+settingsPanel.Size = UDim2.new(0, 260, 0, 194)
 settingsPanel.Position = UDim2.new(1, -544, 0, 50)
 settingsPanel.BackgroundColor3 = PANEL
 settingsPanel.BackgroundTransparency = 0.1
@@ -541,9 +541,23 @@ local setSfxSlider = makeSlider("SFX volume", 62, function(value, persist)
 	end
 end)
 
+local muteButton = button(settingsPanel, "Audio  ON", UDim2.new(1, -24, 0, 34))
+muteButton.Name = "Mute"
+muteButton.Position = UDim2.new(0, 12, 0, 108)
+local muted = Settings.DefaultMute
+local function setMuted(value: boolean)
+	muted = value
+	ClientFX.setMuted(value)
+	muteButton.Text = if value then "Audio  MUTED" else "Audio  ON"
+end
+muteButton.MouseButton1Click:Connect(function()
+	setMuted(not muted)
+	UpdateSettings:FireServer({ Mute = muted })
+end)
+
 local mouseLockButton = button(settingsPanel, "Mouse lock  ON", UDim2.new(1, -24, 0, 34))
 mouseLockButton.Name = "MouseLock"
-mouseLockButton.Position = UDim2.new(0, 12, 0, 108)
+mouseLockButton.Position = UDim2.new(0, 12, 0, 150)
 mouseLockButton.Visible = not (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
 local mouseLockEnabled = Settings.DefaultMouseLock
 local function setMouseLock(enabled: boolean)
@@ -1445,6 +1459,7 @@ stats = {
 	Flags = {},
 	MusicVolume = Settings.DefaultVolume,
 	SfxVolume = Settings.DefaultVolume,
+	Mute = Settings.DefaultMute,
 	MouseLockEnabled = Settings.DefaultMouseLock,
 }
 
@@ -1636,6 +1651,7 @@ StatsChanged.OnClientEvent:Connect(function(s)
 	stats = s
 	setMusicSlider(s.MusicVolume)
 	setSfxSlider(s.SfxVolume)
+	setMuted(s.Mute == true)
 	setMouseLock(s.MouseLockEnabled ~= false)
 	refreshStats()
 	onDailyPopup(s.DailyPopup)

@@ -6,6 +6,7 @@ local Debris = game:GetService("Debris")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 local Feel = require(ReplicatedStorage.Shared.Feel)
+local Mix = require(ReplicatedStorage.Shared.Mix)
 local SoundBudget = require(ReplicatedStorage.Shared.SoundBudget)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Settings = require(ReplicatedStorage.Shared.Settings)
@@ -15,7 +16,35 @@ local ClientFX = {}
 local camera = workspace.CurrentCamera
 local sfxVolume = Settings.DefaultVolume
 local musicVolume = Settings.DefaultVolume
+local muted = Settings.DefaultMute
 local soundBudget = SoundBudget.new()
+
+local function soundGroup(name: string): SoundGroup
+	local existing = SoundService:FindFirstChild(name)
+	if existing and existing:IsA("SoundGroup") then
+		return existing
+	end
+	local group = Instance.new("SoundGroup")
+	group.Name = name
+	group.Parent = SoundService
+	return group
+end
+
+local soundGroups: { [string]: SoundGroup } = {
+	Music = soundGroup("Music"),
+	Sfx = soundGroup("Sfx"),
+	Ui = soundGroup("Ui"),
+}
+local duckStartedAt: number? = nil
+
+local function applyBusVolumes(musicGain: number?)
+	local volumes = Mix.busVolumes(musicVolume, sfxVolume, muted, musicGain)
+	for category, volume in volumes do
+		soundGroups[category].Volume = volume
+	end
+end
+
+applyBusVolumes()
 
 local p0Sounds = {
 	Hurt = true,
@@ -57,9 +86,10 @@ end
 local music = Instance.new("Sound")
 music.Name = "Music"
 music.SoundId = Sounds.Music.Id
-music.Volume = Sounds.Music.Volume * musicVolume
+music.Volume = Sounds.Music.Volume
 music.PlaybackSpeed = Sounds.Music.Pitch
 music.Looped = true
+music.SoundGroup = soundGroups.Music
 music.Parent = SoundService
 if music.SoundId ~= "" then
 	music:Play()
@@ -182,12 +212,30 @@ end
 
 function ClientFX.setMusicVolume(value: any)
 	musicVolume = Settings.clamp(value)
-	music.Volume = Sounds.Music.Volume * musicVolume
+	applyBusVolumes(if duckStartedAt then Mix.duckGain(os.clock() - duckStartedAt) else nil)
 end
 
 function ClientFX.setSfxVolume(value: any)
 	sfxVolume = Settings.clamp(value)
+	applyBusVolumes(if duckStartedAt then Mix.duckGain(os.clock() - duckStartedAt) else nil)
 end
+
+function ClientFX.setMuted(value: any)
+	muted = value == true
+	applyBusVolumes(if duckStartedAt then Mix.duckGain(os.clock() - duckStartedAt) else nil)
+end
+
+RunService.Heartbeat:Connect(function()
+	local startedAt = duckStartedAt
+	if not startedAt then
+		return
+	end
+	local elapsed = os.clock() - startedAt
+	applyBusVolumes(Mix.duckGain(elapsed))
+	if elapsed >= Mix.Duck.Attack + Mix.Duck.Hold + Mix.Duck.Release then
+		duckStartedAt = nil
+	end
+end)
 
 -- ---------- sounds ----------
 function ClientFX.sound(name: string, at: Vector3?, pitchJitter: number?)
@@ -200,14 +248,19 @@ function ClientFX.sound(name: string, at: Vector3?, pitchJitter: number?)
 	if not allowed then
 		return
 	end
+	if Mix.isDuckingStinger(name) then
+		duckStartedAt = os.clock()
+		applyBusVolumes(Mix.duckGain(0))
+	end
 	local s = Instance.new("Sound")
 	s.Ended:Once(function()
 		soundBudget = SoundBudget.release(soundBudget, name, os.clock())
 	end)
 	s.SoundId = def.Id
-	s.Volume = def.Volume * sfxVolume
+	s.Volume = def.Volume
 	s.PlaybackSpeed = def.Pitch * (1 + (math.random() - 0.5) * (pitchJitter or 0.1))
 	s.RollOffMaxDistance = 120
+	s.SoundGroup = soundGroups[Mix.categoryForSound(name)]
 	if at then
 		local holder = Instance.new("Part")
 		holder.Anchored = true
