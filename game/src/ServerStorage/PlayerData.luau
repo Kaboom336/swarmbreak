@@ -28,7 +28,11 @@ local WeaponModels = require(script.Parent.WeaponModels)
 
 local StatsChanged = ReplicatedStorage:WaitForChild("Remotes").StatsChanged :: RemoteEvent
 local CrateResult = ReplicatedStorage:WaitForChild("Remotes").CrateResult :: RemoteEvent
-local topStore = DataStoreService:GetOrderedDataStore("SwarmBreak_top_v1")
+-- GetOrderedDataStore throws in an unpublished Studio place; fall back to no leaderboard.
+local topStoreOk, topStoreResult = pcall(function()
+	return DataStoreService:GetOrderedDataStore("SwarmBreak_top_v1")
+end)
+local topStore: OrderedDataStore? = if topStoreOk then topStoreResult else nil
 local rng = Random.new()
 
 export type Run = {
@@ -667,8 +671,12 @@ function PlayerData.endRun(plr: Player, wave: number, won: boolean): RunSummary
 		best.Value = wave
 	end
 	task.spawn(function()
+		local store = topStore
+		if not store then
+			return
+		end
 		pcall(function()
-			topStore:UpdateAsync(tostring(plr.UserId), function(old)
+			store:UpdateAsync(tostring(plr.UserId), function(old)
 				return math.max(old or 0, wave)
 			end)
 		end)
@@ -690,8 +698,12 @@ end
 
 function PlayerData.topWaves(n: number): { { Name: string, Wave: number } }
 	local out = {}
+	local store = topStore
+	if not store then
+		return out
+	end
 	local ok, pages = pcall(function()
-		return topStore:GetSortedAsync(false, n)
+		return store:GetSortedAsync(false, n)
 	end)
 	if not ok then
 		return out

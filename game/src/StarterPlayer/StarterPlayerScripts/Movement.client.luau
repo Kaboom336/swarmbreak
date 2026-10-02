@@ -7,8 +7,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+<<<<<<< HEAD
 local MovementTuning = require(ReplicatedStorage.Shared.MovementTuning)
 local ClientFX = require(script.Parent.ClientFX)
+=======
+local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
+>>>>>>> origin/integrate/wave8
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera

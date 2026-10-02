@@ -26,9 +26,13 @@ local Settings = require(ReplicatedStorage.Shared.Settings)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
 local HudLayout = require(ReplicatedStorage.Shared.HudLayout)
 local Invite = require(ReplicatedStorage.Shared.Invite)
+<<<<<<< HEAD
 local UiTheme = require(ReplicatedStorage.Shared.UiTheme)
 local ClientFX = require(script.Parent.ClientFX)
 local UiKit = require(script.Parent.UiKit)
+=======
+local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
+>>>>>>> origin/integrate/wave8
 
 local player = Players.LocalPlayer
 local gui = player:WaitForChild("PlayerGui")
