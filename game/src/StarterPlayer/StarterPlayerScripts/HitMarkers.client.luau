@@ -5,7 +5,7 @@ local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Feel = require(ReplicatedStorage.Shared.Feel)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
-local ClientFX = require(script.Parent.ClientFX)
+local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 local HitMarker = ReplicatedStorage:WaitForChild("Remotes").HitMarker :: RemoteEvent
 local numberState: Feel.NumberState = {}
 

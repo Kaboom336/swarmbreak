@@ -5,7 +5,7 @@ local UserInputService = game:GetService("UserInputService")
 local ContextActionService = game:GetService("ContextActionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
-local ClientFX = require(script.Parent.ClientFX)
+local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 
 local player = Players.LocalPlayer
 local Dash = (ReplicatedStorage:WaitForChild("Remotes") :: Folder):WaitForChild(

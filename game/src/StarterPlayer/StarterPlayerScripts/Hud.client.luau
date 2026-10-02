@@ -25,7 +25,7 @@ local Settings = require(ReplicatedStorage.Shared.Settings)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
 local HudLayout = require(ReplicatedStorage.Shared.HudLayout)
 local Invite = require(ReplicatedStorage.Shared.Invite)
-local ClientFX = require(script.Parent.ClientFX)
+local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 
 local player = Players.LocalPlayer
 local gui = player:WaitForChild("PlayerGui")
