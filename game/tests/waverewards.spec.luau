@@ -21,7 +21,7 @@ local function everOffered(id: string, stacks: { [string]: number }, kind: strin
 end
 
 test("reward cards are well formed", function()
-	eq(#WaveRewards.Order, 12, "twelve cards")
+	eq(#WaveRewards.Order, 13, "thirteen cards")
 	local kinds = { Stat = true, Weapon = true, Utility = true }
 	for _, id in WaveRewards.Order do
 		local c = WaveRewards.Defs[id]
