@@ -203,7 +203,7 @@ local function startR15Locomotion(humanoid: Humanoid)
 	end)
 end
 
-local function buildHumanoid(typeName: string, size: Vector3, cf: CFrame): Rig?
+local function buildHumanoidTemplate(typeName: string, size: Vector3, cf: CFrame): Rig?
 	local def = HumanoidEnemies.Defs[typeName]
 	if not def then
 		return nil
@@ -248,6 +248,36 @@ local function buildHumanoid(typeName: string, size: Vector3, cf: CFrame): Rig?
 	model:SetAttribute("HumanoidEnemy", true)
 	local palette = Theme.Enemy[typeName] or Theme.Enemy.Walker
 	attachImportedAccessories(model, typeName, size.Y, cf, body, c3(palette.Accent))
+	return {
+		Model = model,
+		Root = root,
+		Torso = torso,
+		HipHeight = humanoid.HipHeight,
+		Humanoid = humanoid,
+	}
+end
+
+-- Players:CreateHumanoidModelFromDescription is slow, so each type is built once and cloned.
+local humanoidTemplates: { [string]: Model } = {}
+
+local function buildHumanoid(typeName: string, size: Vector3, cf: CFrame): Rig?
+	if not HumanoidEnemies.Defs[typeName] then
+		return nil
+	end
+	local template = humanoidTemplates[typeName]
+	if not template then
+		local built = buildHumanoidTemplate(typeName, size, CFrame.new())
+		if not built then
+			return nil
+		end
+		template = built.Model
+		humanoidTemplates[typeName] = template
+	end
+	local model = template:Clone()
+	model:PivotTo(cf)
+	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart
+	local torso = model:FindFirstChild("UpperTorso") :: BasePart
+	local humanoid = model:FindFirstChildOfClass("Humanoid") :: Humanoid
 	return {
 		Model = model,
 		Root = root,
