@@ -119,7 +119,7 @@ function ArenaModelGenerator.build(layout: Layout, theme: Theme): { OutputFile }
 		{ layout.Floor, 2, layout.Floor },
 		{ 0, 0, 0 },
 		color(theme.Floor),
-		"Slate",
+		"Concrete",
 		nil,
 		nil
 	)
