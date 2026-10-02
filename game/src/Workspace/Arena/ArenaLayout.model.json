@@ -1,0 +1,1894 @@
+{
+  "children": [
+    {
+      "className": "Part",
+      "name": "Bunker1",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -66,
+              4,
+              -66
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Bunker1",
+        "Size": [
+          20,
+          6,
+          20
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Bunker2",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              66,
+              4,
+              -66
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Bunker2",
+        "Size": [
+          20,
+          6,
+          20
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Bunker3",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              66,
+              4,
+              66
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Bunker3",
+        "Size": [
+          20,
+          6,
+          20
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Bunker4",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -66,
+              4,
+              66
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Bunker4",
+        "Size": [
+          20,
+          6,
+          20
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Ring",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                -0.4999999999999998,
+                0,
+                -0.8660254037844387
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0.8660254037844387,
+                0,
+                -0.4999999999999998
+              ]
+            ],
+            "position": [
+              17.753520777580995,
+              3.5,
+              10.249999999999998
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "Metal",
+        "Name": "Ring",
+        "Size": [
+          11.46754979953025,
+          5,
+          3
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Ring",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                -0.8660254037844385,
+                0,
+                -0.5000000000000003
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0.5000000000000003,
+                0,
+                -0.8660254037844385
+              ]
+            ],
+            "position": [
+              10.250000000000002,
+              3.5,
+              17.75352077758099
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "Metal",
+        "Name": "Ring",
+        "Size": [
+          11.46754979953025,
+          5,
+          3
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Ring",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                -0.8660254037844388,
+                0,
+                0.4999999999999997
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                -0.4999999999999997,
+                0,
+                -0.8660254037844388
+              ]
+            ],
+            "position": [
+              -10.249999999999995,
+              3.5,
+              17.753520777580995
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "Metal",
+        "Name": "Ring",
+        "Size": [
+          11.46754979953025,
+          5,
+          3
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Ring",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                -0.4999999999999996,
+                0,
+                0.8660254037844388
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                -0.8660254037844388,
+                0,
+                -0.4999999999999996
+              ]
+            ],
+            "position": [
+              -17.753520777580995,
+              3.5,
+              10.249999999999998
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "Metal",
+        "Name": "Ring",
+        "Size": [
+          11.46754979953025,
+          5,
+          3
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Ring",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                0.49999999999999933,
+                0,
+                0.866025403784439
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                -0.866025403784439,
+                0,
+                0.49999999999999933
+              ]
+            ],
+            "position": [
+              -17.753520777580995,
+              3.5,
+              -10.249999999999995
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "Metal",
+        "Name": "Ring",
+        "Size": [
+          11.46754979953025,
+          5,
+          3
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Ring",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                0.8660254037844384,
+                0,
+                0.5000000000000004
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                -0.5000000000000004,
+                0,
+                0.8660254037844384
+              ]
+            ],
+            "position": [
+              -10.250000000000009,
+              3.5,
+              -17.753520777580988
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "Metal",
+        "Name": "Ring",
+        "Size": [
+          11.46754979953025,
+          5,
+          3
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Ring",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                0.8660254037844386,
+                0,
+                -0.5
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0.5,
+                0,
+                0.8660254037844386
+              ]
+            ],
+            "position": [
+              10.250000000000002,
+              3.5,
+              -17.75352077758099
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "Metal",
+        "Name": "Ring",
+        "Size": [
+          11.46754979953025,
+          5,
+          3
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Ring",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                0.5000000000000004,
+                0,
+                -0.8660254037844384
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0.8660254037844384,
+                0,
+                0.5000000000000004
+              ]
+            ],
+            "position": [
+              17.753520777580988,
+              3.5,
+              -10.250000000000009
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "Metal",
+        "Name": "Ring",
+        "Size": [
+          11.46754979953025,
+          5,
+          3
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Crate",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -48,
+              3,
+              -72
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Crate",
+        "Size": [
+          4,
+          4,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -24,
+              3,
+              -72
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          8,
+          4,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Crate",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              24,
+              3.5,
+              -72
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Crate",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              48,
+              2.5,
+              -72
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          8,
+          3,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              72,
+              3,
+              -48
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          4,
+          4,
+          8
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Crate",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              72,
+              3.5,
+              -24
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Crate",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              72,
+              2.5,
+              24
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          4,
+          3,
+          8
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Crate",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              72,
+              3,
+              48
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Crate",
+        "Size": [
+          4,
+          4,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Crate",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              48,
+              3.5,
+              72
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Crate",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              24,
+              2.5,
+              72
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          8,
+          3,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Crate",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -24,
+              3,
+              72
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Crate",
+        "Size": [
+          4,
+          4,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -48,
+              3,
+              72
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          8,
+          4,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -72,
+              2.5,
+              48
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          4,
+          3,
+          8
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Crate",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -72,
+              3,
+              24
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Crate",
+        "Size": [
+          4,
+          4,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -72,
+              3,
+              -24
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          4,
+          4,
+          8
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Crate",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -72,
+              3.5,
+              -48
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Crate",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Crate",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -40,
+              3,
+              -40
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Crate",
+        "Size": [
+          4,
+          4,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              40,
+              2.5,
+              -40
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          8,
+          3,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Crate",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              40,
+              3.5,
+              40
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Crate",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -40,
+              3,
+              40
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          8,
+          4,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              0,
+              2.5,
+              -48
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          8,
+          3,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Crate",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              48,
+              3,
+              0
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Crate",
+        "Size": [
+          4,
+          4,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              0,
+              3,
+              48
+            ]
+          }
+        },
+        "Color": [
+          0.17647058823529413,
+          0.18823529411764706,
+          0.2196078431372549
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          8,
+          4,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Crate",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -48,
+              3.5,
+              0
+            ]
+          }
+        },
+        "Color": [
+          0.27450980392156865,
+          0.2901960784313726,
+          0.32941176470588235
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Crate",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "BeaconNorth",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              0,
+              16,
+              -76
+            ]
+          }
+        },
+        "CanCollide": false,
+        "CanQuery": false,
+        "Color": [
+          0.1568627450980392,
+          0.8627450980392157,
+          0.8235294117647058
+        ],
+        "Material": "Neon",
+        "Name": "BeaconNorth",
+        "Size": [
+          3,
+          30,
+          3
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "BeaconEast",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              76,
+              16,
+              0
+            ]
+          }
+        },
+        "CanCollide": false,
+        "CanQuery": false,
+        "Color": [
+          1,
+          0.6666666666666666,
+          0.1568627450980392
+        ],
+        "Material": "Neon",
+        "Name": "BeaconEast",
+        "Size": [
+          3,
+          30,
+          3
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "BeaconSouth",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              0,
+              16,
+              76
+            ]
+          }
+        },
+        "CanCollide": false,
+        "CanQuery": false,
+        "Color": [
+          1,
+          0.27450980392156865,
+          0.8627450980392157
+        ],
+        "Material": "Neon",
+        "Name": "BeaconSouth",
+        "Size": [
+          3,
+          30,
+          3
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "BeaconWest",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -76,
+              16,
+              0
+            ]
+          }
+        },
+        "CanCollide": false,
+        "CanQuery": false,
+        "Color": [
+          0.35294117647058826,
+          0.8627450980392157,
+          0.39215686274509803
+        ],
+        "Material": "Neon",
+        "Name": "BeaconWest",
+        "Size": [
+          3,
+          30,
+          3
+        ],
+        "TopSurface": "Smooth"
+      }
+    }
+  ],
+  "className": "Folder",
+  "properties": {}
+}
