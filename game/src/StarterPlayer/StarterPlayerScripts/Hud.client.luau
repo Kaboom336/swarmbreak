@@ -60,6 +60,7 @@ local BUTTON = Color3.fromRGB(50, 90, 160)
 local OK = Color3.fromRGB(40, 160, 80)
 local BAD = Color3.fromRGB(160, 40, 40)
 local GREY = Color3.fromRGB(60, 60, 70) -- a button you cannot afford yet
+local finalHud = {}
 
 local screen = Instance.new("ScreenGui")
 screen.Name = "Hud"
@@ -172,8 +173,73 @@ for _, side in { "Top", "Bottom", "Left", "Right" } do
 	f.Parent = vignette
 end
 
+-- A short red arrow points toward the closest attacker whenever health drops.
+finalHud.HitDirection =
+	text(screen, "HitDirection", UDim2.fromScale(0.5, 0.5), UDim2.fromOffset(48, 48), "^", 42)
+finalHud.HitDirection.AnchorPoint = Vector2.new(0.5, 0.5)
+finalHud.HitDirection.TextColor3 = Color3.fromRGB(255, 50, 50)
+finalHud.HitDirection.TextStrokeTransparency = 0
+finalHud.HitDirection.Visible = false
+finalHud.HitDirection.ZIndex = 5
+finalHud.HitDirectionToken = 0
+
+function finalHud.closestEnemyPosition(from: Vector3): Vector3?
+	local enemies = workspace:FindFirstChild("Enemies")
+	local closest: Vector3? = nil
+	local closestDistance = math.huge
+	if not enemies then
+		return nil
+	end
+	for _, child in enemies:GetChildren() do
+		local root = if child:IsA("Model") then child.PrimaryPart else nil
+		if root then
+			local distance = (root.Position - from).Magnitude
+			if distance < closestDistance then
+				closest = root.Position
+				closestDistance = distance
+			end
+		end
+	end
+	return closest
+end
+
+function finalHud.showHitDirection(playerPosition: Vector3)
+	finalHud.HitDirectionToken += 1
+	local token = finalHud.HitDirectionToken
+	local source = finalHud.closestEnemyPosition(playerPosition)
+	local activeCamera = workspace.CurrentCamera
+	local angle = 0
+	if source and activeCamera then
+		local localDirection = activeCamera.CFrame:VectorToObjectSpace(source - playerPosition)
+		angle = math.deg(math.atan2(localDirection.X, -localDirection.Z))
+	end
+	local radians = math.rad(angle)
+	local radius = math.min(viewport.X, viewport.Y) * 0.18 / currentScale
+	finalHud.HitDirection.Position =
+		UDim2.new(0.5, math.sin(radians) * radius, 0.5, -math.cos(radians) * radius)
+	finalHud.HitDirection.Rotation = angle
+	finalHud.HitDirection.TextTransparency = 0
+	finalHud.HitDirection.Visible = true
+	task.delay(0.35, function()
+		if token ~= finalHud.HitDirectionToken then
+			return
+		end
+		TweenService:Create(finalHud.HitDirection, TweenInfo.new(0.2), { TextTransparency = 1 })
+			:Play()
+		task.delay(0.2, function()
+			if token == finalHud.HitDirectionToken then
+				finalHud.HitDirection.Visible = false
+			end
+		end)
+	end)
+end
+
 -- Top: wave / phase / alive
 local waveLabel = text(screen, "Wave", UDim2.new(0.5, -200, 0, 8), UDim2.new(0, 400, 0, 34), "", 28)
+waveLabel.TextXAlignment = Enum.TextXAlignment.Left
+finalHud.TimerLabel =
+	text(screen, "RoundTimer", UDim2.new(0.5, 0, 0, 8), UDim2.new(0, 200, 0, 34), "0:00", 24)
+finalHud.TimerLabel.TextXAlignment = Enum.TextXAlignment.Right
 local bossChipLabel =
 	text(screen, "BossChip", UDim2.new(0.5, -100, 0, 42), UDim2.new(0, 200, 0, 18), "", 13)
 bossChipLabel.TextColor3 = Color3.fromRGB(255, 160, 80)
@@ -198,6 +264,35 @@ bossFill.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
 bossFill.BorderSizePixel = 0
 bossFill.Parent = bossFrame
 local bossLabel = text(bossFrame, "BossName", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), "", 16)
+
+-- Run currency stays visible at the top right, separate from combat statistics.
+finalHud.CurrencyFrame = Instance.new("Frame")
+finalHud.CurrencyFrame.Name = "Currencies"
+finalHud.CurrencyFrame.BackgroundColor3 = PANEL
+finalHud.CurrencyFrame.BackgroundTransparency = 0.1
+finalHud.CurrencyFrame.BorderSizePixel = 0
+finalHud.CurrencyFrame.Parent = screen
+local currencyCorner = Instance.new("UICorner")
+currencyCorner.CornerRadius = UDim.new(0, 8)
+currencyCorner.Parent = finalHud.CurrencyFrame
+finalHud.CoinsLabel = text(
+	finalHud.CurrencyFrame,
+	"Coins",
+	UDim2.fromScale(0, 0),
+	UDim2.fromScale(0.5, 1),
+	"Coins 0",
+	18
+)
+finalHud.CoinsLabel.TextColor3 = ClientFX.c3(Theme.Coin)
+finalHud.GemsLabel = text(
+	finalHud.CurrencyFrame,
+	"Gems",
+	UDim2.fromScale(0.5, 0),
+	UDim2.fromScale(0.5, 1),
+	"Gems 0",
+	18
+)
+finalHud.GemsLabel.TextColor3 = ClientFX.c3(Theme.NeonTeal)
 
 -- Bottom-left: HP + stats + dash
 local hpBack = Instance.new("Frame")
@@ -496,6 +591,32 @@ local function flash(label: TextLabel, str: string, seconds: number)
 	end)
 end
 
+function finalHud.showAreaWarning(position: Vector3, radius: number, duration: number)
+	local warning = Instance.new("Part")
+	warning.Name = "AreaWarning"
+	warning.Shape = Enum.PartType.Cylinder
+	warning.Size = Vector3.new(0.08, radius * 2, radius * 2)
+	warning.CFrame = CFrame.new(position + Vector3.new(0, 0.08, 0))
+		* CFrame.Angles(0, 0, math.rad(90))
+	warning.Anchored = true
+	warning.CanCollide = false
+	warning.CanQuery = false
+	warning.CanTouch = false
+	warning.CastShadow = false
+	warning.Material = Enum.Material.Neon
+	warning.Color = Color3.fromRGB(255, 40, 40)
+	warning.Transparency = 0.45
+	warning.Parent = workspace:FindFirstChild("ClientFX") or workspace
+	TweenService:Create(
+		warning,
+		TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+		{ Transparency = 0.8, Size = Vector3.new(0.08, radius * 2.15, radius * 2.15) }
+	):Play()
+	task.delay(duration, function()
+		warning:Destroy()
+	end)
+end
+
 -- Latest stats snapshot from the server (filled by StatsChanged below)
 local stats: any
 
@@ -535,6 +656,11 @@ local CARD_STRIPE: { [string]: Color3 } = {
 	Stat = ClientFX.c3(Theme.NeonTeal),
 	Weapon = ClientFX.c3(Theme.NeonAmber),
 	Utility = OK,
+}
+finalHud.CardRarity = {
+	Stat = "Common",
+	Utility = "Rare",
+	Weapon = "Epic",
 }
 local cardIds: { string } = {} -- ids on offer in card order (key 1 = first card)
 local cardKey = "" -- the offer the cards were last built from
@@ -592,6 +718,12 @@ local function rebuildCards(offer: { string })
 			local corner = Instance.new("UICorner")
 			corner.CornerRadius = UDim.new(0, 10)
 			corner.Parent = b
+			local rarity = finalHud.CardRarity[def.Kind] or "Common"
+			local rarityColor = ClientFX.c3(Theme.Rarity[rarity])
+			local outline = Instance.new("UIStroke")
+			outline.Color = rarityColor
+			outline.Thickness = 2
+			outline.Parent = b
 			local stripe = Instance.new("Frame") -- 4 px top stripe coloured by card kind
 			stripe.Name = "Stripe"
 			stripe.Size = UDim2.new(1, -20, 0, 4)
@@ -599,9 +731,18 @@ local function rebuildCards(offer: { string })
 			stripe.BackgroundColor3 = CARD_STRIPE[def.Kind] or WHITE
 			stripe.BorderSizePixel = 0
 			stripe.Parent = b
-			text(b, "Label", UDim2.new(0, 10, 0, 18), UDim2.new(1, -20, 0, 26), def.Label, 18)
+			local rarityTag = text(
+				b,
+				"Rarity",
+				UDim2.new(0, 10, 0, 10),
+				UDim2.new(1, -20, 0, 18),
+				string.upper(rarity),
+				11
+			)
+			rarityTag.TextColor3 = rarityColor
+			text(b, "Label", UDim2.new(0, 10, 0, 30), UDim2.new(1, -20, 0, 26), def.Label, 18)
 			local blurb =
-				text(b, "Blurb", UDim2.new(0, 10, 0, 50), UDim2.new(1, -20, 0, 90), def.Blurb, 13)
+				text(b, "Blurb", UDim2.new(0, 10, 0, 62), UDim2.new(1, -20, 0, 78), def.Blurb, 13)
 			blurb.Font = Enum.Font.Gotham
 			blurb.TextWrapped = true
 			blurb.TextYAlignment = Enum.TextYAlignment.Top
@@ -908,9 +1049,11 @@ local function applyHudLayout()
 		return value / currentScale
 	end
 
-	local wave = rects.wave
+	local wave = rects.waveTimer
 	waveLabel.Position = UDim2.fromOffset(logical(wave.x), logical(wave.y))
-	waveLabel.Size = UDim2.fromOffset(logical(wave.w), 34)
+	waveLabel.Size = UDim2.fromOffset(logical(wave.w) / 2, 34)
+	finalHud.TimerLabel.Position = UDim2.fromOffset(logical(wave.x + wave.w / 2), logical(wave.y))
+	finalHud.TimerLabel.Size = UDim2.fromOffset(logical(wave.w) / 2, 34)
 	bossChipLabel.Position =
 		UDim2.fromOffset(logical(wave.x + (wave.w - 200 * currentScale) / 2), logical(wave.y) + 34)
 	bossChipLabel.Size = UDim2.fromOffset(200, 18)
@@ -918,8 +1061,14 @@ local function applyHudLayout()
 	phaseLabel.Size = UDim2.fromOffset(logical(wave.w), 22)
 	mutationLabel.Position = UDim2.fromOffset(logical(wave.x), logical(wave.y) + 74)
 	mutationLabel.Size = UDim2.fromOffset(logical(wave.w), 18)
-	bossFrame.Position = UDim2.fromOffset(logical(wave.x), logical(wave.y) + 98)
-	bossFrame.Size = UDim2.fromOffset(logical(wave.w), 22)
+
+	local boss = rects.bossBar
+	bossFrame.Position = UDim2.fromOffset(logical(boss.x), logical(boss.y))
+	bossFrame.Size = UDim2.fromOffset(logical(boss.w), logical(boss.h))
+
+	local currencies = rects.currencies
+	finalHud.CurrencyFrame.Position = UDim2.fromOffset(logical(currencies.x), logical(currencies.y))
+	finalHud.CurrencyFrame.Size = UDim2.fromOffset(logical(currencies.w), logical(currencies.h))
 
 	local health = rects.health
 	hpBack.Position = UDim2.fromOffset(logical(health.x), logical(health.y))
@@ -928,7 +1077,7 @@ local function applyHudLayout()
 	statsLabel.Size = UDim2.fromOffset(logical(health.w), 58)
 
 	local buttonHeight = HudLayout.buttonHeightFor(currentScale, platform)
-	local quest = rects.quest
+	local quest = rects.quests
 	questToggle.Position = UDim2.fromOffset(logical(quest.x), logical(quest.y))
 	questToggle.Size = UDim2.fromOffset(logical(quest.w), buttonHeight)
 	questPanel.Position =
@@ -963,6 +1112,13 @@ local function applyHudLayout()
 	boostsLabel.Position =
 		UDim2.fromOffset(logical(hotbarRect.x), logical(hotbarRect.y) + buttonHeight)
 	boostsLabel.Size = UDim2.fromOffset(logical(hotbarRect.w), 14)
+
+	local bannerRect = rects.waveClearBanner
+	banner.Position = UDim2.fromOffset(logical(bannerRect.x), logical(bannerRect.y))
+	banner.Size = UDim2.fromOffset(logical(bannerRect.w), logical(bannerRect.h))
+	local rewardRect = rects.rewardCards
+	cardPanel.Position = UDim2.fromOffset(logical(rewardRect.x), logical(rewardRect.y))
+	cardPanel.Size = UDim2.fromOffset(logical(rewardRect.w), logical(rewardRect.h))
 end
 
 applyHudLayout()
@@ -1385,12 +1541,12 @@ end)
 local function refreshStats()
 	local dash = (player:GetAttribute("DashReady") :: number?) or 0
 	local shards = stats.Shards or {}
+	finalHud.CoinsLabel.Text = string.format("Coins %d", stats.Coins or 0)
+	finalHud.GemsLabel.Text = string.format("Gems %d", stats.Gems or 0)
 	statsLabel.Text = string.format(
-		"Coins %d    Kills %d    Dash %d\nGems %d    Shards  Nature %d  Tech %d  Lightning %d  Dark %d",
-		stats.Coins,
+		"Kills %d    Dash %d\nShards  Nature %d  Tech %d  Lightning %d  Dark %d",
 		stats.Kills,
 		dash,
-		stats.Gems or 0,
 		shards.Nature or 0,
 		shards.Tech or 0,
 		shards.Lightning or 0,
@@ -1497,6 +1653,9 @@ local function refreshPhase()
 	local phase = stateValue("Phase")
 	local t = stateValue("TimeLeft")
 	local alive = stateValue("Alive")
+	local wholeSeconds = math.max(0, math.floor(t))
+	finalHud.TimerLabel.Text =
+		string.format("%d:%02d", math.floor(wholeSeconds / 60), wholeSeconds % 60)
 	if phase == "idle" then
 		phaseLabel.Text = "Waiting for players"
 	elseif phase == "starting" then
@@ -1523,7 +1682,9 @@ onState("Phase", function(phase)
 	end
 	if phase == "intermission" then
 		setShop(true)
-		flash(banner, "WAVE CLEARED", 2)
+		banner.TextColor3 = WHITE
+		local wave = stateValue("Wave")
+		flash(banner, string.format("Wave clear  +%d Coins", 10 * wave), 2)
 	elseif phase == "starting" then
 		setShop(false)
 		flash(banner, "WAVE " .. tostring(stateValue("Wave")), 2)
@@ -1557,6 +1718,10 @@ RunService.Heartbeat:Connect(function()
 		if hum.Health < lastHealth - 0.5 then
 			ClientFX.shake(1.5)
 			ClientFX.sound("Hurt", nil, 0.3)
+			local root = char and char:FindFirstChild("HumanoidRootPart")
+			if root and root:IsA("BasePart") then
+				finalHud.showHitDirection(root.Position)
+			end
 		end
 		lastHealth = hum.Health
 		local frac = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
@@ -1624,6 +1789,11 @@ end)
 
 Toast.OnClientEvent:Connect(function(msg: string, seconds: number)
 	flash(toast, msg, seconds or 3)
+end)
+Remotes.FX.OnClientEvent:Connect(function(kind: string, data: any)
+	if kind == "aoeWarning" and typeof(data.Position) == "Vector3" then
+		finalHud.showAreaWarning(data.Position, data.Radius or 6, data.Duration or 0.65)
+	end
 end)
 
 CrateResult.OnClientEvent:Connect(
