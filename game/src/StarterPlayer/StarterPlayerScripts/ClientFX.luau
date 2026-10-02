@@ -6,6 +6,7 @@ local Debris = game:GetService("Debris")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 local Feel = require(ReplicatedStorage.Shared.Feel)
+local SoundBudget = require(ReplicatedStorage.Shared.SoundBudget)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Settings = require(ReplicatedStorage.Shared.Settings)
 
@@ -13,6 +14,44 @@ local ClientFX = {}
 local camera = workspace.CurrentCamera
 local sfxVolume = Settings.DefaultVolume
 local musicVolume = Settings.DefaultVolume
+local soundBudget = SoundBudget.new()
+
+local p0Sounds = {
+	Hurt = true,
+	WaveStart = true,
+	WaveClear = true,
+	BossRoar = true,
+	BossThunder = true,
+	GameOver = true,
+}
+local p1Sounds = {
+	ShotPistol = true,
+	ShotSmg = true,
+	ShotShotgun = true,
+	ShotRifle = true,
+	ShotEnergy = true,
+	ShotCannon = true,
+	Swing = true,
+	Slam = true,
+	Orb = true,
+	Beam = true,
+}
+local p2Sounds = {
+	Hit = true,
+	Kill = true,
+	Explosion = true,
+}
+
+local function priorityForSound(name: string): SoundBudget.Priority
+	if p0Sounds[name] then
+		return SoundBudget.P0
+	elseif p1Sounds[name] then
+		return SoundBudget.P1
+	elseif p2Sounds[name] then
+		return SoundBudget.P2
+	end
+	return SoundBudget.P3
+end
 
 local music = Instance.new("Sound")
 music.Name = "Music"
@@ -48,7 +87,15 @@ function ClientFX.sound(name: string, at: Vector3?, pitchJitter: number?)
 	if not def or def.Id == "" then
 		return
 	end
+	local allowed
+	soundBudget, allowed = SoundBudget.allow(soundBudget, name, priorityForSound(name), os.clock())
+	if not allowed then
+		return
+	end
 	local s = Instance.new("Sound")
+	s.Ended:Once(function()
+		soundBudget = SoundBudget.release(soundBudget, name, os.clock())
+	end)
 	s.SoundId = def.Id
 	s.Volume = def.Volume * sfxVolume
 	s.PlaybackSpeed = def.Pitch * (1 + (math.random() - 0.5) * (pitchJitter or 0.1))

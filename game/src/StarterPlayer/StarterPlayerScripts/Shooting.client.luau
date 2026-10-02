@@ -1,5 +1,5 @@
 --!strict
--- Hold mouse / touch to fire toward the cursor. Server validates the actual hit.
+-- Hold mouse / touch to fire. Touch-only devices aim at a nearby enemy automatically.
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -7,18 +7,25 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Weapons = require(ReplicatedStorage.Shared.Weapons)
 local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
+local AimAssist = require(ReplicatedStorage.Shared.AimAssist)
+local TouchTracker = require(ReplicatedStorage.Shared.TouchTracker)
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local Shoot = Remotes.Shoot :: RemoteEvent
 local StatsChanged = Remotes.StatsChanged :: RemoteEvent
+local enemies = workspace:WaitForChild("Enemies")
+
+local TOUCH_AIM_RANGE = 100 -- placeholder
+local TOUCH_AIM_ANGLE_DEG = 70 -- placeholder
+local touchAutoAim = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
 
 local firing = false
 local last = 0
 local equipped = "Starter"
 local fireRateMult = 1
-local touchPos: Vector2? = nil
+local touchState = TouchTracker.new()
 
 StatsChanged.OnClientEvent:Connect(function(stats)
 	equipped = stats.Equipped or "Starter"
@@ -47,27 +54,45 @@ local function tryShoot()
 		return
 	end
 	last = now
-	-- Mouse: GetMouseLocation and ViewportPointToRay share the same raw space.
-	-- Touch: InputObject.Position is inset-adjusted, so use ScreenPointToRay.
-	local ray: Ray
-	if touchPos then
-		ray = camera:ScreenPointToRay(touchPos.X, touchPos.Y)
-	else
-		local m = UserInputService:GetMouseLocation()
-		ray = camera:ViewportPointToRay(m.X, m.Y)
-	end
 	local origin = root.Position + Vector3.new(0, 1, 0)
-	local aimPoint = ray.Origin + ray.Direction * 500
-	Shoot:FireServer(origin, (aimPoint - origin).Unit)
+	local direction: Vector3
+	if touchAutoAim then
+		local positions = {}
+		local roots = {}
+		for _, enemy in enemies:GetChildren() do
+			local enemyRoot = enemy:FindFirstChild("HumanoidRootPart") :: BasePart?
+			local enemyHumanoid = enemy:FindFirstChildOfClass("Humanoid")
+			if enemyRoot and enemyHumanoid and enemyHumanoid.Health > 0 then
+				table.insert(positions, { x = enemyRoot.Position.X, z = enemyRoot.Position.Z })
+				table.insert(roots, enemyRoot)
+			end
+		end
+		local look = root.CFrame.LookVector
+		local targetIndex = AimAssist.pickTarget(
+			{ x = origin.X, z = origin.Z },
+			{ x = look.X, z = look.Z },
+			positions,
+			TOUCH_AIM_RANGE,
+			TOUCH_AIM_ANGLE_DEG
+		)
+		local target = if targetIndex then roots[targetIndex] else nil
+		direction = if target then (target.Position - origin).Unit else look
+	else
+		-- GetMouseLocation and ViewportPointToRay share the same raw space.
+		local m = UserInputService:GetMouseLocation()
+		local ray = camera:ViewportPointToRay(m.X, m.Y)
+		local aimPoint = ray.Origin + ray.Direction * 500
+		direction = (aimPoint - origin).Unit
+	end
+	Shoot:FireServer(origin, direction)
 end
 
 UserInputService.InputBegan:Connect(function(input, gp)
-	if gp then
-		return
-	end
 	if input.UserInputType == Enum.UserInputType.Touch then
-		touchPos = Vector2.new(input.Position.X, input.Position.Y)
-		firing = true
+		touchState = TouchTracker.began(touchState, input, gp)
+		firing = TouchTracker.isFiring(touchState)
+	elseif gp then
+		return
 	elseif
 		input.UserInputType == Enum.UserInputType.MouseButton1
 		or input.KeyCode == Enum.KeyCode.ButtonR2
@@ -75,19 +100,15 @@ UserInputService.InputBegan:Connect(function(input, gp)
 		firing = true
 	end
 end)
-UserInputService.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.Touch and touchPos then
-		touchPos = Vector2.new(input.Position.X, input.Position.Y)
-	end
-end)
 UserInputService.InputEnded:Connect(function(input)
-	if
+	if input.UserInputType == Enum.UserInputType.Touch then
+		touchState = TouchTracker.ended(touchState, input)
+		firing = TouchTracker.isFiring(touchState)
+	elseif
 		input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch
 		or input.KeyCode == Enum.KeyCode.ButtonR2
 	then
 		firing = false
-		touchPos = nil
 	end
 end)
 RunService.RenderStepped:Connect(function()
