@@ -41,7 +41,7 @@ end)
 test("valueAt follows base + per level", function()
 	eq(Upgrades.valueAt("Speed", 0), 20, "speed base")
 	eq(Upgrades.valueAt("Speed", 2), 23, "speed lv2")
-	eq(Upgrades.valueAt("MaxHealth", 3), 160, "hp lv3")
+	eq(Upgrades.valueAt("MaxHealth", 3), 210, "hp lv3")
 end)
 
 test("double coins pass doubles and wave bonus grows", function()

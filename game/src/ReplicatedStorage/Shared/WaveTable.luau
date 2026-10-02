@@ -5,6 +5,9 @@ local Config = require(script.Parent.Config)
 local WaveTable = {}
 
 function WaveTable.enemyCount(wave: number): number
+	if wave == 1 then
+		return 8
+	end
 	local base = 6 + 3 * (wave - 1)
 	if wave > Config.NormalWaves then
 		base += Config.InfiniteCountPerWave * (wave - Config.NormalWaves)

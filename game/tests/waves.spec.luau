@@ -3,7 +3,7 @@ local Enemies = load("Enemies")
 local WaveTable = load("WaveTable")
 
 test("enemy count grows each wave and is capped", function()
-	eq(WaveTable.enemyCount(1), 6, "wave 1")
+	eq(WaveTable.enemyCount(1), 8, "wave 1")
 	eq(WaveTable.enemyCount(2), 9, "wave 2")
 	eq(WaveTable.enemyCount(15), 48, "wave 15")
 	assert(WaveTable.enemyCount(16) > WaveTable.enemyCount(15), "infinite adds more")

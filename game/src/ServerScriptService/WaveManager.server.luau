@@ -33,6 +33,25 @@ local rng = Random.new()
 local currentWave = 0
 local runStartedAt = 0
 
+local function protectPlayers()
+	for _, player in Players:GetPlayers() do
+		local character = player.Character
+		if character and not PlayerData.isWaiting(player) then
+			local previous = character:FindFirstChild("SpawnProtection")
+			if previous then
+				previous:Destroy()
+			end
+			local protection = Instance.new("ForceField")
+			protection.Name = "SpawnProtection"
+			protection.Visible = false
+			protection.Parent = character
+			task.delay(Config.SpawnProtectionSeconds, function()
+				protection:Destroy()
+			end)
+		end
+	end
+end
+
 local function sendTelemetry(plr: Player, name: string, fields: Telemetry.Fields)
 	pcall(function()
 		local event = Telemetry.build(name, fields)
@@ -79,7 +98,8 @@ end
 local function spawnEnemy(typeName: string, cf: CFrame?)
 	local def = Enemies.Defs[typeName]
 	local hs, ds = WaveTable.scaling(currentWave)
-	local mutationId = todaysMutation()
+	-- Keep the onboarding wave predictable even when a daily difficulty mutation is active.
+	local mutationId = if currentWave == 1 then "" else todaysMutation()
 	local at = cf or randomSpawnCFrame()
 	local accent = (Theme.Enemy[typeName] or Theme.Enemy.Walker).Accent
 	FX:FireAllClients(
@@ -224,10 +244,15 @@ local function runWave(wave: number): boolean
 	end
 
 	GameState.set("Phase", "fighting")
+	protectPlayers()
 	local mutationId = todaysMutation()
-	local count =
-		math.floor(Mutations.apply({ Spawn = WaveTable.enemyCount(wave) }, mutationId).Spawn + 0.5)
+	local count = if wave == 1
+		then WaveTable.enemyCount(wave)
+		else math.floor(
+			Mutations.apply({ Spawn = WaveTable.enemyCount(wave) }, mutationId).Spawn + 0.5
+		)
 	local weights = Enemies.weightsForWave(wave)
+	local waveOneSpawn = if wave == 1 then randomSpawnCFrame() else nil
 	for _ = 1, count do
 		while EnemyAI.aliveCount() >= Config.MaxAlive do
 			if not anyPlayersAlive() then
@@ -235,7 +260,7 @@ local function runWave(wave: number): boolean
 			end
 			task.wait(0.5)
 		end
-		spawnEnemy(Enemies.pickFromWeights(weights, rng:NextNumber()))
+		spawnEnemy(Enemies.pickFromWeights(weights, rng:NextNumber()), waveOneSpawn)
 		task.wait(rng:NextNumber(Config.SpawnGapMin, Config.SpawnGapMax))
 		if not anyPlayersAlive() then
 			return false
