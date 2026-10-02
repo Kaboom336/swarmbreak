@@ -4,6 +4,7 @@ local Settings = {}
 
 Settings.DefaultVolume = 0.5
 Settings.DefaultMouseLock = true
+Settings.AutoFire = true
 
 function Settings.clamp(value: any): number
 	if type(value) ~= "number" or value ~= value then

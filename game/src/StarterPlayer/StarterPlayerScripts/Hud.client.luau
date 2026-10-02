@@ -439,7 +439,7 @@ settingsToggle.Position = UDim2.new(1, -404, 0, 8)
 
 local settingsPanel = UiKit.Panel(screen, "Settings")
 settingsPanel.Name = "Settings"
-settingsPanel.Size = UDim2.new(0, 260, 0, 152)
+settingsPanel.Size = UDim2.new(0, 260, 0, 194)
 settingsPanel.Position = UDim2.new(1, -544, 0, 50)
 settingsPanel.BackgroundColor3 = PANEL
 settingsPanel.BackgroundTransparency = 0.1
@@ -555,6 +555,21 @@ mouseLockButton.MouseButton1Click:Connect(function()
 	setMouseLock(not mouseLockEnabled)
 	UpdateSettings:FireServer({ MouseLockEnabled = mouseLockEnabled })
 end)
+
+local autoFireButton = button(settingsPanel, "Auto-fire  ON", UDim2.new(1, -24, 0, 34))
+autoFireButton.Name = "AutoFire"
+autoFireButton.Position = UDim2.new(0, 12, 0, 150)
+local autoFireEnabled = Settings.AutoFire
+local function setAutoFire(enabled: boolean)
+	autoFireEnabled = enabled
+	Settings.AutoFire = enabled
+	player:SetAttribute("AutoFire", enabled)
+	autoFireButton.Text = if enabled then "Auto-fire  ON" else "Auto-fire  OFF"
+end
+autoFireButton.MouseButton1Click:Connect(function()
+	setAutoFire(not autoFireEnabled)
+end)
+setAutoFire(autoFireEnabled)
 
 -- Weapon switching remains on number keys; the clean fighting HUD shows ammo instead of cards.
 local hotbar = Instance.new("Frame")
@@ -690,6 +705,7 @@ cardPanel.BackgroundTransparency = 1
 cardPanel.Visible = false
 cardPanel.ZIndex = 2 -- above the shop panel
 cardPanel.Parent = screen
+player:SetAttribute("CardPanelOpen", false)
 local cardLayout = Instance.new("UIListLayout")
 cardLayout.FillDirection = Enum.FillDirection.Horizontal
 cardLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -1149,7 +1165,7 @@ local function applyHudLayout()
 
 	local settings = rects.settings
 	settingsPanel.Position = UDim2.fromOffset(logical(settings.x), logical(settings.y))
-	settingsPanel.Size = UDim2.fromOffset(logical(settings.w), math.min(152, logical(settings.h)))
+	settingsPanel.Size = UDim2.fromOffset(logical(settings.w), math.min(194, logical(settings.h)))
 
 	local shopRect = rects.shop
 	shop.Position = UDim2.fromOffset(logical(shopRect.x), logical(shopRect.y))
@@ -1210,6 +1226,7 @@ shopToggle.MouseButton1Click:Connect(function()
 	setUtilityPanel(if finalHud.OpenUtilityPanel == "shop" then nil else "shop")
 end)
 cardPanel:GetPropertyChangedSignal("Visible"):Connect(function()
+	player:SetAttribute("CardPanelOpen", cardPanel.Visible)
 	if cardPanel.Visible then
 		setUtilityPanel(nil)
 	end
