@@ -71,6 +71,18 @@ screen.ResetOnSpawn = false
 screen.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
 screen.Parent = gui
 
+-- Panels remain visible, but only actual buttons claim input. This keeps firing responsive
+-- when the pointer happens to be over a HUD frame.
+local function letCombatClicksThrough(descendant: Instance)
+	if descendant:IsA("GuiObject") and not descendant:IsA("GuiButton") then
+		descendant.Active = false
+	end
+end
+screen.DescendantAdded:Connect(letCombatClicksThrough)
+for _, descendant in screen:GetDescendants() do
+	letCombatClicksThrough(descendant)
+end
+
 local platform: HudLayout.Platform = if UserInputService.TouchEnabled
 	then "touch"
 	else if UserInputService.GamepadEnabled then "gamepad" else "keyboard"

@@ -5,6 +5,7 @@ export type Position = {
 }
 
 local AimAssist = {}
+AimAssist.PcConeDegrees = 6
 
 local function distanceSquared(a: Position, b: Position): number
 	local x = a.x - b.x
@@ -12,12 +13,13 @@ local function distanceSquared(a: Position, b: Position): number
 	return x * x + z * z
 end
 
-function AimAssist.pickTarget(
+local function pick(
 	origin: Position,
 	facing: Position,
 	enemies: { Position },
 	maxRange: number,
-	maxAngleDeg: number
+	maxAngleDeg: number,
+	fallbackToNearest: boolean
 ): number?
 	if maxRange < 0 then
 		return nil
@@ -54,7 +56,29 @@ function AimAssist.pickTarget(
 		end
 	end
 
-	return coneIndex or nearestIndex
+	return coneIndex or if fallbackToNearest then nearestIndex else nil
+end
+
+-- Soft aim assist never drags aim to a target outside the configured cone.
+function AimAssist.pickTargetInCone(
+	origin: Position,
+	facing: Position,
+	enemies: { Position },
+	maxRange: number,
+	maxAngleDeg: number
+): number?
+	return pick(origin, facing, enemies, maxRange, maxAngleDeg, false)
+end
+
+-- Touch auto-aim keeps its wider-cone nearest-target fallback.
+function AimAssist.pickTarget(
+	origin: Position,
+	facing: Position,
+	enemies: { Position },
+	maxRange: number,
+	maxAngleDeg: number
+): number?
+	return pick(origin, facing, enemies, maxRange, maxAngleDeg, true)
 end
 
 return AimAssist

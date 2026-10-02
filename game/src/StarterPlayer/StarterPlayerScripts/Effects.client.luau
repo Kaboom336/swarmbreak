@@ -57,10 +57,10 @@ handlers.shot = function(d)
 	local color = c3(d.Color)
 	local from = muzzleOf(d.Shooter) or d.Origin
 	for _, endPos in d.Ends do
-		ClientFX.tracer(from, endPos, color, 0.12, 0.08)
+		ClientFX.tracer(from, endPos, color, 0.12, Feel.TracerSeconds)
 	end
-	ClientFX.flash(from, color, 10, 0.08)
-	ClientFX.burst(from, color, 6, 0.5, 8, 0.15, true)
+	ClientFX.flash(from, color, 10, Feel.MuzzleFlashSeconds)
+	ClientFX.burst(from, color, 6, 0.5, 8, Feel.MuzzleFlashSeconds, true)
 	for _, h in d.Hits do
 		ClientFX.burst(h, color, 12, 0.35, 18, 0.35, true)
 	end

@@ -22,29 +22,33 @@ Feel.Events = {
 } :: { [EventName]: EventBudget }
 
 Feel.NumberCapPerSecond = 20 -- placeholder
-Feel.HitFlashSeconds = 0.06 -- placeholder
-Feel.DamageNumberSeconds = 0.6 -- placeholder
-Feel.DamageNumberRiseStuds = 3 -- placeholder
-Feel.HitSparkScale = 0.35 -- placeholder
-Feel.CritSparkScale = 0.55 -- placeholder
-Feel.HitSparkCount = 12 -- placeholder
-Feel.CritSparkCount = 20 -- placeholder
-Feel.HitSparkSpeed = 18 -- placeholder
-Feel.CritSparkSpeed = 24 -- placeholder
-Feel.HitSparkSeconds = 0.35 -- placeholder
-Feel.HitFlashRange = 8 -- placeholder
-Feel.CoinFlightSeconds = 0.55 -- placeholder
+Feel.TracerSeconds = 0.08
+Feel.MuzzleFlashSeconds = 0.08
+Feel.HitFlashSeconds = 0.06
+Feel.DamageNumberSeconds = 0.6
+Feel.DamageNumberRiseStuds = 3
+Feel.HitSparkScale = 0.35
+Feel.CritSparkScale = 0.55
+Feel.HitSparkCount = 12
+Feel.CritSparkCount = 20
+Feel.HitSparkSpeed = 18
+Feel.CritSparkSpeed = 24
+Feel.HitSparkSeconds = 0.35
+Feel.HitFlashRange = 8
+Feel.CoinFlightSeconds = 0.55
+Feel.KnockbackSpeed = 8
+Feel.KnockbackStuds = 0.35
 
--- Each enemy gets its own readable crystal-burst accent on death.
+-- Every enemy gets a bloodless teal/green goo-burst accent on death.
 Feel.DeathBurstColors = {
-	Walker = { 255, 90, 120 },
-	Runner = { 255, 230, 120 },
-	Flyer = { 150, 120, 255 },
-	Tank = { 120, 255, 140 },
-	Spitter = { 190, 255, 90 },
-	Brute = { 255, 40, 40 },
-	Queen = { 255, 90, 255 },
-	Warden = { 90, 200, 255 },
+	Walker = { 55, 230, 175 },
+	Runner = { 120, 255, 120 },
+	Flyer = { 60, 220, 210 },
+	Tank = { 80, 190, 105 },
+	Spitter = { 180, 255, 70 },
+	Brute = { 35, 175, 125 },
+	Queen = { 75, 240, 180 },
+	Warden = { 45, 205, 160 },
 } :: { [string]: { number } }
 
 function Feel.eventFor(killed: boolean, critical: boolean): EventName
