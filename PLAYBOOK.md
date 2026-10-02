@@ -81,3 +81,4 @@ For each piece (a model group, a system, a screen):
 - 2026-10-02: glow and juice come from Roblox-native VFX: fade every particle in and out, keep Rate at or under 100/s for mobile, LightEmission plus Bloom for glow. https://create.roblox.com/docs/effects/particle-emitters
 - Zion 10/2: reference YouTube videos are edited; treat captures as hints, not proof. Prefer unedited full playthroughs.
 - Zion 10/2: take each aspect from the game that does it best (research/BEST-OF.md); judge each part against that game.
+- Zion 10/2: keep Swarm Break's unique parts (elements, evolutions, melee weapons, co-op, bosses); borrow from every genre, never replace what is ours.
