@@ -425,7 +425,7 @@ settingsToggle.Position = UDim2.new(1, -404, 0, 8)
 
 local settingsPanel = UiKit.Panel(screen, "Settings")
 settingsPanel.Name = "Settings"
-settingsPanel.Size = UDim2.new(0, 260, 0, 116)
+settingsPanel.Size = UDim2.new(0, 260, 0, 152)
 settingsPanel.Position = UDim2.new(1, -544, 0, 50)
 settingsPanel.BackgroundColor3 = PANEL
 settingsPanel.BackgroundTransparency = 0.1
@@ -525,6 +525,21 @@ local setSfxSlider = makeSlider("SFX volume", 62, function(value, persist)
 	if persist then
 		UpdateSettings:FireServer({ SfxVolume = value })
 	end
+end)
+
+local mouseLockButton = button(settingsPanel, "Mouse lock  ON", UDim2.new(1, -24, 0, 34))
+mouseLockButton.Name = "MouseLock"
+mouseLockButton.Position = UDim2.new(0, 12, 0, 108)
+mouseLockButton.Visible = not (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
+local mouseLockEnabled = Settings.DefaultMouseLock
+local function setMouseLock(enabled: boolean)
+	mouseLockEnabled = enabled
+	player:SetAttribute("MouseLockEnabled", enabled)
+	mouseLockButton.Text = if enabled then "Mouse lock  ON" else "Mouse lock  OFF"
+end
+mouseLockButton.MouseButton1Click:Connect(function()
+	setMouseLock(not mouseLockEnabled)
+	UpdateSettings:FireServer({ MouseLockEnabled = mouseLockEnabled })
 end)
 
 settingsToggle.MouseButton1Click:Connect(function()
@@ -1481,6 +1496,7 @@ stats = {
 	Flags = {},
 	MusicVolume = Settings.DefaultVolume,
 	SfxVolume = Settings.DefaultVolume,
+	MouseLockEnabled = Settings.DefaultMouseLock,
 }
 
 local tutorialContext: Tutorial.Context = "arena"
@@ -1671,6 +1687,7 @@ StatsChanged.OnClientEvent:Connect(function(s)
 	stats = s
 	setMusicSlider(s.MusicVolume)
 	setSfxSlider(s.SfxVolume)
+	setMouseLock(s.MouseLockEnabled ~= false)
 	refreshStats()
 	onDailyPopup(s.DailyPopup)
 end)

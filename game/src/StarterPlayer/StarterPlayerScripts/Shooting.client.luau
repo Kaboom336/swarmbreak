@@ -9,6 +9,7 @@ local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 local AimAssist = require(ReplicatedStorage.Shared.AimAssist)
 local TouchTracker = require(ReplicatedStorage.Shared.TouchTracker)
+local CameraConfig = require(ReplicatedStorage.Shared.CameraConfig)
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -19,7 +20,8 @@ local enemies = workspace:WaitForChild("Enemies")
 
 local TOUCH_AIM_RANGE = 100 -- placeholder
 local TOUCH_AIM_ANGLE_DEG = 70 -- placeholder
-local touchAutoAim = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
+local touchAutoAim =
+	CameraConfig.isTouchOnly(UserInputService.TouchEnabled, UserInputService.MouseEnabled)
 
 local firing = false
 local last = 0
@@ -78,8 +80,11 @@ local function tryShoot()
 		local target = if targetIndex then roots[targetIndex] else nil
 		direction = if target then (target.Position - origin).Unit else look
 	else
-		-- GetMouseLocation and ViewportPointToRay share the same raw space.
-		local m = UserInputService:GetMouseLocation()
+		-- Mouse lock fires through the centred reticle; the Settings toggle restores cursor aim.
+		local mouseLock = player:GetAttribute("MouseLockEnabled") ~= false
+		local m = if mouseLock or not UserInputService.MouseEnabled
+			then camera.ViewportSize / 2
+			else UserInputService:GetMouseLocation()
 		local ray = camera:ViewportPointToRay(m.X, m.Y)
 		local aimPoint = ray.Origin + ray.Direction * 500
 		local rawDirection = (aimPoint - origin).Unit
@@ -107,6 +112,10 @@ local function tryShoot()
 		)
 		local target = if targetIndex then roots[targetIndex] else nil
 		direction = if target then (target.Position - origin).Unit else rawDirection
+	end
+	local facing = Vector3.new(direction.X, 0, direction.Z)
+	if facing.Magnitude > 0.001 then
+		root.CFrame = CFrame.lookAt(root.Position, root.Position + facing.Unit)
 	end
 	Shoot:FireServer(origin, direction)
 end

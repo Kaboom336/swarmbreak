@@ -3,11 +3,11 @@
 -- Colors are {r, g, b} 0..255 so tests can load this file.
 local Theme = {
 	Name = "Overrun Station",
-	Floor = { 155, 158, 168 },
-	FloorTrim = { 24, 25, 30 },
-	Wall = { 30, 32, 40 },
-	Metal = { 70, 74, 84 },
-	MetalDark = { 45, 48, 56 },
+	Floor = { 180, 185, 195 },
+	FloorTrim = { 135, 140, 150 },
+	Wall = { 105, 110, 120 },
+	Metal = { 115, 120, 130 },
+	MetalDark = { 90, 95, 105 },
 	NeonTeal = { 40, 220, 210 },
 	NeonAmber = { 255, 170, 40 },
 	NeonRed = { 255, 60, 60 },
