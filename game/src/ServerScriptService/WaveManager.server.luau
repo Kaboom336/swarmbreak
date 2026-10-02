@@ -325,7 +325,13 @@ local function endRun(won: boolean, reachedWave: number)
 	EnemyAI.clearAll()
 	GameState.set("Alive", 0)
 	GameState.set("TimeLeft", 0)
-	while not playAgainRequested and #Players:GetPlayers() > 0 do
+	-- Wait for a Play again press; fall back to a restart so an idle server never stalls.
+	local overSince = os.clock()
+	while
+		not playAgainRequested
+		and #Players:GetPlayers() > 0
+		and os.clock() - overSince < Config.PlayAgainTimeout
+	do
 		task.wait(0.1)
 	end
 end

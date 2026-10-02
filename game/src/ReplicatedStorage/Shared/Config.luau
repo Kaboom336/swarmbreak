@@ -1,6 +1,8 @@
 --!strict
 -- Game-wide tunables. Pure data: no Roblox globals, so tests can require it.
 local Config = {
+	-- seconds the run-over screen waits for Play again before restarting anyway
+	PlayAgainTimeout = 30,
 	NormalWaves = 15,
 	BossEvery = 5,
 	IntermissionSeconds = 12,
