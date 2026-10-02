@@ -10,6 +10,7 @@ local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 local AimAssist = require(ReplicatedStorage.Shared.AimAssist)
 local TouchTracker = require(ReplicatedStorage.Shared.TouchTracker)
 local CameraConfig = require(ReplicatedStorage.Shared.CameraConfig)
+local Settings = require(ReplicatedStorage.Shared.Settings)
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -22,6 +23,8 @@ local TOUCH_AIM_RANGE = 100 -- placeholder
 local TOUCH_AIM_ANGLE_DEG = 70 -- placeholder
 local touchAutoAim =
 	CameraConfig.isTouchOnly(UserInputService.TouchEnabled, UserInputService.MouseEnabled)
+local autoAim = Settings.DefaultAutoAim
+local aimAssistStrength = Settings.DefaultAimAssistStrength
 
 local firing = false
 local last = 0
@@ -29,8 +32,15 @@ local equipped = "Starter"
 local fireRateMult = 1
 local touchState = TouchTracker.new()
 
+local function assistDirection(rawDirection: Vector3, targetDirection: Vector3): Vector3
+	local blended = rawDirection:Lerp(targetDirection, aimAssistStrength)
+	return if blended.Magnitude > 0.001 then blended.Unit else rawDirection
+end
+
 StatsChanged.OnClientEvent:Connect(function(stats)
 	equipped = stats.Equipped or "Starter"
+	autoAim = stats.AutoAim ~= false
+	aimAssistStrength = Settings.clampAimAssistStrength(stats.AimAssistStrength)
 	-- The same rate the server checks shots against (PlayerData.fireRateMultiplier): run
 	-- upgrades x the equipped weapon's evolution tier x this run's Trigger cards. This throttle
 	-- is what sets the real cadence (the server only guards), so every part is folded in here.
@@ -58,7 +68,7 @@ local function tryShoot()
 	last = now
 	local origin = root.Position + Vector3.new(0, 1, 0)
 	local direction: Vector3
-	if touchAutoAim then
+	if touchAutoAim and autoAim then
 		local positions = {}
 		local roots = {}
 		for _, enemy in enemies:GetChildren() do
@@ -78,7 +88,8 @@ local function tryShoot()
 			TOUCH_AIM_ANGLE_DEG
 		)
 		local target = if targetIndex then roots[targetIndex] else nil
-		direction = if target then (target.Position - origin).Unit else look
+		local assisted = if target then (target.Position - origin).Unit else look
+		direction = assistDirection(look, assisted)
 	else
 		-- Mouse lock fires through the centred reticle; the Settings toggle restores cursor aim.
 		local mouseLock = player:GetAttribute("MouseLockEnabled") ~= false
@@ -111,7 +122,8 @@ local function tryShoot()
 			AimAssist.PcConeDegrees
 		)
 		local target = if targetIndex then roots[targetIndex] else nil
-		direction = if target then (target.Position - origin).Unit else rawDirection
+		local assisted = if target then (target.Position - origin).Unit else rawDirection
+		direction = assistDirection(rawDirection, assisted)
 	end
 	local facing = Vector3.new(direction.X, 0, direction.Z)
 	if facing.Magnitude > 0.001 then

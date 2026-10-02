@@ -15,7 +15,13 @@ local ClientFX = {}
 local camera = workspace.CurrentCamera
 local sfxVolume = Settings.DefaultVolume
 local musicVolume = Settings.DefaultVolume
+local muted = Settings.DefaultMute
+local reduceMotion = Settings.DefaultReduceMotion
 local soundBudget = SoundBudget.new()
+local shake = 0
+local shakeDecay = 6
+local baseFov = 70
+local fovTween: Tween? = nil
 
 local p0Sounds = {
 	Hurt = true,
@@ -182,15 +188,35 @@ end
 
 function ClientFX.setMusicVolume(value: any)
 	musicVolume = Settings.clamp(value)
-	music.Volume = Sounds.Music.Volume * musicVolume
+	music.Volume = if muted then 0 else Sounds.Music.Volume * musicVolume
 end
 
 function ClientFX.setSfxVolume(value: any)
 	sfxVolume = Settings.clamp(value)
 end
 
+function ClientFX.setMuted(value: any)
+	muted = value == true
+	music.Volume = if muted then 0 else Sounds.Music.Volume * musicVolume
+end
+
+function ClientFX.setReduceMotion(value: any)
+	reduceMotion = value == true
+	if reduceMotion then
+		shake = 0
+		if fovTween then
+			fovTween:Cancel()
+			fovTween = nil
+		end
+		camera.FieldOfView = baseFov
+	end
+end
+
 -- ---------- sounds ----------
 function ClientFX.sound(name: string, at: Vector3?, pitchJitter: number?)
+	if muted then
+		return
+	end
 	local def = (Sounds :: any)[name]
 	if not def or def.Id == "" then
 		return
@@ -227,8 +253,6 @@ function ClientFX.sound(name: string, at: Vector3?, pitchJitter: number?)
 end
 
 -- ---------- camera shake ----------
-local shake = 0
-local shakeDecay = 6
 RunService:BindToRenderStep("SwarmShake", Enum.RenderPriority.Camera.Value + 1, function(dt)
 	if shake <= 0.001 or camera.CameraType == Enum.CameraType.Scriptable then
 		shake = math.max(0, shake - dt * 4)
@@ -244,6 +268,9 @@ RunService:BindToRenderStep("SwarmShake", Enum.RenderPriority.Camera.Value + 1, 
 	shake = math.max(0, shake - dt * shakeDecay * mag)
 end)
 function ClientFX.shake(amount: number)
+	if reduceMotion then
+		return
+	end
 	shake = math.min(shake + amount, 6)
 end
 
@@ -252,9 +279,10 @@ function ClientFX.shakeFor(event: Feel.EventName, setting: Feel.ShakeSetting)
 end
 
 -- ---------- FOV kick ----------
-local baseFov = 70
-local fovTween: Tween? = nil
 function ClientFX.fovKick(delta: number, seconds: number)
+	if reduceMotion then
+		return
+	end
 	if fovTween then
 		fovTween:Cancel()
 	end

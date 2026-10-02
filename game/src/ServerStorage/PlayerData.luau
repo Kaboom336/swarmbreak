@@ -110,6 +110,12 @@ local function push(plr: Player)
 			MusicVolume = p.MusicVolume,
 			SfxVolume = p.SfxVolume,
 			MouseLockEnabled = p.MouseLockEnabled,
+			AutoAim = p.AutoAim,
+			AimAssistStrength = p.AimAssistStrength,
+			UiScale = p.UiScale,
+			LeftHanded = p.LeftHanded,
+			ReduceMotion = p.ReduceMotion,
+			Mute = p.Mute,
 		})
 	end
 end
@@ -176,7 +182,11 @@ function PlayerData.updateSettings(plr: Player, changes: any)
 	if not Profile.isLoaded(plr) then
 		return
 	end
-	Settings.apply(Profile.get(plr), changes)
+	local profile = Profile.get(plr)
+	local updated = Settings.apply(profile, changes)
+	for _, field in Settings.Fields do
+		(profile :: any)[field] = updated[field]
+	end
 	Profile.markDirty(plr)
 	push(plr)
 end

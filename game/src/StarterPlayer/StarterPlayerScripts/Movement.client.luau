@@ -15,8 +15,26 @@ local camera = workspace.CurrentCamera
 local DashRemote = (ReplicatedStorage:WaitForChild("Remotes") :: Folder):WaitForChild(
 		"Dash"
 	) :: RemoteEvent
+local StatsChanged = (ReplicatedStorage:WaitForChild("Remotes") :: Folder):WaitForChild(
+	"StatsChanged"
+) :: RemoteEvent
 
 local RENDER_STEP_NAME = "SwarmMovementCamera"
+local leftHanded = false
+local reduceMotion = false
+
+local function applyTouchLayout()
+	local slideX = if leftHanded then 0.35 else 0.65
+	local dashX = if leftHanded then 0.22 else 0.78
+	ContextActionService:SetPosition("Slide", UDim2.fromScale(slideX, 0.72))
+	ContextActionService:SetPosition("Dash", UDim2.fromScale(dashX, 0.72))
+end
+
+StatsChanged.OnClientEvent:Connect(function(stats: any)
+	leftHanded = stats.LeftHanded == true
+	reduceMotion = stats.ReduceMotion == true
+	applyTouchLayout()
+end)
 
 local function bind(character: Model)
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
@@ -184,7 +202,6 @@ local function bind(character: Model)
 		return Enum.ContextActionResult.Sink
 	end, true, Enum.KeyCode.LeftControl, Enum.KeyCode.C, Enum.KeyCode.ButtonL3)
 	ContextActionService:SetTitle("Slide", "SLIDE")
-	ContextActionService:SetPosition("Slide", UDim2.fromScale(0.65, 0.72))
 
 	ContextActionService:BindAction("Dash", function(_, inputState)
 		if inputState == Enum.UserInputState.Begin then
@@ -193,7 +210,7 @@ local function bind(character: Model)
 		return Enum.ContextActionResult.Sink
 	end, true, Enum.KeyCode.Q, Enum.KeyCode.ButtonB)
 	ContextActionService:SetTitle("Dash", "DASH")
-	ContextActionService:SetPosition("Dash", UDim2.fromScale(0.78, 0.72))
+	applyTouchLayout()
 
 	table.insert(
 		connections,
@@ -235,21 +252,24 @@ local function bind(character: Model)
 
 	RunService:BindToRenderStep(RENDER_STEP_NAME, Enum.RenderPriority.Camera.Value + 2, function(dt)
 		local moving = humanoid.MoveDirection.Magnitude > 0.1
-		local targetTilt = if sliding then MovementTuning.Slide.CameraTiltDegrees else 0
+		local targetTilt = if sliding and not reduceMotion
+			then MovementTuning.Slide.CameraTiltDegrees
+			else 0
 		cameraTilt += (targetTilt - cameraTilt) * math.min(1, dt * 12)
 		if camera.CameraType ~= Enum.CameraType.Scriptable then
 			camera.CFrame *= CFrame.Angles(0, 0, math.rad(cameraTilt))
 		end
 
-		local sprintKick = if isSprinting()
+		local sprintKick = if not reduceMotion
+				and isSprinting()
 				and moving
 				and not sliding
 			then MovementTuning.Fov.SprintKick
 			else 0
-		local dashFov = MovementTuning.fovAt(
-			os.clock() - dashStartedAt,
-			MovementTuning.Fov.DashKick
-		) - MovementTuning.Fov.Base
+		local dashFov = if reduceMotion
+			then 0
+			else MovementTuning.fovAt(os.clock() - dashStartedAt, MovementTuning.Fov.DashKick)
+				- MovementTuning.Fov.Base
 		local targetFov = MovementTuning.Fov.Base + sprintKick + dashFov
 		camera.FieldOfView += (targetFov - camera.FieldOfView) * math.min(1, dt * 12)
 	end)

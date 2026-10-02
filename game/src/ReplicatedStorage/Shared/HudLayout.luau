@@ -56,9 +56,10 @@ end
 function HudLayout.rects(
 	viewportX: number,
 	viewportY: number,
-	platform: Platform
+	platform: Platform,
+	scaleMultiplier: number?
 ): { [string]: Rect }
-	local scale = HudLayout.scaleFor(viewportX, viewportY, platform)
+	local scale = HudLayout.scaleFor(viewportX, viewportY, platform) * (scaleMultiplier or 1)
 	local margin = MARGIN * scale
 	local gap = GAP * scale
 	local iconSize = math.max(ICON_SIZE, HudLayout.buttonHeightFor(scale, platform)) * scale
@@ -160,10 +161,15 @@ function HudLayout.playState(openPanel: UtilityPanel?): ({ string }, { string })
 	return visible, visiblePanels
 end
 
-function HudLayout.touchTargets(viewportX: number, viewportY: number): { [string]: Rect }
-	local rects = HudLayout.rects(viewportX, viewportY, "touch")
+function HudLayout.touchTargets(
+	viewportX: number,
+	viewportY: number,
+	scaleMultiplier: number?
+): { [string]: Rect }
+	local rects = HudLayout.rects(viewportX, viewportY, "touch", scaleMultiplier)
 	local size = rects.icons.w
-	local step = size + ICON_GAP * HudLayout.scaleFor(viewportX, viewportY, "touch")
+	local step = size
+		+ ICON_GAP * HudLayout.scaleFor(viewportX, viewportY, "touch") * (scaleMultiplier or 1)
 	return {
 		quests = { x = rects.icons.x, y = rects.icons.y, w = size, h = size },
 		shop = { x = rects.icons.x, y = rects.icons.y + step, w = size, h = size },

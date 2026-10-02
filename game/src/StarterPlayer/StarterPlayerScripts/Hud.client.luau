@@ -92,6 +92,7 @@ local currentScale = HudLayout.scaleFor(viewport.X, viewport.Y, platform)
 local hudScale = Instance.new("UIScale")
 hudScale.Scale = currentScale
 hudScale.Parent = screen
+local uiScale = Settings.DefaultUiScale
 local managedButtons: { { Button: TextButton, BaseHeight: number } } = {}
 
 local function resizeManagedButtons()
@@ -439,7 +440,7 @@ settingsToggle.Position = UDim2.new(1, -404, 0, 8)
 
 local settingsPanel = UiKit.Panel(screen, "Settings")
 settingsPanel.Name = "Settings"
-settingsPanel.Size = UDim2.new(0, 260, 0, 152)
+settingsPanel.Size = UDim2.new(0, 300, 0, 440)
 settingsPanel.Position = UDim2.new(1, -544, 0, 50)
 settingsPanel.BackgroundColor3 = PANEL
 settingsPanel.BackgroundTransparency = 0.1
@@ -452,6 +453,9 @@ type SliderSetter = (number, boolean?) -> ()
 local function makeSlider(
 	label: string,
 	y: number,
+	defaultValue: number,
+	minimum: number,
+	maximum: number,
 	onChanged: (number, boolean) -> ()
 ): SliderSetter
 	local valueLabel =
@@ -482,17 +486,18 @@ local function makeSlider(
 	fillCorner.CornerRadius = UDim.new(1, 0)
 	fillCorner.Parent = fill
 
-	local value = Settings.DefaultVolume
+	local value = defaultValue
 	local dragging = false
 	local dragInput: InputObject? = nil
 	local function setValue(nextValue: number, persist: boolean?)
-		value = Settings.clamp(nextValue)
-		fill.Size = UDim2.fromScale(value, 1)
+		value = math.clamp(nextValue, minimum, maximum)
+		fill.Size = UDim2.fromScale((value - minimum) / (maximum - minimum), 1)
 		valueLabel.Text = string.format("%s  %d%%", label, math.floor(value * 100 + 0.5))
 		onChanged(value, persist == true)
 	end
 	local function updateAt(x: number)
-		setValue((x - track.AbsolutePosition.X) / math.max(track.AbsoluteSize.X, 1), false)
+		local ratio = (x - track.AbsolutePosition.X) / math.max(track.AbsoluteSize.X, 1)
+		setValue(minimum + math.clamp(ratio, 0, 1) * (maximum - minimum), false)
 	end
 
 	track.InputBegan:Connect(function(input)
@@ -528,22 +533,63 @@ local function makeSlider(
 	return setValue
 end
 
-local setMusicSlider = makeSlider("Music volume", 8, function(value, persist)
-	ClientFX.setMusicVolume(value)
-	if persist then
-		UpdateSettings:FireServer({ MusicVolume = value })
+local setMusicSlider = makeSlider(
+	"Music volume",
+	8,
+	Settings.DefaultVolume,
+	0,
+	1,
+	function(value, persist)
+		ClientFX.setMusicVolume(value)
+		if persist then
+			UpdateSettings:FireServer({ MusicVolume = value })
+		end
 	end
-end)
-local setSfxSlider = makeSlider("SFX volume", 62, function(value, persist)
-	ClientFX.setSfxVolume(value)
-	if persist then
-		UpdateSettings:FireServer({ SfxVolume = value })
+)
+local setSfxSlider = makeSlider(
+	"SFX volume",
+	62,
+	Settings.DefaultVolume,
+	0,
+	1,
+	function(value, persist)
+		ClientFX.setSfxVolume(value)
+		if persist then
+			UpdateSettings:FireServer({ SfxVolume = value })
+		end
 	end
-end)
+)
+
+local setAimAssistSlider = makeSlider(
+	"Aim assist",
+	116,
+	Settings.DefaultAimAssistStrength,
+	0,
+	1,
+	function(value, persist)
+		if persist then
+			UpdateSettings:FireServer({ AimAssistStrength = value })
+		end
+	end
+)
+local setUiScaleSlider = makeSlider(
+	"UI scale",
+	170,
+	Settings.DefaultUiScale,
+	Settings.MinUiScale,
+	Settings.MaxUiScale,
+	function(value, persist)
+		uiScale = value
+		hudScale.Scale = currentScale * uiScale
+		if persist then
+			UpdateSettings:FireServer({ UiScale = value })
+		end
+	end
+)
 
 local mouseLockButton = button(settingsPanel, "Mouse lock  ON", UDim2.new(1, -24, 0, 34))
 mouseLockButton.Name = "MouseLock"
-mouseLockButton.Position = UDim2.new(0, 12, 0, 108)
+mouseLockButton.Position = UDim2.new(0, 12, 0, 224)
 mouseLockButton.Visible = not (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
 local mouseLockEnabled = Settings.DefaultMouseLock
 local function setMouseLock(enabled: boolean)
@@ -555,6 +601,47 @@ mouseLockButton.MouseButton1Click:Connect(function()
 	setMouseLock(not mouseLockEnabled)
 	UpdateSettings:FireServer({ MouseLockEnabled = mouseLockEnabled })
 end)
+
+local function makeToggle(
+	name: string,
+	label: string,
+	y: number,
+	defaultValue: boolean,
+	onChanged: (boolean) -> ()
+): (boolean) -> ()
+	local toggle = button(settingsPanel, "", UDim2.new(1, -24, 0, 34))
+	toggle.Name = name
+	toggle.Position = UDim2.new(0, 12, 0, y)
+	local enabled = defaultValue
+	local function setEnabled(value: boolean)
+		enabled = value
+		toggle.Text = string.format("%s  %s", label, if enabled then "ON" else "OFF")
+		onChanged(enabled)
+	end
+	toggle.MouseButton1Click:Connect(function()
+		setEnabled(not enabled)
+		UpdateSettings:FireServer({ [name] = enabled })
+	end)
+	setEnabled(defaultValue)
+	return setEnabled
+end
+
+local setAutoAim = makeToggle("AutoAim", "Auto aim", 266, Settings.DefaultAutoAim, function() end)
+local setLeftHanded = makeToggle(
+	"LeftHanded",
+	"Left handed",
+	308,
+	Settings.DefaultLeftHanded,
+	function() end
+)
+local setReduceMotion = makeToggle(
+	"ReduceMotion",
+	"Reduce motion",
+	350,
+	Settings.DefaultReduceMotion,
+	ClientFX.setReduceMotion
+)
+local setMute = makeToggle("Mute", "Mute", 392, Settings.DefaultMute, ClientFX.setMuted)
 
 -- Weapon switching remains on number keys; the clean fighting HUD shows ammo instead of cards.
 local hotbar = Instance.new("Frame")
@@ -1096,12 +1183,13 @@ local function applyHudLayout()
 		viewport = activeCamera.ViewportSize
 	end
 	currentScale = HudLayout.scaleFor(viewport.X, viewport.Y, platform)
-	hudScale.Scale = currentScale
+	local layoutScale = currentScale * uiScale
+	hudScale.Scale = layoutScale
 	resizeManagedButtons()
 
-	local rects = HudLayout.rects(viewport.X, viewport.Y, platform)
+	local rects = HudLayout.rects(viewport.X, viewport.Y, platform, uiScale)
 	local function logical(value: number): number
-		return value / currentScale
+		return value / layoutScale
 	end
 
 	local wave = rects.waveTimer
@@ -1133,7 +1221,7 @@ local function applyHudLayout()
 	finalHud.AmmoLabel.Position = UDim2.fromOffset(logical(ammo.x), logical(ammo.y))
 	finalHud.AmmoLabel.Size = UDim2.fromOffset(logical(ammo.w), logical(ammo.h))
 
-	local targets = HudLayout.touchTargets(viewport.X, viewport.Y)
+	local targets = HudLayout.touchTargets(viewport.X, viewport.Y, uiScale)
 	local function placeIcon(icon: TextButton, target: HudLayout.Rect)
 		icon.Position = UDim2.fromOffset(logical(target.x), logical(target.y))
 		icon.Size = UDim2.fromOffset(logical(target.w), logical(target.h))
@@ -1149,7 +1237,7 @@ local function applyHudLayout()
 
 	local settings = rects.settings
 	settingsPanel.Position = UDim2.fromOffset(logical(settings.x), logical(settings.y))
-	settingsPanel.Size = UDim2.fromOffset(logical(settings.w), math.min(152, logical(settings.h)))
+	settingsPanel.Size = UDim2.fromOffset(logical(settings.w), math.min(440, logical(settings.h)))
 
 	local shopRect = rects.shop
 	shop.Position = UDim2.fromOffset(logical(shopRect.x), logical(shopRect.y))
@@ -1446,6 +1534,12 @@ stats = {
 	MusicVolume = Settings.DefaultVolume,
 	SfxVolume = Settings.DefaultVolume,
 	MouseLockEnabled = Settings.DefaultMouseLock,
+	AutoAim = Settings.DefaultAutoAim,
+	AimAssistStrength = Settings.DefaultAimAssistStrength,
+	UiScale = Settings.DefaultUiScale,
+	LeftHanded = Settings.DefaultLeftHanded,
+	ReduceMotion = Settings.DefaultReduceMotion,
+	Mute = Settings.DefaultMute,
 }
 
 local tutorialContext: Tutorial.Context = "arena"
@@ -1637,6 +1731,13 @@ StatsChanged.OnClientEvent:Connect(function(s)
 	setMusicSlider(s.MusicVolume)
 	setSfxSlider(s.SfxVolume)
 	setMouseLock(s.MouseLockEnabled ~= false)
+	setAutoAim(s.AutoAim ~= false)
+	setAimAssistSlider(Settings.clampAimAssistStrength(s.AimAssistStrength))
+	setUiScaleSlider(Settings.clampUiScale(s.UiScale))
+	applyHudLayout()
+	setLeftHanded(s.LeftHanded == true)
+	setReduceMotion(s.ReduceMotion == true)
+	setMute(s.Mute == true)
 	refreshStats()
 	onDailyPopup(s.DailyPopup)
 end)

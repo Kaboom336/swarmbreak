@@ -27,6 +27,12 @@ export type Profile = {
 	MusicVolume: number,
 	SfxVolume: number,
 	MouseLockEnabled: boolean,
+	AutoAim: boolean,
+	AimAssistStrength: number,
+	UiScale: number,
+	LeftHanded: boolean,
+	ReduceMotion: boolean,
+	Mute: boolean,
 }
 
 local ProfileSchema = { Version = 1 }
@@ -74,6 +80,12 @@ function ProfileSchema.default(): Profile
 		MusicVolume = Settings.DefaultVolume,
 		SfxVolume = Settings.DefaultVolume,
 		MouseLockEnabled = Settings.DefaultMouseLock,
+		AutoAim = Settings.DefaultAutoAim,
+		AimAssistStrength = Settings.DefaultAimAssistStrength,
+		UiScale = Settings.DefaultUiScale,
+		LeftHanded = Settings.DefaultLeftHanded,
+		ReduceMotion = Settings.DefaultReduceMotion,
+		Mute = Settings.DefaultMute,
 	}
 end
 
@@ -200,11 +212,10 @@ function ProfileSchema.sanitize(raw: any): Profile
 	if type(raw.Kit) == "string" and Kits.isUnlocked(p, raw.Kit) then
 		p.Kit = raw.Kit
 	end
-	p.MusicVolume = Settings.clamp(raw.MusicVolume)
-	p.SfxVolume = Settings.clamp(raw.SfxVolume)
-	p.MouseLockEnabled = if type(raw.MouseLockEnabled) == "boolean"
-		then raw.MouseLockEnabled
-		else Settings.DefaultMouseLock
+	local savedSettings = Settings.sanitize(raw)
+	for _, field in Settings.Fields do
+		(p :: any)[field] = savedSettings[field]
+	end
 	return p
 end
 
