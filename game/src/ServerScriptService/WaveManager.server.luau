@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local Difficulty = require(ReplicatedStorage.Shared.Difficulty)
 local Enemies = require(ReplicatedStorage.Shared.Enemies)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
 local Economy = require(ReplicatedStorage.Shared.Economy)
@@ -30,7 +31,16 @@ local bossSpawn = arena:WaitForChild("BossSpawn") :: BasePart
 local rng = Random.new()
 
 local currentWave = 0
+local currentDifficultyId: Difficulty.TierName = Difficulty.Default
 local runStartedAt = 0
+
+local function selectedDifficultyId(): Difficulty.TierName
+	local selected = GameState.get("Difficulty")
+	if type(selected) == "string" and Difficulty.Defs[selected :: Difficulty.TierName] then
+		return selected :: Difficulty.TierName
+	end
+	return Difficulty.Default
+end
 
 local function sendTelemetry(plr: Player, name: string, fields: Telemetry.Fields)
 	pcall(function()
@@ -78,6 +88,9 @@ end
 local function spawnEnemy(typeName: string, cf: CFrame?)
 	local def = Enemies.Defs[typeName]
 	local hs, ds = WaveTable.scaling(currentWave)
+	local scaled = Difficulty.apply({ Health = hs, Damage = ds }, currentDifficultyId)
+	local healthScale = scaled.Health :: number
+	local damageScale = scaled.Damage :: number
 	local mutationId = todaysMutation()
 	local at = cf or randomSpawnCFrame()
 	local accent = (Theme.Enemy[typeName] or Theme.Enemy.Walker).Accent
@@ -85,45 +98,55 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 		if def.Boss then "boss" else "spawn",
 		{ Position = at.Position, Color = accent }
 	)
-	local model = EnemyAI.spawn(typeName, at, hs, ds, mutationId, function(killer: Player?)
-		GameState.set("Alive", EnemyAI.aliveCount())
-		if killer then
-			local coins = Economy.coinsForKill(
-				def.Coins,
-				PlayerData.hasPass(killer, "DoubleCoins"),
-				currentWave
-			)
-			PlayerData.addCoins(killer, coins)
-			PlayerData.addKill(killer, def.Boss == true)
-		end
-		if def.Boss then
-			-- bosses drop a shard of their element to everyone alive at the kill
-			local element = Evolutions.BossShards[typeName]
-			if element then
+	local model = EnemyAI.spawn(
+		typeName,
+		at,
+		healthScale,
+		damageScale,
+		mutationId,
+		function(killer: Player?)
+			GameState.set("Alive", EnemyAI.aliveCount())
+			if killer then
+				local coins = Difficulty.scaleReward(
+					Economy.coinsForKill(
+						def.Coins,
+						PlayerData.hasPass(killer, "DoubleCoins"),
+						currentWave
+					),
+					currentDifficultyId
+				)
+				PlayerData.addCoins(killer, coins)
+				PlayerData.addKill(killer, def.Boss == true)
+			end
+			if def.Boss then
+				-- bosses drop a shard of their element to everyone alive at the kill
+				local element = Evolutions.BossShards[typeName]
+				if element then
+					for _, plr in Players:GetPlayers() do
+						if not PlayerData.isWaiting(plr) then
+							PlayerData.addShard(plr, element, 1)
+						end
+					end
+					Toast:FireAllClients(typeName .. " down! +1 " .. element .. " shard", 4)
+				end
+				-- the first boss a player ever sees fall pays a free Gem crate: the way to a
+				-- second weapon without Robux. Once per profile, so only once it has loaded.
 				for _, plr in Players:GetPlayers() do
-					if not PlayerData.isWaiting(plr) then
-						PlayerData.addShard(plr, element, 1)
+					local p = PlayerData.profile(plr)
+					if
+						not PlayerData.isWaiting(plr)
+						and PlayerData.isLoaded(plr)
+						and not p.Flags.FirstBossCrate
+					then
+						p.Flags.FirstBossCrate = true
+						PlayerData.markDirty(plr)
+						PlayerData.openCrate(plr, "Gem")
+						Toast:FireClient(plr, "First boss down: free weapon crate!", 4)
 					end
 				end
-				Toast:FireAllClients(typeName .. " down! +1 " .. element .. " shard", 4)
-			end
-			-- the first boss a player ever sees fall pays a free Gem crate: the way to a
-			-- second weapon without Robux. Once per profile, so only once it has loaded.
-			for _, plr in Players:GetPlayers() do
-				local p = PlayerData.profile(plr)
-				if
-					not PlayerData.isWaiting(plr)
-					and PlayerData.isLoaded(plr)
-					and not p.Flags.FirstBossCrate
-				then
-					p.Flags.FirstBossCrate = true
-					PlayerData.markDirty(plr)
-					PlayerData.openCrate(plr, "Gem")
-					Toast:FireClient(plr, "First boss down: free weapon crate!", 4)
-				end
 			end
 		end
-	end)
+	)
 	GameState.set("Alive", EnemyAI.aliveCount())
 	return model
 end
@@ -235,7 +258,11 @@ local function runWave(wave: number): boolean
 			task.wait(0.5)
 		end
 		spawnEnemy(Enemies.pickFromWeights(weights, rng:NextNumber()))
-		task.wait(rng:NextNumber(Config.SpawnGapMin, Config.SpawnGapMax))
+		local spawnDelay = Difficulty.apply(
+			{ SpawnDelay = rng:NextNumber(Config.SpawnGapMin, Config.SpawnGapMax) },
+			currentDifficultyId
+		).SpawnDelay :: number
+		task.wait(spawnDelay)
 		if not anyPlayersAlive() then
 			return false
 		end
@@ -249,7 +276,10 @@ local function runWave(wave: number): boolean
 	local techShard = wave % Evolutions.TechShardEveryWaves == 0
 	for _, plr in Players:GetPlayers() do
 		if not PlayerData.isWaiting(plr) then
-			PlayerData.addCoins(plr, Economy.waveClearBonus(wave))
+			PlayerData.addCoins(
+				plr,
+				Difficulty.scaleReward(Economy.waveClearBonus(wave), currentDifficultyId)
+			)
 			if techShard then
 				PlayerData.addShard(plr, "Tech", 1)
 			end
@@ -286,6 +316,8 @@ local function gameLoop()
 			task.wait(1)
 		end
 		runStartedAt = os.clock()
+		currentDifficultyId = selectedDifficultyId()
+		GameState.set("Difficulty", currentDifficultyId)
 		local playerCount = #Players:GetPlayers()
 		for _, plr in Players:GetPlayers() do
 			PlayerData.resetRun(plr)
