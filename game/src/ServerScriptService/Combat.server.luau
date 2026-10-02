@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local PlayerData = require(ServerStorage.PlayerData)
 local CombatEffects = require(ServerStorage.CombatEffects)
+local FireGuard = require(ReplicatedStorage.Shared.FireGuard)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 
@@ -13,8 +14,27 @@ local Shoot = Remotes.Shoot :: RemoteEvent
 local FX = Remotes.FX :: RemoteEvent
 
 local lastAction: { [Player]: number } = {}
+local rejectedFireCounts: { [Player]: number } = {}
 local rng = Random.new()
 local enemiesFolder = workspace:WaitForChild("Enemies")
+
+local function point3(vector: Vector3): FireGuard.Point3
+	return { x = vector.X, y = vector.Y, z = vector.Z }
+end
+
+local function recordRejectedFire(plr: Player)
+	rejectedFireCounts[plr] = (rejectedFireCounts[plr] or 0) + 1
+end
+
+task.spawn(function()
+	while true do
+		task.wait(60)
+		for plr, count in rejectedFireCounts do
+			warn(string.format("Rejected %d fire requests from %s", count, plr.Name))
+			rejectedFireCounts[plr] = nil
+		end
+	end
+end)
 
 local function spreadDir(dir: Vector3, degrees: number): Vector3
 	if degrees <= 0 then
@@ -161,7 +181,8 @@ local function doBeam(
 end
 
 Shoot.OnServerEvent:Connect(function(plr, origin: Vector3, dir: Vector3)
-	if typeof(origin) ~= "Vector3" or typeof(dir) ~= "Vector3" or dir.Magnitude < 0.01 then
+	if typeof(origin) ~= "Vector3" or typeof(dir) ~= "Vector3" then
+		recordRejectedFire(plr)
 		return
 	end
 	local char = plr.Character
@@ -170,17 +191,24 @@ Shoot.OnServerEvent:Connect(function(plr, origin: Vector3, dir: Vector3)
 	if not char or not root or not hum or hum.Health <= 0 then
 		return
 	end
-	if (root.Position - origin).Magnitude > 12 then
-		return -- origin must be near the player
-	end
 	local weapon = PlayerData.equippedWeapon(plr)
 	if weapon.Kind == "Orbital" then
 		return -- passive: handled by OrbitalRunner
 	end
 	local rate = weapon.FireRate * PlayerData.fireRateMultiplier(plr)
 	local now = os.clock()
-	if now - (lastAction[plr] or 0) < (1 / rate) * 0.85 then
-		return -- rate guard (small tolerance for latency)
+	if
+		not FireGuard.validate(
+			now,
+			lastAction[plr],
+			rate,
+			point3(origin),
+			point3(root.Position),
+			point3(dir)
+		)
+	then
+		recordRejectedFire(plr)
+		return
 	end
 	lastAction[plr] = now
 	PlayerData.completeTutorial(plr, "Shoot")
@@ -197,4 +225,5 @@ end)
 
 Players.PlayerRemoving:Connect(function(plr)
 	lastAction[plr] = nil
+	rejectedFireCounts[plr] = nil
 end)
