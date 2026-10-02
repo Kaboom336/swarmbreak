@@ -541,9 +541,6 @@ local setSfxSlider = makeSlider("SFX volume", 62, function(value, persist)
 	end
 end)
 
-<<<<<<< HEAD
--- Weapon switching remains on number keys; the clean fighting HUD shows ammo instead of cards.
-=======
 local mouseLockButton = button(settingsPanel, "Mouse lock  ON", UDim2.new(1, -24, 0, 34))
 mouseLockButton.Name = "MouseLock"
 mouseLockButton.Position = UDim2.new(0, 12, 0, 108)
@@ -559,13 +556,7 @@ mouseLockButton.MouseButton1Click:Connect(function()
 	UpdateSettings:FireServer({ MouseLockEnabled = mouseLockEnabled })
 end)
 
-settingsToggle.MouseButton1Click:Connect(function()
-	settingsPanel.Visible = not settingsPanel.Visible
-	settingsToggle.Text = if settingsPanel.Visible then "Settings  -" else "Settings"
-end)
-
--- Bottom-right: weapon hotbar
->>>>>>> w12
+-- Weapon switching remains on number keys; the clean fighting HUD shows ammo instead of cards.
 local hotbar = Instance.new("Frame")
 hotbar.Size = UDim2.new(0, 420, 0, 46)
 hotbar.Position = UDim2.new(1, -432, 1, -72)
@@ -1157,7 +1148,7 @@ local function applyHudLayout()
 
 	local settings = rects.settings
 	settingsPanel.Position = UDim2.fromOffset(logical(settings.x), logical(settings.y))
-	settingsPanel.Size = UDim2.fromOffset(logical(settings.w), 116)
+	settingsPanel.Size = UDim2.fromOffset(logical(settings.w), math.min(152, logical(settings.h)))
 
 	local shopRect = rects.shop
 	shop.Position = UDim2.fromOffset(logical(shopRect.x), logical(shopRect.y))
