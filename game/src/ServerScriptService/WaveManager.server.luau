@@ -15,6 +15,7 @@ local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local SpawnPicker = require(ReplicatedStorage.Shared.SpawnPicker)
 local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
+local Onboarding = require(ReplicatedStorage.Shared.Onboarding)
 local EnemyAI = require(ServerStorage.EnemyAI)
 local PlayerData = require(ServerStorage.PlayerData)
 local GameState = require(ServerStorage.GameState)
@@ -122,6 +123,35 @@ end
 
 local function randomSpawnCFrame(): CFrame
 	return spawnPortalCFrames(1)[1]
+end
+
+local function firstPackSpawnCFrame(): CFrame?
+	for _, player in Players:GetPlayers() do
+		if PlayerData.isWaiting(player) then
+			continue
+		end
+		local character = player.Character
+		local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+		if root and root:IsA("BasePart") then
+			local look = root.CFrame.LookVector * Vector3.new(1, 0, 1)
+			if look.Magnitude < 0.01 then
+				look = Vector3.new(0, 0, -1)
+			else
+				look = look.Unit
+			end
+			local right = Vector3.new(-look.Z, 0, look.X)
+			local angle = math.rad(rng:NextNumber(-10, 10))
+			local distance = Onboarding.firstSpawnDistance(rng:NextNumber())
+			local direction = look * math.cos(angle) + right * math.sin(angle)
+			local height = 4
+			local horizontalDistance = math.sqrt(distance * distance - height * height)
+			local position = root.Position
+				+ direction * horizontalDistance
+				+ Vector3.new(0, height, 0)
+			return CFrame.lookAt(position, root.Position)
+		end
+	end
+	return nil
 end
 
 local function spawnEnemy(typeName: string, cf: CFrame?)
@@ -275,8 +305,10 @@ local function runWave(wave: number): boolean
 		end
 	end
 	GameState.set("Phase", "starting")
-	FX:FireAllClients("sound", { Name = "WaveStart" })
-	countdown(Config.WaveStartDelay)
+	if wave ~= 1 then
+		FX:FireAllClients("sound", { Name = "WaveStart" })
+	end
+	countdown(if wave == 1 then Onboarding.CountdownSeconds else Config.WaveStartDelay)
 
 	local bossName = Enemies.bossForWave(wave)
 	if bossName then
@@ -304,24 +336,30 @@ local function runWave(wave: number): boolean
 		end
 	end
 
-	for _, pack in WaveTable.packs(composition) do
+	for packIndex, pack in WaveTable.packs(composition) do
 		while not WaveTable.packFits(EnemyAI.aliveCount(), pack.Size, Config.MaxAlive) do
 			if not anyPlayersAlive() then
 				return false
 			end
 			task.wait(0.5)
 		end
-		local portals = spawnPortalCFrames(pack.PortalCount)
+		local onboardingPack = wave == 1 and packIndex == 1
+		local onboardingSpawn = if onboardingPack then firstPackSpawnCFrame() else nil
+		local portals = if onboardingSpawn
+			then { onboardingSpawn }
+			else spawnPortalCFrames(pack.PortalCount)
 		local portalIndex = 1
 		for enemyName, amount in pack.Composition do
 			for _ = 1, amount do
 				local at = if Enemies.Defs[enemyName].Boss
 					then bossSpawn.CFrame + Vector3.new(0, 6, 0)
-					else portals[portalIndex] * CFrame.new(
-						rng:NextNumber(-4, 4),
-						0,
-						rng:NextNumber(-4, 4)
-					)
+					else if onboardingPack
+						then firstPackSpawnCFrame() or portals[1]
+						else portals[portalIndex] * CFrame.new(
+							rng:NextNumber(-4, 4),
+							0,
+							rng:NextNumber(-4, 4)
+						)
 				local model = spawnEnemy(enemyName, at)
 				if Enemies.Defs[enemyName].Boss then
 					trackBoss(model)

@@ -26,6 +26,7 @@ local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
 local HudLayout = require(ReplicatedStorage.Shared.HudLayout)
 local DeathFlow = require(ReplicatedStorage.Shared.DeathFlow)
 local UiTheme = require(ReplicatedStorage.Shared.UiTheme)
+local Onboarding = require(ReplicatedStorage.Shared.Onboarding)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 local UiKit = require(script.Parent:WaitForChild("UiKit"))
 
@@ -33,6 +34,7 @@ local player = Players.LocalPlayer
 local gui = player:WaitForChild("PlayerGui")
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local State = ReplicatedStorage:WaitForChild("State")
+local enemiesFolder = workspace:WaitForChild("Enemies")
 local StatsChanged = Remotes.StatsChanged :: RemoteEvent
 local GameOver = Remotes.GameOver :: RemoteEvent
 local PlayAgain = Remotes.PlayAgain :: RemoteEvent
@@ -611,10 +613,37 @@ tutorialHint.TextColor3 = ClientFX.c3(Theme.NeonTeal)
 -- Banner + toast
 local banner = UiKit.Banner(screen, "Banner", "")
 banner.Visible = false
+local objectiveBanner = text(
+	screen,
+	"ObjectiveBanner",
+	UDim2.new(0, 0, 0.12, 0),
+	UDim2.new(1, 0, 0, 64),
+	Onboarding.ObjectiveText,
+	28
+)
+objectiveBanner.BackgroundColor3 = PANEL
+objectiveBanner.BackgroundTransparency = 0.08
+objectiveBanner.Visible = false
+local countdownLabel =
+	text(screen, "Countdown", UDim2.new(0.5, -100, 0.3, 0), UDim2.new(0, 200, 0, 120), "", 72)
+countdownLabel.Visible = false
+local enemyArrow = text(
+	screen,
+	"FirstEnemyArrow",
+	UDim2.new(0.5, -24, 0.5, -24),
+	UDim2.fromOffset(48, 48),
+	"▲",
+	42
+)
+enemyArrow.TextColor3 = ClientFX.c3(Theme.NeonTeal)
+enemyArrow.Visible = false
 local toast = text(screen, "Toast", UDim2.new(0.5, -300, 0.2, 0), UDim2.new(0, 600, 0, 30), "", 20)
 toast.Visible = false
 -- the banner and the toast float above everything else, the reward cards included
 banner.ZIndex = 4
+objectiveBanner.ZIndex = 4
+countdownLabel.ZIndex = 4
+enemyArrow.ZIndex = 4
 toast.ZIndex = 4
 
 local function flash(label: TextLabel, str: string, seconds: number)
@@ -661,21 +690,6 @@ function finalHud.showAreaWarning(position: Vector3, radius: number, duration: n
 	task.delay(duration, function()
 		warning:Destroy()
 	end)
-end
-
-local goalBannerToken = 0
-local function showSpawnGoal()
-	goalBannerToken += 1
-	local token = goalBannerToken
-	task.delay(0.25, function()
-		if token == goalBannerToken and stateValue("Wave") <= 1 then
-			flash(banner, "Survive 5 waves", 3)
-		end
-	end)
-end
-player.CharacterAdded:Connect(showSpawnGoal)
-if player.Character then
-	task.defer(showSpawnGoal)
 end
 
 -- Latest stats snapshot from the server (filled by StatsChanged below)
@@ -1738,10 +1752,25 @@ onState("Phase", function(phase)
 		flash(banner, string.format("Wave clear  +%d Coins", 10 * wave), 2)
 	elseif phase == "starting" then
 		setShop(false)
-		flash(banner, "WAVE " .. tostring(stateValue("Wave")), 2)
+		if stateValue("Wave") == 1 then
+			flash(objectiveBanner, Onboarding.ObjectiveText, Onboarding.ObjectiveSeconds)
+		else
+			flash(banner, "WAVE " .. tostring(stateValue("Wave")), 2)
+		end
 	end
 end)
-onState("TimeLeft", refreshPhase)
+onState("TimeLeft", function(timeLeft)
+	refreshPhase()
+	local openingCountdown = stateValue("Phase") == "starting"
+		and stateValue("Wave") == 1
+		and timeLeft > 0
+		and timeLeft <= Onboarding.CountdownSeconds
+	countdownLabel.Visible = openingCountdown
+	countdownLabel.Text = if openingCountdown then tostring(math.ceil(timeLeft)) else ""
+	if openingCountdown then
+		ClientFX.sound("WaveStart")
+	end
+end)
 task.spawn(function()
 	while true do
 		task.wait(0.5)
@@ -1771,6 +1800,44 @@ onState("BossMaxHealth", refreshBoss)
 local lastHealth = 0
 RunService.Heartbeat:Connect(function()
 	refreshTutorial()
+	enemyArrow.Visible = false
+	if
+		stateValue("Phase") == "fighting"
+		and Onboarding.shouldShowArrow(stats.Kills or 0)
+		and camera
+	then
+		local character = player.Character
+		local playerRoot = character and character:FindFirstChild("HumanoidRootPart")
+		local nearestRoot: BasePart? = nil
+		local nearestDistance = math.huge
+		if playerRoot and playerRoot:IsA("BasePart") then
+			for _, enemy in enemiesFolder:GetChildren() do
+				local root = enemy:FindFirstChild("HumanoidRootPart", true)
+				if root and root:IsA("BasePart") then
+					local distance = (root.Position - playerRoot.Position).Magnitude
+					if distance < nearestDistance then
+						nearestDistance = distance
+						nearestRoot = root
+					end
+				end
+			end
+		end
+		if nearestRoot then
+			local point, onScreen = camera:WorldToViewportPoint(nearestRoot.Position)
+			local center = camera.ViewportSize / 2
+			local direction = Vector2.new(point.X, point.Y) - center
+			if point.Z < 0 then
+				direction = -direction
+			end
+			if direction.Magnitude > 0.01 then
+				local radius = math.min(center.X, center.Y) * (if onScreen then 0.18 else 0.38)
+				local position = center + direction.Unit * radius
+				enemyArrow.Position = UDim2.fromOffset(position.X - 24, position.Y - 24)
+				enemyArrow.Rotation = math.deg(math.atan2(direction.Y, direction.X)) + 90
+				enemyArrow.Visible = true
+			end
+		end
+	end
 	local char = player.Character
 	local hum = char and char:FindFirstChildOfClass("Humanoid")
 	if hum then
