@@ -9,7 +9,11 @@ test("DPS formula matches weapon stats and multipliers", function()
 	eq(BalanceMath.damagePerSecond(starter), 40, "starter DPS")
 
 	local scatter = Weapons.Defs.Scatter
-	eq(BalanceMath.damagePerSecond(scatter), 67.2, "shotgun DPS includes every pellet")
+	eq(
+		BalanceMath.damagePerSecond(scatter),
+		scatter.Damage * scatter.Pellets * scatter.FireRate,
+		"shotgun DPS includes every pellet"
+	)
 	eq(BalanceMath.damagePerSecond(starter, 1.5, 1.25), 75, "DPS multipliers")
 end)
 
