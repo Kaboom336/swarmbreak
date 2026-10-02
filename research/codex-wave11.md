@@ -1,5 +1,5 @@
 # Codex wave 11: surplus-budget queue (Zion 2026-10-02: use spare Codex, nothing wasted)
-Base: integrate/wave8 4ffa416 (or main once wave 8 merges). Sources: research/BEST-OF.md, /mnt/project-files/swarmbreak-hunty-zombie-deep.md, swarmbreak-watch-round3.md.
+Base: integrate/wave8 e95bb4f (or main once wave 8 merges). Sources: research/BEST-OF.md, /mnt/project-files/swarmbreak-hunty-zombie-deep.md, swarmbreak-watch-round3.md.
 Each task is independent; run 2 at a time. Rules: failing spec first, only listed files plus one new spec, no blood (goo teal/green), all prices 0, plain names, no new dependencies.
 testcmd (every task): cd game && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
 
@@ -50,5 +50,6 @@ Spec: no two events overlap; durations positive; every event has banner text.
 ## B12 Save safety
 DataStore wrapper: versioned save schema with migrations, retry with backoff, session lock, autosave + on-leave save; Shared/SaveSchema.luau.
 Spec tests/saveschema.spec.luau: migrating v1->latest keeps currencies; unknown fields dropped safely; default profile valid.
+Also add tests/no_toplevel_datastore.spec.luau: scan src/ text and fail if any GetDataStore/GetOrderedDataStore call sits outside a function or pcall at module top level (unpublished Studio places throw there; see e95bb4f).
 
 Order: B12, B1, B2, B3, B9, B5, B10, B4, B8, B6, B11, B7.
