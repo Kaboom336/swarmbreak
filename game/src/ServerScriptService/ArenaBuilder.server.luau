@@ -5,11 +5,14 @@ local ServerStorage = game:GetService("ServerStorage")
 local Lighting = game:GetService("Lighting")
 local Fit = require(ReplicatedStorage.Shared.Fit)
 local LightingPresets = require(ReplicatedStorage.Shared.LightingPresets)
+local Maps = require(ReplicatedStorage.Shared.Maps)
 local ModelKey = require(ReplicatedStorage.Shared.ModelKey)
 local Theme = require(ReplicatedStorage.Shared.Theme)
+local GameState = require(ServerStorage.GameState)
 local ModelLibrary = require(ServerStorage.ModelLibrary)
 
 local arena = workspace:WaitForChild("Arena")
+local selectedMap = Maps.get(GameState.get("MapName"))
 
 local function c3(t: { number }): Color3
 	return Color3.fromRGB(t[1], t[2], t[3])
@@ -132,12 +135,35 @@ local function neonStrip(size: Vector3, cf: CFrame, color: Color3, range: number
 	end
 end
 
-local function retexture()
+local function configureMap()
+	arena:SetAttribute("MapName", selectedMap.Name)
+	arena:SetAttribute("MapBoss", selectedMap.Boss)
+
 	local floor = arena:FindFirstChild("Floor") :: BasePart?
 	if floor then
 		floor.Material = Enum.Material.Concrete
-		floor.Color = c3(Theme.Floor)
+		floor.Color = c3(selectedMap.FloorColor)
 	end
+
+	local spawnFolder = arena:FindFirstChild("EnemySpawns")
+	if spawnFolder then
+		local spawnParts = {}
+		for _, child in spawnFolder:GetChildren() do
+			if child:IsA("BasePart") then
+				table.insert(spawnParts, child)
+			end
+		end
+		table.sort(spawnParts, function(a, b)
+			return a.Name < b.Name
+		end)
+		for index, spawn in selectedMap.Spawns do
+			local spawnPart = spawnParts[index]
+			if spawnPart then
+				spawnPart.Position = Vector3.new(spawn.x, spawnPart.Position.Y, spawn.z)
+			end
+		end
+	end
+
 	for _, name in { "WallN", "WallS", "WallE", "WallW" } do
 		local w = arena:FindFirstChild(name) :: BasePart?
 		if w then
@@ -327,8 +353,8 @@ local function portals()
 	end
 end
 
-applyLightingPreset(LightingPresets.Station)
-retexture()
+applyLightingPreset(LightingPresets[selectedMap.LightingPreset])
+configureMap()
 floorGrid()
 wallsAndRails()
 portals()
