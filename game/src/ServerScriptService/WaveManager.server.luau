@@ -291,7 +291,10 @@ local function runWave(wave: number): boolean
 			end
 			task.wait(0.5)
 		end
-		spawnEnemy(Enemies.pickFromWeights(weights, rng:NextNumber()), waveOneSpawn)
+		local at = if waveOneSpawn
+			then waveOneSpawn * CFrame.new(rng:NextNumber(-6, 6), 0, rng:NextNumber(-6, 6))
+			else nil
+		spawnEnemy(Enemies.pickFromWeights(weights, rng:NextNumber()), at)
 		local spawnDelay = Difficulty.apply(
 			{ SpawnDelay = rng:NextNumber(Config.SpawnGapMin, Config.SpawnGapMax) },
 			currentDifficultyId
