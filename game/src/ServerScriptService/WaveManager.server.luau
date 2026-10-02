@@ -35,7 +35,6 @@ local currentWave = 0
 local currentDifficultyId: Difficulty.TierName = Difficulty.Default
 local runStartedAt = 0
 
-<<<<<<< HEAD
 local function protectPlayers()
 	for _, player in Players:GetPlayers() do
 		local character = player.Character
@@ -53,14 +52,14 @@ local function protectPlayers()
 			end)
 		end
 	end
-=======
+end
+
 local function selectedDifficultyId(): Difficulty.TierName
 	local selected = GameState.get("Difficulty")
 	if type(selected) == "string" and Difficulty.Defs[selected :: Difficulty.TierName] then
 		return selected :: Difficulty.TierName
 	end
 	return Difficulty.Default
->>>>>>> w12
 end
 
 local function sendTelemetry(plr: Player, name: string, fields: Telemetry.Fields)
@@ -109,15 +108,11 @@ end
 local function spawnEnemy(typeName: string, cf: CFrame?)
 	local def = Enemies.Defs[typeName]
 	local hs, ds = WaveTable.scaling(currentWave)
-<<<<<<< HEAD
-	-- Keep the onboarding wave predictable even when a daily difficulty mutation is active.
-	local mutationId = if currentWave == 1 then "" else todaysMutation()
-=======
 	local scaled = Difficulty.apply({ Health = hs, Damage = ds }, currentDifficultyId)
 	local healthScale = scaled.Health :: number
 	local damageScale = scaled.Damage :: number
-	local mutationId = todaysMutation()
->>>>>>> w12
+	-- Keep the onboarding wave predictable even when a daily difficulty mutation is active.
+	local mutationId = if currentWave == 1 then "" else todaysMutation()
 	local at = cf or randomSpawnCFrame()
 	local accent = (Theme.Enemy[typeName] or Theme.Enemy.Walker).Accent
 	FX:FireAllClients(
@@ -288,17 +283,12 @@ local function runWave(wave: number): boolean
 			end
 			task.wait(0.5)
 		end
-<<<<<<< HEAD
 		spawnEnemy(Enemies.pickFromWeights(weights, rng:NextNumber()), waveOneSpawn)
-		task.wait(rng:NextNumber(Config.SpawnGapMin, Config.SpawnGapMax))
-=======
-		spawnEnemy(Enemies.pickFromWeights(weights, rng:NextNumber()))
 		local spawnDelay = Difficulty.apply(
 			{ SpawnDelay = rng:NextNumber(Config.SpawnGapMin, Config.SpawnGapMax) },
 			currentDifficultyId
 		).SpawnDelay :: number
 		task.wait(spawnDelay)
->>>>>>> w12
 		if not anyPlayersAlive() then
 			return false
 		end
