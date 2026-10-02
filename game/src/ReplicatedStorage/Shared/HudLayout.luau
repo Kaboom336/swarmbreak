@@ -31,6 +31,7 @@ HudLayout.Anchors = {
 	rewardCards = "center",
 }
 
+<<<<<<< HEAD
 HudLayout.PlayElements = { "waveTimer", "health", "xp", "ammo", "icons" }
 HudLayout.UtilityPanels = { "quests", "shop", "settings", "stats" }
 HudLayout.MaxVisiblePlayPanels = 3
@@ -41,6 +42,12 @@ local GAP = 10
 local BUTTON_HEIGHT = 34
 local ICON_SIZE = 48
 local ICON_GAP = 8
+=======
+local REFERENCE_HEIGHT = 720 -- placeholder
+local BUTTON_HEIGHT = 34 -- placeholder
+local PANEL_GAP = 8 -- placeholder
+local SETTINGS_CONTENT_BOTTOM = 142 -- two sliders plus mouse-lock toggle
+>>>>>>> w12
 
 function HudLayout.scaleFor(_viewportX: number, viewportY: number, _platform: Platform): number
 	return math.clamp(viewportY / REFERENCE_HEIGHT, HudLayout.MinScale, HudLayout.MaxScale)
@@ -59,6 +66,7 @@ function HudLayout.rects(
 	platform: Platform
 ): { [string]: Rect }
 	local scale = HudLayout.scaleFor(viewportX, viewportY, platform)
+<<<<<<< HEAD
 	local margin = MARGIN * scale
 	local gap = GAP * scale
 	local iconSize = math.max(ICON_SIZE, HudLayout.buttonHeightFor(scale, platform)) * scale
@@ -73,6 +81,37 @@ function HudLayout.rects(
 	local panelY = 76 * scale
 	local panelWidth = math.min(340 * scale, viewportX - panelX - margin)
 	local panelHeight = math.max(0, bottomY - gap - panelY)
+=======
+	local margin = 12 -- placeholder
+	local gap = PANEL_GAP * scale
+	local buttonHeight = HudLayout.buttonHeightFor(scale, platform) * scale
+
+	local waveWidth = 480 * scale -- placeholder
+	local waveHeight = 92 * scale -- placeholder
+	local bossHeight = 28 * scale -- placeholder
+	local sideWidth = 260 * scale -- placeholder
+	local currencyHeight = 52 * scale -- placeholder
+	local settingsPanelHeight = math.max(
+		152, -- placeholder
+		SETTINGS_CONTENT_BOTTOM + HudLayout.buttonHeightFor(scale, platform)
+	)
+	local settingsHeight = buttonHeight + gap + settingsPanelHeight * scale
+	local questHeight = buttonHeight + gap + 180 * scale -- placeholder
+	local shopWidth = 360 * scale -- placeholder
+	local healthWidth = 420 * scale -- placeholder
+	local healthHeight = 80 * scale -- placeholder
+	local hotbarWidth = 420 * scale -- placeholder
+	local hotbarHeight = buttonHeight + 14 * scale -- placeholder
+	local bottomHeight = math.max(healthHeight, hotbarHeight)
+	local xpHeight = 12 * scale
+	local xp = {
+		x = 0,
+		y = viewportY - xpHeight,
+		w = viewportX,
+		h = xpHeight,
+	}
+	local bottomY = xp.y - gap - bottomHeight
+>>>>>>> w12
 
 	local waveTimer = {
 		x = (viewportX - waveWidth) / 2,

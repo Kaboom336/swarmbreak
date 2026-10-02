@@ -71,6 +71,18 @@ screen.ResetOnSpawn = false
 screen.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
 screen.Parent = gui
 
+-- Panels remain visible, but only actual buttons claim input. This keeps firing responsive
+-- when the pointer happens to be over a HUD frame.
+local function letCombatClicksThrough(descendant: Instance)
+	if descendant:IsA("GuiObject") and not descendant:IsA("GuiButton") then
+		descendant.Active = false
+	end
+end
+screen.DescendantAdded:Connect(letCombatClicksThrough)
+for _, descendant in screen:GetDescendants() do
+	letCombatClicksThrough(descendant)
+end
+
 local platform: HudLayout.Platform = if UserInputService.TouchEnabled
 	then "touch"
 	else if UserInputService.GamepadEnabled then "gamepad" else "keyboard"
@@ -427,7 +439,7 @@ settingsToggle.Position = UDim2.new(1, -404, 0, 8)
 
 local settingsPanel = UiKit.Panel(screen, "Settings")
 settingsPanel.Name = "Settings"
-settingsPanel.Size = UDim2.new(0, 260, 0, 116)
+settingsPanel.Size = UDim2.new(0, 260, 0, 152)
 settingsPanel.Position = UDim2.new(1, -544, 0, 50)
 settingsPanel.BackgroundColor3 = PANEL
 settingsPanel.BackgroundTransparency = 0.1
@@ -529,7 +541,31 @@ local setSfxSlider = makeSlider("SFX volume", 62, function(value, persist)
 	end
 end)
 
+<<<<<<< HEAD
 -- Weapon switching remains on number keys; the clean fighting HUD shows ammo instead of cards.
+=======
+local mouseLockButton = button(settingsPanel, "Mouse lock  ON", UDim2.new(1, -24, 0, 34))
+mouseLockButton.Name = "MouseLock"
+mouseLockButton.Position = UDim2.new(0, 12, 0, 108)
+mouseLockButton.Visible = not (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
+local mouseLockEnabled = Settings.DefaultMouseLock
+local function setMouseLock(enabled: boolean)
+	mouseLockEnabled = enabled
+	player:SetAttribute("MouseLockEnabled", enabled)
+	mouseLockButton.Text = if enabled then "Mouse lock  ON" else "Mouse lock  OFF"
+end
+mouseLockButton.MouseButton1Click:Connect(function()
+	setMouseLock(not mouseLockEnabled)
+	UpdateSettings:FireServer({ MouseLockEnabled = mouseLockEnabled })
+end)
+
+settingsToggle.MouseButton1Click:Connect(function()
+	settingsPanel.Visible = not settingsPanel.Visible
+	settingsToggle.Text = if settingsPanel.Visible then "Settings  -" else "Settings"
+end)
+
+-- Bottom-right: weapon hotbar
+>>>>>>> w12
 local hotbar = Instance.new("Frame")
 hotbar.Size = UDim2.new(0, 420, 0, 46)
 hotbar.Position = UDim2.new(1, -432, 1, -72)
@@ -1497,6 +1533,7 @@ stats = {
 	Flags = {},
 	MusicVolume = Settings.DefaultVolume,
 	SfxVolume = Settings.DefaultVolume,
+	MouseLockEnabled = Settings.DefaultMouseLock,
 }
 
 local tutorialContext: Tutorial.Context = "arena"
@@ -1694,6 +1731,7 @@ StatsChanged.OnClientEvent:Connect(function(s)
 	stats = s
 	setMusicSlider(s.MusicVolume)
 	setSfxSlider(s.SfxVolume)
+	setMouseLock(s.MouseLockEnabled ~= false)
 	refreshStats()
 	onDailyPopup(s.DailyPopup)
 end)
