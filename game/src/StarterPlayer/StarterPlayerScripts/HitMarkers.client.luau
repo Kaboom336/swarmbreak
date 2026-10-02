@@ -74,9 +74,26 @@ local function flyCoinToCounter(worldPosition: Vector3)
 end
 
 HitMarker.OnClientEvent:Connect(
-	function(pos: Vector3, damage: number, killed: boolean, critical: boolean?)
+	function(pos: Vector3, damage: number, killed: boolean, target: Model?, critical: boolean?)
 		local isCritical = critical == true
 		local event = Feel.eventFor(killed, isCritical)
+		if target and target.Parent then
+			local previous = target:FindFirstChild("HitFlash")
+			if previous then
+				previous:Destroy()
+			end
+			local highlight = Instance.new("Highlight")
+			highlight.Name = "HitFlash"
+			highlight.Adornee = target
+			highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+			highlight.FillColor = Color3.new(1, 1, 1)
+			highlight.FillTransparency = 0
+			highlight.OutlineTransparency = 1
+			highlight.Parent = target
+			task.delay(Feel.HitFlashSeconds, function()
+				highlight:Destroy()
+			end)
+		end
 		local sparkColor = if killed
 			then Color3.fromRGB(255, 210, 60)
 			else if isCritical then Color3.fromRGB(255, 150, 60) else Color3.new(1, 1, 1)

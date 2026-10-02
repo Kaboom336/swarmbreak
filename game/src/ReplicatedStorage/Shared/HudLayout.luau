@@ -33,7 +33,7 @@ HudLayout.Anchors = {
 local REFERENCE_HEIGHT = 720 -- placeholder
 local BUTTON_HEIGHT = 34 -- placeholder
 local PANEL_GAP = 8 -- placeholder
-local SETTINGS_LAST_SLIDER_Y = 89 -- placeholder
+local SETTINGS_CONTENT_BOTTOM = 142 -- two sliders plus mouse-lock toggle
 
 function HudLayout.scaleFor(_viewportX: number, viewportY: number, _platform: Platform): number
 	return math.clamp(viewportY / REFERENCE_HEIGHT, HudLayout.MinScale, HudLayout.MaxScale)
@@ -62,8 +62,8 @@ function HudLayout.rects(
 	local sideWidth = 260 * scale -- placeholder
 	local currencyHeight = 52 * scale -- placeholder
 	local settingsPanelHeight = math.max(
-		116, -- placeholder
-		SETTINGS_LAST_SLIDER_Y + HudLayout.buttonHeightFor(scale, platform)
+		152, -- placeholder
+		SETTINGS_CONTENT_BOTTOM + HudLayout.buttonHeightFor(scale, platform)
 	)
 	local settingsHeight = buttonHeight + gap + settingsPanelHeight * scale
 	local questHeight = buttonHeight + gap + 180 * scale -- placeholder
