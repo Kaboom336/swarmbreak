@@ -32,6 +32,7 @@ type Live = {
 local live: { [Model]: Live } = {}
 local EnemyAI = {}
 EnemyAI.OnSummon = nil :: ((string, CFrame) -> ())?
+local AREA_WARNING_SECONDS = 0.65 -- placeholder
 
 local function v3(t: { number }): Vector3
 	return Vector3.new(t[1], t[2], t[3])
@@ -97,6 +98,20 @@ local function rangedShot(e: Live, target: BasePart)
 	if hum then
 		hum:TakeDamage(e.Damage)
 	end
+end
+
+local function telegraphAttack(e: Live, target: BasePart, radius: number, attack: (Vector3) -> ())
+	local impactPosition = target.Position
+	FX:FireAllClients("aoeWarning", {
+		Position = impactPosition - Vector3.new(0, 3, 0),
+		Radius = radius,
+		Duration = AREA_WARNING_SECONDS,
+	})
+	task.delay(AREA_WARNING_SECONDS, function()
+		if e.Humanoid.Health > 0 and e.Model.Parent and target.Parent then
+			attack(impactPosition)
+		end
+	end)
 end
 
 -- Ground enemies path around towers and walls; re-plan every 0.4 s, jump when stuck.
@@ -288,16 +303,39 @@ RunService.Heartbeat:Connect(function(dt)
 
 		e.AttackCooldown -= dt
 		if e.AttackCooldown <= 0 then
+			local typeName = e.Model:GetAttribute("TypeName") :: string
 			if def.Ranged then
 				if dist <= (def.Range or 40) then
 					e.AttackCooldown = def.AttackCooldown or 2
-					rangedShot(e, target)
+					if typeName == "Spitter" or def.Boss then
+						local warningRadius = if def.Boss then 10 else 6
+						telegraphAttack(e, target, warningRadius, function(impactPosition)
+							local moved = (target.Position - impactPosition) * Vector3.new(1, 0, 1)
+							if moved.Magnitude <= warningRadius then
+								rangedShot(e, target)
+							end
+						end)
+					else
+						rangedShot(e, target)
+					end
 				end
 			elseif horizontalDist < (e.Root.Size.Magnitude / 2 + 3) then
 				e.AttackCooldown = 1
-				local hum = target.Parent and target.Parent:FindFirstChildOfClass("Humanoid")
-				if hum then
-					hum:TakeDamage(e.Damage)
+				local function hitTarget(_impactPosition: Vector3?)
+					local currentDistance = ((target.Position - e.Root.Position) * Vector3.new(
+						1,
+						0,
+						1
+					)).Magnitude
+					local hum = target.Parent and target.Parent:FindFirstChildOfClass("Humanoid")
+					if hum and currentDistance < (e.Root.Size.Magnitude / 2 + 4) then
+						hum:TakeDamage(e.Damage)
+					end
+				end
+				if def.Boss then
+					telegraphAttack(e, target, 10, hitTarget)
+				else
+					hitTarget(nil)
 				end
 			end
 		end
