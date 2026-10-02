@@ -5,6 +5,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PathfindingService = game:GetService("PathfindingService")
 local Enemies = require(ReplicatedStorage.Shared.Enemies)
+local Fit = require(ReplicatedStorage.Shared.Fit)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local EnemyBuilder = require(script.Parent.EnemyBuilder)
@@ -55,15 +56,19 @@ local function nearestPlayerRoot(pos: Vector3): (BasePart?, number)
 	return best, bestDist
 end
 
-local function makeHealthBar(root: BasePart, hum: Humanoid, boss: boolean)
+local function makeHealthBar(model: Model, root: BasePart, hum: Humanoid, boss: boolean)
 	if boss then
 		return -- boss HP goes on the HUD
 	end
 	local bb = Instance.new("BillboardGui")
 	bb.Size = UDim2.new(4, 0, 0.4, 0)
-	bb.StudsOffsetWorldSpace = Vector3.new(0, root.Size.Y / 2 + 1.5, 0)
+	local head = model:FindFirstChild("Head", true)
+	local adornee = if head and head:IsA("BasePart") then head else root
+	bb.Adornee = adornee
+	bb.StudsOffsetWorldSpace = Vector3.new(0, adornee.Size.Y / 2 + 1, 0)
 	bb.AlwaysOnTop = true
 	bb.MaxDistance = 120
+	bb.Enabled = false
 	local back = Instance.new("Frame")
 	back.Size = UDim2.fromScale(1, 1)
 	back.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
@@ -74,7 +79,12 @@ local function makeHealthBar(root: BasePart, hum: Humanoid, boss: boolean)
 	fill.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
 	fill.BorderSizePixel = 0
 	fill.Parent = back
+	local damaged = false
 	hum.HealthChanged:Connect(function(h)
+		if h < hum.MaxHealth then
+			damaged = true
+		end
+		bb.Enabled = damaged and h > 0
 		fill.Size = UDim2.fromScale(math.clamp(h / hum.MaxHealth, 0, 1), 1)
 	end)
 	bb.Parent = root
@@ -167,7 +177,8 @@ function EnemyAI.spawn(
 		EnemyHealth = def.Health * healthScale,
 		BossScale = 1,
 	}, mutationId)
-	local size = v3(def.Size) * (if def.Boss then stats.BossScale else 1)
+	local fittedSize = Fit.sizeForRelativeHeight(def.Size, def.Scale, 5)
+	local size = v3(fittedSize) * (if def.Boss then stats.BossScale else 1)
 	local rig = EnemyBuilder.build(typeName, size, cf)
 	local model = rig.Model
 	local root = rig.Root
@@ -189,7 +200,7 @@ function EnemyAI.spawn(
 	model:SetAttribute("Boss", def.Boss == true)
 	model:SetAttribute("TypeName", typeName)
 	model:SetAttribute("LastHitBy", 0)
-	makeHealthBar(root, hum, def.Boss == true)
+	makeHealthBar(model, root, hum, def.Boss == true)
 	model.Parent = folder
 	if not def.Flying then
 		root:SetNetworkOwner(nil) -- server simulates enemies
