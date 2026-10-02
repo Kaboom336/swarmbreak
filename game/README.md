@@ -34,6 +34,15 @@ On the laptop, switch `std = "roblox"` in selene.toml for the real API dump.
 
 Codex tasks on this repo: `testcmd: cd game && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl`
 
+## CI
+
+GitHub Actions runs formatting, lint, unit tests, and a Rojo build on every push and pull request. The workflow uses
+the tool versions pinned in `../rokit.toml`, including Rojo 7.4.4. Run the same gate locally from this folder with:
+
+```
+stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
+```
+
 ## Run in Studio (laptop)
 1. `rokit install` in this folder (installs rojo, selene, stylua, lune).
 2. `rojo plugin install`, then `rojo serve`.
