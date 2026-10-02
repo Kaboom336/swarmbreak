@@ -17,10 +17,10 @@ local camera = workspace.CurrentCamera
 local sfxVolume = Settings.DefaultVolume
 local musicVolume = Settings.DefaultVolume
 local soundBudget = SoundBudget.new()
-local configuredQuality = (settings() :: any).Rendering.QualityLevel
-local qualityLevel = if typeof(configuredQuality) == "EnumItem"
-	then configuredQuality.Value
-	else tonumber(configuredQuality) or 5
+-- settings() is plugin-only; game scripts read the player's saved quality instead.
+local configuredQuality = UserSettings():GetService("UserGameSettings").SavedQualityLevel
+-- SavedQualityLevel is 0 when the player leaves graphics on Automatic.
+local qualityLevel = if configuredQuality.Value > 0 then configuredQuality.Value else 5
 local effectPoolSizes = PoolSize.forQuality(qualityLevel)
 
 local p0Sounds = {

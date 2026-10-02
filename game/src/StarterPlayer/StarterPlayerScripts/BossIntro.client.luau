@@ -16,7 +16,6 @@ end
 
 local function applyLightingPreset(preset: any)
 	local properties = preset.Lighting
-	Lighting.Technology = Enum.Technology.Future
 	Lighting.ClockTime = properties.ClockTime
 	Lighting.Brightness = properties.Brightness
 	Lighting.ExposureCompensation = properties.ExposureCompensation
