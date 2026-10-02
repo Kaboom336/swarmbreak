@@ -9,6 +9,7 @@ local Feel = require(ReplicatedStorage.Shared.Feel)
 local SoundBudget = require(ReplicatedStorage.Shared.SoundBudget)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Settings = require(ReplicatedStorage.Shared.Settings)
+local VfxDefs = require(ReplicatedStorage.Shared.VfxDefs)
 
 local ClientFX = {}
 local camera = workspace.CurrentCamera
@@ -67,6 +68,113 @@ end
 local fxFolder = Instance.new("Folder")
 fxFolder.Name = "ClientFX"
 fxFolder.Parent = workspace
+
+type PoolEntry = {
+	Holder: Part,
+	Emitter: ParticleEmitter,
+	AvailableAt: number,
+}
+
+local function numberSequence(keypoints: { VfxDefs.Keypoint }): NumberSequence
+	local values = {}
+	for _, keypoint in keypoints do
+		table.insert(values, NumberSequenceKeypoint.new(keypoint.Time, keypoint.Value))
+	end
+	return NumberSequence.new(values)
+end
+
+local function colorSequence(colors: { VfxDefs.Color }): ColorSequence
+	local values = {}
+	local last = #colors
+	for index, color in colors do
+		table.insert(
+			values,
+			ColorSequenceKeypoint.new(
+				(index - 1) / math.max(1, last - 1),
+				Color3.fromRGB(color[1], color[2], color[3])
+			)
+		)
+	end
+	return ColorSequence.new(values)
+end
+
+local function applyDefinition(emitter: ParticleEmitter, definition: VfxDefs.Definition)
+	emitter.Enabled = false
+	emitter.Color = colorSequence(definition.Colors)
+	emitter.Transparency = numberSequence(definition.Transparency)
+	emitter.Size = numberSequence(definition.Size)
+	emitter.Lifetime = NumberRange.new(definition.Lifetime[1], definition.Lifetime[2])
+	emitter.Speed = NumberRange.new(definition.Speed[1], definition.Speed[2])
+	emitter.SpreadAngle = Vector2.new(definition.Spread[1], definition.Spread[2])
+	emitter.Acceleration = Vector3.new(
+		definition.Acceleration[1],
+		definition.Acceleration[2],
+		definition.Acceleration[3]
+	)
+	emitter.Drag = definition.Drag
+	emitter.LightEmission = definition.LightEmission
+	emitter.Rate = definition.Rate
+	emitter.LockedToPart = false
+end
+
+local function makePoolEntry(name: string, definition: VfxDefs.Definition): PoolEntry
+	local holder = Instance.new("Part")
+	holder.Name = name .. "Emitter"
+	holder.Anchored = true
+	holder.CanCollide = false
+	holder.CanQuery = false
+	holder.CanTouch = false
+	holder.CastShadow = false
+	holder.Transparency = 1
+	holder.Size = Vector3.one * 0.2
+	holder.Parent = fxFolder
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Name = name
+	applyDefinition(emitter, definition)
+	emitter.Parent = holder
+	return { Holder = holder, Emitter = emitter, AvailableAt = 0 }
+end
+
+local emitterPools: { [string]: { PoolEntry } } = {}
+for name, definition in VfxDefs.Definitions do
+	local pool = {}
+	for _ = 1, definition.PoolSize do
+		table.insert(pool, makePoolEntry(name, definition))
+	end
+	emitterPools[name] = pool
+end
+
+local customPool = {}
+for _ = 1, 16 do
+	table.insert(customPool, makePoolEntry("CustomBurst", VfxDefs.HitSpark))
+end
+
+local function claim(pool: { PoolEntry }): PoolEntry
+	local now = os.clock()
+	local earliest = pool[1]
+	for _, entry in pool do
+		if entry.AvailableAt <= now then
+			return entry
+		end
+		if entry.AvailableAt < earliest.AvailableAt then
+			earliest = entry
+		end
+	end
+	return earliest
+end
+
+function ClientFX.emit(name: string, at: Vector3, count: number?)
+	local definition = VfxDefs.Definitions[name]
+	local pool = emitterPools[name]
+	if not definition or not pool then
+		warn("Unknown VFX definition: " .. name)
+		return
+	end
+	local entry = claim(pool)
+	entry.Holder.Position = at
+	entry.AvailableAt = os.clock() + definition.Lifetime[2]
+	entry.Emitter:Emit(count or definition.EmitCount)
+end
 
 function ClientFX.c3(t: { number }): Color3
 	return Color3.fromRGB(t[1], t[2], t[3])
@@ -194,23 +302,19 @@ function ClientFX.burst(
 	life: number,
 	spark: boolean
 )
-	local holder = Instance.new("Part")
-	holder.Anchored = true
-	holder.CanCollide = false
-	holder.CanQuery = false
-	holder.Transparency = 1
-	holder.Size = Vector3.one * 0.2
-	holder.Position = at
-	holder.Parent = fxFolder
-	local att = Instance.new("Attachment")
-	att.Parent = holder
-	local pe = Instance.new("ParticleEmitter")
+	local entry = claim(customPool)
+	local pe = entry.Emitter
+	entry.Holder.Position = at
 	pe.Color = ColorSequence.new(color, color:Lerp(Color3.new(0, 0, 0), 0.5))
 	pe.Size = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, size),
 		NumberSequenceKeypoint.new(1, 0),
 	})
-	pe.Transparency = NumberSequence.new(0.1, 1)
+	pe.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(0.08, 0.1),
+		NumberSequenceKeypoint.new(1, 1),
+	})
 	pe.Lifetime = NumberRange.new(life * 0.6, life)
 	pe.Speed = NumberRange.new(speed * 0.5, speed)
 	pe.SpreadAngle = Vector2.new(180, 180)
@@ -218,9 +322,8 @@ function ClientFX.burst(
 	pe.Acceleration = if spark then Vector3.new(0, -30, 0) else Vector3.new(0, 4, 0)
 	pe.LightEmission = 1
 	pe.Rate = 0
-	pe.Parent = att
+	entry.AvailableAt = os.clock() + life
 	pe:Emit(count)
-	Debris:AddItem(holder, life + 0.5)
 end
 
 function ClientFX.flash(at: Vector3, color: Color3, range: number, life: number)
