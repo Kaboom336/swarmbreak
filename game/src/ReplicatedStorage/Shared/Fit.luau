@@ -17,4 +17,13 @@ function Fit.scaleFor(boundsSize: Size, targetSize: Size): number
 	return scale
 end
 
+function Fit.sizeForRelativeHeight(
+	size: Size,
+	relativeHeight: number,
+	referenceHeight: number
+): Size
+	local scale = Fit.scaleFor(size, { math.huge, referenceHeight * relativeHeight, math.huge })
+	return { size[1] * scale, size[2] * scale, size[3] * scale }
+end
+
 return Fit
