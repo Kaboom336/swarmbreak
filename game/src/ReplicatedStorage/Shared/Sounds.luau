@@ -11,7 +11,8 @@ local Sounds = {
 	ShotRifle = { Id = "rbxasset://sounds/Shoulder fired rocket.wav", Volume = 0.4, Pitch = 1.5 },
 	ShotEnergy = { Id = "rbxasset://sounds/flashbulb.wav", Volume = 0.4, Pitch = 1.1 },
 	ShotCannon = { Id = "rbxasset://sounds/Launching rocket.wav", Volume = 0.6, Pitch = 0.9 },
-	Swing = { Id = "rbxasset://sounds/swoosh.wav", Volume = 0.6, Pitch = 0.9 },
+	-- TODO: Replace these placeholders with a proper approved swoosh sound.
+	Swing = { Id = "rbxasset://sounds/impact_water.mp3", Volume = 0.6, Pitch = 1.4 },
 	Slam = { Id = "rbxasset://sounds/impact_explosion_02.mp3", Volume = 0.7, Pitch = 1.2 },
 	Orb = { Id = "rbxasset://sounds/electronicpingshort.wav", Volume = 0.15, Pitch = 2.0 },
 	Beam = { Id = "rbxasset://sounds/flashbulb.wav", Volume = 0.2, Pitch = 0.6 },
@@ -19,7 +20,7 @@ local Sounds = {
 	Hit = { Id = "rbxasset://sounds/hit.wav", Volume = 0.3, Pitch = 1.4 },
 	Kill = { Id = "rbxasset://sounds/splat.wav", Volume = 0.5, Pitch = 1.0 },
 	Hurt = { Id = "rbxasset://sounds/uuhhh.mp3", Volume = 0.5, Pitch = 1.0 },
-	Dash = { Id = "rbxasset://sounds/swoosh.wav", Volume = 0.5, Pitch = 1.1 },
+	Dash = { Id = "rbxasset://sounds/impact_water.mp3", Volume = 0.5, Pitch = 1.8 },
 	Jump = { Id = "rbxasset://sounds/action_jump.mp3", Volume = 0.4, Pitch = 1.0 },
 	Coin = { Id = "rbxasset://sounds/switch.wav", Volume = 0.3, Pitch = 1.8 },
 	Buy = { Id = "rbxasset://sounds/button.wav", Volume = 0.5, Pitch = 1.0 },

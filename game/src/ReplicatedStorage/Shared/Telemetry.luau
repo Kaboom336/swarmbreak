@@ -1,6 +1,8 @@
 --!strict
--- One contract for the soft-launch funnel. This module stays pure so event payloads can be
+-- One contract for the soft-launch funnel. Event payloads and their text formatting can be
 -- checked before a server hands them to AnalyticsService.
+
+local RunService = if game ~= nil then game:GetService("RunService") else nil
 
 export type FieldValue = number | string
 export type Fields = { [string]: FieldValue }
@@ -28,6 +30,20 @@ Telemetry.Events = {
 	death = { "wave", "seconds" },
 } :: { [string]: { string } }
 
+function Telemetry.formatFields(fields: Fields): string
+	local names = {}
+	for name in fields do
+		table.insert(names, name)
+	end
+	table.sort(names)
+
+	local parts = {}
+	for _, name in names do
+		table.insert(parts, name .. "=" .. tostring(fields[name]))
+	end
+	return table.concat(parts, " ")
+end
+
 function Telemetry.build(name: string, fields: Fields): Event
 	local fieldList = Telemetry.Events[name]
 	assert(fieldList ~= nil, "Unknown telemetry event: " .. name)
@@ -50,7 +66,11 @@ function Telemetry.build(name: string, fields: Fields): Event
 			else value
 	end
 
-	return { name = name, fields = copied }
+	local event = { name = name, fields = copied }
+	if RunService ~= nil and RunService:IsStudio() then
+		print("[funnel] " .. name, Telemetry.formatFields(copied))
+	end
+	return event
 end
 
 return Telemetry
