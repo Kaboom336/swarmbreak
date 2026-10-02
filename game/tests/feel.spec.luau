@@ -1,4 +1,31 @@
 local Feel = load("Feel")
+local Enemies = load("Enemies")
+
+test("hit feedback timings stay readable and immediate", function()
+	assert(Feel.HitFlashSeconds >= 0.04, "hit flash is too short")
+	assert(Feel.HitFlashSeconds <= 0.08, "hit flash is too long")
+	assert(Feel.DamageNumberSeconds >= 0.4, "damage number is too brief")
+	assert(Feel.DamageNumberSeconds <= 1, "damage number lingers too long")
+end)
+
+test("critical hits are bigger than normal hits", function()
+	assert(
+		Feel.Events.Crit.NumberScale > Feel.Events.Hit.NumberScale,
+		"critical number scale should exceed normal hit scale"
+	)
+	assert(Feel.CritSparkScale > Feel.HitSparkScale, "critical spark should exceed normal spark")
+end)
+
+test("every enemy type has a death burst colour", function()
+	for enemyType in Enemies.Defs do
+		local color = Feel.DeathBurstColors[enemyType]
+		assert(color ~= nil, enemyType .. " is missing a death burst colour")
+		eq(#color, 3, enemyType .. " death burst colour channel count")
+		for _, channel in color do
+			assert(channel >= 0 and channel <= 255, enemyType .. " death burst colour channel")
+		end
+	end
+end)
 
 test("freeze times stay inside the feel budget", function()
 	for name, event in Feel.Events do
