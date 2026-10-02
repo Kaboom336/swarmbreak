@@ -79,3 +79,4 @@ For each piece (a model group, a system, a screen):
 - 2026-10-02: bake colour and AO into a small palette texture (one material, UVs in 0:1) so the Blender look survives import; save SurfaceAppearance for bosses and arena tiles. https://create.roblox.com/docs/art/modeling/texture-specifications
 - 2026-10-02: AI 3D generators can make static props but not our named rig parts; keep rigged enemies scripted and put any generated mesh through the same screenshot gate. https://devforum.roblox.com/t/beta-cube-3d-generation-tools-and-apis-for-creators/3558947
 - 2026-10-02: glow and juice come from Roblox-native VFX: fade every particle in and out, keep Rate at or under 100/s for mobile, LightEmission plus Bloom for glow. https://create.roblox.com/docs/effects/particle-emitters
+- Zion 10/2: reference YouTube videos are edited; treat captures as hints, not proof. Prefer unedited full playthroughs.

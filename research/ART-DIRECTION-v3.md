@@ -4,6 +4,7 @@ game/tools/blender/RECIPE.md, renders enemies-sheet.png, weapons-sheet.png, aren
 Tags: [V] verified in a cited doc, [E] estimate or taste, [PRIOR] memory of a game, not checked this run.
 
 ## 0. REVISION 2026-10-02 01:20Z after the laptop's captures of 8 top games (overrides sections 2 and 4 where they differ)
+CAVEAT (Zion 01:22Z): the source videos are edited YouTube clips (cuts, zoom, effects, overlays), so the stills show highlights, not normal play. Use them for direction only, and check timings and density against unedited play or our own playtest.
 Evidence: /mnt/project-files/swarmbreak-reference-overview.jpg and swarmbreak-reference-notes.md (40 stills from YouTube gameplay).
 - None of the 8 games uses detailed models. Rivals is white blocks, Grow a Garden is default studs, Final Swarm is plain low-poly in daylight. They win on bright, readable light, a dense HUD and hit feedback on every shot.
 - So the look becomes a **bright station at dusk**: strong warm key light and a blue sky, with neon trim as an accent, not darkness. Only Doors (horror) is dark, and we are not horror. The floor still has to be lighter than the enemies.
