@@ -1,4 +1,5 @@
 local LevelUp = load("LevelUp")
+local Evolutions = load("Evolutions")
 local WaveRewards = load("WaveRewards")
 local Weapons = load("Weapons")
 
@@ -50,6 +51,51 @@ test("card rarity odds sum to one", function()
 	assert(math.abs(total - 1) < 1e-9, "rarity odds must sum to 1")
 	eq(LevelUp.rollRarity(0), "Common", "low roll")
 	eq(LevelUp.rollRarity(0.999), "Legendary", "high roll")
+end)
+
+test("the level 2 offer contains exactly one element card", function()
+	for _, rolls in
+		{
+			{ 0, 0.2, 0.8 },
+			{ 0.26, 0.4, 0.9 },
+			{ 0.51, 0.6, 0.1 },
+			{ 0.99, 0.8, 0.3 },
+		}
+	do
+		local offer = LevelUp.offer(2, {}, "Hitscan", rolls, { 0.05, 0.65, 0.95 })
+		local elementCards = 0
+		for _, card in offer do
+			assert(LevelUp.RarityOdds[card.Rarity], "element offers retain valid rarities")
+			if card.Element then
+				elementCards += 1
+				local element = Evolutions.Elements[card.Element]
+				assert(element, "known element " .. card.Element)
+				eq(card.Color, element.Color, "weapon recolor comes from the element")
+				eq(
+					card.OnHitEffect,
+					element.Tiers[2].Effect,
+					"card grants the element on-hit effect"
+				)
+			end
+		end
+		eq(elementCards, 1, "one element card")
+	end
+end)
+
+test("the level 4 offer shows one first evolution preview", function()
+	local offer = LevelUp.offer(4, {}, "Hitscan", { 0.7, 0.2, 0.8 }, { 0.1, 0.7, 0.99 })
+	local previews = 0
+	for _, card in offer do
+		assert(LevelUp.RarityOdds[card.Rarity], "preview offers retain valid rarities")
+		if card.EvolutionPreview then
+			previews += 1
+			eq(card.EvolutionPreview.Tier, 1, "first evolution tier")
+			local element = Evolutions.Elements[card.EvolutionPreview.Element]
+			assert(element, "preview uses a known element")
+			eq(card.EvolutionPreview.Label, element.Tiers[1].Label, "preview label")
+		end
+	end
+	eq(previews, 1, "one evolution preview")
 end)
 
 test("the run chest uses the existing crate pity", function()
