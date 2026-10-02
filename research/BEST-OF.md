@@ -1,4 +1,12 @@
 # Best-of map: take each part from the game that does it best (Zion 2026-10-02)
+
+## Bar: BEAT, not match (Zion 2026-10-02 03:19)
+Each part is judged on whether it is better than the reference at that aspect, and each reference gets one thing ours does that it lacks:
+- vs Hunty Zombie: element builds that evolve mid-run (Nature/Tech/Lightning/Dark) so every run plays differently; Hunty runs feel the same.
+- vs Final Swarm: co-op element combos (e.g. Lightning hit on a Nature-rooted enemy chains) so friends make each other stronger, not just share a screen.
+- vs Deep Rock Galactic: instant drop-in, 10-minute runs, phone-friendly controls with auto-aim.
+- vs Vampire Survivors: you actually aim and move like Rivals, so skill matters, not only build.
+Judges score "beats / matches / worse" per aspect; only "beats" passes for core loop, look and hit feel.
 Rule: for every aspect of Swarm Break, name the top game that does it best, copy the idea (never the assets), and judge our version against that one game. Sources are the edited video stills in /mnt/project-files/swarmbreak-reference-notes.md, so treat them as hints and check them in real play.
 
 ## What is ours right now (planning phase: anything can change with a good reason; log each change and its reason in COMPARISON.md)
