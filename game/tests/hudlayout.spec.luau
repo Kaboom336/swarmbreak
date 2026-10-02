@@ -65,3 +65,61 @@ test("scale is monotonic and clamped", function()
 	eq(HudLayout.scaleFor(640, 100, "touch"), HudLayout.MinScale, "minimum clamp")
 	eq(HudLayout.scaleFor(1920, 2000, "keyboard"), HudLayout.MaxScale, "maximum clamp")
 end)
+
+test("side icon hotkeys are unique", function()
+	local expectedColumns = {
+		{ "Inventory", "Kits", "Quests", "Shop", "Settings" },
+		{ "Codes", "Pass", "Rewards", "Guides" },
+	}
+	local seen = {}
+	for columnIndex, column in { HudLayout.IconColumns.left, HudLayout.IconColumns.right } do
+		eq(#column, #expectedColumns[columnIndex], "icon column length")
+		for entryIndex, entry in column do
+			eq(entry.name, expectedColumns[columnIndex][entryIndex], "icon name")
+			assert(not seen[entry.hotkey], entry.hotkey .. " is assigned more than once")
+			seen[entry.hotkey] = true
+		end
+	end
+end)
+
+test("side icons are large squares that do not overlap the T6 HUD", function()
+	local rects = HudLayout.rects(1334, 750, "keyboard")
+	local icons = {}
+
+	for _, column in { HudLayout.IconColumns.left, HudLayout.IconColumns.right } do
+		for _, entry in column do
+			local icon = rects[entry.id]
+			assert(icon ~= nil, entry.name .. " rectangle exists")
+			eq(icon.w, icon.h, entry.name .. " is square")
+			assert(icon.w >= 44, entry.name .. " is at least 44 pixels")
+
+			for _, panelName in PANEL_NAMES do
+				assert(
+					not overlaps(icon, rects[panelName]),
+					entry.name .. " overlaps " .. panelName
+				)
+			end
+
+			for _, other in icons do
+				assert(not overlaps(icon, other), entry.name .. " overlaps another side icon")
+			end
+			table.insert(icons, icon)
+		end
+	end
+end)
+
+test("giant money counter does not overlap the T6 HUD or side icons", function()
+	local rects = HudLayout.rects(1334, 750, "keyboard")
+	local money = rects.money
+	assert(money ~= nil, "money rectangle exists")
+	assert(money.w >= 200 and money.h >= 44, "money counter is prominent")
+
+	for _, panelName in PANEL_NAMES do
+		assert(not overlaps(money, rects[panelName]), "money overlaps " .. panelName)
+	end
+	for _, column in { HudLayout.IconColumns.left, HudLayout.IconColumns.right } do
+		for _, entry in column do
+			assert(not overlaps(money, rects[entry.id]), "money overlaps " .. entry.name)
+		end
+	end
+end)
