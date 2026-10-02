@@ -410,6 +410,14 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 	model:ScaleTo(Fit.scaleFor({ bounds.X, bounds.Y, bounds.Z }, { size.X, size.Y, size.Z }))
 	model:PivotTo(cf)
 	model.Name = typeName
+	local palette = Theme.Enemy[typeName] or Theme.Enemy.Walker
+	local body = c3(palette.Body)
+	local accent = c3(palette.Accent)
+	for _, descendant in model:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			descendant.Color = if ModelParts.isGlow(descendant.Name) then accent else body
+		end
+	end
 
 	local root = Instance.new("Part")
 	root.Name = "HumanoidRootPart"

@@ -15,14 +15,14 @@ local Theme = {
 	Coin = { 255, 210, 60 },
 	-- enemy body palette per type (overrides Enemies.Defs Color for the rig)
 	Enemy = {
-		Walker = { Body = { 90, 40, 60 }, Accent = { 255, 90, 120 } },
+		Walker = { Body = { 210, 100, 115 }, Accent = { 255, 90, 120 } },
 		Runner = { Body = { 200, 130, 30 }, Accent = { 255, 230, 120 } },
-		Flyer = { Body = { 70, 60, 160 }, Accent = { 150, 120, 255 } },
-		Tank = { Body = { 55, 70, 60 }, Accent = { 120, 255, 140 } },
+		Flyer = { Body = { 130, 125, 225 }, Accent = { 150, 120, 255 } },
+		Tank = { Body = { 125, 160, 125 }, Accent = { 120, 255, 140 } },
 		Spitter = { Body = { 80, 130, 50 }, Accent = { 190, 255, 90 } },
-		Brute = { Body = { 60, 15, 20 }, Accent = { 255, 40, 40 } },
-		Queen = { Body = { 110, 25, 100 }, Accent = { 255, 90, 255 } },
-		Warden = { Body = { 20, 25, 60 }, Accent = { 90, 200, 255 } },
+		Brute = { Body = { 210, 75, 65 }, Accent = { 255, 40, 40 } },
+		Queen = { Body = { 205, 85, 190 }, Accent = { 255, 90, 255 } },
+		Warden = { Body = { 105, 145, 220 }, Accent = { 90, 200, 255 } },
 	},
 	Rarity = {
 		Common = { 190, 190, 200 },
