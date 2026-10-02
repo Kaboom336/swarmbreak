@@ -144,9 +144,9 @@
       "$properties": {
         "CharacterJumpPower": 50,
         "CharacterWalkSpeed": 20,
-        "EnableMouseLockOption": true,
-        "CameraMaxZoomDistance": 28,
-        "CameraMinZoomDistance": 6
+        "EnableMouseLockOption": false,
+        "CameraMaxZoomDistance": 12,
+        "CameraMinZoomDistance": 12
       }
     },
     "Workspace": {
