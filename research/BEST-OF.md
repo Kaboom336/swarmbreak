@@ -12,3 +12,6 @@ Rule: for every aspect of Swarm Break, name the top game that does it best, copy
 | Night neon accents | Jailbreak | Emissive strips and coloured lights on the station trim |
 | In-world info | Dead Rails | Counters on objects (e.g. "6/15") instead of more panels |
 | Wave rewards | Tower Defense Simulator | "Wave Clear Bonus" popup, red danger tint during waves |
+| Movement feel (Zion: one of the best) | Rivals | Sprint, slide with momentum, short dash, quick jump, FOV kick and camera tilt; movement stays fast while shooting |
+| Animations | Rivals | Snappy weapon equip, reload and inspect animations; first-person arms and weapon sway |
+| Custom skins | Rivals | Weapon skins and wraps as the main cosmetic, unlocked with Gems or crates; must stay readable (rarity colour on the frame, not the gun) |

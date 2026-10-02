@@ -26,4 +26,9 @@ game/tools/capture.luau for the Studio command bar: 6 fixed cameras (see ART-DIR
 ## T6 Final Swarm HUD set (priority 2, do right after T1)
 Hud.client.luau + UiKit (from T4, or plain frames if T4 is not merged yet): boss name with a big red HP bar at the top centre; wave number plus round timer at the top centre; Coins/Gems at the top right; the Quests panel on the left (Quests.luau exists); damage numbers with a crit colour; a red hit-direction indicator when the player is hit; red AoE warning circles on the ground before boss and spitter attacks; a "Wave clear +N Coins" banner. The existing pick-1-of-3 reward screen gets rarity-tagged cards.
 Spec tests/hudlayout.spec.luau (pure layout data in Shared/HudLayout.luau): each element anchored where listed, nothing overlapping at 1334x750 and 1920x1080, touch targets >= 44 px.
-Order: T1, T6, T3, T2, T4, T5.
+
+## T7 Rivals-style movement (Zion 10/2)
+StarterPlayerScripts/Movement.client.luau + Shared/MovementTuning.luau (pure data): sprint (default on for mobile), slide (crouch while sprinting; momentum decays over about 0.8 s), short dash on a cooldown, jump buffering and coyote time, small FOV kick on sprint and dash, camera tilt on slide. Shooting while moving keeps full speed. Mobile gets a slide/dash button via the touch layout.
+Spec tests/movement.spec.luau: pure functions for slide speed curve (monotonic decay, ends at walk speed), dash cooldown, coyote and buffer windows in range, FOV kick returns to base.
+
+Order: T1, T6, T7, T3, T2, T4, T5.
