@@ -83,10 +83,17 @@ local function bindCharacter(character: Model)
 	humanoid.CameraOffset = Vector3.new(CameraConfig.RightOffset, CameraConfig.HeightOffset, 0)
 	humanoid.AutoRotate = false
 
-	local connection: RBXScriptConnection
-	connection = RunService.RenderStepped:Connect(function()
+	-- Bound after the default camera so its per-frame MouseBehavior reset cannot undo the lock.
+	local bindName = "SwarmBreakAimCamera"
+	local function unbind()
+		pcall(function()
+			RunService:UnbindFromRenderStep(bindName)
+		end)
+	end
+	unbind()
+	RunService:BindToRenderStep(bindName, Enum.RenderPriority.Camera.Value + 1, function()
 		if humanoid.Health <= 0 or not character.Parent then
-			connection:Disconnect()
+			unbind()
 			return
 		end
 
@@ -106,11 +113,7 @@ local function bindCharacter(character: Model)
 		end
 	end)
 
-	humanoid.Died:Connect(function()
-		if connection.Connected then
-			connection:Disconnect()
-		end
-	end)
+	humanoid.Died:Connect(unbind)
 end
 
 applyMouseLock(CameraConfig.MouseLockDefault)
