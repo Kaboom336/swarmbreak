@@ -80,3 +80,4 @@ For each piece (a model group, a system, a screen):
 - 2026-10-02: AI 3D generators can make static props but not our named rig parts; keep rigged enemies scripted and put any generated mesh through the same screenshot gate. https://devforum.roblox.com/t/beta-cube-3d-generation-tools-and-apis-for-creators/3558947
 - 2026-10-02: glow and juice come from Roblox-native VFX: fade every particle in and out, keep Rate at or under 100/s for mobile, LightEmission plus Bloom for glow. https://create.roblox.com/docs/effects/particle-emitters
 - Zion 10/2: reference YouTube videos are edited; treat captures as hints, not proof. Prefer unedited full playthroughs.
+- Zion 10/2: take each aspect from the game that does it best (research/BEST-OF.md); judge each part against that game.
