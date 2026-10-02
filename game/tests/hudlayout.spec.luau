@@ -7,7 +7,7 @@ local VIEWPORTS = {
 	{ 1920, 1080 },
 }
 
-local PANEL_NAMES = { "quest", "settings", "shop", "hotbar", "wave", "health" }
+local PANEL_NAMES = { "quest", "settings", "shop", "hotbar", "wave", "health", "xp" }
 
 local function overlaps(a, b)
 	return not (a.x + a.w <= b.x or b.x + b.w <= a.x or a.y + a.h <= b.y or b.y + b.h <= a.y)
@@ -25,6 +25,14 @@ test("panel rectangles stay inside each required viewport", function()
 			assert(rect.x + rect.w <= width, name .. " fits horizontally")
 			assert(rect.y + rect.h <= height, name .. " fits vertically")
 		end
+	end
+end)
+
+test("xp bar spans the full viewport width", function()
+	for _, viewport in VIEWPORTS do
+		local rect = HudLayout.rects(viewport[1], viewport[2], "touch").xp
+		eq(rect.x, 0, "xp bar starts at the left edge")
+		eq(rect.w, viewport[1], "xp bar reaches the right edge")
 	end
 end)
 

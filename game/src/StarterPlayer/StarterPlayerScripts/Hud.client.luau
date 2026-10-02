@@ -217,6 +217,22 @@ local statsLabel = text(screen, "Stats", UDim2.new(0, 12, 1, -66), UDim2.new(0, 
 statsLabel.TextXAlignment = Enum.TextXAlignment.Left
 statsLabel.TextYAlignment = Enum.TextYAlignment.Top
 
+-- Full-width run XP, pinned to the bottom edge by HudLayout.
+local xpBack = Instance.new("Frame")
+xpBack.Name = "XP"
+xpBack.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+xpBack.BorderSizePixel = 0
+xpBack.ClipsDescendants = true
+xpBack.Parent = screen
+local xpFill = Instance.new("Frame")
+xpFill.Name = "Fill"
+xpFill.Size = UDim2.fromScale(0, 1)
+xpFill.BackgroundColor3 = ClientFX.c3(Theme.NeonTeal)
+xpFill.BorderSizePixel = 0
+xpFill.Parent = xpBack
+local xpText = text(xpBack, "Value", UDim2.new(), UDim2.fromScale(1, 1), "", 11)
+xpText.ZIndex = xpFill.ZIndex + 1
+
 -- Top-right daily quests, tucked under the existing controls.
 local questToggle = button(screen, "Quests", UDim2.new(0, 260, 0, 34))
 questToggle.Name = "QuestToggle"
@@ -966,6 +982,10 @@ local function applyHudLayout()
 	statsLabel.Position = UDim2.fromOffset(logical(health.x), logical(health.y) + 20)
 	statsLabel.Size = UDim2.fromOffset(logical(health.w), 58)
 
+	local xp = rects.xp
+	xpBack.Position = UDim2.fromOffset(logical(xp.x), logical(xp.y))
+	xpBack.Size = UDim2.fromOffset(logical(xp.w), logical(xp.h))
+
 	local buttonHeight = HudLayout.buttonHeightFor(currentScale, platform)
 	local quest = rects.quest
 	questToggle.Position = UDim2.fromOffset(logical(quest.x), logical(quest.y))
@@ -1429,12 +1449,10 @@ local function refreshStats()
 	local dash = (player:GetAttribute("DashReady") :: number?) or 0
 	local shards = stats.Shards or {}
 	statsLabel.Text = string.format(
-		"Coins %d    Kills %d    Level %d  XP %d/%d    Dash %d\nGems %d    Shards  Nature %d  Tech %d  Lightning %d  Dark %d",
+		"Coins %d    Kills %d    Level %d    Dash %d\nGems %d    Shards  Nature %d  Tech %d  Lightning %d  Dark %d",
 		stats.Coins,
 		stats.Kills,
 		stats.Level or 0,
-		stats.XP or 0,
-		stats.XPNeeded or 0,
 		dash,
 		stats.Gems or 0,
 		shards.Nature or 0,
@@ -1442,6 +1460,10 @@ local function refreshStats()
 		shards.Lightning or 0,
 		shards.Dark or 0
 	)
+	local xp = stats.XP or 0
+	local xpNeeded = math.max(stats.XPNeeded or 1, 1)
+	xpFill.Size = UDim2.fromScale(math.clamp(xp / xpNeeded, 0, 1), 1)
+	xpText.Text = string.format("LEVEL %d    XP %d / %d", stats.Level or 0, xp, xpNeeded)
 	-- Evolution section follows the equipped weapon
 	local equippedDef = Weapons.Defs[stats.Equipped]
 	local evo = (stats.Evolutions or {})[stats.Equipped]

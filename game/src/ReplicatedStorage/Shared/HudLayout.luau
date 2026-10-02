@@ -59,7 +59,14 @@ function HudLayout.rects(
 	local hotbarWidth = 420 * scale -- placeholder
 	local hotbarHeight = buttonHeight + 14 * scale -- placeholder
 	local bottomHeight = math.max(healthHeight, hotbarHeight)
-	local bottomY = viewportY - margin - bottomHeight
+	local xpHeight = 12 * scale
+	local xp = {
+		x = 0,
+		y = viewportY - xpHeight,
+		w = viewportX,
+		h = xpHeight,
+	}
+	local bottomY = xp.y - gap - bottomHeight
 
 	local wave = {
 		x = (viewportX - waveWidth) / 2,
@@ -107,6 +114,7 @@ function HudLayout.rects(
 		hotbar = hotbar,
 		wave = wave,
 		health = health,
+		xp = xp,
 	}
 end
 

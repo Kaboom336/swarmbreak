@@ -2,12 +2,19 @@ local LevelUp = load("LevelUp")
 local WaveRewards = load("WaveRewards")
 local Weapons = load("Weapons")
 
-test("the first two levels arrive inside the target cadence", function()
+test("wave 1 level-ups take 10 to 20 seconds at the baseline kill rate", function()
 	for level = 1, 2 do
 		local seconds = LevelUp.secondsAtWaveOneRate(level)
-		assert(seconds > 10, "level " .. level .. " is not an instant pick")
-		assert(seconds < 20, "level " .. level .. " takes under 20 seconds")
+		assert(seconds >= 10, "level " .. level .. " is not an instant pick")
+		assert(seconds <= 20, "level " .. level .. " takes at most 20 seconds")
 	end
+end)
+
+test("wave 4 level-ups take 30 to 60 seconds at the baseline kill rate", function()
+	local seconds = LevelUp.secondsAtWaveOneRate(4)
+	assert(seconds >= 30, "wave 4 cadence is at least 30 seconds")
+	assert(seconds <= 60, "wave 4 cadence is at most 60 seconds")
+	eq(LevelUp.requiredXp(5), LevelUp.requiredXp(4), "late cadence stays bounded")
 end)
 
 test("xp carries across levels", function()

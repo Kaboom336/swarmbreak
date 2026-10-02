@@ -11,6 +11,9 @@ export type OfferCard = {
 local LevelUp = {}
 
 LevelUp.WaveOneKillRate = 0.4 -- placeholder: one kill every 2.5 seconds
+-- XP needed for each level. Early picks are frequent; from wave 4 onward the
+-- curve settles at 40 seconds per pick at the baseline kill rate below.
+LevelUp.XpCurve = { 60, 70, 80, 160 }
 LevelUp.KillXp = {
 	Walker = 10,
 	Runner = 10,
@@ -33,7 +36,8 @@ LevelUp.ChestRevealSeconds = 2.25
 LevelUp.CardFlipSeconds = 0.18
 
 function LevelUp.requiredXp(level: number): number
-	return 60 + 5 * math.max(0, level - 1)
+	local curveIndex = math.clamp(math.floor(level), 1, #LevelUp.XpCurve)
+	return LevelUp.XpCurve[curveIndex]
 end
 
 function LevelUp.secondsAtWaveOneRate(level: number): number
