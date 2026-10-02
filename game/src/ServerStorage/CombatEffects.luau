@@ -56,14 +56,10 @@ local function rawHit(
 	local root = model.PrimaryPart
 	local playerRoot = plr.Character
 		and plr.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
-	if root and playerRoot then
+	if root and playerRoot and model:GetAttribute("Boss") ~= true then
 		local away = (root.Position - playerRoot.Position) * Vector3.new(1, 0, 1)
 		if away.Magnitude > 0.01 then
-			if root.Anchored then
-				root.CFrame += away.Unit * Feel.KnockbackStuds
-			else
-				root:ApplyImpulse(away.Unit * Feel.KnockbackSpeed * root.AssemblyMass)
-			end
+			root.CFrame += away.Unit * Feel.KnockbackStuds
 		end
 	end
 	HitMarker:FireClient(plr, hitPos, math.floor(damage + 0.5), killed, model)

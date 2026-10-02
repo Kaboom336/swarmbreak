@@ -1,76 +1,10 @@
 --!strict
 -- Floating damage numbers where your shots land.
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
 local Feel = require(ReplicatedStorage.Shared.Feel)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 local HitMarker = ReplicatedStorage:WaitForChild("Remotes").HitMarker :: RemoteEvent
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui") :: PlayerGui
-local numberState: Feel.NumberState = {}
-
-local feedbackGui = Instance.new("ScreenGui")
-feedbackGui.Name = "HitFeedback"
-feedbackGui.ResetOnSpawn = false
-feedbackGui.DisplayOrder = 5
-feedbackGui.Parent = playerGui
-
-local function coinCounterPosition(): Vector2
-	local hud = playerGui:FindFirstChild("Hud")
-	local counter = hud and (hud:FindFirstChild("Coins", true) or hud:FindFirstChild("Stats", true))
-	if counter and counter:IsA("GuiObject") then
-		return counter.AbsolutePosition + counter.AbsoluteSize / 2
-	end
-	local camera = workspace.CurrentCamera
-	local viewport = if camera then camera.ViewportSize else Vector2.new(1280, 720)
-	return Vector2.new(viewport.X - 56, 34)
-end
-
-local function flyCoinToCounter(worldPosition: Vector3)
-	local camera = workspace.CurrentCamera
-	local screenPosition = Vector2.new(0, 0)
-	if camera then
-		local projected, visible = camera:WorldToViewportPoint(worldPosition)
-		screenPosition = if visible
-			then Vector2.new(projected.X, projected.Y)
-			else camera.ViewportSize / 2
-	end
-
-	local coin = Instance.new("TextLabel")
-	coin.Name = "CoinPickup"
-	coin.AnchorPoint = Vector2.new(0.5, 0.5)
-	coin.Position = UDim2.fromOffset(screenPosition.X, screenPosition.Y)
-	coin.Size = UDim2.fromOffset(26, 26)
-	coin.BackgroundColor3 = Color3.fromRGB(255, 210, 60)
-	coin.BorderSizePixel = 0
-	coin.Font = Enum.Font.GothamBlack
-	coin.Text = "+"
-	coin.TextColor3 = Color3.fromRGB(80, 45, 10)
-	coin.TextSize = 20
-	coin.ZIndex = 5
-	coin.Parent = feedbackGui
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(1, 0)
-	corner.Parent = coin
-
-	TweenService:Create(
-		coin,
-		TweenInfo.new(Feel.CoinFlightSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-		{
-			Position = UDim2.fromOffset(coinCounterPosition().X, coinCounterPosition().Y),
-			Size = UDim2.fromOffset(14, 14),
-			Rotation = 360,
-			BackgroundTransparency = 0.25,
-			TextTransparency = 0.25,
-		}
-	):Play()
-	task.delay(Feel.CoinFlightSeconds, function()
-		coin:Destroy()
-		ClientFX.sound("Coin")
-	end)
-end
 
 HitMarker.OnClientEvent:Connect(
 	function(pos: Vector3, damage: number, killed: boolean, target: Model?, critical: boolean?)
@@ -95,7 +29,7 @@ HitMarker.OnClientEvent:Connect(
 		end
 		local sparkColor = if killed
 			then Color3.fromRGB(255, 210, 60)
-			else if isCritical then Color3.fromRGB(255, 150, 60) else Color3.new(1, 1, 1)
+			else if isCritical then Color3.fromRGB(255, 225, 70) else Color3.new(1, 1, 1)
 		ClientFX.burst(
 			pos,
 			sparkColor,
@@ -111,7 +45,6 @@ HitMarker.OnClientEvent:Connect(
 			ClientFX.sound(soundName, pos)
 		end
 		if killed then
-			flyCoinToCounter(pos)
 			local enemyType = if target then target:GetAttribute("EnemyType") else nil
 			if type(enemyType) ~= "string" and target then
 				enemyType = target.Name
@@ -119,16 +52,13 @@ HitMarker.OnClientEvent:Connect(
 			local gooColor = Feel.deathBurstColor(enemyType, { 60, 220, 160 })
 			ClientFX.gooDecal(pos, ClientFX.c3(gooColor), 2.5, 2)
 		end
-		ClientFX.shakeFor(event, "Full")
-		local allowed: boolean
-		numberState, allowed = Feel.allowNumber(numberState, os.clock())
-		if not allowed then
-			return
+		if killed then
+			ClientFX.shakeFor("Kill", "Full")
 		end
 		local budget = Feel.Events[event]
 		local numberColor = if killed
 			then Color3.fromRGB(255, 210, 60)
-			else if isCritical then Color3.fromRGB(255, 150, 60) else Color3.new(1, 1, 1)
+			else if isCritical then Color3.fromRGB(255, 225, 70) else Color3.new(1, 1, 1)
 		ClientFX.damageNumber(
 			pos,
 			(if isCritical then "CRIT " else "") .. tostring(damage),

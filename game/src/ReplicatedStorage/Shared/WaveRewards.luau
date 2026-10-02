@@ -128,6 +128,15 @@ WaveRewards.Defs = {
 		MaxStacks = 2,
 		Apply = { DashCooldown = 0.20 },
 	}),
+	Magnet = card({
+		Id = "Magnet",
+		Label = "Magnet",
+		Blurb = "+4 pickup radius",
+		Kind = "Utility",
+		Weight = 6,
+		MaxStacks = 3,
+		Apply = {},
+	}),
 	["Long Barrel"] = card({
 		Id = "Long Barrel",
 		Label = "Long Barrel",
@@ -180,6 +189,7 @@ WaveRewards.Order = {
 	"Lucky",
 	"Second Wind",
 	"Fast Dash",
+	"Magnet",
 	"Long Barrel",
 	"Double Tap",
 	"Wide Swing",

@@ -16,6 +16,7 @@ local ProfileSchema = require(ReplicatedStorage.Shared.ProfileSchema)
 local Goals = require(ReplicatedStorage.Shared.Goals)
 local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
 local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
+local Drops = require(ReplicatedStorage.Shared.Drops)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Quests = require(ReplicatedStorage.Shared.Quests)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
@@ -239,18 +240,10 @@ local function progressQuest(plr: Player, stat: string, amount: number)
 	Profile.markDirty(plr)
 end
 
-function PlayerData.addKill(plr: Player, boss: boolean?, enemyType: string?)
+function PlayerData.addKill(plr: Player, boss: boolean?)
 	local r = PlayerData.get(plr)
 	r.Kills += 1
 	sendFunnel(plr, "first_kill", { seconds = runSeconds(r) })
-	local newLevel, newXp, levelsGained =
-		LevelUp.advance(r.Level, r.XP, LevelUp.xpForKill(enemyType or "Walker"))
-	r.Level = newLevel
-	r.XP = newXp
-	r.PendingLevels += levelsGained
-	if levelsGained > 0 then
-		sendFunnel(plr, "first_levelup", { seconds = runSeconds(r) })
-	end
 	local p = Profile.get(plr)
 	local weapon = Weapons.Defs[p.Equipped] or Weapons.Defs.Starter
 	local _, _, _, _, healOnKill = Kits.mods(p.Kit, weapon.Kind)
@@ -262,10 +255,26 @@ function PlayerData.addKill(plr: Player, boss: boolean?, enemyType: string?)
 	if boss then
 		progressQuest(plr, "BossKills", 1)
 	end
+	push(plr)
+end
+
+function PlayerData.addXp(plr: Player, amount: number)
+	local r = PlayerData.get(plr)
+	local newLevel, newXp, levelsGained = LevelUp.advance(r.Level, r.XP, amount)
+	r.Level = newLevel
+	r.XP = newXp
+	r.PendingLevels += levelsGained
+	if levelsGained > 0 then
+		sendFunnel(plr, "first_levelup", { seconds = runSeconds(r) })
+	end
 	if #r.Offer == 0 and r.PendingLevels > 0 then
 		PlayerData.offerLevelReward(plr)
 	end
 	push(plr)
+end
+
+function PlayerData.magnetRadius(plr: Player): number
+	return Drops.magnetRadius(PlayerData.get(plr).Boosts.Stacks.Magnet or 0)
 end
 
 function PlayerData.recordHit(plr: Player)
