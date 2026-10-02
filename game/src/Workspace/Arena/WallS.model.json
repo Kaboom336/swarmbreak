@@ -16,18 +16,7 @@
   "Material": "SmoothPlastic",
   "TopSurface": "Smooth",
   "BottomSurface": "Smooth",
-  "CFrame": {
-   "position": [
-    0,
-    10,
-    80
-   ],
-   "orientation": [
-    0,
-    0,
-    0
-   ]
-  }
+  "CFrame": [0, 10, 80, 1, 0, 0, 0, 1, 0, 0, 0, 1]
  },
  "children": []
 }

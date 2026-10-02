@@ -23,18 +23,7 @@
     "BottomSurface": "Smooth",
     "Transparency": 1,
     "CanCollide": false,
-    "CFrame": {
-     "position": [
-      -70,
-      1.5,
-      -70
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
-    }
+     "CFrame": [-70, 1.5, -70, 1, 0, 0, 0, 1, 0, 0, 0, 1]
    }
   },
   {
@@ -58,18 +47,7 @@
     "BottomSurface": "Smooth",
     "Transparency": 1,
     "CanCollide": false,
-    "CFrame": {
-     "position": [
-      70,
-      1.5,
-      -70
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
-    }
+     "CFrame": [70, 1.5, -70, 1, 0, 0, 0, 1, 0, 0, 0, 1]
    }
   },
   {
@@ -93,18 +71,7 @@
     "BottomSurface": "Smooth",
     "Transparency": 1,
     "CanCollide": false,
-    "CFrame": {
-     "position": [
-      70,
-      1.5,
-      70
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
-    }
+     "CFrame": [70, 1.5, 70, 1, 0, 0, 0, 1, 0, 0, 0, 1]
    }
   },
   {
@@ -128,18 +95,7 @@
     "BottomSurface": "Smooth",
     "Transparency": 1,
     "CanCollide": false,
-    "CFrame": {
-     "position": [
-      -70,
-      1.5,
-      70
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
-    }
+     "CFrame": [-70, 1.5, 70, 1, 0, 0, 0, 1, 0, 0, 0, 1]
    }
   },
   {
@@ -163,18 +119,7 @@
     "BottomSurface": "Smooth",
     "Transparency": 1,
     "CanCollide": false,
-    "CFrame": {
-     "position": [
-      0,
-      1.5,
-      -72
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
-    }
+     "CFrame": [0, 1.5, -72, 1, 0, 0, 0, 1, 0, 0, 0, 1]
    }
   },
   {
@@ -198,18 +143,7 @@
     "BottomSurface": "Smooth",
     "Transparency": 1,
     "CanCollide": false,
-    "CFrame": {
-     "position": [
-      72,
-      1.5,
-      0
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
-    }
+     "CFrame": [72, 1.5, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]
    }
   },
   {
@@ -233,18 +167,7 @@
     "BottomSurface": "Smooth",
     "Transparency": 1,
     "CanCollide": false,
-    "CFrame": {
-     "position": [
-      0,
-      1.5,
-      72
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
-    }
+     "CFrame": [0, 1.5, 72, 1, 0, 0, 0, 1, 0, 0, 0, 1]
    }
   },
   {
@@ -268,18 +191,7 @@
     "BottomSurface": "Smooth",
     "Transparency": 1,
     "CanCollide": false,
-    "CFrame": {
-     "position": [
-      -72,
-      1.5,
-      0
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
-    }
+     "CFrame": [-72, 1.5, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]
    }
   }
  ]

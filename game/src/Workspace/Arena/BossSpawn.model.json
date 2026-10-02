@@ -18,18 +18,7 @@
   "BottomSurface": "Smooth",
   "Transparency": 0.5,
   "CanCollide": false,
-  "CFrame": {
-   "position": [
-    0,
-    1.5,
-    -70
-   ],
-   "orientation": [
-    0,
-    0,
-    0
-   ]
-  }
+  "CFrame": [0, 1.5, -70, 1, 0, 0, 0, 1, 0, 0, 0, 1]
  },
  "children": []
 }

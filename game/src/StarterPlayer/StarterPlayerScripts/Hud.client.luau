@@ -23,11 +23,8 @@ local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local Settings = require(ReplicatedStorage.Shared.Settings)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
-<<<<<<< HEAD
 local HudLayout = require(ReplicatedStorage.Shared.HudLayout)
-=======
 local Invite = require(ReplicatedStorage.Shared.Invite)
->>>>>>> codex/w7-invite-rules
 local ClientFX = require(script.Parent.ClientFX)
 
 local player = Players.LocalPlayer
