@@ -102,21 +102,40 @@ local function placeArenaAsset(name: string, size: Vector3, cf: CFrame): boolean
 end
 
 local function neonStrip(size: Vector3, cf: CFrame, color: Color3, range: number?)
-	local p = part("Neon", size, cf, color, Enum.Material.Neon)
-	p.CanCollide = false
-	p.CanQuery = false
-	local light = Instance.new("PointLight")
-	light.Color = color
-	light.Range = range or 14
-	light.Brightness = 1.2
-	light.Parent = p
-	return p
+	local longest = math.max(size.X, size.Y, size.Z)
+	local segmentCount = math.ceil(longest / 12)
+	local segmentSize = size
+	local axis = Vector3.new(1, 0, 0)
+	if size.Y == longest then
+		segmentSize = Vector3.new(size.X, size.Y / segmentCount, size.Z)
+		axis = Vector3.new(0, 1, 0)
+	elseif size.Z == longest then
+		segmentSize = Vector3.new(size.X, size.Y, size.Z / segmentCount)
+		axis = Vector3.new(0, 0, 1)
+	else
+		segmentSize = Vector3.new(size.X / segmentCount, size.Y, size.Z)
+	end
+
+	for index = 1, segmentCount do
+		local offset = (index - (segmentCount + 1) / 2) * longest / segmentCount
+		local p =
+			part("Neon", segmentSize, cf * CFrame.new(axis * offset), color, Enum.Material.Neon)
+		p.CanCollide = false
+		p.CanQuery = false
+		if range and range > 0 and index == math.ceil(segmentCount / 2) then
+			local light = Instance.new("PointLight")
+			light.Color = color
+			light.Range = range
+			light.Brightness = 1.2
+			light.Parent = p
+		end
+	end
 end
 
 local function retexture()
 	local floor = arena:FindFirstChild("Floor") :: BasePart?
 	if floor then
-		floor.Material = Enum.Material.Slate
+		floor.Material = Enum.Material.Concrete
 		floor.Color = c3(Theme.Floor)
 	end
 	for _, name in { "WallN", "WallS", "WallE", "WallW" } do
@@ -135,27 +154,33 @@ local function retexture()
 	end
 end
 
--- Grid of floor panels + glowing seams so the ground has scale and reads in motion.
+-- Dark, non-glowing seams give the bright floor scale without overpowering combat.
 local function floorGrid()
-	local teal = c3(Theme.NeonTeal)
+	local trim = c3(Theme.FloorTrim)
 	for i = -3, 3 do
-		neonStrip(
+		local northSouth = part(
+			"GridLine",
 			Vector3.new(0.3, 0.08, 156),
 			CFrame.new(i * 22, 1.05, 0),
-			teal:Lerp(Color3.new(0, 0, 0), 0.55),
-			0
+			trim,
+			Enum.Material.SmoothPlastic
 		)
-		neonStrip(
+		northSouth.CanCollide = false
+		northSouth.CanQuery = false
+		local eastWest = part(
+			"GridLine",
 			Vector3.new(156, 0.08, 0.3),
 			CFrame.new(0, 1.05, i * 22),
-			teal:Lerp(Color3.new(0, 0, 0), 0.55),
-			0
+			trim,
+			Enum.Material.SmoothPlastic
 		)
+		eastWest.CanCollide = false
+		eastWest.CanQuery = false
 	end
 	-- center emblem
 	local emblem = part(
 		"Emblem",
-		Vector3.new(0.1, 18, 18),
+		Vector3.new(0.1, 8, 8),
 		CFrame.new(0, 1.06, 0) * CFrame.Angles(0, 0, math.rad(90)),
 		c3(Theme.FloorTrim),
 		Enum.Material.Metal,
@@ -165,9 +190,9 @@ local function floorGrid()
 	emblem.CanQuery = false
 	local ring = part(
 		"EmblemRing",
-		Vector3.new(0.12, 20, 20),
+		Vector3.new(0.12, 10, 10),
 		CFrame.new(0, 1.05, 0) * CFrame.Angles(0, 0, math.rad(90)),
-		teal,
+		c3(Theme.NeonTeal),
 		Enum.Material.Neon,
 		Enum.PartType.Cylinder
 	)
@@ -206,9 +231,7 @@ local function wallsAndRails()
 	end
 	-- railings on the towers and ledge
 	local function rail(cf: CFrame, len: number)
-		local r = part("Rail", Vector3.new(len, 0.2, 0.2), cf, teal, Enum.Material.Neon)
-		r.CanCollide = false
-		r.CanQuery = false
+		neonStrip(Vector3.new(len, 0.2, 0.2), cf, teal, 0)
 	end
 	rail(CFrame.new(45, 17.2, -22), 14)
 	rail(CFrame.new(45, 17.2, -8), 14)
@@ -217,33 +240,43 @@ local function wallsAndRails()
 	rail(CFrame.new(0, 14.2, 55), 30)
 end
 
--- Portals at each enemy spawn and a big gate at the boss spawn.
+local function spawnRing(cf: CFrame, color: Color3)
+	local radius = 3
+	for index = 0, 7 do
+		local angle = index * math.pi / 4
+		local marker = part(
+			"SpawnRing",
+			Vector3.new(2.2, 0.12, 0.35),
+			cf
+				* CFrame.new(radius * math.cos(angle), 0.1, radius * math.sin(angle))
+				* CFrame.Angles(0, -angle, 0),
+			color,
+			Enum.Material.Neon
+		)
+		marker.CanCollide = false
+		marker.CanQuery = false
+	end
+end
+
+-- Compact floor rings mark enemy spawns without obscuring enemies or sightlines.
 local function portals()
-	local swarm = c3(Theme.Swarm)
-	local red = c3(Theme.NeonRed)
+	local teal = c3(Theme.NeonTeal)
+	local amber = c3(Theme.NeonAmber)
 	local spawns = arena:FindFirstChild("EnemySpawns")
 	if spawns then
-		for _, sp in spawns:GetChildren() do
+		for index, sp in spawns:GetChildren() do
 			if sp:IsA("BasePart") then
-				local ring = part(
-					"Portal",
-					Vector3.new(0.4, 9, 9),
-					sp.CFrame * CFrame.new(0, 4, 0) * CFrame.Angles(0, math.rad(90), 0),
-					swarm,
-					Enum.Material.Neon,
-					Enum.PartType.Cylinder
-				)
-				ring.CanCollide = false
-				ring.CanQuery = false
-				ring.Transparency = 0.35
+				local markerColor = if index % 2 == 0 then amber else teal
+				spawnRing(sp.CFrame, markerColor)
 				local light = Instance.new("PointLight")
-				light.Color = swarm
-				light.Range = 18
-				light.Parent = ring
+				light.Color = markerColor
+				light.Range = 10
+				light.Brightness = 0.8
+				light.Parent = sp
 				local att = Instance.new("Attachment")
-				att.Parent = ring
+				att.Parent = sp
 				local pe = Instance.new("ParticleEmitter")
-				pe.Color = ColorSequence.new(swarm)
+				pe.Color = ColorSequence.new(markerColor)
 				pe.Size = NumberSequence.new(0.6, 0)
 				pe.Transparency = NumberSequence.new(0.5, 1)
 				pe.Lifetime = NumberRange.new(0.8, 1.4)
@@ -277,7 +310,7 @@ local function portals()
 				neonStrip(
 					Vector3.new(0.4, 20, 0.4),
 					boss.CFrame * CFrame.new(sign * 9, 10, -1.7),
-					red,
+					amber,
 					24
 				)
 			end
@@ -289,23 +322,8 @@ local function portals()
 				Enum.Material.Metal
 			)
 			top.CanCollide = true
-			neonStrip(Vector3.new(19, 0.4, 0.4), boss.CFrame * CFrame.new(0, 19.6, -1.7), red, 30)
+			neonStrip(Vector3.new(19, 0.4, 0.4), boss.CFrame * CFrame.new(0, 19.6, -1.7), amber, 30)
 		end
-	end
-	local wall = arena:FindFirstChild("LeaderboardWall") :: BasePart?
-	if wall then
-		neonStrip(
-			Vector3.new(25, 0.3, 0.3),
-			wall.CFrame * CFrame.new(0, 7.3, -0.6),
-			c3(Theme.NeonAmber),
-			20
-		)
-		neonStrip(
-			Vector3.new(25, 0.3, 0.3),
-			wall.CFrame * CFrame.new(0, -7.3, -0.6),
-			c3(Theme.NeonAmber),
-			20
-		)
 	end
 end
 

@@ -90,10 +90,10 @@ ArenaLayout.Props = {
 } :: { Prop }
 
 ArenaLayout.Beacons = {
-	{ Name = "North", x = 0, z = -76, Width = 3, Height = 30, Color = { 40, 220, 210 } },
-	{ Name = "East", x = 76, z = 0, Width = 3, Height = 30, Color = { 255, 170, 40 } },
-	{ Name = "South", x = 0, z = 76, Width = 3, Height = 30, Color = { 255, 70, 220 } },
-	{ Name = "West", x = -76, z = 0, Width = 3, Height = 30, Color = { 90, 220, 100 } },
+	{ Name = "North", x = 0, z = -76, Width = 6, Height = 0.15, Color = { 40, 220, 210 } },
+	{ Name = "East", x = 76, z = 0, Width = 6, Height = 0.15, Color = { 255, 170, 40 } },
+	{ Name = "South", x = 0, z = 76, Width = 6, Height = 0.15, Color = { 40, 220, 210 } },
+	{ Name = "West", x = -76, z = 0, Width = 6, Height = 0.15, Color = { 255, 170, 40 } },
 } :: { Beacon }
 
 function ArenaLayout.playArea(players: number): number

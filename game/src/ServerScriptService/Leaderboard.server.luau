@@ -1,5 +1,5 @@
 --!strict
--- Global top-10 best wave board on the arena wall. Refreshes every 60 s.
+-- Global top-10 best wave board in the Base. Refreshes every 60 s.
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -36,8 +36,8 @@ phase:GetPropertyChangedSignal("Value"):Connect(function()
 	end
 end)
 
-local arena = workspace:WaitForChild("Arena")
-local board = arena:WaitForChild("LeaderboardWall") :: BasePart
+local base = workspace:WaitForChild("Base")
+local board = base:WaitForChild("LeaderboardWall") :: BasePart
 
 local gui = Instance.new("SurfaceGui")
 gui.Face = Enum.NormalId.Front

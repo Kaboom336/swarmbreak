@@ -26,6 +26,7 @@ export type Profile = {
 	KitsOwned: { [string]: boolean },
 	MusicVolume: number,
 	SfxVolume: number,
+	MouseLockEnabled: boolean,
 }
 
 local ProfileSchema = { Version = 1 }
@@ -72,6 +73,7 @@ function ProfileSchema.default(): Profile
 		KitsOwned = { Soldier = true },
 		MusicVolume = Settings.DefaultVolume,
 		SfxVolume = Settings.DefaultVolume,
+		MouseLockEnabled = Settings.DefaultMouseLock,
 	}
 end
 
@@ -200,6 +202,9 @@ function ProfileSchema.sanitize(raw: any): Profile
 	end
 	p.MusicVolume = Settings.clamp(raw.MusicVolume)
 	p.SfxVolume = Settings.clamp(raw.SfxVolume)
+	p.MouseLockEnabled = if type(raw.MouseLockEnabled) == "boolean"
+		then raw.MouseLockEnabled
+		else Settings.DefaultMouseLock
 	return p
 end
 
