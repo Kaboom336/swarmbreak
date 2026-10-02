@@ -23,6 +23,7 @@ local Kits = require(ReplicatedStorage.Shared.Kits)
 local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
 local Settings = require(ReplicatedStorage.Shared.Settings)
 local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
+local Funnel = require(ReplicatedStorage.Shared.Funnel)
 local Profile = require(script.Parent.Profile)
 local WeaponModels = require(script.Parent.WeaponModels)
 
@@ -51,6 +52,7 @@ export type Run = {
 	StartedAt: number,
 	Wave: number,
 	Active: boolean,
+	FunnelEvents: Funnel.Run,
 }
 
 -- What the run summary panel shows at the end of a run (sent per player over GameOver).
@@ -77,6 +79,21 @@ local function sendTelemetry(plr: Player, name: string, fields: Telemetry.Fields
 		local event = Telemetry.build(name, fields)
 		AnalyticsService:LogCustomEvent(plr, event.name, nil, event.fields)
 	end)
+end
+
+local function runSeconds(r: Run): number
+	return math.max(0, os.clock() - r.StartedAt)
+end
+
+local function sendFunnel(plr: Player, name: Funnel.EventName, fields: Telemetry.Fields)
+	local r = PlayerData.get(plr)
+	if not r.Active then
+		return
+	end
+	local event = Funnel.once(r.FunnelEvents, name, fields)
+	if event then
+		sendTelemetry(plr, event.name, event.fields)
+	end
 end
 
 local function push(plr: Player)
@@ -138,6 +155,7 @@ function PlayerData.get(plr: Player): Run
 			StartedAt = 0,
 			Wave = 0,
 			Active = false,
+			FunnelEvents = Funnel.newRun(),
 		}
 		runs[plr] = r
 	end
@@ -224,11 +242,15 @@ end
 function PlayerData.addKill(plr: Player, boss: boolean?, enemyType: string?)
 	local r = PlayerData.get(plr)
 	r.Kills += 1
+	sendFunnel(plr, "first_kill", { seconds = runSeconds(r) })
 	local newLevel, newXp, levelsGained =
 		LevelUp.advance(r.Level, r.XP, LevelUp.xpForKill(enemyType or "Walker"))
 	r.Level = newLevel
 	r.XP = newXp
 	r.PendingLevels += levelsGained
+	if levelsGained > 0 then
+		sendFunnel(plr, "first_levelup", { seconds = runSeconds(r) })
+	end
 	local p = Profile.get(plr)
 	local weapon = Weapons.Defs[p.Equipped] or Weapons.Defs.Starter
 	local _, _, _, _, healOnKill = Kits.mods(p.Kit, weapon.Kind)
@@ -244,6 +266,11 @@ function PlayerData.addKill(plr: Player, boss: boolean?, enemyType: string?)
 		PlayerData.offerLevelReward(plr)
 	end
 	push(plr)
+end
+
+function PlayerData.recordHit(plr: Player)
+	local r = PlayerData.get(plr)
+	sendFunnel(plr, "first_hit", { seconds = runSeconds(r) })
 end
 
 function PlayerData.addMeleeDamage(plr: Player, amount: number)
@@ -625,7 +652,9 @@ function PlayerData.resetRun(plr: Player)
 	r.PendingLevels = 0
 	r.StartedAt = os.clock()
 	r.Wave = 0
+	r.FunnelEvents = Funnel.newRun()
 	r.Active = true
+	sendFunnel(plr, "run_start", { seconds = 0 })
 	applyStats(plr) -- a survivor keeps their character, so last run's stats go now
 	push(plr)
 end
@@ -813,6 +842,18 @@ local function onPlayerAdded(plr: Player)
 		local hum = char:WaitForChild("Humanoid") :: Humanoid
 		hum.MaxHealth = maxHealthFor(plr)
 		hum.Health = hum.MaxHealth
+		local previousHealth = hum.Health
+		hum.HealthChanged:Connect(function(health)
+			if health < previousHealth then
+				local r = PlayerData.get(plr)
+				sendFunnel(plr, "first_damage_taken", { seconds = runSeconds(r) })
+			end
+			previousHealth = health
+		end)
+		hum.Died:Connect(function()
+			local r = PlayerData.get(plr)
+			sendFunnel(plr, "death", { wave = r.Wave, seconds = runSeconds(r) })
+		end)
 		applyStats(plr)
 		attachWeapon(plr)
 		push(plr)

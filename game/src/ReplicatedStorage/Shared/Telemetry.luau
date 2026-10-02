@@ -20,6 +20,12 @@ Telemetry.Events = {
 	CrateOpened = { "crate", "rarity", "weapon", "result" },
 	CodeRedeemed = { "code", "reward" },
 	PurchasePrompted = { "kind", "item" },
+	run_start = { "seconds" },
+	first_hit = { "seconds" },
+	first_kill = { "seconds" },
+	first_levelup = { "seconds" },
+	first_damage_taken = { "seconds" },
+	death = { "wave", "seconds" },
 } :: { [string]: { string } }
 
 function Telemetry.build(name: string, fields: Fields): Event
