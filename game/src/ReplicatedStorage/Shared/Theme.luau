@@ -1,9 +1,9 @@
 --!strict
--- Visual theme: "Overrun research station" (dark metal, teal + amber neon, purple swarm).
+-- Visual theme: "Overrun research station" (bright floor, dark metal, teal + amber neon, purple swarm).
 -- Colors are {r, g, b} 0..255 so tests can load this file.
 local Theme = {
 	Name = "Overrun Station",
-	Floor = { 40, 42, 50 },
+	Floor = { 155, 158, 168 },
 	FloorTrim = { 24, 25, 30 },
 	Wall = { 30, 32, 40 },
 	Metal = { 70, 74, 84 },

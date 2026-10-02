@@ -3,12 +3,59 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local BossIntro = ReplicatedStorage:WaitForChild("Remotes").BossIntro :: RemoteEvent
+local LightingPresets = require(ReplicatedStorage.Shared.LightingPresets)
+
+local function normalizedColor(t: { number }): Color3
+	return Color3.new(t[1], t[2], t[3])
+end
+
+local function applyLightingPreset(preset: any)
+	local properties = preset.Lighting
+	Lighting.Technology = Enum.Technology.Future
+	Lighting.ClockTime = properties.ClockTime
+	Lighting.Brightness = properties.Brightness
+	Lighting.ExposureCompensation = properties.ExposureCompensation
+	Lighting.GlobalShadows = properties.GlobalShadows
+	Lighting.EnvironmentDiffuseScale = properties.EnvironmentDiffuseScale
+	Lighting.EnvironmentSpecularScale = properties.EnvironmentSpecularScale
+	Lighting.ShadowSoftness = properties.ShadowSoftness
+	Lighting.Ambient = normalizedColor(properties.Ambient)
+	Lighting.OutdoorAmbient = normalizedColor(properties.OutdoorAmbient)
+	Lighting.FogColor = normalizedColor(properties.FogColor)
+	Lighting.FogStart = properties.FogStart
+	Lighting.FogEnd = properties.FogEnd
+
+	local atmosphere = Lighting:FindFirstChild("Atmosphere") :: Atmosphere
+	atmosphere.Density = preset.Atmosphere.Density
+	atmosphere.Offset = preset.Atmosphere.Offset
+	atmosphere.Color = normalizedColor(preset.Atmosphere.Color)
+	atmosphere.Decay = normalizedColor(preset.Atmosphere.Decay)
+	atmosphere.Glare = preset.Atmosphere.Glare
+	atmosphere.Haze = preset.Atmosphere.Haze
+
+	local bloom = Lighting:FindFirstChild("Bloom") :: BloomEffect
+	bloom.Intensity = preset.Bloom.Intensity
+	bloom.Size = preset.Bloom.Size
+	bloom.Threshold = preset.Bloom.Threshold
+
+	local correction = Lighting:FindFirstChild("ColorCorrection") :: ColorCorrectionEffect
+	correction.Contrast = preset.ColorCorrection.Contrast
+	correction.Saturation = preset.ColorCorrection.Saturation
+	correction.TintColor = normalizedColor(preset.ColorCorrection.TintColor)
+
+	local sky = Lighting:FindFirstChild("Sky") :: Sky
+	sky.StarCount = preset.Sky.StarCount
+	sky.CelestialBodiesShown = preset.Sky.CelestialBodiesShown
+	sky.SunAngularSize = preset.Sky.SunAngularSize
+end
 
 BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number)
+	applyLightingPreset(LightingPresets.BossFight)
 	local arena = workspace:FindFirstChild("Arena")
 	local bossSpawn = arena and arena:FindFirstChild("BossSpawn") :: BasePart?
 	local gui = player:WaitForChild("PlayerGui")
@@ -51,4 +98,5 @@ BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number)
 	task.wait(seconds)
 	camera.CameraType = Enum.CameraType.Custom
 	card:Destroy()
+	applyLightingPreset(LightingPresets.Station)
 end)

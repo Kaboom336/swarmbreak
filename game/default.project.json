@@ -166,46 +166,47 @@
       "$className": "Lighting",
       "$properties": {
         "Technology": "Future",
-        "ClockTime": 0,
-        "Brightness": 2,
+        "ClockTime": 17,
+        "Brightness": 2.5,
+        "ExposureCompensation": 0,
         "GlobalShadows": true,
-        "EnvironmentDiffuseScale": 0.6,
+        "EnvironmentDiffuseScale": 0.7,
         "EnvironmentSpecularScale": 0.8,
-        "ShadowSoftness": 0.3,
+        "ShadowSoftness": 0.35,
         "Ambient": [
-          0.1568627450980392,
-          0.1568627450980392,
-          0.2196078431372549
+          0.35,
+          0.38,
+          0.48
         ],
         "OutdoorAmbient": [
-          0.27450980392156865,
-          0.25882352941176473,
-          0.3607843137254902
+          0.48,
+          0.5,
+          0.62
         ],
         "FogColor": [
-          0.054901960784313725,
-          0.054901960784313725,
-          0.10196078431372549
+          0.68,
+          0.76,
+          0.92
         ],
-        "FogStart": 90,
-        "FogEnd": 420
+        "FogStart": 180,
+        "FogEnd": 700
       },
       "Bloom": {
         "$className": "BloomEffect",
         "$properties": {
-          "Intensity": 0.6,
-          "Size": 32,
-          "Threshold": 1.2
+          "Intensity": 1.2,
+          "Size": 24,
+          "Threshold": 0.85
         }
       },
       "ColorCorrection": {
         "$className": "ColorCorrectionEffect",
         "$properties": {
           "Contrast": 0.15,
-          "Saturation": 0.1,
+          "Saturation": 0.05,
           "TintColor": [
-            0.9215686274509803,
-            0.9215686274509803,
+            0.93,
+            0.96,
             1
           ]
         }
@@ -213,27 +214,28 @@
       "Atmosphere": {
         "$className": "Atmosphere",
         "$properties": {
-          "Density": 0.42,
-          "Offset": 0.3,
+          "Density": 0.3,
+          "Offset": 0.25,
           "Color": [
-            0.47058823529411764,
-            0.43137254901960786,
-            0.5882352941176471
+            0.68,
+            0.78,
+            0.95
           ],
           "Decay": [
-            0.1568627450980392,
-            0.11764705882352941,
-            0.27450980392156865
+            0.48,
+            0.33,
+            0.3
           ],
-          "Glare": 0.3,
-          "Haze": 2.2
+          "Glare": 0.2,
+          "Haze": 1.5
         }
       },
       "Sky": {
         "$className": "Sky",
         "$properties": {
-          "StarCount": 3000,
-          "CelestialBodiesShown": true
+          "StarCount": 0,
+          "CelestialBodiesShown": true,
+          "SunAngularSize": 11
         }
       }
     },
