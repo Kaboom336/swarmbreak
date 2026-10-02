@@ -274,6 +274,7 @@ local function runWave(wave: number): boolean
 		trackBoss(spawnEnemy(bossName, bossSpawn.CFrame + Vector3.new(0, 6, 0)))
 	end
 
+	workspace:SetAttribute("WaveStartedAt", workspace:GetServerTimeNow()) -- HUD wave clock
 	GameState.set("Phase", "fighting")
 	protectPlayers()
 	local mutationId = todaysMutation()

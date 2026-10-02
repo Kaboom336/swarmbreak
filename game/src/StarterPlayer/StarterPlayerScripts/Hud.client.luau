@@ -1418,6 +1418,10 @@ local function showDaily(popup: Daily.Popup)
 			else if i == popup.Slot then ClientFX.c3(Theme.NeonAmber) else DAILY_LATER
 	end
 	dailyStrip.Visible = true
+	-- Close on its own: during a fight the cursor is locked, so a click-to-close strip would stick.
+	task.delay(5, function()
+		dailyStrip.Visible = false
+	end)
 	if not dailySounded then
 		dailySounded = true
 		ClientFX.sound("Buy")
@@ -1447,8 +1451,7 @@ end
 local function onDailyPhase(phase: string)
 	if phase == "fighting" then
 		if dailyStrip.Visible then
-			dailyPending = true
-			hideDaily()
+			hideDaily() -- already seen once; do not bring it back after every wave
 		end
 	elseif dailyPending and dailyPopup then
 		dailyPending = false
@@ -1686,7 +1689,12 @@ local function refreshPhase()
 	local phase = stateValue("Phase")
 	local t = stateValue("TimeLeft")
 	local alive = stateValue("Alive")
-	local wholeSeconds = math.max(0, math.floor(t))
+	-- Countdowns show time left; a fight shows how long this wave has run.
+	local startedAt = workspace:GetAttribute("WaveStartedAt")
+	local clock = if phase == "fighting" and type(startedAt) == "number"
+		then workspace:GetServerTimeNow() - startedAt
+		else t
+	local wholeSeconds = math.max(0, math.floor(clock))
 	finalHud.TimerLabel.Text =
 		string.format("%d:%02d", math.floor(wholeSeconds / 60), wholeSeconds % 60)
 	if phase == "idle" then
@@ -1734,6 +1742,14 @@ onState("Phase", function(phase)
 	end
 end)
 onState("TimeLeft", refreshPhase)
+task.spawn(function()
+	while true do
+		task.wait(0.5)
+		if stateValue("Phase") == "fighting" then
+			refreshPhase()
+		end
+	end
+end)
 onState("Alive", refreshPhase)
 onState("MutationLabel", function(label)
 	mutationLabel.Text = "Today: " .. label
