@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local GuiService = game:GetService("GuiService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
@@ -71,6 +72,63 @@ screen.ResetOnSpawn = false
 screen.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
 screen.Parent = gui
 
+local selectionImage = Instance.new("Frame")
+selectionImage.Name = "GamepadSelection"
+selectionImage.Size = UDim2.fromScale(1, 1)
+selectionImage.BackgroundTransparency = 1
+local selectionStroke = Instance.new("UIStroke")
+selectionStroke.Color = ClientFX.c3(Theme.NeonAmber)
+selectionStroke.Thickness = 4
+selectionStroke.Transparency = 0
+selectionStroke.Parent = selectionImage
+local selectionCorner = Instance.new("UICorner")
+selectionCorner.CornerRadius = UDim.new(0, 8)
+selectionCorner.Parent = selectionImage
+
+local function prepareForGamepad(buttonObject: GuiButton)
+	buttonObject.Selectable = true
+	buttonObject.SelectionImageObject = selectionImage
+end
+
+local function isGamepadInput(inputType: Enum.UserInputType): boolean
+	return string.find(inputType.Name, "Gamepad", 1, true) ~= nil
+end
+
+local focusCurrentContext: (() -> ())? = nil
+local gamepadActive = isGamepadInput(UserInputService:GetLastInputType())
+UserInputService.LastInputTypeChanged:Connect(function(inputType)
+	gamepadActive = isGamepadInput(inputType)
+	if not gamepadActive then
+		GuiService.SelectedObject = nil
+	elseif focusCurrentContext then
+		focusCurrentContext()
+	end
+end)
+
+local function linkNavigation(buttons: { GuiButton }, horizontal: boolean?)
+	for index, current in buttons do
+		local previous = buttons[if index == 1 then #buttons else index - 1]
+		local nextButton = buttons[if index == #buttons then 1 else index + 1]
+		if horizontal then
+			current.NextSelectionLeft = previous
+			current.NextSelectionRight = nextButton
+		else
+			current.NextSelectionUp = previous
+			current.NextSelectionDown = nextButton
+		end
+	end
+end
+
+local function focusFirst(buttons: { GuiButton })
+	if gamepadActive and buttons[1] then
+		task.defer(function()
+			if buttons[1].Parent and buttons[1].Visible then
+				GuiService.SelectedObject = buttons[1]
+			end
+		end)
+	end
+end
+
 -- Panels remain visible, but only actual buttons claim input. This keeps firing responsive
 -- when the pointer happens to be over a HUD frame.
 local function letCombatClicksThrough(descendant: Instance)
@@ -119,6 +177,7 @@ end
 
 local function button(parent: Instance, str: string, size: UDim2): TextButton
 	local b = UiKit.Button(parent, str, size)
+	prepareForGamepad(b)
 	if size.Y.Scale == 0 then
 		table.insert(managedButtons, { Button = b, BaseHeight = size.Y.Offset })
 		resizeManagedButtons()
@@ -432,6 +491,7 @@ settingsPanel.BackgroundTransparency = 0.1
 settingsPanel.BorderSizePixel = 0
 settingsPanel.Visible = false
 settingsPanel.Parent = screen
+local settingsNavigationButtons: { GuiButton } = {}
 
 type SliderSetter = (number, boolean?) -> ()
 
@@ -453,6 +513,8 @@ local function makeSlider(
 	track.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
 	track.BorderSizePixel = 0
 	track.Parent = settingsPanel
+	prepareForGamepad(track)
+	table.insert(settingsNavigationButtons, track)
 	table.insert(managedButtons, { Button = track, BaseHeight = 12 })
 	resizeManagedButtons()
 	local trackCorner = Instance.new("UICorner")
@@ -480,6 +542,11 @@ local function makeSlider(
 	local function updateAt(x: number)
 		setValue((x - track.AbsolutePosition.X) / math.max(track.AbsoluteSize.X, 1), false)
 	end
+	track.Activated:Connect(function()
+		if gamepadActive then
+			setValue(if value >= 1 then 0 else value + 0.1, true)
+		end
+	end)
 
 	track.InputBegan:Connect(function(input)
 		if
@@ -531,20 +598,27 @@ local mouseLockButton = button(settingsPanel, "Mouse lock  ON", UDim2.new(1, -24
 mouseLockButton.Name = "MouseLock"
 mouseLockButton.Position = UDim2.new(0, 12, 0, 108)
 mouseLockButton.Visible = not (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
+table.insert(settingsNavigationButtons, mouseLockButton)
+linkNavigation(settingsNavigationButtons)
 local mouseLockEnabled = Settings.DefaultMouseLock
 local function setMouseLock(enabled: boolean)
 	mouseLockEnabled = enabled
 	player:SetAttribute("MouseLockEnabled", enabled)
 	mouseLockButton.Text = if enabled then "Mouse lock  ON" else "Mouse lock  OFF"
 end
-mouseLockButton.MouseButton1Click:Connect(function()
+mouseLockButton.Activated:Connect(function()
 	setMouseLock(not mouseLockEnabled)
 	UpdateSettings:FireServer({ MouseLockEnabled = mouseLockEnabled })
 end)
 
-settingsToggle.MouseButton1Click:Connect(function()
+settingsToggle.Activated:Connect(function()
 	settingsPanel.Visible = not settingsPanel.Visible
 	settingsToggle.Text = if settingsPanel.Visible then "Settings  -" else "Settings"
+	if settingsPanel.Visible then
+		focusFirst(settingsNavigationButtons)
+	elseif gamepadActive then
+		GuiService.SelectedObject = settingsToggle
+	end
 end)
 
 -- Bottom-right: weapon hotbar
@@ -687,6 +761,7 @@ cardLayout.Parent = cardPanel
 local cardIds: { string } = {} -- ids on offer in card order (key 1 = first card)
 local cardKey = "" -- the offer the cards were last built from
 local cardPending = false -- our pick is in flight
+local cardNavigationButtons: { GuiButton } = {}
 
 local function pickCard(id: string)
 	if cardPending then
@@ -723,12 +798,15 @@ local function rebuildCards(offer: { string }, rarities: { [string]: string })
 		end
 	end
 	cardIds = {}
+	cardNavigationButtons = {}
 	for _, id in offer do
 		local def = WaveRewards.Defs[id]
 		if def and #cardIds < WaveRewards.OfferSize then
 			table.insert(cardIds, id)
 			local i = #cardIds
 			local b = UiKit.Button(cardPanel, "", UDim2.new(0, 184, 0, 180))
+			prepareForGamepad(b)
+			table.insert(cardNavigationButtons, b)
 			b.Name = "Card" .. i
 			local targetSize = UDim2.new(0, 184, 0, 180)
 			b.Size = UDim2.new(0, 0, 0, 180)
@@ -777,7 +855,7 @@ local function rebuildCards(offer: { string }, rarities: { [string]: string })
 				12
 			)
 			hint.TextColor3 = Color3.fromRGB(160, 160, 175)
-			b.MouseButton1Click:Connect(function()
+			b.Activated:Connect(function()
 				pickCard(id)
 			end)
 			task.delay((i - 1) * 0.08, function()
@@ -796,6 +874,7 @@ local function rebuildCards(offer: { string }, rarities: { [string]: string })
 			end)
 		end
 	end
+	linkNavigation(cardNavigationButtons, true)
 end
 
 -- Rebuild when the offer changes; level-up cards can appear during a fight or intermission.
@@ -812,7 +891,11 @@ local function refreshCards()
 		rebuildCards(offer, rarities)
 	end
 	local phase = stateValue("Phase")
+	local wasVisible = cardPanel.Visible
 	cardPanel.Visible = #cardIds > 0 and (phase == "fighting" or phase == "intermission")
+	if cardPanel.Visible and not wasVisible then
+		focusFirst(cardNavigationButtons)
+	end
 end
 
 UserInputService.InputBegan:Connect(function(input, gp)
@@ -847,7 +930,7 @@ local function perkRow(parent: Instance, key: string, height: number): TextButto
 	local b = button(parent, ProfileSchema.PerkDefs[key].Label, UDim2.new(1, 0, 0, height))
 	b.Name = "Perk" .. key
 	table.insert(perkButtons, { Key = key, Button = b })
-	b.MouseButton1Click:Connect(function()
+	b.Activated:Connect(function()
 		local ok, why = BuyPerk:InvokeServer(key)
 		ClientFX.sound(if ok then "Buy" else "Deny")
 		flashButton(b, ok == true)
@@ -872,6 +955,7 @@ shop.CanvasSize = UDim2.new()
 shop.AutomaticCanvasSize = Enum.AutomaticSize.Y
 shop.Visible = false
 shop.Parent = screen
+local shopNavigationButtons: { GuiButton } = {}
 local shopCorner = Instance.new("UICorner")
 shopCorner.CornerRadius = UDim.new(0, 10)
 shopCorner.Parent = shop
@@ -897,6 +981,7 @@ local function shopButton(str: string): TextButton
 	order += 1
 	local b = button(shop, str, UDim2.new(1, 0, 0, 34))
 	b.LayoutOrder = order
+	table.insert(shopNavigationButtons, b)
 	return b
 end
 
@@ -905,7 +990,7 @@ local upgradeButtons: { [string]: TextButton } = {}
 for _, name in Config.UpgradeOrder do
 	local b = shopButton(name)
 	upgradeButtons[name] = b
-	b.MouseButton1Click:Connect(function()
+	b.Activated:Connect(function()
 		local ok = BuyUpgrade:InvokeServer(name) == true
 		ClientFX.sound(if ok then "Buy" else "Deny")
 		flashButton(b, ok)
@@ -928,7 +1013,7 @@ for _, key in Weapons.CrateOrder do
 	if cost then
 		local b = shopButton(string.format("%s  %d Gems", crate.Label, cost))
 		table.insert(crateRows, { Cost = cost, Button = b })
-		b.MouseButton1Click:Connect(function()
+		b.Activated:Connect(function()
 			if gemCratePending then
 				return
 			end
@@ -945,7 +1030,7 @@ for _, key in Weapons.CrateOrder do
 	else
 		local product = crate.Product or ""
 		local b = shopButton(crate.Label .. " (Robux)")
-		b.MouseButton1Click:Connect(function()
+		b.Activated:Connect(function()
 			Prompt:FireServer("product", product)
 		end)
 	end
@@ -976,7 +1061,7 @@ local evoButtons: { [string]: TextButton } = {}
 for _, element in Evolutions.Order do
 	local b = shopButton(element)
 	evoButtons[element] = b
-	b.MouseButton1Click:Connect(function()
+	b.Activated:Connect(function()
 		local equipped = (stats :: any).Equipped
 		local ok, why = Evolve:InvokeServer(equipped, element)
 		ClientFX.sound(if ok then "Buy" else "Deny")
@@ -1025,7 +1110,8 @@ for _, id in Kits.Order do
 	b.TextSize = 10
 	b.TextWrapped = true
 	kitButtons[id] = b
-	b.MouseButton1Click:Connect(function()
+	table.insert(shopNavigationButtons, b)
+	b.Activated:Connect(function()
 		local ok, why = ChooseKit:InvokeServer(id)
 		local soundName = if ok then SfxMap.forEvent("kit equip") else "Deny"
 		if soundName then
@@ -1042,7 +1128,7 @@ end
 section("COINS (Robux)")
 for _, key in { "Coins500", "Coins1500" } do
 	local b = shopButton(Monetization.DeveloperProducts[key].Name)
-	b.MouseButton1Click:Connect(function()
+	b.Activated:Connect(function()
 		Prompt:FireServer("product", key)
 	end)
 end
@@ -1052,13 +1138,14 @@ local passButtons: { [string]: TextButton } = {}
 for _, key in { "DoubleCoins", "ExtraDash", "StarterPack" } do
 	local b = shopButton(Monetization.GamePasses[key].Name)
 	passButtons[key] = b
-	b.MouseButton1Click:Connect(function()
+	b.Activated:Connect(function()
 		Prompt:FireServer("pass", key)
 	end)
 end
 
 local closeBtn = shopButton("Close  [B]")
 closeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
+linkNavigation(shopNavigationButtons)
 
 -- Shop toggle button (always visible) + compact death status.
 local shopToggle = button(screen, "SHOP [B]", UDim2.new(0, 110, 0, 34))
@@ -1181,15 +1268,30 @@ end)
 
 local function setShop(open: boolean)
 	shop.Visible = open
+	if open then
+		focusFirst(shopNavigationButtons)
+	elseif gamepadActive then
+		GuiService.SelectedObject = shopToggle
+	end
 end
-shopToggle.MouseButton1Click:Connect(function()
+shopToggle.Activated:Connect(function()
 	ClientFX.sound("Buy", nil, 0.3)
 	setShop(not shop.Visible)
 end)
-closeBtn.MouseButton1Click:Connect(function()
+closeBtn.Activated:Connect(function()
 	setShop(false)
 end)
 UserInputService.InputBegan:Connect(function(input, gp)
+	if input.KeyCode == Enum.KeyCode.ButtonB then
+		if settingsPanel.Visible then
+			settingsPanel.Visible = false
+			settingsToggle.Text = "Settings"
+			GuiService.SelectedObject = settingsToggle
+		elseif shop.Visible then
+			setShop(false)
+		end
+		return
+	end
 	if gp then
 		return
 	end
@@ -1235,12 +1337,13 @@ end
 summaryOrder += 1
 local playAgainButton = button(summaryPanel, "PLAY AGAIN", UDim2.new(1, 0, 0, 56))
 playAgainButton.LayoutOrder = summaryOrder
+linkNavigation({ playAgainButton })
 
 local deathState: DeathFlow.State = DeathFlow.initialState()
 local diedAt: number? = nil
 local summaryToken = 0
 
-playAgainButton.MouseButton1Click:Connect(function()
+playAgainButton.Activated:Connect(function()
 	if deathState ~= "summary" then
 		return
 	end
@@ -1248,6 +1351,18 @@ playAgainButton.MouseButton1Click:Connect(function()
 	summaryPanel.Visible = false
 	PlayAgain:FireServer()
 end)
+
+focusCurrentContext = function()
+	if summaryPanel.Visible then
+		focusFirst({ playAgainButton })
+	elseif cardPanel.Visible then
+		focusFirst(cardNavigationButtons)
+	elseif settingsPanel.Visible then
+		focusFirst(settingsNavigationButtons)
+	elseif shop.Visible then
+		focusFirst(shopNavigationButtons)
+	end
+end
 
 local function watchCharacter(character: Model)
 	summaryToken += 1
@@ -1736,6 +1851,7 @@ GameOver.OnClientEvent:Connect(function(summary: any)
 		summaryKills.Text = "Kills " .. commas(summary.Kills or 0)
 		summaryGems.Text = "Gems +" .. commas(summary.GemsEarned or 0)
 		summaryPanel.Visible = true
+		focusFirst({ playAgainButton })
 	end)
 end)
 
