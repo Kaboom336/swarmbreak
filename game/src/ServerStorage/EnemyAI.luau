@@ -4,6 +4,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PathfindingService = game:GetService("PathfindingService")
+local AiSchedule = require(ReplicatedStorage.Shared.AiSchedule)
 local Enemies = require(ReplicatedStorage.Shared.Enemies)
 local EnemyTells = require(ReplicatedStorage.Shared.EnemyTells)
 local Fit = require(ReplicatedStorage.Shared.Fit)
@@ -19,6 +20,7 @@ folder.Name = "Enemies"
 folder.Parent = workspace
 
 type Live = {
+	Id: number,
 	Model: Model,
 	Root: BasePart,
 	Humanoid: Humanoid,
@@ -32,6 +34,9 @@ type Live = {
 }
 
 local live: { [Model]: Live } = {}
+local nextEnemyId = 0
+local heartbeatFrame = 0
+local playerRoots: { BasePart } = {}
 local EnemyAI = {}
 EnemyAI.OnSummon = nil :: ((string, CFrame) -> ())?
 
@@ -39,22 +44,42 @@ local function v3(t: { number }): Vector3
 	return Vector3.new(t[1], t[2], t[3])
 end
 
-local function nearestPlayerRoot(pos: Vector3): (BasePart?, number)
-	local best: BasePart? = nil
-	local bestDist = math.huge
+local function snapshotPlayerRoots(): { BasePart }
+	local roots = {}
 	for _, plr in Players:GetPlayers() do
 		local char = plr.Character
 		local hum = char and char:FindFirstChildOfClass("Humanoid")
 		local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
 		if hum and root and hum.Health > 0 then
-			local d = (root.Position - pos).Magnitude
-			if d < bestDist then
-				best = root
-				bestDist = d
-			end
+			table.insert(roots, root)
+		end
+	end
+	return roots
+end
+
+local function nearestPlayerRoot(pos: Vector3, roots: { BasePart }): (BasePart?, number)
+	local best: BasePart? = nil
+	local bestDist = math.huge
+	for _, root in roots do
+		local d = (root.Position - pos).Magnitude
+		if d < bestDist then
+			best = root
+			bestDist = d
 		end
 	end
 	return best, bestDist
+end
+
+local function containsRoot(roots: { BasePart }, target: BasePart?): boolean
+	if target == nil then
+		return false
+	end
+	for _, root in roots do
+		if root == target then
+			return true
+		end
+	end
+	return false
 end
 
 local function makeHealthBar(model: Model, root: BasePart, hum: Humanoid, boss: boolean)
@@ -141,7 +166,7 @@ local function queueAttack(e: Live, target: BasePart, radius: number, attack: (V
 	end
 end
 
--- Ground enemies path around towers and walls; re-plan every 0.4 s, jump when stuck.
+-- Ground enemies path around towers and walls; re-plans are spread across heartbeat frames.
 local function groundMover(e: Live)
 	local hum = e.Humanoid
 	local def = e.Def
@@ -153,17 +178,37 @@ local function groundMover(e: Live)
 	})
 	local lastPos = e.Root.Position
 	local stuckTime = 0
+	local lastUpdateFrame = heartbeatFrame
+	local target: BasePart? = nil
+	local pathBlocked = false
+	local nextRepathFrame =
+		AiSchedule.nextRepathFrame(e.Id, heartbeatFrame, AiSchedule.RepathIntervalFrames)
+	path.Blocked:Connect(function()
+		pathBlocked = true
+	end)
 	while hum.Health > 0 and e.Model.Parent do
+		local dt = RunService.Heartbeat:Wait()
+		local frame = heartbeatFrame
+		local invalidTarget = target ~= nil and not containsRoot(playerRoots, target)
+		local urgent = pathBlocked or invalidTarget
+		if not AiSchedule.shouldRepath(frame, nextRepathFrame, urgent) then
+			continue
+		end
+		pathBlocked = false
+
 		-- Nature poison: slowed while SlowUntil (set by CombatEffects) is in the future
 		local slowUntil = (e.Model:GetAttribute("SlowUntil") :: number?) or 0
 		hum.WalkSpeed = if os.clock() < slowUntil then e.Speed * 0.7 else e.Speed
-		local target, dist = nearestPlayerRoot(e.Root.Position)
+		local previousTarget = target
+		local dist
+		target, dist = nearestPlayerRoot(e.Root.Position, playerRoots)
 		if target then
 			if def.Ranged and dist < (def.Range or 40) * 0.8 then
 				hum:MoveTo(e.Root.Position) -- hold position and shoot
 			elseif dist < 10 then
 				hum:MoveTo(target.Position) -- close: go straight
 			else
+				-- A blocked path or replacement target bypasses the normal stagger.
 				local ok = pcall(path.ComputeAsync, path, e.Root.Position, target.Position)
 				local waypoints = if ok and path.Status == Enum.PathStatus.Success
 					then path:GetWaypoints()
@@ -178,12 +223,14 @@ local function groundMover(e: Live)
 					hum:MoveTo(target.Position)
 				end
 			end
+		elseif previousTarget then
+			hum:MoveTo(e.Root.Position)
 		end
 		-- stuck detection: barely moved while trying to move -> jump
 		local moved = (e.Root.Position - lastPos).Magnitude
 		lastPos = e.Root.Position
 		if moved < 0.5 and target and dist > 6 then
-			stuckTime += 0.4
+			stuckTime += math.max(dt, (frame - lastUpdateFrame) / 60)
 			if stuckTime > 1.2 then
 				hum.Jump = true
 				stuckTime = 0
@@ -191,7 +238,8 @@ local function groundMover(e: Live)
 		else
 			stuckTime = 0
 		end
-		task.wait(0.4)
+		lastUpdateFrame = frame
+		nextRepathFrame = AiSchedule.nextRepathFrame(e.Id, frame, AiSchedule.RepathIntervalFrames)
 	end
 end
 
@@ -239,6 +287,7 @@ function EnemyAI.spawn(
 	end
 
 	local e: Live = {
+		Id = nextEnemyId,
 		Model = model,
 		Root = root,
 		Humanoid = hum,
@@ -250,6 +299,7 @@ function EnemyAI.spawn(
 		OnDeath = onDeath,
 		LastHitBy = nil,
 	}
+	nextEnemyId += 1
 	live[model] = e
 	if not def.Flying then
 		task.spawn(groundMover, e)
@@ -307,11 +357,13 @@ function EnemyAI.clearAll()
 end
 
 RunService.Heartbeat:Connect(function(dt)
+	heartbeatFrame += 1
+	playerRoots = snapshotPlayerRoots()
 	for model, e in live do
 		if e.Humanoid.Health <= 0 or not model.Parent then
 			continue
 		end
-		local target, dist = nearestPlayerRoot(e.Root.Position)
+		local target, dist = nearestPlayerRoot(e.Root.Position, playerRoots)
 		if not target then
 			continue
 		end
