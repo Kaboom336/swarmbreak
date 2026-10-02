@@ -8,8 +8,8 @@ export type Point3 = {
 
 local FireGuard = {}
 
-FireGuard.MaximumOriginDistance = 8
-FireGuard.FireRateTolerance = 0.1
+FireGuard.MaximumOriginDistance = 14
+FireGuard.FireRateTolerance = 0.25
 
 local function isFinite(value: number): boolean
 	return value == value and value > -math.huge and value < math.huge
