@@ -54,6 +54,23 @@ function ModelLibrary.preload()
 			end)
 			if ok then
 				local asset = (container :: Model):FindFirstChildWhichIsA("Model")
+				if not asset then
+					-- FBX imports can land as loose MeshParts; wrap them so rig part names survive.
+					local wrapper = Instance.new("Model")
+					for _, child in (container :: Model):GetChildren() do
+						child.Parent = wrapper
+					end
+					asset = if #wrapper:GetChildren() > 0 then wrapper else nil
+				end
+				if not asset then
+					warn(
+						string.format(
+							"Model %s (%d) loaded empty; using part fallback",
+							key,
+							assetId
+						)
+					)
+				end
 				if asset then
 					prepare(asset)
 					asset.Name = key
