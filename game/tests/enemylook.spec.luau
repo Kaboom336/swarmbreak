@@ -30,10 +30,10 @@ end)
 test("every enemy has a readable relative height", function()
 	for name, def in Enemies.Defs do
 		if def.Boss then
-			assert(def.Scale >= 2.5 and def.Scale <= 4, name .. " boss scale")
+			assert(def.Scale >= 3.6 and def.Scale <= 4.4, name .. " boss scale")
 		else
-			assert(def.Scale >= 1 and def.Scale <= 1.6, name .. " enemy scale")
+			assert(def.Scale >= 1.2 and def.Scale <= 2.6, name .. " enemy scale")
 		end
 	end
-	eq(Enemies.Defs.Walker.Scale, 1.2, "Walker height relative to player")
+	eq(Enemies.Defs.Walker.Scale, 2, "Walker height relative to player")
 end)

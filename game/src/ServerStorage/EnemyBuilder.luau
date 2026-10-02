@@ -407,8 +407,10 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 	end
 
 	local bounds = model:GetExtentsSize()
-	model:ScaleTo(Fit.scaleFor({ bounds.X, bounds.Y, bounds.Z }, { size.X, size.Y, size.Z }))
+	local fitted = Fit.sizeForRelativeHeight({ bounds.X, bounds.Y, bounds.Z }, size.Y, 1)
+	model:ScaleTo(fitted[2] / bounds.Y)
 	model:PivotTo(cf)
+	local boundsCFrame, scaledBounds = model:GetBoundingBox()
 	model.Name = typeName
 	local palette = Theme.Enemy[typeName] or Theme.Enemy.Walker
 	local body = c3(palette.Body)
@@ -421,9 +423,9 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 
 	local root = Instance.new("Part")
 	root.Name = "HumanoidRootPart"
-	root.Size = size
+	root.Size = scaledBounds
 	root.Transparency = 1
-	root.CFrame = cf
+	root.CFrame = boundsCFrame
 	root.CanCollide = true
 	root.Parent = model
 	model.PrimaryPart = root
@@ -452,15 +454,7 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 		end
 	end
 
-	local minY = math.huge
-	for _, descendant in model:GetDescendants() do
-		if descendant:IsA("BasePart") and descendant ~= root then
-			minY = math.min(minY, descendant.Position.Y - descendant.Size.Y / 2)
-		end
-	end
 	local hipHeight = 0.4
-	local halfHeight = math.max(0.5, root.Position.Y - minY - hipHeight)
-	root.Size = Vector3.new(root.Size.X, halfHeight * 2, root.Size.Z)
 	return { Model = model, Root = root, Torso = torso, HipHeight = hipHeight }
 end
 

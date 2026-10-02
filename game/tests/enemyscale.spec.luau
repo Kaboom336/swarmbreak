@@ -1,0 +1,27 @@
+local Enemies = load("Enemies")
+local Fit = load("Fit")
+
+local PLAYER_HEIGHT = 5
+local TARGET_HEIGHTS = {
+	Walker = 10,
+	Runner = 8,
+	Spitter = 9,
+	Flyer = 6,
+	Tank = 13,
+	Brute = 18,
+	Queen = 22,
+	Warden = 22,
+}
+
+test("enemy heights stay within ten percent of their targets", function()
+	for name, targetHeight in TARGET_HEIGHTS do
+		local actualHeight = Enemies.Defs[name].Scale * PLAYER_HEIGHT
+		local errorRatio = math.abs(actualHeight - targetHeight) / targetHeight
+		assert(errorRatio <= 0.1, name .. " height")
+	end
+end)
+
+test("wide imported meshes fit Walker by height", function()
+	local fitted = Fit.sizeForRelativeHeight({ 10, 4, 2 }, Enemies.Defs.Walker.Scale, PLAYER_HEIGHT)
+	eq(fitted[2], 10, "Walker height")
+end)
