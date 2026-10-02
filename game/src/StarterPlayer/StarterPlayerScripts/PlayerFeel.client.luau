@@ -25,6 +25,8 @@ type FeelState = {
 }
 
 local activeState: FeelState? = nil
+local lastOffset = CFrame.identity
+local lastWritten: CFrame? = nil
 local characterConnections: { RBXScriptConnection } = {}
 local bindGeneration = 0
 local lastLevel: number? = nil
@@ -160,7 +162,15 @@ local function bind(character: Model)
 						0,
 						math.rad(state.Roll + flinch)
 					)
-				state.PoseJoint.Transform *= offset
+				-- Transform persists when no animation drives this joint, so remove last frame's
+				-- offset first; otherwise the lean would compound every frame.
+				local joint = state.PoseJoint
+				local base = if joint.Transform == lastWritten
+					then joint.Transform * lastOffset:Inverse()
+					else joint.Transform
+				joint.Transform = base * offset
+				lastOffset = offset
+				lastWritten = joint.Transform
 			end
 		end
 	)
