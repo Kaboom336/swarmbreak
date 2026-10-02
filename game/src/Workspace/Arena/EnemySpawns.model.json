@@ -24,16 +24,30 @@
     "Transparency": 1,
     "CanCollide": false,
     "CFrame": {
-     "position": [
-      -70,
-      1.5,
-      -70
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
+     "CFrame": {
+      "position": [
+       -70,
+       1.5,
+       -70
+      ],
+      "orientation": [
+       [
+        1,
+        0,
+        0
+       ],
+       [
+        0,
+        1,
+        0
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     }
     }
    }
   },
@@ -59,16 +73,30 @@
     "Transparency": 1,
     "CanCollide": false,
     "CFrame": {
-     "position": [
-      70,
-      1.5,
-      -70
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
+     "CFrame": {
+      "position": [
+       70,
+       1.5,
+       -70
+      ],
+      "orientation": [
+       [
+        1,
+        0,
+        0
+       ],
+       [
+        0,
+        1,
+        0
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     }
     }
    }
   },
@@ -94,16 +122,30 @@
     "Transparency": 1,
     "CanCollide": false,
     "CFrame": {
-     "position": [
-      70,
-      1.5,
-      70
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
+     "CFrame": {
+      "position": [
+       70,
+       1.5,
+       70
+      ],
+      "orientation": [
+       [
+        1,
+        0,
+        0
+       ],
+       [
+        0,
+        1,
+        0
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     }
     }
    }
   },
@@ -129,16 +171,30 @@
     "Transparency": 1,
     "CanCollide": false,
     "CFrame": {
-     "position": [
-      -70,
-      1.5,
-      70
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
+     "CFrame": {
+      "position": [
+       -70,
+       1.5,
+       70
+      ],
+      "orientation": [
+       [
+        1,
+        0,
+        0
+       ],
+       [
+        0,
+        1,
+        0
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     }
     }
    }
   },
@@ -164,16 +220,30 @@
     "Transparency": 1,
     "CanCollide": false,
     "CFrame": {
-     "position": [
-      0,
-      1.5,
-      -72
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
+     "CFrame": {
+      "position": [
+       0,
+       1.5,
+       -72
+      ],
+      "orientation": [
+       [
+        1,
+        0,
+        0
+       ],
+       [
+        0,
+        1,
+        0
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     }
     }
    }
   },
@@ -199,16 +269,30 @@
     "Transparency": 1,
     "CanCollide": false,
     "CFrame": {
-     "position": [
-      72,
-      1.5,
-      0
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
+     "CFrame": {
+      "position": [
+       72,
+       1.5,
+       0
+      ],
+      "orientation": [
+       [
+        1,
+        0,
+        0
+       ],
+       [
+        0,
+        1,
+        0
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     }
     }
    }
   },
@@ -234,16 +318,30 @@
     "Transparency": 1,
     "CanCollide": false,
     "CFrame": {
-     "position": [
-      0,
-      1.5,
-      72
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
+     "CFrame": {
+      "position": [
+       0,
+       1.5,
+       72
+      ],
+      "orientation": [
+       [
+        1,
+        0,
+        0
+       ],
+       [
+        0,
+        1,
+        0
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     }
     }
    }
   },
@@ -269,16 +367,30 @@
     "Transparency": 1,
     "CanCollide": false,
     "CFrame": {
-     "position": [
-      -72,
-      1.5,
-      0
-     ],
-     "orientation": [
-      0,
-      0,
-      0
-     ]
+     "CFrame": {
+      "position": [
+       -72,
+       1.5,
+       0
+      ],
+      "orientation": [
+       [
+        1,
+        0,
+        0
+       ],
+       [
+        0,
+        1,
+        0
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     }
     }
    }
   }

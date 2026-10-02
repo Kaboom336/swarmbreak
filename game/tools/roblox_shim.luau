@@ -60,9 +60,11 @@ Vector3.__index = function(t, k)
 	return vecIndex[k]
 end
 
-local Vector2 = { new = function(x, y)
-	return { X = x, Y = y }
-end }
+local Vector2 = {
+	new = function(x, y)
+		return { X = x, Y = y }
+	end,
+}
 
 -- ---------- CFrame (position + 3x3 rotation, row-major r[i][j]) ----------
 local CFrame = {}
@@ -88,12 +90,20 @@ local function rotV(r, v)
 	)
 end
 local function transposeR(r)
-	return { { r[1][1], r[2][1], r[3][1] }, { r[1][2], r[2][2], r[3][2] }, { r[1][3], r[2][3], r[3][3] } }
+	return {
+		{ r[1][1], r[2][1], r[3][1] },
+		{ r[1][2], r[2][2], r[3][2] },
+		{ r[1][3], r[2][3], r[3][3] },
+	}
 end
 local function cf(p, r)
 	return setmetatable({ p = p, r = r }, CFrame)
 end
-CFrame.new = function(a, b, c)
+CFrame.new = function(a, b, c, ...)
+	local m = { ... }
+	if #m == 9 then
+		return cf(v3(a, b, c), { { m[1], m[2], m[3] }, { m[4], m[5], m[6] }, { m[7], m[8], m[9] } })
+	end
 	if a == nil then
 		return cf(v3(0, 0, 0), identityR())
 	elseif type(a) == "number" then
@@ -200,26 +210,34 @@ local Enum = enumNode("Enum")
 
 -- ---------- misc value types ----------
 local function anyNew()
-	return { new = function(...)
-		return { ... }
-	end }
+	return {
+		new = function(...)
+			return { ... }
+		end,
+	}
 end
 local NumberRange = anyNew()
 local NumberSequence = anyNew()
 local NumberSequenceKeypoint = anyNew()
 local ColorSequence = anyNew()
-local UDim2 = { new = function(...)
-	return { ... }
-end, fromScale = function(...)
-	return { ... }
-end, fromOffset = function(...)
-	return { ... }
-end }
+local UDim2 = {
+	new = function(...)
+		return { ... }
+	end,
+	fromScale = function(...)
+		return { ... }
+	end,
+	fromOffset = function(...)
+		return { ... }
+	end,
+}
 local UDim = anyNew()
 local TweenInfo = anyNew()
-local RaycastParams = { new = function()
-	return {}
-end }
+local RaycastParams = {
+	new = function()
+		return {}
+	end,
+}
 
 local Random = {}
 Random.__index = Random
@@ -394,9 +412,11 @@ function Inst:GetAttribute(k)
 	return self._attrs[k]
 end
 function Inst:GetAttributeChangedSignal()
-	return { Connect = function()
-		return { Disconnect = function() end }
-	end }
+	return {
+		Connect = function()
+			return { Disconnect = function() end }
+		end,
+	}
 end
 function Inst:Clone()
 	local c = Instance.new(self.ClassName)
@@ -462,7 +482,10 @@ end
 
 local created = {}
 Instance.new = function(class, parent)
-	local t = setmetatable({ _props = { Name = class, ClassName = class }, _children = {}, _attrs = {} }, Inst)
+	local t = setmetatable(
+		{ _props = { Name = class, ClassName = class }, _children = {}, _attrs = {} },
+		Inst
+	)
 	if isA(class, "BasePart") then
 		t._props.Size = v3(4, 1, 2)
 		t._props.CFrame = CFrame.new()
@@ -523,13 +546,30 @@ function Shim.exportParts(root)
 				shape = if mesh then enumName(mesh._props.MeshType) else enumName(p.Shape),
 				size = { p.Size.X, p.Size.Y, p.Size.Z },
 				pos = { c.p.X, c.p.Y, c.p.Z },
-				rot = { c.r[1][1], c.r[1][2], c.r[1][3], c.r[2][1], c.r[2][2], c.r[2][3], c.r[3][1], c.r[3][2], c.r[3][3] },
+				rot = {
+					c.r[1][1],
+					c.r[1][2],
+					c.r[1][3],
+					c.r[2][1],
+					c.r[2][2],
+					c.r[2][3],
+					c.r[3][1],
+					c.r[3][2],
+					c.r[3][3],
+				},
 				color = { p.Color.R, p.Color.G, p.Color.B },
 				material = enumName(p.Material),
 				transparency = p.Transparency or 0,
 				light = (function()
 					local l = d:FindFirstChildOfClass("PointLight")
-					return l and { l._props.Color and { l._props.Color.R, l._props.Color.G, l._props.Color.B } or { 1, 1, 1 }, l._props.Range or 8 } or nil
+					return l
+							and {
+								l._props.Color
+										and { l._props.Color.R, l._props.Color.G, l._props.Color.B }
+									or { 1, 1, 1 },
+								l._props.Range or 8,
+							}
+						or nil
 				end)(),
 				particles = d:FindFirstChildOfClass("Attachment") ~= nil,
 			})
@@ -556,9 +596,14 @@ Shim.env = {
 	Instance = Instance,
 	game = game,
 	workspace = workspace,
-	task = { wait = function() end, spawn = function(f, ...)
-		f(...)
-	end, delay = function() end, defer = function() end },
+	task = {
+		wait = function() end,
+		spawn = function(f, ...)
+			f(...)
+		end,
+		delay = function() end,
+		defer = function() end,
+	},
 	warn = print,
 	typeof = function(x)
 		local mt = getmetatable(x)

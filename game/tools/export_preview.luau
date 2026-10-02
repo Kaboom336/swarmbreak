@@ -16,7 +16,11 @@ shared.Parent = RS
 local modulePaths = {}
 local function register(dir, parent)
 	for _, f in fs.readDir(dir) do
-		if f:match("%.luau$") and not f:match("%.server%.luau$") and not f:match("%.client%.luau$") then
+		if
+			f:match("%.luau$")
+			and not f:match("%.server%.luau$")
+			and not f:match("%.client%.luau$")
+		then
 			local name = f:gsub("%.luau$", "")
 			local m = Shim.Instance.new("ModuleScript")
 			m.Name = name
@@ -68,7 +72,8 @@ local out = { enemies = {}, weapons = {}, arena = {}, data = {} }
 -- enemies
 for _, typeName in { "Walker", "Runner", "Flyer", "Tank", "Spitter", "Brute", "Queen", "Warden" } do
 	local def = Enemies.Defs[typeName]
-	local rig = EnemyBuilder.build(typeName, V3.new(def.Size[1], def.Size[2], def.Size[3]), CF.new(0, 0, 0))
+	local rig =
+		EnemyBuilder.build(typeName, V3.new(def.Size[1], def.Size[2], def.Size[3]), CF.new(0, 0, 0))
 	local parts = Shim.exportParts(rig.Model)
 	-- drop the invisible root so silhouettes read
 	local visible = {}
@@ -135,9 +140,30 @@ local function fromJson(node, parent)
 	local props = node.properties or {}
 	for k, val in props do
 		if k == "CFrame" then
-			local p = val.position
-			local o = val.orientation or { 0, 0, 0 }
-			inst.CFrame = CF.new(p[1], p[2], p[3]) * CF.Angles(math.rad(o[1]), math.rad(o[2]), math.rad(o[3]))
+			-- Rojo explicit form: { CFrame = { position = {x,y,z}, orientation = 3x3 rotation rows } }
+			local cf = val.CFrame or val
+			local p = cf.position
+			local o = cf.orientation
+			if type(o) == "table" and type(o[1]) == "table" then
+				inst.CFrame = CF.new(
+					p[1],
+					p[2],
+					p[3],
+					o[1][1],
+					o[1][2],
+					o[1][3],
+					o[2][1],
+					o[2][2],
+					o[2][3],
+					o[3][1],
+					o[3][2],
+					o[3][3]
+				)
+			else
+				o = o or { 0, 0, 0 }
+				inst.CFrame = CF.new(p[1], p[2], p[3])
+					* CF.Angles(math.rad(o[1]), math.rad(o[2]), math.rad(o[3]))
+			end
 		elseif k == "Size" then
 			inst.Size = V3.new(val[1], val[2], val[3])
 		elseif k == "Color" then
@@ -170,7 +196,11 @@ print(string.format("arena %d parts", #out.arena))
 
 -- plain data for the cards
 out.data = {
-	config = { NormalWaves = Config.NormalWaves, BossEvery = Config.BossEvery, Intermission = Config.IntermissionSeconds },
+	config = {
+		NormalWaves = Config.NormalWaves,
+		BossEvery = Config.BossEvery,
+		Intermission = Config.IntermissionSeconds,
+	},
 	theme = Theme,
 	rarityOdds = Weapons.RarityOdds,
 	rarityColor = Weapons.RarityColor,

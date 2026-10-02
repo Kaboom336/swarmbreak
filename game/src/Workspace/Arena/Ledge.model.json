@@ -17,16 +17,30 @@
   "TopSurface": "Smooth",
   "BottomSurface": "Smooth",
   "CFrame": {
-   "position": [
-    0,
-    12,
-    50
-   ],
-   "orientation": [
-    0,
-    0,
-    0
-   ]
+   "CFrame": {
+    "position": [
+     0,
+     12,
+     50
+    ],
+    "orientation": [
+     [
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1
+     ]
+    ]
+   }
   }
  },
  "children": []

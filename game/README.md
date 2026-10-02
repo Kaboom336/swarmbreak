@@ -27,11 +27,12 @@ Plan: ../GAME-PLAN.md. Zion's steps: ../PUBLISH-GUIDE.md and ../MONETIZATION-SET
 stylua --check src
 selene src
 lune run tests/run.luau
+rojo build default.project.json -o out.rbxl
 ```
 `selene.toml` uses `roblox_min.yml` (a small global list) because the full Roblox std needs a GitHub download.
 On the laptop, switch `std = "roblox"` in selene.toml for the real API dump.
 
-Codex tasks on this repo: `testcmd: stylua --check src && selene src && lune run tests/run.luau`
+Codex tasks on this repo: `testcmd: cd game && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl`
 
 ## Run in Studio (laptop)
 1. `rokit install` in this folder (installs rojo, selene, stylua, lune).

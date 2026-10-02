@@ -7,7 +7,7 @@ the laptop copy is a git repo, then the laptop wins).
    Then in `C:\dev\swarmbreak`: `rokit install` (reads rokit.toml: rojo, selene, stylua, lune).
 2. `rojo plugin install` (Studio plugin). Restart Studio if open.
 3. Switch selene to the full std: in selene.toml set `std = "roblox"` (it downloads the API dump once).
-4. Checks: `stylua --check src && selene src && lune run tests/run.luau`.
+4. Checks: `stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl`.
 5. `rojo serve`; in Studio: new Baseplate place, Plugins > Rojo > Connect. Delete the default Baseplate part.
 6. Press Play. Smoke test list:
    - Spawn, HUD shows "WAVE 1", "Get ready 3".
@@ -24,7 +24,7 @@ the laptop copy is a git repo, then the laptop wins).
 7. Fix anything found, run the checks, then ask Zion to Publish (PUBLISH-GUIDE.md).
 8. Test on a phone once public: DASH touch button, tap-to-shoot.
 
-Codex tasks for this repo (send via Iris): `testcmd: stylua --check src && selene src && lune run tests/run.luau`.
+Codex tasks for this repo (send via Iris): `testcmd: cd game && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl`.
 
 ## Mesh import (after the smoke test works with the part-built fallbacks)
 Models are in `assets/models/<group>/<Name>.fbx` (also `.glb`). Sizes in studs are in `assets/models/manifest.json`.
