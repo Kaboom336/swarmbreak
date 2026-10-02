@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local SocialService = game:GetService("SocialService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
@@ -22,7 +23,11 @@ local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local Settings = require(ReplicatedStorage.Shared.Settings)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
+<<<<<<< HEAD
 local HudLayout = require(ReplicatedStorage.Shared.HudLayout)
+=======
+local Invite = require(ReplicatedStorage.Shared.Invite)
+>>>>>>> codex/w7-invite-rules
 local ClientFX = require(script.Parent.ClientFX)
 
 local player = Players.LocalPlayer
@@ -886,6 +891,9 @@ reviveBtn.Visible = false
 reviveBtn.MouseButton1Click:Connect(function()
 	Prompt:FireServer("product", "Revive")
 end)
+local deathInviteBtn = button(screen, "Invite a friend", reviveBtn.Size)
+deathInviteBtn.Position = reviveBtn.Position + UDim2.new(0, 0, 0, 48) -- placeholder
+deathInviteBtn.Visible = false
 
 local PANEL_GAP = 8 -- placeholder
 
@@ -995,8 +1003,8 @@ end)
 -- Shown on GameOver, hidden when the Phase leaves "over".
 local summaryPanel = Instance.new("Frame")
 summaryPanel.Name = "RunSummary"
-summaryPanel.Size = UDim2.new(0, 460, 0, 380)
-summaryPanel.Position = UDim2.new(0.5, -230, 0.5, -190)
+summaryPanel.Size = UDim2.new(0, 460, 0, 420) -- placeholder
+summaryPanel.Position = UDim2.new(0.5, -230, 0.5, -210) -- placeholder
 summaryPanel.BackgroundColor3 = PANEL
 summaryPanel.BorderSizePixel = 0
 summaryPanel.Visible = false
@@ -1056,11 +1064,76 @@ for _, key in Goals.PerkOrder do
 	summaryOrder += 1
 	perkRow(summaryPanel, key, 28).LayoutOrder = summaryOrder
 end
+summaryOrder += 1
+local summaryInviteBtn = button(summaryPanel, "Invite a friend", UDim2.new(1, 0, 0, 34)) -- placeholder
+summaryInviteBtn.LayoutOrder = summaryOrder
+summaryInviteBtn.Visible = false
 local summaryFooter = summaryRow("Footer", 20, 14)
 summaryFooter.TextColor3 = Color3.fromRGB(200, 200, 200)
 
 local summaryEarned = 0 -- Gems this run paid, kept for the row after the count-up
 local summaryCounting = 0 -- token: a newer summary cancels an older count-up
+local lastInviteShownAt: number? = nil
+
+local function canSendGameInvite(): boolean
+	local ok, canSend = pcall(function(): boolean
+		return SocialService:CanSendGameInviteAsync(player)
+	end)
+	return ok and canSend
+end
+
+local function connectInviteButton(inviteButton: TextButton)
+	inviteButton.MouseButton1Click:Connect(function()
+		if not canSendGameInvite() then
+			inviteButton.Visible = false
+			return
+		end
+		SocialService:PromptGameInvite(player)
+	end)
+end
+
+local function offerInvite(
+	inviteButton: TextButton,
+	moment: "summary" | "death",
+	isStillActive: () -> boolean
+)
+	inviteButton.Visible = false
+	local now = os.clock()
+	if not Invite.shouldShow(#Players:GetPlayers(), moment, lastInviteShownAt, now) then
+		return
+	end
+	task.spawn(function()
+		if not canSendGameInvite() or not isStillActive() then
+			inviteButton.Visible = false
+			return
+		end
+		local shownAt = os.clock()
+		if Invite.shouldShow(#Players:GetPlayers(), moment, lastInviteShownAt, shownAt) then
+			inviteButton.Visible = true
+			lastInviteShownAt = shownAt
+		end
+	end)
+end
+
+connectInviteButton(summaryInviteBtn)
+connectInviteButton(deathInviteBtn)
+
+local function watchCharacter(character: Model)
+	deathInviteBtn.Visible = false
+	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
+	humanoid.Died:Connect(function()
+		offerInvite(deathInviteBtn, "death", function(): boolean
+			return stateValue("Phase") == "fighting"
+				and humanoid.Health <= 0
+				and not summaryPanel.Visible
+		end)
+	end)
+end
+
+player.CharacterAdded:Connect(watchCharacter)
+if player.Character then
+	task.spawn(watchCharacter, player.Character)
+end
 
 local function commas(n: number): string
 	local s = tostring(math.floor(n)):reverse():gsub("(%d%d%d)", "%1,"):reverse()
@@ -1446,6 +1519,10 @@ onState("Phase", function(phase)
 	onDailyPhase(phase) -- the daily reward strip never covers a fight
 	if phase ~= "over" then
 		summaryPanel.Visible = false
+		summaryInviteBtn.Visible = false
+	end
+	if phase ~= "fighting" then
+		deathInviteBtn.Visible = false
 	end
 	if phase == "intermission" then
 		setShop(true)
@@ -1512,6 +1589,7 @@ end)
 GameOver.OnClientEvent:Connect(function(summary: any)
 	setShop(false)
 	cardPanel.Visible = false
+	deathInviteBtn.Visible = false
 	local wave = summary.Wave or 0
 	summaryTitle.Text = if summary.Won
 		then string.format("SURVIVED TO WAVE %d", wave)
@@ -1523,6 +1601,9 @@ GameOver.OnClientEvent:Connect(function(summary: any)
 	refreshGoal(summary.Goal)
 	refreshPerkButtons()
 	summaryPanel.Visible = true
+	offerInvite(summaryInviteBtn, "summary", function(): boolean
+		return summaryPanel.Visible
+	end)
 	-- Gems count up from 0 to what the run paid over one second, a coin tick per step
 	summaryEarned = summary.GemsEarned or 0
 	local total = summary.Gems or 0
