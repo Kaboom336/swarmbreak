@@ -2,7 +2,12 @@
 -- Builds enemy rigs from parts and Motor6Ds (no uploaded meshes, so nothing to license).
 -- Motor names are what EnemyAnimator.client animates: Hip_L/R, Shoulder_L/R, Neck, Wing_1..n, Leg_1..n, Jaw.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
+local Fit = require(ReplicatedStorage.Shared.Fit)
+local ModelKey = require(ReplicatedStorage.Shared.ModelKey)
+local ModelParts = require(ReplicatedStorage.Shared.ModelParts)
 local Theme = require(ReplicatedStorage.Shared.Theme)
+local ModelLibrary = require(ServerStorage.ModelLibrary)
 
 local EnemyBuilder = {}
 
@@ -385,7 +390,77 @@ local function bossDressing(model: Model, torso: BasePart, s: number, accent: Co
 	light.Parent = torso
 end
 
+local function findPart(model: Model, name: string): BasePart?
+	local found = model:FindFirstChild(name, true)
+	return if found and found:IsA("BasePart") then found else nil
+end
+
+local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
+	local model = ModelLibrary.get(ModelKey.make("enemies", typeName))
+	if not model then
+		return nil
+	end
+	local torso = findPart(model, "Torso")
+	if not torso then
+		model:Destroy()
+		return nil
+	end
+
+	local bounds = model:GetExtentsSize()
+	model:ScaleTo(Fit.scaleFor({ bounds.X, bounds.Y, bounds.Z }, { size.X, size.Y, size.Z }))
+	model:PivotTo(cf)
+	model.Name = typeName
+
+	local root = Instance.new("Part")
+	root.Name = "HumanoidRootPart"
+	root.Size = size
+	root.Transparency = 1
+	root.CFrame = cf
+	root.CanCollide = true
+	root.Parent = model
+	model.PrimaryPart = root
+	weld(root, torso, root.CFrame:ToObjectSpace(torso.CFrame))
+
+	for _, descendant in model:GetDescendants() do
+		if descendant:IsA("BasePart") and descendant ~= root and descendant ~= torso then
+			local motorName = ModelParts.motorFor(descendant.Name)
+			if motorName then
+				local parentName = ModelParts.parentFor(descendant.Name)
+				local parent = if parentName then findPart(model, parentName) else nil
+				parent = parent or torso
+				joint(
+					motorName,
+					parent,
+					descendant,
+					parent.CFrame:ToObjectSpace(descendant.CFrame),
+					CFrame.new()
+				)
+			else
+				local constraint = Instance.new("WeldConstraint")
+				constraint.Part0 = torso
+				constraint.Part1 = descendant
+				constraint.Parent = torso
+			end
+		end
+	end
+
+	local minY = math.huge
+	for _, descendant in model:GetDescendants() do
+		if descendant:IsA("BasePart") and descendant ~= root then
+			minY = math.min(minY, descendant.Position.Y - descendant.Size.Y / 2)
+		end
+	end
+	local hipHeight = 0.4
+	local halfHeight = math.max(0.5, root.Position.Y - minY - hipHeight)
+	root.Size = Vector3.new(root.Size.X, halfHeight * 2, root.Size.Z)
+	return { Model = model, Root = root, Torso = torso, HipHeight = hipHeight }
+end
+
 function EnemyBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig
+	local imported = buildImported(typeName, size, cf)
+	if imported then
+		return imported
+	end
 	local palette = Theme.Enemy[typeName] or Theme.Enemy.Walker
 	local body = c3(palette.Body)
 	local accent = c3(palette.Accent)

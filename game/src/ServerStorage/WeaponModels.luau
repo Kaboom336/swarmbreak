@@ -1,9 +1,12 @@
 --!strict
 -- Builds a held weapon model from parts, colored by rarity, and welds it to the right hand.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
 local Weapons = require(ReplicatedStorage.Shared.Weapons)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
+local ModelKey = require(ReplicatedStorage.Shared.ModelKey)
+local ModelLibrary = require(ServerStorage.ModelLibrary)
 
 local WeaponModels = {}
 
@@ -257,6 +260,24 @@ shapes.Ion = function(model, grip, dark, accent)
 end
 
 function WeaponModels.build(id: string): Model
+	local imported = ModelLibrary.get(ModelKey.make("weapons", id))
+	if imported then
+		local body = imported:FindFirstChild("Body", true)
+		if body and body:IsA("BasePart") then
+			imported.Name = "Weapon"
+			imported.PrimaryPart = body
+			for _, descendant in imported:GetDescendants() do
+				if descendant:IsA("BasePart") and descendant ~= body then
+					local weld = Instance.new("WeldConstraint")
+					weld.Part0 = body
+					weld.Part1 = descendant
+					weld.Parent = body
+				end
+			end
+			return imported
+		end
+		imported:Destroy()
+	end
 	local def = Weapons.Defs[id] or Weapons.Defs.Starter
 	local accent = c3(Theme.Rarity[def.Rarity])
 	local dark = c3(Theme.MetalDark)
