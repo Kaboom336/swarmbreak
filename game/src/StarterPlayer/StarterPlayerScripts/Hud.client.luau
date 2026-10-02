@@ -1201,6 +1201,7 @@ local function setUtilityPanel(panel: HudLayout.UtilityPanel?)
 		return
 	end
 	finalHud.OpenUtilityPanel = panel
+	player:SetAttribute("UtilityPanelOpen", panel ~= nil)
 	setQuestsOpen(panel == "quests")
 	shop.Visible = panel == "shop"
 	settingsPanel.Visible = panel == "settings"
@@ -1278,6 +1279,22 @@ for _, l in { summaryWave, summaryKills, summaryGems } do
 	l.TextXAlignment = Enum.TextXAlignment.Left
 end
 summaryOrder += 1
+-- Any open panel frees the mouse (Camera.client reads ModalOpen through MouseMode).
+local function updateModalOpen()
+	local open = cardPanel.Visible
+		or summaryPanel.Visible
+		or shop.Visible
+		or settingsPanel.Visible
+		or finalHud.StatsPanel.Visible
+		or player:GetAttribute("UtilityPanelOpen") == true
+	player:SetAttribute("ModalOpen", open)
+end
+for _, panel in { cardPanel, summaryPanel, shop, settingsPanel, finalHud.StatsPanel } do
+	panel:GetPropertyChangedSignal("Visible"):Connect(updateModalOpen)
+end
+player:GetAttributeChangedSignal("UtilityPanelOpen"):Connect(updateModalOpen)
+updateModalOpen()
+
 local playAgainButton = button(summaryPanel, "PLAY AGAIN", UDim2.new(1, 0, 0, 56))
 playAgainButton.LayoutOrder = summaryOrder
 
