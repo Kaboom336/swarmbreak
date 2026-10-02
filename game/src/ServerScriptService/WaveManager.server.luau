@@ -131,6 +131,9 @@ local function randomSpawnCFrame(): CFrame
 end
 
 local function awardDrop(plr: Player, kind: string, value: number)
+	if not PlayerData.get(plr).Active then
+		return -- the run ended; a stray gem must not feed the next run
+	end
 	if kind == "XP" then
 		PlayerData.addXp(plr, value)
 	else
