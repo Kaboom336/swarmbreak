@@ -73,7 +73,14 @@ function HudLayout.rects(
 	local hotbarWidth = 420 * scale -- placeholder
 	local hotbarHeight = buttonHeight + 14 * scale -- placeholder
 	local bottomHeight = math.max(healthHeight, hotbarHeight)
-	local bottomY = viewportY - margin - bottomHeight
+	local xpHeight = 12 * scale
+	local xp = {
+		x = 0,
+		y = viewportY - xpHeight,
+		w = viewportX,
+		h = xpHeight,
+	}
+	local bottomY = xp.y - gap - bottomHeight
 
 	local waveTimer = {
 		x = (viewportX - waveWidth) / 2,
@@ -150,6 +157,7 @@ function HudLayout.rects(
 		shop = shop,
 		hotbar = hotbar,
 		health = health,
+<<<<<<< HEAD
 		-- Compatibility names used by older HUD code.
 		wave = waveTimer,
 		quest = quests,
@@ -166,6 +174,9 @@ function HudLayout.touchTargets(viewportX: number, viewportY: number): { [string
 		rewardCard1 = { x = rects.rewardCards.x, y = rects.rewardCards.y, w = 184, h = 180 },
 		rewardCard2 = { x = rects.rewardCards.x + 208, y = rects.rewardCards.y, w = 184, h = 180 },
 		rewardCard3 = { x = rects.rewardCards.x + 416, y = rects.rewardCards.y, w = 184, h = 180 },
+=======
+		xp = xp,
+>>>>>>> codex/w9-card-cadence-xp
 	}
 end
 

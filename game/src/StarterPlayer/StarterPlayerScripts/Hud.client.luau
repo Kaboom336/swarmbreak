@@ -16,6 +16,7 @@ local ProfileSchema = require(ReplicatedStorage.Shared.ProfileSchema)
 local Goals = require(ReplicatedStorage.Shared.Goals)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
+local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Quests = require(ReplicatedStorage.Shared.Quests)
 local Kits = require(ReplicatedStorage.Shared.Kits)
@@ -311,6 +312,22 @@ local statsLabel = text(screen, "Stats", UDim2.new(0, 12, 1, -66), UDim2.new(0, 
 statsLabel.TextXAlignment = Enum.TextXAlignment.Left
 statsLabel.TextYAlignment = Enum.TextYAlignment.Top
 
+-- Full-width run XP, pinned to the bottom edge by HudLayout.
+local xpBack = Instance.new("Frame")
+xpBack.Name = "XP"
+xpBack.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+xpBack.BorderSizePixel = 0
+xpBack.ClipsDescendants = true
+xpBack.Parent = screen
+local xpFill = Instance.new("Frame")
+xpFill.Name = "Fill"
+xpFill.Size = UDim2.fromScale(0, 1)
+xpFill.BackgroundColor3 = ClientFX.c3(Theme.NeonTeal)
+xpFill.BorderSizePixel = 0
+xpFill.Parent = xpBack
+local xpText = text(xpBack, "Value", UDim2.new(), UDim2.fromScale(1, 1), "", 11)
+xpText.ZIndex = xpFill.ZIndex + 1
+
 -- Top-right daily quests, tucked under the existing controls.
 local questToggle = button(screen, "Quests", UDim2.new(0, 260, 0, 34))
 questToggle.Name = "QuestToggle"
@@ -591,6 +608,7 @@ local function flash(label: TextLabel, str: string, seconds: number)
 	end)
 end
 
+<<<<<<< HEAD
 function finalHud.showAreaWarning(position: Vector3, radius: number, duration: number)
 	local warning = Instance.new("Part")
 	warning.Name = "AreaWarning"
@@ -616,6 +634,22 @@ function finalHud.showAreaWarning(position: Vector3, radius: number, duration: n
 		warning:Destroy()
 	end)
 end
+=======
+local goalBannerToken = 0
+local function showSpawnGoal()
+	goalBannerToken += 1
+	local token = goalBannerToken
+	task.delay(0.25, function()
+		if token == goalBannerToken and stateValue("Wave") <= 1 then
+			flash(banner, "Survive 5 waves", 3)
+		end
+	end)
+end
+player.CharacterAdded:Connect(showSpawnGoal)
+if player.Character then
+	task.defer(showSpawnGoal)
+end
+>>>>>>> codex/w9-card-cadence-xp
 
 -- Latest stats snapshot from the server (filled by StatsChanged below)
 local stats: any
@@ -652,6 +686,7 @@ cardLayout.SortOrder = Enum.SortOrder.LayoutOrder
 cardLayout.Padding = UDim.new(0, 12)
 cardLayout.Parent = cardPanel
 
+<<<<<<< HEAD
 local CARD_STRIPE: { [string]: Color3 } = {
 	Stat = ClientFX.c3(Theme.NeonTeal),
 	Weapon = ClientFX.c3(Theme.NeonAmber),
@@ -662,6 +697,8 @@ finalHud.CardRarity = {
 	Utility = "Rare",
 	Weapon = "Epic",
 }
+=======
+>>>>>>> codex/w9-card-cadence-xp
 local cardIds: { string } = {} -- ids on offer in card order (key 1 = first card)
 local cardKey = "" -- the offer the cards were last built from
 local cardPending = false -- our pick is in flight
@@ -694,7 +731,7 @@ local function pickCard(id: string)
 	end
 end
 
-local function rebuildCards(offer: { string })
+local function rebuildCards(offer: { string }, rarities: { [string]: string })
 	for _, c in cardPanel:GetChildren() do
 		if c:IsA("TextButton") then
 			c:Destroy()
@@ -708,16 +745,20 @@ local function rebuildCards(offer: { string })
 			local i = #cardIds
 			local b = Instance.new("TextButton")
 			b.Name = "Card" .. i
-			b.Size = UDim2.new(0, 184, 0, 180)
+			local targetSize = UDim2.new(0, 184, 0, 180)
+			b.Size = UDim2.new(0, 0, 0, 180)
 			b.Text = ""
 			b.BackgroundColor3 = PANEL
 			b.BorderSizePixel = 0
 			b.AutoButtonColor = true
+			b.Active = false
+			b.ClipsDescendants = true
 			b.LayoutOrder = i
 			b.Parent = cardPanel
 			local corner = Instance.new("UICorner")
 			corner.CornerRadius = UDim.new(0, 10)
 			corner.Parent = b
+<<<<<<< HEAD
 			local rarity = finalHud.CardRarity[def.Kind] or "Common"
 			local rarityColor = ClientFX.c3(Theme.Rarity[rarity])
 			local outline = Instance.new("UIStroke")
@@ -725,12 +766,18 @@ local function rebuildCards(offer: { string })
 			outline.Thickness = 2
 			outline.Parent = b
 			local stripe = Instance.new("Frame") -- 4 px top stripe coloured by card kind
+=======
+			local rarity = rarities[id] or "Common"
+			local rarityColor = Theme.Rarity[rarity] or Theme.Rarity.Common
+			local stripe = Instance.new("Frame") -- rarity colour reads before the card text
+>>>>>>> codex/w9-card-cadence-xp
 			stripe.Name = "Stripe"
 			stripe.Size = UDim2.new(1, -20, 0, 4)
 			stripe.Position = UDim2.new(0, 10, 0, 0)
-			stripe.BackgroundColor3 = CARD_STRIPE[def.Kind] or WHITE
+			stripe.BackgroundColor3 = ClientFX.c3(rarityColor)
 			stripe.BorderSizePixel = 0
 			stripe.Parent = b
+<<<<<<< HEAD
 			local rarityTag = text(
 				b,
 				"Rarity",
@@ -743,6 +790,14 @@ local function rebuildCards(offer: { string })
 			text(b, "Label", UDim2.new(0, 10, 0, 30), UDim2.new(1, -20, 0, 26), def.Label, 18)
 			local blurb =
 				text(b, "Blurb", UDim2.new(0, 10, 0, 62), UDim2.new(1, -20, 0, 78), def.Blurb, 13)
+=======
+			local rarityLabel =
+				text(b, "Rarity", UDim2.new(0, 10, 0, 12), UDim2.new(1, -20, 0, 18), rarity, 11)
+			rarityLabel.TextColor3 = ClientFX.c3(rarityColor)
+			text(b, "Label", UDim2.new(0, 10, 0, 32), UDim2.new(1, -20, 0, 26), def.Label, 18)
+			local blurb =
+				text(b, "Blurb", UDim2.new(0, 10, 0, 64), UDim2.new(1, -20, 0, 76), def.Blurb, 13)
+>>>>>>> codex/w9-card-cadence-xp
 			blurb.Font = Enum.Font.Gotham
 			blurb.TextWrapped = true
 			blurb.TextYAlignment = Enum.TextYAlignment.Top
@@ -759,19 +814,39 @@ local function rebuildCards(offer: { string })
 			b.MouseButton1Click:Connect(function()
 				pickCard(id)
 			end)
+			task.delay((i - 1) * 0.08, function()
+				if b.Parent then
+					TweenService:Create(
+						b,
+						TweenInfo.new(LevelUp.CardFlipSeconds, Enum.EasingStyle.Quad),
+						{ Size = targetSize }
+					):Play()
+					task.delay(LevelUp.CardFlipSeconds, function()
+						if b.Parent then
+							b.Active = true
+						end
+					end)
+				end
+			end)
 		end
 	end
 end
 
--- Rebuild when the offer changes; show only while the intermission lasts.
+-- Rebuild when the offer changes; level-up cards can appear during a fight or intermission.
 local function refreshCards()
 	local offer: { string } = stats.Offer or {}
-	local offerKey = table.concat(offer, "|")
+	local rarities: { [string]: string } = stats.OfferRarities or {}
+	local rarityKey = {}
+	for _, id in offer do
+		table.insert(rarityKey, rarities[id] or "Common")
+	end
+	local offerKey = table.concat(offer, "|") .. ":" .. table.concat(rarityKey, "|")
 	if offerKey ~= cardKey then
 		cardKey = offerKey
-		rebuildCards(offer)
+		rebuildCards(offer, rarities)
 	end
-	cardPanel.Visible = #cardIds > 0 and stateValue("Phase") == "intermission"
+	local phase = stateValue("Phase")
+	cardPanel.Visible = #cardIds > 0 and (phase == "fighting" or phase == "intermission")
 end
 
 UserInputService.InputBegan:Connect(function(input, gp)
@@ -1075,6 +1150,10 @@ local function applyHudLayout()
 	hpBack.Size = UDim2.fromOffset(math.min(260, logical(health.w)), 18)
 	statsLabel.Position = UDim2.fromOffset(logical(health.x), logical(health.y) + 20)
 	statsLabel.Size = UDim2.fromOffset(logical(health.w), 58)
+
+	local xp = rects.xp
+	xpBack.Position = UDim2.fromOffset(logical(xp.x), logical(xp.y))
+	xpBack.Size = UDim2.fromOffset(logical(xp.w), logical(xp.h))
 
 	local buttonHeight = HudLayout.buttonHeightFor(currentScale, platform)
 	local quest = rects.quests
@@ -1449,6 +1528,10 @@ stats = {
 	Kit = "Soldier",
 	KitsOwned = { Soldier = true },
 	Offer = {},
+	OfferRarities = {},
+	XP = 0,
+	Level = 0,
+	XPNeeded = LevelUp.requiredXp(1),
 	Quests = {},
 	Flags = {},
 	MusicVolume = Settings.DefaultVolume,
@@ -1544,14 +1627,24 @@ local function refreshStats()
 	finalHud.CoinsLabel.Text = string.format("Coins %d", stats.Coins or 0)
 	finalHud.GemsLabel.Text = string.format("Gems %d", stats.Gems or 0)
 	statsLabel.Text = string.format(
+<<<<<<< HEAD
 		"Kills %d    Dash %d\nShards  Nature %d  Tech %d  Lightning %d  Dark %d",
+=======
+		"Coins %d    Kills %d    Level %d    Dash %d\nGems %d    Shards  Nature %d  Tech %d  Lightning %d  Dark %d",
+		stats.Coins,
+>>>>>>> codex/w9-card-cadence-xp
 		stats.Kills,
+		stats.Level or 0,
 		dash,
 		shards.Nature or 0,
 		shards.Tech or 0,
 		shards.Lightning or 0,
 		shards.Dark or 0
 	)
+	local xp = stats.XP or 0
+	local xpNeeded = math.max(stats.XPNeeded or 1, 1)
+	xpFill.Size = UDim2.fromScale(math.clamp(xp / xpNeeded, 0, 1), 1)
+	xpText.Text = string.format("LEVEL %d    XP %d / %d", stats.Level or 0, xp, xpNeeded)
 	-- Evolution section follows the equipped weapon
 	local equippedDef = Weapons.Defs[stats.Equipped]
 	local evo = (stats.Evolutions or {})[stats.Equipped]
@@ -1664,6 +1757,8 @@ local function refreshPhase()
 		phaseLabel.Text = string.format("Enemies left: %d", alive)
 	elseif phase == "intermission" then
 		phaseLabel.Text = string.format("Shop open  %ds", t)
+	elseif phase == "chest" then
+		phaseLabel.Text = "Opening run chest"
 	elseif phase == "over" then
 		phaseLabel.Text = string.format("Restarting in %d", t)
 		summaryFooter.Text = string.format("Play again in %d", t)
@@ -1671,7 +1766,7 @@ local function refreshPhase()
 end
 onState("Phase", function(phase)
 	refreshPhase()
-	refreshCards() -- the cards only show during the intermission
+	refreshCards()
 	onDailyPhase(phase) -- the daily reward strip never covers a fight
 	if phase ~= "over" then
 		summaryPanel.Visible = false
@@ -1797,14 +1892,25 @@ Remotes.FX.OnClientEvent:Connect(function(kind: string, data: any)
 end)
 
 CrateResult.OnClientEvent:Connect(
-	function(id: string, rarity: string, isNew: boolean, gemsBack: number, crateKey: string)
+	function(
+		id: string,
+		rarity: string,
+		isNew: boolean,
+		gemsBack: number,
+		crateKey: string,
+		revealContext: string?
+	)
 		local def = Weapons.Defs[id]
 		local c = Weapons.RarityColor[rarity]
 		banner.TextColor3 = Color3.fromRGB(c[1], c[2], c[3])
 		local msg = if isNew
 			then string.format("%s: %s!", rarity, def.Name)
 			else string.format("Duplicate %s: +%d Gems", def.Name, gemsBack)
-		flash(banner, msg, 4)
+		flash(
+			banner,
+			if revealContext == "RunEnd" then "CHEST OPEN  " .. msg else msg,
+			if revealContext == "RunEnd" then LevelUp.ChestRevealSeconds else 4
+		)
 		-- crates we did not click open here (Robux receipts, the free first-boss crate) sound
 		-- now; a Gem crate we asked for sounds once, when its request comes back
 		if not (crateKey == "Gem" and gemCratePending) then

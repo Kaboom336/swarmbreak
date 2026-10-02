@@ -15,6 +15,7 @@ local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 local ProfileSchema = require(ReplicatedStorage.Shared.ProfileSchema)
 local Goals = require(ReplicatedStorage.Shared.Goals)
 local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
+local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Quests = require(ReplicatedStorage.Shared.Quests)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
@@ -38,6 +39,10 @@ export type Run = {
 	Passes: { [string]: boolean },
 	Boosts: WaveRewards.Boosts, -- wave reward cards picked this run
 	Offer: { string }, -- card ids on offer right now ({} when there is nothing to pick)
+	OfferRarities: { [string]: string },
+	XP: number,
+	Level: number,
+	PendingLevels: number,
 	DailyPopup: Daily.Popup?, -- today's daily reward, once paid; kept for the session so no push loses it
 	StartedAt: number,
 	Wave: number,
@@ -83,6 +88,10 @@ local function push(plr: Player)
 			Passes = r.Passes,
 			Boosts = r.Boosts,
 			Offer = r.Offer,
+			OfferRarities = r.OfferRarities,
+			XP = r.XP,
+			Level = r.Level,
+			XPNeeded = LevelUp.requiredXp(r.Level + 1),
 			Gems = p.Gems,
 			Shards = p.Shards,
 			Evolutions = p.Evolutions,
@@ -116,6 +125,10 @@ function PlayerData.get(plr: Player): Run
 			Passes = {},
 			Boosts = WaveRewards.newBoosts(),
 			Offer = {},
+			OfferRarities = {},
+			XP = 0,
+			Level = 0,
+			PendingLevels = 0,
 			DailyPopup = nil,
 			StartedAt = 0,
 			Wave = 0,
@@ -203,9 +216,14 @@ local function progressQuest(plr: Player, stat: string, amount: number)
 	Profile.markDirty(plr)
 end
 
-function PlayerData.addKill(plr: Player, boss: boolean?)
+function PlayerData.addKill(plr: Player, boss: boolean?, enemyType: string?)
 	local r = PlayerData.get(plr)
 	r.Kills += 1
+	local newLevel, newXp, levelsGained =
+		LevelUp.advance(r.Level, r.XP, LevelUp.xpForKill(enemyType or "Walker"))
+	r.Level = newLevel
+	r.XP = newXp
+	r.PendingLevels += levelsGained
 	local p = Profile.get(plr)
 	local weapon = Weapons.Defs[p.Equipped] or Weapons.Defs.Starter
 	local _, _, _, _, healOnKill = Kits.mods(p.Kit, weapon.Kind)
@@ -216,6 +234,9 @@ function PlayerData.addKill(plr: Player, boss: boolean?)
 	progressQuest(plr, "Kills", 1)
 	if boss then
 		progressQuest(plr, "BossKills", 1)
+	end
+	if #r.Offer == 0 and r.PendingLevels > 0 then
+		PlayerData.offerLevelReward(plr)
 	end
 	push(plr)
 end
@@ -300,7 +321,12 @@ end
 -- Open one crate (Weapons.Crates key) that is already paid for: roll a rarity (Robux crates
 -- also move the pity counter), pick a weapon of that rarity, grant it, and pay Gems back for
 -- a duplicate. The client hears about it over CrateResult. Shop and WaveManager both call this.
-function PlayerData.openCrate(plr: Player, crateKey: string)
+function PlayerData.openCrate(
+	plr: Player,
+	crateKey: string,
+	revealContext: string?,
+	usePity: boolean?
+)
 	local crate = Weapons.Crates[crateKey]
 	if not crate then
 		return
@@ -309,7 +335,7 @@ function PlayerData.openCrate(plr: Player, crateKey: string)
 	progressQuest(plr, "Crates", 1)
 	local p = Profile.get(plr)
 	local rarity = Weapons.rollRarity(rng:NextNumber(), crate.Odds)
-	if crate.Pity then
+	if crate.Pity or usePity then
 		rarity = Weapons.applyPity(rarity, p.CratesSinceLegendary)
 		p.CratesSinceLegendary = Weapons.nextPityCount(rarity, p.CratesSinceLegendary)
 		Profile.markDirty(plr)
@@ -322,7 +348,7 @@ function PlayerData.openCrate(plr: Player, crateKey: string)
 		gemsBack = Weapons.DuplicateGems[rarity]
 		PlayerData.addGems(plr, gemsBack)
 	end
-	CrateResult:FireClient(plr, id, rarity, isNew, gemsBack, crateKey)
+	CrateResult:FireClient(plr, id, rarity, isNew, gemsBack, crateKey, revealContext)
 	sendTelemetry(plr, "CrateOpened", {
 		crate = crateKey,
 		rarity = rarity,
@@ -510,17 +536,26 @@ function PlayerData.chooseKit(plr: Player, id: string): (boolean, string)
 	return true, ""
 end
 
--- ---------- wave rewards (pick 1 of 3 on a wave clear) ----------
--- Roll this player's three cards for the intermission after `wave` and send them down.
-function PlayerData.offerRewards(plr: Player, wave: number)
+-- ---------- level-up rewards (pick 1 of 3 after earning enough kill XP) ----------
+function PlayerData.offerLevelReward(plr: Player)
 	local r = PlayerData.get(plr)
-	progressQuest(plr, "Wave", wave)
-	r.Offer = WaveRewards.offer(
-		wave,
+	if #r.Offer > 0 or r.PendingLevels <= 0 then
+		return
+	end
+	local offer = LevelUp.offer(
+		r.Level,
 		r.Boosts.Stacks,
 		PlayerData.equippedWeapon(plr).Kind,
+		{ rng:NextNumber(), rng:NextNumber(), rng:NextNumber() },
 		{ rng:NextNumber(), rng:NextNumber(), rng:NextNumber() }
 	)
+	r.Offer = {}
+	r.OfferRarities = {}
+	for _, card in offer do
+		table.insert(r.Offer, card.Id)
+		r.OfferRarities[card.Id] = card.Rarity
+	end
+	r.PendingLevels -= 1
 	push(plr)
 end
 
@@ -535,6 +570,7 @@ function PlayerData.pickReward(plr: Player, id: string): (boolean, string)
 	end
 	local _, healNow = WaveRewards.apply(r.Boosts, id)
 	r.Offer = {}
+	r.OfferRarities = {}
 	PlayerData.completeTutorial(plr, "Pick")
 	progressQuest(plr, "WaveRewards", 1)
 	applyStats(plr)
@@ -547,6 +583,7 @@ function PlayerData.pickReward(plr: Player, id: string): (boolean, string)
 	if WaveRewards.Defs[id].Kind == "Weapon" and PlayerData.OnEquipChanged then
 		PlayerData.OnEquipChanged(plr) -- rebuilds the orbit for Extra Orb
 	end
+	PlayerData.offerLevelReward(plr)
 	sendTelemetry(plr, "CardPicked", {
 		wave = r.Wave,
 		card = id,
@@ -556,10 +593,10 @@ function PlayerData.pickReward(plr: Player, id: string): (boolean, string)
 	return true, ""
 end
 
--- Intermission over: whoever has not picked takes the first card, so nobody misses a reward.
+-- Intermission over: resolve every queued level so nobody loses earned picks.
 function PlayerData.autoPick(plr: Player)
 	local r = PlayerData.get(plr)
-	if #r.Offer > 0 then
+	while #r.Offer > 0 do
 		PlayerData.pickReward(plr, r.Offer[1])
 	end
 end
@@ -577,6 +614,10 @@ function PlayerData.resetRun(plr: Player)
 	end
 	r.Boosts = WaveRewards.newBoosts()
 	r.Offer = {}
+	r.OfferRarities = {}
+	r.XP = 0
+	r.Level = 0
+	r.PendingLevels = 0
 	r.StartedAt = os.clock()
 	r.Wave = 0
 	r.Active = true
