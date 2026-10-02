@@ -1,47 +1,46 @@
 {
- "className": "Part",
- "properties": {
-  "Name": "Floor",
-  "Anchored": true,
-  "Size": [
-   160,
-   2,
-   160
-  ],
-  "Color": [
-   0.35,
-   0.4,
-   0.35
-  ],
-  "Material": "SmoothPlastic",
-  "TopSurface": "Smooth",
-  "BottomSurface": "Smooth",
-  "CFrame": {
-   "CFrame": {
-    "position": [
-     0,
-     0,
-     0
+  "className": "Part",
+  "properties": {
+    "Anchored": true,
+    "BottomSurface": "Smooth",
+    "CFrame": {
+      "CFrame": {
+        "orientation": [
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "Color": [
+      0.1568627450980392,
+      0.16470588235294117,
+      0.19607843137254902
     ],
-    "orientation": [
-     [
-      1,
-      0,
-      0
-     ],
-     [
-      0,
-      1,
-      0
-     ],
-     [
-      0,
-      0,
-      1
-     ]
-    ]
-   }
+    "Material": "Slate",
+    "Name": "Floor",
+    "Size": [
+      160,
+      2,
+      160
+    ],
+    "TopSurface": "Smooth"
   }
- },
- "children": []
 }
