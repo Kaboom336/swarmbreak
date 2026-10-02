@@ -157,7 +157,7 @@ function HudLayout.rects(
 		shop = shop,
 		hotbar = hotbar,
 		health = health,
-<<<<<<< HEAD
+		xp = xp,
 		-- Compatibility names used by older HUD code.
 		wave = waveTimer,
 		quest = quests,
@@ -174,9 +174,6 @@ function HudLayout.touchTargets(viewportX: number, viewportY: number): { [string
 		rewardCard1 = { x = rects.rewardCards.x, y = rects.rewardCards.y, w = 184, h = 180 },
 		rewardCard2 = { x = rects.rewardCards.x + 208, y = rects.rewardCards.y, w = 184, h = 180 },
 		rewardCard3 = { x = rects.rewardCards.x + 416, y = rects.rewardCards.y, w = 184, h = 180 },
-=======
-		xp = xp,
->>>>>>> codex/w9-card-cadence-xp
 	}
 end
 

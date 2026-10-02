@@ -12,20 +12,6 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui") :: PlayerGui
 local numberState: Feel.NumberState = {}
 
-<<<<<<< HEAD
-HitMarker.OnClientEvent:Connect(
-	function(pos: Vector3, damage: number, killed: boolean, critical: boolean?)
-		local isCritical = critical == true
-		local event: Feel.EventName = if killed
-			then "Kill"
-			else if isCritical then "Crit" else "Hit"
-		if killed then
-			local soundName = SfxMap.forEvent("enemy kill")
-			if soundName then
-				ClientFX.sound(soundName)
-			end
-		end
-=======
 local feedbackGui = Instance.new("ScreenGui")
 feedbackGui.Name = "HitFeedback"
 feedbackGui.ResetOnSpawn = false
@@ -111,7 +97,6 @@ HitMarker.OnClientEvent:Connect(
 		if killed then
 			flyCoinToCounter(pos)
 		end
->>>>>>> codex/w9-hit-feedback
 		ClientFX.shakeFor(event, "Full")
 		local allowed: boolean
 		numberState, allowed = Feel.allowNumber(numberState, os.clock())
@@ -136,21 +121,6 @@ HitMarker.OnClientEvent:Connect(
 		t.BackgroundTransparency = 1
 		t.Font = Enum.Font.GothamBlack
 		t.TextSize = math.round(18 * budget.NumberScale)
-<<<<<<< HEAD
-		t.TextColor3 = if isCritical
-			then Color3.fromRGB(255, 105, 220)
-			else if killed then Color3.fromRGB(255, 80, 80) else Color3.fromRGB(255, 240, 150)
-		t.TextStrokeTransparency = 0.3
-		t.Text = if isCritical then "CRIT " .. tostring(damage) else tostring(damage)
-		t.Parent = bb
-		TweenService:Create(bb, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {
-			StudsOffset = Vector3.new(0, 3, 0),
-		}):Play()
-		TweenService
-			:Create(t, TweenInfo.new(0.6), { TextTransparency = 1, TextStrokeTransparency = 1 })
-			:Play()
-		Debris:AddItem(anchor, 0.7)
-=======
 		t.TextColor3 = if killed
 			then Color3.fromRGB(255, 210, 60)
 			else if isCritical then Color3.fromRGB(255, 150, 60) else Color3.new(1, 1, 1)
@@ -166,6 +136,5 @@ HitMarker.OnClientEvent:Connect(
 			{ TextTransparency = 1, TextStrokeTransparency = 1 }
 		):Play()
 		Debris:AddItem(anchor, Feel.DamageNumberSeconds + 0.1)
->>>>>>> codex/w9-hit-feedback
 	end
 )

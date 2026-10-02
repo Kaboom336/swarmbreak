@@ -26,13 +26,9 @@ local Settings = require(ReplicatedStorage.Shared.Settings)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
 local HudLayout = require(ReplicatedStorage.Shared.HudLayout)
 local Invite = require(ReplicatedStorage.Shared.Invite)
-<<<<<<< HEAD
 local UiTheme = require(ReplicatedStorage.Shared.UiTheme)
-local ClientFX = require(script.Parent.ClientFX)
-local UiKit = require(script.Parent.UiKit)
-=======
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
->>>>>>> origin/integrate/wave8
+local UiKit = require(script.Parent.UiKit)
 
 local player = Players.LocalPlayer
 local gui = player:WaitForChild("PlayerGui")
@@ -61,22 +57,13 @@ local function onState(name: string, fn: (any) -> ())
 	fn(v.Value)
 end
 
-<<<<<<< HEAD
-local WHITE = Color3.new(1, 1, 1)
-local PANEL = Color3.fromRGB(18, 18, 26)
-local BUTTON = Color3.fromRGB(50, 90, 160)
-local OK = Color3.fromRGB(40, 160, 80)
-local BAD = Color3.fromRGB(160, 40, 40)
-local GREY = Color3.fromRGB(60, 60, 70) -- a button you cannot afford yet
-local finalHud = {}
-=======
 local WHITE = ClientFX.c3(UiTheme.Colors.Text)
 local PANEL = ClientFX.c3(UiTheme.Colors.Panel)
 local BUTTON = ClientFX.c3(UiTheme.Colors.Button)
 local OK = ClientFX.c3(UiTheme.Colors.Success)
 local BAD = ClientFX.c3(UiTheme.Colors.Danger)
 local GREY = ClientFX.c3(UiTheme.Colors.Disabled) -- a button you cannot afford yet
->>>>>>> codex/w9-ui-kit
+local finalHud = {}
 
 local screen = Instance.new("ScreenGui")
 screen.Name = "Hud"
@@ -594,7 +581,6 @@ local function flash(label: TextLabel, str: string, seconds: number)
 	end)
 end
 
-<<<<<<< HEAD
 function finalHud.showAreaWarning(position: Vector3, radius: number, duration: number)
 	local warning = Instance.new("Part")
 	warning.Name = "AreaWarning"
@@ -620,7 +606,7 @@ function finalHud.showAreaWarning(position: Vector3, radius: number, duration: n
 		warning:Destroy()
 	end)
 end
-=======
+
 local goalBannerToken = 0
 local function showSpawnGoal()
 	goalBannerToken += 1
@@ -635,7 +621,6 @@ player.CharacterAdded:Connect(showSpawnGoal)
 if player.Character then
 	task.defer(showSpawnGoal)
 end
->>>>>>> codex/w9-card-cadence-xp
 
 -- Latest stats snapshot from the server (filled by StatsChanged below)
 local stats: any
@@ -672,19 +657,6 @@ cardLayout.SortOrder = Enum.SortOrder.LayoutOrder
 cardLayout.Padding = UDim.new(0, 12)
 cardLayout.Parent = cardPanel
 
-<<<<<<< HEAD
-local CARD_STRIPE: { [string]: Color3 } = {
-	Stat = ClientFX.c3(Theme.NeonTeal),
-	Weapon = ClientFX.c3(Theme.NeonAmber),
-	Utility = OK,
-}
-finalHud.CardRarity = {
-	Stat = "Common",
-	Utility = "Rare",
-	Weapon = "Epic",
-}
-=======
->>>>>>> codex/w9-card-cadence-xp
 local cardIds: { string } = {} -- ids on offer in card order (key 1 = first card)
 local cardKey = "" -- the offer the cards were last built from
 local cardPending = false -- our pick is in flight
@@ -731,65 +703,40 @@ local function rebuildCards(offer: { string }, rarities: { [string]: string })
 			local i = #cardIds
 			local b = UiKit.Button(cardPanel, "", UDim2.new(0, 184, 0, 180))
 			b.Name = "Card" .. i
-<<<<<<< HEAD
 			local targetSize = UDim2.new(0, 184, 0, 180)
 			b.Size = UDim2.new(0, 0, 0, 180)
 			b.Text = ""
 			b.BackgroundColor3 = PANEL
 			b.BorderSizePixel = 0
-			b.AutoButtonColor = true
 			b.Active = false
 			b.ClipsDescendants = true
 			b.LayoutOrder = i
-			b.Parent = cardPanel
-			local corner = Instance.new("UICorner")
-			corner.CornerRadius = UDim.new(0, 10)
-			corner.Parent = b
-<<<<<<< HEAD
-			local rarity = finalHud.CardRarity[def.Kind] or "Common"
-			local rarityColor = ClientFX.c3(Theme.Rarity[rarity])
-			local outline = Instance.new("UIStroke")
-			outline.Color = rarityColor
-			outline.Thickness = 2
-			outline.Parent = b
-=======
-			b.BackgroundColor3 = PANEL
-			b.BorderSizePixel = 0
-			b.LayoutOrder = i
->>>>>>> codex/w9-ui-kit
-			local stripe = Instance.new("Frame") -- 4 px top stripe coloured by card kind
-=======
 			local rarity = rarities[id] or "Common"
-			local rarityColor = Theme.Rarity[rarity] or Theme.Rarity.Common
+			local rarityColor = ClientFX.c3(Theme.Rarity[rarity] or Theme.Rarity.Common)
+			local outline = b:FindFirstChild("Outline")
+			if outline and outline:IsA("UIStroke") then
+				outline.Color = rarityColor
+				outline.Thickness = 2
+			end
 			local stripe = Instance.new("Frame") -- rarity colour reads before the card text
->>>>>>> codex/w9-card-cadence-xp
 			stripe.Name = "Stripe"
 			stripe.Size = UDim2.new(1, -20, 0, 4)
 			stripe.Position = UDim2.new(0, 10, 0, 0)
-			stripe.BackgroundColor3 = ClientFX.c3(rarityColor)
+			stripe.BackgroundColor3 = rarityColor
 			stripe.BorderSizePixel = 0
 			stripe.Parent = b
-<<<<<<< HEAD
-			local rarityTag = text(
+			local rarityLabel = text(
 				b,
 				"Rarity",
-				UDim2.new(0, 10, 0, 10),
+				UDim2.new(0, 10, 0, 12),
 				UDim2.new(1, -20, 0, 18),
 				string.upper(rarity),
 				11
 			)
-			rarityTag.TextColor3 = rarityColor
-			text(b, "Label", UDim2.new(0, 10, 0, 30), UDim2.new(1, -20, 0, 26), def.Label, 18)
-			local blurb =
-				text(b, "Blurb", UDim2.new(0, 10, 0, 62), UDim2.new(1, -20, 0, 78), def.Blurb, 13)
-=======
-			local rarityLabel =
-				text(b, "Rarity", UDim2.new(0, 10, 0, 12), UDim2.new(1, -20, 0, 18), rarity, 11)
-			rarityLabel.TextColor3 = ClientFX.c3(rarityColor)
+			rarityLabel.TextColor3 = rarityColor
 			text(b, "Label", UDim2.new(0, 10, 0, 32), UDim2.new(1, -20, 0, 26), def.Label, 18)
 			local blurb =
 				text(b, "Blurb", UDim2.new(0, 10, 0, 64), UDim2.new(1, -20, 0, 76), def.Blurb, 13)
->>>>>>> codex/w9-card-cadence-xp
 			blurb.Font = Enum.Font.Gotham
 			blurb.TextWrapped = true
 			blurb.TextYAlignment = Enum.TextYAlignment.Top
@@ -1613,12 +1560,7 @@ local function refreshStats()
 	finalHud.CoinsLabel.Text = string.format("Coins %d", stats.Coins or 0)
 	finalHud.GemsLabel.Text = string.format("Gems %d", stats.Gems or 0)
 	statsLabel.Text = string.format(
-<<<<<<< HEAD
-		"Kills %d    Dash %d\nShards  Nature %d  Tech %d  Lightning %d  Dark %d",
-=======
-		"Coins %d    Kills %d    Level %d    Dash %d\nGems %d    Shards  Nature %d  Tech %d  Lightning %d  Dark %d",
-		stats.Coins,
->>>>>>> codex/w9-card-cadence-xp
+		"Kills %d    Level %d    Dash %d\nShards  Nature %d  Tech %d  Lightning %d  Dark %d",
 		stats.Kills,
 		stats.Level or 0,
 		dash,
