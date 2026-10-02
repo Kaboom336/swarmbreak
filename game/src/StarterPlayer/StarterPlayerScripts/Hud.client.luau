@@ -27,7 +27,7 @@ local HudLayout = require(ReplicatedStorage.Shared.HudLayout)
 local DeathFlow = require(ReplicatedStorage.Shared.DeathFlow)
 local UiTheme = require(ReplicatedStorage.Shared.UiTheme)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
-local UiKit = require(script.Parent.UiKit)
+local UiKit = require(script.Parent:WaitForChild("UiKit"))
 
 local player = Players.LocalPlayer
 local gui = player:WaitForChild("PlayerGui")

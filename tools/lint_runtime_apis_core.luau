@@ -3,6 +3,7 @@
 export type Hit = {
 	line: number,
 	api: string,
+	message: string?,
 }
 
 local RuntimeApis = {}
@@ -44,6 +45,35 @@ local function writesToCoreGui(line: string): boolean
 	return false
 end
 
+local function isStarterPlayerScriptsPath(path: string): boolean
+	local normalized = path:gsub("\\", "/")
+	for _, prefix in
+		{
+			"game/src/StarterPlayer/StarterPlayerScripts/",
+			"src/StarterPlayer/StarterPlayerScripts/",
+		}
+	do
+		if normalized:sub(1, #prefix) == prefix or normalized:find("/" .. prefix, 1, true) then
+			return true
+		end
+	end
+	return false
+end
+
+local function directParentRequire(line: string): string?
+	local child = line:match("require%s*%(%s*script%s*%.%s*Parent%s*%.%s*([%a_][%w_]*)%s*%)")
+	if not child then
+		child = line:match('require%s*%(%s*script%s*%.%s*Parent%s*%[%s*"([%a_][%w_]*)"%s*%]%s*%)')
+	end
+	if not child then
+		child = line:match("require%s*%(%s*script%s*%.%s*Parent%s*%[%s*'([%a_][%w_]*)'%s*%]%s*%)")
+	end
+	if child then
+		return "require(script.Parent." .. child .. ")"
+	end
+	return nil
+end
+
 function RuntimeApis.matchLine(line: string): { string }
 	if line:match("^%s*%-%-") then
 		return {}
@@ -77,14 +107,25 @@ function RuntimeApis.matchLine(line: string): { string }
 	return hits
 end
 
-function RuntimeApis.scanSource(source: string): { Hit }
+function RuntimeApis.scanSource(source: string, path: string?): { Hit }
 	local hits = {}
 	local lineNumber = 0
+	local checkParentRequires = path ~= nil and isStarterPlayerScriptsPath(path)
 	for line in (source .. "\n"):gmatch("(.-)\n") do
 		lineNumber += 1
 		line = line:gsub("\r$", "")
 		for _, api in RuntimeApis.matchLine(line) do
 			table.insert(hits, { line = lineNumber, api = api })
+		end
+		if checkParentRequires and not line:match("^%s*%-%-") then
+			local parentRequire = directParentRequire(line)
+			if parentRequire then
+				table.insert(hits, {
+					line = lineNumber,
+					api = parentRequire,
+					message = parentRequire .. " must use WaitForChild",
+				})
+			end
 		end
 	end
 	return hits

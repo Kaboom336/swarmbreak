@@ -51,11 +51,15 @@ local files = walk(sourceRoot, {})
 table.sort(files)
 for _, path in files do
 	local displayPath = if sourceRoot == "src" then "game/" .. path else path
-	for _, hit in RuntimeApis.scanSource(fs.readFile(path)) do
+	for _, hit in RuntimeApis.scanSource(fs.readFile(path), displayPath) do
 		local location = displayPath .. ":" .. hit.line
 		if not allowlist[location] then
 			failures += 1
-			print(string.format("%s: %s is plugin-only", location, hit.api))
+			if hit.message then
+				print(string.format("%s: %s", location, hit.message))
+			else
+				print(string.format("%s: %s is plugin-only", location, hit.api))
+			end
 		end
 	end
 end

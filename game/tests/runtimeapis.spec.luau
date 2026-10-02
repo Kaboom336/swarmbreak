@@ -45,10 +45,36 @@ test("UserSettings is runtime-safe", function()
 	eq(#RuntimeApis.matchLine('UserSettings():GetService("UserGameSettings")'), 0)
 end)
 
+test("StarterPlayerScripts requires script siblings with WaitForChild", function()
+	local path = "game/src/StarterPlayer/StarterPlayerScripts/Client.client.luau"
+	local samples = {
+		"local Module = require(script.Parent.X)",
+		'local Module = require(script.Parent["X"])',
+	}
+
+	for _, sample in samples do
+		local hits = RuntimeApis.scanSource(sample, path)
+		eq(#hits, 1)
+		eq(hits[1].api, "require(script.Parent.X)")
+		eq(hits[1].message, "require(script.Parent.X) must use WaitForChild")
+	end
+end)
+
+test("StarterPlayerScripts WaitForChild requires are allowed", function()
+	local path = "game/src/StarterPlayer/StarterPlayerScripts/Client.client.luau"
+	local source = 'local Module = require(script.Parent:WaitForChild("X"))'
+	eq(#RuntimeApis.scanSource(source, path), 0)
+end)
+
+test("script sibling requires outside StarterPlayerScripts are allowed", function()
+	local path = "game/src/ServerScriptService/Server.server.luau"
+	eq(#RuntimeApis.scanSource("local Module = require(script.Parent.X)", path), 0)
+end)
+
 test("game source contains no plugin-only APIs", function()
 	local hits = {}
 	for _, path in walk("src", {}) do
-		for _, hit in RuntimeApis.scanSource(fs.readFile(path)) do
+		for _, hit in RuntimeApis.scanSource(fs.readFile(path), path) do
 			table.insert(hits, string.format("%s:%d: %s", path, hit.line, hit.api))
 		end
 	end
