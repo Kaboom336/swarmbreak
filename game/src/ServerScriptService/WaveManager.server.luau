@@ -90,7 +90,7 @@ local function publishMutation()
 	workspace.Gravity = mutation.Gravity
 end
 
-local function randomSpawnCFrame(): CFrame
+local function spawnPortalCFrames(count: number): { CFrame }
 	local parts: { BasePart } = {}
 	local portalPositions = {}
 	for _, child in spawns:GetChildren() do
@@ -109,8 +109,19 @@ local function randomSpawnCFrame(): CFrame
 		end
 	end
 
-	local p = parts[SpawnPicker.pick(portalPositions, playerPositions, rng:NextNumber())]
-	return p.CFrame + Vector3.new(0, 4, 0)
+	local selected: { CFrame } = {}
+	local firstIndex = SpawnPicker.pick(portalPositions, playerPositions, rng:NextNumber())
+	table.insert(selected, parts[firstIndex].CFrame + Vector3.new(0, 4, 0))
+	table.remove(parts, firstIndex)
+	if count > 1 and #parts > 0 then
+		local second = parts[rng:NextInteger(1, #parts)]
+		table.insert(selected, second.CFrame + Vector3.new(0, 4, 0))
+	end
+	return selected
+end
+
+local function randomSpawnCFrame(): CFrame
+	return spawnPortalCFrames(1)[1]
 end
 
 local function spawnEnemy(typeName: string, cf: CFrame?)
@@ -271,30 +282,52 @@ local function runWave(wave: number): boolean
 	if bossName then
 		BossIntro:FireAllClients(Enemies.Defs[bossName].Name, Config.BossIntroSeconds)
 		task.wait(Config.BossIntroSeconds)
-		trackBoss(spawnEnemy(bossName, bossSpawn.CFrame + Vector3.new(0, 6, 0)))
 	end
 
 	GameState.set("Phase", "fighting")
 	protectPlayers()
-	local mutationId = todaysMutation()
-	local count = if wave == 1
-		then WaveTable.enemyCount(wave)
-		else math.floor(
+	local composition = WaveTable.Compositions[wave]
+	if not composition then
+		composition = {}
+		local mutationId = todaysMutation()
+		local count = math.floor(
 			Mutations.apply({ Spawn = WaveTable.enemyCount(wave) }, mutationId).Spawn + 0.5
 		)
-	local weights = Enemies.weightsForWave(wave)
-	local waveOneSpawn = if wave == 1 then randomSpawnCFrame() else nil
-	for _ = 1, count do
-		while EnemyAI.aliveCount() >= Config.MaxAlive do
+		local weights = Enemies.weightsForWave(wave)
+		for _ = 1, count do
+			local enemyName = Enemies.pickFromWeights(weights, rng:NextNumber())
+			composition[enemyName] = (composition[enemyName] or 0) + 1
+		end
+		if bossName then
+			composition[bossName] = (composition[bossName] or 0) + 1
+		end
+	end
+
+	for _, pack in WaveTable.packs(composition) do
+		while not WaveTable.packFits(EnemyAI.aliveCount(), pack.Size, Config.MaxAlive) do
 			if not anyPlayersAlive() then
 				return false
 			end
 			task.wait(0.5)
 		end
-		local at = if waveOneSpawn
-			then waveOneSpawn * CFrame.new(rng:NextNumber(-10, 10), 0, rng:NextNumber(-10, 10))
-			else nil
-		spawnEnemy(Enemies.pickFromWeights(weights, rng:NextNumber()), at)
+		local portals = spawnPortalCFrames(pack.PortalCount)
+		local portalIndex = 1
+		for enemyName, amount in pack.Composition do
+			for _ = 1, amount do
+				local at = if Enemies.Defs[enemyName].Boss
+					then bossSpawn.CFrame + Vector3.new(0, 6, 0)
+					else portals[portalIndex] * CFrame.new(
+						rng:NextNumber(-4, 4),
+						0,
+						rng:NextNumber(-4, 4)
+					)
+				local model = spawnEnemy(enemyName, at)
+				if Enemies.Defs[enemyName].Boss then
+					trackBoss(model)
+				end
+				portalIndex = portalIndex % #portals + 1
+			end
+		end
 		local spawnDelay = Difficulty.apply(
 			{ SpawnDelay = rng:NextNumber(Config.SpawnGapMin, Config.SpawnGapMax) },
 			currentDifficultyId

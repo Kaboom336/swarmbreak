@@ -66,9 +66,9 @@ test("every fifth wave has one boss", function()
 	end
 end)
 
-test("wave 1 stays eight Walkers", function()
+test("wave 1 is sixteen Walkers", function()
 	local first = WaveTable.Compositions[1]
-	eq(first.Walker, 8, "Walker count")
+	eq(first.Walker, 16, "Walker count")
 	for name in first do
 		eq(name, "Walker", "only enemy type")
 	end
