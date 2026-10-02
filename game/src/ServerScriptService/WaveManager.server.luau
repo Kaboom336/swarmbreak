@@ -217,7 +217,7 @@ local function runWave(wave: number): boolean
 
 	local bossName = Enemies.bossForWave(wave)
 	if bossName then
-		BossIntro:FireAllClients(Enemies.Defs[bossName].Name, Config.BossIntroSeconds)
+		BossIntro:FireAllClients(bossName)
 		task.wait(Config.BossIntroSeconds)
 		trackBoss(spawnEnemy(bossName, bossSpawn.CFrame + Vector3.new(0, 6, 0)))
 	end
