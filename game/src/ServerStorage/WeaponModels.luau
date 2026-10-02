@@ -2,10 +2,12 @@
 -- Builds a held weapon model from parts, colored by rarity, and welds it to the right hand.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local Players = game:GetService("Players")
 local Weapons = require(ReplicatedStorage.Shared.Weapons)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 local ModelKey = require(ReplicatedStorage.Shared.ModelKey)
+local WeaponPose = require(ReplicatedStorage.Shared.WeaponPose)
 local ModelLibrary = require(ServerStorage.ModelLibrary)
 
 local WeaponModels = {}
@@ -266,6 +268,12 @@ function WeaponModels.build(id: string): Model
 		if body and body:IsA("BasePart") then
 			imported.Name = "Weapon"
 			imported.PrimaryPart = body
+			local def = Weapons.Defs[id] or Weapons.Defs.Starter
+			local extents = imported:GetExtentsSize()
+			local length = math.max(extents.X, extents.Y, extents.Z)
+			if length > 0.001 then
+				imported:ScaleTo(WeaponPose.targetLength(id, def.Kind) / length)
+			end
 			for _, descendant in imported:GetDescendants() do
 				if descendant:IsA("BasePart") and descendant ~= body then
 					local weld = Instance.new("WeldConstraint")
@@ -351,14 +359,49 @@ function WeaponModels.applyEvolution(model: Model, evo: Evolutions.WeaponEvo?)
 end
 
 -- Attach to the character's right hand (R15) or right arm (R6).
+local appearanceConnections: { [Player]: RBXScriptConnection } = {}
+local equippedByPlayer: { [Player]: { Id: string, Evo: Evolutions.WeaponEvo? } } = {}
+local attachRequest: { [Model]: number } = {}
+
+local function handName(char: Model): string
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	return if humanoid and humanoid.RigType == Enum.HumanoidRigType.R6
+		then "Right Arm"
+		else "RightHand"
+end
+
+local function rememberAppearanceLoad(char: Model, id: string, evo: Evolutions.WeaponEvo?)
+	local player = Players:GetPlayerFromCharacter(char)
+	if not player then
+		return
+	end
+	equippedByPlayer[player] = { Id = id, Evo = evo }
+	if appearanceConnections[player] then
+		return
+	end
+	appearanceConnections[player] = player.CharacterAppearanceLoaded:Connect(function(loadedChar)
+		local equipped = equippedByPlayer[player]
+		if loadedChar == player.Character and equipped then
+			task.spawn(WeaponModels.attach, loadedChar, equipped.Id, equipped.Evo)
+		end
+	end)
+end
+
 function WeaponModels.attach(char: Model, id: string, evo: Evolutions.WeaponEvo?)
+	rememberAppearanceLoad(char, id, evo)
+	local request = (attachRequest[char] or 0) + 1
+	attachRequest[char] = request
+
+	local expectedHand = handName(char)
+	local hand = char:FindFirstChild(expectedHand)
+		or char:WaitForChild(expectedHand, 5)
+		or char:FindFirstChild(if expectedHand == "RightHand" then "Right Arm" else "RightHand")
+	if not hand or not hand:IsA("BasePart") or attachRequest[char] ~= request then
+		return
+	end
 	local old = char:FindFirstChild("Weapon")
 	if old then
 		old:Destroy()
-	end
-	local hand = (char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")) :: BasePart?
-	if not hand then
-		return
 	end
 	local model = WeaponModels.build(id)
 	WeaponModels.applyEvolution(model, evo)
@@ -373,5 +416,14 @@ function WeaponModels.attach(char: Model, id: string, evo: Evolutions.WeaponEvo?
 	w.Parent = hand
 	model.Parent = char
 end
+
+Players.PlayerRemoving:Connect(function(player)
+	local connection = appearanceConnections[player]
+	if connection then
+		connection:Disconnect()
+	end
+	appearanceConnections[player] = nil
+	equippedByPlayer[player] = nil
+end)
 
 return WeaponModels
