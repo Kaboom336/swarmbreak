@@ -3,6 +3,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local Feel = require(ReplicatedStorage.Shared.Feel)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local ClientFX = require(script.Parent.ClientFX)
 
@@ -66,9 +67,6 @@ handlers.shot = function(d)
 	ClientFX.sound(d.Sound, from)
 	if d.Shooter == player then
 		ClientFX.shake(0.6 + #d.Ends * 0.15)
-		if #d.Hits > 0 then
-			ClientFX.sound("Hit")
-		end
 	end
 end
 
@@ -100,9 +98,6 @@ handlers.swing = function(d)
 		ClientFX.burst(h, color, 14, 0.4, 16, 0.35, true)
 	end
 	ClientFX.sound(d.Sound, d.Origin)
-	if d.Shooter == player and #d.Hits > 0 then
-		ClientFX.sound("Hit")
-	end
 end
 
 local beamParts: { [Player]: BasePart } = {}
@@ -151,7 +146,7 @@ handlers.spit = function(d)
 end
 
 handlers.death = function(d)
-	local color = c3(d.Color)
+	local color = c3(Feel.deathBurstColor(d.EnemyType, d.Color))
 	local n = if d.Boss then 90 else 22
 	ClientFX.burst(
 		d.Position,

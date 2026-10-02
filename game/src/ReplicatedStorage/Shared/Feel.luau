@@ -22,6 +22,43 @@ Feel.Events = {
 } :: { [EventName]: EventBudget }
 
 Feel.NumberCapPerSecond = 20 -- placeholder
+Feel.HitFlashSeconds = 0.06 -- placeholder
+Feel.DamageNumberSeconds = 0.6 -- placeholder
+Feel.DamageNumberRiseStuds = 3 -- placeholder
+Feel.HitSparkScale = 0.35 -- placeholder
+Feel.CritSparkScale = 0.55 -- placeholder
+Feel.HitSparkCount = 12 -- placeholder
+Feel.CritSparkCount = 20 -- placeholder
+Feel.HitSparkSpeed = 18 -- placeholder
+Feel.CritSparkSpeed = 24 -- placeholder
+Feel.HitSparkSeconds = 0.35 -- placeholder
+Feel.HitFlashRange = 8 -- placeholder
+Feel.CoinFlightSeconds = 0.55 -- placeholder
+
+-- Each enemy gets its own readable crystal-burst accent on death.
+Feel.DeathBurstColors = {
+	Walker = { 255, 90, 120 },
+	Runner = { 255, 230, 120 },
+	Flyer = { 150, 120, 255 },
+	Tank = { 120, 255, 140 },
+	Spitter = { 190, 255, 90 },
+	Brute = { 255, 40, 40 },
+	Queen = { 255, 90, 255 },
+	Warden = { 90, 200, 255 },
+} :: { [string]: { number } }
+
+function Feel.eventFor(killed: boolean, critical: boolean): EventName
+	if killed then
+		return "Kill"
+	elseif critical then
+		return "Crit"
+	end
+	return "Hit"
+end
+
+function Feel.deathBurstColor(enemyType: string?, fallback: { number }): { number }
+	return if enemyType then Feel.DeathBurstColors[enemyType] or fallback else fallback
+end
 
 function Feel.allowNumber(state: NumberState, now: number): (NumberState, boolean)
 	local nextState: NumberState = {}
