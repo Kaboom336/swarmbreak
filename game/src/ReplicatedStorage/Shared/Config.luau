@@ -11,12 +11,15 @@ local Config = {
 	MaxAlive = 30,
 	SpawnGapMin = 0.5,
 	SpawnGapMax = 1.2,
+	SpawnProtectionSeconds = 2,
+	RestartDelay = 15, -- the run summary panel stays up this long
+
 	-- Infinite mode: every wave past NormalWaves scales enemies by this much (compounding).
 	InfiniteHealthScale = 1.08,
 	InfiniteDamageScale = 1.04,
 	InfiniteCountPerWave = 2,
 
-	StartHealth = 100,
+	StartHealth = 150,
 	CoinsBaseMultiplier = 1,
 	DoubleCoinsMultiplier = 2,
 
@@ -50,7 +53,7 @@ local Config = {
 		},
 		MaxHealth = {
 			Label = "Max HP",
-			Base = 100,
+			Base = 150,
 			PerLevel = 20,
 			BaseCost = 30,
 			CostGrowth = 1.35,
