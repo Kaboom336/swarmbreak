@@ -1,7 +1,18 @@
 --!strict
 -- Dresses the checked-in arena at start with neon strips, portals, and a boss gate.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
+local Fit = require(ReplicatedStorage.Shared.Fit)
+local ModelKey = require(ReplicatedStorage.Shared.ModelKey)
 local Theme = require(ReplicatedStorage.Shared.Theme)
+<<<<<<< HEAD
+=======
+local ModelLibrary = require(ServerStorage.ModelLibrary)
+local arenaLayoutModule = ReplicatedStorage.Shared:FindFirstChild("ArenaLayout")
+local ArenaLayout = if arenaLayoutModule and arenaLayoutModule:IsA("ModuleScript")
+	then require(arenaLayoutModule)
+	else nil
+>>>>>>> codex/w8-model-library
 
 local arena = workspace:WaitForChild("Arena")
 
@@ -30,6 +41,25 @@ local function part(
 	p.BottomSurface = Enum.SurfaceType.Smooth
 	p.Parent = arena
 	return p
+end
+
+local function placeArenaAsset(name: string, size: Vector3, cf: CFrame): boolean
+	local model = ModelLibrary.get(ModelKey.make("arena", name))
+	if not model then
+		return false
+	end
+	local bounds = model:GetExtentsSize()
+	model:ScaleTo(Fit.scaleFor({ bounds.X, bounds.Y, bounds.Z }, { size.X, size.Y, size.Z }))
+	model.Name = name
+	model:PivotTo(cf)
+	for _, descendant in model:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			descendant.Anchored = true
+			descendant.CanCollide = true
+		end
+	end
+	model.Parent = arena
+	return true
 end
 
 local function neonStrip(size: Vector3, cf: CFrame, color: Color3, range: number?)
@@ -148,6 +178,172 @@ local function wallsAndRails()
 	rail(CFrame.new(0, 14.2, 55), 30)
 end
 
+<<<<<<< HEAD
+=======
+-- Cover: crates, barrels, broken pillars, scattered around but off the spawn lines.
+local function props()
+	local metal = c3(Theme.Metal)
+	local dark = c3(Theme.MetalDark)
+	local amber = c3(Theme.NeonAmber)
+	if ArenaLayout then
+		for _, spec in ArenaLayout.Props do
+			local size = Vector3.new(spec.Width, spec.Height, spec.Depth)
+			local cf = CFrame.new(spec.x, 1 + spec.Height / 2, spec.z)
+			if not placeArenaAsset(spec.Kind, size, cf) then
+				part(
+					spec.Kind,
+					size,
+					cf,
+					if spec.Kind == "Crate" then metal else dark,
+					if spec.Kind == "Crate" then Enum.Material.DiamondPlate else Enum.Material.Metal
+				).CanCollide =
+					true
+			end
+		end
+		return
+	end
+	local spots = {
+		{ 20, 20 },
+		{ -22, -18 },
+		{ 50, 40 },
+		{ -55, -40 },
+		{ 25, -52 },
+		{ -30, 55 },
+		{ 60, -35 },
+		{ -60, 15 },
+		{ 5, 35 },
+		{ -8, -35 },
+	}
+	for i, s in spots do
+		local x, z = s[1], s[2]
+		local ang = rng:NextNumber(0, math.pi * 2)
+		if i % 3 == 0 then
+			-- barrel cluster
+			for j = 0, 2 do
+				local size = Vector3.new(3.2, 2.4, 2.4)
+				local cf = CFrame.new(x + j * 2.6, 2.6, z + (j % 2) * 2.2)
+					* CFrame.Angles(0, 0, math.rad(90))
+				if not placeArenaAsset("Barrel", size, cf) then
+					local b = part(
+						"Barrel",
+						size,
+						cf,
+						if j == 1 then amber:Lerp(dark, 0.5) else dark,
+						Enum.Material.Metal,
+						Enum.PartType.Cylinder
+					)
+					b.CanCollide = true
+				end
+			end
+		elseif i % 3 == 1 then
+			-- crate stack
+			local lowerCf = CFrame.new(x, 3, z) * CFrame.Angles(0, ang, 0)
+			if not placeArenaAsset("Crate", Vector3.new(4, 4, 4), lowerCf) then
+				part("Crate", Vector3.new(4, 4, 4), lowerCf, metal, Enum.Material.DiamondPlate).CanCollide =
+					true
+			end
+			local upperCf = CFrame.new(x + 1, 6.5, z - 0.5) * CFrame.Angles(0, ang + 0.4, 0)
+			if not placeArenaAsset("Crate", Vector3.new(3, 3, 3), upperCf) then
+				part("Crate", Vector3.new(3, 3, 3), upperCf, dark, Enum.Material.DiamondPlate).CanCollide =
+					true
+			end
+			neonStrip(
+				Vector3.new(4.1, 0.15, 0.15),
+				CFrame.new(x, 5.05, z + 2) * CFrame.Angles(0, ang, 0),
+				amber,
+				8
+			)
+		else
+			-- broken pillar
+			local height = rng:NextNumber(5, 9)
+			local pillarCf = CFrame.new(x, 4.5, z) * CFrame.Angles(0, ang, 0)
+			if not placeArenaAsset("Pillar", Vector3.new(3, height, 3), pillarCf) then
+				part("Pillar", Vector3.new(3, height, 3), pillarCf, metal, Enum.Material.Concrete).CanCollide =
+					true
+				part(
+					"PillarTop",
+					Vector3.new(3.4, 0.6, 3.4),
+					CFrame.new(x, 8.2, z) * CFrame.Angles(math.rad(8), ang, 0),
+					dark,
+					Enum.Material.Concrete
+				).CanCollide =
+					true
+			end
+		end
+	end
+end
+
+-- Build the v2 pieces from data when it is available. The checked-in model JSON remains
+-- the fallback, so an older place without ArenaLayout still starts with its existing arena.
+local function applyArenaLayout()
+	if not ArenaLayout then
+		return
+	end
+
+	local floor = arena:FindFirstChild("Floor") :: BasePart?
+	if floor then
+		floor.Size = Vector3.new(ArenaLayout.Floor, floor.Size.Y, ArenaLayout.Floor)
+	end
+
+	local spawnFolder = arena:FindFirstChild("EnemySpawns")
+	if spawnFolder then
+		for i, position in ArenaLayout.Spawns do
+			local spawn = spawnFolder:FindFirstChild("Spawn" .. i)
+			if spawn and spawn:IsA("BasePart") then
+				spawn.Position = Vector3.new(position.x, spawn.Position.Y, position.z)
+			end
+		end
+	end
+
+	for i, spec in ArenaLayout.Bunkers do
+		part(
+			"Bunker" .. i,
+			Vector3.new(spec.Width, spec.Height, spec.Depth),
+			CFrame.new(spec.x, 1 + spec.Height / 2, spec.z),
+			c3(Theme.MetalDark),
+			Enum.Material.DiamondPlate
+		).CanCollide =
+			true
+	end
+
+	local ring = ArenaLayout.Ring
+	local ringRadius = (ring.OuterDiameter - ring.Thickness) / 2
+	local segmentCount = 12
+	local arcStride = 2 * math.pi * ringRadius / segmentCount
+	local segmentLength = 2 * arcStride - ring.Gap
+	for i = 0, segmentCount - 1 do
+		-- Four omitted segments make the compass-point gaps.
+		if i % 3 ~= 0 then
+			local angle = i * 2 * math.pi / segmentCount
+			local ringPart = part(
+				"Ring",
+				Vector3.new(segmentLength, ring.Height, ring.Thickness),
+				CFrame.new(
+					ringRadius * math.cos(angle),
+					1 + ring.Height / 2,
+					ringRadius * math.sin(angle)
+				) * CFrame.Angles(0, -angle - math.pi / 2, 0),
+				c3(Theme.Metal),
+				Enum.Material.Metal
+			)
+			ringPart.CanCollide = true
+		end
+	end
+
+	for _, spec in ArenaLayout.Beacons do
+		local beacon = part(
+			"Beacon" .. spec.Name,
+			Vector3.new(spec.Width, spec.Height, spec.Width),
+			CFrame.new(spec.x, 1 + spec.Height / 2, spec.z),
+			c3(spec.Color),
+			Enum.Material.Neon
+		)
+		beacon.CanCollide = false
+		beacon.CanQuery = false
+	end
+end
+
+>>>>>>> codex/w8-model-library
 -- Portals at each enemy spawn and a big gate at the boss spawn.
 local function portals()
 	local swarm = c3(Theme.Swarm)
@@ -189,31 +385,39 @@ local function portals()
 	local boss = arena:FindFirstChild("BossSpawn") :: BasePart?
 	if boss then
 		boss.Transparency = 1
-		for _, sign in { -1, 1 } do
-			local pillar = part(
-				"GatePillar",
-				Vector3.new(3, 22, 3),
-				boss.CFrame * CFrame.new(sign * 9, 10, 0),
+		if
+			not placeArenaAsset(
+				"BossGate",
+				Vector3.new(21, 22, 4),
+				boss.CFrame * CFrame.new(0, 10, 0)
+			)
+		then
+			for _, sign in { -1, 1 } do
+				local pillar = part(
+					"GatePillar",
+					Vector3.new(3, 22, 3),
+					boss.CFrame * CFrame.new(sign * 9, 10, 0),
+					c3(Theme.MetalDark),
+					Enum.Material.Metal
+				)
+				pillar.CanCollide = true
+				neonStrip(
+					Vector3.new(0.4, 20, 0.4),
+					boss.CFrame * CFrame.new(sign * 9, 10, -1.7),
+					red,
+					24
+				)
+			end
+			local top = part(
+				"GateTop",
+				Vector3.new(21, 2.5, 3),
+				boss.CFrame * CFrame.new(0, 21, 0),
 				c3(Theme.MetalDark),
 				Enum.Material.Metal
 			)
-			pillar.CanCollide = true
-			neonStrip(
-				Vector3.new(0.4, 20, 0.4),
-				boss.CFrame * CFrame.new(sign * 9, 10, -1.7),
-				red,
-				24
-			)
+			top.CanCollide = true
+			neonStrip(Vector3.new(19, 0.4, 0.4), boss.CFrame * CFrame.new(0, 19.6, -1.7), red, 30)
 		end
-		local top = part(
-			"GateTop",
-			Vector3.new(21, 2.5, 3),
-			boss.CFrame * CFrame.new(0, 21, 0),
-			c3(Theme.MetalDark),
-			Enum.Material.Metal
-		)
-		top.CanCollide = true
-		neonStrip(Vector3.new(19, 0.4, 0.4), boss.CFrame * CFrame.new(0, 19.6, -1.7), red, 30)
 	end
 	local wall = arena:FindFirstChild("LeaderboardWall") :: BasePart?
 	if wall then
