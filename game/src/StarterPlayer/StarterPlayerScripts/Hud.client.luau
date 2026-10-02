@@ -5,7 +5,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local SocialService = game:GetService("SocialService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
@@ -25,7 +24,7 @@ local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local Settings = require(ReplicatedStorage.Shared.Settings)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
 local HudLayout = require(ReplicatedStorage.Shared.HudLayout)
-local Invite = require(ReplicatedStorage.Shared.Invite)
+local DeathFlow = require(ReplicatedStorage.Shared.DeathFlow)
 local UiTheme = require(ReplicatedStorage.Shared.UiTheme)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 local UiKit = require(script.Parent.UiKit)
@@ -36,6 +35,7 @@ local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local State = ReplicatedStorage:WaitForChild("State")
 local StatsChanged = Remotes.StatsChanged :: RemoteEvent
 local GameOver = Remotes.GameOver :: RemoteEvent
+local PlayAgain = Remotes.PlayAgain :: RemoteEvent
 local Toast = Remotes.Toast :: RemoteEvent
 local CrateResult = Remotes.CrateResult :: RemoteEvent
 local BuyUpgrade = Remotes.BuyUpgrade :: RemoteFunction
@@ -70,6 +70,18 @@ screen.Name = "Hud"
 screen.ResetOnSpawn = false
 screen.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
 screen.Parent = gui
+
+-- Panels remain visible, but only actual buttons claim input. This keeps firing responsive
+-- when the pointer happens to be over a HUD frame.
+local function letCombatClicksThrough(descendant: Instance)
+	if descendant:IsA("GuiObject") and not descendant:IsA("GuiButton") then
+		descendant.Active = false
+	end
+end
+screen.DescendantAdded:Connect(letCombatClicksThrough)
+for _, descendant in screen:GetDescendants() do
+	letCombatClicksThrough(descendant)
+end
 
 local platform: HudLayout.Platform = if UserInputService.TouchEnabled
 	then "touch"
@@ -1048,19 +1060,20 @@ end
 local closeBtn = shopButton("Close  [B]")
 closeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
 
--- Shop toggle button (always visible) + revive button (only when dead mid-wave)
+-- Shop toggle button (always visible) + compact death status.
 local shopToggle = button(screen, "SHOP [B]", UDim2.new(0, 110, 0, 34))
 shopToggle.Position = UDim2.new(1, -122, 0, 8)
-local reviveBtn = button(screen, "REVIVE NOW (Robux)", UDim2.new(0, 220, 0, 40))
-reviveBtn.Position = UDim2.new(0.5, -110, 0.6, 0)
-reviveBtn.BackgroundColor3 = Color3.fromRGB(200, 120, 30)
-reviveBtn.Visible = false
-reviveBtn.MouseButton1Click:Connect(function()
-	Prompt:FireServer("product", "Revive")
-end)
-local deathInviteBtn = button(screen, "Invite a friend", reviveBtn.Size)
-deathInviteBtn.Position = reviveBtn.Position + UDim2.new(0, 0, 0, 48) -- placeholder
-deathInviteBtn.Visible = false
+local spectateLabel = text(
+	screen,
+	"SpectateStatus",
+	UDim2.new(0.5, -140, 0.58, 0),
+	UDim2.new(0, 280, 0, 44),
+	"Respawn next wave",
+	22
+)
+spectateLabel.BackgroundColor3 = PANEL
+spectateLabel.BackgroundTransparency = 0.08
+spectateLabel.Visible = false
 
 local PANEL_GAP = 8 -- placeholder
 
@@ -1185,12 +1198,11 @@ UserInputService.InputBegan:Connect(function(input, gp)
 	end
 end)
 
--- Run summary panel: what the run earned, the next forever-unlock, and perks to buy right here.
--- Shown on GameOver, hidden when the Phase leaves "over".
+-- Compact all-dead summary, hidden whenever a run is active.
 local summaryPanel = UiKit.Panel(screen, "Summary")
 summaryPanel.Name = "RunSummary"
-summaryPanel.Size = UDim2.new(0, 460, 0, 420) -- placeholder
-summaryPanel.Position = UDim2.new(0.5, -230, 0.5, -210) -- placeholder
+summaryPanel.Size = UDim2.new(0, 360, 0, 246)
+summaryPanel.Position = UDim2.new(0.5, -180, 0.5, -123)
 summaryPanel.BackgroundColor3 = PANEL
 summaryPanel.BorderSizePixel = 0
 summaryPanel.Visible = false
@@ -1214,102 +1226,41 @@ local function summaryRow(name: string, height: number, textSize: number): TextL
 	return l
 end
 local summaryTitle = summaryRow("Title", 36, 34)
-local summaryBest = summaryRow("NewBest", 20, 16)
-summaryBest.Text = "NEW BEST"
-summaryBest.TextColor3 = ClientFX.c3(Theme.NeonAmber)
-summaryBest.Visible = false
-local summaryKills = summaryRow("Kills", 18, 16)
-local summaryCoins = summaryRow("Coins", 18, 16)
-local summaryGems = summaryRow("Gems", 18, 16)
-local summaryShards = summaryRow("Shards", 18, 16)
-local goalLabel = summaryRow("Goal", 20, 16)
-goalLabel.TextColor3 = Color3.fromRGB(255, 200, 60)
-for _, l in { summaryKills, summaryCoins, summaryGems, summaryShards, goalLabel } do
+local summaryWave = summaryRow("Wave", 26, 18)
+local summaryKills = summaryRow("Kills", 26, 18)
+local summaryGems = summaryRow("Gems", 26, 18)
+for _, l in { summaryWave, summaryKills, summaryGems } do
 	l.TextXAlignment = Enum.TextXAlignment.Left
 end
 summaryOrder += 1
-local goalBar = Instance.new("Frame")
-goalBar.Name = "GoalBar"
-goalBar.Size = UDim2.new(1, 0, 0, 14)
-goalBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-goalBar.BorderSizePixel = 0
-goalBar.LayoutOrder = summaryOrder
-goalBar.Parent = summaryPanel
-local goalFill = Instance.new("Frame")
-goalFill.Name = "Fill"
-goalFill.Size = UDim2.fromScale(0, 1)
-goalFill.BackgroundColor3 = OK
-goalFill.BorderSizePixel = 0
-goalFill.Parent = goalBar
-local goalText = summaryRow("GoalText", 18, 14)
-goalText.TextXAlignment = Enum.TextXAlignment.Left
-for _, key in Goals.PerkOrder do
-	summaryOrder += 1
-	perkRow(summaryPanel, key, 28).LayoutOrder = summaryOrder
-end
-summaryOrder += 1
-local summaryInviteBtn = button(summaryPanel, "Invite a friend", UDim2.new(1, 0, 0, 34)) -- placeholder
-summaryInviteBtn.LayoutOrder = summaryOrder
-summaryInviteBtn.Visible = false
-local summaryFooter = summaryRow("Footer", 20, 14)
-summaryFooter.TextColor3 = Color3.fromRGB(200, 200, 200)
+local playAgainButton = button(summaryPanel, "PLAY AGAIN", UDim2.new(1, 0, 0, 56))
+playAgainButton.LayoutOrder = summaryOrder
 
-local summaryEarned = 0 -- Gems this run paid, kept for the row after the count-up
-local summaryCounting = 0 -- token: a newer summary cancels an older count-up
-local lastInviteShownAt: number? = nil
+local deathState: DeathFlow.State = DeathFlow.initialState()
+local diedAt: number? = nil
+local summaryToken = 0
 
-local function canSendGameInvite(): boolean
-	local ok, canSend = pcall(function(): boolean
-		return SocialService:CanSendGameInviteAsync(player)
-	end)
-	return ok and canSend
-end
-
-local function connectInviteButton(inviteButton: TextButton)
-	inviteButton.MouseButton1Click:Connect(function()
-		if not canSendGameInvite() then
-			inviteButton.Visible = false
-			return
-		end
-		SocialService:PromptGameInvite(player)
-	end)
-end
-
-local function offerInvite(
-	inviteButton: TextButton,
-	moment: "summary" | "death",
-	isStillActive: () -> boolean
-)
-	inviteButton.Visible = false
-	local now = os.clock()
-	if not Invite.shouldShow(#Players:GetPlayers(), moment, lastInviteShownAt, now) then
+playAgainButton.MouseButton1Click:Connect(function()
+	if deathState ~= "summary" then
 		return
 	end
-	task.spawn(function()
-		if not canSendGameInvite() or not isStillActive() then
-			inviteButton.Visible = false
-			return
-		end
-		local shownAt = os.clock()
-		if Invite.shouldShow(#Players:GetPlayers(), moment, lastInviteShownAt, shownAt) then
-			inviteButton.Visible = true
-			lastInviteShownAt = shownAt
-		end
-	end)
-end
-
-connectInviteButton(summaryInviteBtn)
-connectInviteButton(deathInviteBtn)
+	deathState = DeathFlow.transition(deathState, "play-again")
+	summaryPanel.Visible = false
+	PlayAgain:FireServer()
+end)
 
 local function watchCharacter(character: Model)
-	deathInviteBtn.Visible = false
+	summaryToken += 1
+	spectateLabel.Visible = false
+	deathState = DeathFlow.transition(deathState, "respawned")
+	deathState = DeathFlow.transition(deathState, "ready")
+	diedAt = nil
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 	humanoid.Died:Connect(function()
-		offerInvite(deathInviteBtn, "death", function(): boolean
-			return stateValue("Phase") == "fighting"
-				and humanoid.Health <= 0
-				and not summaryPanel.Visible
-		end)
+		deathState = DeathFlow.transition(deathState, "died")
+		deathState = DeathFlow.transition(deathState, "spectate")
+		diedAt = os.clock()
+		spectateLabel.Visible = true
 	end)
 end
 
@@ -1321,24 +1272,6 @@ end
 local function commas(n: number): string
 	local s = tostring(math.floor(n)):reverse():gsub("(%d%d%d)", "%1,"):reverse()
 	return if s:sub(1, 1) == "," then s:sub(2) else s
-end
-
-local function refreshGoal(goal: any)
-	if not goal then
-		goalLabel.Text = "Everything unlocked. Chase the board."
-		goalBar.Visible = false
-		goalText.Visible = false
-		return
-	end
-	goalBar.Visible = true
-	goalText.Visible = true
-	goalLabel.Text = "Next: " .. tostring(goal.Label)
-	local have = goal.Have or 0
-	local need = math.max(goal.Need or 1, 1)
-	goalFill.Size = UDim2.fromScale(math.clamp(have / need, 0, 1), 1)
-	goalText.Text = if have >= need
-		then "Ready to buy"
-		else string.format("%d / %d Gems", have, need)
 end
 
 -- Daily reward strip: the server pays today's login streak slot when the profile loads and the
@@ -1646,13 +1579,6 @@ local function refreshStats()
 	refreshCards()
 	refreshQuests(stats.Quests)
 	refreshTutorial()
-	if summaryPanel.Visible then
-		-- a perk bought from the panel moves the goal on and updates the Gems total
-		refreshGoal(Goals.next(profileSnapshot()))
-		if summaryCounting == 0 then
-			summaryGems.Text = string.format("Gems +%d  (now %d)", summaryEarned, stats.Gems or 0)
-		end
-	end
 	rebuildHotbar()
 end
 
@@ -1705,8 +1631,7 @@ local function refreshPhase()
 	elseif phase == "chest" then
 		phaseLabel.Text = "Opening run chest"
 	elseif phase == "over" then
-		phaseLabel.Text = string.format("Restarting in %d", t)
-		summaryFooter.Text = string.format("Play again in %d", t)
+		phaseLabel.Text = "Run over"
 	end
 end
 onState("Phase", function(phase)
@@ -1714,11 +1639,11 @@ onState("Phase", function(phase)
 	refreshCards()
 	onDailyPhase(phase) -- the daily reward strip never covers a fight
 	if phase ~= "over" then
+		summaryToken += 1
 		summaryPanel.Visible = false
-		summaryInviteBtn.Visible = false
 	end
-	if phase ~= "fighting" then
-		deathInviteBtn.Visible = false
+	if phase == "idle" or phase == "starting" or phase == "intermission" then
+		spectateLabel.Visible = false
 	end
 	if phase == "intermission" then
 		setShop(true)
@@ -1748,7 +1673,7 @@ end
 onState("BossHealth", refreshBoss)
 onState("BossMaxHealth", refreshBoss)
 
--- HP bar + revive visibility
+-- HP bar and hit feedback.
 local lastHealth = 0
 RunService.Heartbeat:Connect(function()
 	refreshTutorial()
@@ -1770,7 +1695,6 @@ RunService.Heartbeat:Connect(function()
 			then OK
 			else if frac > 0.25 then Color3.fromRGB(220, 160, 40) else BAD
 		hpText.Text = string.format("%d / %d", math.floor(hum.Health), math.floor(hum.MaxHealth))
-		reviveBtn.Visible = hum.Health <= 0 and stateValue("Phase") == "fighting"
 		local low = frac < 0.35 and hum.Health > 0
 		vignette.Visible = low
 		if low then
@@ -1783,7 +1707,6 @@ RunService.Heartbeat:Connect(function()
 		end
 	else
 		hpText.Text = ""
-		reviveBtn.Visible = stateValue("Phase") == "fighting"
 	end
 end)
 
@@ -1791,39 +1714,28 @@ end)
 GameOver.OnClientEvent:Connect(function(summary: any)
 	setShop(false)
 	cardPanel.Visible = false
-	deathInviteBtn.Visible = false
-	local wave = summary.Wave or 0
-	summaryTitle.Text = if summary.Won
-		then string.format("SURVIVED TO WAVE %d", wave)
-		else string.format("FELL ON WAVE %d", wave)
-	summaryBest.Visible = summary.NewBest == true
-	summaryKills.Text = "Kills " .. commas(summary.Kills or 0)
-	summaryCoins.Text = "Coins " .. commas(summary.Coins or 0)
-	summaryShards.Text = string.format("Shards +%d", summary.ShardsEarned or 0)
-	refreshGoal(summary.Goal)
-	refreshPerkButtons()
-	summaryPanel.Visible = true
-	offerInvite(summaryInviteBtn, "summary", function(): boolean
-		return summaryPanel.Visible
-	end)
-	-- Gems count up from 0 to what the run paid over one second, a coin tick per step
-	summaryEarned = summary.GemsEarned or 0
-	local total = summary.Gems or 0
-	summaryCounting += 1
-	local token = summaryCounting
-	task.spawn(function()
-		for step = 1, 10 do
-			if token ~= summaryCounting or not summaryPanel.Visible then
-				return
-			end
-			local shown = math.floor(summaryEarned * step / 10 + 0.5)
-			summaryGems.Text = string.format("Gems +%d  (now %d)", shown, total)
-			ClientFX.sound("Coin")
-			task.wait(0.1)
+	if deathState == "alive" then
+		deathState = DeathFlow.transition(deathState, "died")
+	end
+	if deathState == "dead" then
+		deathState = DeathFlow.transition(deathState, "spectate")
+	end
+	deathState = DeathFlow.transition(deathState, "all-dead")
+	summaryToken += 1
+	local token = summaryToken
+	local remaining = if diedAt
+		then math.max(0, DeathFlow.SpectateSeconds - (os.clock() - diedAt))
+		else DeathFlow.SpectateSeconds
+	task.delay(remaining, function()
+		if token ~= summaryToken or deathState ~= "summary" or stateValue("Phase") ~= "over" then
+			return
 		end
-		if token == summaryCounting then
-			summaryCounting = 0
-		end
+		spectateLabel.Visible = false
+		summaryTitle.Text = "RUN OVER"
+		summaryWave.Text = "Wave " .. commas(summary.Wave or 0)
+		summaryKills.Text = "Kills " .. commas(summary.Kills or 0)
+		summaryGems.Text = "Gems +" .. commas(summary.GemsEarned or 0)
+		summaryPanel.Visible = true
 	end)
 end)
 

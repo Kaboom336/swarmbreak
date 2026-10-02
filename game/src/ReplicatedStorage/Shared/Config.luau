@@ -1,6 +1,8 @@
 --!strict
 -- Game-wide tunables. Pure data: no Roblox globals, so tests can require it.
 local Config = {
+	-- seconds the run-over screen waits for Play again before restarting anyway
+	PlayAgainTimeout = 30,
 	NormalWaves = 15,
 	BossEvery = 5,
 	IntermissionSeconds = 12,
@@ -9,9 +11,12 @@ local Config = {
 	MaxAlive = 30,
 	SpawnGapMin = 0.5,
 	SpawnGapMax = 1.2,
+<<<<<<< HEAD
 	SpawnProtectionSeconds = 2,
 	RestartDelay = 15, -- the run summary panel stays up this long
 
+=======
+>>>>>>> w12
 	-- Infinite mode: every wave past NormalWaves scales enemies by this much (compounding).
 	InfiniteHealthScale = 1.08,
 	InfiniteDamageScale = 1.04,

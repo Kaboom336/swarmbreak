@@ -251,6 +251,7 @@ function EnemyAI.spawn(
 			Position = root.Position,
 			Size = size.Magnitude,
 			Color = accent,
+			EnemyType = typeName,
 			Boss = def.Boss == true,
 		})
 		-- let the pieces fly for a moment, then remove

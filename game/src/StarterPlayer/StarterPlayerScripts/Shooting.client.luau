@@ -87,7 +87,31 @@ local function tryShoot()
 			else UserInputService:GetMouseLocation()
 		local ray = camera:ViewportPointToRay(m.X, m.Y)
 		local aimPoint = ray.Origin + ray.Direction * 500
-		direction = (aimPoint - origin).Unit
+		local rawDirection = (aimPoint - origin).Unit
+		local positions = {}
+		local roots = {}
+		for _, enemy in enemies:GetChildren() do
+			local enemyRoot = enemy:FindFirstChild("HumanoidRootPart") :: BasePart?
+			local enemyHumanoid = enemy:FindFirstChildOfClass("Humanoid")
+			if
+				enemyRoot
+				and enemyHumanoid
+				and enemyHumanoid.Health > 0
+				and (enemyRoot.Position - origin).Magnitude <= weapon.Range
+			then
+				table.insert(positions, { x = enemyRoot.Position.X, z = enemyRoot.Position.Z })
+				table.insert(roots, enemyRoot)
+			end
+		end
+		local targetIndex = AimAssist.pickTargetInCone(
+			{ x = origin.X, z = origin.Z },
+			{ x = rawDirection.X, z = rawDirection.Z },
+			positions,
+			weapon.Range,
+			AimAssist.PcConeDegrees
+		)
+		local target = if targetIndex then roots[targetIndex] else nil
+		direction = if target then (target.Position - origin).Unit else rawDirection
 	end
 	local facing = Vector3.new(direction.X, 0, direction.Z)
 	if facing.Magnitude > 0.001 then

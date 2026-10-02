@@ -22,6 +22,7 @@ local GameState = require(ServerStorage.GameState)
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local BossIntro = Remotes.BossIntro :: RemoteEvent
 local GameOver = Remotes.GameOver :: RemoteEvent
+local PlayAgain = Remotes.PlayAgain :: RemoteEvent
 local Toast = Remotes.Toast :: RemoteEvent
 local FX = Remotes.FX :: RemoteEvent
 local Theme = require(ReplicatedStorage.Shared.Theme)
@@ -34,6 +35,13 @@ local rng = Random.new()
 local currentWave = 0
 local currentDifficultyId: Difficulty.TierName = Difficulty.Default
 local runStartedAt = 0
+local playAgainRequested = false
+
+PlayAgain.OnServerEvent:Connect(function(plr: Player)
+	if GameState.get("Phase") == "over" and not PlayerData.isWaiting(plr) then
+		playAgainRequested = true
+	end
+end)
 
 local function protectPlayers()
 	for _, player in Players:GetPlayers() do
@@ -319,6 +327,7 @@ local function runWave(wave: number): boolean
 end
 
 local function endRun(won: boolean, reachedWave: number)
+	playAgainRequested = false
 	GameState.set("BossName", "")
 	GameState.set("Phase", "chest")
 	-- Every surviving participant sees the existing Gem crate open. The run version uses the
@@ -340,7 +349,16 @@ local function endRun(won: boolean, reachedWave: number)
 	FX:FireAllClients("sound", { Name = if won then "WaveClear" else "GameOver" })
 	EnemyAI.clearAll()
 	GameState.set("Alive", 0)
-	countdown(Config.RestartDelay)
+	GameState.set("TimeLeft", 0)
+	-- Wait for a Play again press; fall back to a restart so an idle server never stalls.
+	local overSince = os.clock()
+	while
+		not playAgainRequested
+		and #Players:GetPlayers() > 0
+		and os.clock() - overSince < Config.PlayAgainTimeout
+	do
+		task.wait(0.1)
+	end
 end
 
 local function gameLoop()
