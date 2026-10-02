@@ -1,4 +1,48 @@
 local Telemetry = load("Telemetry")
+local Sounds = load("Sounds")
+
+test("sound ids use approved formats", function()
+	local allowed = {
+		["rbxasset://sounds/electronicpingshort.wav"] = true,
+		["rbxasset://sounds/Rocket shot.wav"] = true,
+		["rbxasset://sounds/Shoulder fired rocket.wav"] = true,
+		["rbxasset://sounds/flashbulb.wav"] = true,
+		["rbxasset://sounds/Launching rocket.wav"] = true,
+		["rbxasset://sounds/impact_explosion_02.mp3"] = true,
+		["rbxasset://sounds/hit.wav"] = true,
+		["rbxasset://sounds/splat.wav"] = true,
+		["rbxasset://sounds/uuhhh.mp3"] = true,
+		["rbxasset://sounds/action_jump.mp3"] = true,
+		["rbxasset://sounds/switch.wav"] = true,
+		["rbxasset://sounds/button.wav"] = true,
+		["rbxasset://sounds/collide.wav"] = true,
+		["rbxasset://sounds/snap.wav"] = true,
+		["rbxasset://sounds/bass.wav"] = true,
+		["rbxasset://sounds/victory.wav"] = true,
+		["rbxasset://sounds/HalloweenGhost.wav"] = true,
+		["rbxasset://sounds/HalloweenLightning.wav"] = true,
+		["rbxasset://sounds/impact_water.mp3"] = true,
+		["rbxasset://sounds/impact_explosion_01.mp3"] = true,
+		[""] = true,
+	}
+
+	for name, sound in Sounds do
+		if type(sound) == "table" and sound.Id ~= nil then
+			assert(sound.Id ~= "rbxasset://sounds/swoosh.wav", name .. " uses unapproved swoosh")
+			assert(
+				sound.Id:match("^rbxassetid://%d+$") ~= nil or allowed[sound.Id] == true,
+				name .. " has an unapproved sound id: " .. sound.Id
+			)
+		end
+	end
+end)
+
+test("telemetry field formatting is stable", function()
+	local fields = { weapon = "Starter", players = 2, kit = "Scout" }
+	eq(Telemetry.formatFields(fields), "kit=Scout players=2 weapon=Starter", "sorted fields")
+	eq(Telemetry.formatFields(fields), "kit=Scout players=2 weapon=Starter", "repeat formatting")
+	eq(Telemetry.formatFields({}), "", "empty fields")
+end)
 
 test("every telemetry event has a field list", function()
 	local expected = {

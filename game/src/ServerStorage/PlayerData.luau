@@ -392,7 +392,8 @@ end
 local function attachWeapon(plr: Player)
 	local p = Profile.get(plr)
 	if plr.Character then
-		WeaponModels.attach(plr.Character, p.Equipped, p.Evolutions[p.Equipped])
+		-- attach waits up to 5 s for the hand; never hold up the caller's stat push.
+		task.spawn(WeaponModels.attach, plr.Character, p.Equipped, p.Evolutions[p.Equipped])
 	end
 end
 

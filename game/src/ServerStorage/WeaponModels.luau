@@ -361,7 +361,7 @@ end
 -- Attach to the character's right hand (R15) or right arm (R6).
 local appearanceConnections: { [Player]: RBXScriptConnection } = {}
 local equippedByPlayer: { [Player]: { Id: string, Evo: Evolutions.WeaponEvo? } } = {}
-local attachRequest: { [Model]: number } = {}
+local attachRequest: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
 
 local function handName(char: Model): string
 	local humanoid = char:FindFirstChildOfClass("Humanoid")
