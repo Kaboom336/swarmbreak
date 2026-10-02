@@ -3,7 +3,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
-local Debris = game:GetService("Debris")
 local Feel = require(ReplicatedStorage.Shared.Feel)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
@@ -113,6 +112,12 @@ HitMarker.OnClientEvent:Connect(
 		end
 		if killed then
 			flyCoinToCounter(pos)
+			local enemyType = if target then target:GetAttribute("EnemyType") else nil
+			if type(enemyType) ~= "string" and target then
+				enemyType = target.Name
+			end
+			local gooColor = Feel.deathBurstColor(enemyType, { 60, 220, 160 })
+			ClientFX.gooDecal(pos, ClientFX.c3(gooColor), 2.5, 2)
 		end
 		ClientFX.shakeFor(event, "Full")
 		local allowed: boolean
@@ -121,37 +126,16 @@ HitMarker.OnClientEvent:Connect(
 			return
 		end
 		local budget = Feel.Events[event]
-		local anchor = Instance.new("Part")
-		anchor.Anchored = true
-		anchor.CanCollide = false
-		anchor.CanQuery = false
-		anchor.Transparency = 1
-		anchor.Size = Vector3.new(0.1, 0.1, 0.1)
-		anchor.Position = pos
-		anchor.Parent = workspace
-		local bb = Instance.new("BillboardGui")
-		bb.Size = UDim2.fromOffset(80, 30)
-		bb.AlwaysOnTop = true
-		bb.Parent = anchor
-		local t = Instance.new("TextLabel")
-		t.Size = UDim2.fromScale(1, 1)
-		t.BackgroundTransparency = 1
-		t.Font = Enum.Font.GothamBlack
-		t.TextSize = math.round(18 * budget.NumberScale)
-		t.TextColor3 = if killed
+		local numberColor = if killed
 			then Color3.fromRGB(255, 210, 60)
 			else if isCritical then Color3.fromRGB(255, 150, 60) else Color3.new(1, 1, 1)
-		t.TextStrokeTransparency = 0.3
-		t.Text = (if isCritical then "CRIT " else "") .. tostring(damage)
-		t.Parent = bb
-		TweenService:Create(bb, TweenInfo.new(Feel.DamageNumberSeconds, Enum.EasingStyle.Quad), {
-			StudsOffset = Vector3.new(0, Feel.DamageNumberRiseStuds, 0),
-		}):Play()
-		TweenService:Create(
-			t,
-			TweenInfo.new(Feel.DamageNumberSeconds),
-			{ TextTransparency = 1, TextStrokeTransparency = 1 }
-		):Play()
-		Debris:AddItem(anchor, Feel.DamageNumberSeconds + 0.1)
+		ClientFX.damageNumber(
+			pos,
+			(if isCritical then "CRIT " else "") .. tostring(damage),
+			numberColor,
+			budget.NumberScale,
+			Feel.DamageNumberSeconds,
+			Feel.DamageNumberRiseStuds
+		)
 	end
 )

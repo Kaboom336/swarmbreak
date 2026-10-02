@@ -6,6 +6,7 @@ local Debris = game:GetService("Debris")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 local Feel = require(ReplicatedStorage.Shared.Feel)
+local PoolSize = require(ReplicatedStorage.Shared.PoolSize)
 local SoundBudget = require(ReplicatedStorage.Shared.SoundBudget)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Settings = require(ReplicatedStorage.Shared.Settings)
@@ -16,6 +17,11 @@ local camera = workspace.CurrentCamera
 local sfxVolume = Settings.DefaultVolume
 local musicVolume = Settings.DefaultVolume
 local soundBudget = SoundBudget.new()
+local configuredQuality = (settings() :: any).Rendering.QualityLevel
+local qualityLevel = if typeof(configuredQuality) == "EnumItem"
+	then configuredQuality.Value
+	else tonumber(configuredQuality) or 5
+local effectPoolSizes = PoolSize.forQuality(qualityLevel)
 
 local p0Sounds = {
 	Hurt = true,
@@ -72,7 +78,28 @@ fxFolder.Parent = workspace
 type PoolEntry = {
 	Holder: Part,
 	Emitter: ParticleEmitter,
-	AvailableAt: number,
+	Token: number,
+}
+
+type TracerEntry = {
+	Part: Part,
+	Tween: Tween?,
+	Token: number,
+}
+
+type DamageNumberEntry = {
+	Anchor: Part,
+	Billboard: BillboardGui,
+	Label: TextLabel,
+	RiseTween: Tween?,
+	FadeTween: Tween?,
+	Token: number,
+}
+
+type GooDecalEntry = {
+	Part: Part,
+	Tween: Tween?,
+	Token: number,
 }
 
 local function numberSequence(keypoints: { VfxDefs.Keypoint }): NumberSequence
@@ -132,35 +159,30 @@ local function makePoolEntry(name: string, definition: VfxDefs.Definition): Pool
 	emitter.Name = name
 	applyDefinition(emitter, definition)
 	emitter.Parent = holder
-	return { Holder = holder, Emitter = emitter, AvailableAt = 0 }
+	return { Holder = holder, Emitter = emitter, Token = 0 }
 end
 
-local emitterPools: { [string]: { PoolEntry } } = {}
+local emitterPools: { [string]: PoolSize.Pool<PoolEntry> } = {}
 for name, definition in VfxDefs.Definitions do
-	local pool = {}
-	for _ = 1, definition.PoolSize do
-		table.insert(pool, makePoolEntry(name, definition))
-	end
-	emitterPools[name] = pool
+	emitterPools[name] = PoolSize.new(definition.PoolSize, function()
+		return makePoolEntry(name, definition)
+	end)
 end
 
-local customPool = {}
-for _ = 1, 16 do
-	table.insert(customPool, makePoolEntry("CustomBurst", VfxDefs.HitSpark))
-end
+local customPool = PoolSize.new(effectPoolSizes.HitSparks, function()
+	return makePoolEntry("CustomBurst", VfxDefs.HitSpark)
+end)
 
-local function claim(pool: { PoolEntry }): PoolEntry
-	local now = os.clock()
-	local earliest = pool[1]
-	for _, entry in pool do
-		if entry.AvailableAt <= now then
-			return entry
+local function claimEmitter(pool: PoolSize.Pool<PoolEntry>, lifetime: number): PoolEntry
+	local entry = PoolSize.acquire(pool)
+	entry.Token += 1
+	local token = entry.Token
+	task.delay(lifetime, function()
+		if entry.Token == token then
+			PoolSize.release(pool, entry)
 		end
-		if entry.AvailableAt < earliest.AvailableAt then
-			earliest = entry
-		end
-	end
-	return earliest
+	end)
+	return entry
 end
 
 function ClientFX.emit(name: string, at: Vector3, count: number?)
@@ -170,9 +192,9 @@ function ClientFX.emit(name: string, at: Vector3, count: number?)
 		warn("Unknown VFX definition: " .. name)
 		return
 	end
-	local entry = claim(pool)
+	local lifetime = definition.Lifetime[2]
+	local entry = claimEmitter(pool, lifetime)
 	entry.Holder.Position = at
-	entry.AvailableAt = os.clock() + definition.Lifetime[2]
 	entry.Emitter:Emit(count or definition.EmitCount)
 end
 
@@ -268,29 +290,49 @@ function ClientFX.fovKick(delta: number, seconds: number)
 end
 
 -- ---------- world primitives ----------
+local tracerPool = PoolSize.new(effectPoolSizes.Tracers, function(index): TracerEntry
+	local part = Instance.new("Part")
+	part.Name = "Tracer" .. index
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.CastShadow = false
+	part.Material = Enum.Material.Neon
+	part.Transparency = 1
+	part.Parent = fxFolder
+	return { Part = part, Tween = nil, Token = 0 }
+end)
+
 function ClientFX.tracer(from: Vector3, to: Vector3, color: Color3, thickness: number, life: number)
 	local len = (to - from).Magnitude
 	if len < 0.5 then
 		return
 	end
-	local beam = Instance.new("Part")
-	beam.Anchored = true
-	beam.CanCollide = false
-	beam.CanQuery = false
-	beam.CastShadow = false
+	local entry = PoolSize.acquire(tracerPool)
+	entry.Token += 1
+	local token = entry.Token
+	if entry.Tween then
+		entry.Tween:Cancel()
+	end
+	local beam = entry.Part
 	beam.Material = Enum.Material.Neon
 	beam.Color = color
+	beam.Transparency = 0
 	beam.Size = Vector3.new(thickness, thickness, len)
 	beam.CFrame = CFrame.lookAt(from, to) * CFrame.new(0, 0, -len / 2)
-	beam.Parent = fxFolder
-	TweenService
-		:Create(
-			beam,
-			TweenInfo.new(life),
-			{ Transparency = 1, Size = Vector3.new(0.02, 0.02, len) }
-		)
-		:Play()
-	Debris:AddItem(beam, life)
+	entry.Tween = TweenService:Create(
+		beam,
+		TweenInfo.new(life),
+		{ Transparency = 1, Size = Vector3.new(0.02, 0.02, len) }
+	)
+	entry.Tween:Play()
+	task.delay(life, function()
+		if entry.Token == token then
+			beam.Transparency = 1
+			PoolSize.release(tracerPool, entry)
+		end
+	end)
 end
 
 function ClientFX.burst(
@@ -302,7 +344,7 @@ function ClientFX.burst(
 	life: number,
 	spark: boolean
 )
-	local entry = claim(customPool)
+	local entry = claimEmitter(customPool, life)
 	local pe = entry.Emitter
 	entry.Holder.Position = at
 	pe.Color = ColorSequence.new(color, color:Lerp(Color3.new(0, 0, 0), 0.5))
@@ -322,8 +364,122 @@ function ClientFX.burst(
 	pe.Acceleration = if spark then Vector3.new(0, -30, 0) else Vector3.new(0, 4, 0)
 	pe.LightEmission = 1
 	pe.Rate = 0
-	entry.AvailableAt = os.clock() + life
 	pe:Emit(count)
+end
+
+local damageNumberPool = PoolSize.new(
+	effectPoolSizes.DamageNumbers,
+	function(index): DamageNumberEntry
+		local anchor = Instance.new("Part")
+		anchor.Name = "DamageNumber" .. index
+		anchor.Anchored = true
+		anchor.CanCollide = false
+		anchor.CanQuery = false
+		anchor.CanTouch = false
+		anchor.Transparency = 1
+		anchor.Size = Vector3.new(0.1, 0.1, 0.1)
+		anchor.Parent = fxFolder
+		local billboard = Instance.new("BillboardGui")
+		billboard.Size = UDim2.fromOffset(80, 30)
+		billboard.AlwaysOnTop = true
+		billboard.Enabled = false
+		billboard.Parent = anchor
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.fromScale(1, 1)
+		label.BackgroundTransparency = 1
+		label.Font = Enum.Font.GothamBlack
+		label.TextStrokeTransparency = 0.3
+		label.Parent = billboard
+		return {
+			Anchor = anchor,
+			Billboard = billboard,
+			Label = label,
+			RiseTween = nil,
+			FadeTween = nil,
+			Token = 0,
+		}
+	end
+)
+
+function ClientFX.damageNumber(
+	at: Vector3,
+	text: string,
+	color: Color3,
+	scale: number,
+	life: number,
+	rise: number
+)
+	local entry = PoolSize.acquire(damageNumberPool)
+	entry.Token += 1
+	local token = entry.Token
+	if entry.RiseTween then
+		entry.RiseTween:Cancel()
+	end
+	if entry.FadeTween then
+		entry.FadeTween:Cancel()
+	end
+	entry.Anchor.Position = at
+	entry.Billboard.StudsOffset = Vector3.zero
+	entry.Billboard.Enabled = true
+	entry.Label.Text = text
+	entry.Label.TextColor3 = color
+	entry.Label.TextSize = math.round(18 * scale)
+	entry.Label.TextTransparency = 0
+	entry.Label.TextStrokeTransparency = 0.3
+	entry.RiseTween = TweenService:Create(
+		entry.Billboard,
+		TweenInfo.new(life, Enum.EasingStyle.Quad),
+		{ StudsOffset = Vector3.new(0, rise, 0) }
+	)
+	entry.FadeTween = TweenService:Create(entry.Label, TweenInfo.new(life), {
+		TextTransparency = 1,
+		TextStrokeTransparency = 1,
+	})
+	entry.RiseTween:Play()
+	entry.FadeTween:Play()
+	task.delay(life, function()
+		if entry.Token == token then
+			entry.Billboard.Enabled = false
+			PoolSize.release(damageNumberPool, entry)
+		end
+	end)
+end
+
+local gooDecalPool = PoolSize.new(effectPoolSizes.GooDecals, function(index): GooDecalEntry
+	local part = Instance.new("Part")
+	part.Name = "GooDecal" .. index
+	part.Shape = Enum.PartType.Cylinder
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.CastShadow = false
+	part.Material = Enum.Material.SmoothPlastic
+	part.Transparency = 1
+	part.Parent = fxFolder
+	return { Part = part, Tween = nil, Token = 0 }
+end)
+
+function ClientFX.gooDecal(at: Vector3, color: Color3, radius: number, life: number)
+	local entry = PoolSize.acquire(gooDecalPool)
+	entry.Token += 1
+	local token = entry.Token
+	if entry.Tween then
+		entry.Tween:Cancel()
+	end
+	local decal = entry.Part
+	decal.Color = color
+	decal.Size = Vector3.new(0.04, radius * 2, radius * 2)
+	decal.CFrame = CFrame.new(at + Vector3.new(0, 0.03, 0)) * CFrame.Angles(0, 0, math.rad(90))
+	decal.Transparency = 0.35
+	entry.Tween = TweenService:Create(decal, TweenInfo.new(life), { Transparency = 1 })
+	entry.Tween:Play()
+	task.delay(life, function()
+		if entry.Token == token then
+			decal.Transparency = 1
+			PoolSize.release(gooDecalPool, entry)
+		end
+	end)
 end
 
 function ClientFX.flash(at: Vector3, color: Color3, range: number, life: number)
