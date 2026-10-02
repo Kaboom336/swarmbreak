@@ -18,8 +18,7 @@ local sfxVolume = Settings.DefaultVolume
 local musicVolume = Settings.DefaultVolume
 local soundBudget = SoundBudget.new()
 -- settings() is plugin-only; game scripts read the player's saved quality instead.
-local userSettings = (getfenv() :: any).UserSettings()
-local configuredQuality = userSettings:GetService("UserGameSettings").SavedQualityLevel
+local configuredQuality = UserSettings():GetService("UserGameSettings").SavedQualityLevel
 -- SavedQualityLevel is 0 when the player leaves graphics on Automatic.
 local qualityLevel = if configuredQuality.Value > 0 then configuredQuality.Value else 5
 local effectPoolSizes = PoolSize.forQuality(qualityLevel)

@@ -127,7 +127,9 @@ local function autoDirection(char: Model, root: BasePart, origin: Vector3, weapo
 					z = enemyRoot.AssemblyLinearVelocity.Z,
 				},
 				boss = model:GetAttribute("Boss") == true,
-				visible = hasLineOfSight(origin, char, model, enemyRoot),
+				-- Raycast only enemies in range: one ray per enemy per frame adds up in late waves.
+				visible = (enemyRoot.Position - origin).Magnitude <= range
+					and hasLineOfSight(origin, char, model, enemyRoot),
 			})
 			if enemyRoot == currentTarget then
 				currentIndex = #roots
