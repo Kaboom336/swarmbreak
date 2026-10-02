@@ -38,6 +38,7 @@ local rng = Random.new()
 export type Run = {
 	Coins: number,
 	Kills: number,
+	Damage: number,
 	ShardsEarned: number, -- shards picked up this run (for the run summary)
 	Levels: { [string]: number },
 	Passes: { [string]: boolean },
@@ -58,12 +59,21 @@ export type RunSummary = {
 	Won: boolean,
 	Wave: number,
 	Kills: number,
+	Damage: number,
+	Duration: number,
 	Coins: number,
 	GemsEarned: number,
 	Gems: number, -- Gems after this run's payout
 	ShardsEarned: number,
 	BestWave: number,
+	BestDuration: number,
+	BestKills: number,
+	BestDamage: number,
 	NewBest: boolean,
+	NewBestWave: boolean,
+	NewBestDuration: boolean,
+	NewBestKills: boolean,
+	NewBestDamage: boolean,
 	Goal: Goals.Goal?,
 }
 
@@ -125,6 +135,7 @@ function PlayerData.get(plr: Player): Run
 		r = {
 			Coins = 0,
 			Kills = 0,
+			Damage = 0,
 			ShardsEarned = 0,
 			Levels = levels,
 			Passes = {},
@@ -249,6 +260,11 @@ end
 function PlayerData.addMeleeDamage(plr: Player, amount: number)
 	progressQuest(plr, "MeleeDamage", amount)
 	push(plr)
+end
+
+function PlayerData.addDamage(plr: Player, amount: number)
+	local r = PlayerData.get(plr)
+	r.Damage += math.max(0, amount)
 end
 
 function PlayerData.hasPass(plr: Player, key: string): boolean
@@ -613,6 +629,7 @@ function PlayerData.resetRun(plr: Player)
 	PlayerData.setWaiting(plr, false)
 	r.Coins = ProfileSchema.perkValue(p, "StartCoins") + (if r.Passes.StarterPack then 300 else 0)
 	r.Kills = 0
+	r.Damage = 0
 	r.ShardsEarned = 0
 	for name in r.Levels do
 		r.Levels[name] = 0
@@ -639,11 +656,21 @@ function PlayerData.endRun(plr: Player, wave: number, won: boolean): RunSummary
 	local r = PlayerData.get(plr)
 	local p = Profile.get(plr)
 	local previousBest = p.BestWave
+	local duration = math.max(0, os.clock() - r.StartedAt)
+	local roundedDuration = math.floor(duration + 0.5)
+	local roundedDamage = math.floor(r.Damage + 0.5)
+	local newBestWave = wave > p.BestWave
+	local newBestDuration = roundedDuration > p.BestDuration
+	local newBestKills = r.Kills > p.BestKills
+	local newBestDamage = roundedDamage > p.BestDamage
 	-- gemsForRun before Runs counts this one; the Lucky card adds its share on top
 	local gemsEarned =
 		math.floor(Evolutions.gemsForRun(wave, won, p.Runs) * (1 + r.Boosts.GemMult) + 0.5)
 	p.Runs += 1
 	p.BestWave = math.max(p.BestWave, wave)
+	p.BestDuration = math.max(p.BestDuration, roundedDuration)
+	p.BestKills = math.max(p.BestKills, r.Kills)
+	p.BestDamage = math.max(p.BestDamage, roundedDamage)
 	p.Gems += gemsEarned
 	progressQuest(plr, "Wave", wave)
 	progressQuest(plr, "Runs", 1)
@@ -663,7 +690,7 @@ function PlayerData.endRun(plr: Player, wave: number, won: boolean): RunSummary
 		kills = r.Kills,
 		coins = r.Coins,
 		gems = gemsEarned,
-		seconds = os.clock() - r.StartedAt,
+		seconds = duration,
 	})
 	r.Active = false
 	local ls = plr:FindFirstChild("leaderstats")
@@ -687,12 +714,21 @@ function PlayerData.endRun(plr: Player, wave: number, won: boolean): RunSummary
 		Won = won,
 		Wave = wave,
 		Kills = r.Kills,
+		Damage = r.Damage,
+		Duration = duration,
 		Coins = r.Coins,
 		GemsEarned = gemsEarned,
 		Gems = p.Gems,
 		ShardsEarned = r.ShardsEarned,
 		BestWave = p.BestWave,
+		BestDuration = p.BestDuration,
+		BestKills = p.BestKills,
+		BestDamage = p.BestDamage,
 		NewBest = wave > previousBest,
+		NewBestWave = newBestWave,
+		NewBestDuration = newBestDuration,
+		NewBestKills = newBestKills,
+		NewBestDamage = newBestDamage,
 		Goal = Goals.next(p),
 	}
 end

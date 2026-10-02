@@ -15,6 +15,9 @@ export type Profile = {
 	Evolutions: { [string]: { Element: string, Tier: number } }, -- per weapon id
 	Perks: { [string]: number }, -- lobby perks (levels)
 	BestWave: number,
+	BestDuration: number,
+	BestKills: number,
+	BestDamage: number,
 	Runs: number,
 	CratesSinceLegendary: number, -- Robux crates opened since the last Legendary (pity counter)
 	Flags: { [string]: boolean }, -- one-time events already paid out (see FlagKeys)
@@ -62,6 +65,9 @@ function ProfileSchema.default(): Profile
 		Evolutions = {},
 		Perks = {},
 		BestWave = 0,
+		BestDuration = 0,
+		BestKills = 0,
+		BestDamage = 0,
 		Runs = 0,
 		CratesSinceLegendary = 0,
 		Flags = {},
@@ -131,6 +137,11 @@ function ProfileSchema.sanitize(raw: any): Profile
 	end
 	if type(raw.BestWave) == "number" then
 		p.BestWave = math.max(0, math.floor(raw.BestWave))
+	end
+	for _, key in { "BestDuration", "BestKills", "BestDamage" } do
+		if type(raw[key]) == "number" then
+			(p :: any)[key] = math.max(0, math.floor(raw[key] + 0.5))
+		end
 	end
 	if type(raw.Runs) == "number" then
 		p.Runs = math.max(0, math.floor(raw.Runs))

@@ -25,6 +25,7 @@ local Settings = require(ReplicatedStorage.Shared.Settings)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
 local HudLayout = require(ReplicatedStorage.Shared.HudLayout)
 local DeathFlow = require(ReplicatedStorage.Shared.DeathFlow)
+local RunSummary = require(ReplicatedStorage.Shared.RunSummary)
 local UiTheme = require(ReplicatedStorage.Shared.UiTheme)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 local UiKit = require(script.Parent.UiKit)
@@ -36,6 +37,7 @@ local State = ReplicatedStorage:WaitForChild("State")
 local StatsChanged = Remotes.StatsChanged :: RemoteEvent
 local GameOver = Remotes.GameOver :: RemoteEvent
 local PlayAgain = Remotes.PlayAgain :: RemoteEvent
+local Retry = Remotes:FindFirstChild("Retry") :: RemoteEvent?
 local Toast = Remotes.Toast :: RemoteEvent
 local CrateResult = Remotes.CrateResult :: RemoteEvent
 local BuyUpgrade = Remotes.BuyUpgrade :: RemoteFunction
@@ -1229,8 +1231,8 @@ end)
 -- Compact all-dead summary, hidden whenever a run is active.
 local summaryPanel = UiKit.Panel(screen, "Summary")
 summaryPanel.Name = "RunSummary"
-summaryPanel.Size = UDim2.new(0, 360, 0, 246)
-summaryPanel.Position = UDim2.new(0.5, -180, 0.5, -123)
+summaryPanel.Size = UDim2.new(0, 400, 0, 342)
+summaryPanel.Position = UDim2.new(0.5, -200, 0.5, -171)
 summaryPanel.BackgroundColor3 = PANEL
 summaryPanel.BorderSizePixel = 0
 summaryPanel.Visible = false
@@ -1255,17 +1257,22 @@ local function summaryRow(name: string, height: number, textSize: number): TextL
 end
 local summaryTitle = summaryRow("Title", 36, 34)
 local summaryWave = summaryRow("Wave", 26, 18)
+local summaryDuration = summaryRow("Duration", 26, 18)
 local summaryKills = summaryRow("Kills", 26, 18)
-local summaryGems = summaryRow("Gems", 26, 18)
-for _, l in { summaryWave, summaryKills, summaryGems } do
+local summaryDamage = summaryRow("Damage", 26, 18)
+local summaryRewards = summaryRow("Rewards", 26, 18)
+local summaryBests = summaryRow("Bests", 26, 16)
+summaryBests.TextColor3 = OK
+for _, l in
+	{ summaryWave, summaryDuration, summaryKills, summaryDamage, summaryRewards, summaryBests }
+do
 	l.TextXAlignment = Enum.TextXAlignment.Left
 end
 summaryOrder += 1
-local playAgainButton = button(summaryPanel, "PLAY AGAIN", UDim2.new(1, 0, 0, 56))
+local playAgainButton = button(summaryPanel, "RETRY", UDim2.new(1, 0, 0, 56))
 playAgainButton.LayoutOrder = summaryOrder
 
 local deathState: DeathFlow.State = DeathFlow.initialState()
-local diedAt: number? = nil
 local summaryToken = 0
 
 playAgainButton.MouseButton1Click:Connect(function()
@@ -1274,7 +1281,11 @@ playAgainButton.MouseButton1Click:Connect(function()
 	end
 	deathState = DeathFlow.transition(deathState, "play-again")
 	summaryPanel.Visible = false
-	PlayAgain:FireServer()
+	if Retry then
+		Retry:FireServer()
+	else
+		PlayAgain:FireServer()
+	end
 end)
 
 local function watchCharacter(character: Model)
@@ -1282,12 +1293,10 @@ local function watchCharacter(character: Model)
 	spectateLabel.Visible = false
 	deathState = DeathFlow.transition(deathState, "respawned")
 	deathState = DeathFlow.transition(deathState, "ready")
-	diedAt = nil
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 	humanoid.Died:Connect(function()
 		deathState = DeathFlow.transition(deathState, "died")
 		deathState = DeathFlow.transition(deathState, "spectate")
-		diedAt = os.clock()
 		spectateLabel.Visible = true
 	end)
 end
@@ -1295,11 +1304,6 @@ end
 player.CharacterAdded:Connect(watchCharacter)
 if player.Character then
 	task.spawn(watchCharacter, player.Character)
-end
-
-local function commas(n: number): string
-	local s = tostring(math.floor(n)):reverse():gsub("(%d%d%d)", "%1,"):reverse()
-	return if s:sub(1, 1) == "," then s:sub(2) else s
 end
 
 -- Daily reward strip: the server pays today's login streak slot when the profile loads and the
@@ -1768,18 +1772,19 @@ GameOver.OnClientEvent:Connect(function(summary: any)
 	deathState = DeathFlow.transition(deathState, "all-dead")
 	summaryToken += 1
 	local token = summaryToken
-	local remaining = if diedAt
-		then math.max(0, DeathFlow.SpectateSeconds - (os.clock() - diedAt))
-		else DeathFlow.SpectateSeconds
-	task.delay(remaining, function()
-		if token ~= summaryToken or deathState ~= "summary" or stateValue("Phase") ~= "over" then
+	task.defer(function()
+		if token ~= summaryToken or deathState ~= "summary" then
 			return
 		end
 		spectateLabel.Visible = false
-		summaryTitle.Text = "RUN OVER"
-		summaryWave.Text = "Wave " .. commas(summary.Wave or 0)
-		summaryKills.Text = "Kills " .. commas(summary.Kills or 0)
-		summaryGems.Text = "Gems +" .. commas(summary.GemsEarned or 0)
+		local recap = RunSummary.format(summary)
+		summaryTitle.Text = recap.Title
+		summaryWave.Text = recap.Wave
+		summaryDuration.Text = recap.Duration
+		summaryKills.Text = recap.Kills
+		summaryDamage.Text = recap.Damage
+		summaryRewards.Text = recap.Rewards
+		summaryBests.Text = recap.Bests
 		summaryPanel.Visible = true
 	end)
 end)

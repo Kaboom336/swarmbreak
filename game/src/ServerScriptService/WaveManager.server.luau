@@ -15,6 +15,7 @@ local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local SpawnPicker = require(ReplicatedStorage.Shared.SpawnPicker)
 local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
+local RunSummary = require(ReplicatedStorage.Shared.RunSummary)
 local EnemyAI = require(ServerStorage.EnemyAI)
 local PlayerData = require(ServerStorage.PlayerData)
 local GameState = require(ServerStorage.GameState)
@@ -23,6 +24,7 @@ local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local BossIntro = Remotes.BossIntro :: RemoteEvent
 local GameOver = Remotes.GameOver :: RemoteEvent
 local PlayAgain = Remotes.PlayAgain :: RemoteEvent
+local Retry = Remotes.Retry :: RemoteEvent
 local Toast = Remotes.Toast :: RemoteEvent
 local FX = Remotes.FX :: RemoteEvent
 local Theme = require(ReplicatedStorage.Shared.Theme)
@@ -36,11 +38,27 @@ local currentWave = 0
 local currentDifficultyId: Difficulty.TierName = Difficulty.Default
 local runStartedAt = 0
 local playAgainRequested = false
+local quickRetryRequested = false
+local retryState = RunSummary.newRetryState()
 
-PlayAgain.OnServerEvent:Connect(function(plr: Player)
-	if GameState.get("Phase") == "over" and not PlayerData.isWaiting(plr) then
+local function requestRetry(plr: Player, quick: boolean)
+	if
+		GameState.get("Phase") == "over"
+		and not PlayerData.isWaiting(plr)
+		and RunSummary.acceptRetry(retryState, plr)
+	then
 		playAgainRequested = true
+		quickRetryRequested = quickRetryRequested or quick
 	end
+end
+
+Retry.OnServerEvent:Connect(function(plr: Player)
+	requestRetry(plr, true)
+end)
+
+-- Compatibility with clients that still have the previous results panel.
+PlayAgain.OnServerEvent:Connect(function(plr: Player)
+	requestRetry(plr, false)
 end)
 
 local function protectPlayers()
@@ -250,7 +268,7 @@ local function trackBoss(model: Model)
 end
 
 -- Returns true if the wave was cleared, false on team wipe.
-local function runWave(wave: number): boolean
+local function runWave(wave: number, skipCountdown: boolean?): boolean
 	currentWave = wave
 	publishMutation()
 	GameState.set("Wave", wave)
@@ -265,7 +283,11 @@ local function runWave(wave: number): boolean
 	end
 	GameState.set("Phase", "starting")
 	FX:FireAllClients("sound", { Name = "WaveStart" })
-	countdown(Config.WaveStartDelay)
+	if skipCountdown then
+		GameState.set("TimeLeft", 0)
+	else
+		countdown(Config.WaveStartDelay)
+	end
 
 	local bossName = Enemies.bossForWave(wave)
 	if bossName then
@@ -331,6 +353,8 @@ end
 
 local function endRun(won: boolean, reachedWave: number)
 	playAgainRequested = false
+	quickRetryRequested = false
+	retryState = RunSummary.newRetryState()
 	GameState.set("BossName", "")
 	GameState.set("Phase", "chest")
 	-- Every surviving participant sees the existing Gem crate open. The run version uses the
@@ -345,8 +369,8 @@ local function endRun(won: boolean, reachedWave: number)
 	-- each player gets their own run summary (Gems earned, next goal) for the results panel
 	for _, plr in Players:GetPlayers() do
 		if not PlayerData.isWaiting(plr) then
-			local summary = PlayerData.endRun(plr, reachedWave, won)
-			GameOver:FireClient(plr, summary)
+			local finalSnapshot = PlayerData.endRun(plr, reachedWave, won)
+			GameOver:FireClient(plr, finalSnapshot)
 		end
 	end
 	FX:FireAllClients("sound", { Name = if won then "WaveClear" else "GameOver" })
@@ -388,9 +412,10 @@ local function gameLoop()
 
 		local wave = 0
 		local alive = true
+		local skipFirstCountdown = quickRetryRequested
 		while alive do
 			wave += 1
-			alive = runWave(wave)
+			alive = runWave(wave, wave == 1 and skipFirstCountdown)
 			if alive then
 				if WaveTable.isFinalNormalWave(wave) then
 					Toast:FireAllClients("Normal mode cleared! Infinite mode begins.", 5)

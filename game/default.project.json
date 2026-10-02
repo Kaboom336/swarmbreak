@@ -17,6 +17,9 @@
         "PlayAgain": {
           "$className": "RemoteEvent"
         },
+        "Retry": {
+          "$className": "RemoteEvent"
+        },
         "HitMarker": {
           "$className": "RemoteEvent"
         },

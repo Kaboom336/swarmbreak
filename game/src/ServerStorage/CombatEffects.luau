@@ -51,7 +51,9 @@ local function rawHit(
 		return false, false
 	end
 	model:SetAttribute("LastHitBy", plr.UserId)
+	local healthBefore = ehum.Health
 	ehum:TakeDamage(damage)
+	PlayerData.addDamage(plr, math.min(healthBefore, damage))
 	local killed = ehum.Health <= 0
 	local root = model.PrimaryPart
 	local playerRoot = plr.Character
