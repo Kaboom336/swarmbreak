@@ -246,12 +246,13 @@ bossFill.BorderSizePixel = 0
 bossFill.Parent = bossFrame
 local bossLabel = text(bossFrame, "BossName", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), "", 16)
 
--- Run currency stays visible at the top right, separate from combat statistics.
+-- Run currency is useful between waves, but the fighting HUD stays clear.
 finalHud.CurrencyFrame = Instance.new("Frame")
 finalHud.CurrencyFrame.Name = "Currencies"
 finalHud.CurrencyFrame.BackgroundColor3 = PANEL
 finalHud.CurrencyFrame.BackgroundTransparency = 0.1
 finalHud.CurrencyFrame.BorderSizePixel = 0
+finalHud.CurrencyFrame.Visible = false
 finalHud.CurrencyFrame.Parent = screen
 local currencyCorner = Instance.new("UICorner")
 currencyCorner.CornerRadius = UDim.new(0, 8)
@@ -275,7 +276,7 @@ finalHud.GemsLabel = text(
 )
 finalHud.GemsLabel.TextColor3 = ClientFX.c3(Theme.NeonTeal)
 
--- Bottom-left: HP + stats + dash
+-- Bottom-left: HP. Detailed run stats live behind this bar instead of in persistent rows.
 local hpBack = UiKit.Panel(screen, "Health")
 hpBack.Size = UDim2.new(0, 260, 0, 18)
 hpBack.Position = UDim2.new(0, 12, 1, -80)
@@ -288,7 +289,24 @@ hpFill.BackgroundColor3 = OK
 hpFill.BorderSizePixel = 0
 hpFill.Parent = hpBack
 local hpText = text(hpBack, "HP", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), "", 14)
-local statsLabel = text(screen, "Stats", UDim2.new(0, 12, 1, -66), UDim2.new(0, 420, 0, 58), "", 16)
+finalHud.StatsToggle = Instance.new("TextButton")
+finalHud.StatsToggle.Name = "OpenStats"
+finalHud.StatsToggle.Size = UDim2.fromScale(1, 1)
+finalHud.StatsToggle.BackgroundTransparency = 1
+finalHud.StatsToggle.Text = ""
+finalHud.StatsToggle.ZIndex = hpText.ZIndex + 1
+finalHud.StatsToggle.Parent = hpBack
+
+finalHud.StatsPanel = UiKit.Panel(screen, "Stats")
+finalHud.StatsPanel.BackgroundColor3 = PANEL
+finalHud.StatsPanel.BackgroundTransparency = 0.1
+finalHud.StatsPanel.BorderSizePixel = 0
+finalHud.StatsPanel.Visible = false
+finalHud.StatsPanel.Parent = screen
+text(finalHud.StatsPanel, "Title", UDim2.fromOffset(12, 8), UDim2.new(1, -24, 0, 24), "STATS", 18).TextXAlignment =
+	Enum.TextXAlignment.Left
+local statsLabel =
+	text(finalHud.StatsPanel, "Values", UDim2.fromOffset(12, 40), UDim2.new(1, -24, 0, 90), "", 16)
 statsLabel.TextXAlignment = Enum.TextXAlignment.Left
 statsLabel.TextYAlignment = Enum.TextYAlignment.Top
 
@@ -308,8 +326,8 @@ xpFill.Parent = xpBack
 local xpText = text(xpBack, "Value", UDim2.new(), UDim2.fromScale(1, 1), "", 11)
 xpText.ZIndex = xpFill.ZIndex + 1
 
--- Top-right daily quests, tucked under the existing controls.
-local questToggle = button(screen, "Quests", UDim2.new(0, 260, 0, 34))
+-- A compact left icon column opens utility panels only when requested.
+local questToggle = button(screen, "Q", UDim2.fromOffset(48, 48))
 questToggle.Name = "QuestToggle"
 questToggle.Position = UDim2.new(1, -272, 0, 50)
 local questPanel = Instance.new("ScrollingFrame")
@@ -337,15 +355,11 @@ questLayout.Padding = UDim.new(0, 6)
 questLayout.SortOrder = Enum.SortOrder.LayoutOrder
 questLayout.Parent = questPanel
 
-local questsOpen = true
 local function setQuestsOpen(open: boolean)
-	questsOpen = open
 	questPanel.Visible = open
-	questToggle.Text = if open then "Quests  -" else "Quests  +"
+	questToggle.Text = if open then "Q-" else "Q"
 end
-questToggle.MouseButton1Click:Connect(function()
-	setQuestsOpen(not questsOpen)
-end)
+setQuestsOpen(false)
 
 local function refreshQuests(state: any)
 	for _, child in questPanel:GetChildren() do
@@ -406,8 +420,8 @@ local function refreshQuests(state: any)
 	end
 end
 
--- Top-right settings panel. Volume changes take effect while dragging and save on release.
-local settingsToggle = button(screen, "Settings", UDim2.new(0, 120, 0, 34))
+-- Settings shares the utility-panel slot. Volume changes save on release.
+local settingsToggle = button(screen, "S", UDim2.fromOffset(48, 48))
 settingsToggle.Name = "SettingsToggle"
 settingsToggle.Position = UDim2.new(1, -404, 0, 8)
 
@@ -515,16 +529,12 @@ local setSfxSlider = makeSlider("SFX volume", 62, function(value, persist)
 	end
 end)
 
-settingsToggle.MouseButton1Click:Connect(function()
-	settingsPanel.Visible = not settingsPanel.Visible
-	settingsToggle.Text = if settingsPanel.Visible then "Settings  -" else "Settings"
-end)
-
--- Bottom-right: weapon hotbar
+-- Weapon switching remains on number keys; the clean fighting HUD shows ammo instead of cards.
 local hotbar = Instance.new("Frame")
 hotbar.Size = UDim2.new(0, 420, 0, 46)
 hotbar.Position = UDim2.new(1, -432, 1, -72)
 hotbar.BackgroundTransparency = 1
+hotbar.Visible = false
 hotbar.Parent = screen
 local hotLayout = Instance.new("UIListLayout")
 hotLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -536,6 +546,10 @@ local boostsLabel =
 	text(screen, "Boosts", UDim2.new(1, -432, 1, -24), UDim2.new(0, 420, 0, 14), "", 12)
 boostsLabel.TextXAlignment = Enum.TextXAlignment.Right
 boostsLabel.TextColor3 = ClientFX.c3(Theme.NeonTeal)
+boostsLabel.Visible = false
+
+finalHud.AmmoLabel = text(screen, "Ammo", UDim2.new(), UDim2.new(), "AMMO UNLIMITED", 18)
+finalHud.AmmoLabel.TextXAlignment = Enum.TextXAlignment.Right
 
 -- Bottom-center first-run hint. Only the first unfinished tutorial step is visible.
 local tutorialPill = UiKit.Panel(screen, "Tutorial")
@@ -1033,8 +1047,9 @@ end
 local closeBtn = shopButton("Close  [B]")
 closeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
 
--- Shop toggle button (always visible) + revive button (only when dead mid-wave)
-local shopToggle = button(screen, "SHOP [B]", UDim2.new(0, 110, 0, 34))
+-- Third button in the compact utility icon column.
+local shopToggle = button(screen, "$", UDim2.fromOffset(48, 48))
+shopToggle.Name = "ShopToggle"
 shopToggle.Position = UDim2.new(1, -122, 0, 8)
 local reviveBtn = button(screen, "REVIVE NOW (Robux)", UDim2.new(0, 220, 0, 40))
 reviveBtn.Position = UDim2.new(0.5, -110, 0.6, 0)
@@ -1046,8 +1061,6 @@ end)
 local deathInviteBtn = button(screen, "Invite a friend", reviveBtn.Size)
 deathInviteBtn.Position = reviveBtn.Position + UDim2.new(0, 0, 0, 48) -- placeholder
 deathInviteBtn.Visible = false
-
-local PANEL_GAP = 8 -- placeholder
 
 local function applyHudLayout()
 	local activeCamera = workspace.CurrentCamera
@@ -1080,56 +1093,44 @@ local function applyHudLayout()
 	bossFrame.Position = UDim2.fromOffset(logical(boss.x), logical(boss.y))
 	bossFrame.Size = UDim2.fromOffset(logical(boss.w), logical(boss.h))
 
-	local currencies = rects.currencies
-	finalHud.CurrencyFrame.Position = UDim2.fromOffset(logical(currencies.x), logical(currencies.y))
-	finalHud.CurrencyFrame.Size = UDim2.fromOffset(logical(currencies.w), logical(currencies.h))
-
 	local health = rects.health
 	hpBack.Position = UDim2.fromOffset(logical(health.x), logical(health.y))
-	hpBack.Size = UDim2.fromOffset(math.min(260, logical(health.w)), 18)
-	statsLabel.Position = UDim2.fromOffset(logical(health.x), logical(health.y) + 20)
-	statsLabel.Size = UDim2.fromOffset(logical(health.w), 58)
+	hpBack.Size = UDim2.fromOffset(logical(health.w), logical(health.h))
 
 	local xp = rects.xp
 	xpBack.Position = UDim2.fromOffset(logical(xp.x), logical(xp.y))
 	xpBack.Size = UDim2.fromOffset(logical(xp.w), logical(xp.h))
 
-	local buttonHeight = HudLayout.buttonHeightFor(currentScale, platform)
+	local ammo = rects.ammo
+	finalHud.AmmoLabel.Position = UDim2.fromOffset(logical(ammo.x), logical(ammo.y))
+	finalHud.AmmoLabel.Size = UDim2.fromOffset(logical(ammo.w), logical(ammo.h))
+
+	local targets = HudLayout.touchTargets(viewport.X, viewport.Y)
+	local function placeIcon(icon: TextButton, target: HudLayout.Rect)
+		icon.Position = UDim2.fromOffset(logical(target.x), logical(target.y))
+		icon.Size = UDim2.fromOffset(logical(target.w), logical(target.h))
+	end
+	placeIcon(questToggle, targets.quests)
+	placeIcon(shopToggle, targets.shop)
+	placeIcon(settingsToggle, targets.settings)
+
 	local quest = rects.quests
-	questToggle.Position = UDim2.fromOffset(logical(quest.x), logical(quest.y))
-	questToggle.Size = UDim2.fromOffset(logical(quest.w), buttonHeight)
-	questPanel.Position =
-		UDim2.fromOffset(logical(quest.x), logical(quest.y) + buttonHeight + PANEL_GAP)
-	questPanel.Size =
-		UDim2.fromOffset(logical(quest.w), math.max(0, logical(quest.h) - buttonHeight - PANEL_GAP))
+	questPanel.Position = UDim2.fromOffset(logical(quest.x), logical(quest.y))
+	questPanel.Size = UDim2.fromOffset(logical(quest.w), logical(quest.h))
 	questPanel.ClipsDescendants = true
 
 	local settings = rects.settings
-	settingsToggle.Position = UDim2.fromOffset(logical(settings.x), logical(settings.y))
-	settingsToggle.Size = UDim2.fromOffset(logical(settings.w), buttonHeight)
-	settingsPanel.Position =
-		UDim2.fromOffset(logical(settings.x), logical(settings.y) + buttonHeight + PANEL_GAP)
-	settingsPanel.Size = UDim2.fromOffset(
-		logical(settings.w),
-		math.max(0, logical(settings.h) - buttonHeight - PANEL_GAP)
-	)
+	settingsPanel.Position = UDim2.fromOffset(logical(settings.x), logical(settings.y))
+	settingsPanel.Size = UDim2.fromOffset(logical(settings.w), 116)
 
 	local shopRect = rects.shop
-	shopToggle.Position = UDim2.fromOffset(logical(shopRect.x), logical(shopRect.y))
-	shopToggle.Size = UDim2.fromOffset(logical(shopRect.w), buttonHeight)
-	shop.Position =
-		UDim2.fromOffset(logical(shopRect.x), logical(shopRect.y) + buttonHeight + PANEL_GAP)
-	shop.Size = UDim2.fromOffset(
-		logical(shopRect.w),
-		math.max(0, logical(shopRect.h) - buttonHeight - PANEL_GAP)
-	)
+	shop.Position = UDim2.fromOffset(logical(shopRect.x), logical(shopRect.y))
+	shop.Size = UDim2.fromOffset(logical(shopRect.w), logical(shopRect.h))
 
-	local hotbarRect = rects.hotbar
-	hotbar.Position = UDim2.fromOffset(logical(hotbarRect.x), logical(hotbarRect.y))
-	hotbar.Size = UDim2.fromOffset(logical(hotbarRect.w), buttonHeight)
-	boostsLabel.Position =
-		UDim2.fromOffset(logical(hotbarRect.x), logical(hotbarRect.y) + buttonHeight)
-	boostsLabel.Size = UDim2.fromOffset(logical(hotbarRect.w), 14)
+	local statsRect = rects.stats
+	finalHud.StatsPanel.Position = UDim2.fromOffset(logical(statsRect.x), logical(statsRect.y))
+	finalHud.StatsPanel.Size =
+		UDim2.fromOffset(logical(statsRect.w), math.min(146, logical(statsRect.h)))
 
 	local bannerRect = rects.waveClearBanner
 	banner.Position = UDim2.fromOffset(logical(bannerRect.x), logical(bannerRect.y))
@@ -1151,12 +1152,39 @@ workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
 	end
 end)
 
-local function setShop(open: boolean)
-	shop.Visible = open
+local function setUtilityPanel(panel: HudLayout.UtilityPanel?)
+	if panel ~= nil and cardPanel.Visible then
+		return
+	end
+	finalHud.OpenUtilityPanel = panel
+	setQuestsOpen(panel == "quests")
+	shop.Visible = panel == "shop"
+	settingsPanel.Visible = panel == "settings"
+	finalHud.StatsPanel.Visible = panel == "stats"
+	shopToggle.Text = if panel == "shop" then "$-" else "$"
+	settingsToggle.Text = if panel == "settings" then "S-" else "S"
 end
+
+local function setShop(open: boolean)
+	setUtilityPanel(if open then "shop" else nil)
+end
+questToggle.MouseButton1Click:Connect(function()
+	setUtilityPanel(if finalHud.OpenUtilityPanel == "quests" then nil else "quests")
+end)
+settingsToggle.MouseButton1Click:Connect(function()
+	setUtilityPanel(if finalHud.OpenUtilityPanel == "settings" then nil else "settings")
+end)
+finalHud.StatsToggle.MouseButton1Click:Connect(function()
+	setUtilityPanel(if finalHud.OpenUtilityPanel == "stats" then nil else "stats")
+end)
 shopToggle.MouseButton1Click:Connect(function()
 	ClientFX.sound("Buy", nil, 0.3)
-	setShop(not shop.Visible)
+	setUtilityPanel(if finalHud.OpenUtilityPanel == "shop" then nil else "shop")
+end)
+cardPanel:GetPropertyChangedSignal("Visible"):Connect(function()
+	if cardPanel.Visible then
+		setUtilityPanel(nil)
+	end
 end)
 closeBtn.MouseButton1Click:Connect(function()
 	setShop(false)
@@ -1502,6 +1530,7 @@ local function refreshTutorial()
 	local tutorialStep = Tutorial.pick(stats.Flags or {}, context)
 	local visible = tutorialStep ~= nil
 		and Tutorial.shouldShow(tutorialStep.Id, now - tutorialContextStartedAt)
+		and stateValue("Phase") ~= "fighting"
 	tutorialPill.Visible = visible
 	tutorialHint.Text = if visible and tutorialStep
 		then Tutorial.hintFor(tutorialStep.Id, currentTutorialPlatform())
@@ -1560,10 +1589,12 @@ local function refreshStats()
 	finalHud.CoinsLabel.Text = string.format("Coins %d", stats.Coins or 0)
 	finalHud.GemsLabel.Text = string.format("Gems %d", stats.Gems or 0)
 	statsLabel.Text = string.format(
-		"Kills %d    Level %d    Dash %d\nShards  Nature %d  Tech %d  Lightning %d  Dark %d",
+		"Kills %d    Level %d    Dash %d\nCoins %d    Gems %d\nShards  Nature %d  Tech %d  Lightning %d  Dark %d",
 		stats.Kills,
 		stats.Level or 0,
 		dash,
+		stats.Coins or 0,
+		stats.Gems or 0,
 		shards.Nature or 0,
 		shards.Tech or 0,
 		shards.Lightning or 0,
@@ -1575,6 +1606,10 @@ local function refreshStats()
 	xpText.Text = string.format("LEVEL %d    XP %d / %d", stats.Level or 0, xp, xpNeeded)
 	-- Evolution section follows the equipped weapon
 	local equippedDef = Weapons.Defs[stats.Equipped]
+	finalHud.AmmoLabel.Text = string.format(
+		"%s   AMMO UNLIMITED",
+		if equippedDef then string.upper(equippedDef.Name) else "WEAPON"
+	)
 	local evo = (stats.Evolutions or {})[stats.Equipped]
 	evoInfo.Text = string.format(
 		"%s: %s\nOne path per weapon. Shards drop from bosses (Dark, Nature, Lightning) and every 5th wave (Tech).",
@@ -1696,6 +1731,15 @@ onState("Phase", function(phase)
 	refreshPhase()
 	refreshCards()
 	onDailyPhase(phase) -- the daily reward strip never covers a fight
+	local fighting = phase == "fighting"
+	if fighting then
+		setUtilityPanel(nil)
+	end
+	phaseLabel.Visible = not fighting
+	bossChipLabel.Visible = not fighting
+	mutationLabel.Visible = not fighting and stateValue("MutationLabel") ~= ""
+	bossFrame.Visible = not fighting and stateValue("BossName") ~= ""
+	finalHud.CurrencyFrame.Visible = false
 	if phase ~= "over" then
 		summaryPanel.Visible = false
 		summaryInviteBtn.Visible = false
@@ -1704,7 +1748,7 @@ onState("Phase", function(phase)
 		deathInviteBtn.Visible = false
 	end
 	if phase == "intermission" then
-		setShop(true)
+		setShop(false)
 		banner.TextColor3 = WHITE
 		local wave = stateValue("Wave")
 		flash(banner, string.format("Wave clear  +%d Coins", 10 * wave), 2)
@@ -1717,10 +1761,10 @@ onState("TimeLeft", refreshPhase)
 onState("Alive", refreshPhase)
 onState("MutationLabel", function(label)
 	mutationLabel.Text = "Today: " .. label
-	mutationLabel.Visible = label ~= ""
+	mutationLabel.Visible = label ~= "" and stateValue("Phase") ~= "fighting"
 end)
 onState("BossName", function(name)
-	bossFrame.Visible = name ~= ""
+	bossFrame.Visible = name ~= "" and stateValue("Phase") ~= "fighting"
 	bossLabel.Text = name
 end)
 local function refreshBoss()
@@ -1752,7 +1796,8 @@ RunService.Heartbeat:Connect(function()
 		hpFill.BackgroundColor3 = if frac > 0.5
 			then OK
 			else if frac > 0.25 then Color3.fromRGB(220, 160, 40) else BAD
-		hpText.Text = string.format("%d / %d", math.floor(hum.Health), math.floor(hum.MaxHealth))
+		hpText.Text =
+			string.format("HP %d / %d   STATS", math.floor(hum.Health), math.floor(hum.MaxHealth))
 		reviveBtn.Visible = hum.Health <= 0 and stateValue("Phase") == "fighting"
 		local low = frac < 0.35 and hum.Health > 0
 		vignette.Visible = low

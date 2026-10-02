@@ -1,7 +1,8 @@
 --!strict
--- Pure responsive layout calculations. Rectangles are returned in rendered viewport pixels.
+-- Pure screen-space layout and visibility rules for the in-run HUD.
 
 export type Platform = "keyboard" | "touch" | "gamepad"
+export type UtilityPanel = "quests" | "shop" | "settings" | "stats"
 
 export type Rect = {
 	x: number,
@@ -12,17 +13,17 @@ export type Rect = {
 
 local HudLayout = {}
 
-HudLayout.MinScale = 0.6 -- placeholder
-HudLayout.MaxScale = 1.4 -- placeholder
-HudLayout.MinTouchTarget = 44 -- placeholder
-HudLayout.MinButtonHeight = HudLayout.MinTouchTarget -- compatibility for existing callers
+HudLayout.MinScale = 0.8
+HudLayout.MaxScale = 1.25
+HudLayout.MinTouchTarget = 44
+HudLayout.MinButtonHeight = HudLayout.MinTouchTarget
 
--- Screen-space elements use these anchors; world-space feedback is projected by its client.
 HudLayout.Anchors = {
 	waveTimer = "top-center",
-	bossBar = "top-center",
-	currencies = "top-right",
-	quests = "left",
+	health = "bottom-left",
+	xp = "bottom-full-width",
+	ammo = "bottom-right",
+	icons = "left",
 	damageNumbers = "world",
 	hitDirection = "center",
 	aoeWarning = "world",
@@ -30,10 +31,16 @@ HudLayout.Anchors = {
 	rewardCards = "center",
 }
 
-local REFERENCE_HEIGHT = 720 -- placeholder
-local BUTTON_HEIGHT = 34 -- placeholder
-local PANEL_GAP = 8 -- placeholder
-local SETTINGS_LAST_SLIDER_Y = 89 -- placeholder
+HudLayout.PlayElements = { "waveTimer", "health", "xp", "ammo", "icons" }
+HudLayout.UtilityPanels = { "quests", "shop", "settings", "stats" }
+HudLayout.MaxVisiblePlayPanels = 3
+
+local REFERENCE_HEIGHT = 750
+local MARGIN = 16
+local GAP = 10
+local BUTTON_HEIGHT = 34
+local ICON_SIZE = 48
+local ICON_GAP = 8
 
 function HudLayout.scaleFor(_viewportX: number, viewportY: number, _platform: Platform): number
 	return math.clamp(viewportY / REFERENCE_HEIGHT, HudLayout.MinScale, HudLayout.MaxScale)
@@ -52,73 +59,32 @@ function HudLayout.rects(
 	platform: Platform
 ): { [string]: Rect }
 	local scale = HudLayout.scaleFor(viewportX, viewportY, platform)
-	local margin = 12 -- placeholder
-	local gap = PANEL_GAP * scale
-	local buttonHeight = HudLayout.buttonHeightFor(scale, platform) * scale
-
-	local waveWidth = 480 * scale -- placeholder
-	local waveHeight = 92 * scale -- placeholder
-	local bossHeight = 28 * scale -- placeholder
-	local sideWidth = 260 * scale -- placeholder
-	local currencyHeight = 52 * scale -- placeholder
-	local settingsPanelHeight = math.max(
-		116, -- placeholder
-		SETTINGS_LAST_SLIDER_Y + HudLayout.buttonHeightFor(scale, platform)
-	)
-	local settingsHeight = buttonHeight + gap + settingsPanelHeight * scale
-	local questHeight = buttonHeight + gap + 180 * scale -- placeholder
-	local shopWidth = 360 * scale -- placeholder
-	local healthWidth = 420 * scale -- placeholder
-	local healthHeight = 80 * scale -- placeholder
-	local hotbarWidth = 420 * scale -- placeholder
-	local hotbarHeight = buttonHeight + 14 * scale -- placeholder
-	local bottomHeight = math.max(healthHeight, hotbarHeight)
-	local xpHeight = 12 * scale
-	local xp = {
-		x = 0,
-		y = viewportY - xpHeight,
-		w = viewportX,
-		h = xpHeight,
-	}
-	local bottomY = xp.y - gap - bottomHeight
+	local margin = MARGIN * scale
+	local gap = GAP * scale
+	local iconSize = math.max(ICON_SIZE, HudLayout.buttonHeightFor(scale, platform)) * scale
+	local xpHeight = 10 * scale
+	local bottomHeight = 44 * scale
+	local bottomY = viewportY - xpHeight - gap - bottomHeight
+	local waveWidth = math.min(360 * scale, viewportX - margin * 2)
+	local healthWidth = math.min(280 * scale, viewportX * 0.3)
+	local ammoWidth = math.min(180 * scale, viewportX * 0.22)
+	local iconColumnHeight = iconSize * 3 + ICON_GAP * scale * 2
+	local panelX = margin + iconSize + gap
+	local panelY = 76 * scale
+	local panelWidth = math.min(340 * scale, viewportX - panelX - margin)
+	local panelHeight = math.max(0, bottomY - gap - panelY)
 
 	local waveTimer = {
 		x = (viewportX - waveWidth) / 2,
 		y = margin,
 		w = waveWidth,
-		h = waveHeight,
+		h = 44 * scale,
 	}
 	local bossBar = {
 		x = waveTimer.x,
 		y = waveTimer.y + waveTimer.h + gap,
 		w = waveTimer.w,
-		h = bossHeight,
-	}
-	local currencies = {
-		x = viewportX - margin - sideWidth,
-		y = margin,
-		w = sideWidth,
-		h = currencyHeight,
-	}
-	local settings = {
-		x = margin,
-		y = margin,
-		w = sideWidth,
-		h = settingsHeight,
-	}
-	local questY = settings.y + settings.h + gap
-	local quests = {
-		x = margin,
-		y = questY,
-		w = sideWidth,
-		h = math.min(questHeight, bottomY - gap - questY),
-	}
-	local shopY = currencies.y + currencies.h + gap
-	local shop = {
-		x = viewportX - margin - shopWidth,
-		y = shopY,
-		w = shopWidth,
-		h = bottomY - gap - shopY,
+		h = 22 * scale,
 	}
 	local health = {
 		x = margin,
@@ -126,11 +92,29 @@ function HudLayout.rects(
 		w = healthWidth,
 		h = bottomHeight,
 	}
-	local hotbar = {
-		x = viewportX - margin - hotbarWidth,
+	local ammo = {
+		x = viewportX - margin - ammoWidth,
 		y = bottomY,
-		w = hotbarWidth,
+		w = ammoWidth,
 		h = bottomHeight,
+	}
+	local xp = {
+		x = 0,
+		y = viewportY - xpHeight,
+		w = viewportX,
+		h = xpHeight,
+	}
+	local icons = {
+		x = margin,
+		y = panelY,
+		w = iconSize,
+		h = iconColumnHeight,
+	}
+	local utilityPanel = {
+		x = panelX,
+		y = panelY,
+		w = panelWidth,
+		h = panelHeight,
 	}
 
 	local waveClearBanner = {
@@ -149,31 +133,41 @@ function HudLayout.rects(
 	return {
 		waveTimer = waveTimer,
 		bossBar = bossBar,
-		currencies = currencies,
-		quests = quests,
-		waveClearBanner = waveClearBanner,
-		rewardCards = rewardCards,
-		settings = settings,
-		shop = shop,
-		hotbar = hotbar,
 		health = health,
 		xp = xp,
-		-- Compatibility names used by older HUD code.
+		ammo = ammo,
+		icons = icons,
+		quests = utilityPanel,
+		shop = utilityPanel,
+		settings = utilityPanel,
+		stats = utilityPanel,
+		hotbar = ammo,
+		waveClearBanner = waveClearBanner,
+		rewardCards = rewardCards,
+		-- Compatibility names for transient elements owned by the existing HUD.
 		wave = waveTimer,
-		quest = quests,
+		quest = utilityPanel,
 	}
+end
+
+function HudLayout.playState(openPanel: UtilityPanel?): ({ string }, { string })
+	local visible = table.clone(HudLayout.PlayElements)
+	local visiblePanels = { "health", "xp" }
+	if openPanel then
+		table.insert(visible, openPanel)
+		table.insert(visiblePanels, openPanel)
+	end
+	return visible, visiblePanels
 end
 
 function HudLayout.touchTargets(viewportX: number, viewportY: number): { [string]: Rect }
 	local rects = HudLayout.rects(viewportX, viewportY, "touch")
-	local size = HudLayout.MinTouchTarget
+	local size = rects.icons.w
+	local step = size + ICON_GAP * HudLayout.scaleFor(viewportX, viewportY, "touch")
 	return {
-		quests = { x = rects.quests.x, y = rects.quests.y, w = rects.quests.w, h = size },
-		settings = { x = rects.settings.x, y = rects.settings.y, w = rects.settings.w, h = size },
-		shop = { x = rects.shop.x, y = rects.shop.y, w = rects.shop.w, h = size },
-		rewardCard1 = { x = rects.rewardCards.x, y = rects.rewardCards.y, w = 184, h = 180 },
-		rewardCard2 = { x = rects.rewardCards.x + 208, y = rects.rewardCards.y, w = 184, h = 180 },
-		rewardCard3 = { x = rects.rewardCards.x + 416, y = rects.rewardCards.y, w = 184, h = 180 },
+		quests = { x = rects.icons.x, y = rects.icons.y, w = size, h = size },
+		shop = { x = rects.icons.x, y = rects.icons.y + step, w = size, h = size },
+		settings = { x = rects.icons.x, y = rects.icons.y + step * 2, w = size, h = size },
 	}
 end
 
