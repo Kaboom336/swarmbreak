@@ -365,4 +365,47 @@ function ClientFX.ring(at: Vector3, color: Color3, radius: number, life: number)
 	Debris:AddItem(ring, life)
 end
 
+function ClientFX.glowPulse(model: Model, color: Color3, duration: number)
+	local glow = Instance.new("Highlight")
+	glow.Name = "AttackTell"
+	glow.Adornee = model
+	glow.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	glow.FillColor = color
+	glow.FillTransparency = 0.35
+	glow.OutlineColor = color
+	glow.OutlineTransparency = 0
+	glow.Parent = fxFolder
+	local life = math.max(duration, 0.1)
+	TweenService:Create(glow, TweenInfo.new(life), {
+		FillTransparency = 1,
+		OutlineTransparency = 1,
+	}):Play()
+	Debris:AddItem(glow, life)
+end
+
+function ClientFX.groundCircle(at: Vector3, color: Color3, radius: number, duration: number)
+	local circle = Instance.new("Part")
+	circle.Name = "AttackTellCircle"
+	circle.Shape = Enum.PartType.Cylinder
+	circle.Size = Vector3.new(0.08, radius * 2, radius * 2)
+	circle.CFrame = CFrame.new(at + Vector3.new(0, 0.08, 0)) * CFrame.Angles(0, 0, math.rad(90))
+	circle.Anchored = true
+	circle.CanCollide = false
+	circle.CanQuery = false
+	circle.CanTouch = false
+	circle.CastShadow = false
+	circle.Material = Enum.Material.Neon
+	circle.Color = color
+	circle.Transparency = 0.45
+	circle.Parent = fxFolder
+	local life = math.max(duration, 0.1)
+	TweenService
+		:Create(circle, TweenInfo.new(life, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			Transparency = 0.8,
+			Size = Vector3.new(0.08, radius * 2.15, radius * 2.15),
+		})
+		:Play()
+	Debris:AddItem(circle, life)
+end
+
 return ClientFX

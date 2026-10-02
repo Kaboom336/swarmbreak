@@ -8,6 +8,12 @@ export type EnemyTell = {
 	GroundAoeCircle: boolean,
 }
 
+export type AttackTimeline = {
+	TellStartsAt: number,
+	DamageAt: number,
+	ShowGroundCircle: boolean,
+}
+
 local Defs: { [string]: EnemyTell } = {
 	Walker = {
 		SoundKey = "Hurt",
@@ -67,4 +73,14 @@ local Defs: { [string]: EnemyTell } = {
 	},
 }
 
-return { Defs = Defs }
+local EnemyTells = { Defs = Defs }
+
+function EnemyTells.attackTimeline(tell: EnemyTell, now: number): AttackTimeline
+	return {
+		TellStartsAt = now,
+		DamageAt = now + math.max(0, tell.Windup),
+		ShowGroundCircle = tell.GroundAoeCircle,
+	}
+end
+
+return EnemyTells

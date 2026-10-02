@@ -180,6 +180,17 @@ handlers.spawn = function(d)
 	ClientFX.sound("EnemySpawn", d.Position, 0.3)
 end
 
+handlers.tell = function(d)
+	local color = c3(d.GlowColor)
+	if d.GlowPulse and d.Model and d.Model.Parent then
+		ClientFX.glowPulse(d.Model, color, d.Duration)
+	end
+	ClientFX.sound(d.Sound, d.Position)
+	if d.GroundPosition then
+		ClientFX.groundCircle(d.GroundPosition, color, d.Radius, d.Duration)
+	end
+end
+
 handlers.boss = function(d)
 	ClientFX.sound("BossRoar")
 	ClientFX.sound("BossThunder")

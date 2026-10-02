@@ -5,6 +5,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PathfindingService = game:GetService("PathfindingService")
 local Enemies = require(ReplicatedStorage.Shared.Enemies)
+local EnemyTells = require(ReplicatedStorage.Shared.EnemyTells)
 local Fit = require(ReplicatedStorage.Shared.Fit)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local Theme = require(ReplicatedStorage.Shared.Theme)
@@ -33,7 +34,6 @@ type Live = {
 local live: { [Model]: Live } = {}
 local EnemyAI = {}
 EnemyAI.OnSummon = nil :: ((string, CFrame) -> ())?
-local AREA_WARNING_SECONDS = 0.65 -- placeholder
 
 local function v3(t: { number }): Vector3
 	return Vector3.new(t[1], t[2], t[3])
@@ -110,18 +110,35 @@ local function rangedShot(e: Live, target: BasePart)
 	end
 end
 
-local function telegraphAttack(e: Live, target: BasePart, radius: number, attack: (Vector3) -> ())
+local function queueAttack(e: Live, target: BasePart, radius: number, attack: (Vector3) -> ())
+	local typeName = e.Model:GetAttribute("TypeName") :: string
+	local tell = EnemyTells.Defs[typeName]
 	local impactPosition = target.Position
-	FX:FireAllClients("aoeWarning", {
-		Position = impactPosition - Vector3.new(0, 3, 0),
+	local timeline = EnemyTells.attackTimeline(tell, os.clock())
+	FX:FireAllClients("tell", {
+		Model = e.Model,
+		Position = e.Root.Position,
+		Sound = tell.SoundKey,
+		GlowPulse = tell.GlowPulse,
+		GlowColor = tell.GlowColor,
+		Duration = timeline.DamageAt - timeline.TellStartsAt,
+		GroundPosition = if timeline.ShowGroundCircle
+			then impactPosition - Vector3.new(0, 3, 0)
+			else nil,
 		Radius = radius,
-		Duration = AREA_WARNING_SECONDS,
 	})
-	task.delay(AREA_WARNING_SECONDS, function()
+
+	local function landAttack()
 		if e.Humanoid.Health > 0 and e.Model.Parent and target.Parent then
 			attack(impactPosition)
 		end
-	end)
+	end
+	local delaySeconds = math.max(0, timeline.DamageAt - os.clock())
+	if delaySeconds == 0 then
+		landAttack()
+	else
+		task.delay(delaySeconds, landAttack)
+	end
 end
 
 -- Ground enemies path around towers and walls; re-plan every 0.4 s, jump when stuck.
@@ -319,17 +336,17 @@ RunService.Heartbeat:Connect(function(dt)
 			if def.Ranged then
 				if dist <= (def.Range or 40) then
 					e.AttackCooldown = def.AttackCooldown or 2
-					if typeName == "Spitter" or def.Boss then
-						local warningRadius = if def.Boss then 10 else 6
-						telegraphAttack(e, target, warningRadius, function(impactPosition)
+					local tellRadius = if def.Boss then 10 else 6
+					queueAttack(e, target, tellRadius, function(impactPosition)
+						if EnemyTells.Defs[typeName].GroundAoeCircle then
 							local moved = (target.Position - impactPosition) * Vector3.new(1, 0, 1)
-							if moved.Magnitude <= warningRadius then
+							if moved.Magnitude <= tellRadius then
 								rangedShot(e, target)
 							end
-						end)
-					else
-						rangedShot(e, target)
-					end
+						else
+							rangedShot(e, target)
+						end
+					end)
 				end
 			elseif horizontalDist < (e.Root.Size.Magnitude / 2 + 3) then
 				e.AttackCooldown = 1
@@ -344,11 +361,7 @@ RunService.Heartbeat:Connect(function(dt)
 						hum:TakeDamage(e.Damage)
 					end
 				end
-				if def.Boss then
-					telegraphAttack(e, target, 10, hitTarget)
-				else
-					hitTarget(nil)
-				end
+				queueAttack(e, target, if def.Boss then 10 else 6, hitTarget)
 			end
 		end
 

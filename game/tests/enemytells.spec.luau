@@ -48,3 +48,27 @@ test("Spitter and bosses show a ground area warning", function()
 		)
 	end
 end)
+
+test("attack damage cannot land before the windup ends", function()
+	local now = 12.5
+	for enemyType, tell in EnemyTells.Defs do
+		local timeline = EnemyTells.attackTimeline(tell, now)
+		eq(timeline.TellStartsAt, now, enemyType .. " tell start")
+		eq(timeline.DamageAt, now + tell.Windup, enemyType .. " damage time")
+		assert(timeline.DamageAt >= timeline.TellStartsAt, enemyType .. " damage is too early")
+	end
+end)
+
+test("zero-windup attacks may land immediately", function()
+	local tell = table.clone(EnemyTells.Defs.Walker)
+	tell.Windup = 0
+	local timeline = EnemyTells.attackTimeline(tell, 24)
+	eq(timeline.DamageAt, timeline.TellStartsAt, "zero windup damage time")
+end)
+
+test("attack timeline ground circle follows the tell", function()
+	for enemyType, tell in EnemyTells.Defs do
+		local timeline = EnemyTells.attackTimeline(tell, 0)
+		eq(timeline.ShowGroundCircle, tell.GroundAoeCircle, enemyType .. " timeline circle")
+	end
+end)
