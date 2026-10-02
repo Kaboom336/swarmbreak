@@ -27,12 +27,13 @@ Plan: ../GAME-PLAN.md. Zion's steps: ../PUBLISH-GUIDE.md and ../MONETIZATION-SET
 stylua --check src
 selene src
 lune run tests/run.luau
+lune run ../tools/lint_runtime_apis.luau
 rojo build default.project.json -o out.rbxl
 ```
 `selene.toml` uses `roblox_min.yml` (a small global list) because the full Roblox std needs a GitHub download.
 On the laptop, switch `std = "roblox"` in selene.toml for the real API dump.
 
-Codex tasks on this repo: `testcmd: cd game && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl`
+Codex tasks on this repo: `testcmd: cd game && stylua --check src tests && selene src && lune run tests/run.luau && lune run ../tools/lint_runtime_apis.luau && rojo build default.project.json -o out.rbxl`
 
 ## CI
 
@@ -40,7 +41,7 @@ GitHub Actions runs formatting, lint, unit tests, and a Rojo build on every push
 the tool versions pinned in `../rokit.toml`, including Rojo 7.4.4. Run the same gate locally from this folder with:
 
 ```
-stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
+stylua --check src tests && selene src && lune run tests/run.luau && lune run ../tools/lint_runtime_apis.luau && rojo build default.project.json -o out.rbxl
 ```
 
 ## Run in Studio (laptop)

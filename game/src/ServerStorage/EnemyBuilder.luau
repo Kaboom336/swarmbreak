@@ -3,6 +3,7 @@
 -- Motor names are what EnemyAnimator.client animates: Hip_L/R, Shoulder_L/R, Neck, Wing_1..n, Leg_1..n, Jaw.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local Enemies = require(ReplicatedStorage.Shared.Enemies)
 local Fit = require(ReplicatedStorage.Shared.Fit)
 local ModelKey = require(ReplicatedStorage.Shared.ModelKey)
 local ModelParts = require(ReplicatedStorage.Shared.ModelParts)
@@ -407,8 +408,12 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 	end
 
 	local bounds = model:GetExtentsSize()
-	model:ScaleTo(Fit.scaleFor({ bounds.X, bounds.Y, bounds.Z }, { size.X, size.Y, size.Z }))
+	local fitted = Fit.sizeForRelativeHeight({ bounds.X, bounds.Y, bounds.Z }, size.Y, 1)
+	model:ScaleTo(
+		Fit.capWidth(fitted[2] / bounds.Y, bounds.X, bounds.Z, Enemies.Defs[typeName].MaxWidth)
+	)
 	model:PivotTo(cf)
+	local boundsCFrame, scaledBounds = model:GetBoundingBox()
 	model.Name = typeName
 	local palette = Theme.Enemy[typeName] or Theme.Enemy.Walker
 	local body = c3(palette.Body)
@@ -421,9 +426,12 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 
 	local root = Instance.new("Part")
 	root.Name = "HumanoidRootPart"
-	root.Size = size
+	-- Root bottom sits HipHeight above the feet so the Humanoid keeps the feet on the floor.
+	local importedHip = 0.4
+	root.Size =
+		Vector3.new(scaledBounds.X, math.max(1, scaledBounds.Y - importedHip), scaledBounds.Z)
 	root.Transparency = 1
-	root.CFrame = cf
+	root.CFrame = boundsCFrame * CFrame.new(0, importedHip / 2, 0)
 	root.CanCollide = true
 	root.Parent = model
 	model.PrimaryPart = root
@@ -452,16 +460,7 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 		end
 	end
 
-	local minY = math.huge
-	for _, descendant in model:GetDescendants() do
-		if descendant:IsA("BasePart") and descendant ~= root then
-			minY = math.min(minY, descendant.Position.Y - descendant.Size.Y / 2)
-		end
-	end
-	local hipHeight = 0.4
-	local halfHeight = math.max(0.5, root.Position.Y - minY - hipHeight)
-	root.Size = Vector3.new(root.Size.X, halfHeight * 2, root.Size.Z)
-	return { Model = model, Root = root, Torso = torso, HipHeight = hipHeight }
+	return { Model = model, Root = root, Torso = torso, HipHeight = importedHip }
 end
 
 function EnemyBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig
