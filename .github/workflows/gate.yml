@@ -1,0 +1,29 @@
+name: Gate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Rokit
+        uses: rojo-rbx/setup-rokit@v0.1.2
+        with:
+          version: v1.2.0
+
+      - name: Install pinned tools
+        working-directory: game
+        run: rokit install --no-trust-check
+
+      - name: Run checks
+        working-directory: game
+        run: stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
