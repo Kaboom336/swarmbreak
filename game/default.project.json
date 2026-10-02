@@ -83,6 +83,12 @@
             "Value": "idle"
           }
         },
+        "MapName": {
+          "$className": "StringValue",
+          "$properties": {
+            "Value": "Station Deck"
+          }
+        },
         "TimeLeft": {
           "$className": "NumberValue",
           "$properties": {
