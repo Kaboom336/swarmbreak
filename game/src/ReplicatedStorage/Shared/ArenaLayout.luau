@@ -26,6 +26,12 @@ export type Beacon = Position & {
 	Color: { number },
 }
 
+export type BarrelRow = Position & {
+	Axis: "X" | "Z",
+	Count: number,
+	Spacing: number,
+}
+
 local ArenaLayout = {}
 
 ArenaLayout.Floor = 160 -- placeholder
@@ -95,6 +101,14 @@ ArenaLayout.Beacons = {
 	{ Name = "South", x = 0, z = 76, Width = 6, Height = 0.15, Color = { 40, 220, 210 } },
 	{ Name = "West", x = -76, z = 0, Width = 6, Height = 0.15, Color = { 255, 170, 40 } },
 } :: { Beacon }
+
+-- Short rows create deliberate chain-reaction opportunities without blocking routes.
+ArenaLayout.BarrelRows = {
+	{ x = -30, z = -54, Axis = "X", Count = 3, Spacing = 6 },
+	{ x = 54, z = -30, Axis = "Z", Count = 3, Spacing = 6 },
+	{ x = 30, z = 54, Axis = "X", Count = 3, Spacing = 6 },
+	{ x = -54, z = 30, Axis = "Z", Count = 3, Spacing = 6 },
+} :: { BarrelRow }
 
 function ArenaLayout.playArea(players: number): number
 	if players < 4 then

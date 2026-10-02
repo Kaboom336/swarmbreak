@@ -30,6 +30,8 @@ local Theme = require(ReplicatedStorage.Shared.Theme)
 local arena = workspace:WaitForChild("Arena")
 local spawns = arena:WaitForChild("EnemySpawns")
 local bossSpawn = arena:WaitForChild("BossSpawn") :: BasePart
+local barrels = workspace:WaitForChild("Barrels")
+local barrelReset = barrels:WaitForChild("Reset") :: BindableEvent
 local rng = Random.new()
 
 local currentWave = 0
@@ -252,6 +254,7 @@ end
 -- Returns true if the wave was cleared, false on team wipe.
 local function runWave(wave: number): boolean
 	currentWave = wave
+	barrelReset:Fire()
 	publishMutation()
 	GameState.set("Wave", wave)
 	for _, plr in Players:GetPlayers() do

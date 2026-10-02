@@ -4,6 +4,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local Lighting = game:GetService("Lighting")
 local Fit = require(ReplicatedStorage.Shared.Fit)
+local ArenaLayout = require(ReplicatedStorage.Shared.ArenaLayout)
+local Barrels = require(ReplicatedStorage.Shared.Barrels)
 local LightingPresets = require(ReplicatedStorage.Shared.LightingPresets)
 local ModelKey = require(ReplicatedStorage.Shared.ModelKey)
 local Theme = require(ReplicatedStorage.Shared.Theme)
@@ -327,8 +329,58 @@ local function portals()
 	end
 end
 
+local function energyBarrels()
+	local existing = workspace:FindFirstChild("Barrels")
+	if existing then
+		existing:Destroy()
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "Barrels"
+	folder.Parent = workspace
+	local reset = Instance.new("BindableEvent")
+	reset.Name = "Reset"
+	reset.Parent = folder
+	local teal = c3(Barrels.Color)
+	for rowIndex, row in ArenaLayout.BarrelRows do
+		for index = 1, row.Count do
+			local offset = (index - (row.Count + 1) / 2) * row.Spacing
+			local x = row.x + (if row.Axis == "X" then offset else 0)
+			local z = row.z + (if row.Axis == "Z" then offset else 0)
+			local model = Instance.new("Model")
+			model.Name = string.format("EnergyBarrel_%d_%d", rowIndex, index)
+			model:SetAttribute("IsEnergyBarrel", true)
+			model:SetAttribute("Health", Barrels.Health)
+			model:SetAttribute("Spent", false)
+			model:SetAttribute("Queued", false)
+			local cf = CFrame.new(x, 3.5, z) * CFrame.Angles(0, 0, math.rad(90))
+			local core = part(
+				"Core",
+				Vector3.new(5, 3.5, 3.5),
+				cf,
+				c3(Theme.MetalDark),
+				Enum.Material.Metal,
+				Enum.PartType.Cylinder
+			)
+			core.Parent = model
+			local energy = part(
+				"Energy",
+				Vector3.new(3.8, 3.65, 3.65),
+				cf,
+				teal,
+				Enum.Material.Neon,
+				Enum.PartType.Cylinder
+			)
+			energy.CanCollide = false
+			energy.Parent = model
+			model.PrimaryPart = core
+			model.Parent = folder
+		end
+	end
+end
+
 applyLightingPreset(LightingPresets.Station)
 retexture()
 floorGrid()
 wallsAndRails()
 portals()
+energyBarrels()

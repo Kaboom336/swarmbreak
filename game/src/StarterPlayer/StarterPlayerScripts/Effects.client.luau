@@ -53,6 +53,25 @@ end
 
 local handlers: { [string]: (any) -> () } = {}
 
+handlers.barrelWarning = function(d)
+	local color = c3(d.Color)
+	ClientFX.groundCircle(d.Position - Vector3.new(0, 2.4, 0), color, 3.5, d.Delay)
+	ClientFX.flash(d.Position, color, 8, d.Delay)
+	ClientFX.sound("Hit", d.Position, 0.5)
+end
+
+handlers.barrelBlast = function(d)
+	local color = c3(d.Color)
+	ClientFX.ring(d.Position - Vector3.new(0, 2.4, 0), color, d.Radius, 0.45)
+	ClientFX.burst(d.Position, color, 36, 0.8, 30, 0.6, true)
+	ClientFX.flash(d.Position, color, d.Radius * 1.5, 0.3)
+	ClientFX.sound("Explosion", d.Position)
+	local camera = workspace.CurrentCamera
+	if camera and (d.Position - camera.CFrame.Position).Magnitude <= d.Radius * 2 then
+		ClientFX.shake(3)
+	end
+end
+
 handlers.shot = function(d)
 	local color = c3(d.Color)
 	local from = muzzleOf(d.Shooter) or d.Origin

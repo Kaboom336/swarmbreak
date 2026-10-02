@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local PlayerData = require(ServerStorage.PlayerData)
 local CombatEffects = require(ServerStorage.CombatEffects)
+local Barrels = require(ReplicatedStorage.Shared.Barrels)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 
@@ -15,6 +16,127 @@ local FX = Remotes.FX :: RemoteEvent
 local lastAction: { [Player]: number } = {}
 local rng = Random.new()
 local enemiesFolder = workspace:WaitForChild("Enemies")
+local barrelsFolder = workspace:WaitForChild("Barrels")
+local enemiesNear: (Vector3, number) -> { Model }
+
+type Cascade = { FXCount: number }
+
+local function barrelFromHit(hit: Instance): Model?
+	local model = hit:FindFirstAncestorOfClass("Model")
+	if model and model.Parent == barrelsFolder and model:GetAttribute("IsEnergyBarrel") == true then
+		return model
+	end
+	return nil
+end
+
+local function showBarrel(model: Model, visible: boolean)
+	for _, descendant in model:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			descendant.Transparency = if visible then 0 else 1
+			descendant.CanCollide = visible and descendant.Name == "Core"
+			descendant.CanQuery = visible
+		end
+	end
+end
+
+local function resetBarrels()
+	barrelsFolder:SetAttribute("Generation", (barrelsFolder:GetAttribute("Generation") or 0) + 1)
+	for _, child in barrelsFolder:GetChildren() do
+		if child:IsA("Model") and child:GetAttribute("IsEnergyBarrel") == true then
+			child:SetAttribute("Health", Barrels.Health)
+			child:SetAttribute("Spent", false)
+			child:SetAttribute("Queued", false)
+			showBarrel(child, true)
+		end
+	end
+end
+
+local explodeBarrel: (Player, Model, Cascade, boolean) -> ()
+
+local function queueBarrel(plr: Player, model: Model, delaySeconds: number, cascade: Cascade)
+	if model:GetAttribute("Spent") == true or model:GetAttribute("Queued") == true then
+		return
+	end
+	model:SetAttribute("Queued", true)
+	cascade.FXCount += 1
+	local showFX = cascade.FXCount <= Barrels.MaxChainFX
+	if showFX then
+		FX:FireAllClients("barrelWarning", {
+			Position = (model.PrimaryPart :: BasePart).Position,
+			Delay = delaySeconds,
+			Color = Barrels.Color,
+		})
+	end
+	local generation = barrelsFolder:GetAttribute("Generation") or 0
+	task.delay(delaySeconds, function()
+		if barrelsFolder:GetAttribute("Generation") == generation then
+			explodeBarrel(plr, model, cascade, showFX)
+		end
+	end)
+end
+
+explodeBarrel = function(plr: Player, model: Model, cascade: Cascade, showFX: boolean)
+	if model:GetAttribute("Spent") == true or model.Parent ~= barrelsFolder then
+		return
+	end
+	model:SetAttribute("Spent", true)
+	model:SetAttribute("Queued", false)
+	local root = model.PrimaryPart
+	if not root then
+		return
+	end
+	local center = root.Position
+	showBarrel(model, false)
+	if showFX then
+		FX:FireAllClients("barrelBlast", {
+			Position = center,
+			Radius = Barrels.BlastRadius,
+			Color = Barrels.Color,
+		})
+	end
+	for _, enemy in enemiesNear(center, Barrels.BlastRadius) do
+		local enemyRoot = enemy.PrimaryPart :: BasePart
+		local offset = enemyRoot.Position - center
+		local distance = offset.Magnitude
+		local damage = Barrels.damageAtDistance(distance)
+		if damage > 0 then
+			CombatEffects.rawHit(plr, enemy, damage, enemyRoot.Position, false)
+			local horizontal = offset * Vector3.new(1, 0, 1)
+			if horizontal.Magnitude > 0.01 then
+				local velocity = horizontal.Unit * Barrels.knockbackAtDistance(distance)
+					+ Vector3.new(0, 16, 0)
+				if enemyRoot.Anchored then
+					enemyRoot.CFrame += horizontal.Unit * math.min(6, velocity.Magnitude * 0.08)
+				else
+					enemyRoot:ApplyImpulse(velocity * enemyRoot.AssemblyMass)
+				end
+			end
+		end
+	end
+	for _, other in barrelsFolder:GetChildren() do
+		if other:IsA("Model") and other ~= model and other.PrimaryPart then
+			local distance = (other.PrimaryPart.Position - center).Magnitude
+			if Barrels.shouldChain(distance) then
+				queueBarrel(plr, other, Barrels.ChainDelay, cascade)
+			end
+		end
+	end
+end
+
+local function damageBarrel(plr: Player, model: Model, damage: number): boolean
+	if model:GetAttribute("Spent") == true or model:GetAttribute("Queued") == true then
+		return false
+	end
+	local health = math.max(0, (model:GetAttribute("Health") :: number? or Barrels.Health) - damage)
+	model:SetAttribute("Health", health)
+	if health <= 0 then
+		queueBarrel(plr, model, Barrels.FuseDelay, { FXCount = 0 })
+	end
+	return true
+end
+
+local resetEvent = barrelsFolder:WaitForChild("Reset") :: BindableEvent
+resetEvent.Event:Connect(resetBarrels)
 
 local function spreadDir(dir: Vector3, degrees: number): Vector3
 	if degrees <= 0 then
@@ -31,7 +153,7 @@ local function damageEnemy(plr: Player, model: Model, damage: number, hitPos: Ve
 	return landed
 end
 
-local function enemiesNear(pos: Vector3, radius: number): { Model }
+enemiesNear = function(pos: Vector3, radius: number): { Model }
 	local out = {}
 	for _, model in enemiesFolder:GetChildren() do
 		local root = model:IsA("Model") and model.PrimaryPart
@@ -59,8 +181,12 @@ local function doHitscan(
 		local hit = workspace:Raycast(origin, d * weapon.Range, params)
 		table.insert(ends, if hit then hit.Position else origin + d * weapon.Range)
 		if hit then
+			local barrel = barrelFromHit(hit.Instance)
 			local model = hit.Instance:FindFirstAncestorOfClass("Model")
-			if model and damageEnemy(plr, model, damage, hit.Position) then
+			local landed = if barrel
+				then damageBarrel(plr, barrel, damage)
+				else model ~= nil and damageEnemy(plr, model, damage, hit.Position)
+			if landed then
 				table.insert(hits, hit.Position)
 			end
 		end
@@ -145,8 +271,12 @@ local function doBeam(
 	local endPos = if hit then hit.Position else origin + dir * weapon.Range
 	local hitPos: Vector3? = nil
 	if hit then
+		local barrel = barrelFromHit(hit.Instance)
 		local model = hit.Instance:FindFirstAncestorOfClass("Model")
-		if model and damageEnemy(plr, model, damage, hit.Position) then
+		local landed = if barrel
+			then damageBarrel(plr, barrel, damage)
+			else model ~= nil and damageEnemy(plr, model, damage, hit.Position)
+		if landed then
 			hitPos = hit.Position
 		end
 	end

@@ -44,7 +44,8 @@ local function rawHit(
 	plr: Player,
 	model: Model,
 	damage: number,
-	hitPos: Vector3
+	hitPos: Vector3,
+	applyWeaponKnockback: boolean?
 ): (boolean, boolean)
 	local ehum = model:FindFirstChildOfClass("Humanoid")
 	if not ehum or ehum.Health <= 0 or model.Parent ~= enemiesFolder then
@@ -56,7 +57,7 @@ local function rawHit(
 	local root = model.PrimaryPart
 	local playerRoot = plr.Character
 		and plr.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
-	if root and playerRoot then
+	if root and playerRoot and applyWeaponKnockback ~= false then
 		local away = (root.Position - playerRoot.Position) * Vector3.new(1, 0, 1)
 		if away.Magnitude > 0.01 then
 			if root.Anchored then
@@ -69,6 +70,7 @@ local function rawHit(
 	HitMarker:FireClient(plr, hitPos, math.floor(damage + 0.5), killed, model)
 	return true, killed
 end
+CombatEffects.rawHit = rawHit
 
 -- A full hit: damage plus every active evolution effect. Returns landed, killed.
 function CombatEffects.hit(
