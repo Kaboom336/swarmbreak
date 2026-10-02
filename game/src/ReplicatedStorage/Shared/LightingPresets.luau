@@ -6,9 +6,9 @@ local LightingPresets = {
 	Station = {
 		Lighting = {
 			Technology = "Future",
-			ClockTime = 15.5,
+			ClockTime = 17,
 			Brightness = 2.5,
-			ExposureCompensation = 0,
+			ExposureCompensation = -0.3,
 			GlobalShadows = true,
 			EnvironmentDiffuseScale = 0.7,
 			EnvironmentSpecularScale = 0.8,
@@ -39,7 +39,7 @@ local LightingPresets = {
 		},
 		Sky = {
 			Tint = { 0.93, 0.96, 1 },
-			StarCount = 0,
+			StarCount = 600,
 			CelestialBodiesShown = true,
 			SunAngularSize = 11,
 		},

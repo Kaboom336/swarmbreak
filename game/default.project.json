@@ -178,9 +178,9 @@
       "$className": "Lighting",
       "$properties": {
         "Technology": "Future",
-        "ClockTime": 15.5,
+        "ClockTime": 17,
         "Brightness": 2.5,
-        "ExposureCompensation": 0,
+        "ExposureCompensation": -0.3,
         "GlobalShadows": true,
         "EnvironmentDiffuseScale": 0.7,
         "EnvironmentSpecularScale": 0.8,
@@ -245,7 +245,7 @@
       "Sky": {
         "$className": "Sky",
         "$properties": {
-          "StarCount": 0,
+          "StarCount": 600,
           "CelestialBodiesShown": true,
           "SunAngularSize": 11
         }
