@@ -28,6 +28,9 @@ end
 -- Damage an enemy model (plus Evolution effects); returns true if it counted.
 local function damageEnemy(plr: Player, model: Model, damage: number, hitPos: Vector3): boolean
 	local landed = CombatEffects.hit(plr, model, damage, hitPos)
+	if landed then
+		PlayerData.recordHit(plr)
+	end
 	return landed
 end
 
