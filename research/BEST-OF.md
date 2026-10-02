@@ -36,3 +36,5 @@ Borrowed ideas should fit these by default; replacing one is allowed when eviden
 
 ## Wave 10 candidates (from watch round 2, not yet briefed)
 Reactor core with world counter; objective line + threat banner; world events; debris on slams; one UI style across panels.
+| Dark bug caves that still read (our genre) | Deep Rock Galactic | Nest/boss interiors: deep purple + teal rock, saturated glowing crystals/fungus as light sources, chunky bright-yellow guns, ammo shown on the gun. Replaces Pressure as the main Nest reference; arenas, lobby, HUD and juice stay Hunty. |
+| Level-up pacing and XP bar | Vampire Survivors | Full-width XP bar, top-centre timer; picks every ~30-60 s later in a run (Final Swarm is faster early: start at 10-20 s, slow to 30-60 s) |
