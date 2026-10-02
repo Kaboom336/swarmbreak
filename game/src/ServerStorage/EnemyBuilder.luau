@@ -3,6 +3,7 @@
 -- Motor names are what EnemyAnimator.client animates: Hip_L/R, Shoulder_L/R, Neck, Wing_1..n, Leg_1..n, Jaw.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local Enemies = require(ReplicatedStorage.Shared.Enemies)
 local Fit = require(ReplicatedStorage.Shared.Fit)
 local ModelKey = require(ReplicatedStorage.Shared.ModelKey)
 local ModelParts = require(ReplicatedStorage.Shared.ModelParts)
@@ -408,7 +409,9 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 
 	local bounds = model:GetExtentsSize()
 	local fitted = Fit.sizeForRelativeHeight({ bounds.X, bounds.Y, bounds.Z }, size.Y, 1)
-	model:ScaleTo(fitted[2] / bounds.Y)
+	model:ScaleTo(
+		Fit.capWidth(fitted[2] / bounds.Y, bounds.X, bounds.Z, Enemies.Defs[typeName].MaxWidth)
+	)
 	model:PivotTo(cf)
 	local boundsCFrame, scaledBounds = model:GetBoundingBox()
 	model.Name = typeName
@@ -423,9 +426,12 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 
 	local root = Instance.new("Part")
 	root.Name = "HumanoidRootPart"
-	root.Size = scaledBounds
+	-- Root bottom sits HipHeight above the feet so the Humanoid keeps the feet on the floor.
+	local importedHip = 0.4
+	root.Size =
+		Vector3.new(scaledBounds.X, math.max(1, scaledBounds.Y - importedHip), scaledBounds.Z)
 	root.Transparency = 1
-	root.CFrame = boundsCFrame
+	root.CFrame = boundsCFrame * CFrame.new(0, importedHip / 2, 0)
 	root.CanCollide = true
 	root.Parent = model
 	model.PrimaryPart = root
@@ -454,8 +460,7 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 		end
 	end
 
-	local hipHeight = 0.4
-	return { Model = model, Root = root, Torso = torso, HipHeight = hipHeight }
+	return { Model = model, Root = root, Torso = torso, HipHeight = importedHip }
 end
 
 function EnemyBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig

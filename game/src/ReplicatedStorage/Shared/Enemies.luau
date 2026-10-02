@@ -9,6 +9,7 @@ export type EnemyDef = {
 	Scale: number, -- height relative to a player
 	Color: { number }, -- r, g, b 0..255
 	Flying: boolean,
+	MaxWidth: number?, -- caps the footprint of wide meshes (studs)
 	Ranged: boolean?, -- attacks from range instead of contact
 	Range: number?,
 	AttackCooldown: number?,
@@ -95,7 +96,8 @@ local Defs: { [string]: EnemyDef } = {
 		Health = 1800,
 		Speed = 7,
 		Damage = 20,
-		Size = { 24.4, 22, 24.4 },
+		Size = { 24, 22, 24 },
+		MaxWidth = 26,
 		Scale = 4.4,
 		Color = { 150, 40, 120 },
 		Flying = false,
@@ -109,7 +111,8 @@ local Defs: { [string]: EnemyDef } = {
 		Health = 3000,
 		Speed = 14,
 		Damage = 30,
-		Size = { 52.8, 22, 52.8 },
+		Size = { 30, 22, 30 },
+		MaxWidth = 30,
 		Scale = 4.4,
 		Color = { 30, 30, 60 },
 		Flying = true,

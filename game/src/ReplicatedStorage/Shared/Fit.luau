@@ -26,4 +26,12 @@ function Fit.sizeForRelativeHeight(
 	return { size[1] * scale, size[2] * scale, size[3] * scale }
 end
 
+-- Shrink a height-based scale so the footprint stays within maxWidth (no cap when nil).
+function Fit.capWidth(scale: number, width: number, depth: number, maxWidth: number?): number
+	if not maxWidth then
+		return scale
+	end
+	return math.min(scale, maxWidth / math.max(width, depth))
+end
+
 return Fit
