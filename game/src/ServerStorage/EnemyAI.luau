@@ -5,6 +5,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PathfindingService = game:GetService("PathfindingService")
 local Enemies = require(ReplicatedStorage.Shared.Enemies)
+local BossPhases = require(ReplicatedStorage.Shared.BossPhases)
 local EnemyTells = require(ReplicatedStorage.Shared.EnemyTells)
 local Fit = require(ReplicatedStorage.Shared.Fit)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
@@ -27,6 +28,8 @@ type Live = {
 	Damage: number,
 	AttackCooldown: number,
 	SummonCooldown: number,
+	PhaseTransitioned: boolean,
+	AttackModifiers: BossPhases.AttackModifiers,
 	OnDeath: (Player?) -> (),
 	LastHitBy: Player?,
 }
@@ -34,6 +37,14 @@ type Live = {
 local live: { [Model]: Live } = {}
 local EnemyAI = {}
 EnemyAI.OnSummon = nil :: ((string, CFrame) -> ())?
+
+local DEFAULT_ATTACK_MODIFIERS: BossPhases.AttackModifiers = {
+	AttackCooldownMultiplier = 1,
+	SummonCooldownMultiplier = 1,
+	SummonCount = 1,
+	VolleyCount = 1,
+	VolleyInterval = 0.2,
+}
 
 local function v3(t: { number }): Vector3
 	return Vector3.new(t[1], t[2], t[3])
@@ -107,6 +118,21 @@ local function rangedShot(e: Live, target: BasePart)
 	local hum = target.Parent and target.Parent:FindFirstChildOfClass("Humanoid")
 	if hum then
 		hum:TakeDamage(e.Damage)
+	end
+end
+
+local function rangedVolley(e: Live, target: BasePart)
+	for shot = 1, e.AttackModifiers.VolleyCount do
+		local delaySeconds = (shot - 1) * e.AttackModifiers.VolleyInterval
+		if delaySeconds == 0 then
+			rangedShot(e, target)
+		else
+			task.delay(delaySeconds, function()
+				if e.Humanoid.Health > 0 and target.Parent then
+					rangedShot(e, target)
+				end
+			end)
+		end
 	end
 end
 
@@ -232,6 +258,7 @@ function EnemyAI.spawn(
 	model:SetAttribute("Boss", def.Boss == true)
 	model:SetAttribute("TypeName", typeName)
 	model:SetAttribute("LastHitBy", 0)
+	model:SetAttribute("BossPhase", if def.Boss then 1 else 0)
 	makeHealthBar(model, root, hum, def.Boss == true)
 	model.Parent = folder
 	if not def.Flying then
@@ -247,6 +274,8 @@ function EnemyAI.spawn(
 		Damage = math.floor(def.Damage * damageScale + 0.5),
 		AttackCooldown = 1,
 		SummonCooldown = def.SummonEvery or 0,
+		PhaseTransitioned = false,
+		AttackModifiers = DEFAULT_ATTACK_MODIFIERS,
 		OnDeath = onDeath,
 		LastHitBy = nil,
 	}
@@ -259,6 +288,40 @@ function EnemyAI.spawn(
 		local id = model:GetAttribute("LastHitBy") :: number
 		e.LastHitBy = Players:GetPlayerByUserId(id)
 	end)
+
+	if def.Boss then
+		hum.HealthChanged:Connect(function(health)
+			if
+				BossPhases.shouldTransition(typeName, health, hum.MaxHealth, e.PhaseTransitioned)
+			then
+				local phase = BossPhases.Defs[typeName]
+				if not phase then
+					return
+				end
+				e.PhaseTransitioned = true
+				e.AttackModifiers = phase.Modifiers
+				e.AttackCooldown = math.min(
+					e.AttackCooldown,
+					(def.AttackCooldown or 1) * phase.Modifiers.AttackCooldownMultiplier
+				)
+				if def.SummonEvery then
+					e.SummonCooldown = math.min(
+						e.SummonCooldown,
+						def.SummonEvery * phase.Modifiers.SummonCooldownMultiplier
+					)
+				end
+				model:SetAttribute("BossPhase", 2)
+				FX:FireAllClients("bossPhase", {
+					BossType = typeName,
+					Model = model,
+					Position = root.Position,
+					Banner = phase.Banner,
+					Color = phase.Color,
+					Phase = 2,
+				})
+			end
+		end)
+	end
 
 	hum.Died:Connect(function()
 		live[model] = nil
@@ -335,21 +398,22 @@ RunService.Heartbeat:Connect(function(dt)
 			local typeName = e.Model:GetAttribute("TypeName") :: string
 			if def.Ranged then
 				if dist <= (def.Range or 40) then
-					e.AttackCooldown = def.AttackCooldown or 2
+					e.AttackCooldown = (def.AttackCooldown or 2)
+						* e.AttackModifiers.AttackCooldownMultiplier
 					local tellRadius = if def.Boss then 10 else 6
 					queueAttack(e, target, tellRadius, function(impactPosition)
 						if EnemyTells.Defs[typeName].GroundAoeCircle then
 							local moved = (target.Position - impactPosition) * Vector3.new(1, 0, 1)
 							if moved.Magnitude <= tellRadius then
-								rangedShot(e, target)
+								rangedVolley(e, target)
 							end
 						else
-							rangedShot(e, target)
+							rangedVolley(e, target)
 						end
 					end)
 				end
 			elseif horizontalDist < (e.Root.Size.Magnitude / 2 + 3) then
-				e.AttackCooldown = 1
+				e.AttackCooldown = e.AttackModifiers.AttackCooldownMultiplier
 				local function hitTarget(_impactPosition: Vector3?)
 					local currentDistance = ((target.Position - e.Root.Position) * Vector3.new(
 						1,
@@ -368,15 +432,19 @@ RunService.Heartbeat:Connect(function(dt)
 		if def.Summons and def.SummonEvery then
 			e.SummonCooldown -= dt
 			if e.SummonCooldown <= 0 then
-				e.SummonCooldown = def.SummonEvery
+				e.SummonCooldown = def.SummonEvery * e.AttackModifiers.SummonCooldownMultiplier
 				local onSummon = EnemyAI.OnSummon
 				if onSummon then
 					-- deferred: never insert into `live` while iterating it
-					task.defer(
-						onSummon,
-						def.Summons,
-						e.Root.CFrame * CFrame.new(0, 0, e.Root.Size.Z)
-					)
+					for summon = 1, e.AttackModifiers.SummonCount do
+						local angle = (summon - 1) * math.pi * 2 / e.AttackModifiers.SummonCount
+						local offset = CFrame.new(
+							math.sin(angle) * e.Root.Size.X,
+							0,
+							math.cos(angle) * e.Root.Size.Z
+						)
+						task.defer(onSummon, def.Summons, e.Root.CFrame * offset)
+					end
 				end
 			end
 		end

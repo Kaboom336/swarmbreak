@@ -198,6 +198,14 @@ handlers.boss = function(d)
 	ClientFX.ring(d.Position, c3(d.Color), 40, 1.5)
 end
 
+handlers.bossPhase = function(d)
+	local color = c3(d.Color)
+	ClientFX.sound("BossRoar", d.Position)
+	ClientFX.shake(3)
+	ClientFX.flash(d.Position, color, 35, 0.45)
+	ClientFX.ring(d.Position, color, 28, 0.8)
+end
+
 handlers.sound = function(d)
 	local soundName = if d.Event then SfxMap.forEvent(d.Event) else d.Name
 	if soundName then

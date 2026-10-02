@@ -8,6 +8,7 @@ local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local BossIntro = ReplicatedStorage:WaitForChild("Remotes").BossIntro :: RemoteEvent
+local FX = ReplicatedStorage:WaitForChild("Remotes").FX :: RemoteEvent
 local LightingPresets = require(ReplicatedStorage.Shared.LightingPresets)
 
 local function normalizedColor(t: { number }): Color3
@@ -53,6 +54,39 @@ local function applyLightingPreset(preset: any)
 	sky.CelestialBodiesShown = preset.Sky.CelestialBodiesShown
 	sky.SunAngularSize = preset.Sky.SunAngularSize
 end
+
+local function showPhaseBanner(text: string, color: { number })
+	local gui = player:WaitForChild("PlayerGui")
+	local card = Instance.new("ScreenGui")
+	card.Name = "BossPhaseBanner"
+	card.IgnoreGuiInset = true
+	card.DisplayOrder = 49
+	card.Parent = gui
+	local banner = Instance.new("TextLabel")
+	banner.Size = UDim2.new(1, 0, 0, 70)
+	banner.Position = UDim2.new(0, 0, 0.18, 0)
+	banner.BackgroundTransparency = 1
+	banner.Text = text
+	banner.Font = Enum.Font.Antique
+	banner.TextSize = 44
+	banner.TextColor3 = Color3.fromRGB(color[1], color[2], color[3])
+	banner.TextStrokeTransparency = 0
+	banner.TextTransparency = 1
+	banner.Parent = card
+	TweenService:Create(banner, TweenInfo.new(0.2), { TextTransparency = 0 }):Play()
+	task.delay(1.5, function()
+		local tween = TweenService:Create(banner, TweenInfo.new(0.35), { TextTransparency = 1 })
+		tween:Play()
+		tween.Completed:Wait()
+		card:Destroy()
+	end)
+end
+
+FX.OnClientEvent:Connect(function(kind: string, data: any)
+	if kind == "bossPhase" then
+		showPhaseBanner(data.Banner, data.Color)
+	end
+end)
 
 BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number)
 	applyLightingPreset(LightingPresets.BossFight)

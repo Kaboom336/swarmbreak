@@ -105,7 +105,7 @@ local Defs: { [string]: EnemyDef } = {
 		SummonEvery = 6,
 	},
 	Warden = {
-		Name = "Sky King",
+		Name = "Sky Warden",
 		Health = 3000,
 		Speed = 14,
 		Damage = 30,
