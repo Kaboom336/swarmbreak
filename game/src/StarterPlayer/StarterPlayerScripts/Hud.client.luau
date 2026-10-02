@@ -1074,14 +1074,9 @@ end
 local closeBtn = shopButton("Close  [B]")
 closeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
 
-<<<<<<< HEAD
 -- Third button in the compact utility icon column.
 local shopToggle = button(screen, "$", UDim2.fromOffset(48, 48))
 shopToggle.Name = "ShopToggle"
-=======
--- Shop toggle button (always visible) + compact death status.
-local shopToggle = button(screen, "SHOP [B]", UDim2.new(0, 110, 0, 34))
->>>>>>> w12
 shopToggle.Position = UDim2.new(1, -122, 0, 8)
 local spectateLabel = text(
 	screen,
@@ -1743,13 +1738,8 @@ RunService.Heartbeat:Connect(function()
 		hpFill.BackgroundColor3 = if frac > 0.5
 			then OK
 			else if frac > 0.25 then Color3.fromRGB(220, 160, 40) else BAD
-<<<<<<< HEAD
 		hpText.Text =
 			string.format("HP %d / %d   STATS", math.floor(hum.Health), math.floor(hum.MaxHealth))
-		reviveBtn.Visible = hum.Health <= 0 and stateValue("Phase") == "fighting"
-=======
-		hpText.Text = string.format("%d / %d", math.floor(hum.Health), math.floor(hum.MaxHealth))
->>>>>>> w12
 		local low = frac < 0.35 and hum.Health > 0
 		vignette.Visible = low
 		if low then
