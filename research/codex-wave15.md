@@ -1,6 +1,6 @@
 # Codex wave 15: close the playtest gaps
 
-Base: the integrate/wave13 head at dispatch (b604704 or later; dispatched on fb57e80). The reviewer resolves any conflicts with G3/G5/G6.
+Base: integrate/wave13 d8cc616 or later (mouse-lock and timer fixes). The reviewer resolves any conflicts with G3/G5/G6.
 
 ## Rules (every task)
 - Failing spec first. Touch only the listed files plus one spec.
@@ -10,7 +10,7 @@ Base: the integrate/wave13 head at dispatch (b604704 or later; dispatched on fb5
 
 testcmd: cd game && stylua --check src tests && selene src && lune run tests/run.luau && lune run ../tools/lint_runtime_apis.luau && rojo build default.project.json -o out.rbxl
 
-Order: H4 and H1; then H2 and H5; then H3 and H6; H7 last. H4/H3 both touch WaveManager, and H3/H7 both touch Hud.client, so those pairs run one after the other. H0 and H8 are laptop jobs (not dispatched).
+Order: H4 and H1; then H2 and H5; then H3 and H6; then H9; H7 last. H4/H3 both touch WaveManager, and H3/H9/H7 all touch Hud.client, so those run one after the other. H0 and H8 are laptop jobs (not dispatched).
 
 ## H1 Arena: open fight space, hive-station identity
 - ArenaBuilder + ArenaLayout/Maps: no cover blocks in the central 90x90 fight space. Cover goes only in the outer ring, as low ledges <= 3 studs and pillars.
@@ -58,3 +58,15 @@ LevelUp.luau. Spec: the level-2 offer contains exactly one element card; offers 
 - A weapon and kit select board, a daily quests board, and a shop board (prices 0).
 - A teleport ring into the arena.
 Places.luau and Shared/Lobby.luau (pure), plus a LobbyBuilder server script. Spec: pad timing, party grouping, and every price is 0.
+
+## H9 Upgrade cards that feel like loot (beat Final Swarm)
+Zion saw "plain dark boxes, all COMMON, small text". Runs after H3 and before H7 (all three touch Hud.client).
+Hud.client rebuildCards plus a new Shared/CardStyle.luau (pure):
+- The whole card fills with a rarity gradient (Common grey-blue, Rare blue, Epic purple, Legendary gold), with a thick rarity UIStroke.
+- A big icon glyph per upgrade family: damage, fire rate, range, health, speed, magnet, element. Use text glyphs or simple frames; no new assets.
+- The name is 22 px and the effect line is 16 px.
+- Cards are 220x300, with a shine sweep on Epic and above.
+- Reveal: the cards flip in one by one, 0.12 s apart (LevelUp.CardFlipSeconds). Legendary gets a glow pulse and a sound.
+- Each card shows its "Press 1/2/3" key, and clicking also works (the mouse is free while cards are open, per MouseMode).
+- Rarity odds stay as in LevelUp.
+- Spec tests/cardstyle.spec.luau: every rarity maps to colors that pass a contrast check against the text; every upgrade id maps to an icon; the reveal order is left to right and the total time is <= 0.5 s.

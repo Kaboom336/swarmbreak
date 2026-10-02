@@ -284,6 +284,7 @@ local function runWave(wave: number): boolean
 		task.wait(Config.BossIntroSeconds)
 	end
 
+	workspace:SetAttribute("WaveStartedAt", workspace:GetServerTimeNow()) -- HUD wave clock
 	GameState.set("Phase", "fighting")
 	protectPlayers()
 	local composition = WaveTable.Compositions[wave]

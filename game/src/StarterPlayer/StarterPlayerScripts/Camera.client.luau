@@ -6,6 +6,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local CameraConfig = require(ReplicatedStorage.Shared.CameraConfig)
+local MouseMode = require(ReplicatedStorage.Shared.MouseMode)
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -47,16 +48,52 @@ end
 crosshairLine("Horizontal", UDim2.new(0, 0, 0.5, -1), UDim2.new(1, 0, 0, 2))
 crosshairLine("Vertical", UDim2.new(0.5, -1, 0, 0), UDim2.new(0, 2, 1, 0))
 
+local alive = false
+local freeHeld = false
+
+local function mouseState(): MouseMode.State
+	return {
+		LockPreferred = mouseLockEnabled,
+		Alive = alive,
+		ModalOpen = player:GetAttribute("ModalOpen") == true,
+		FreeHeld = freeHeld,
+		TouchOnly = touchOnly,
+	}
+end
+
+-- One place decides the mouse every frame, so a stats push or death can never strand it locked.
+local function applyMouse()
+	if touchOnly or not UserInputService.MouseEnabled then
+		return
+	end
+	local locked = MouseMode.locked(mouseState())
+	UserInputService.MouseBehavior = if locked
+		then Enum.MouseBehavior.LockCenter
+		else Enum.MouseBehavior.Default
+	UserInputService.MouseIconEnabled = not locked
+	crosshair.Visible = locked
+end
+
 local function applyMouseLock(enabled: boolean)
 	mouseLockEnabled = enabled
 	player:SetAttribute("MouseLockEnabled", enabled)
-	if not touchOnly and UserInputService.MouseEnabled then
-		UserInputService.MouseBehavior = if enabled
-			then Enum.MouseBehavior.LockCenter
-			else Enum.MouseBehavior.Default
-		UserInputService.MouseIconEnabled = not enabled
-	end
+	applyMouse()
 end
+
+UserInputService.InputBegan:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.LeftAlt then
+		freeHeld = true
+	end
+end)
+UserInputService.InputEnded:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.LeftAlt then
+		freeHeld = false
+	end
+end)
+
+-- Bound after the default camera so its per-frame MouseBehavior reset cannot undo the choice.
+-- Stays bound through death and menus: that is when the mouse must be released.
+RunService:BindToRenderStep("SwarmBreakMouse", Enum.RenderPriority.Camera.Value + 2, applyMouse)
 
 player:GetAttributeChangedSignal("MouseLockEnabled"):Connect(function()
 	local enabled = player:GetAttribute("MouseLockEnabled")
@@ -82,8 +119,11 @@ local function bindCharacter(character: Model)
 	player.CameraMaxZoomDistance = CameraConfig.Distance
 	humanoid.CameraOffset = Vector3.new(CameraConfig.RightOffset, CameraConfig.HeightOffset, 0)
 	humanoid.AutoRotate = false
+	alive = true
+	humanoid.Died:Connect(function()
+		alive = false
+	end)
 
-	-- Bound after the default camera so its per-frame MouseBehavior reset cannot undo the lock.
 	local bindName = "SwarmBreakAimCamera"
 	local function unbind()
 		pcall(function()
@@ -93,14 +133,13 @@ local function bindCharacter(character: Model)
 	unbind()
 	RunService:BindToRenderStep(bindName, Enum.RenderPriority.Camera.Value + 1, function()
 		if humanoid.Health <= 0 or not character.Parent then
+			alive = false
 			unbind()
 			return
 		end
 
-		if UserInputService.MouseEnabled then
-			UserInputService.MouseBehavior = if mouseLockEnabled
-				then Enum.MouseBehavior.LockCenter
-				else Enum.MouseBehavior.Default
+		if not MouseMode.aimsCharacter(mouseState()) then
+			return
 		end
 
 		local screenPoint = if mouseLockEnabled or not UserInputService.MouseEnabled

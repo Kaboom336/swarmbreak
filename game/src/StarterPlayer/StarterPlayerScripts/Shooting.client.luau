@@ -12,6 +12,7 @@ local AutoAim = require(ReplicatedStorage.Shared.AutoAim)
 local Settings = require(ReplicatedStorage.Shared.Settings)
 local TouchTracker = require(ReplicatedStorage.Shared.TouchTracker)
 local CameraConfig = require(ReplicatedStorage.Shared.CameraConfig)
+local WeaponFeelEvent = script.Parent:WaitForChild("WeaponFeelEvent") :: BindableEvent
 
 local player = Players.LocalPlayer
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -220,6 +221,7 @@ local function tryShoot(root: BasePart, weapon, origin: Vector3, direction: Vect
 		root.CFrame = CFrame.lookAt(root.Position, root.Position + facing.Unit)
 	end
 	Shoot:FireServer(origin, direction)
+	WeaponFeelEvent:Fire(if weapon.Kind == "Melee" then "swing" else "shot", direction)
 end
 
 local function autoFireEnabled(): boolean
@@ -281,6 +283,7 @@ RunService.RenderStepped:Connect(function()
 	end
 
 	turnUpperBody(char, root, direction)
+	WeaponFeelEvent:Fire("aim", direction)
 	if direction then
 		tryShoot(root, weapon, origin, direction)
 	end
