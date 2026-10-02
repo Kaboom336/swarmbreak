@@ -26,4 +26,12 @@ jobs:
 
       - name: Run checks
         working-directory: game
-        run: stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
+        run: stylua --check src tests && selene src && lune run tests/run.luau
+
+      - name: Lint runtime APIs
+        working-directory: game
+        run: lune run ../tools/lint_runtime_apis.luau
+
+      - name: Build place
+        working-directory: game
+        run: rojo build default.project.json -o out.rbxl

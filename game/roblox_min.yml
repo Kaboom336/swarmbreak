@@ -45,6 +45,8 @@ globals:
     any: true
   settings:
     any: true
+  UserSettings:
+    any: true
   DateTime:
     any: true
   NumberRange:
