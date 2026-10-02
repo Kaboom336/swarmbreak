@@ -27,3 +27,12 @@ Borrowed ideas should fit these by default; replacing one is allowed when eviden
 | Wave-fighter look (hottest recent) | Hunty Zombie | Bright stylized islands, simple models, big VFX, Quests panel always visible: our arena look |
 | Dark sci-fi rooms | Pressure | Dark rooms that still read because every room shows coloured light sources: our Nest and boss lairs |
 | Hit VFX scale | Slayers 2 | Huge bright ability VFX over plain sand arenas |
+| Shared team goal | 99 Nights in the Forest | Station reactor core that the team charges; big floating counter; "wave cleared, arena grows" |
+| Threat alerts | Steal a Brainrot | Loud red banner when the Base is threatened ("The swarm is breaching your Base!") |
+| Always-clear objective | Forsaken | Round timer at top centre plus one objective line at all times; ability icons with cooldown numbers |
+| Menu polish | Anime Vanguards | One UI style for every panel (angled header, neon outline, rarity colour), timed event banner, reveal screens |
+| Heavy impacts | The Strongest Battlegrounds | Debris and dust bursts when big bugs land or die; ground cracks on boss slams |
+| Next-goal events | Fisch | Server announcements ("A hive has opened in Sector 3"); short skill-check minigame for repairs or hacking |
+
+## Wave 10 candidates (from watch round 2, not yet briefed)
+Reactor core with world counter; objective line + threat banner; world events; debris on slams; one UI style across panels.
