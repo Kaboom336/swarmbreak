@@ -292,7 +292,7 @@ local function runWave(wave: number): boolean
 			task.wait(0.5)
 		end
 		local at = if waveOneSpawn
-			then waveOneSpawn * CFrame.new(rng:NextNumber(-6, 6), 0, rng:NextNumber(-6, 6))
+			then waveOneSpawn * CFrame.new(rng:NextNumber(-10, 10), 0, rng:NextNumber(-10, 10))
 			else nil
 		spawnEnemy(Enemies.pickFromWeights(weights, rng:NextNumber()), at)
 		local spawnDelay = Difficulty.apply(
