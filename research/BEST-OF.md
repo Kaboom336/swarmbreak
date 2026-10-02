@@ -1,13 +1,13 @@
 # Best-of map: take each part from the game that does it best (Zion 2026-10-02)
 Rule: for every aspect of Swarm Break, name the top game that does it best, copy the idea (never the assets), and judge our version against that one game. Sources are the edited video stills in /mnt/project-files/swarmbreak-reference-notes.md, so treat them as hints and check them in real play.
 
-## What stays ours (never traded away for a copied idea)
+## What is ours right now (planning phase: anything can change with a good reason; log each change and its reason in COMPARISON.md)
 - 4 elements (Nature, Tech, Lightning, Dark) with simple evolution trees and per-element Shards
 - Weapons beyond guns (Energy Sword, Dark Scythe and more), each evolving by element
 - Setting: Outpost 9 station vs the Nest swarm; bosses Big Brute, Swarm Queen, Sky King
 - Co-op: 30-player Base lobby, then 8-player arenas with friends; co-play bonus
 - Mutations, Kits (Soldier, Brawler, Engineer, Medic), Weekly Board
-Every borrowed idea must fit these, not replace them. Keep looking beyond our genre too (horror, tycoon, racing, sim): any game that is best at one aspect counts.
+Borrowed ideas should fit these by default; replacing one is allowed when evidence (playtests, top-game data) says it is better. Keep looking beyond our genre too (horror, tycoon, racing, sim): any game that is best at one aspect counts.
 
 | Aspect | Best at it | What we take |
 |---|---|---|
