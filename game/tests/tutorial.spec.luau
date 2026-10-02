@@ -29,6 +29,42 @@ test("next returns nil when every step is done", function()
 	eq(Tutorial.next(flags), nil, "tutorial complete")
 end)
 
+test("pick chooses required steps for the current context before optional ones", function()
+	local flags = { Tut_Move = true, Tut_Shoot = true }
+	eq(Tutorial.pick(flags, "cards").Id, "Pick", "unused dash does not block cards")
+	eq(Tutorial.pick(flags, "shop").Id, "Upgrade", "shop starts with its required step")
+	eq(Tutorial.pick(flags, "arena").Id, "Dash", "optional arena step remains available")
+end)
+
+test("pick returns nil when every step is done", function()
+	local flags = {}
+	for _, step in Tutorial.Steps do
+		flags = Tutorial.complete(flags, step.Id)
+	end
+	eq(Tutorial.pick(flags, "arena"), nil, "arena complete")
+	eq(Tutorial.pick(flags, "cards"), nil, "cards complete")
+	eq(Tutorial.pick(flags, "shop"), nil, "shop complete")
+end)
+
+test("hints wait for their step delay and unknown steps use the default", function()
+	local moveDelay = Tutorial.DelaySeconds.Move
+	eq(Tutorial.shouldShow("Move", moveDelay - 0.01), false, "before move delay")
+	eq(Tutorial.shouldShow("Move", moveDelay), true, "at move delay")
+	local defaultDelay = Tutorial.DefaultDelaySeconds
+	eq(Tutorial.shouldShow("Unknown", defaultDelay - 0.01), false, "before default delay")
+	eq(Tutorial.shouldShow("Unknown", defaultDelay), true, "at default delay")
+end)
+
+test("every step has a hint for every platform", function()
+	for _, step in Tutorial.Steps do
+		for _, platform in { "keyboard", "touch", "gamepad" } do
+			assert(Tutorial.hintFor(step.Id, platform) ~= "", step.Id .. " " .. platform .. " hint")
+		end
+	end
+	eq(Tutorial.hintFor("Move", "touch"), "Drag to move", "touch movement wording")
+	eq(Tutorial.hintFor("Shoot", "touch"), "Tap to shoot", "touch shooting wording")
+end)
+
 test("complete returns new flags and keeps the input unchanged", function()
 	local flags = { FirstBossCrate = true }
 	local completed = Tutorial.complete(flags, "Move")
