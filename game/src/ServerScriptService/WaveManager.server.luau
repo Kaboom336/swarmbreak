@@ -16,8 +16,8 @@ local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local SpawnPicker = require(ReplicatedStorage.Shared.SpawnPicker)
 local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
-local Onboarding = require(ReplicatedStorage.Shared.Onboarding)
 local Drops = require(ReplicatedStorage.Shared.Drops)
+local Onboarding = require(ReplicatedStorage.Shared.Onboarding)
 local EnemyAI = require(ServerStorage.EnemyAI)
 local PlayerData = require(ServerStorage.PlayerData)
 local GameState = require(ServerStorage.GameState)
@@ -131,35 +131,6 @@ local function randomSpawnCFrame(): CFrame
 	return spawnPortalCFrames(1)[1]
 end
 
-local function firstPackSpawnCFrame(): CFrame?
-	for _, player in Players:GetPlayers() do
-		if PlayerData.isWaiting(player) then
-			continue
-		end
-		local character = player.Character
-		local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
-		if root and root:IsA("BasePart") then
-			local look = root.CFrame.LookVector * Vector3.new(1, 0, 1)
-			if look.Magnitude < 0.01 then
-				look = Vector3.new(0, 0, -1)
-			else
-				look = look.Unit
-			end
-			local right = Vector3.new(-look.Z, 0, look.X)
-			local angle = math.rad(rng:NextNumber(-10, 10))
-			local distance = Onboarding.firstSpawnDistance(rng:NextNumber())
-			local direction = look * math.cos(angle) + right * math.sin(angle)
-			local height = 4
-			local horizontalDistance = math.sqrt(distance * distance - height * height)
-			local position = root.Position
-				+ direction * horizontalDistance
-				+ Vector3.new(0, height, 0)
-			return CFrame.lookAt(position, root.Position)
-		end
-	end
-	return nil
-end
-
 local function awardDrop(plr: Player, kind: string, value: number)
 	if not PlayerData.get(plr).Active then
 		return -- the run ended; a stray gem must not feed the next run
@@ -240,6 +211,42 @@ local function spawnDrops(plr: Player, position: Vector3, enemyType: string, coi
 		makeDrop(plr, position, "XP", value, index)
 	end
 	makeDrop(plr, position, "Coin", coins, index + 1)
+end
+
+local function firstPackSpawnCFrame(): CFrame?
+	for _, player in Players:GetPlayers() do
+		if PlayerData.isWaiting(player) then
+			continue
+		end
+		local character = player.Character
+		local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+		if root and root:IsA("BasePart") then
+			local look = root.CFrame.LookVector * Vector3.new(1, 0, 1)
+			if look.Magnitude < 0.01 then
+				look = Vector3.new(0, 0, -1)
+			else
+				look = look.Unit
+			end
+			local right = Vector3.new(-look.Z, 0, look.X)
+			local angle = math.rad(rng:NextNumber(-10, 10))
+			local distance = Onboarding.firstSpawnDistance(rng:NextNumber())
+			local direction = look * math.cos(angle) + right * math.sin(angle)
+			local height = 4
+			local horizontalDistance = math.sqrt(distance * distance - height * height)
+			local position = root.Position
+				+ direction * horizontalDistance
+				+ Vector3.new(0, height, 0)
+			-- Keep the pack inside the walls when the player stands near an edge.
+			local limit = 72
+			position = Vector3.new(
+				math.clamp(position.X, -limit, limit),
+				position.Y,
+				math.clamp(position.Z, -limit, limit)
+			)
+			return CFrame.lookAt(position, root.Position)
+		end
+	end
+	return nil
 end
 
 local function spawnEnemy(typeName: string, cf: CFrame?)
