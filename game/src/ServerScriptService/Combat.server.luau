@@ -2,9 +2,13 @@
 -- Server-authoritative combat for every weapon kind. Client only sends aim + intent.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 local PlayerData = require(ServerStorage.PlayerData)
 local CombatEffects = require(ServerStorage.CombatEffects)
+local Difficulty = require(ReplicatedStorage.Shared.Difficulty)
+local Economy = require(ReplicatedStorage.Shared.Economy)
+local Pickups = require(ReplicatedStorage.Shared.Pickups)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 
@@ -15,6 +19,162 @@ local FX = Remotes.FX :: RemoteEvent
 local lastAction: { [Player]: number } = {}
 local rng = Random.new()
 local enemiesFolder = workspace:WaitForChild("Enemies")
+
+type LivePickup = {
+	Id: number,
+	Kind: string,
+	Amount: number,
+	Position: Vector3,
+	ExpiresAt: number,
+	TargetId: number?,
+	Collected: boolean?,
+}
+
+local livePickups: { [number]: LivePickup } = {}
+local vacuumUntil: { [Player]: number } = {}
+local nextPickupId = 0
+
+local function eligible(plr: Player): (boolean, BasePart?)
+	local char = plr.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	return PlayerData.isWaiting(plr) == false and root ~= nil and hum ~= nil and hum.Health > 0,
+		root
+end
+
+local function point(position: Vector3): { [string]: number }
+	return { x = position.X, y = position.Y, z = position.Z }
+end
+
+local function spawnPickup(kind: string, amount: number, position: Vector3)
+	nextPickupId += 1
+	local id = nextPickupId
+	livePickups[id] = {
+		Id = id,
+		Kind = kind,
+		Amount = amount,
+		Position = position,
+		ExpiresAt = os.clock() + Pickups.Lifetime,
+	}
+	FX:FireAllClients("pickupSpawn", {
+		Id = id,
+		Kind = kind,
+		Position = position,
+		Lifetime = Pickups.Lifetime,
+	})
+end
+
+CombatEffects.OnEnemyKilled = function(killer: Player, model: Model, hitPosition: Vector3)
+	local baseCoins = model:GetAttribute("DropBaseCoins")
+	local wave = model:GetAttribute("DropWave")
+	local difficultyId = model:GetAttribute("DropDifficulty")
+	local xp = model:GetAttribute("DropXP")
+	if
+		type(baseCoins) ~= "number"
+		or type(wave) ~= "number"
+		or type(difficultyId) ~= "string"
+		or type(xp) ~= "number"
+	then
+		return
+	end
+	local coinAmount =
+		Economy.coinsForKill(baseCoins, PlayerData.hasPass(killer, "DoubleCoins"), wave)
+	coinAmount = Difficulty.scaleReward(coinAmount, difficultyId :: Difficulty.TierName)
+	if Pickups.shouldDrop("Coin", rng:NextNumber()) then
+		spawnPickup("Coin", coinAmount, hitPosition + Vector3.new(-0.8, 1, 0))
+	end
+	if Pickups.shouldDrop("XP", rng:NextNumber()) then
+		spawnPickup("XP", xp, hitPosition + Vector3.new(0.8, 1, 0))
+	end
+	if Pickups.shouldDrop("Vacuum", rng:NextNumber()) then
+		spawnPickup("Vacuum", 1, hitPosition + Vector3.new(0, 2, 0))
+	end
+end
+
+local function pickupCandidates(): { any }
+	local candidates = {}
+	for _, plr in Players:GetPlayers() do
+		local isEligible, root = eligible(plr)
+		if root then
+			table.insert(candidates, {
+				Id = plr.UserId,
+				Position = point(root.Position),
+				Eligible = isEligible,
+				VacuumUntil = vacuumUntil[plr],
+			})
+		end
+	end
+	return candidates
+end
+
+local pickupClock = 0
+RunService.Heartbeat:Connect(function(dt: number)
+	pickupClock += dt
+	if pickupClock < 0.05 then
+		return
+	end
+	local stepTime = pickupClock
+	pickupClock = 0
+	local now = os.clock()
+	local candidates = pickupCandidates()
+	for id, drop in livePickups do
+		if now >= drop.ExpiresAt then
+			livePickups[id] = nil
+			FX:FireAllClients("pickupRemove", { Id = id })
+			continue
+		end
+		local target = Pickups.chooseTarget(point(drop.Position), candidates, now)
+		local targetId = if target then target.Id else nil
+		if targetId ~= drop.TargetId then
+			drop.TargetId = targetId
+			FX:FireAllClients("pickupTarget", {
+				Id = id,
+				Target = if targetId then Players:GetPlayerByUserId(targetId) else nil,
+				Position = drop.Position,
+			})
+		end
+		if not target then
+			continue
+		end
+		local targetPlayer = Players:GetPlayerByUserId(target.Id)
+		local isEligible = false
+		local root: BasePart? = nil
+		if targetPlayer then
+			isEligible, root = eligible(targetPlayer)
+		end
+		if not targetPlayer or not isEligible or not root then
+			continue
+		end
+		local offset = root.Position - drop.Position
+		local distance = offset.Magnitude
+		if distance > 0 then
+			drop.Position += offset.Unit * math.min(distance, Pickups.FlySpeed * stepTime)
+		end
+		local claim = {
+			Id = targetPlayer.UserId,
+			Position = point(root.Position),
+			Eligible = true,
+			VacuumUntil = vacuumUntil[targetPlayer],
+		}
+		local collected = Pickups.tryCollect(drop :: any, claim, now)
+		if collected then
+			livePickups[id] = nil
+			if drop.Kind == "Coin" then
+				PlayerData.addCoins(targetPlayer, drop.Amount)
+			elseif drop.Kind == "XP" then
+				PlayerData.addXP(targetPlayer, drop.Amount)
+			elseif drop.Kind == "Vacuum" then
+				vacuumUntil[targetPlayer] = Pickups.vacuumExpiry(now)
+			end
+			FX:FireAllClients("pickupCollect", {
+				Id = id,
+				Kind = drop.Kind,
+				Player = targetPlayer,
+				Position = root.Position,
+			})
+		end
+	end
+end)
 
 local function spreadDir(dir: Vector3, degrees: number): Vector3
 	if degrees <= 0 then
@@ -197,4 +357,5 @@ end)
 
 Players.PlayerRemoving:Connect(function(plr)
 	lastAction[plr] = nil
+	vacuumUntil[plr] = nil
 end)

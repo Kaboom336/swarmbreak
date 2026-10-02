@@ -12,6 +12,7 @@ local FX = Remotes.FX :: RemoteEvent
 local enemiesFolder = workspace:WaitForChild("Enemies")
 
 local CombatEffects = {}
+CombatEffects.OnEnemyKilled = nil :: ((Player, Model, Vector3) -> ())?
 
 local function enemiesNear(pos: Vector3, radius: number, except: Model?): { Model }
 	local out = {}
@@ -53,6 +54,9 @@ local function rawHit(
 	model:SetAttribute("LastHitBy", plr.UserId)
 	ehum:TakeDamage(damage)
 	local killed = ehum.Health <= 0
+	if killed and CombatEffects.OnEnemyKilled then
+		CombatEffects.OnEnemyKilled(plr, model, hitPos)
+	end
 	local root = model.PrimaryPart
 	local playerRoot = plr.Character
 		and plr.Character:FindFirstChild("HumanoidRootPart") :: BasePart?

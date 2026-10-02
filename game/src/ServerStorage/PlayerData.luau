@@ -221,14 +221,9 @@ local function progressQuest(plr: Player, stat: string, amount: number)
 	Profile.markDirty(plr)
 end
 
-function PlayerData.addKill(plr: Player, boss: boolean?, enemyType: string?)
+function PlayerData.recordKill(plr: Player, boss: boolean?)
 	local r = PlayerData.get(plr)
 	r.Kills += 1
-	local newLevel, newXp, levelsGained =
-		LevelUp.advance(r.Level, r.XP, LevelUp.xpForKill(enemyType or "Walker"))
-	r.Level = newLevel
-	r.XP = newXp
-	r.PendingLevels += levelsGained
 	local p = Profile.get(plr)
 	local weapon = Weapons.Defs[p.Equipped] or Weapons.Defs.Starter
 	local _, _, _, _, healOnKill = Kits.mods(p.Kit, weapon.Kind)
@@ -240,10 +235,25 @@ function PlayerData.addKill(plr: Player, boss: boolean?, enemyType: string?)
 	if boss then
 		progressQuest(plr, "BossKills", 1)
 	end
+	push(plr)
+end
+
+function PlayerData.addXP(plr: Player, amount: number)
+	local r = PlayerData.get(plr)
+	local newLevel, newXp, levelsGained = LevelUp.advance(r.Level, r.XP, amount)
+	r.Level = newLevel
+	r.XP = newXp
+	r.PendingLevels += levelsGained
 	if #r.Offer == 0 and r.PendingLevels > 0 then
 		PlayerData.offerLevelReward(plr)
 	end
 	push(plr)
+end
+
+-- Kept as the combined operation for callers outside the pickup flow.
+function PlayerData.addKill(plr: Player, boss: boolean?, enemyType: string?)
+	PlayerData.recordKill(plr, boss)
+	PlayerData.addXP(plr, LevelUp.xpForKill(enemyType or "Walker"))
 end
 
 function PlayerData.addMeleeDamage(plr: Player, amount: number)

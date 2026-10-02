@@ -2,8 +2,10 @@
 -- Renders every FX event the server broadcasts. All visuals are local, so the server stays cheap.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Feel = require(ReplicatedStorage.Shared.Feel)
+local Pickups = require(ReplicatedStorage.Shared.Pickups)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 
@@ -52,6 +54,101 @@ local function swingWeapon(shooter: Player, slam: boolean)
 end
 
 local handlers: { [string]: (any) -> () } = {}
+
+type PickupVisual = { Part: BasePart, Target: Player?, Kind: string }
+local pickupVisuals: { [number]: PickupVisual } = {}
+local pickupColors = {
+	Coin = Color3.fromRGB(255, 208, 70),
+	XP = Color3.fromRGB(70, 235, 255),
+	Vacuum = Color3.fromRGB(210, 100, 255),
+}
+
+RunService.RenderStepped:Connect(function(dt: number)
+	for _, visual in pickupVisuals do
+		local target = visual.Target
+		local root = target
+			and target.Character
+			and target.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if root and visual.Part.Parent then
+			local offset = root.Position - visual.Part.Position
+			local distance = offset.Magnitude
+			if distance > 0 then
+				visual.Part.Position += offset.Unit * math.min(distance, Pickups.FlySpeed * dt)
+			end
+		end
+	end
+end)
+
+handlers.pickupSpawn = function(d)
+	local part = Instance.new("Part")
+	part.Name = "Pickup_" .. d.Kind
+	part.Shape = Enum.PartType.Ball
+	part.Size = if d.Kind == "Vacuum"
+		then Vector3.new(1.5, 1.5, 1.5)
+		else Vector3.new(0.8, 0.8, 0.8)
+	part.Material = Enum.Material.Neon
+	part.Color = pickupColors[d.Kind] or Color3.new(1, 1, 1)
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CastShadow = false
+	part.Position = d.Position
+	part.Parent = workspace:FindFirstChild("ClientFX") or workspace
+	pickupVisuals[d.Id] = { Part = part, Target = nil, Kind = d.Kind }
+	ClientFX.burst(
+		d.Position,
+		part.Color,
+		if d.Kind == "Vacuum" then 14 else 5,
+		0.25,
+		5,
+		0.35,
+		true
+	)
+	task.delay(d.Lifetime, function()
+		local visual = pickupVisuals[d.Id]
+		if visual and visual.Part == part then
+			pickupVisuals[d.Id] = nil
+			part:Destroy()
+		end
+	end)
+end
+
+handlers.pickupTarget = function(d)
+	local visual = pickupVisuals[d.Id]
+	if visual then
+		visual.Target = d.Target
+		visual.Part.Position = d.Position
+	end
+end
+
+handlers.pickupRemove = function(d)
+	local visual = pickupVisuals[d.Id]
+	if visual then
+		visual.Part:Destroy()
+		pickupVisuals[d.Id] = nil
+	end
+end
+
+handlers.pickupCollect = function(d)
+	local visual = pickupVisuals[d.Id]
+	local color = if visual then visual.Part.Color else pickupColors[d.Kind] or Color3.new(1, 1, 1)
+	if visual then
+		visual.Part:Destroy()
+		pickupVisuals[d.Id] = nil
+	end
+	ClientFX.burst(d.Position, color, if d.Kind == "Vacuum" then 30 else 10, 0.35, 12, 0.45, true)
+	ClientFX.ring(
+		d.Position,
+		color,
+		if d.Kind == "Vacuum" then 60 else 4,
+		if d.Kind == "Vacuum" then 0.8 else 0.25
+	)
+	ClientFX.sound(SfxMap.forEvent("pickup") or "Coin", d.Position)
+	if d.Kind == "Vacuum" and d.Player == player then
+		ClientFX.shake(2)
+		ClientFX.fovKick(8, 0.6)
+	end
+end
 
 handlers.shot = function(d)
 	local color = c3(d.Color)

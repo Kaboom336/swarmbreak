@@ -136,16 +136,7 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 		function(killer: Player?)
 			GameState.set("Alive", EnemyAI.aliveCount())
 			if killer then
-				local coins = Difficulty.scaleReward(
-					Economy.coinsForKill(
-						def.Coins,
-						PlayerData.hasPass(killer, "DoubleCoins"),
-						currentWave
-					),
-					currentDifficultyId
-				)
-				PlayerData.addCoins(killer, coins)
-				PlayerData.addKill(killer, def.Boss == true, typeName)
+				PlayerData.recordKill(killer, def.Boss == true)
 			end
 			if def.Boss then
 				-- bosses drop a shard of their element to everyone alive at the kill
@@ -176,6 +167,12 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 			end
 		end
 	)
+	-- Combat owns collectible rewards. These immutable attributes let every damage source
+	-- (including orbitals and evolution chains) produce the same server-authoritative drops.
+	model:SetAttribute("DropBaseCoins", def.Coins)
+	model:SetAttribute("DropXP", LevelUp.xpForKill(typeName))
+	model:SetAttribute("DropWave", currentWave)
+	model:SetAttribute("DropDifficulty", currentDifficultyId)
 	GameState.set("Alive", EnemyAI.aliveCount())
 	return model
 end
