@@ -27,6 +27,7 @@ local HudLayout = require(ReplicatedStorage.Shared.HudLayout)
 local DeathFlow = require(ReplicatedStorage.Shared.DeathFlow)
 local UiTheme = require(ReplicatedStorage.Shared.UiTheme)
 local Onboarding = require(ReplicatedStorage.Shared.Onboarding)
+local CardStyle = require(ReplicatedStorage.Shared.CardStyle)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 local UiKit = require(script.Parent:WaitForChild("UiKit"))
 
@@ -713,8 +714,8 @@ end
 -- keys 1-3 pick one, and the server takes the first card for us when the countdown runs out.
 local cardPanel = Instance.new("Frame")
 cardPanel.Name = "RewardCards"
-cardPanel.Size = UDim2.new(0, 600, 0, 200)
-cardPanel.Position = UDim2.new(0.5, -300, 0.3, 0)
+cardPanel.Size = UDim2.fromOffset(CardStyle.Width * WaveRewards.OfferSize + 24, CardStyle.Height)
+cardPanel.Position = UDim2.new(0.5, -((CardStyle.Width * WaveRewards.OfferSize + 24) / 2), 0.22, 0)
 cardPanel.BackgroundTransparency = 1
 cardPanel.Visible = false
 cardPanel.ZIndex = 2 -- above the shop panel
@@ -760,7 +761,11 @@ local function pickCard(id: string)
 	end
 end
 
-local function rebuildCards(offer: { string }, rarities: { [string]: string })
+local function rebuildCards(
+	offer: { string },
+	rarities: { [string]: string },
+	elements: { [string]: string }
+)
 	for _, c in cardPanel:GetChildren() do
 		if c:IsA("TextButton") then
 			c:Destroy()
@@ -772,65 +777,157 @@ local function rebuildCards(offer: { string }, rarities: { [string]: string })
 		if def and #cardIds < WaveRewards.OfferSize then
 			table.insert(cardIds, id)
 			local i = #cardIds
-			local b = UiKit.Button(cardPanel, "", UDim2.new(0, 184, 0, 180))
+			local b =
+				UiKit.Button(cardPanel, "", UDim2.fromOffset(CardStyle.Width, CardStyle.Height))
 			b.Name = "Card" .. i
-			local targetSize = UDim2.new(0, 184, 0, 180)
-			b.Size = UDim2.new(0, 0, 0, 180)
+			local targetSize = UDim2.fromOffset(CardStyle.Width, CardStyle.Height)
+			b.Size = UDim2.fromOffset(0, CardStyle.Height)
 			b.Text = ""
-			b.BackgroundColor3 = PANEL
+			b.BackgroundColor3 = Color3.new(1, 1, 1)
 			b.BorderSizePixel = 0
 			b.Active = false
 			b.ClipsDescendants = true
 			b.LayoutOrder = i
 			local rarity = rarities[id] or "Common"
-			local rarityColor = ClientFX.c3(Theme.Rarity[rarity] or Theme.Rarity.Common)
+			local style = CardStyle.styleFor(rarity)
+			local textColor = ClientFX.c3(style.Text)
+			local rarityColor = ClientFX.c3(style.Stroke)
+			local backgroundGradient = b:FindFirstChildOfClass("UIGradient")
+			if backgroundGradient then
+				backgroundGradient.Color = ColorSequence.new(
+					ClientFX.c3(style.Background[1]),
+					ClientFX.c3(style.Background[2])
+				)
+				backgroundGradient.Rotation = 90
+			end
 			local outline = b:FindFirstChild("Outline")
 			if outline and outline:IsA("UIStroke") then
 				outline.Color = rarityColor
-				outline.Thickness = 2
+				outline.Thickness = CardStyle.StrokeThickness
+				outline.Transparency = 0
 			end
-			local stripe = Instance.new("Frame") -- rarity colour reads before the card text
-			stripe.Name = "Stripe"
-			stripe.Size = UDim2.new(1, -20, 0, 4)
-			stripe.Position = UDim2.new(0, 10, 0, 0)
-			stripe.BackgroundColor3 = rarityColor
-			stripe.BorderSizePixel = 0
-			stripe.Parent = b
 			local rarityLabel = text(
 				b,
 				"Rarity",
-				UDim2.new(0, 10, 0, 12),
-				UDim2.new(1, -20, 0, 18),
+				UDim2.new(0, 12, 0, 12),
+				UDim2.new(1, -24, 0, 20),
 				string.upper(rarity),
-				11
+				13
 			)
-			rarityLabel.TextColor3 = rarityColor
-			text(b, "Label", UDim2.new(0, 10, 0, 32), UDim2.new(1, -20, 0, 26), def.Label, 18)
-			local blurb =
-				text(b, "Blurb", UDim2.new(0, 10, 0, 64), UDim2.new(1, -20, 0, 76), def.Blurb, 13)
+			rarityLabel.TextColor3 = textColor
+			local elementName = elements[id]
+			local icon = text(
+				b,
+				"Icon",
+				UDim2.new(0, 12, 0, 38),
+				UDim2.new(1, -24, 0, 76),
+				CardStyle.iconFor(id, elementName) or "",
+				52
+			)
+			icon.Font = Enum.Font.GothamBlack
+			icon.TextColor3 = textColor
+			local nameLabel = text(
+				b,
+				"Label",
+				UDim2.new(0, 12, 0, 116),
+				UDim2.new(1, -24, 0, 34),
+				def.Label,
+				CardStyle.NameTextSize
+			)
+			nameLabel.TextColor3 = textColor
+			local blurb = text(
+				b,
+				"Blurb",
+				UDim2.new(0, 12, 0, 156),
+				UDim2.new(1, -24, 0, 48),
+				def.Blurb,
+				CardStyle.EffectTextSize
+			)
 			blurb.Font = Enum.Font.Gotham
 			blurb.TextWrapped = true
 			blurb.TextYAlignment = Enum.TextYAlignment.Top
-			blurb.TextColor3 = Color3.fromRGB(210, 210, 220)
+			blurb.TextColor3 = textColor
+			if elementName then
+				local element = Evolutions.Elements[elementName]
+				local elementLabel = text(
+					b,
+					"Element",
+					UDim2.new(0, 12, 0, 210),
+					UDim2.new(1, -24, 0, 28),
+					elementName .. " ELEMENT",
+					CardStyle.EffectTextSize
+				)
+				if element then
+					elementLabel.TextColor3 = ClientFX.c3(element.Color)
+					icon.TextColor3 = ClientFX.c3(element.Color)
+				end
+				elementLabel.TextStrokeTransparency = 0.15
+			end
 			local hint = text(
 				b,
 				"Key",
-				UDim2.new(0, 10, 1, -28),
-				UDim2.new(1, -20, 0, 20),
+				UDim2.new(0, 12, 1, -38),
+				UDim2.new(1, -24, 0, 24),
 				"Press " .. i,
-				12
+				14
 			)
-			hint.TextColor3 = Color3.fromRGB(160, 160, 175)
+			hint.TextColor3 = textColor
+			local shine: Frame? = nil
+			if style.Shine then
+				shine = Instance.new("Frame")
+				shine.Name = "Shine"
+				shine.Size = UDim2.new(0, 54, 1.3, 0)
+				shine.Position = UDim2.new(0, -90, -0.15, 0)
+				shine.Rotation = 16
+				shine.BackgroundColor3 = Color3.new(1, 1, 1)
+				shine.BackgroundTransparency = 0.55
+				shine.BorderSizePixel = 0
+				shine.ZIndex = b.ZIndex + 2
+				shine.Parent = b
+				local shineGradient = Instance.new("UIGradient")
+				shineGradient.Transparency = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 1),
+					NumberSequenceKeypoint.new(0.5, 0),
+					NumberSequenceKeypoint.new(1, 1),
+				})
+				shineGradient.Parent = shine
+			end
 			b.MouseButton1Click:Connect(function()
 				pickCard(id)
 			end)
-			task.delay((i - 1) * 0.08, function()
+			task.delay((i - 1) * LevelUp.CardFlipSeconds, function()
 				if b.Parent then
 					TweenService:Create(
 						b,
 						TweenInfo.new(LevelUp.CardFlipSeconds, Enum.EasingStyle.Quad),
 						{ Size = targetSize }
 					):Play()
+					if shine then
+						TweenService:Create(
+							shine,
+							TweenInfo.new(0.45, Enum.EasingStyle.Quad),
+							{ Position = UDim2.new(1, 40, -0.15, 0) }
+						):Play()
+					end
+					if rarity == "Legendary" then
+						ClientFX.sound(SfxMap.forEvent("level up") or "LevelUp")
+						if outline and outline:IsA("UIStroke") then
+							TweenService:Create(
+								outline,
+								TweenInfo.new(
+									0.4,
+									Enum.EasingStyle.Quad,
+									Enum.EasingDirection.Out,
+									1,
+									true
+								),
+								{
+									Thickness = CardStyle.StrokeThickness + 4,
+									Transparency = 0.15,
+								}
+							):Play()
+						end
+					end
 					task.delay(LevelUp.CardFlipSeconds, function()
 						if b.Parent then
 							b.Active = true
@@ -846,14 +943,21 @@ end
 local function refreshCards()
 	local offer: { string } = stats.Offer or {}
 	local rarities: { [string]: string } = stats.OfferRarities or {}
+	local elements: { [string]: string } = stats.OfferElements or {}
 	local rarityKey = {}
+	local elementKey = {}
 	for _, id in offer do
 		table.insert(rarityKey, rarities[id] or "Common")
+		table.insert(elementKey, elements[id] or "")
 	end
-	local offerKey = table.concat(offer, "|") .. ":" .. table.concat(rarityKey, "|")
+	local offerKey = table.concat(offer, "|")
+		.. ":"
+		.. table.concat(rarityKey, "|")
+		.. ":"
+		.. table.concat(elementKey, "|")
 	if offerKey ~= cardKey then
 		cardKey = offerKey
-		rebuildCards(offer, rarities)
+		rebuildCards(offer, rarities, elements)
 	end
 	local phase = stateValue("Phase")
 	cardPanel.Visible = #cardIds > 0 and (phase == "fighting" or phase == "intermission")
