@@ -40,9 +40,9 @@ Maps.All = {
 			{ x = 0, z = 72 },
 			{ x = -72, z = 0 },
 		},
-		Props = { "Cargo Crates", "Safety Rails", "Landing Lights" },
+		Props = { "Low Ledges", "Pillars", "Crystal Clusters", "Hive Goo" },
 		Boss = "Brute",
-		FloorColor = { 180, 185, 195 },
+		FloorColor = { 155, 158, 168 },
 	},
 	{
 		Name = "Hive Caves",

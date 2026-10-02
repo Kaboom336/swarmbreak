@@ -3,6 +3,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local Lighting = game:GetService("Lighting")
+local ArenaLayout = require(ReplicatedStorage.Shared.ArenaLayout)
 local Fit = require(ReplicatedStorage.Shared.Fit)
 local LightingPresets = require(ReplicatedStorage.Shared.LightingPresets)
 local Maps = require(ReplicatedStorage.Shared.Maps)
@@ -170,12 +171,48 @@ local function configureMap()
 			w.Color = c3(Theme.Wall)
 		end
 	end
-	for _, name in { "TowerA", "TowerB", "TowerA_Step", "TowerB_Step", "Ledge", "GapPillar" } do
+	-- These legacy platforms occupied the new open fight space.
+	for _, name in { "TowerA", "TowerB", "TowerA_Step", "TowerB_Step", "Ledge" } do
+		local legacy = arena:FindFirstChild(name)
+		if legacy then
+			legacy:Destroy()
+		end
+	end
+	for _, name in { "GapPillar" } do
 		local p = arena:FindFirstChild(name) :: BasePart?
 		if p then
 			p.Material = Enum.Material.DiamondPlate
 			p.Color = c3(Theme.Metal)
 		end
+	end
+end
+
+local function outerCover()
+	local layout = arena:FindFirstChild("ArenaLayout")
+	if layout then
+		for _, child in layout:GetChildren() do
+			if
+				child.Name == "Bunker"
+				or child.Name:match("^Bunker%d+$")
+				or child.Name == "Ring"
+				or child.Name == "Crate"
+				or child.Name == "LowWall"
+				or child.Name == "Pillar"
+			then
+				child:Destroy()
+			end
+		end
+	end
+
+	for _, spec in ArenaLayout.Props do
+		local cover = part(
+			spec.Kind,
+			Vector3.new(spec.Width, spec.Height, spec.Depth),
+			CFrame.new(spec.x, 1 + spec.Height / 2, spec.z),
+			c3(if spec.Kind == "Pillar" then Theme.Metal else Theme.MetalDark),
+			if spec.Kind == "Pillar" then Enum.Material.DiamondPlate else Enum.Material.Metal
+		)
+		cover.CanCollide = true
 	end
 end
 
@@ -226,6 +263,68 @@ local function floorGrid()
 	ring.Transparency = 0.4
 end
 
+local function gooPatches()
+	local teal = c3(Theme.NeonTeal)
+	for index, spec in
+		{
+			{ x = -30, z = -20, radius = 6 },
+			{ x = 24, z = -28, radius = 4 },
+			{ x = 30, z = 22, radius = 7 },
+			{ x = -22, z = 30, radius = 5 },
+		}
+	do
+		local cf = CFrame.new(spec.x, 1.04, spec.z) * CFrame.Angles(0, 0, math.rad(90))
+		local goo = part(
+			"HiveGoo" .. index,
+			Vector3.new(0.06, spec.radius * 2, spec.radius * 2),
+			cf,
+			teal:Lerp(Color3.new(0, 0.2, 0.18), 0.45),
+			Enum.Material.SmoothPlastic,
+			Enum.PartType.Cylinder
+		)
+		goo.CanCollide = false
+		goo.CanQuery = false
+		local edge = part(
+			"HiveGooEdge" .. index,
+			Vector3.new(0.04, spec.radius * 2 + 0.7, spec.radius * 2 + 0.7),
+			cf * CFrame.new(-0.05, 0, 0),
+			teal,
+			Enum.Material.Neon,
+			Enum.PartType.Cylinder
+		)
+		edge.CanCollide = false
+		edge.CanQuery = false
+		edge.Transparency = 0.35
+	end
+end
+
+local function crystalClusters()
+	local colors = { c3(Theme.NeonPurple), c3(Theme.NeonTeal) }
+	for _, spec in ArenaLayout.CrystalClusters do
+		local cluster = Instance.new("Model")
+		cluster.Name = "CrystalCluster" .. spec.Name
+		cluster.Parent = arena
+		for index, offset in { -1.5, 0, 1.5 } do
+			local color = colors[(index - 1) % #colors + 1]
+			local crystal = part(
+				"Crystal" .. index,
+				Vector3.new(1.1, 3 + index, 1.1),
+				CFrame.new(spec.x + offset, 2.5 + index / 2, spec.z)
+					* CFrame.Angles(math.rad(offset * 5), 0, math.rad(offset * 8)),
+				color,
+				Enum.Material.Neon
+			)
+			crystal.CanCollide = false
+			crystal.Parent = cluster
+			local light = Instance.new("PointLight")
+			light.Color = color
+			light.Range = 14
+			light.Brightness = 1.4
+			light.Parent = crystal
+		end
+	end
+end
+
 -- Wall trims, hazard lights and catwalk railings.
 local function wallsAndRails()
 	local amber = c3(Theme.NeonAmber)
@@ -254,15 +353,6 @@ local function wallsAndRails()
 			neonStrip(Vector3.new(1.4, 1.4, 1.4), CFrame.new(x, 19.5, z), amber, 26)
 		end
 	end
-	-- railings on the towers and ledge
-	local function rail(cf: CFrame, len: number)
-		neonStrip(Vector3.new(len, 0.2, 0.2), cf, teal, 0)
-	end
-	rail(CFrame.new(45, 17.2, -22), 14)
-	rail(CFrame.new(45, 17.2, -8), 14)
-	rail(CFrame.new(-40, 21.2, 27), 16)
-	rail(CFrame.new(-40, 21.2, 43), 16)
-	rail(CFrame.new(0, 14.2, 55), 30)
 end
 
 local function spawnRing(cf: CFrame, color: Color3)
@@ -354,6 +444,9 @@ end
 
 applyLightingPreset(LightingPresets[selectedMap.LightingPreset])
 configureMap()
+outerCover()
 floorGrid()
+gooPatches()
+crystalClusters()
 wallsAndRails()
 portals()
