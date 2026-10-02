@@ -395,15 +395,40 @@ local function findPart(model: Model, name: string): BasePart?
 	return if found and found:IsA("BasePart") then found else nil
 end
 
+local REQUIRED_LIMBS: { [string]: { string } } = {
+	Walker = { "Arm_L", "Arm_R", "Leg_L", "Leg_R" },
+	Runner = { "Leg_1", "Leg_2", "Leg_3", "Leg_4" },
+	Spitter = { "Leg_1", "Leg_2" },
+	Flyer = { "Wing_1", "Wing_2" },
+	Tank = { "Leg_1", "Leg_2", "Leg_3", "Leg_4", "Leg_5", "Leg_6" },
+	Brute = { "Arm_L", "Arm_R", "Leg_L", "Leg_R" },
+	Queen = { "Leg_1", "Leg_2", "Leg_3", "Leg_4", "Leg_5", "Leg_6", "Leg_7", "Leg_8" },
+	Warden = { "Wing_1", "Wing_2", "Wing_3", "Wing_4" },
+}
+
+local function hasRequiredLimbs(model: Model, typeName: string): boolean
+	for _, name in REQUIRED_LIMBS[typeName] or {} do
+		if not findPart(model, name) then
+			return false
+		end
+	end
+	return true
+end
+
 local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 	local model = ModelLibrary.get(ModelKey.make("enemies", typeName))
 	if not model then
 		return nil
 	end
 	local torso = findPart(model, "Torso")
-	if not torso then
+	if not torso or not hasRequiredLimbs(model, typeName) then
 		model:Destroy()
 		return nil
+	end
+	for _, descendant in model:GetDescendants() do
+		if descendant:IsA("JointInstance") or descendant:IsA("WeldConstraint") then
+			descendant:Destroy()
+		end
 	end
 
 	local bounds = model:GetExtentsSize()
