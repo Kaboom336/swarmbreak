@@ -13,10 +13,14 @@ export type Bunker = Position & {
 }
 
 export type Prop = Position & {
-	Kind: "Crate" | "LowWall",
+	Kind: "Pillar" | "LowWall",
 	Width: number,
 	Height: number,
 	Depth: number,
+}
+
+export type CrystalCluster = Position & {
+	Name: string,
 }
 
 export type Beacon = Position & {
@@ -55,39 +59,48 @@ ArenaLayout.Ring = {
 	Gap = 10, -- placeholder
 }
 
--- The outer clusters leave the edge portals clear. The inner eight remain at least
--- 25 studs beyond the central ring edge, and every cluster is at least 18 studs apart.
+-- Cover stays in the outer ring so the central 90 by 90 fight space remains open.
+-- Low walls are short enough to read as ledges; pillars provide the vertical shapes.
 ArenaLayout.Props = {
-	{ Kind = "Crate", x = -48, z = -72, Width = 4, Height = 4, Depth = 4 },
-	{ Kind = "LowWall", x = -24, z = -72, Width = 8, Height = 4, Depth = 4 },
-	{ Kind = "Crate", x = 24, z = -72, Width = 4, Height = 5, Depth = 4 },
-	{ Kind = "LowWall", x = 48, z = -72, Width = 8, Height = 3, Depth = 4 },
+	{ Kind = "Pillar", x = -48, z = -64, Width = 4, Height = 5, Depth = 4 },
+	{ Kind = "LowWall", x = -28, z = -64, Width = 8, Height = 3, Depth = 4 },
+	{ Kind = "Pillar", x = -8, z = -64, Width = 4, Height = 5, Depth = 4 },
+	{ Kind = "LowWall", x = 12, z = -64, Width = 8, Height = 3, Depth = 4 },
+	{ Kind = "Pillar", x = 32, z = -64, Width = 4, Height = 5, Depth = 4 },
+	{ Kind = "LowWall", x = 52, z = -64, Width = 8, Height = 3, Depth = 4 },
 
-	{ Kind = "LowWall", x = 72, z = -48, Width = 4, Height = 4, Depth = 8 },
-	{ Kind = "Crate", x = 72, z = -24, Width = 4, Height = 5, Depth = 4 },
-	{ Kind = "LowWall", x = 72, z = 24, Width = 4, Height = 3, Depth = 8 },
-	{ Kind = "Crate", x = 72, z = 48, Width = 4, Height = 4, Depth = 4 },
+	{ Kind = "Pillar", x = 64, z = -48, Width = 4, Height = 5, Depth = 4 },
+	{ Kind = "LowWall", x = 64, z = -28, Width = 4, Height = 3, Depth = 8 },
+	{ Kind = "Pillar", x = 64, z = -8, Width = 4, Height = 5, Depth = 4 },
+	{ Kind = "LowWall", x = 64, z = 12, Width = 4, Height = 3, Depth = 8 },
+	{ Kind = "Pillar", x = 64, z = 32, Width = 4, Height = 5, Depth = 4 },
+	{ Kind = "LowWall", x = 64, z = 52, Width = 4, Height = 3, Depth = 8 },
 
-	{ Kind = "Crate", x = 48, z = 72, Width = 4, Height = 5, Depth = 4 },
-	{ Kind = "LowWall", x = 24, z = 72, Width = 8, Height = 3, Depth = 4 },
-	{ Kind = "Crate", x = -24, z = 72, Width = 4, Height = 4, Depth = 4 },
-	{ Kind = "LowWall", x = -48, z = 72, Width = 8, Height = 4, Depth = 4 },
+	{ Kind = "Pillar", x = 48, z = 64, Width = 4, Height = 5, Depth = 4 },
+	{ Kind = "LowWall", x = 28, z = 64, Width = 8, Height = 3, Depth = 4 },
+	{ Kind = "Pillar", x = 8, z = 64, Width = 4, Height = 5, Depth = 4 },
+	{ Kind = "LowWall", x = -12, z = 64, Width = 8, Height = 3, Depth = 4 },
+	{ Kind = "Pillar", x = -32, z = 64, Width = 4, Height = 5, Depth = 4 },
+	{ Kind = "LowWall", x = -52, z = 64, Width = 8, Height = 3, Depth = 4 },
 
-	{ Kind = "LowWall", x = -72, z = 48, Width = 4, Height = 3, Depth = 8 },
-	{ Kind = "Crate", x = -72, z = 24, Width = 4, Height = 4, Depth = 4 },
-	{ Kind = "LowWall", x = -72, z = -24, Width = 4, Height = 4, Depth = 8 },
-	{ Kind = "Crate", x = -72, z = -48, Width = 4, Height = 5, Depth = 4 },
-
-	{ Kind = "Crate", x = -40, z = -40, Width = 4, Height = 4, Depth = 4 },
-	{ Kind = "LowWall", x = 40, z = -40, Width = 8, Height = 3, Depth = 4 },
-	{ Kind = "Crate", x = 40, z = 40, Width = 4, Height = 5, Depth = 4 },
-	{ Kind = "LowWall", x = -40, z = 40, Width = 8, Height = 4, Depth = 4 },
-
-	{ Kind = "LowWall", x = 0, z = -48, Width = 8, Height = 3, Depth = 4 },
-	{ Kind = "Crate", x = 48, z = 0, Width = 4, Height = 4, Depth = 4 },
-	{ Kind = "LowWall", x = 0, z = 48, Width = 8, Height = 4, Depth = 4 },
-	{ Kind = "Crate", x = -48, z = 0, Width = 4, Height = 5, Depth = 4 },
+	{ Kind = "Pillar", x = -64, z = 48, Width = 4, Height = 5, Depth = 4 },
+	{ Kind = "LowWall", x = -64, z = 28, Width = 4, Height = 3, Depth = 8 },
+	{ Kind = "Pillar", x = -64, z = 8, Width = 4, Height = 5, Depth = 4 },
+	{ Kind = "LowWall", x = -64, z = -12, Width = 4, Height = 3, Depth = 8 },
+	{ Kind = "Pillar", x = -64, z = -32, Width = 4, Height = 5, Depth = 4 },
+	{ Kind = "LowWall", x = -64, z = -52, Width = 4, Height = 3, Depth = 8 },
 } :: { Prop }
+
+ArenaLayout.CrystalClusters = {
+	{ Name = "NorthWest", x = -66, z = -66 },
+	{ Name = "NorthEast", x = 66, z = -66 },
+	{ Name = "SouthEast", x = 66, z = 66 },
+	{ Name = "SouthWest", x = -66, z = 66 },
+	{ Name = "NorthPortal", x = 7, z = -72 },
+	{ Name = "EastPortal", x = 72, z = 7 },
+	{ Name = "SouthPortal", x = -7, z = 72 },
+	{ Name = "WestPortal", x = -72, z = -7 },
+} :: { CrystalCluster }
 
 ArenaLayout.Beacons = {
 	{ Name = "North", x = 0, z = -76, Width = 6, Height = 0.15, Color = { 40, 220, 210 } },

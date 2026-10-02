@@ -1,11 +1,22 @@
 --!strict
 -- Pure level-up cadence, card rarity, and end-of-run chest rules.
+local Evolutions = require(script.Parent.Evolutions)
 local WaveRewards = require(script.Parent.WaveRewards)
 local Weapons = require(script.Parent.Weapons)
+
+export type EvolutionPreview = {
+	Element: string,
+	Tier: number,
+	Label: string,
+}
 
 export type OfferCard = {
 	Id: string,
 	Rarity: string,
+	Element: string?,
+	Color: { number }?,
+	OnHitEffect: string?,
+	EvolutionPreview: EvolutionPreview?,
 }
 
 local LevelUp = {}
@@ -71,6 +82,15 @@ function LevelUp.rollRarity(roll01: number): string
 	return LevelUp.RarityOrder[#LevelUp.RarityOrder]
 end
 
+local function rolledElement(roll01: number): string
+	local index = math.clamp(
+		math.floor(math.clamp(roll01, 0, 0.999999) * #Evolutions.Order) + 1,
+		1,
+		#Evolutions.Order
+	)
+	return Evolutions.Order[index]
+end
+
 function LevelUp.offer(
 	level: number,
 	stacks: { [string]: number },
@@ -85,6 +105,21 @@ function LevelUp.offer(
 			Id = id,
 			Rarity = LevelUp.rollRarity(rarityRolls[i] or 0),
 		})
+	end
+	if #cards > 0 and (level == 2 or level == 4) then
+		local elementName = rolledElement(cardRolls[1] or 0)
+		local element = Evolutions.Elements[elementName]
+		if level == 2 then
+			cards[1].Element = elementName
+			cards[1].Color = element.Color
+			cards[1].OnHitEffect = element.Tiers[2].Effect
+		else
+			cards[1].EvolutionPreview = {
+				Element = elementName,
+				Tier = 1,
+				Label = element.Tiers[1].Label,
+			}
+		end
 	end
 	return cards
 end

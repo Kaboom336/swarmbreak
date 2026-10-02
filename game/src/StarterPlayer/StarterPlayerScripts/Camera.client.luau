@@ -51,6 +51,28 @@ crosshairLine("Vertical", UDim2.new(0.5, -1, 0, 0), UDim2.new(0, 2, 1, 0))
 local alive = false
 local freeHeld = false
 
+local function nearbyEnemyCount(origin: Vector3): number
+	local enemies = workspace:FindFirstChild("Enemies")
+	if not enemies then
+		return 0
+	end
+
+	local radiusSquared = CameraConfig.CrowdRadius * CameraConfig.CrowdRadius
+	local count = 0
+	for _, enemy in enemies:GetChildren() do
+		if enemy:IsA("Model") then
+			local enemyRoot = enemy.PrimaryPart or enemy:FindFirstChild("HumanoidRootPart")
+			if enemyRoot and enemyRoot:IsA("BasePart") then
+				local offset = enemyRoot.Position - origin
+				if offset:Dot(offset) <= radiusSquared then
+					count += 1
+				end
+			end
+		end
+	end
+	return count
+end
+
 local function mouseState(): MouseMode.State
 	return {
 		LockPreferred = mouseLockEnabled,
@@ -120,6 +142,8 @@ local function bindCharacter(character: Model)
 	humanoid.CameraOffset = Vector3.new(CameraConfig.RightOffset, CameraConfig.HeightOffset, 0)
 	humanoid.AutoRotate = false
 	alive = true
+	local currentDistance = CameraConfig.Distance
+	local pitchInitialized = false
 	humanoid.Died:Connect(function()
 		alive = false
 	end)
@@ -131,11 +155,42 @@ local function bindCharacter(character: Model)
 		end)
 	end
 	unbind()
-	RunService:BindToRenderStep(bindName, Enum.RenderPriority.Camera.Value + 1, function()
+	RunService:BindToRenderStep(bindName, Enum.RenderPriority.Camera.Value + 1, function(dt: number)
 		if humanoid.Health <= 0 or not character.Parent then
 			alive = false
 			unbind()
 			return
+		end
+
+		local enemyCount = 0
+		if
+			player:GetAttribute("AutoFire") ~= false
+			and player:GetAttribute("CardPanelOpen") ~= true
+		then
+			enemyCount = nearbyEnemyCount(root.Position)
+		end
+		local targetDistance = CameraConfig.distanceForEnemyCount(enemyCount)
+		local distanceAlpha = 1 - math.exp(-CameraConfig.DistanceResponse * dt)
+		currentDistance += (targetDistance - currentDistance) * distanceAlpha
+		currentDistance =
+			math.clamp(currentDistance, CameraConfig.Distance, CameraConfig.CrowdedDistance)
+		player.CameraMinZoomDistance = currentDistance
+		player.CameraMaxZoomDistance = currentDistance
+
+		local look = camera.CFrame.LookVector
+		local horizontalLook = Vector3.new(look.X, 0, look.Z)
+		if horizontalLook.Magnitude > 0.001 then
+			local pitchDegrees = if pitchInitialized
+				then math.deg(math.asin(math.clamp(-look.Y, -1, 1)))
+				else CameraConfig.StartPitchDegrees
+			pitchInitialized = true
+			pitchDegrees =
+				math.clamp(pitchDegrees, CameraConfig.MinPitchDegrees, CameraConfig.MaxPitchDegrees)
+			local pitch = math.rad(pitchDegrees)
+			local direction = horizontalLook.Unit * math.cos(pitch)
+				+ Vector3.new(0, -math.sin(pitch), 0)
+			camera.CFrame =
+				CFrame.lookAt(camera.CFrame.Position, camera.CFrame.Position + direction)
 		end
 
 		if not MouseMode.aimsCharacter(mouseState()) then

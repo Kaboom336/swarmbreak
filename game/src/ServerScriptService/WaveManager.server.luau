@@ -3,6 +3,7 @@ local Players = game:GetService("Players")
 local AnalyticsService = game:GetService("AnalyticsService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local TweenService = game:GetService("TweenService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Difficulty = require(ReplicatedStorage.Shared.Difficulty)
@@ -16,6 +17,7 @@ local SpawnPicker = require(ReplicatedStorage.Shared.SpawnPicker)
 local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
 local Onboarding = require(ReplicatedStorage.Shared.Onboarding)
+local Drops = require(ReplicatedStorage.Shared.Drops)
 local EnemyAI = require(ServerStorage.EnemyAI)
 local PlayerData = require(ServerStorage.PlayerData)
 local GameState = require(ServerStorage.GameState)
@@ -32,6 +34,10 @@ local arena = workspace:WaitForChild("Arena")
 local spawns = arena:WaitForChild("EnemySpawns")
 local bossSpawn = arena:WaitForChild("BossSpawn") :: BasePart
 local rng = Random.new()
+
+local dropsFolder = Instance.new("Folder")
+dropsFolder.Name = "Drops"
+dropsFolder.Parent = workspace
 
 local currentWave = 0
 local currentDifficultyId: Difficulty.TierName = Difficulty.Default
@@ -154,6 +160,88 @@ local function firstPackSpawnCFrame(): CFrame?
 	return nil
 end
 
+local function awardDrop(plr: Player, kind: string, value: number)
+	if not PlayerData.get(plr).Active then
+		return -- the run ended; a stray gem must not feed the next run
+	end
+	if kind == "XP" then
+		PlayerData.addXp(plr, value)
+	else
+		PlayerData.addCoins(plr, value)
+	end
+end
+
+local function makeDrop(plr: Player, position: Vector3, kind: string, value: number, index: number)
+	local angle = index * 2.4
+	local part = Instance.new("Part")
+	part.Name = kind .. "Drop"
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.CastShadow = false
+	part.Material = Enum.Material.Neon
+	part.Position = position + Vector3.new(math.cos(angle) * 1.5, 1.2, math.sin(angle) * 1.5)
+	if kind == "XP" then
+		part.Color = Color3.fromRGB(45, 230, 195)
+		part.Shape = Enum.PartType.Ball
+		part.Size = Vector3.new(0.7, 0.9, 0.7)
+	else
+		part.Color = Color3.fromRGB(255, 205, 55)
+		part.Shape = Enum.PartType.Cylinder
+		part.Size = Vector3.new(0.25, 0.8, 0.8)
+		part.CFrame = CFrame.new(part.Position) * CFrame.Angles(0, 0, math.rad(90))
+	end
+	part.Parent = dropsFolder
+
+	task.spawn(function()
+		local expiresAt = os.clock() + Drops.AutoCollectSeconds
+		while part.Parent do
+			if plr.Parent ~= Players then
+				part:Destroy()
+				return
+			end
+			local root = plr.Character
+				and plr.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			local fallback = os.clock() >= expiresAt
+			if fallback then
+				if part.Parent and plr.Parent == Players then
+					awardDrop(plr, kind, value)
+					part:Destroy()
+				end
+				return
+			end
+			if
+				root
+				and (root.Position - part.Position).Magnitude <= PlayerData.magnetRadius(plr)
+			then
+				local tween = TweenService:Create(
+					part,
+					TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+					{ Position = root.Position }
+				)
+				tween:Play()
+				tween.Completed:Wait()
+				if part.Parent and plr.Parent == Players then
+					awardDrop(plr, kind, value)
+					part:Destroy()
+				end
+				return
+			end
+			task.wait(0.05)
+		end
+	end)
+end
+
+local function spawnDrops(plr: Player, position: Vector3, enemyType: string, coins: number)
+	local index = 0
+	for _, value in Drops.gemsForKill(enemyType) do
+		index += 1
+		makeDrop(plr, position, "XP", value, index)
+	end
+	makeDrop(plr, position, "Coin", coins, index + 1)
+end
+
 local function spawnEnemy(typeName: string, cf: CFrame?)
 	local def = Enemies.Defs[typeName]
 	local hs, ds = WaveTable.scaling(currentWave)
@@ -174,7 +262,7 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 		healthScale,
 		damageScale,
 		mutationId,
-		function(killer: Player?)
+		function(killer: Player?, deathPosition: Vector3)
 			GameState.set("Alive", EnemyAI.aliveCount())
 			if killer then
 				local coins = Difficulty.scaleReward(
@@ -185,8 +273,8 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 					),
 					currentDifficultyId
 				)
-				PlayerData.addCoins(killer, coins)
-				PlayerData.addKill(killer, def.Boss == true, typeName)
+				PlayerData.addKill(killer, def.Boss == true)
+				spawnDrops(killer, deathPosition, typeName, coins)
 			end
 			if def.Boss then
 				-- bosses drop a shard of their element to everyone alive at the kill

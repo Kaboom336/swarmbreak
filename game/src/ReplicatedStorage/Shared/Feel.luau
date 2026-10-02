@@ -16,7 +16,7 @@ local Feel = {}
 Feel.Events = {
 	Hit = { FreezeMs = 0, Shake = 0.2, NumberScale = 1 },
 	Crit = { FreezeMs = 40, Shake = 0.5, NumberScale = 1.25 },
-	Kill = { FreezeMs = 0, Shake = 0.7, NumberScale = 1.4 },
+	Kill = { FreezeMs = 0, Shake = 0.15, NumberScale = 1.4 },
 	BossHit = { FreezeMs = 60, Shake = 1, NumberScale = 1.6 },
 	BossKill = { FreezeMs = 80, Shake = 2, NumberScale = 2 },
 } :: { [EventName]: EventBudget }
@@ -39,7 +39,7 @@ Feel.HitSparkSeconds = 0.35
 Feel.HitFlashRange = 8
 Feel.CoinFlightSeconds = 0.55
 Feel.KnockbackSpeed = 8
-Feel.KnockbackStuds = 0.35
+Feel.KnockbackStuds = 2
 
 -- Every enemy gets a bloodless teal/green goo-burst accent on death.
 Feel.DeathBurstColors = {

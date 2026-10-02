@@ -27,7 +27,7 @@ type Live = {
 	Damage: number,
 	AttackCooldown: number,
 	SummonCooldown: number,
-	OnDeath: (Player?) -> (),
+	OnDeath: (Player?, Vector3) -> (),
 	LastHitBy: Player?,
 }
 
@@ -201,7 +201,7 @@ function EnemyAI.spawn(
 	healthScale: number,
 	damageScale: number,
 	mutationId: string,
-	onDeath: (Player?) -> ()
+	onDeath: (Player?, Vector3) -> ()
 ): Model
 	local def = Enemies.Defs[typeName]
 	local stats = Mutations.apply({
@@ -263,7 +263,7 @@ function EnemyAI.spawn(
 
 	hum.Died:Connect(function()
 		live[model] = nil
-		onDeath(e.LastHitBy)
+		onDeath(e.LastHitBy, root.Position)
 		local accent = (Theme.Enemy[typeName] or Theme.Enemy.Walker).Accent
 		FX:FireAllClients("death", {
 			Position = root.Position,
