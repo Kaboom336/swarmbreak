@@ -16,6 +16,7 @@ local ProfileSchema = require(ReplicatedStorage.Shared.ProfileSchema)
 local Goals = require(ReplicatedStorage.Shared.Goals)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
+local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Quests = require(ReplicatedStorage.Shared.Quests)
 local Kits = require(ReplicatedStorage.Shared.Kits)
@@ -496,6 +497,21 @@ local function flash(label: TextLabel, str: string, seconds: number)
 	end)
 end
 
+local goalBannerToken = 0
+local function showSpawnGoal()
+	goalBannerToken += 1
+	local token = goalBannerToken
+	task.delay(0.25, function()
+		if token == goalBannerToken and stateValue("Wave") <= 1 then
+			flash(banner, "Survive 5 waves", 3)
+		end
+	end)
+end
+player.CharacterAdded:Connect(showSpawnGoal)
+if player.Character then
+	task.defer(showSpawnGoal)
+end
+
 -- Latest stats snapshot from the server (filled by StatsChanged below)
 local stats: any
 
@@ -531,11 +547,6 @@ cardLayout.SortOrder = Enum.SortOrder.LayoutOrder
 cardLayout.Padding = UDim.new(0, 12)
 cardLayout.Parent = cardPanel
 
-local CARD_STRIPE: { [string]: Color3 } = {
-	Stat = ClientFX.c3(Theme.NeonTeal),
-	Weapon = ClientFX.c3(Theme.NeonAmber),
-	Utility = OK,
-}
 local cardIds: { string } = {} -- ids on offer in card order (key 1 = first card)
 local cardKey = "" -- the offer the cards were last built from
 local cardPending = false -- our pick is in flight
@@ -568,7 +579,7 @@ local function pickCard(id: string)
 	end
 end
 
-local function rebuildCards(offer: { string })
+local function rebuildCards(offer: { string }, rarities: { [string]: string })
 	for _, c in cardPanel:GetChildren() do
 		if c:IsA("TextButton") then
 			c:Destroy()
@@ -582,26 +593,34 @@ local function rebuildCards(offer: { string })
 			local i = #cardIds
 			local b = Instance.new("TextButton")
 			b.Name = "Card" .. i
-			b.Size = UDim2.new(0, 184, 0, 180)
+			local targetSize = UDim2.new(0, 184, 0, 180)
+			b.Size = UDim2.new(0, 0, 0, 180)
 			b.Text = ""
 			b.BackgroundColor3 = PANEL
 			b.BorderSizePixel = 0
 			b.AutoButtonColor = true
+			b.Active = false
+			b.ClipsDescendants = true
 			b.LayoutOrder = i
 			b.Parent = cardPanel
 			local corner = Instance.new("UICorner")
 			corner.CornerRadius = UDim.new(0, 10)
 			corner.Parent = b
-			local stripe = Instance.new("Frame") -- 4 px top stripe coloured by card kind
+			local rarity = rarities[id] or "Common"
+			local rarityColor = Theme.Rarity[rarity] or Theme.Rarity.Common
+			local stripe = Instance.new("Frame") -- rarity colour reads before the card text
 			stripe.Name = "Stripe"
 			stripe.Size = UDim2.new(1, -20, 0, 4)
 			stripe.Position = UDim2.new(0, 10, 0, 0)
-			stripe.BackgroundColor3 = CARD_STRIPE[def.Kind] or WHITE
+			stripe.BackgroundColor3 = ClientFX.c3(rarityColor)
 			stripe.BorderSizePixel = 0
 			stripe.Parent = b
-			text(b, "Label", UDim2.new(0, 10, 0, 18), UDim2.new(1, -20, 0, 26), def.Label, 18)
+			local rarityLabel =
+				text(b, "Rarity", UDim2.new(0, 10, 0, 12), UDim2.new(1, -20, 0, 18), rarity, 11)
+			rarityLabel.TextColor3 = ClientFX.c3(rarityColor)
+			text(b, "Label", UDim2.new(0, 10, 0, 32), UDim2.new(1, -20, 0, 26), def.Label, 18)
 			local blurb =
-				text(b, "Blurb", UDim2.new(0, 10, 0, 50), UDim2.new(1, -20, 0, 90), def.Blurb, 13)
+				text(b, "Blurb", UDim2.new(0, 10, 0, 64), UDim2.new(1, -20, 0, 76), def.Blurb, 13)
 			blurb.Font = Enum.Font.Gotham
 			blurb.TextWrapped = true
 			blurb.TextYAlignment = Enum.TextYAlignment.Top
@@ -618,19 +637,39 @@ local function rebuildCards(offer: { string })
 			b.MouseButton1Click:Connect(function()
 				pickCard(id)
 			end)
+			task.delay((i - 1) * 0.08, function()
+				if b.Parent then
+					TweenService:Create(
+						b,
+						TweenInfo.new(LevelUp.CardFlipSeconds, Enum.EasingStyle.Quad),
+						{ Size = targetSize }
+					):Play()
+					task.delay(LevelUp.CardFlipSeconds, function()
+						if b.Parent then
+							b.Active = true
+						end
+					end)
+				end
+			end)
 		end
 	end
 end
 
--- Rebuild when the offer changes; show only while the intermission lasts.
+-- Rebuild when the offer changes; level-up cards can appear during a fight or intermission.
 local function refreshCards()
 	local offer: { string } = stats.Offer or {}
-	local offerKey = table.concat(offer, "|")
+	local rarities: { [string]: string } = stats.OfferRarities or {}
+	local rarityKey = {}
+	for _, id in offer do
+		table.insert(rarityKey, rarities[id] or "Common")
+	end
+	local offerKey = table.concat(offer, "|") .. ":" .. table.concat(rarityKey, "|")
 	if offerKey ~= cardKey then
 		cardKey = offerKey
-		rebuildCards(offer)
+		rebuildCards(offer, rarities)
 	end
-	cardPanel.Visible = #cardIds > 0 and stateValue("Phase") == "intermission"
+	local phase = stateValue("Phase")
+	cardPanel.Visible = #cardIds > 0 and (phase == "fighting" or phase == "intermission")
 end
 
 UserInputService.InputBegan:Connect(function(input, gp)
@@ -1293,6 +1332,10 @@ stats = {
 	Kit = "Soldier",
 	KitsOwned = { Soldier = true },
 	Offer = {},
+	OfferRarities = {},
+	XP = 0,
+	Level = 0,
+	XPNeeded = LevelUp.requiredXp(1),
 	Quests = {},
 	Flags = {},
 	MusicVolume = Settings.DefaultVolume,
@@ -1386,9 +1429,12 @@ local function refreshStats()
 	local dash = (player:GetAttribute("DashReady") :: number?) or 0
 	local shards = stats.Shards or {}
 	statsLabel.Text = string.format(
-		"Coins %d    Kills %d    Dash %d\nGems %d    Shards  Nature %d  Tech %d  Lightning %d  Dark %d",
+		"Coins %d    Kills %d    Level %d  XP %d/%d    Dash %d\nGems %d    Shards  Nature %d  Tech %d  Lightning %d  Dark %d",
 		stats.Coins,
 		stats.Kills,
+		stats.Level or 0,
+		stats.XP or 0,
+		stats.XPNeeded or 0,
 		dash,
 		stats.Gems or 0,
 		shards.Nature or 0,
@@ -1505,6 +1551,8 @@ local function refreshPhase()
 		phaseLabel.Text = string.format("Enemies left: %d", alive)
 	elseif phase == "intermission" then
 		phaseLabel.Text = string.format("Shop open  %ds", t)
+	elseif phase == "chest" then
+		phaseLabel.Text = "Opening run chest"
 	elseif phase == "over" then
 		phaseLabel.Text = string.format("Restarting in %d", t)
 		summaryFooter.Text = string.format("Play again in %d", t)
@@ -1512,7 +1560,7 @@ local function refreshPhase()
 end
 onState("Phase", function(phase)
 	refreshPhase()
-	refreshCards() -- the cards only show during the intermission
+	refreshCards()
 	onDailyPhase(phase) -- the daily reward strip never covers a fight
 	if phase ~= "over" then
 		summaryPanel.Visible = false
@@ -1627,14 +1675,25 @@ Toast.OnClientEvent:Connect(function(msg: string, seconds: number)
 end)
 
 CrateResult.OnClientEvent:Connect(
-	function(id: string, rarity: string, isNew: boolean, gemsBack: number, crateKey: string)
+	function(
+		id: string,
+		rarity: string,
+		isNew: boolean,
+		gemsBack: number,
+		crateKey: string,
+		revealContext: string?
+	)
 		local def = Weapons.Defs[id]
 		local c = Weapons.RarityColor[rarity]
 		banner.TextColor3 = Color3.fromRGB(c[1], c[2], c[3])
 		local msg = if isNew
 			then string.format("%s: %s!", rarity, def.Name)
 			else string.format("Duplicate %s: +%d Gems", def.Name, gemsBack)
-		flash(banner, msg, 4)
+		flash(
+			banner,
+			if revealContext == "RunEnd" then "CHEST OPEN  " .. msg else msg,
+			if revealContext == "RunEnd" then LevelUp.ChestRevealSeconds else 4
+		)
 		-- crates we did not click open here (Robux receipts, the free first-boss crate) sound
 		-- now; a Gem crate we asked for sounds once, when its request comes back
 		if not (crateKey == "Gem" and gemCratePending) then

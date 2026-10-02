@@ -13,6 +13,7 @@ local Daily = require(ReplicatedStorage.Shared.Daily)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local SpawnPicker = require(ReplicatedStorage.Shared.SpawnPicker)
 local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
+local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
 local EnemyAI = require(ServerStorage.EnemyAI)
 local PlayerData = require(ServerStorage.PlayerData)
 local GameState = require(ServerStorage.GameState)
@@ -94,7 +95,7 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 				currentWave
 			)
 			PlayerData.addCoins(killer, coins)
-			PlayerData.addKill(killer, def.Boss == true)
+			PlayerData.addKill(killer, def.Boss == true, typeName)
 		end
 		if def.Boss then
 			-- bosses drop a shard of their element to everyone alive at the kill
@@ -263,8 +264,17 @@ local function runWave(wave: number): boolean
 end
 
 local function endRun(won: boolean, reachedWave: number)
-	GameState.set("Phase", "over")
 	GameState.set("BossName", "")
+	GameState.set("Phase", "chest")
+	-- Every surviving participant sees the existing Gem crate open. The run version uses the
+	-- shared pity counter even though Gem crates bought in the shop do not.
+	for _, plr in Players:GetPlayers() do
+		if not PlayerData.isWaiting(plr) then
+			PlayerData.openCrate(plr, LevelUp.ChestCrate, "RunEnd", true)
+		end
+	end
+	task.wait(LevelUp.ChestRevealSeconds)
+	GameState.set("Phase", "over")
 	-- each player gets their own run summary (Gems earned, next goal) for the results panel
 	for _, plr in Players:GetPlayers() do
 		if not PlayerData.isWaiting(plr) then
@@ -310,10 +320,6 @@ local function gameLoop()
 				GameState.set("Phase", "intermission")
 				admitWaitingPlayers()
 				respawnAll()
-				-- pick 1 of 3 reward cards: a slow pick costs shop time, never the wave
-				for _, plr in Players:GetPlayers() do
-					PlayerData.offerRewards(plr, wave)
-				end
 				countdown(Config.IntermissionSeconds)
 				for _, plr in Players:GetPlayers() do
 					PlayerData.autoPick(plr)
@@ -331,11 +337,6 @@ local function onPlayerAdded(plr: Player)
 	task.wait(1)
 	if not joinedDuringWave and not plr.Character then
 		plr:LoadCharacter()
-	end
-	-- joining mid-intermission: roll this wave's reward cards too, so the panel is not
-	-- silently missing until the next clear (autoPick covers whoever is present at the end)
-	if GameState.get("Phase") == "intermission" and #PlayerData.get(plr).Offer == 0 then
-		PlayerData.offerRewards(plr, currentWave)
 	end
 end
 Players.PlayerAdded:Connect(onPlayerAdded)
