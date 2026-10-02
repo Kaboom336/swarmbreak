@@ -8,6 +8,15 @@ test("gameplay events use sounds from the sound library", function()
 		["wave clear"] = "WaveClear",
 		["quest done"] = "Coin",
 		["kit equip"] = "Buy",
+		["wave start"] = "WaveStart",
+		["boss spawn"] = "BossRoar",
+		["card pick"] = "Buy",
+		["crate open"] = "Crate",
+		["pickup"] = "Coin",
+		["level up"] = "Buy",
+		["low hp"] = "Hurt",
+		["victory"] = "WaveClear",
+		["defeat"] = "GameOver",
 	}
 
 	for eventName, soundName in expected do
@@ -16,6 +25,6 @@ test("gameplay events use sounds from the sound library", function()
 	end
 end)
 
-test("events without a sound return nil", function()
-	eq(SfxMap.forEvent("wave start"), nil, "unmapped event")
+test("unknown events return nil", function()
+	eq(SfxMap.forEvent("not a real event"), nil, "unknown event")
 end)
