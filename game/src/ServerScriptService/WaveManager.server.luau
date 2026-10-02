@@ -43,6 +43,25 @@ PlayAgain.OnServerEvent:Connect(function(plr: Player)
 	end
 end)
 
+local function protectPlayers()
+	for _, player in Players:GetPlayers() do
+		local character = player.Character
+		if character and not PlayerData.isWaiting(player) then
+			local previous = character:FindFirstChild("SpawnProtection")
+			if previous then
+				previous:Destroy()
+			end
+			local protection = Instance.new("ForceField")
+			protection.Name = "SpawnProtection"
+			protection.Visible = false
+			protection.Parent = character
+			task.delay(Config.SpawnProtectionSeconds, function()
+				protection:Destroy()
+			end)
+		end
+	end
+end
+
 local function selectedDifficultyId(): Difficulty.TierName
 	local selected = GameState.get("Difficulty")
 	if type(selected) == "string" and Difficulty.Defs[selected :: Difficulty.TierName] then
@@ -100,7 +119,8 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 	local scaled = Difficulty.apply({ Health = hs, Damage = ds }, currentDifficultyId)
 	local healthScale = scaled.Health :: number
 	local damageScale = scaled.Damage :: number
-	local mutationId = todaysMutation()
+	-- Keep the onboarding wave predictable even when a daily difficulty mutation is active.
+	local mutationId = if currentWave == 1 then "" else todaysMutation()
 	local at = cf or randomSpawnCFrame()
 	local accent = (Theme.Enemy[typeName] or Theme.Enemy.Walker).Accent
 	FX:FireAllClients(
@@ -255,10 +275,15 @@ local function runWave(wave: number): boolean
 	end
 
 	GameState.set("Phase", "fighting")
+	protectPlayers()
 	local mutationId = todaysMutation()
-	local count =
-		math.floor(Mutations.apply({ Spawn = WaveTable.enemyCount(wave) }, mutationId).Spawn + 0.5)
+	local count = if wave == 1
+		then WaveTable.enemyCount(wave)
+		else math.floor(
+			Mutations.apply({ Spawn = WaveTable.enemyCount(wave) }, mutationId).Spawn + 0.5
+		)
 	local weights = Enemies.weightsForWave(wave)
+	local waveOneSpawn = if wave == 1 then randomSpawnCFrame() else nil
 	for _ = 1, count do
 		while EnemyAI.aliveCount() >= Config.MaxAlive do
 			if not anyPlayersAlive() then
@@ -266,7 +291,10 @@ local function runWave(wave: number): boolean
 			end
 			task.wait(0.5)
 		end
-		spawnEnemy(Enemies.pickFromWeights(weights, rng:NextNumber()))
+		local at = if waveOneSpawn
+			then waveOneSpawn * CFrame.new(rng:NextNumber(-6, 6), 0, rng:NextNumber(-6, 6))
+			else nil
+		spawnEnemy(Enemies.pickFromWeights(weights, rng:NextNumber()), at)
 		local spawnDelay = Difficulty.apply(
 			{ SpawnDelay = rng:NextNumber(Config.SpawnGapMin, Config.SpawnGapMax) },
 			currentDifficultyId

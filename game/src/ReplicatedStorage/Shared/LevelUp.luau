@@ -10,10 +10,10 @@ export type OfferCard = {
 
 local LevelUp = {}
 
-LevelUp.WaveOneKillRate = 0.4 -- placeholder: one kill every 2.5 seconds
+LevelUp.WaveOneKillRate = 0.2 -- one Walker kill every 5 seconds in the opening wave
 -- XP needed for each level. Early picks are frequent; from wave 4 onward the
 -- curve settles at 40 seconds per pick at the baseline kill rate below.
-LevelUp.XpCurve = { 60, 70, 80, 160 }
+LevelUp.XpCurve = { 30, 35, 40, 80 }
 LevelUp.KillXp = {
 	Walker = 10,
 	Runner = 10,
