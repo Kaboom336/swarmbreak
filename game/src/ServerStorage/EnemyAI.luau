@@ -217,7 +217,7 @@ function EnemyAI.spawn(
 	root.Anchored = def.Flying
 	root.CanCollide = not def.Flying
 
-	local hum = Instance.new("Humanoid")
+	local hum = rig.Humanoid or Instance.new("Humanoid")
 	hum.RigType = Enum.HumanoidRigType.R15
 	hum.HipHeight = rig.HipHeight
 	hum.MaxHealth = math.floor(stats.EnemyHealth + 0.5)
@@ -234,6 +234,7 @@ function EnemyAI.spawn(
 	model:SetAttribute("LastHitBy", 0)
 	makeHealthBar(model, root, hum, def.Boss == true)
 	model.Parent = folder
+	EnemyBuilder.startLocomotion(rig)
 	if not def.Flying then
 		root:SetNetworkOwner(nil) -- server simulates enemies
 	end

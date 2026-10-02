@@ -3,8 +3,10 @@
 -- Motor names are what EnemyAnimator.client animates: Hip_L/R, Shoulder_L/R, Neck, Wing_1..n, Leg_1..n, Jaw.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local Players = game:GetService("Players")
 local Enemies = require(ReplicatedStorage.Shared.Enemies)
 local Fit = require(ReplicatedStorage.Shared.Fit)
+local HumanoidEnemies = require(ReplicatedStorage.Shared.HumanoidEnemies)
 local ModelKey = require(ReplicatedStorage.Shared.ModelKey)
 local ModelParts = require(ReplicatedStorage.Shared.ModelParts)
 local Theme = require(ReplicatedStorage.Shared.Theme)
@@ -12,7 +14,13 @@ local ModelLibrary = require(ServerStorage.ModelLibrary)
 
 local EnemyBuilder = {}
 
-export type Rig = { Model: Model, Root: BasePart, Torso: BasePart, HipHeight: number }
+export type Rig = {
+	Model: Model,
+	Root: BasePart,
+	Torso: BasePart,
+	HipHeight: number,
+	Humanoid: Humanoid?,
+}
 
 local function c3(t: { number }): Color3
 	return Color3.fromRGB(t[1], t[2], t[3])
@@ -102,6 +110,151 @@ local function glow(p: BasePart, color: Color3, size: number)
 	pe.SpreadAngle = Vector2.new(180, 180)
 	pe.LightEmission = 1
 	pe.Parent = a
+end
+
+local function isAccessoryPart(name: string): boolean
+	return name == "Head"
+		or ModelParts.isGlow(name)
+		or name:find("Spike", 1, true) ~= nil
+		or name:find("Crown", 1, true) ~= nil
+end
+
+local function attachImportedAccessories(
+	model: Model,
+	typeName: string,
+	targetHeight: number,
+	cf: CFrame,
+	body: Color3,
+	accent: Color3
+)
+	local source = ModelLibrary.get(ModelKey.make("enemies", typeName))
+	if not source then
+		return
+	end
+	local sourceHeight = source:GetExtentsSize().Y
+	if sourceHeight > 0 then
+		source:ScaleTo(targetHeight / sourceHeight)
+	end
+	source:PivotTo(cf)
+	local head = model:FindFirstChild("Head") :: BasePart?
+	local torso = model:FindFirstChild("UpperTorso") :: BasePart?
+	for _, descendant in source:GetDescendants() do
+		if descendant:IsA("BasePart") and isAccessoryPart(descendant.Name) then
+			local target = if descendant.Name == "Head" or descendant.Name:find("Eye", 1, true)
+				then head
+				else torso
+			if target then
+				local originalName = descendant.Name
+				descendant.Color = if ModelParts.isGlow(originalName) then accent else body
+				descendant.CanCollide = false
+				descendant.Massless = true
+				local accessory = Instance.new("Accessory")
+				accessory.Name = originalName
+				descendant.Name = "Handle"
+				descendant.Parent = accessory
+				local accessoryWeld = Instance.new("Weld")
+				accessoryWeld.Name = "AccessoryWeld"
+				accessoryWeld.Part0 = target
+				accessoryWeld.Part1 = descendant
+				accessoryWeld.C0 = target.CFrame:ToObjectSpace(descendant.CFrame)
+				accessoryWeld.Parent = descendant
+				accessory.Parent = model
+			end
+		end
+	end
+	source:Destroy()
+end
+
+local function animationTrack(animator: Animator, id: string): AnimationTrack
+	local animation = Instance.new("Animation")
+	animation.AnimationId = id
+	local track = animator:LoadAnimation(animation)
+	animation:Destroy()
+	track.Looped = true
+	track.Priority = Enum.AnimationPriority.Movement
+	return track
+end
+
+local function startR15Locomotion(humanoid: Humanoid)
+	local animator = humanoid:FindFirstChildOfClass("Animator")
+	if not animator then
+		animator = Instance.new("Animator")
+		animator.Parent = humanoid
+	end
+	local walk = animationTrack(animator, HumanoidEnemies.Animations.Walk)
+	local run = animationTrack(animator, HumanoidEnemies.Animations.Run)
+	humanoid.Running:Connect(function(speed)
+		if speed <= 0.05 then
+			walk:Stop(0.15)
+			run:Stop(0.15)
+		elseif speed >= humanoid.WalkSpeed * 0.75 then
+			walk:Stop(0.15)
+			if not run.IsPlaying then
+				run:Play(0.15)
+			end
+			run:AdjustSpeed(speed / 16)
+		else
+			run:Stop(0.15)
+			if not walk.IsPlaying then
+				walk:Play(0.15)
+			end
+			walk:AdjustSpeed(speed / 8)
+		end
+	end)
+end
+
+local function buildHumanoid(typeName: string, size: Vector3, cf: CFrame): Rig?
+	local def = HumanoidEnemies.Defs[typeName]
+	if not def then
+		return nil
+	end
+	local description = Instance.new("HumanoidDescription")
+	for property, value in def.Description do
+		description[property] = value
+	end
+	local body = c3(def.BodyColor)
+	description.HeadColor = body
+	description.LeftArmColor = body
+	description.LeftLegColor = body
+	description.RightArmColor = body
+	description.RightLegColor = body
+	description.TorsoColor = body
+	local ok, generated = pcall(
+		Players.CreateHumanoidModelFromDescription,
+		Players,
+		description,
+		Enum.HumanoidRigType.R15
+	)
+	description:Destroy()
+	if not ok then
+		warn(string.format("Could not create R15 enemy %s: %s", typeName, tostring(generated)))
+		return nil
+	end
+	local model = generated :: Model
+	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart?
+	local torso = model:FindFirstChild("UpperTorso") :: BasePart?
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	if not root or not torso or not humanoid then
+		model:Destroy()
+		return nil
+	end
+	local generatedHeight = model:GetExtentsSize().Y
+	if generatedHeight > 0 then
+		model:ScaleTo(size.Y / generatedHeight)
+	end
+	model.Name = typeName
+	model:PivotTo(cf)
+	model.PrimaryPart = root
+	model:SetAttribute("HumanoidEnemy", true)
+	local palette = Theme.Enemy[typeName] or Theme.Enemy.Walker
+	attachImportedAccessories(model, typeName, size.Y, cf, body, c3(palette.Accent))
+	return {
+		Model = model,
+		Root = root,
+		Torso = torso,
+		HipHeight = humanoid.HipHeight,
+		Humanoid = humanoid,
+	}
 end
 
 -- ---------- rigs ----------
@@ -489,6 +642,10 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 end
 
 function EnemyBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig
+	local humanoid = buildHumanoid(typeName, size, cf)
+	if humanoid then
+		return humanoid
+	end
 	local imported = buildImported(typeName, size, cf)
 	if imported then
 		return imported
@@ -544,6 +701,12 @@ function EnemyBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig
 	root.Size = Vector3.new(root.Size.X, halfHeight * 2, root.Size.Z)
 	hip = HIP
 	return { Model = model, Root = root, Torso = torso, HipHeight = hip }
+end
+
+function EnemyBuilder.startLocomotion(rig: Rig)
+	if rig.Humanoid then
+		startR15Locomotion(rig.Humanoid)
+	end
 end
 
 return EnemyBuilder
