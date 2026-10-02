@@ -25,7 +25,9 @@ local Settings = require(ReplicatedStorage.Shared.Settings)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
 local HudLayout = require(ReplicatedStorage.Shared.HudLayout)
 local Invite = require(ReplicatedStorage.Shared.Invite)
+local UiTheme = require(ReplicatedStorage.Shared.UiTheme)
 local ClientFX = require(script.Parent.ClientFX)
+local UiKit = require(script.Parent.UiKit)
 
 local player = Players.LocalPlayer
 local gui = player:WaitForChild("PlayerGui")
@@ -54,12 +56,12 @@ local function onState(name: string, fn: (any) -> ())
 	fn(v.Value)
 end
 
-local WHITE = Color3.new(1, 1, 1)
-local PANEL = Color3.fromRGB(18, 18, 26)
-local BUTTON = Color3.fromRGB(50, 90, 160)
-local OK = Color3.fromRGB(40, 160, 80)
-local BAD = Color3.fromRGB(160, 40, 40)
-local GREY = Color3.fromRGB(60, 60, 70) -- a button you cannot afford yet
+local WHITE = ClientFX.c3(UiTheme.Colors.Text)
+local PANEL = ClientFX.c3(UiTheme.Colors.Panel)
+local BUTTON = ClientFX.c3(UiTheme.Colors.Button)
+local OK = ClientFX.c3(UiTheme.Colors.Success)
+local BAD = ClientFX.c3(UiTheme.Colors.Danger)
+local GREY = ClientFX.c3(UiTheme.Colors.Disabled) -- a button you cannot afford yet
 
 local screen = Instance.new("ScreenGui")
 screen.Name = "Hud"
@@ -98,37 +100,15 @@ local function text(
 	str: string,
 	textSize: number
 ): TextLabel
-	local l = Instance.new("TextLabel")
-	l.Name = name
-	l.Position = pos
-	l.Size = size
-	l.BackgroundTransparency = 1
-	l.TextColor3 = WHITE
-	l.TextStrokeTransparency = 0.4
-	l.Font = Enum.Font.GothamBold
-	l.TextSize = textSize
-	l.Text = str
-	l.Parent = parent
-	return l
+	return UiKit.Label(parent, name, pos, size, str, textSize)
 end
 
 local function button(parent: Instance, str: string, size: UDim2): TextButton
-	local b = Instance.new("TextButton")
-	b.Size = size
-	b.Text = str
-	b.Font = Enum.Font.Gotham
-	b.TextSize = 16
-	b.TextColor3 = WHITE
-	b.BackgroundColor3 = BUTTON
-	b.AutoButtonColor = true
-	b.Parent = parent
+	local b = UiKit.Button(parent, str, size)
 	if size.Y.Scale == 0 then
 		table.insert(managedButtons, { Button = b, BaseHeight = size.Y.Offset })
 		resizeManagedButtons()
 	end
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 6)
-	corner.Parent = b
 	return b
 end
 
@@ -185,7 +165,7 @@ local mutationLabel =
 mutationLabel.TextColor3 = Color3.fromRGB(255, 200, 60)
 
 -- Boss bar
-local bossFrame = Instance.new("Frame")
+local bossFrame = UiKit.Panel(screen, "BossBar")
 bossFrame.Size = UDim2.new(0, 480, 0, 22)
 bossFrame.Position = UDim2.new(0.5, -240, 0, 106)
 bossFrame.BackgroundColor3 = Color3.fromRGB(30, 10, 10)
@@ -200,7 +180,7 @@ bossFill.Parent = bossFrame
 local bossLabel = text(bossFrame, "BossName", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), "", 16)
 
 -- Bottom-left: HP + stats + dash
-local hpBack = Instance.new("Frame")
+local hpBack = UiKit.Panel(screen, "Health")
 hpBack.Size = UDim2.new(0, 260, 0, 18)
 hpBack.Position = UDim2.new(0, 12, 1, -80)
 hpBack.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -319,7 +299,7 @@ local settingsToggle = button(screen, "Settings", UDim2.new(0, 120, 0, 34))
 settingsToggle.Name = "SettingsToggle"
 settingsToggle.Position = UDim2.new(1, -404, 0, 8)
 
-local settingsPanel = Instance.new("Frame")
+local settingsPanel = UiKit.Panel(screen, "Settings")
 settingsPanel.Name = "Settings"
 settingsPanel.Size = UDim2.new(0, 260, 0, 116)
 settingsPanel.Position = UDim2.new(1, -544, 0, 50)
@@ -328,9 +308,6 @@ settingsPanel.BackgroundTransparency = 0.1
 settingsPanel.BorderSizePixel = 0
 settingsPanel.Visible = false
 settingsPanel.Parent = screen
-local settingsCorner = Instance.new("UICorner")
-settingsCorner.CornerRadius = UDim.new(0, 8)
-settingsCorner.Parent = settingsPanel
 
 type SliderSetter = (number, boolean?) -> ()
 
@@ -449,7 +426,7 @@ boostsLabel.TextXAlignment = Enum.TextXAlignment.Right
 boostsLabel.TextColor3 = ClientFX.c3(Theme.NeonTeal)
 
 -- Bottom-center first-run hint. Only the first unfinished tutorial step is visible.
-local tutorialPill = Instance.new("Frame")
+local tutorialPill = UiKit.Panel(screen, "Tutorial")
 tutorialPill.Name = "TutorialHint"
 tutorialPill.AnchorPoint = Vector2.new(0.5, 1)
 tutorialPill.Size = UDim2.new(0, 300, 0, 38)
@@ -459,16 +436,12 @@ tutorialPill.BackgroundTransparency = 0.08
 tutorialPill.BorderSizePixel = 0
 tutorialPill.Visible = false
 tutorialPill.Parent = screen
-local tutorialCorner = Instance.new("UICorner")
-tutorialCorner.CornerRadius = UDim.new(1, 0)
-tutorialCorner.Parent = tutorialPill
 local tutorialHint =
 	text(tutorialPill, "Text", UDim2.new(0, 12, 0, 0), UDim2.new(1, -24, 1, 0), "", 17)
 tutorialHint.TextColor3 = ClientFX.c3(Theme.NeonTeal)
 
 -- Banner + toast
-local banner =
-	text(screen, "Banner", UDim2.new(0.5, -300, 0.38, 0), UDim2.new(0, 600, 0, 80), "", 48)
+local banner = UiKit.Banner(screen, "Banner", "")
 banner.Visible = false
 local toast = text(screen, "Toast", UDim2.new(0.5, -300, 0.2, 0), UDim2.new(0, 600, 0, 30), "", 20)
 toast.Visible = false
@@ -580,18 +553,11 @@ local function rebuildCards(offer: { string })
 		if def and #cardIds < WaveRewards.OfferSize then
 			table.insert(cardIds, id)
 			local i = #cardIds
-			local b = Instance.new("TextButton")
+			local b = UiKit.Button(cardPanel, "", UDim2.new(0, 184, 0, 180))
 			b.Name = "Card" .. i
-			b.Size = UDim2.new(0, 184, 0, 180)
-			b.Text = ""
 			b.BackgroundColor3 = PANEL
 			b.BorderSizePixel = 0
-			b.AutoButtonColor = true
 			b.LayoutOrder = i
-			b.Parent = cardPanel
-			local corner = Instance.new("UICorner")
-			corner.CornerRadius = UDim.new(0, 10)
-			corner.Parent = b
 			local stripe = Instance.new("Frame") -- 4 px top stripe coloured by card kind
 			stripe.Name = "Stripe"
 			stripe.Size = UDim2.new(1, -20, 0, 4)
@@ -998,7 +964,7 @@ end)
 
 -- Run summary panel: what the run earned, the next forever-unlock, and perks to buy right here.
 -- Shown on GameOver, hidden when the Phase leaves "over".
-local summaryPanel = Instance.new("Frame")
+local summaryPanel = UiKit.Panel(screen, "Summary")
 summaryPanel.Name = "RunSummary"
 summaryPanel.Size = UDim2.new(0, 460, 0, 420) -- placeholder
 summaryPanel.Position = UDim2.new(0.5, -230, 0.5, -210) -- placeholder
@@ -1006,9 +972,6 @@ summaryPanel.BackgroundColor3 = PANEL
 summaryPanel.BorderSizePixel = 0
 summaryPanel.Visible = false
 summaryPanel.Parent = screen
-local summaryCorner = Instance.new("UICorner")
-summaryCorner.CornerRadius = UDim.new(0, 12)
-summaryCorner.Parent = summaryPanel
 local summaryPad = Instance.new("UIPadding")
 summaryPad.PaddingLeft = UDim.new(0, 12)
 summaryPad.PaddingRight = UDim.new(0, 12)
@@ -1160,7 +1123,7 @@ end
 -- a fight: a popup that lands mid-wave waits for the next phase, and a wave that starts while
 -- the strip is still up hides it until the wave ends.
 local DAILY_LATER = Color3.fromRGB(40, 40, 50) -- a day not reached yet
-local dailyStrip = Instance.new("Frame")
+local dailyStrip = UiKit.Panel(screen, "DailyReward")
 dailyStrip.Name = "DailyReward"
 dailyStrip.Size = UDim2.new(0, 540, 0, 130)
 dailyStrip.Position = UDim2.new(0.5, -270, 0.12, 0)
@@ -1169,9 +1132,6 @@ dailyStrip.BorderSizePixel = 0
 dailyStrip.Visible = false
 dailyStrip.ZIndex = 3 -- over the shop and the reward cards, under the banner and the toast
 dailyStrip.Parent = screen
-local dailyCorner = Instance.new("UICorner")
-dailyCorner.CornerRadius = UDim.new(0, 10)
-dailyCorner.Parent = dailyStrip
 -- an invisible button that fills the strip, so a click anywhere on it dismisses it
 local dailyBody = Instance.new("TextButton")
 dailyBody.Name = "Body"
