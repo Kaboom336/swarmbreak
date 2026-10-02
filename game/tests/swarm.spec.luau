@@ -51,3 +51,14 @@ test("whole packs respect MaxAlive", function()
 	assert(not WaveTable.packFits(55, 6, Config.MaxAlive), "pack must not cross cap")
 	assert(not WaveTable.packFits(Config.MaxAlive, 3, Config.MaxAlive), "full cap")
 end)
+
+test("packs mix types and the boss comes last", function()
+	local packs = WaveTable.packs({ Walker = 8, Runner = 4, Brute = 1 })
+	local last = packs[#packs].Composition
+	eq(last.Brute, 1, "boss in the last pack")
+	for index = 1, #packs - 1 do
+		eq(packs[index].Composition.Brute, nil, "no boss before the last pack")
+	end
+	local first = packs[1].Composition
+	assert(first.Walker and first.Runner, "first pack mixes Walkers and Runners")
+end)
