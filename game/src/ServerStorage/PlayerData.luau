@@ -46,6 +46,8 @@ export type Run = {
 	Boosts: WaveRewards.Boosts, -- wave reward cards picked this run
 	Offer: { string }, -- card ids on offer right now ({} when there is nothing to pick)
 	OfferRarities: { [string]: string },
+	OfferElements: { [string]: string }, -- element cards in the current offer (H6)
+	RunElement: string?, -- element picked from a card this run; acts as a tier-1 evolution
 	XP: number,
 	Level: number,
 	PendingLevels: number,
@@ -111,6 +113,8 @@ local function push(plr: Player)
 			Boosts = r.Boosts,
 			Offer = r.Offer,
 			OfferRarities = r.OfferRarities,
+			OfferElements = r.OfferElements,
+			RunElement = r.RunElement,
 			XP = r.XP,
 			Level = r.Level,
 			XPNeeded = LevelUp.requiredXp(r.Level + 1),
@@ -149,6 +153,7 @@ function PlayerData.get(plr: Player): Run
 			Boosts = WaveRewards.newBoosts(),
 			Offer = {},
 			OfferRarities = {},
+			OfferElements = {},
 			XP = 0,
 			Level = 0,
 			PendingLevels = 0,
@@ -337,7 +342,13 @@ end
 
 function PlayerData.equippedEvo(plr: Player): Evolutions.WeaponEvo?
 	local p = Profile.get(plr)
-	return p.Evolutions[p.Equipped]
+	local owned = p.Evolutions[p.Equipped]
+	if owned then
+		return owned
+	end
+	-- A run's element card works like a tier-1 evolution until the run ends.
+	local runElement = PlayerData.get(plr).RunElement
+	return if runElement then { Element = runElement, Tier = 1 } else nil
 end
 
 function PlayerData.ownsWeapon(plr: Player, id: string): boolean
@@ -402,7 +413,7 @@ local function attachWeapon(plr: Player)
 	local p = Profile.get(plr)
 	if plr.Character then
 		-- attach waits up to 5 s for the hand; never hold up the caller's stat push.
-		task.spawn(WeaponModels.attach, plr.Character, p.Equipped, p.Evolutions[p.Equipped])
+		task.spawn(WeaponModels.attach, plr.Character, p.Equipped, PlayerData.equippedEvo(plr))
 	end
 end
 
@@ -593,9 +604,13 @@ function PlayerData.offerLevelReward(plr: Player)
 	)
 	r.Offer = {}
 	r.OfferRarities = {}
+	r.OfferElements = {}
 	for _, card in offer do
 		table.insert(r.Offer, card.Id)
 		r.OfferRarities[card.Id] = card.Rarity
+		if card.Element then
+			r.OfferElements[card.Id] = card.Element
+		end
 	end
 	r.PendingLevels -= 1
 	push(plr)
@@ -611,8 +626,17 @@ function PlayerData.pickReward(plr: Player, id: string): (boolean, string)
 		return false, "Not in your offer."
 	end
 	local _, healNow = WaveRewards.apply(r.Boosts, id)
+	local pickedElement = r.OfferElements[id]
 	r.Offer = {}
 	r.OfferRarities = {}
+	r.OfferElements = {}
+	if pickedElement and not Profile.get(plr).Evolutions[Profile.get(plr).Equipped] then
+		r.RunElement = pickedElement
+		attachWeapon(plr)
+		if PlayerData.OnEquipChanged then
+			PlayerData.OnEquipChanged(plr)
+		end
+	end
 	PlayerData.completeTutorial(plr, "Pick")
 	progressQuest(plr, "WaveRewards", 1)
 	applyStats(plr)
@@ -657,6 +681,8 @@ function PlayerData.resetRun(plr: Player)
 	r.Boosts = WaveRewards.newBoosts()
 	r.Offer = {}
 	r.OfferRarities = {}
+	r.OfferElements = {}
+	r.RunElement = nil
 	r.XP = 0
 	r.Level = 0
 	r.PendingLevels = 0
