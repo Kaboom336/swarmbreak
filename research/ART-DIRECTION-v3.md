@@ -8,6 +8,7 @@ CAVEAT (Zion 01:22Z): the source videos are edited YouTube clips (cuts, zoom, ef
 Evidence: /mnt/project-files/swarmbreak-reference-overview.jpg and swarmbreak-reference-notes.md (40 stills from YouTube gameplay).
 - None of the 8 games uses detailed models. Rivals is white blocks, Grow a Garden is default studs, Final Swarm is plain low-poly in daylight. They win on bright, readable light, a dense HUD and hit feedback on every shot.
 - So the look becomes a **bright station at dusk**: strong warm key light and a blue sky, with neon trim as an accent, not darkness. Only Doors (horror) is dark, and we are not horror. The floor still has to be lighter than the enemies.
+- Recent-games pass (10/2 01:44Z, swarmbreak-reference-notes-v3.md): arenas follow Hunty Zombie (bright, stylized, simple models, big VFX); Nest and boss interiors follow Pressure (dark, but lit by visible coloured sources). Frontlines (realistic) is not our lane.
 - New priority order: (1) lighting and post (T1), (2) the Final Swarm HUD set (T6), (3) hit, kill and AoE juice (T2, T3), (4) mesh upload (wave 8), (5) mesh fidelity. Art steps 3 to 6 in section 4a (re-facet, atlas, SurfaceAppearance, bosses) move behind the in-engine screenshots and happen only if those show the meshes are the weak spot.
 
 ## 1. Honest diagnosis: why we are not front-page

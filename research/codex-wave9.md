@@ -4,8 +4,8 @@ Every task: write the failing spec first, keep to the listed files, no new depen
 testcmd: cd game && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
 
 ## T1 Lighting presets (ART-DIRECTION-v3 X2)
-Station is BRIGHT dusk daylight (see ART-DIRECTION-v3 section 0): ClockTime about 17, Brightness 2 to 3, warm sun, blue sky, ExposureCompensation about 0, Bloom Intensity about 1.2, Threshold about 0.85, Size 24, ColorCorrection Contrast 0.15, Atmosphere Density about 0.3, Offset 0.25, colour matched to the horizon. Values come from /mnt swarmbreak-studio-research.md and are tuned by eye. Only BossFight may tint red.
-Shared/LightingPresets.luau: pure data presets Station, BossFight, Base, LowQuality (Lighting props, Atmosphere, Bloom, ColorCorrection, Sky tint). Apply in ArenaBuilder and BossIntro. Station must equal the Lighting baked into default.project.json by wave 8.
+Station is BRIGHT dusk daylight (see ART-DIRECTION-v3 section 0): ClockTime about 17, Brightness 2 to 3, warm sun, blue sky, ExposureCompensation about 0, Bloom Intensity about 1.2, Threshold about 0.85, Size 24, ColorCorrection Contrast 0.15, Atmosphere Density about 0.3, Offset 0.25, colour matched to the horizon. Values come from /mnt swarmbreak-studio-research.md and are tuned by eye. Only BossFight may tint red. Add preset NestInterior (Pressure-style, for boss lairs and indoor rooms): dark ambient but every room has visible coloured light sources (PointLights on Neon fixtures, no black corners where enemies hide).
+Shared/LightingPresets.luau: pure data presets Station, BossFight, NestInterior, Base, LowQuality (Lighting props, Atmosphere, Bloom, ColorCorrection, Sky tint). Apply in ArenaBuilder and BossIntro. Station must equal the Lighting baked into default.project.json by wave 8.
 Spec tests/lightingpresets.spec.luau: Station Brightness >= 2 and ClockTime between 15 and 18; all keys present in every preset; Atmosphere.Color near Sky tint hue; Bloom.Threshold >= 0.8; Theme floor luminance > every Theme enemy body luminance; project.json Lighting == Station.
 
 ## T2 VFX library (X3)

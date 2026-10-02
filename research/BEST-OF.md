@@ -24,3 +24,6 @@ Borrowed ideas should fit these by default; replacing one is allowed when eviden
 | Animations | Rivals | Snappy weapon equip, reload and inspect animations; first-person arms and weapon sway |
 | Custom skins | Rivals | Weapon skins and wraps as the main cosmetic, unlocked with Gems or crates; must stay readable (rarity colour on the frame, not the gun) |
 | Lobby polish | Rivals | The lobby (our Base) is the polished showcase; arenas stay simple and readable |
+| Wave-fighter look (hottest recent) | Hunty Zombie | Bright stylized islands, simple models, big VFX, Quests panel always visible: our arena look |
+| Dark sci-fi rooms | Pressure | Dark rooms that still read because every room shows coloured light sources: our Nest and boss lairs |
+| Hit VFX scale | Slayers 2 | Huge bright ability VFX over plain sand arenas |
