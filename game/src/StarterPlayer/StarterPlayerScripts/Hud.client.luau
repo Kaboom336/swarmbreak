@@ -439,7 +439,7 @@ settingsToggle.Position = UDim2.new(1, -404, 0, 8)
 
 local settingsPanel = UiKit.Panel(screen, "Settings")
 settingsPanel.Name = "Settings"
-settingsPanel.Size = UDim2.new(0, 260, 0, 152)
+settingsPanel.Size = UDim2.new(0, 260, 0, 194)
 settingsPanel.Position = UDim2.new(1, -544, 0, 50)
 settingsPanel.BackgroundColor3 = PANEL
 settingsPanel.BackgroundTransparency = 0.1
@@ -554,6 +554,20 @@ end
 mouseLockButton.MouseButton1Click:Connect(function()
 	setMouseLock(not mouseLockEnabled)
 	UpdateSettings:FireServer({ MouseLockEnabled = mouseLockEnabled })
+end)
+
+local qualityChoice = Settings.DefaultQuality
+local qualityButton = button(settingsPanel, "Quality  Auto", UDim2.new(1, -24, 0, 34))
+qualityButton.Name = "Quality"
+qualityButton.Position = UDim2.new(0, 12, 0, 150)
+local function setQuality(choice: any)
+	qualityChoice = Settings.quality(choice)
+	qualityButton.Text = "Quality  " .. qualityChoice
+	ClientFX.setQualityChoice(qualityChoice)
+end
+qualityButton.MouseButton1Click:Connect(function()
+	setQuality(Settings.nextQuality(qualityChoice))
+	UpdateSettings:FireServer({ Quality = qualityChoice })
 end)
 
 -- Weapon switching remains on number keys; the clean fighting HUD shows ammo instead of cards.
@@ -1149,7 +1163,7 @@ local function applyHudLayout()
 
 	local settings = rects.settings
 	settingsPanel.Position = UDim2.fromOffset(logical(settings.x), logical(settings.y))
-	settingsPanel.Size = UDim2.fromOffset(logical(settings.w), math.min(152, logical(settings.h)))
+	settingsPanel.Size = UDim2.fromOffset(logical(settings.w), math.min(194, logical(settings.h)))
 
 	local shopRect = rects.shop
 	shop.Position = UDim2.fromOffset(logical(shopRect.x), logical(shopRect.y))
@@ -1446,6 +1460,7 @@ stats = {
 	MusicVolume = Settings.DefaultVolume,
 	SfxVolume = Settings.DefaultVolume,
 	MouseLockEnabled = Settings.DefaultMouseLock,
+	Quality = Settings.DefaultQuality,
 }
 
 local tutorialContext: Tutorial.Context = "arena"
@@ -1637,6 +1652,7 @@ StatsChanged.OnClientEvent:Connect(function(s)
 	setMusicSlider(s.MusicVolume)
 	setSfxSlider(s.SfxVolume)
 	setMouseLock(s.MouseLockEnabled ~= false)
+	setQuality(s.Quality)
 	refreshStats()
 	onDailyPopup(s.DailyPopup)
 end)

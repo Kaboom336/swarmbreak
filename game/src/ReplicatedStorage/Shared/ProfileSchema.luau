@@ -27,6 +27,7 @@ export type Profile = {
 	MusicVolume: number,
 	SfxVolume: number,
 	MouseLockEnabled: boolean,
+	Quality: string,
 }
 
 local ProfileSchema = { Version = 1 }
@@ -74,6 +75,7 @@ function ProfileSchema.default(): Profile
 		MusicVolume = Settings.DefaultVolume,
 		SfxVolume = Settings.DefaultVolume,
 		MouseLockEnabled = Settings.DefaultMouseLock,
+		Quality = Settings.DefaultQuality,
 	}
 end
 
@@ -205,6 +207,7 @@ function ProfileSchema.sanitize(raw: any): Profile
 	p.MouseLockEnabled = if type(raw.MouseLockEnabled) == "boolean"
 		then raw.MouseLockEnabled
 		else Settings.DefaultMouseLock
+	p.Quality = Settings.quality(raw.Quality)
 	return p
 end
 

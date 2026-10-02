@@ -110,6 +110,7 @@ local function push(plr: Player)
 			MusicVolume = p.MusicVolume,
 			SfxVolume = p.SfxVolume,
 			MouseLockEnabled = p.MouseLockEnabled,
+			Quality = p.Quality,
 		})
 	end
 end

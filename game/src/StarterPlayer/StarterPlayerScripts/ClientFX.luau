@@ -6,6 +6,7 @@ local Debris = game:GetService("Debris")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 local Feel = require(ReplicatedStorage.Shared.Feel)
+local Quality = require(ReplicatedStorage.Shared.Quality)
 local SoundBudget = require(ReplicatedStorage.Shared.SoundBudget)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Settings = require(ReplicatedStorage.Shared.Settings)
@@ -16,6 +17,22 @@ local camera = workspace.CurrentCamera
 local sfxVolume = Settings.DefaultVolume
 local musicVolume = Settings.DefaultVolume
 local soundBudget = SoundBudget.new()
+local qualityState = Quality.new(Settings.DefaultQuality)
+local fxSequence = 0
+
+function ClientFX.setQualityChoice(choice: any)
+	qualityState = Quality.new(choice)
+end
+
+function ClientFX.getQualityBudget(): Quality.Budget
+	return Quality.budget(qualityState)
+end
+
+local function allowFX(): boolean
+	local rate = ClientFX.getQualityBudget().FX
+	fxSequence += 1
+	return rate >= 1 or fxSequence % math.max(1, math.floor(1 / rate + 0.5)) == 0
+end
 
 local p0Sounds = {
 	Hurt = true,
@@ -173,7 +190,11 @@ function ClientFX.emit(name: string, at: Vector3, count: number?)
 	local entry = claim(pool)
 	entry.Holder.Position = at
 	entry.AvailableAt = os.clock() + definition.Lifetime[2]
-	entry.Emitter:Emit(count or definition.EmitCount)
+	local emitCount =
+		math.floor((count or definition.EmitCount) * ClientFX.getQualityBudget().Particles + 0.5)
+	if emitCount > 0 then
+		entry.Emitter:Emit(emitCount)
+	end
 end
 
 function ClientFX.c3(t: { number }): Color3
@@ -230,6 +251,7 @@ end
 local shake = 0
 local shakeDecay = 6
 RunService:BindToRenderStep("SwarmShake", Enum.RenderPriority.Camera.Value + 1, function(dt)
+	qualityState = Quality.sample(qualityState, dt)
 	if shake <= 0.001 or camera.CameraType == Enum.CameraType.Scriptable then
 		shake = math.max(0, shake - dt * 4)
 		return
@@ -270,7 +292,7 @@ end
 -- ---------- world primitives ----------
 function ClientFX.tracer(from: Vector3, to: Vector3, color: Color3, thickness: number, life: number)
 	local len = (to - from).Magnitude
-	if len < 0.5 then
+	if len < 0.5 or not allowFX() then
 		return
 	end
 	local beam = Instance.new("Part")
@@ -302,6 +324,10 @@ function ClientFX.burst(
 	life: number,
 	spark: boolean
 )
+	count = math.floor(count * ClientFX.getQualityBudget().Particles + 0.5)
+	if count <= 0 then
+		return
+	end
 	local entry = claim(customPool)
 	local pe = entry.Emitter
 	entry.Holder.Position = at
@@ -327,6 +353,9 @@ function ClientFX.burst(
 end
 
 function ClientFX.flash(at: Vector3, color: Color3, range: number, life: number)
+	if not allowFX() then
+		return
+	end
 	local holder = Instance.new("Part")
 	holder.Anchored = true
 	holder.CanCollide = false
@@ -345,6 +374,9 @@ function ClientFX.flash(at: Vector3, color: Color3, range: number, life: number)
 end
 
 function ClientFX.ring(at: Vector3, color: Color3, radius: number, life: number)
+	if not allowFX() then
+		return
+	end
 	local ring = Instance.new("Part")
 	ring.Shape = Enum.PartType.Cylinder
 	ring.Anchored = true

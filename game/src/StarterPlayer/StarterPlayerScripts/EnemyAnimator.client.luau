@@ -5,6 +5,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local AnimCull = require(ReplicatedStorage.Shared.AnimCull)
+local ClientFX = require(script.Parent.ClientFX)
 
 local enemies = workspace:WaitForChild("Enemies")
 
@@ -66,11 +67,15 @@ end
 local frame = 0
 RunService.Heartbeat:Connect(function(dt)
 	frame += 1
+	local animationEvery = math.max(1, math.floor(1 / ClientFX.getQualityBudget().Animation + 0.5))
 	local t = os.clock()
 	local camera = workspace.CurrentCamera
 	for model, a in anims do
 		if not model.Parent then
 			anims[model] = nil
+			continue
+		end
+		if (frame + a.Index) % animationEvery ~= 0 then
 			continue
 		end
 		if camera then
@@ -82,7 +87,7 @@ RunService.Heartbeat:Connect(function(dt)
 		end
 		local speed = a.Root.AssemblyLinearVelocity.Magnitude
 		local moving = math.clamp(speed / 12, 0, 1.5)
-		a.Phase += dt * (4 + speed * 0.35)
+		a.Phase += dt * animationEvery * (4 + speed * 0.35)
 		local p = a.Phase
 		local M = a.Motors
 		-- bipeds
