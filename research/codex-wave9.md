@@ -31,4 +31,9 @@ Spec tests/hudlayout.spec.luau (pure layout data in Shared/HudLayout.luau): each
 StarterPlayerScripts/Movement.client.luau + Shared/MovementTuning.luau (pure data): sprint (default on for mobile), slide (crouch while sprinting; momentum decays over about 0.8 s), short dash on a cooldown, jump buffering and coyote time, small FOV kick on sprint and dash, camera tilt on slide. Shooting while moving keeps full speed. Mobile gets a slide/dash button via the touch layout.
 Spec tests/movement.spec.luau: pure functions for slide speed curve (monotonic decay, ends at walk speed), dash cooldown, coyote and buffer windows in range, FOV kick returns to base.
 
-Order: T1, T6, T7, T3, T2, T4, T5.
+## T8 Final Swarm card cadence and chest payoff (laptop player's-eye pass, 10/2)
+Evidence: /mnt/project-files/swarmbreak-reference-notes-20261002T012511-1d9d.md. Final Swarm shows a level-up pick every 10-20 s.
+In-run XP from kills; each level-up offers 3 rarity-coloured cards with a short flip reveal (reuse the existing pick-1-of-3 reward logic and perks). Early levels are cheap so the first pick lands about 15 s into wave 1. End of run: a short chest-reveal moment (existing Gem crate and pity) before the run summary. At spawn, the tutorial shows a one-line goal banner ("Survive 5 waves").
+Spec tests/levelup.spec.luau: pure XP curve where level 1 and 2 need under 20 s of kills at the wave 1 kill rate (constant in data); picks never offer duplicate cards; rarity odds sum to 1; the chest result uses Crate pity.
+
+Order: T1, T6, T8, T7, T3, T2, T4, T5.

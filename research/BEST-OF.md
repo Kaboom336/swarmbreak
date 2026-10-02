@@ -3,7 +3,7 @@ Rule: for every aspect of Swarm Break, name the top game that does it best, copy
 
 | Aspect | Best at it | What we take |
 |---|---|---|
-| Core loop and wave HUD | Final Swarm | Boss bar at the top centre, wave and timer, upgrade cards between waves, AoE warning circles |
+| Core loop and wave HUD | Final Swarm | Level-up card pick every 10-20 s with rarity reveal, end-of-run chest reveal, one-line goal at spawn, Boss bar at the top centre, wave and timer, upgrade cards between waves, AoE warning circles |
 | Hit feel | Blox Fruits | Big coloured damage numbers, glowing ability circles on every hit |
 | Combat readability | Rivals | Simple map, big timer, red hit-direction marker, weapon banner, ammo at the bottom right |
 | Daily reasons to return | Rivals and Grow a Garden | Daily Tasks panel, restock and "UPDATE IN" timers |
@@ -15,3 +15,4 @@ Rule: for every aspect of Swarm Break, name the top game that does it best, copy
 | Movement feel (Zion: one of the best) | Rivals | Sprint, slide with momentum, short dash, quick jump, FOV kick and camera tilt; movement stays fast while shooting |
 | Animations | Rivals | Snappy weapon equip, reload and inspect animations; first-person arms and weapon sway |
 | Custom skins | Rivals | Weapon skins and wraps as the main cosmetic, unlocked with Gems or crates; must stay readable (rarity colour on the frame, not the gun) |
+| Lobby polish | Rivals | The lobby (our Base) is the polished showcase; arenas stay simple and readable |
