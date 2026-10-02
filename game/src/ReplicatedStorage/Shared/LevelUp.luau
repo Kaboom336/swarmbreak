@@ -44,7 +44,7 @@ LevelUp.RarityOdds = {
 }
 LevelUp.ChestCrate = "Gem"
 LevelUp.ChestRevealSeconds = 2.25
-LevelUp.CardFlipSeconds = 0.18
+LevelUp.CardFlipSeconds = 0.12
 
 function LevelUp.requiredXp(level: number): number
 	local curveIndex = math.clamp(math.floor(level), 1, #LevelUp.XpCurve)
