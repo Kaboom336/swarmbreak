@@ -1,0 +1,35 @@
+local Revive = load("Revive")
+
+test("revive eligibility checks distance and alive/downed state", function()
+	eq(Revive.isEligible(true, true, Revive.MaxDistance, false), true, "at max distance")
+	eq(Revive.isEligible(true, true, Revive.MaxDistance + 0.01, false), false, "too far")
+	eq(Revive.isEligible(false, true, 1, false), false, "rescuer is down")
+	eq(Revive.isEligible(true, false, 1, false), false, "target is alive")
+	eq(Revive.isEligible(true, true, 1, true), false, "already rescued this wave")
+end)
+
+test("revive hold progress requires the full hold duration", function()
+	eq(Revive.holdProgress(0), 0, "not started")
+	eq(Revive.holdProgress(Revive.HoldSeconds / 2), 0.5, "half held")
+	eq(Revive.holdProgress(Revive.HoldSeconds), 1, "complete")
+	eq(Revive.holdProgress(Revive.HoldSeconds + 1), 1, "clamped")
+end)
+
+test("revive window times out at its deadline", function()
+	eq(Revive.isTimedOut(20, 20 + Revive.WindowSeconds - 0.01), false, "still open")
+	eq(Revive.isTimedOut(20, 20 + Revive.WindowSeconds), true, "deadline reached")
+end)
+
+test("revive cooldown is once per player per wave and resets", function()
+	local cooldown = Revive.newCooldown(4)
+	eq(Revive.wasUsed(cooldown, 101, 4), false, "initially ready")
+	local unused = cooldown
+	cooldown = Revive.markUsed(cooldown, 101, 4)
+	eq(Revive.wasUsed(cooldown, 101, 4), true, "used in current wave")
+	eq(Revive.wasUsed(unused, 101, 4), false, "rule does not mutate its input")
+	eq(Revive.wasUsed(cooldown, 202, 4), false, "other player remains ready")
+
+	cooldown = Revive.resetCooldown(cooldown, 5)
+	eq(Revive.wasUsed(cooldown, 101, 5), false, "new wave resets use")
+	eq(cooldown.Wave, 5, "tracks new wave")
+end)

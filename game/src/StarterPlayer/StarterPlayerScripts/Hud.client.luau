@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local ProximityPromptService = game:GetService("ProximityPromptService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
@@ -25,6 +26,7 @@ local Settings = require(ReplicatedStorage.Shared.Settings)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
 local HudLayout = require(ReplicatedStorage.Shared.HudLayout)
 local DeathFlow = require(ReplicatedStorage.Shared.DeathFlow)
+local Revive = require(ReplicatedStorage.Shared.Revive)
 local UiTheme = require(ReplicatedStorage.Shared.UiTheme)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 local UiKit = require(script.Parent.UiKit)
@@ -1066,14 +1068,84 @@ shopToggle.Position = UDim2.new(1, -122, 0, 8)
 local spectateLabel = text(
 	screen,
 	"SpectateStatus",
-	UDim2.new(0.5, -140, 0.58, 0),
-	UDim2.new(0, 280, 0, 44),
+	UDim2.new(0.5, -190, 0.56, 0),
+	UDim2.new(0, 380, 0, 64),
 	"Respawn next wave",
-	22
+	18
 )
 spectateLabel.BackgroundColor3 = PANEL
 spectateLabel.BackgroundTransparency = 0.08
 spectateLabel.Visible = false
+spectateLabel.TextWrapped = true
+
+local selfReviveButton = button(screen, "SELF-REVIVE (ROBUX)", UDim2.new(0, 220, 0, 44))
+selfReviveButton.Name = "SelfRevive"
+selfReviveButton.Position = UDim2.new(0.5, -110, 0.56, 70)
+selfReviveButton.Visible = false
+selfReviveButton.MouseButton1Click:Connect(function()
+	Prompt:FireServer("product", "Revive")
+end)
+
+local rescueLabel =
+	text(screen, "RescueProgress", UDim2.new(0.5, -180, 0.48, 0), UDim2.new(0, 360, 0, 50), "", 18)
+rescueLabel.BackgroundColor3 = PANEL
+rescueLabel.BackgroundTransparency = 0.08
+rescueLabel.TextWrapped = true
+rescueLabel.Visible = false
+
+local function rescueWording(): string
+	if UserInputService.TouchEnabled then
+		return "hold RESCUE on screen"
+	elseif UserInputService.GamepadEnabled then
+		return "hold X"
+	end
+	return "hold E"
+end
+
+local activeRescuePrompt: ProximityPrompt? = nil
+local rescueHoldStarted: number? = nil
+
+ProximityPromptService.PromptShown:Connect(function(prompt)
+	if prompt.Name ~= "RescuePrompt" then
+		return
+	end
+	activeRescuePrompt = prompt
+	rescueHoldStarted = nil
+	rescueLabel.Text = string.format("RESCUE %s — %s", prompt.ObjectText, rescueWording())
+	rescueLabel.Visible = true
+end)
+
+ProximityPromptService.PromptButtonHoldBegan:Connect(function(prompt)
+	if prompt == activeRescuePrompt then
+		rescueHoldStarted = os.clock()
+	end
+end)
+
+ProximityPromptService.PromptButtonHoldEnded:Connect(function(prompt)
+	if prompt == activeRescuePrompt then
+		rescueHoldStarted = nil
+		rescueLabel.Text = string.format("RESCUE %s — %s", prompt.ObjectText, rescueWording())
+	end
+end)
+
+ProximityPromptService.PromptHidden:Connect(function(prompt)
+	if prompt == activeRescuePrompt then
+		activeRescuePrompt = nil
+		rescueHoldStarted = nil
+		rescueLabel.Visible = false
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	if activeRescuePrompt and rescueHoldStarted then
+		local progress = Revive.holdProgress(os.clock() - rescueHoldStarted)
+		rescueLabel.Text = string.format(
+			"RESCUING %s  %d%%",
+			activeRescuePrompt.ObjectText,
+			math.floor(progress * 100 + 0.5)
+		)
+	end
+end)
 
 local PANEL_GAP = 8 -- placeholder
 
@@ -1240,6 +1312,20 @@ local deathState: DeathFlow.State = DeathFlow.initialState()
 local diedAt: number? = nil
 local summaryToken = 0
 
+local function refreshDownedStatus()
+	if deathState ~= "spectate" then
+		return
+	end
+	if player:GetAttribute("RescueAvailable") == true then
+		spectateLabel.Text = "DOWNED — teammate can " .. rescueWording() .. "\nRespawn next wave"
+	elseif player:GetAttribute("Downed") == true then
+		spectateLabel.Text = "DOWNED — rescue window closed\nRespawn next wave"
+	end
+end
+
+player:GetAttributeChangedSignal("Downed"):Connect(refreshDownedStatus)
+player:GetAttributeChangedSignal("RescueAvailable"):Connect(refreshDownedStatus)
+
 playAgainButton.MouseButton1Click:Connect(function()
 	if deathState ~= "summary" then
 		return
@@ -1252,6 +1338,7 @@ end)
 local function watchCharacter(character: Model)
 	summaryToken += 1
 	spectateLabel.Visible = false
+	selfReviveButton.Visible = false
 	deathState = DeathFlow.transition(deathState, "respawned")
 	deathState = DeathFlow.transition(deathState, "ready")
 	diedAt = nil
@@ -1260,7 +1347,13 @@ local function watchCharacter(character: Model)
 		deathState = DeathFlow.transition(deathState, "died")
 		deathState = DeathFlow.transition(deathState, "spectate")
 		diedAt = os.clock()
+		local fighting = stateValue("Phase") == "fighting"
+		spectateLabel.Text = if fighting
+			then "DOWNED — teammate can " .. rescueWording() .. "\nRespawn next wave"
+			else "Respawn next wave"
 		spectateLabel.Visible = true
+		selfReviveButton.Visible = fighting
+		refreshDownedStatus()
 	end)
 end
 
@@ -1644,6 +1737,9 @@ onState("Phase", function(phase)
 	end
 	if phase == "idle" or phase == "starting" or phase == "intermission" then
 		spectateLabel.Visible = false
+	end
+	if phase ~= "fighting" then
+		selfReviveButton.Visible = false
 	end
 	if phase == "intermission" then
 		setShop(true)

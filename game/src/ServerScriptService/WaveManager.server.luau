@@ -15,6 +15,7 @@ local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local SpawnPicker = require(ReplicatedStorage.Shared.SpawnPicker)
 local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
+local Revive = require(ReplicatedStorage.Shared.Revive)
 local EnemyAI = require(ServerStorage.EnemyAI)
 local PlayerData = require(ServerStorage.PlayerData)
 local GameState = require(ServerStorage.GameState)
@@ -36,6 +37,101 @@ local currentWave = 0
 local currentDifficultyId: Difficulty.TierName = Difficulty.Default
 local runStartedAt = 0
 local playAgainRequested = false
+local reviveCooldown = Revive.newCooldown(0)
+local downedPrompts: { [Player]: ProximityPrompt } = {}
+
+local function clearDowned(plr: Player)
+	local prompt = downedPrompts[plr]
+	if prompt then
+		prompt:Destroy()
+		downedPrompts[plr] = nil
+	end
+	plr:SetAttribute("Downed", false)
+	plr:SetAttribute("RescueAvailable", false)
+end
+
+local function clearAllDowned()
+	for _, plr in Players:GetPlayers() do
+		clearDowned(plr)
+	end
+end
+
+local function openRescueWindow(target: Player, character: Model, humanoid: Humanoid)
+	if
+		GameState.get("Phase") ~= "fighting"
+		or PlayerData.isWaiting(target)
+		or Revive.wasUsed(reviveCooldown, target.UserId, currentWave)
+	then
+		return
+	end
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not root or not root:IsA("BasePart") then
+		return
+	end
+
+	clearDowned(target)
+	target:SetAttribute("Downed", true)
+	target:SetAttribute("RescueAvailable", true)
+	local downedAt = os.clock()
+	local wave = currentWave
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "RescuePrompt"
+	prompt.ActionText = "Rescue"
+	prompt.ObjectText = target.DisplayName .. " is down"
+	prompt.HoldDuration = Revive.HoldSeconds
+	prompt.MaxActivationDistance = Revive.MaxDistance
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = root
+	downedPrompts[target] = prompt
+
+	prompt.Triggered:Connect(function(rescuer: Player)
+		local rescuerRoot = rescuer.Character
+			and rescuer.Character:FindFirstChild("HumanoidRootPart")
+		local rescuerHumanoid = rescuer.Character
+			and rescuer.Character:FindFirstChildOfClass("Humanoid")
+		local distance = if rescuerRoot and rescuerRoot:IsA("BasePart")
+			then (rescuerRoot.Position - root.Position).Magnitude
+			else math.huge
+		local eligible = currentWave == wave
+			and GameState.get("Phase") == "fighting"
+			and downedPrompts[target] == prompt
+			and not Revive.isTimedOut(downedAt, os.clock())
+			and Revive.isEligible(
+				rescuer ~= target and rescuerHumanoid ~= nil and rescuerHumanoid.Health > 0,
+				humanoid.Health <= 0,
+				distance,
+				Revive.wasUsed(reviveCooldown, target.UserId, wave)
+			)
+		if not eligible then
+			return
+		end
+
+		reviveCooldown = Revive.markUsed(reviveCooldown, target.UserId, wave)
+		clearDowned(target)
+		Toast:FireClient(rescuer, "Rescue complete!", 2)
+		Toast:FireClient(target, rescuer.DisplayName .. " rescued you!", 3)
+		target:LoadCharacter()
+	end)
+
+	task.delay(Revive.WindowSeconds, function()
+		if downedPrompts[target] == prompt then
+			clearDowned(target)
+			target:SetAttribute("Downed", true)
+		end
+	end)
+end
+
+local function watchCharacter(plr: Player, character: Model)
+	clearDowned(plr)
+	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
+	-- Keep the fallen avatar together so its root can carry the rescue prompt.
+	humanoid.BreakJointsOnDeath = false
+	humanoid.Died:Connect(function()
+		openRescueWindow(plr, character, humanoid)
+	end)
+end
 
 PlayAgain.OnServerEvent:Connect(function(plr: Player)
 	if GameState.get("Phase") == "over" and not PlayerData.isWaiting(plr) then
@@ -232,6 +328,8 @@ end
 -- Returns true if the wave was cleared, false on team wipe.
 local function runWave(wave: number): boolean
 	currentWave = wave
+	reviveCooldown = Revive.resetCooldown(reviveCooldown, wave)
+	clearAllDowned()
 	publishMutation()
 	GameState.set("Wave", wave)
 	for _, plr in Players:GetPlayers() do
@@ -303,6 +401,7 @@ end
 
 local function endRun(won: boolean, reachedWave: number)
 	playAgainRequested = false
+	clearAllDowned()
 	GameState.set("BossName", "")
 	GameState.set("Phase", "chest")
 	-- Every surviving participant sees the existing Gem crate open. The run version uses the
@@ -383,6 +482,12 @@ end
 local function onPlayerAdded(plr: Player)
 	local joinedDuringWave = GameState.isWaveActive()
 	PlayerData.setWaiting(plr, joinedDuringWave)
+	plr.CharacterAdded:Connect(function(character)
+		watchCharacter(plr, character)
+	end)
+	if plr.Character then
+		task.spawn(watchCharacter, plr, plr.Character)
+	end
 	-- Players joining an active wave stay unspawned until its intermission.
 	task.wait(1)
 	if not joinedDuringWave and not plr.Character then
@@ -390,6 +495,9 @@ local function onPlayerAdded(plr: Player)
 	end
 end
 Players.PlayerAdded:Connect(onPlayerAdded)
+Players.PlayerRemoving:Connect(function(plr)
+	clearDowned(plr)
+end)
 for _, plr in Players:GetPlayers() do
 	task.spawn(onPlayerAdded, plr)
 end
