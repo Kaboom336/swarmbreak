@@ -4,8 +4,9 @@ Every task: write the failing spec first, keep to the listed files, no new depen
 testcmd: cd game && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
 
 ## T1 Lighting presets (ART-DIRECTION-v3 X2)
+Station is BRIGHT dusk daylight (see ART-DIRECTION-v3 section 0): ClockTime about 17, Brightness 2 to 3, warm sun, blue sky, ExposureCompensation about 0, Bloom Intensity about 1.2, Threshold about 0.85, Size 24, ColorCorrection Contrast 0.15, Atmosphere Density about 0.3, Offset 0.25, colour matched to the horizon. Values come from /mnt swarmbreak-studio-research.md and are tuned by eye. Only BossFight may tint red.
 Shared/LightingPresets.luau: pure data presets Station, BossFight, Base, LowQuality (Lighting props, Atmosphere, Bloom, ColorCorrection, Sky tint). Apply in ArenaBuilder and BossIntro. Station must equal the Lighting baked into default.project.json by wave 8.
-Spec tests/lightingpresets.spec.luau: all keys present in every preset; Atmosphere.Color near Sky tint hue; Bloom.Threshold >= 0.8; Theme floor luminance > every Theme enemy body luminance; project.json Lighting == Station.
+Spec tests/lightingpresets.spec.luau: Station Brightness >= 2 and ClockTime between 15 and 18; all keys present in every preset; Atmosphere.Color near Sky tint hue; Bloom.Threshold >= 0.8; Theme floor luminance > every Theme enemy body luminance; project.json Lighting == Station.
 
 ## T2 VFX library (X3)
 Shared/VfxDefs.luau (HitSpark, MuzzleFlash, DeathBurst, SpawnBuildIn, Telegraph, PickupMagnet, BossWeakPoint) + StarterPlayerScripts/ClientFX.luau (pooled emitters, Emit(n), no per-hit Instance.new).
@@ -21,3 +22,8 @@ Spec tests/uitheme.spec.luau: text/stroke contrast >= 4.5:1; rarity colours == T
 
 ## T5 Capture script (X7)
 game/tools/capture.luau for the Studio command bar: 6 fixed cameras (see ART-DIRECTION-v3 section 5), apply Station preset, wait, screenshot. No unit test; must pass selene/stylua.
+
+## T6 Final Swarm HUD set (priority 2, do right after T1)
+Hud.client.luau + UiKit (from T4, or plain frames if T4 is not merged yet): boss name with a big red HP bar at the top centre; wave number plus round timer at the top centre; Coins/Gems at the top right; the Quests panel on the left (Quests.luau exists); damage numbers with a crit colour; a red hit-direction indicator when the player is hit; red AoE warning circles on the ground before boss and spitter attacks; a "Wave clear +N Coins" banner. The existing pick-1-of-3 reward screen gets rarity-tagged cards.
+Spec tests/hudlayout.spec.luau (pure layout data in Shared/HudLayout.luau): each element anchored where listed, nothing overlapping at 1334x750 and 1920x1080, touch targets >= 44 px.
+Order: T1, T6, T3, T2, T4, T5.

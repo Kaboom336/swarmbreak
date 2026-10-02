@@ -3,6 +3,12 @@ Inputs: research/r4-ai-build.md, r4-build-craft.md, r4-genre-feel.md, import-pla
 game/tools/blender/RECIPE.md, renders enemies-sheet.png, weapons-sheet.png, arena/Lineup.png (+ refs-sheet, before-after-walker).
 Tags: [V] verified in a cited doc, [E] estimate or taste, [PRIOR] memory of a game, not checked this run.
 
+## 0. REVISION 2026-10-02 01:20Z after the laptop's captures of 8 top games (overrides sections 2 and 4 where they differ)
+Evidence: /mnt/project-files/swarmbreak-reference-overview.jpg and swarmbreak-reference-notes.md (40 stills from YouTube gameplay).
+- None of the 8 games uses detailed models. Rivals is white blocks, Grow a Garden is default studs, Final Swarm is plain low-poly in daylight. They win on bright, readable light, a dense HUD and hit feedback on every shot.
+- So the look becomes a **bright station at dusk**: strong warm key light and a blue sky, with neon trim as an accent, not darkness. Only Doors (horror) is dark, and we are not horror. The floor still has to be lighter than the enemies.
+- New priority order: (1) lighting and post (T1), (2) the Final Swarm HUD set (T6), (3) hit, kill and AoE juice (T2, T3), (4) mesh upload (wave 8), (5) mesh fidelity. Art steps 3 to 6 in section 4a (re-facet, atlas, SurfaceAppearance, bosses) move behind the in-engine screenshots and happen only if those show the meshes are the weak spot.
+
 ## 1. Honest diagnosis: why we are not front-page
 0. **Nobody has seen our art in Roblox.** Zion's playtest showed grey part-built placeholders under the default night sky,
    because `Shared/Meshes.luau` has no ids and lighting/post-FX exist only at runtime (import-plan.md causes 1-3). Every
