@@ -53,3 +53,8 @@ test("card chrome covers every category and highlights effect keywords", functio
 		assert(rich:find(keyword, 1, true), "keeps keyword " .. keyword)
 	end
 end)
+
+test("EVOLVE cards use the CardStyle gold border", function()
+	eq(CardStyle.strokeFor("Common", true), CardStyle.EvolveStroke, "evolution gold")
+	eq(CardStyle.strokeFor("Rare", false), CardStyle.Rarities.Rare.Stroke, "normal rarity")
+end)

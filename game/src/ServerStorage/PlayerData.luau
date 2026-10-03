@@ -31,6 +31,7 @@ local WeaponModels = require(script.Parent.WeaponModels)
 
 local StatsChanged = ReplicatedStorage:WaitForChild("Remotes").StatsChanged :: RemoteEvent
 local CrateResult = ReplicatedStorage:WaitForChild("Remotes").CrateResult :: RemoteEvent
+local FX = ReplicatedStorage:WaitForChild("Remotes").FX :: RemoteEvent
 local SignatureRemote =
 	ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Signature") :: RemoteEvent
 -- GetOrderedDataStore throws in an unpublished Studio place; fall back to no leaderboard.
@@ -50,8 +51,10 @@ export type Run = {
 	Offer: { string }, -- card ids on offer right now ({} when there is nothing to pick)
 	OfferRarities: { [string]: string },
 	OfferElements: { [string]: string }, -- element cards in the current offer (H6)
+	OfferEvolutions: { [string]: string },
 	RewardActions: LevelUp.ActionState,
 	RunElement: string?, -- element picked from a card this run; acts as a tier-1 evolution
+	EvolvedRecipe: string?,
 	XP: number,
 	Level: number,
 	PendingLevels: number,
@@ -119,11 +122,13 @@ local function push(plr: Player)
 			Offer = r.Offer,
 			OfferRarities = r.OfferRarities,
 			OfferElements = r.OfferElements,
+			OfferEvolutions = r.OfferEvolutions,
 			RewardActions = {
 				Rerolls = LevelUp.rerollsLeft(r.RewardActions, r.Level),
 				Banishes = LevelUp.banishesLeft(r.RewardActions),
 			},
 			RunElement = r.RunElement,
+			EvolvedRecipe = r.EvolvedRecipe,
 			XP = r.XP,
 			Level = r.Level,
 			XPNeeded = LevelUp.requiredXp(r.Level + 1),
@@ -163,6 +168,7 @@ function PlayerData.get(plr: Player): Run
 			Offer = {},
 			OfferRarities = {},
 			OfferElements = {},
+			OfferEvolutions = {},
 			RewardActions = LevelUp.newActionState(),
 			XP = 0,
 			Level = 0,
@@ -397,6 +403,10 @@ end
 
 function PlayerData.equippedEvo(plr: Player): Evolutions.WeaponEvo?
 	local p = Profile.get(plr)
+	local runRecipe = Evolutions.recipe(PlayerData.get(plr).EvolvedRecipe or "")
+	if runRecipe then
+		return { Element = runRecipe.Element, Tier = 3 }
+	end
 	local owned = p.Evolutions[p.Equipped]
 	if owned then
 		return owned
@@ -676,7 +686,8 @@ local function rollLevelOffer(plr: Player, excluded: { [string]: boolean }?): { 
 		{ rng:NextNumber(), rng:NextNumber(), rng:NextNumber() },
 		{ rng:NextNumber(), rng:NextNumber(), rng:NextNumber() },
 		r.RewardActions.Banished,
-		excluded
+		excluded,
+		r.EvolvedRecipe
 	)
 end
 
@@ -684,11 +695,15 @@ local function setLevelOffer(r: Run, offer: { LevelUp.OfferCard })
 	r.Offer = {}
 	r.OfferRarities = {}
 	r.OfferElements = {}
+	r.OfferEvolutions = {}
 	for _, card in offer do
 		table.insert(r.Offer, card.Id)
 		r.OfferRarities[card.Id] = card.Rarity
 		if card.Element then
 			r.OfferElements[card.Id] = card.Element
+		end
+		if card.Evolution then
+			r.OfferEvolutions[card.Id] = card.Evolution
 		end
 	end
 end
@@ -712,11 +727,49 @@ function PlayerData.pickReward(plr: Player, id: string): (boolean, string)
 	if not table.find(r.Offer, id) then
 		return false, "Not in your offer."
 	end
-	local _, healNow = WaveRewards.apply(r.Boosts, id)
+	local evolutionId = r.OfferEvolutions[id]
+	local healNow = false
+	if evolutionId then
+		local recipe = Evolutions.recipe(evolutionId)
+		if
+			id ~= Evolutions.CardId
+			or not recipe
+			or r.EvolvedRecipe
+			or Evolutions.readyRecipe(r.Boosts.Stacks, PlayerData.equippedWeapon(plr).Kind, nil)
+				~= recipe
+		then
+			return false, "Evolution is no longer ready."
+		end
+		r.EvolvedRecipe = recipe.Id
+		local p = Profile.get(plr)
+		p.Flags[Evolutions.RecipeFlagPrefix .. recipe.Id] = true
+		Profile.markDirty(plr)
+		attachWeapon(plr)
+		if PlayerData.OnEquipChanged then
+			PlayerData.OnEquipChanged(plr)
+		end
+		local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+		if root and root:IsA("BasePart") then
+			FX:FireAllClients("evolve", {
+				Position = root.Position,
+				Color = Evolutions.Elements[recipe.Element].Color,
+				Tier = 3,
+			})
+		end
+		sendFunnel(plr, "evolve_in_run", {
+			recipe = recipe.Id,
+			wave = r.Wave,
+			seconds = runSeconds(r),
+		})
+	else
+		local _, pickedHeal = WaveRewards.apply(r.Boosts, id)
+		healNow = pickedHeal
+	end
 	local pickedElement = r.OfferElements[id]
 	r.Offer = {}
 	r.OfferRarities = {}
 	r.OfferElements = {}
+	r.OfferEvolutions = {}
 	if pickedElement and not Profile.get(plr).Evolutions[Profile.get(plr).Equipped] then
 		r.RunElement = pickedElement
 		attachWeapon(plr)
@@ -733,7 +786,11 @@ function PlayerData.pickReward(plr: Player, id: string): (boolean, string)
 			hum.Health = hum.MaxHealth
 		end
 	end
-	if WaveRewards.Defs[id].Kind == "Weapon" and PlayerData.OnEquipChanged then
+	if
+		WaveRewards.Defs[id]
+		and WaveRewards.Defs[id].Kind == "Weapon"
+		and PlayerData.OnEquipChanged
+	then
 		PlayerData.OnEquipChanged(plr) -- rebuilds the orbit for Extra Orb
 	end
 	PlayerData.offerLevelReward(plr)
@@ -780,6 +837,9 @@ function PlayerData.rewardAction(plr: Player, action: string, id: string?): (boo
 		if not id or not table.find(r.Offer, id) then
 			return false, "Select a card to banish."
 		end
+		if id == Evolutions.CardId then
+			return false, "EVOLVE cannot be banished."
+		end
 		if not LevelUp.banish(r.RewardActions, id) then
 			return false, "No banishes left."
 		end
@@ -813,8 +873,10 @@ function PlayerData.resetRun(plr: Player)
 	r.Offer = {}
 	r.OfferRarities = {}
 	r.OfferElements = {}
+	r.OfferEvolutions = {}
 	r.RewardActions = LevelUp.newActionState()
 	r.RunElement = nil
+	r.EvolvedRecipe = nil
 	r.XP = 0
 	r.Level = 0
 	r.PendingLevels = 0

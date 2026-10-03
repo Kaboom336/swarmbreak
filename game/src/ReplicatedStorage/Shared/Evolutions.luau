@@ -117,6 +117,144 @@ Evolutions.BossShards = { Brute = "Dark", Queen = "Nature", Warden = "Lightning"
 Evolutions.TechShardEveryWaves = 5
 
 export type WeaponEvo = { Element: Element, Tier: number }
+export type Recipe = {
+	Id: string,
+	Weapon: string,
+	Passive: string,
+	Kind: string,
+	MaxLevel: number,
+	Evolved: string,
+	Icon: string,
+	Element: Element,
+}
+
+Evolutions.CardId = "EVOLVE"
+Evolutions.RecipeFlagPrefix = "Recipe_"
+
+-- Run recipes pair V2's weapon cards with passive cards. Their Element selects the existing
+-- shop evolution's top-tier multipliers and effects; no second stats catalog can drift.
+Evolutions.Recipes = {
+	{
+		Id = "Railstorm",
+		Weapon = "Long Barrel",
+		Passive = "Magnet",
+		Kind = "Beam",
+		MaxLevel = 3,
+		Evolved = "Railstorm",
+		Icon = "RLS",
+		Element = "Tech",
+	},
+	{
+		Id = "Thunderburst",
+		Weapon = "Double Tap",
+		Passive = "Fast Dash",
+		Kind = "Hitscan",
+		MaxLevel = 2,
+		Evolved = "Thunderburst",
+		Icon = "THN",
+		Element = "Lightning",
+	},
+	{
+		Id = "Soul Reaper",
+		Weapon = "Wide Swing",
+		Passive = "Second Wind",
+		Kind = "Melee",
+		MaxLevel = 2,
+		Evolved = "Soul Reaper",
+		Icon = "RPR",
+		Element = "Dark",
+	},
+	{
+		Id = "Verdant Halo",
+		Weapon = "Extra Orb",
+		Passive = "Lucky",
+		Kind = "Orbital",
+		MaxLevel = 2,
+		Evolved = "Verdant Halo",
+		Icon = "HAL",
+		Element = "Nature",
+	},
+} :: { Recipe }
+
+function Evolutions.recipe(id: string): Recipe?
+	for _, recipe in Evolutions.Recipes do
+		if recipe.Id == id then
+			return recipe
+		end
+	end
+	return nil
+end
+
+function Evolutions.recipeForWeaponCard(cardId: string, equippedKind: string): Recipe?
+	for _, recipe in Evolutions.Recipes do
+		if recipe.Weapon == cardId and recipe.Kind == equippedKind then
+			return recipe
+		end
+	end
+	return nil
+end
+
+function Evolutions.readyRecipe(
+	stacks: { [string]: number },
+	equippedKind: string,
+	evolvedRecipe: string?
+): Recipe?
+	if evolvedRecipe then
+		return nil
+	end
+	for _, recipe in Evolutions.Recipes do
+		if
+			recipe.Kind == equippedKind
+			and (stacks[recipe.Weapon] or 0) >= recipe.MaxLevel
+			and (stacks[recipe.Passive] or 0) > 0
+		then
+			return recipe
+		end
+	end
+	return nil
+end
+
+function Evolutions.completesRecipe(
+	cardId: string,
+	stacks: { [string]: number },
+	equippedKind: string
+): boolean
+	for _, recipe in Evolutions.Recipes do
+		if recipe.Kind == equippedKind then
+			if
+				cardId == recipe.Weapon
+				and (stacks[recipe.Weapon] or 0) + 1 >= recipe.MaxLevel
+				and (stacks[recipe.Passive] or 0) > 0
+			then
+				return true
+			elseif
+				cardId == recipe.Passive
+				and (stacks[recipe.Weapon] or 0) >= recipe.MaxLevel
+				and (stacks[recipe.Passive] or 0) == 0
+			then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+-- Pure preview used by specs and UI: picking a recipe swaps numeric combat stats to the
+-- matching shop evolution's tier-3 values without mutating the weapon catalog.
+function Evolutions.pickInRun(weapon: any, recipeId: string): (any, WeaponEvo?)
+	local recipe = Evolutions.recipe(recipeId)
+	if not recipe then
+		return table.clone(weapon), nil
+	end
+	local evolution: WeaponEvo = { Element = recipe.Element, Tier = 3 }
+	local damageMult, rateMult = Evolutions.multipliers(evolution)
+	local evolved = table.clone(weapon)
+	evolved.Name = recipe.Evolved
+	evolved.Rarity = "Legendary"
+	evolved.Damage = weapon.Damage * damageMult
+	evolved.FireRate = weapon.FireRate * rateMult
+	return evolved, evolution
+end
 
 function Evolutions.tierDef(element: string, tier: number): TierDef?
 	local e = Evolutions.Elements[element]

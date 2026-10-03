@@ -27,6 +27,7 @@ Telemetry.Events = {
 	first_kill = { "seconds" },
 	first_levelup = { "seconds" },
 	first_damage_taken = { "seconds" },
+	evolve_in_run = { "recipe", "wave", "seconds" },
 	death = { "wave", "seconds" },
 } :: { [string]: { string } }
 

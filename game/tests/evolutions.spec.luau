@@ -1,4 +1,16 @@
 local Evolutions = load("Evolutions")
+local LevelUp = load("LevelUp")
+local WaveRewards = load("WaveRewards")
+local Weapons = load("Weapons")
+
+local function hasCard(offer, id: string): boolean
+	for _, card in offer do
+		if card.Id == id then
+			return true
+		end
+	end
+	return false
+end
 
 test("four elements, three tiers each, rising costs", function()
 	for _, name in Evolutions.Order do
@@ -68,4 +80,61 @@ test("first runs pay a flat Gems bonus; wave 0 never does", function()
 	eq(Evolutions.gemsForRun(5, false, 3), 36, "fourth run: no bonus")
 	eq(Evolutions.gemsForRun(5, false), 36, "no run count, no bonus")
 	eq(Evolutions.gemsForRun(0, false, 0), 0, "wave 0 pays nothing")
+end)
+
+test("EVOLVE is offered only for a max weapon card with its passive", function()
+	local recipe = Evolutions.Recipes[1]
+	local maxed = { [recipe.Weapon] = recipe.MaxLevel }
+	local ready = { [recipe.Weapon] = recipe.MaxLevel, [recipe.Passive] = 1 }
+	local rolls = { 0.1, 0.5, 0.9 }
+	local rarities = { 0.1, 0.5, 0.9 }
+
+	local weaponOnly = LevelUp.offer(6, maxed, recipe.Kind, rolls, rarities)
+	assert(not hasCard(weaponOnly, Evolutions.CardId), "passive is required")
+	local passiveOnly = LevelUp.offer(6, { [recipe.Passive] = 1 }, recipe.Kind, rolls, rarities)
+	assert(not hasCard(passiveOnly, Evolutions.CardId), "max weapon card is required")
+	local offered = LevelUp.offer(6, ready, recipe.Kind, rolls, rarities)
+	eq(offered[1].Id, Evolutions.CardId, "ready recipe is the next offer")
+	eq(offered[1].Evolution, recipe.Id, "offer identifies the recipe")
+end)
+
+test("every run recipe uses real weapon and passive cards", function()
+	for _, recipe in Evolutions.Recipes do
+		local weapon = WaveRewards.Defs[recipe.Weapon]
+		local passive = WaveRewards.Defs[recipe.Passive]
+		assert(weapon and weapon.Kind == "Weapon", recipe.Id .. " weapon card")
+		assert(passive and passive.Kind == "Utility", recipe.Id .. " passive card")
+		eq(recipe.MaxLevel, weapon.MaxStacks, recipe.Id .. " max card level")
+		assert(Evolutions.Elements[recipe.Element], recipe.Id .. " shop stats")
+	end
+end)
+
+test("EVOLVE is offered only once", function()
+	local recipe = Evolutions.Recipes[1]
+	local ready = { [recipe.Weapon] = recipe.MaxLevel, [recipe.Passive] = 1 }
+	local offered = LevelUp.offer(6, ready, recipe.Kind, { 0.1, 0.5, 0.9 }, { 0.1, 0.5, 0.9 })
+	eq(offered[1].Id, Evolutions.CardId, "first offer evolves")
+	local afterPick = LevelUp.offer(
+		7,
+		ready,
+		recipe.Kind,
+		{ 0.1, 0.5, 0.9 },
+		{ 0.1, 0.5, 0.9 },
+		nil,
+		nil,
+		recipe.Id
+	)
+	assert(not hasCard(afterPick, Evolutions.CardId), "picked evolution never returns")
+end)
+
+test("picking EVOLVE swaps to the shop evolution stats", function()
+	local recipe = Evolutions.Recipes[1]
+	local original = Weapons.Defs.Starter
+	local originalDamage = original.Damage
+	local evolved, evolution = Evolutions.pickInRun(original, recipe.Id)
+	local damageMult, rateMult = Evolutions.multipliers(evolution)
+	eq(evolved.Id, original.Id, "equipped weapon identity stays")
+	assert(math.abs(evolved.Damage - original.Damage * damageMult) < 1e-9, "damage swaps")
+	assert(math.abs(evolved.FireRate - original.FireRate * rateMult) < 1e-9, "rate swaps")
+	eq(original.Damage, originalDamage, "catalog stays pure")
 end)

@@ -17,6 +17,7 @@ export type OfferCard = {
 	Color: { number }?,
 	OnHitEffect: string?,
 	EvolutionPreview: EvolutionPreview?,
+	Evolution: string?,
 }
 
 export type ActionState = {
@@ -108,7 +109,8 @@ function LevelUp.offer(
 	cardRolls: { number },
 	rarityRolls: { number },
 	banished: { [string]: boolean }?,
-	excluded: { [string]: boolean }?
+	excluded: { [string]: boolean }?,
+	evolvedRecipe: string?
 ): { OfferCard }
 	local ids = WaveRewards.offer(level, stacks, equippedKind, cardRolls, banished, excluded)
 	local cards = {}
@@ -131,6 +133,17 @@ function LevelUp.offer(
 				Tier = 1,
 				Label = element.Tiers[1].Label,
 			}
+		end
+	end
+	local recipe = Evolutions.readyRecipe(stacks, equippedKind, evolvedRecipe)
+	if recipe then
+		table.insert(cards, 1, {
+			Id = Evolutions.CardId,
+			Rarity = "Legendary",
+			Evolution = recipe.Id,
+		})
+		if #cards > WaveRewards.OfferSize then
+			table.remove(cards)
 		end
 	end
 	return cards

@@ -1,7 +1,9 @@
 local Funnel = load("Funnel")
 
 local function fieldsFor(name: string)
-	if name == "death" then
+	if name == "evolve_in_run" then
+		return { recipe = "Railstorm", wave = 3, seconds = 42 }
+	elseif name == "death" then
 		return { wave = 3, seconds = 42 }
 	end
 	return { seconds = 42 }
@@ -14,6 +16,7 @@ test("every funnel event builds with its required fields", function()
 		"first_kill",
 		"first_levelup",
 		"first_damage_taken",
+		"evolve_in_run",
 		"death",
 	}
 	for _, name in expected do
