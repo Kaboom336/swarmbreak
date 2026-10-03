@@ -227,15 +227,16 @@ GemCrate.OnServerInvoke = function(plr)
 	return true, ""
 end
 
--- Wave rewards: take one of the three cards offered after a wave clear. Returns ok, reason.
-PickReward.OnServerInvoke = function(plr, id)
-	if not allowed(plr, RemoteGuard.Actions.Reward, id) then
+-- All reward actions share one guarded entry point so picks and offer mutations have the
+-- same payload validation and rate limit.
+PickReward.OnServerInvoke = function(plr, action, id)
+	if not allowed(plr, RemoteGuard.Actions.Reward, { Action = action, Id = id }) then
 		return false, "Please wait."
 	end
-	if typeof(id) ~= "string" then
+	if typeof(action) ~= "string" or (id ~= nil and typeof(id) ~= "string") then
 		return false, "Bad request."
 	end
-	return PlayerData.pickReward(plr, id)
+	return PlayerData.rewardAction(plr, action, id)
 end
 
 local function grantProduct(plr: Player, kind: ReceiptLedger.ProductKind, prod: any): boolean

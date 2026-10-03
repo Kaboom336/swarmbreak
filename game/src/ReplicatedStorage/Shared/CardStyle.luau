@@ -18,6 +18,31 @@ CardStyle.NameTextSize = 22
 CardStyle.EffectTextSize = 16
 CardStyle.MinimumContrast = 4.5
 CardStyle.StrokeThickness = 5
+CardStyle.SelectedStrokeThickness = 9
+CardStyle.SelectedStroke = { 255, 255, 255 }
+
+CardStyle.CategoryColors = {
+	WEAPON = { 245, 78, 78 },
+	PASSIVE = { 68, 145, 255 },
+	ELEMENT = { 90, 220, 180 },
+	UPGRADE = { 74, 210, 110 },
+}
+
+CardStyle.KeywordColors = {
+	fire = "#FF765F",
+	chain = "#9DEBFF",
+	pierce = "#FFD166",
+	slow = "#74D6FF",
+	heal = "#6BE585",
+	damage = "#FF9B7A",
+	health = "#6BE585",
+	speed = "#8DDBFF",
+	range = "#FFD166",
+	orb = "#D8A8FF",
+	pellet = "#FFB36B",
+	coins = "#FFE16B",
+	gems = "#78E7FF",
+}
 
 CardStyle.Rarities = {
 	Common = {
@@ -98,6 +123,25 @@ end
 function CardStyle.iconFor(upgradeId: string, elementName: string?): string?
 	local family = if elementName then "Element" else CardStyle.UpgradeFamilies[upgradeId]
 	return if family then CardStyle.Icons[family] else nil
+end
+
+function CardStyle.categoryFor(kind: string, elementName: string?): string
+	if elementName then
+		return "ELEMENT"
+	elseif kind == "Weapon" then
+		return "WEAPON"
+	elseif kind == "Utility" then
+		return "PASSIVE"
+	end
+	return "UPGRADE"
+end
+
+function CardStyle.richEffect(effect: string): string
+	local escaped = effect:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
+	return escaped:gsub("(%a+)", function(word: string): string
+		local color = CardStyle.KeywordColors[string.lower(word)]
+		return if color then string.format('<font color="%s">%s</font>', color, word) else word
+	end)
 end
 
 function CardStyle.revealSchedule(count: number): { { Index: number, Delay: number } }

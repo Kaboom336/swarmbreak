@@ -50,6 +50,7 @@ export type Run = {
 	Offer: { string }, -- card ids on offer right now ({} when there is nothing to pick)
 	OfferRarities: { [string]: string },
 	OfferElements: { [string]: string }, -- element cards in the current offer (H6)
+	RewardActions: LevelUp.ActionState,
 	RunElement: string?, -- element picked from a card this run; acts as a tier-1 evolution
 	XP: number,
 	Level: number,
@@ -118,6 +119,10 @@ local function push(plr: Player)
 			Offer = r.Offer,
 			OfferRarities = r.OfferRarities,
 			OfferElements = r.OfferElements,
+			RewardActions = {
+				Rerolls = LevelUp.rerollsLeft(r.RewardActions, r.Level),
+				Banishes = LevelUp.banishesLeft(r.RewardActions),
+			},
 			RunElement = r.RunElement,
 			XP = r.XP,
 			Level = r.Level,
@@ -158,6 +163,7 @@ function PlayerData.get(plr: Player): Run
 			Offer = {},
 			OfferRarities = {},
 			OfferElements = {},
+			RewardActions = LevelUp.newActionState(),
 			XP = 0,
 			Level = 0,
 			PendingLevels = 0,
@@ -661,18 +667,20 @@ function PlayerData.chooseKit(plr: Player, id: string): (boolean, string)
 end
 
 -- ---------- level-up rewards (pick 1 of 3 after earning enough kill XP) ----------
-function PlayerData.offerLevelReward(plr: Player)
+local function rollLevelOffer(plr: Player, excluded: { [string]: boolean }?): { LevelUp.OfferCard }
 	local r = PlayerData.get(plr)
-	if #r.Offer > 0 or r.PendingLevels <= 0 then
-		return
-	end
-	local offer = LevelUp.offer(
+	return LevelUp.offer(
 		r.Level,
 		r.Boosts.Stacks,
 		PlayerData.equippedWeapon(plr).Kind,
 		{ rng:NextNumber(), rng:NextNumber(), rng:NextNumber() },
-		{ rng:NextNumber(), rng:NextNumber(), rng:NextNumber() }
+		{ rng:NextNumber(), rng:NextNumber(), rng:NextNumber() },
+		r.RewardActions.Banished,
+		excluded
 	)
+end
+
+local function setLevelOffer(r: Run, offer: { LevelUp.OfferCard })
 	r.Offer = {}
 	r.OfferRarities = {}
 	r.OfferElements = {}
@@ -683,6 +691,14 @@ function PlayerData.offerLevelReward(plr: Player)
 			r.OfferElements[card.Id] = card.Element
 		end
 	end
+end
+
+function PlayerData.offerLevelReward(plr: Player)
+	local r = PlayerData.get(plr)
+	if #r.Offer > 0 or r.PendingLevels <= 0 then
+		return
+	end
+	setLevelOffer(r, rollLevelOffer(plr))
 	r.PendingLevels -= 1
 	push(plr)
 end
@@ -730,6 +746,50 @@ function PlayerData.pickReward(plr: Player, id: string): (boolean, string)
 	return true, ""
 end
 
+function PlayerData.rewardAction(plr: Player, action: string, id: string?): (boolean, string)
+	local r = PlayerData.get(plr)
+	if action == WaveRewards.Actions.Pick then
+		return PlayerData.pickReward(plr, id or "")
+	end
+	if #r.Offer == 0 then
+		return false, "No reward offered."
+	end
+	if action == WaveRewards.Actions.Reroll then
+		if LevelUp.rerollsLeft(r.RewardActions, r.Level) <= 0 then
+			return false, "No rerolls left."
+		end
+		local previous = {}
+		for _, offeredId in r.Offer do
+			previous[offeredId] = true
+		end
+		local replacement = rollLevelOffer(plr, previous)
+		if #replacement == 0 then
+			return false, "No different cards available."
+		end
+		LevelUp.useReroll(r.RewardActions, r.Level)
+		setLevelOffer(r, replacement)
+		push(plr)
+		return true, ""
+	elseif action == WaveRewards.Actions.Skip then
+		local refund = LevelUp.skipXp(r.Level)
+		setLevelOffer(r, {})
+		PlayerData.addXp(plr, refund)
+		PlayerData.offerLevelReward(plr)
+		return true, ""
+	elseif action == WaveRewards.Actions.Banish then
+		if not id or not table.find(r.Offer, id) then
+			return false, "Select a card to banish."
+		end
+		if not LevelUp.banish(r.RewardActions, id) then
+			return false, "No banishes left."
+		end
+		setLevelOffer(r, rollLevelOffer(plr))
+		push(plr)
+		return true, ""
+	end
+	return false, "Bad request."
+end
+
 -- Intermission over: resolve every queued level so nobody loses earned picks.
 function PlayerData.autoPick(plr: Player)
 	local r = PlayerData.get(plr)
@@ -753,6 +813,7 @@ function PlayerData.resetRun(plr: Player)
 	r.Offer = {}
 	r.OfferRarities = {}
 	r.OfferElements = {}
+	r.RewardActions = LevelUp.newActionState()
 	r.RunElement = nil
 	r.XP = 0
 	r.Level = 0

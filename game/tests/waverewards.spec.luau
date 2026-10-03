@@ -259,3 +259,25 @@ test("weapon cards only count for the kind they were made for", function()
 	eq(WaveRewards.weaponWith(tap, Weapons.Defs.Starter).Pellets, 2, "pistol +1 pellet")
 	eq(WaveRewards.weaponWith(tap, Weapons.Defs.Guardian).Pellets, 2, "orbs unchanged")
 end)
+
+test("banished cards are excluded from every later offer", function()
+	local banished = { Sharp = true, Lucky = true }
+	for _, rolls in grid(300) do
+		local offer = WaveRewards.offer(1, {}, "Hitscan", rolls, banished)
+		assert(not table.find(offer, "Sharp"), "Sharp stays banished")
+		assert(not table.find(offer, "Lucky"), "Lucky stays banished")
+	end
+end)
+
+test("reroll excludes all three cards it replaces", function()
+	local first = WaveRewards.offer(1, {}, "Hitscan", { 0.1, 0.5, 0.9 })
+	local excluded = {}
+	for _, id in first do
+		excluded[id] = true
+	end
+	local second = WaveRewards.offer(1, {}, "Hitscan", { 0.1, 0.5, 0.9 }, nil, excluded)
+	eq(#second, WaveRewards.OfferSize, "replacement has three cards")
+	for _, id in second do
+		assert(not excluded[id], "reroll does not repeat " .. id)
+	end
+end)
