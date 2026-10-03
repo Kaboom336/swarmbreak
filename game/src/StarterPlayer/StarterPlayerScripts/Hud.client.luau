@@ -1976,34 +1976,57 @@ local function rebuildHotbar()
 	table.sort(ids, function(a, b)
 		return Weapons.power(Weapons.Defs[a]) < Weapons.power(Weapons.Defs[b])
 	end)
-	local def = Weapons.Defs[stats.Equipped]
-	if def then
-		local weaponLevel = 1
+	local function weaponLevel(kind: string): number
+		local level = 1
 		for id, count in (stats.Boosts and stats.Boosts.Stacks) or {} do
 			local card = WaveRewards.Defs[id]
 			if
 				card
 				and card.Kind == "Weapon"
-				and (not card.Kinds or table.find(card.Kinds, def.Kind))
+				and (not card.Kinds or table.find(card.Kinds, kind))
 			then
-				weaponLevel += count
+				level += count
 			end
 		end
-		local equipped = button(
+		return level
+	end
+	-- One slot per owned weapon, labelled with the number key that equips it (_hotIds order).
+	-- Tapping or clicking a slot equips it, so touch and gamepad players can switch too.
+	for n, id in ids do
+		local slotDef = Weapons.Defs[id]
+		local isEquipped = id == stats.Equipped
+		local slot = button(
 			hotbar,
-			string.format("1\n%s\nLv %d", string.upper(def.Name), weaponLevel),
+			string.format(
+				"%s\n%s\nLv %d",
+				if n <= 9 then tostring(n) else "",
+				string.upper(slotDef.Name),
+				weaponLevel(slotDef.Kind)
+			),
 			UDim2.new(0, 64, 1, 0)
 		)
-		equipped.TextSize = 10
-		equipped.TextWrapped = true
-		local rarity = Weapons.RarityColor[def.Rarity]
+		slot.Name = "Weapon_" .. id
+		slot.TextSize = 10
+		slot.TextWrapped = true
+		local rarity = Weapons.RarityColor[slotDef.Rarity]
 		local border = Instance.new("UIStroke")
 		border.Name = "Rarity"
-		border.Thickness = 3
+		border.Thickness = if isEquipped then 4 else 2
+		border.Transparency = if isEquipped then 0 else 0.4
 		border.Color = Color3.fromRGB(rarity[1], rarity[2], rarity[3])
-		border.Parent = equipped
-
-		local runRecipe = Evolutions.recipe(stats.EvolvedRecipe or "")
+		border.Parent = slot
+		if not isEquipped then
+			slot.MouseButton1Click:Connect(function()
+				EquipWeapon:FireServer(id)
+			end)
+		end
+	end
+	local def = Weapons.Defs[stats.Equipped]
+	if def then
+		-- The run's evolution belongs to the weapon it transformed (PlayerData.equippedEvo).
+		local runRecipe = if stats.EvolvedWeapon == stats.Equipped
+			then Evolutions.recipe(stats.EvolvedRecipe or "")
+			else nil
 		local ownedEvolution = (stats.Evolutions or {})[stats.Equipped]
 		local element = if runRecipe then runRecipe.Element else stats.RunElement
 		local stateName = if runRecipe

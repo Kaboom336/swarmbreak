@@ -387,12 +387,16 @@ local function trackBoss(model: Model)
 	end)
 	hum.Died:Connect(function()
 		GameState.set("BossName", "")
+		-- 0 tells the HUD to go back to the wave-progress bar.
+		GameState.set("BossMaxHealth", 0)
+		GameState.set("BossHealth", 0)
 	end)
 end
 
 -- Returns true if the wave was cleared, false on team wipe.
 local function runWave(wave: number): boolean
 	currentWave = wave
+	GameState.set("BossMaxHealth", 0) -- a boss removed without dying must not stick to later waves
 	publishMutation()
 	GameState.set("Wave", wave)
 	for _, plr in Players:GetPlayers() do

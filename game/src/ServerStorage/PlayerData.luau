@@ -130,6 +130,7 @@ local function push(plr: Player)
 			},
 			RunElement = r.RunElement,
 			EvolvedRecipe = r.EvolvedRecipe,
+			EvolvedWeapon = r.EvolvedWeapon,
 			XP = r.XP,
 			Level = r.Level,
 			XPNeeded = LevelUp.requiredXp(r.Level + 1),
