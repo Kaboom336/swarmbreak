@@ -95,3 +95,18 @@ test("daily reward day and streak are sanitized", function()
 	eq(ProfileSchema.default().Streak, 0, "default streak")
 	eq(ProfileSchema.default().LastClaimDay, 0, "default day")
 end)
+
+test("processed purchase ids persist through profile sanitizing", function()
+	local p = ProfileSchema.sanitize({
+		ProcessedPurchaseIds = { "purchase-1", false, "", "purchase-2", "purchase-1" },
+	})
+	eq(#p.ProcessedPurchaseIds, 2, "valid unique ids")
+	eq(p.ProcessedPurchaseIds[1], "purchase-2", "newest order")
+	eq(p.ProcessedPurchaseIds[2], "purchase-1", "newest duplicate")
+	eq(#ProfileSchema.default().ProcessedPurchaseIds, 0, "default ledger")
+	eq(
+		#ProfileSchema.sanitize({ ProcessedPurchaseIds = "corrupt" }).ProcessedPurchaseIds,
+		0,
+		"junk"
+	)
+end)

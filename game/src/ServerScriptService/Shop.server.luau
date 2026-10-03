@@ -13,6 +13,7 @@ local ProfileSchema = require(ReplicatedStorage.Shared.ProfileSchema)
 local Kits = require(ReplicatedStorage.Shared.Kits)
 local Codes = require(ReplicatedStorage.Shared.Codes)
 local Daily = require(ReplicatedStorage.Shared.Daily)
+local ReceiptLedger = require(ReplicatedStorage.Shared.ReceiptLedger)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local BuyUpgrade = Remotes.BuyUpgrade :: RemoteFunction
@@ -214,26 +215,17 @@ PickReward.OnServerInvoke = function(plr, id)
 	return PlayerData.pickReward(plr, id)
 end
 
-MarketplaceService.ProcessReceipt = function(receipt)
-	local plr = Players:GetPlayerByUserId(receipt.PlayerId)
-	if not plr then
-		return Enum.ProductPurchaseDecision.NotProcessedYet
-	end
-	local key = Monetization.productKeyForId(receipt.ProductId)
-	if not key then
-		return Enum.ProductPurchaseDecision.NotProcessedYet
-	end
-	local prod = Monetization.DeveloperProducts[key] :: any
-	if prod.Coins then
+local function grantProduct(plr: Player, kind: ReceiptLedger.ProductKind, prod: any): boolean
+	if kind == "Coins" then
 		PlayerData.addCoins(plr, prod.Coins)
-		return Enum.ProductPurchaseDecision.PurchaseGranted
-	elseif key == "WeaponCrate" then
+		return true
+	elseif kind == "BasicCrate" then
 		PlayerData.openCrate(plr, "Basic")
-		return Enum.ProductPurchaseDecision.PurchaseGranted
-	elseif key == "EpicCrate" then
+		return true
+	elseif kind == "EpicCrate" then
 		PlayerData.openCrate(plr, "Epic")
-		return Enum.ProductPurchaseDecision.PurchaseGranted
-	elseif key == "Revive" then
+		return true
+	elseif kind == "Revive" then
 		-- Robux is already taken, so always grant: revive if possible, else coins instead.
 		if canRevive(plr) then
 			plr:LoadCharacter()
@@ -241,7 +233,37 @@ MarketplaceService.ProcessReceipt = function(receipt)
 			PlayerData.addCoins(plr, 200)
 			Toast:FireClient(plr, "Revive not needed right now: +200 coins instead.", 3)
 		end
+		return true
+	end
+	return false
+end
+
+MarketplaceService.ProcessReceipt = function(receipt)
+	local plr = Players:GetPlayerByUserId(receipt.PlayerId)
+	local key = Monetization.productKeyForId(receipt.ProductId)
+	local prod = if key then Monetization.DeveloperProducts[key] else nil
+	local kind = ReceiptLedger.productKind(key, prod)
+	local productAvailable = kind ~= nil
+	local playerAvailable = plr ~= nil and PlayerData.isLoaded(plr)
+	local history = if playerAvailable
+		then PlayerData.profile(plr :: Player).ProcessedPurchaseIds
+		else nil
+	local decision =
+		ReceiptLedger.decide(history, receipt.PurchaseId, productAvailable, playerAvailable)
+	if decision == ReceiptLedger.Decisions.Retry then
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+	if decision == ReceiptLedger.Decisions.AlreadyGranted then
 		return Enum.ProductPurchaseDecision.PurchaseGranted
 	end
-	return Enum.ProductPurchaseDecision.NotProcessedYet
+
+	local player = plr :: Player
+	if not grantProduct(player, kind :: ReceiptLedger.ProductKind, prod) then
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+	local profile = PlayerData.profile(player)
+	profile.ProcessedPurchaseIds =
+		ReceiptLedger.record(profile.ProcessedPurchaseIds, receipt.PurchaseId)
+	PlayerData.markDirty(player)
+	return Enum.ProductPurchaseDecision.PurchaseGranted
 end

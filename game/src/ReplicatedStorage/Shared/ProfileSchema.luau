@@ -5,6 +5,7 @@ local Evolutions = require(script.Parent.Evolutions)
 local Quests = require(script.Parent.Quests)
 local Kits = require(script.Parent.Kits)
 local Settings = require(script.Parent.Settings)
+local ReceiptLedger = require(script.Parent.ReceiptLedger)
 
 export type Profile = {
 	Version: number,
@@ -27,6 +28,7 @@ export type Profile = {
 	MusicVolume: number,
 	SfxVolume: number,
 	MouseLockEnabled: boolean,
+	ProcessedPurchaseIds: { string },
 }
 
 local ProfileSchema = { Version = 1 }
@@ -74,6 +76,7 @@ function ProfileSchema.default(): Profile
 		MusicVolume = Settings.DefaultVolume,
 		SfxVolume = Settings.DefaultVolume,
 		MouseLockEnabled = Settings.DefaultMouseLock,
+		ProcessedPurchaseIds = {},
 	}
 end
 
@@ -205,6 +208,7 @@ function ProfileSchema.sanitize(raw: any): Profile
 	p.MouseLockEnabled = if type(raw.MouseLockEnabled) == "boolean"
 		then raw.MouseLockEnabled
 		else Settings.DefaultMouseLock
+	p.ProcessedPurchaseIds = ReceiptLedger.sanitize(raw.ProcessedPurchaseIds)
 	return p
 end
 
