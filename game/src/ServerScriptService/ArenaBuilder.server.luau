@@ -104,7 +104,7 @@ local function placeArenaAsset(name: string, size: Vector3, cf: CFrame): boolean
 	return true
 end
 
-local function neonStrip(size: Vector3, cf: CFrame, color: Color3, range: number?)
+local function neonStrip(size: Vector3, cf: CFrame, color: Color3, range: number?, name: string?)
 	local longest = math.max(size.X, size.Y, size.Z)
 	local segmentCount = math.ceil(longest / 12)
 	local segmentSize = size
@@ -121,8 +121,13 @@ local function neonStrip(size: Vector3, cf: CFrame, color: Color3, range: number
 
 	for index = 1, segmentCount do
 		local offset = (index - (segmentCount + 1) / 2) * longest / segmentCount
-		local p =
-			part("Neon", segmentSize, cf * CFrame.new(axis * offset), color, Enum.Material.Neon)
+		local p = part(
+			name or "Neon",
+			segmentSize,
+			cf * CFrame.new(axis * offset),
+			color,
+			Enum.Material.Neon
+		)
 		p.CanCollide = false
 		p.CanQuery = false
 		if range and range > 0 and index == math.ceil(segmentCount / 2) then
@@ -216,28 +221,21 @@ local function outerCover()
 	end
 end
 
--- Dark, non-glowing seams give the bright floor scale without overpowering combat.
-local function floorGrid()
-	local trim = c3(Theme.FloorTrim)
-	for i = -3, 3 do
-		local northSouth = part(
-			"GridLine",
-			Vector3.new(0.3, 0.08, 156),
-			CFrame.new(i * 22, 1.05, 0),
-			trim,
-			Enum.Material.SmoothPlastic
+-- Wide, bright lanes point outward without adding cover to the open fight space.
+local function laneStripes()
+	for _, stripe in Theme.LaneStripes do
+		local angle = math.rad(stripe.Angle)
+		local direction = Vector3.new(math.sin(angle), 0, -math.cos(angle))
+		local centre = direction * (stripe.Length / 2)
+		local cf = CFrame.new(centre + Vector3.new(0, 1 + stripe.Thickness / 2, 0))
+			* CFrame.Angles(0, angle, 0)
+		neonStrip(
+			Vector3.new(stripe.Width, stripe.Thickness, stripe.Length),
+			cf,
+			c3(stripe.Color),
+			nil,
+			"LaneStripe"
 		)
-		northSouth.CanCollide = false
-		northSouth.CanQuery = false
-		local eastWest = part(
-			"GridLine",
-			Vector3.new(156, 0.08, 0.3),
-			CFrame.new(0, 1.05, i * 22),
-			trim,
-			Enum.Material.SmoothPlastic
-		)
-		eastWest.CanCollide = false
-		eastWest.CanQuery = false
 	end
 	-- center emblem
 	local emblem = part(
@@ -445,7 +443,7 @@ end
 applyLightingPreset(LightingPresets[selectedMap.LightingPreset])
 configureMap()
 outerCover()
-floorGrid()
+laneStripes()
 gooPatches()
 crystalClusters()
 wallsAndRails()

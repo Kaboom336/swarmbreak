@@ -50,8 +50,10 @@ local function inspectNeon(value, path)
 	end
 end
 
-test("arena floor is bright enough to read", function()
-	assert(relativeLuminance(Theme.Floor) >= 0.33, "floor relative luminance is below 0.33")
+test("arena floor is saturated deep violet", function()
+	assert(Theme.Floor[3] > Theme.Floor[1], "floor is not violet")
+	assert(Theme.Floor[1] > Theme.Floor[2], "floor is not violet")
+	assert(relativeLuminance(Theme.Floor) <= 0.1, "floor is not deep enough")
 end)
 
 test("arena contains no oversized neon parts", function()
@@ -60,15 +62,11 @@ test("arena contains no oversized neon parts", function()
 	end
 end)
 
-test("Station uses the dusk preset", function()
+test("Station uses the bright afternoon preset", function()
 	local station = LightingPresets.Station
-	assert(
-		station.Lighting.ClockTime >= 14 and station.Lighting.ClockTime <= 17,
-		"ClockTime is not late afternoon or dusk"
-	)
-	eq(station.Lighting.ClockTime, 17, "ClockTime")
-	eq(station.Lighting.ExposureCompensation, -0.3, "ExposureCompensation")
-	eq(station.Lighting.Brightness, 2.5, "Brightness")
+	eq(station.Lighting.ClockTime, 14, "ClockTime")
+	eq(station.Lighting.ExposureCompensation, 0.1, "ExposureCompensation")
+	eq(station.Lighting.Brightness, 3, "Brightness")
 	eq(station.Bloom.Threshold, 0.9, "Bloom threshold")
 	eq(station.ColorCorrection.Contrast, 0.1, "color correction contrast")
 end)

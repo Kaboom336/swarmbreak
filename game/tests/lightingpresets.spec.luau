@@ -60,10 +60,10 @@ local function assertSame(expected, actual, path)
 	end
 end
 
-test("Station is bright dusk daylight", function()
+test("Station is bright afternoon daylight", function()
 	assert(LightingPresets.Station.Lighting.Brightness >= 2, "Station is too dim")
-	assert(LightingPresets.Station.Lighting.ClockTime >= 15, "Station is too early")
-	assert(LightingPresets.Station.Lighting.ClockTime <= 18, "Station is too late")
+	eq(LightingPresets.Station.Lighting.ClockTime, 14, "Station ClockTime")
+	assert(LightingPresets.Station.Atmosphere.Density <= 0.15, "Station atmosphere is too dense")
 end)
 
 test("every lighting preset has the complete schema", function()
@@ -94,12 +94,12 @@ test("atmosphere follows the sky hue and bloom only catches highlights", functio
 	end
 end)
 
-test("the floor is lighter than every enemy body", function()
+test("every enemy body is pale and lighter than the floor", function()
 	local floorLuminance = luminance(Theme.Floor)
 	for enemyName, colors in Theme.Enemy do
 		assert(
-			floorLuminance > luminance(colors.Body),
-			enemyName .. " body is not darker than the floor"
+			luminance(colors.Body) - floorLuminance >= 0.35,
+			enemyName .. " body is not pale enough against the floor"
 		)
 	end
 end)

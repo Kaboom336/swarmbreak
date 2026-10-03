@@ -181,26 +181,26 @@
       "$className": "Lighting",
       "$properties": {
         "Technology": "Future",
-        "ClockTime": 17,
-        "Brightness": 2.5,
-        "ExposureCompensation": -0.3,
+        "ClockTime": 14,
+        "Brightness": 3,
+        "ExposureCompensation": 0.1,
         "GlobalShadows": true,
         "EnvironmentDiffuseScale": 0.7,
         "EnvironmentSpecularScale": 0.8,
         "ShadowSoftness": 0.35,
         "Ambient": [
-          0.46,
-          0.45,
-          0.43
+          0.52,
+          0.48,
+          0.58
         ],
         "OutdoorAmbient": [
-          0.58,
-          0.56,
-          0.52
+          0.68,
+          0.62,
+          0.72
         ],
         "FogColor": [
-          0.68,
-          0.76,
+          0.88,
+          0.72,
           0.92
         ],
         "FogStart": 180,
@@ -220,8 +220,8 @@
           "Contrast": 0.1,
           "Saturation": 0.05,
           "TintColor": [
-            0.93,
-            0.96,
+            0.98,
+            0.9,
             1
           ]
         }
@@ -229,26 +229,26 @@
       "Atmosphere": {
         "$className": "Atmosphere",
         "$properties": {
-          "Density": 0.3,
+          "Density": 0.12,
           "Offset": 0.25,
           "Color": [
-            0.68,
-            0.78,
-            0.95
+            0.88,
+            0.72,
+            0.92
           ],
           "Decay": [
-            0.48,
-            0.33,
-            0.3
+            0.58,
+            0.46,
+            0.62
           ],
-          "Glare": 0.2,
-          "Haze": 1.5
+          "Glare": 0.12,
+          "Haze": 0.8
         }
       },
       "Sky": {
         "$className": "Sky",
         "$properties": {
-          "StarCount": 600,
+          "StarCount": 0,
           "CelestialBodiesShown": true,
           "SunAngularSize": 11
         }

@@ -33,9 +33,9 @@
           }
         },
         "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
         ],
         "Material": "DiamondPlate",
         "Name": "Bunker1",
@@ -80,9 +80,9 @@
           }
         },
         "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
         ],
         "Material": "DiamondPlate",
         "Name": "Bunker2",
@@ -127,9 +127,9 @@
           }
         },
         "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
         ],
         "Material": "DiamondPlate",
         "Name": "Bunker3",
@@ -174,9 +174,9 @@
           }
         },
         "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
         ],
         "Material": "DiamondPlate",
         "Name": "Bunker4",
@@ -221,9 +221,9 @@
           }
         },
         "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
+          0.9803921568627451,
+          0.9725490196078431,
+          1
         ],
         "Material": "Metal",
         "Name": "Ring",
@@ -268,9 +268,9 @@
           }
         },
         "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
+          0.9803921568627451,
+          0.9725490196078431,
+          1
         ],
         "Material": "Metal",
         "Name": "Ring",
@@ -315,9 +315,9 @@
           }
         },
         "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
+          0.9803921568627451,
+          0.9725490196078431,
+          1
         ],
         "Material": "Metal",
         "Name": "Ring",
@@ -362,9 +362,9 @@
           }
         },
         "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
+          0.9803921568627451,
+          0.9725490196078431,
+          1
         ],
         "Material": "Metal",
         "Name": "Ring",
@@ -409,9 +409,9 @@
           }
         },
         "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
+          0.9803921568627451,
+          0.9725490196078431,
+          1
         ],
         "Material": "Metal",
         "Name": "Ring",
@@ -456,9 +456,9 @@
           }
         },
         "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
+          0.9803921568627451,
+          0.9725490196078431,
+          1
         ],
         "Material": "Metal",
         "Name": "Ring",
@@ -503,9 +503,9 @@
           }
         },
         "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
+          0.9803921568627451,
+          0.9725490196078431,
+          1
         ],
         "Material": "Metal",
         "Name": "Ring",
@@ -550,9 +550,9 @@
           }
         },
         "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
+          0.9803921568627451,
+          0.9725490196078431,
+          1
         ],
         "Material": "Metal",
         "Name": "Ring",
@@ -566,1088 +566,7 @@
     },
     {
       "className": "Part",
-      "name": "Crate",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              -48,
-              3,
-              -72
-            ]
-          }
-        },
-        "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
-        ],
-        "Material": "DiamondPlate",
-        "Name": "Crate",
-        "Size": [
-          4,
-          4,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "LowWall",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              -24,
-              3,
-              -72
-            ]
-          }
-        },
-        "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
-        ],
-        "Material": "Metal",
-        "Name": "LowWall",
-        "Size": [
-          8,
-          4,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "Crate",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              24,
-              3.5,
-              -72
-            ]
-          }
-        },
-        "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
-        ],
-        "Material": "DiamondPlate",
-        "Name": "Crate",
-        "Size": [
-          4,
-          5,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "LowWall",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              48,
-              2.5,
-              -72
-            ]
-          }
-        },
-        "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
-        ],
-        "Material": "Metal",
-        "Name": "LowWall",
-        "Size": [
-          8,
-          3,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "LowWall",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              72,
-              3,
-              -48
-            ]
-          }
-        },
-        "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
-        ],
-        "Material": "Metal",
-        "Name": "LowWall",
-        "Size": [
-          4,
-          4,
-          8
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "Crate",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              72,
-              3.5,
-              -24
-            ]
-          }
-        },
-        "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
-        ],
-        "Material": "DiamondPlate",
-        "Name": "Crate",
-        "Size": [
-          4,
-          5,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "LowWall",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              72,
-              2.5,
-              24
-            ]
-          }
-        },
-        "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
-        ],
-        "Material": "Metal",
-        "Name": "LowWall",
-        "Size": [
-          4,
-          3,
-          8
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "Crate",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              72,
-              3,
-              48
-            ]
-          }
-        },
-        "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
-        ],
-        "Material": "DiamondPlate",
-        "Name": "Crate",
-        "Size": [
-          4,
-          4,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "Crate",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              48,
-              3.5,
-              72
-            ]
-          }
-        },
-        "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
-        ],
-        "Material": "DiamondPlate",
-        "Name": "Crate",
-        "Size": [
-          4,
-          5,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "LowWall",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              24,
-              2.5,
-              72
-            ]
-          }
-        },
-        "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
-        ],
-        "Material": "Metal",
-        "Name": "LowWall",
-        "Size": [
-          8,
-          3,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "Crate",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              -24,
-              3,
-              72
-            ]
-          }
-        },
-        "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
-        ],
-        "Material": "DiamondPlate",
-        "Name": "Crate",
-        "Size": [
-          4,
-          4,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "LowWall",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              -48,
-              3,
-              72
-            ]
-          }
-        },
-        "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
-        ],
-        "Material": "Metal",
-        "Name": "LowWall",
-        "Size": [
-          8,
-          4,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "LowWall",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              -72,
-              2.5,
-              48
-            ]
-          }
-        },
-        "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
-        ],
-        "Material": "Metal",
-        "Name": "LowWall",
-        "Size": [
-          4,
-          3,
-          8
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "Crate",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              -72,
-              3,
-              24
-            ]
-          }
-        },
-        "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
-        ],
-        "Material": "DiamondPlate",
-        "Name": "Crate",
-        "Size": [
-          4,
-          4,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "LowWall",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              -72,
-              3,
-              -24
-            ]
-          }
-        },
-        "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
-        ],
-        "Material": "Metal",
-        "Name": "LowWall",
-        "Size": [
-          4,
-          4,
-          8
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "Crate",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              -72,
-              3.5,
-              -48
-            ]
-          }
-        },
-        "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
-        ],
-        "Material": "DiamondPlate",
-        "Name": "Crate",
-        "Size": [
-          4,
-          5,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "Crate",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              -40,
-              3,
-              -40
-            ]
-          }
-        },
-        "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
-        ],
-        "Material": "DiamondPlate",
-        "Name": "Crate",
-        "Size": [
-          4,
-          4,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "LowWall",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              40,
-              2.5,
-              -40
-            ]
-          }
-        },
-        "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
-        ],
-        "Material": "Metal",
-        "Name": "LowWall",
-        "Size": [
-          8,
-          3,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "Crate",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              40,
-              3.5,
-              40
-            ]
-          }
-        },
-        "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
-        ],
-        "Material": "DiamondPlate",
-        "Name": "Crate",
-        "Size": [
-          4,
-          5,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "LowWall",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              -40,
-              3,
-              40
-            ]
-          }
-        },
-        "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
-        ],
-        "Material": "Metal",
-        "Name": "LowWall",
-        "Size": [
-          8,
-          4,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "LowWall",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              0,
-              2.5,
-              -48
-            ]
-          }
-        },
-        "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
-        ],
-        "Material": "Metal",
-        "Name": "LowWall",
-        "Size": [
-          8,
-          3,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "Crate",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              48,
-              3,
-              0
-            ]
-          }
-        },
-        "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
-        ],
-        "Material": "DiamondPlate",
-        "Name": "Crate",
-        "Size": [
-          4,
-          4,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "LowWall",
-      "properties": {
-        "Anchored": true,
-        "BottomSurface": "Smooth",
-        "CFrame": {
-          "CFrame": {
-            "orientation": [
-              [
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                1,
-                0
-              ],
-              [
-                0,
-                0,
-                1
-              ]
-            ],
-            "position": [
-              0,
-              3,
-              48
-            ]
-          }
-        },
-        "Color": [
-          0.35294117647058826,
-          0.37254901960784315,
-          0.4117647058823529
-        ],
-        "Material": "Metal",
-        "Name": "LowWall",
-        "Size": [
-          8,
-          4,
-          4
-        ],
-        "TopSurface": "Smooth"
-      }
-    },
-    {
-      "className": "Part",
-      "name": "Crate",
+      "name": "Pillar",
       "properties": {
         "Anchored": true,
         "BottomSurface": "Smooth",
@@ -1673,21 +592,1102 @@
             "position": [
               -48,
               3.5,
-              0
+              -64
             ]
           }
         },
         "Color": [
-          0.45098039215686275,
-          0.47058823529411764,
-          0.5098039215686274
+          0.9803921568627451,
+          0.9725490196078431,
+          1
         ],
         "Material": "DiamondPlate",
-        "Name": "Crate",
+        "Name": "Pillar",
         "Size": [
           4,
           5,
           4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -28,
+              2.5,
+              -64
+            ]
+          }
+        },
+        "Color": [
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          8,
+          3,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Pillar",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -8,
+              3.5,
+              -64
+            ]
+          }
+        },
+        "Color": [
+          0.9803921568627451,
+          0.9725490196078431,
+          1
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Pillar",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              12,
+              2.5,
+              -64
+            ]
+          }
+        },
+        "Color": [
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          8,
+          3,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Pillar",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              32,
+              3.5,
+              -64
+            ]
+          }
+        },
+        "Color": [
+          0.9803921568627451,
+          0.9725490196078431,
+          1
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Pillar",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              52,
+              2.5,
+              -64
+            ]
+          }
+        },
+        "Color": [
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          8,
+          3,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Pillar",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              64,
+              3.5,
+              -48
+            ]
+          }
+        },
+        "Color": [
+          0.9803921568627451,
+          0.9725490196078431,
+          1
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Pillar",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              64,
+              2.5,
+              -28
+            ]
+          }
+        },
+        "Color": [
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          4,
+          3,
+          8
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Pillar",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              64,
+              3.5,
+              -8
+            ]
+          }
+        },
+        "Color": [
+          0.9803921568627451,
+          0.9725490196078431,
+          1
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Pillar",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              64,
+              2.5,
+              12
+            ]
+          }
+        },
+        "Color": [
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          4,
+          3,
+          8
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Pillar",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              64,
+              3.5,
+              32
+            ]
+          }
+        },
+        "Color": [
+          0.9803921568627451,
+          0.9725490196078431,
+          1
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Pillar",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              64,
+              2.5,
+              52
+            ]
+          }
+        },
+        "Color": [
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          4,
+          3,
+          8
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Pillar",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              48,
+              3.5,
+              64
+            ]
+          }
+        },
+        "Color": [
+          0.9803921568627451,
+          0.9725490196078431,
+          1
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Pillar",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              28,
+              2.5,
+              64
+            ]
+          }
+        },
+        "Color": [
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          8,
+          3,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Pillar",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              8,
+              3.5,
+              64
+            ]
+          }
+        },
+        "Color": [
+          0.9803921568627451,
+          0.9725490196078431,
+          1
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Pillar",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -12,
+              2.5,
+              64
+            ]
+          }
+        },
+        "Color": [
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          8,
+          3,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Pillar",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -32,
+              3.5,
+              64
+            ]
+          }
+        },
+        "Color": [
+          0.9803921568627451,
+          0.9725490196078431,
+          1
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Pillar",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -52,
+              2.5,
+              64
+            ]
+          }
+        },
+        "Color": [
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          8,
+          3,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Pillar",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -64,
+              3.5,
+              48
+            ]
+          }
+        },
+        "Color": [
+          0.9803921568627451,
+          0.9725490196078431,
+          1
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Pillar",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -64,
+              2.5,
+              28
+            ]
+          }
+        },
+        "Color": [
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          4,
+          3,
+          8
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Pillar",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -64,
+              3.5,
+              8
+            ]
+          }
+        },
+        "Color": [
+          0.9803921568627451,
+          0.9725490196078431,
+          1
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Pillar",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -64,
+              2.5,
+              -12
+            ]
+          }
+        },
+        "Color": [
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          4,
+          3,
+          8
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "Pillar",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -64,
+              3.5,
+              -32
+            ]
+          }
+        },
+        "Color": [
+          0.9803921568627451,
+          0.9725490196078431,
+          1
+        ],
+        "Material": "DiamondPlate",
+        "Name": "Pillar",
+        "Size": [
+          4,
+          5,
+          4
+        ],
+        "TopSurface": "Smooth"
+      }
+    },
+    {
+      "className": "Part",
+      "name": "LowWall",
+      "properties": {
+        "Anchored": true,
+        "BottomSurface": "Smooth",
+        "CFrame": {
+          "CFrame": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "position": [
+              -64,
+              2.5,
+              -52
+            ]
+          }
+        },
+        "Color": [
+          0.803921568627451,
+          0.7254901960784313,
+          0.9019607843137255
+        ],
+        "Material": "Metal",
+        "Name": "LowWall",
+        "Size": [
+          4,
+          3,
+          8
         ],
         "TopSurface": "Smooth"
       }

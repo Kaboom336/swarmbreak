@@ -32,9 +32,27 @@ test("cover footprints leave the central 90 by 90 fight space open", function()
 	end
 end)
 
-test("station floor uses the concrete theme color", function()
-	sameColor(Theme.Floor, { 155, 158, 168 }, "Theme.Floor")
+test("station floor uses the deep violet theme color", function()
+	sameColor(Theme.Floor, { 70, 40, 140 }, "Theme.Floor")
 	sameColor(Maps.get("Station Deck").FloorColor, Theme.Floor, "Station Deck floor")
+end)
+
+test("four wide neon lanes radiate from the arena centre", function()
+	eq(#Theme.LaneStripes, 4, "lane stripe count")
+	for index, stripe in Theme.LaneStripes do
+		assert(stripe.Width >= 4, "lane stripe " .. index .. " is not wide")
+		assert(stripe.Length >= 60, "lane stripe " .. index .. " is too short")
+		assert(stripe.Thickness <= 0.15, "lane stripe " .. index .. " is not thin")
+		eq(stripe.Material, "Neon", "lane stripe " .. index .. " material")
+		eq(stripe.CanCollide, false, "lane stripe " .. index .. " collision")
+		local expectedColor = if index % 2 == 1 then Theme.NeonTeal else Theme.NeonAmber
+		assert(
+			stripe.Color[1] == expectedColor[1]
+				and stripe.Color[2] == expectedColor[2]
+				and stripe.Color[3] == expectedColor[3],
+			"lane stripe " .. index .. " has the wrong color"
+		)
+	end
 end)
 
 test("every arena corner has a crystal cluster", function()
@@ -54,9 +72,14 @@ test("every arena corner has a crystal cluster", function()
 	end
 end)
 
-test("Station preset is dusk", function()
+test("Station preset is bright afternoon", function()
 	local station = LightingPresets.Station
-	eq(station.Lighting.ClockTime, 17, "Station ClockTime")
-	eq(station.Lighting.ExposureCompensation, -0.3, "Station ExposureCompensation")
-	assert(station.Sky.StarCount > 0, "Station sky is still daytime")
+	eq(station.Lighting.ClockTime, 14, "Station ClockTime")
+	assert(station.Lighting.Brightness >= 2.5, "Station is not bright")
+	assert(station.Atmosphere.Density <= 0.15, "Station atmosphere is too dense")
+	assert(
+		station.Atmosphere.Color[1] > station.Atmosphere.Color[2]
+			and station.Atmosphere.Color[3] > station.Atmosphere.Color[2],
+		"Station atmosphere is not purple-pink"
+	)
 end)

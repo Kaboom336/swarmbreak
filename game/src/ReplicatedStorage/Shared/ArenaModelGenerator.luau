@@ -13,7 +13,7 @@ export type SizedPosition = Position & {
 }
 
 export type Prop = SizedPosition & {
-	Kind: "Crate" | "LowWall",
+	Kind: "Pillar" | "LowWall",
 }
 
 export type Beacon = Position & {
@@ -198,8 +198,8 @@ function ArenaModelGenerator.build(layout: Layout, theme: Theme): { OutputFile }
 				spec.Kind,
 				{ spec.Width, spec.Height, spec.Depth },
 				{ spec.x, 1 + spec.Height / 2, spec.z },
-				color(if spec.Kind == "Crate" then theme.Metal else theme.MetalDark),
-				if spec.Kind == "Crate" then "DiamondPlate" else "Metal",
+				color(if spec.Kind == "Pillar" then theme.Metal else theme.MetalDark),
+				if spec.Kind == "Pillar" then "DiamondPlate" else "Metal",
 				nil,
 				nil
 			)

@@ -1,29 +1,67 @@
 --!strict
--- Visual theme: "Overrun research station" (bright floor, dark metal, teal + amber neon, purple swarm).
+-- Visual theme: "Overrun research station" (deep violet floor, pastel structures, bright enemies).
 -- Colors are {r, g, b} 0..255 so tests can load this file.
 local Theme = {
 	Name = "Overrun Station",
-	Floor = { 155, 158, 168 },
-	FloorTrim = { 105, 108, 118 },
-	Wall = { 105, 110, 120 },
-	Metal = { 115, 120, 130 },
-	MetalDark = { 90, 95, 105 },
+	Floor = { 70, 40, 140 },
+	FloorTrim = { 115, 80, 180 },
+	Wall = { 220, 205, 240 },
+	Metal = { 250, 248, 255 },
+	MetalDark = { 205, 185, 230 },
 	NeonTeal = { 40, 220, 210 },
 	NeonPurple = { 180, 70, 255 },
 	NeonAmber = { 255, 170, 40 },
 	NeonRed = { 255, 60, 60 },
 	Swarm = { 150, 40, 170 }, -- enemy accent glow
 	Coin = { 255, 210, 60 },
+	LaneStripes = {
+		{
+			Angle = 0,
+			Length = 68,
+			Width = 5,
+			Thickness = 0.1,
+			Color = { 40, 220, 210 },
+			Material = "Neon",
+			CanCollide = false,
+		},
+		{
+			Angle = 90,
+			Length = 68,
+			Width = 5,
+			Thickness = 0.1,
+			Color = { 255, 170, 40 },
+			Material = "Neon",
+			CanCollide = false,
+		},
+		{
+			Angle = 180,
+			Length = 68,
+			Width = 5,
+			Thickness = 0.1,
+			Color = { 40, 220, 210 },
+			Material = "Neon",
+			CanCollide = false,
+		},
+		{
+			Angle = 270,
+			Length = 68,
+			Width = 5,
+			Thickness = 0.1,
+			Color = { 255, 170, 40 },
+			Material = "Neon",
+			CanCollide = false,
+		},
+	},
 	-- enemy body palette per type (overrides Enemies.Defs Color for the rig)
 	Enemy = {
-		Walker = { Body = { 125, 40, 60 }, Accent = { 255, 90, 120 } },
-		Runner = { Body = { 115, 60, 5 }, Accent = { 255, 230, 120 } },
-		Flyer = { Body = { 70, 55, 150 }, Accent = { 150, 120, 255 } },
-		Tank = { Body = { 35, 80, 40 }, Accent = { 120, 255, 140 } },
-		Spitter = { Body = { 45, 85, 15 }, Accent = { 190, 255, 90 } },
-		Brute = { Body = { 135, 35, 30 }, Accent = { 255, 40, 40 } },
-		Queen = { Body = { 120, 35, 115 }, Accent = { 255, 90, 255 } },
-		Warden = { Body = { 40, 75, 145 }, Accent = { 90, 200, 255 } },
+		Walker = { Body = { 245, 245, 250 }, Accent = { 255, 90, 120 } },
+		Runner = { Body = { 225, 240, 255 }, Accent = { 255, 230, 120 } },
+		Flyer = { Body = { 220, 205, 250 }, Accent = { 150, 120, 255 } },
+		Tank = { Body = { 210, 245, 220 }, Accent = { 120, 255, 140 } },
+		Spitter = { Body = { 220, 250, 190 }, Accent = { 190, 255, 90 } },
+		Brute = { Body = { 250, 220, 215 }, Accent = { 255, 40, 40 } },
+		Queen = { Body = { 240, 210, 245 }, Accent = { 255, 90, 255 } },
+		Warden = { Body = { 210, 230, 255 }, Accent = { 90, 200, 255 } },
 	},
 	Rarity = {
 		Common = { 190, 190, 200 },
@@ -32,4 +70,23 @@ local Theme = {
 		Legendary = { 255, 170, 30 },
 	},
 }
+
+local function linearChannel(value: number): number
+	local normalized = value / 255
+	if normalized <= 0.04045 then
+		return normalized / 12.92
+	end
+	return ((normalized + 0.055) / 1.055) ^ 2.4
+end
+
+function Theme.relativeLuminance(color: { number }): number
+	return 0.2126 * linearChannel(color[1])
+		+ 0.7152 * linearChannel(color[2])
+		+ 0.0722 * linearChannel(color[3])
+end
+
+function Theme.luminanceContrast(first: { number }, second: { number }): number
+	return math.abs(Theme.relativeLuminance(first) - Theme.relativeLuminance(second))
+end
+
 return Theme

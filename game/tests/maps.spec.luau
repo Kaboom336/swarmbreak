@@ -3,24 +3,6 @@ local LightingPresets = load("LightingPresets")
 local Maps = load("Maps")
 local Theme = load("Theme")
 
-local function channel(value: number): number
-	local normalized = value / 255
-	if normalized <= 0.04045 then
-		return normalized / 12.92
-	end
-	return ((normalized + 0.055) / 1.055) ^ 2.4
-end
-
-local function luminance(color: { number }): number
-	return 0.2126 * channel(color[1]) + 0.7152 * channel(color[2]) + 0.0722 * channel(color[3])
-end
-
-local function contrast(a: { number }, b: { number }): number
-	local lighter = math.max(luminance(a), luminance(b))
-	local darker = math.min(luminance(a), luminance(b))
-	return (lighter + 0.05) / (darker + 0.05)
-end
-
 test("maps have unique plain English names and valid references", function()
 	local names = {}
 	for _, map in Maps.All do
@@ -51,7 +33,10 @@ test("every map floor keeps enemy silhouettes readable", function()
 	for _, map in Maps.All do
 		for enemyName in Enemies.Defs do
 			local body = Theme.Enemy[enemyName].Body
-			assert(contrast(map.FloorColor, body) >= 3, map.Name .. " hides " .. enemyName)
+			assert(
+				Theme.luminanceContrast(map.FloorColor, body) >= 0.35,
+				map.Name .. " hides " .. enemyName
+			)
 		end
 	end
 end)
