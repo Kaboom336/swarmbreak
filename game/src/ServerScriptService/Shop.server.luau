@@ -14,6 +14,7 @@ local Kits = require(ReplicatedStorage.Shared.Kits)
 local Codes = require(ReplicatedStorage.Shared.Codes)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local ReceiptLedger = require(ReplicatedStorage.Shared.ReceiptLedger)
+local RemoteGuard = require(ReplicatedStorage.Shared.RemoteGuard)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local BuyUpgrade = Remotes.BuyUpgrade :: RemoteFunction
@@ -30,19 +31,20 @@ local RedeemCode = Remotes.RedeemCode :: RemoteFunction
 local FX = Remotes.FX :: RemoteEvent
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 
-local lastCodeAttempt: { [Player]: number } = {}
+local remoteGuard = RemoteGuard.new()
+
+local function allowed(plr: Player, action: string, payload: any): boolean
+	return remoteGuard:allow(plr, action, payload)
+end
 
 Players.PlayerRemoving:Connect(function(plr)
-	lastCodeAttempt[plr] = nil
+	remoteGuard:clear(plr)
 end)
 
 RedeemCode.OnServerInvoke = function(plr, code)
-	local now = os.clock()
-	local lastAttempt = lastCodeAttempt[plr]
-	if lastAttempt ~= nil and now - lastAttempt < 2 then
+	if not allowed(plr, RemoteGuard.Actions.Code, code) then
 		return false, "Please wait before trying another code."
 	end
-	lastCodeAttempt[plr] = now
 	if typeof(code) ~= "string" then
 		return false, "Bad request."
 	end
@@ -68,7 +70,7 @@ RedeemCode.OnServerInvoke = function(plr, code)
 end
 
 UpdateSettings.OnServerEvent:Connect(function(plr, changes)
-	if typeof(changes) == "table" then
+	if allowed(plr, RemoteGuard.Actions.Settings, changes) and typeof(changes) == "table" then
 		PlayerData.updateSettings(plr, changes)
 	end
 end)
@@ -82,6 +84,9 @@ local function canRevive(plr: Player): boolean
 end
 
 BuyUpgrade.OnServerInvoke = function(plr, name)
+	if not allowed(plr, RemoteGuard.Actions.Shop, name) then
+		return false
+	end
 	if typeof(name) ~= "string" then
 		return false
 	end
@@ -90,6 +95,9 @@ end
 
 -- Lobby perks: spend Gems on the next level of a forever perk (from the shop or the run summary).
 BuyPerk.OnServerInvoke = function(plr, key)
+	if not allowed(plr, RemoteGuard.Actions.Shop, key) then
+		return false, "Please wait."
+	end
 	if typeof(key) ~= "string" or not ProfileSchema.PerkDefs[key] then
 		return false, "Bad request."
 	end
@@ -104,6 +112,9 @@ end
 
 -- Kits: buy with Gems on the first choice, then equip immediately.
 ChooseKit.OnServerInvoke = function(plr, id)
+	if not allowed(plr, RemoteGuard.Actions.Shop, id) then
+		return false, "Please wait."
+	end
 	if typeof(id) ~= "string" or not Kits.Defs[id] then
 		return false, "Bad request."
 	end
@@ -118,13 +129,16 @@ ChooseKit.OnServerInvoke = function(plr, id)
 end
 
 EquipWeapon.OnServerEvent:Connect(function(plr, id)
-	if typeof(id) == "string" then
+	if allowed(plr, RemoteGuard.Actions.Equip, id) and typeof(id) == "string" then
 		PlayerData.equip(plr, id)
 	end
 end)
 
 -- Weapon evolution: spend Gems + shards to take the equipped weapon one tier down an element.
 Evolve.OnServerInvoke = function(plr, id, element)
+	if not allowed(plr, RemoteGuard.Actions.Evolution, { id, element }) then
+		return false, "Please wait."
+	end
 	if typeof(id) ~= "string" or typeof(element) ~= "string" then
 		return false, "Bad request."
 	end
@@ -159,6 +173,9 @@ end
 
 -- Client asks to be shown a Roblox purchase prompt. Server decides what to prompt.
 Prompt.OnServerEvent:Connect(function(plr, kind, key)
+	if not allowed(plr, RemoteGuard.Actions.Shop, { kind, key }) then
+		return
+	end
 	if typeof(kind) ~= "string" or typeof(key) ~= "string" then
 		return
 	end
@@ -196,6 +213,9 @@ end)
 -- Gem crate: the free path to a second weapon. Costs Gems (earned in runs), never Legendary.
 -- Returns ok, reason like the other Gem purchases.
 GemCrate.OnServerInvoke = function(plr)
+	if not allowed(plr, RemoteGuard.Actions.Shop, nil) then
+		return false, "Please wait."
+	end
 	if not PlayerData.isLoaded(plr) then
 		return false, "Loading..."
 	end
@@ -209,6 +229,9 @@ end
 
 -- Wave rewards: take one of the three cards offered after a wave clear. Returns ok, reason.
 PickReward.OnServerInvoke = function(plr, id)
+	if not allowed(plr, RemoteGuard.Actions.Reward, id) then
+		return false, "Please wait."
+	end
 	if typeof(id) ~= "string" then
 		return false, "Bad request."
 	end

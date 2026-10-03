@@ -6,9 +6,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local PlayerData = require(ServerStorage.PlayerData)
+local RemoteGuard = require(ReplicatedStorage.Shared.RemoteGuard)
 local Dash = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Dash") :: RemoteEvent
 
 local moveStarts: { [Player]: Vector3 } = {}
+local remoteGuard = RemoteGuard.new()
 
 local function watchCharacter(plr: Player, char: Model)
 	local root = char:WaitForChild("HumanoidRootPart") :: BasePart
@@ -49,6 +51,10 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 
 Dash.OnServerEvent:Connect(function(plr)
+	local allowed = remoteGuard:allow(plr, RemoteGuard.Actions.Tutorial, nil)
+	if not allowed then
+		return
+	end
 	local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
 	if hum and hum.Health > 0 then
 		PlayerData.completeTutorial(plr, "Dash")
@@ -57,4 +63,5 @@ end)
 
 Players.PlayerRemoving:Connect(function(plr)
 	moveStarts[plr] = nil
+	remoteGuard:clear(plr)
 end)
