@@ -263,7 +263,8 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 		if def.Boss then "boss" else "spawn",
 		{ Position = at.Position, Color = accent }
 	)
-	local model = EnemyAI.spawn(
+	local model: Model
+	model = EnemyAI.spawn(
 		typeName,
 		at,
 		healthScale,
@@ -271,7 +272,7 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 		mutationId,
 		function(killer: Player?, deathPosition: Vector3)
 			GameState.set("Alive", EnemyAI.aliveCount())
-			if killer then
+			if killer and Players:GetPlayerByUserId(killer.UserId) == killer then
 				local coins = Difficulty.scaleReward(
 					Economy.coinsForKill(
 						def.Coins,
@@ -282,6 +283,9 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 				)
 				PlayerData.addKill(killer, def.Boss == true)
 				spawnDrops(killer, deathPosition, typeName, coins)
+				PlayerData.awardAssists(model, killer, coins, def.Boss == true)
+			else
+				PlayerData.clearDamageCredit(model)
 			end
 			if def.Boss then
 				-- bosses drop a shard of their element to everyone alive at the kill
