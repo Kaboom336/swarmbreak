@@ -267,6 +267,9 @@ Weapons.RarityOdds = Weapons.Crates.Basic.Odds
 -- Gems paid back when a crate rolls a weapon the player already owns.
 Weapons.DuplicateGems =
 	{ Common = 30, Rare = 80, Epic = 200, Legendary = 500 } :: { [string]: number }
+-- After this many consecutive duplicates, candidate selection narrows to unowned weapons of
+-- the already-rolled rarity when any remain. Rarity odds are never changed.
+Weapons.DuplicateProtectionAt = 3
 -- Pity: every Robux crate counts, and the PityAt-th crate since the last Legendary is Legendary.
 Weapons.PityAt = 40
 
@@ -300,6 +303,10 @@ function Weapons.oddsText(crateKey: string?): string
 			ordinal(Weapons.PityAt)
 		)
 	end
+	out ..= string.format(
+		"  After %d duplicates, the next crate gives a new weapon of the rolled rarity when available",
+		Weapons.DuplicateProtectionAt
+	)
 	return out
 end
 
@@ -346,6 +353,41 @@ function Weapons.idsOfRarity(rarity: Rarity): { string }
 	end
 	table.sort(ids)
 	return ids
+end
+
+-- Pick deterministically from the rolled rarity. Once duplicate protection is active, only
+-- unowned ids are candidates if that rarity is not yet complete. The original full pool is
+-- retained for complete rarities so callers can award the normal unavoidable-duplicate refund.
+function Weapons.selectWeaponCandidate(
+	rarity: Rarity,
+	ownedWeapons: { string },
+	duplicateStreak: number,
+	roll01: number
+): string
+	local ids = Weapons.idsOfRarity(rarity)
+	local candidates = ids
+	if duplicateStreak >= Weapons.DuplicateProtectionAt then
+		local owned = {}
+		for _, id in ownedWeapons do
+			owned[id] = true
+		end
+		local unowned = {}
+		for _, id in ids do
+			if not owned[id] then
+				table.insert(unowned, id)
+			end
+		end
+		if #unowned > 0 then
+			candidates = unowned
+		end
+	end
+	local idx = math.floor(roll01 * #candidates) + 1
+	return candidates[math.clamp(idx, 1, #candidates)]
+end
+
+-- The streak changes only after the selected weapon is actually granted.
+function Weapons.nextDuplicateStreak(isNew: boolean, duplicateStreak: number): number
+	return if isNew then 0 else math.min(duplicateStreak + 1, 9999)
 end
 
 -- Full crate roll (default Basic): rarity then a weapon of that rarity. Two rolls in [0, 1).

@@ -83,6 +83,22 @@ test("pity counter and flags are sanitized", function()
 	eq(ProfileSchema.default().CratesSinceLegendary, 0, "default counter")
 end)
 
+test("crate duplicate streak is sanitized", function()
+	eq(ProfileSchema.default().CrateDuplicateStreak, 0, "default streak")
+	eq(ProfileSchema.sanitize({ CrateDuplicateStreak = -3 }).CrateDuplicateStreak, 0, "negative")
+	eq(ProfileSchema.sanitize({ CrateDuplicateStreak = 12.9 }).CrateDuplicateStreak, 12, "floored")
+	eq(
+		ProfileSchema.sanitize({ CrateDuplicateStreak = 10001 }).CrateDuplicateStreak,
+		9999,
+		"clamped"
+	)
+	eq(
+		ProfileSchema.sanitize({ CrateDuplicateStreak = "3" }).CrateDuplicateStreak,
+		0,
+		"strings dropped"
+	)
+end)
+
 test("daily reward day and streak are sanitized", function()
 	local p = ProfileSchema.sanitize({ LastClaimDay = 19999.7, Streak = -4 })
 	eq(p.LastClaimDay, 19999, "day floored")

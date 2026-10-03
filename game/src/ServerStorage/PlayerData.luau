@@ -118,6 +118,7 @@ local function push(plr: Player)
 			Evolutions = p.Evolutions,
 			Perks = p.Perks,
 			CratesSinceLegendary = p.CratesSinceLegendary,
+			CrateDuplicateStreak = p.CrateDuplicateStreak,
 			Streak = p.Streak,
 			DailyPopup = r.DailyPopup,
 			Quests = p.Quests,
@@ -372,14 +373,17 @@ function PlayerData.openCrate(
 		p.CratesSinceLegendary = Weapons.nextPityCount(rarity, p.CratesSinceLegendary)
 		Profile.markDirty(plr)
 	end
-	local ids = Weapons.idsOfRarity(rarity)
-	local id = ids[rng:NextInteger(1, #ids)]
+	local id =
+		Weapons.selectWeaponCandidate(rarity, p.Weapons, p.CrateDuplicateStreak, rng:NextNumber())
 	local isNew = PlayerData.grantWeapon(plr, id)
+	p.CrateDuplicateStreak = Weapons.nextDuplicateStreak(isNew, p.CrateDuplicateStreak)
+	Profile.markDirty(plr)
 	local gemsBack = 0
 	if not isNew then
 		gemsBack = Weapons.DuplicateGems[rarity]
 		PlayerData.addGems(plr, gemsBack)
 	end
+	push(plr)
 	CrateResult:FireClient(plr, id, rarity, isNew, gemsBack, crateKey, revealContext)
 	sendTelemetry(plr, "CrateOpened", {
 		crate = crateKey,

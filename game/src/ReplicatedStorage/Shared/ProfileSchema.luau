@@ -17,6 +17,7 @@ export type Profile = {
 	BestWave: number,
 	Runs: number,
 	CratesSinceLegendary: number, -- Robux crates opened since the last Legendary (pity counter)
+	CrateDuplicateStreak: number, -- consecutive crate results that were already owned
 	Flags: { [string]: boolean }, -- one-time events already paid out (see FlagKeys)
 	Redeemed: { [string]: boolean }, -- redeemable codes already paid out
 	LastClaimDay: number, -- UTC day number (Daily.dayIndex) of the last daily reward, 0 = never
@@ -64,6 +65,7 @@ function ProfileSchema.default(): Profile
 		BestWave = 0,
 		Runs = 0,
 		CratesSinceLegendary = 0,
+		CrateDuplicateStreak = 0,
 		Flags = {},
 		Redeemed = {},
 		LastClaimDay = 0,
@@ -137,6 +139,9 @@ function ProfileSchema.sanitize(raw: any): Profile
 	end
 	if type(raw.CratesSinceLegendary) == "number" then
 		p.CratesSinceLegendary = math.clamp(math.floor(raw.CratesSinceLegendary), 0, 9999)
+	end
+	if type(raw.CrateDuplicateStreak) == "number" then
+		p.CrateDuplicateStreak = math.clamp(math.floor(raw.CrateDuplicateStreak), 0, 9999)
 	end
 	if type(raw.Flags) == "table" then
 		for _, k in ProfileSchema.FlagKeys do

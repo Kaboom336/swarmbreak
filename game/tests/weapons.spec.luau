@@ -126,9 +126,57 @@ end)
 
 test("odds text hides 0% rarities and says the pity rule", function()
 	assert(not Weapons.oddsText("Gem"):find("Legendary", 1, true), "Gem crate text")
+	assert(Weapons.oddsText("Gem"):find("new weapon", 1, true), "Gem duplicate rule")
 	assert(Weapons.oddsText("Basic"):find("guaranteed", 1, true), "Basic crate text")
+	assert(Weapons.oddsText("Basic"):find("rolled rarity", 1, true), "Basic duplicate rule")
 	assert(Weapons.oddsText("Epic"):find("40th", 1, true), "Epic crate text")
 	assert(not Weapons.oddsText("Epic"):find("Common", 1, true), "Epic crate hides Common")
+end)
+
+test("duplicate protection activates only at its threshold", function()
+	local owned = { "Blade", "Burst" }
+	local before =
+		Weapons.selectWeaponCandidate("Common", owned, Weapons.DuplicateProtectionAt - 1, 0)
+	local protected =
+		Weapons.selectWeaponCandidate("Common", owned, Weapons.DuplicateProtectionAt, 0)
+	eq(before, "Blade", "normal candidate before threshold")
+	eq(protected, "Starter", "unowned candidate at threshold")
+end)
+
+test("complete rarities keep deterministic unavoidable duplicates", function()
+	for _, rarity in Weapons.RarityOrder do
+		local owned = Weapons.idsOfRarity(rarity)
+		local first = Weapons.selectWeaponCandidate(rarity, owned, Weapons.DuplicateProtectionAt, 0)
+		local last =
+			Weapons.selectWeaponCandidate(rarity, owned, Weapons.DuplicateProtectionAt, 0.999)
+		eq(first, owned[1], rarity .. " first candidate")
+		eq(last, owned[#owned], rarity .. " last candidate")
+		eq(
+			Weapons.selectWeaponCandidate(rarity, owned, Weapons.DuplicateProtectionAt, 0.999),
+			last,
+			rarity .. " deterministic repeat"
+		)
+	end
+end)
+
+test("duplicate streak resets only for a new grant", function()
+	eq(Weapons.nextDuplicateStreak(true, 8), 0, "new weapon resets")
+	eq(Weapons.nextDuplicateStreak(false, 8), 9, "duplicate increments")
+	eq(Weapons.nextDuplicateStreak(false, 9999), 9999, "streak bounded")
+end)
+
+test("Legendary pity and duplicate protection apply together", function()
+	local rarity = Weapons.applyPity("Common", Weapons.PityAt - 1)
+	eq(rarity, "Legendary", "rarity pity")
+	local id =
+		Weapons.selectWeaponCandidate(rarity, { "Halo", "Nova" }, Weapons.DuplicateProtectionAt, 0)
+	eq(id, "Reaper", "duplicate protection keeps the pitied rarity")
+	eq(Weapons.nextPityCount(rarity, Weapons.PityAt - 1), 0, "rarity pity resets")
+	eq(
+		Weapons.nextDuplicateStreak(true, Weapons.DuplicateProtectionAt),
+		0,
+		"duplicate streak resets"
+	)
 end)
 
 test("rollCrate on the Epic crate never returns a Common weapon", function()
