@@ -157,11 +157,13 @@ event.Event:Connect(function(kind: string, direction: Vector3?)
 	if kind == "swing" then
 		swingStartedAt = os.clock()
 		trailFor(char)
+		ClientFX.shake(Feel.WeaponCameraKick)
 	else
+		-- No camera shake per shot: with auto-fire it shook every few frames and read as jank
+		-- (Zion 10/03). Hits, kills and bosses keep their own shake in Feel.Events.
 		recoilStartedAt = os.clock()
 		muzzleFlash(char)
 	end
-	ClientFX.shake(Feel.WeaponCameraKick)
 end)
 
 local function mouseDirection(root: BasePart): Vector3

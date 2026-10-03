@@ -94,6 +94,10 @@ local function placeArenaAsset(name: string, size: Vector3, cf: CFrame): boolean
 	model:ScaleTo(Fit.scaleFor({ bounds.X, bounds.Y, bounds.Z }, { size.X, size.Y, size.Z }))
 	model.Name = name
 	model:PivotTo(cf)
+	-- Exported pivots sit at the mesh origin (often the base), so centre the bounding box on cf;
+	-- pivoting alone left the boss gate floating about 10 studs up.
+	local boxCFrame = model:GetBoundingBox()
+	model:PivotTo(model:GetPivot() + (cf.Position - boxCFrame.Position))
 	for _, descendant in model:GetDescendants() do
 		if descendant:IsA("BasePart") then
 			descendant.Anchored = true
@@ -408,7 +412,7 @@ local function portals()
 			not placeArenaAsset(
 				"BossGate",
 				Vector3.new(21, 22, 4),
-				boss.CFrame * CFrame.new(0, 10, 0)
+				boss.CFrame * CFrame.new(0, 10.5, 0) -- box centre: the gate's base rests on the floor
 			)
 		then
 			for _, sign in { -1, 1 } do

@@ -14,7 +14,7 @@ local Feel = {}
 
 -- Placeholder values until playtesting establishes final feel tuning.
 Feel.Events = {
-	Hit = { FreezeMs = 0, Shake = 0.2, NumberScale = 1 },
+	Hit = { FreezeMs = 0, Shake = 0, NumberScale = 1 }, -- auto-fire hits every few frames; no shake
 	Crit = { FreezeMs = 40, Shake = 0.5, NumberScale = 1.25 },
 	Kill = { FreezeMs = 0, Shake = 0.15, NumberScale = 1.4 },
 	BossHit = { FreezeMs = 60, Shake = 1, NumberScale = 1.6 },
@@ -25,7 +25,7 @@ Feel.NumberCapPerSecond = 20 -- placeholder
 Feel.TracerSeconds = 0.08
 Feel.MuzzleFlashSeconds = 0.08
 Feel.WeaponMuzzleFlashSeconds = 0.05
-Feel.WeaponCameraKick = 0.3
+Feel.WeaponCameraKick = 0.15 -- melee swings only
 Feel.HitFlashSeconds = 0.06
 Feel.DamageNumberSeconds = 0.6
 Feel.DamageNumberRiseStuds = 3

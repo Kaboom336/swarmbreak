@@ -39,10 +39,12 @@ end)
 test("shake settings respect accessibility levels", function()
 	for name in Feel.Events do
 		eq(Feel.shakeFor(name, "Off"), 0, name .. " off shake")
-		assert(
-			Feel.shakeFor(name, "Low") < Feel.shakeFor(name, "Full"),
-			name .. " low shake should be below full"
-		)
+		local full = Feel.shakeFor(name, "Full")
+		if full > 0 then
+			assert(Feel.shakeFor(name, "Low") < full, name .. " low shake should be below full")
+		else
+			eq(Feel.shakeFor(name, "Low"), 0, name .. " no shake stays none on Low")
+		end
 	end
 end)
 

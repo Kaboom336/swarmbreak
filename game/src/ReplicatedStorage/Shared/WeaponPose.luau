@@ -11,8 +11,8 @@ local WeaponPose = {}
 WeaponPose.RecoilOutSeconds = 0.08
 WeaponPose.RecoilBackSeconds = 0.12
 WeaponPose.RecoilSeconds = WeaponPose.RecoilOutSeconds + WeaponPose.RecoilBackSeconds
-WeaponPose.RecoilBackStuds = 0.25
-WeaponPose.RecoilUpDegrees = 6
+WeaponPose.RecoilBackStuds = 0.15
+WeaponPose.RecoilUpDegrees = 3
 
 WeaponPose.SwingWindupSeconds = 0.08
 WeaponPose.SwingArcSeconds = 0.16

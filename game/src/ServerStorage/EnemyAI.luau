@@ -9,6 +9,7 @@ local EnemyTells = require(ReplicatedStorage.Shared.EnemyTells)
 local Fit = require(ReplicatedStorage.Shared.Fit)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local Theme = require(ReplicatedStorage.Shared.Theme)
+local EnemyWatchdog = require(ReplicatedStorage.Shared.EnemyWatchdog)
 local EnemyBuilder = require(script.Parent.EnemyBuilder)
 local EnemyIndex = require(script.Parent.EnemyIndex)
 local FxRouter = require(script.Parent.FxRouter)
@@ -318,6 +319,58 @@ function EnemyAI.aliveCount(): number
 	end
 	return n
 end
+
+-- Watchdog: drop, kill or move enemies that can't be fought, so a wave never stalls on them.
+local watch: { [Model]: { Last: Vector3, Stuck: number } } = {}
+task.spawn(function()
+	while true do
+		task.wait(EnemyWatchdog.CheckSeconds)
+		for model, e in live do
+			if e.Humanoid.Health <= 0 then
+				continue
+			end
+			local root = e.Root
+			local hasRoot = root.Parent ~= nil and root:IsDescendantOf(model)
+			local pos = if hasRoot then root.Position else Vector3.zero
+			local w = watch[model]
+			if not w then
+				w = { Last = pos, Stuck = 0 }
+				watch[model] = w
+			end
+			-- Ranged enemies hold still in range on purpose; only count chasers.
+			local target, dist = nearestPlayerRoot(pos)
+			local chasing = target ~= nil
+				and dist > 8
+				and not (e.Def.Ranged and dist < (e.Def.Range or 40) * 0.8)
+			w.Stuck = EnemyWatchdog.nextStuck(w.Stuck, (pos - w.Last).Magnitude, chasing)
+			w.Last = pos
+			local verdict =
+				EnemyWatchdog.verdict(model.Parent ~= nil, hasRoot, pos.X, pos.Y, pos.Z, w.Stuck)
+			if verdict == "Forget" then
+				live[model] = nil
+				watch[model] = nil
+				EnemyIndex.remove(model)
+				model:Destroy()
+			elseif verdict == "Kill" then
+				e.Humanoid.Health = 0
+			elseif verdict == "Respawn" then
+				w.Stuck = 0
+				local spawns = workspace:FindFirstChild("Arena")
+					and (workspace :: any).Arena:FindFirstChild("EnemySpawns")
+				local points = if spawns then spawns:GetChildren() else {}
+				local point = points[math.random(1, math.max(#points, 1))]
+				if point and point:IsA("BasePart") then
+					model:PivotTo(point.CFrame + Vector3.new(0, e.Root.Size.Y, 0))
+				end
+			end
+		end
+		for model in watch do
+			if not live[model] then
+				watch[model] = nil
+			end
+		end
+	end
+end)
 
 function EnemyAI.clearAll()
 	live = {}

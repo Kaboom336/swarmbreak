@@ -485,6 +485,7 @@ local function runWave(wave: number): boolean
 			return false
 		end
 		task.wait(0.4)
+		GameState.set("Alive", EnemyAI.aliveCount()) -- the watchdog can drop enemies that never died
 	end
 	local techShard = wave % Evolutions.TechShardEveryWaves == 0
 	for _, plr in Players:GetPlayers() do
