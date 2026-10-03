@@ -152,9 +152,11 @@ Evolve.OnServerInvoke = function(plr, id, element)
 		local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
 		if root and evo then
 			FX:FireAllClients("evolve", {
+				Player = plr,
 				Position = (root :: BasePart).Position,
 				Color = Evolutions.Elements[element].Color,
 				Tier = evo.Tier,
+				Name = if def then def.Name else id,
 			})
 		end
 		Toast:FireClient(

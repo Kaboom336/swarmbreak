@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local PlayerPose = require(ReplicatedStorage.Shared.PlayerPose)
+local AnimCurves = require(ReplicatedStorage.Shared.AnimCurves)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 
@@ -17,6 +18,10 @@ local RENDER_STEP_NAME = "SwarmPlayerFeel"
 type FeelState = {
 	Root: BasePart,
 	PoseJoint: Motor6D?,
+	LeftShoulder: Motor6D?,
+	RightShoulder: Motor6D?,
+	LeftShoulderBase: CFrame?,
+	RightShoulderBase: CFrame?,
 	Trail: Trail,
 	DashStartedAt: number,
 	HitStartedAt: number,
@@ -39,6 +44,12 @@ local function disconnectCharacter()
 	end
 	table.clear(characterConnections)
 	if activeState then
+		if activeState.LeftShoulder and activeState.LeftShoulderBase then
+			activeState.LeftShoulder.C0 = activeState.LeftShoulderBase
+		end
+		if activeState.RightShoulder and activeState.RightShoulderBase then
+			activeState.RightShoulder.C0 = activeState.RightShoulderBase
+		end
 		activeState.Trail:Destroy()
 	end
 	activeState = nil
@@ -90,11 +101,19 @@ local function bind(character: Model)
 	elseif rootJoint and rootJoint:IsA("Motor6D") then
 		poseJoint = rootJoint
 	end
+	local leftFound = character:FindFirstChild("LeftShoulder", true)
+	local rightFound = character:FindFirstChild("RightShoulder", true)
+	local leftShoulder = if leftFound and leftFound:IsA("Motor6D") then leftFound else nil
+	local rightShoulder = if rightFound and rightFound:IsA("Motor6D") then rightFound else nil
 
 	local now = os.clock()
 	local state: FeelState = {
 		Root = root,
 		PoseJoint = poseJoint,
+		LeftShoulder = leftShoulder,
+		RightShoulder = rightShoulder,
+		LeftShoulderBase = if leftShoulder then leftShoulder.C0 else nil,
+		RightShoulderBase = if rightShoulder then rightShoulder.C0 else nil,
 		Trail = makeDashTrail(root),
 		DashStartedAt = -math.huge,
 		HitStartedAt = -math.huge,
@@ -152,14 +171,16 @@ local function bind(character: Model)
 			local currentTime = os.clock()
 			local dashElapsed = currentTime - state.DashStartedAt
 			local dash = PlayerPose.dashPose(dashElapsed)
-			local flinch = PlayerPose.hitFlinch(currentTime - state.HitStartedAt)
+			local dashRoll = AnimCurves.dashRollAt(dashElapsed)
+			local flinch = AnimCurves.hitFlinch(currentTime - state.HitStartedAt)
 			local pop = PlayerPose.levelUpPop(currentTime - state.LevelStartedAt)
+			local flourish = AnimCurves.levelUpFlourish(currentTime - state.LevelStartedAt)
 			state.Trail.Enabled = dashElapsed >= 0 and dashElapsed < PlayerPose.DashDuration
 
 			if state.PoseJoint then
 				local offset = CFrame.new(0, dash.Stretch + pop, 0)
 					* CFrame.Angles(
-						math.rad(-state.Pitch - dash.LeanDegrees),
+						math.rad(-state.Pitch - dash.LeanDegrees - dashRoll),
 						0,
 						math.rad(state.Roll + flinch)
 					)
@@ -172,6 +193,14 @@ local function bind(character: Model)
 				joint.Transform = base * offset
 				lastOffset = offset
 				lastWritten = joint.Transform
+			end
+			if state.LeftShoulder and state.LeftShoulderBase then
+				state.LeftShoulder.C0 = state.LeftShoulderBase
+					* CFrame.Angles(math.rad(flourish.LeftDegrees), 0, 0)
+			end
+			if state.RightShoulder and state.RightShoulderBase then
+				state.RightShoulder.C0 = state.RightShoulderBase
+					* CFrame.Angles(math.rad(flourish.RightDegrees), 0, 0)
 			end
 		end
 	)

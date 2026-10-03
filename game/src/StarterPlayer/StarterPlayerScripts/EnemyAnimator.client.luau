@@ -4,6 +4,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local AnimCull = require(ReplicatedStorage.Shared.AnimCull)
+local AnimCurves = require(ReplicatedStorage.Shared.AnimCurves)
 local EnemyAnimCurves = require(ReplicatedStorage.Shared.EnemyAnimCurves)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 
@@ -14,6 +15,7 @@ local enemies = workspace:WaitForChild("Enemies")
 type Anim = {
 	Root: BasePart,
 	Humanoid: Humanoid,
+	TypeName: string,
 	Motors: { [string]: Motor6D },
 	Base: { [string]: CFrame },
 	Phase: number,
@@ -100,22 +102,30 @@ local function playDeath(model: Model, anim: Anim)
 	local motors, base = motorMap(ghost)
 	local startPivot = ghost:GetPivot()
 	local drop = math.max(1, anim.Root.Size.Y * 0.3)
-	gooBurst(ghostRoot)
+	task.delay(AnimCurves.DeathSquashDuration, function()
+		if ghostRoot.Parent then
+			gooBurst(ghostRoot)
+		end
+	end)
 	task.spawn(function()
 		local started = os.clock()
 		while ghost.Parent do
 			local elapsed = os.clock() - started
-			if elapsed >= EnemyAnimCurves.DeathDuration then
+			if elapsed >= AnimCurves.DeathSquashDuration + EnemyAnimCurves.DeathDuration then
 				break
 			end
-			local collapse =
-				EnemyAnimCurves.deathCollapse(elapsed / EnemyAnimCurves.DeathCollapseDuration)
+			local squash = AnimCurves.deathSquash(elapsed / AnimCurves.DeathSquashDuration)
+			local collapseElapsed = math.max(0, elapsed - AnimCurves.DeathSquashDuration)
+			local collapse = EnemyAnimCurves.deathCollapse(
+				collapseElapsed / EnemyAnimCurves.DeathCollapseDuration
+			)
 			local dissolve = EnemyAnimCurves.deathDissolve(
-				(elapsed - EnemyAnimCurves.DeathCollapseDuration)
+				(collapseElapsed - EnemyAnimCurves.DeathCollapseDuration)
 					/ EnemyAnimCurves.DeathDissolveDuration
 			)
 			ghost:PivotTo(
 				startPivot
+					* CFrame.new(0, -ghostRoot.Size.Y * 0.08 * squash, 0)
 					* CFrame.new(0, -drop * collapse, 0)
 					* CFrame.Angles(math.rad(70) * collapse, 0, 0)
 			)
@@ -123,6 +133,7 @@ local function playDeath(model: Model, anim: Anim)
 				local index = tonumber(name:match("(%d+)$"))
 				local side = if name:sub(-1) == "L" or (index and index % 2 == 1) then -1 else 1
 				motor.C0 = base[name]
+					* CFrame.new(0, -ghostRoot.Size.Y * 0.04 * squash, 0)
 					* CFrame.Angles(math.rad(55) * collapse, 0, side * math.rad(25) * collapse)
 			end
 			for part, transparency in transparencies do
@@ -158,7 +169,7 @@ local function flashHit(model: Model, anim: Anim)
 	highlight.FillTransparency = 0.15
 	highlight.OutlineColor = Color3.new(1, 1, 1)
 	highlight.OutlineTransparency = 0
-	task.delay(EnemyAnimCurves.HitDuration, function()
+	task.delay(AnimCurves.HitFlashDuration, function()
 		if anim.HitFlash ~= flash or flash.Token ~= token then
 			return
 		end
@@ -187,6 +198,7 @@ local function register(model: Instance)
 		local anim: Anim = {
 			Root = root,
 			Humanoid = humanoid,
+			TypeName = (model:GetAttribute("TypeName") :: string?) or "Walker",
 			Motors = motors,
 			Base = base,
 			Phase = math.random() * 6,
@@ -259,30 +271,40 @@ RunService.Heartbeat:Connect(function(dt)
 
 		local speed = anim.Root.AssemblyLinearVelocity.Magnitude
 		local moving = math.clamp(speed / 12, 0, 1.5)
-		anim.Phase = EnemyAnimCurves.walkPhase(anim.Phase, speed, dt)
+		local profile = AnimCurves.enemyWalkProfileFor(anim.TypeName)
+		anim.Phase = AnimCurves.enemyWalkPhase(anim.Phase, speed, dt, anim.TypeName)
 		local phase = anim.Phase
 		local windup, lunge = 0, 0
 		if anim.AttackStarted then
-			windup, lunge = EnemyAnimCurves.attackPose(now - anim.AttackStarted, anim.AttackWindup)
+			local attack = AnimCurves.enemyAttackAt(now - anim.AttackStarted, anim.AttackWindup)
+			windup, lunge = attack.Pull, attack.Lunge
 			if
 				now - anim.AttackStarted
-				> anim.AttackWindup + EnemyAnimCurves.AttackLungeDuration
+				> anim.AttackWindup
+					+ AnimCurves.AttackStrikeDuration
+					+ AnimCurves.AttackRecoveryDuration
 			then
 				anim.AttackStarted = nil
 			end
 		end
 		local squash = 0
+		local flinchDegrees = 0
 		if anim.HitStarted then
 			local hitElapsed = now - anim.HitStarted
-			squash = EnemyAnimCurves.hitSquash(hitElapsed / EnemyAnimCurves.HitDuration)
+			squash = AnimCurves.enemyHitSquash(hitElapsed / EnemyAnimCurves.HitDuration)
+			flinchDegrees = AnimCurves.enemyHitFlinch(hitElapsed / EnemyAnimCurves.HitDuration)
 			if hitElapsed >= EnemyAnimCurves.HitDuration then
 				anim.HitStarted = nil
 			end
 		end
-		local attackPitch = math.rad(-30) * windup + math.rad(48) * lunge
-		local compress = CFrame.new(0, -anim.Root.Size.Y * 0.04 * squash, 0)
+		local attackPitch = math.rad(-30) * windup + math.rad(48) * lunge + math.rad(flinchDegrees)
+		local breathing = if anim.Humanoid.MoveDirection.Magnitude <= 0.05
+			then AnimCurves.idleBreath(now)
+			else math.sin(phase * 2) * 0.02 * profile.BobScale * moving
+		local compress =
+			CFrame.new(0, anim.Root.Size.Y * breathing - anim.Root.Size.Y * 0.04 * squash, 0)
 
-		local swing = math.sin(phase) * math.rad(35) * moving
+		local swing = math.sin(phase) * math.rad(profile.SwingDegrees) * moving
 		set(anim, "Hip_L", compress * CFrame.Angles(swing + attackPitch * 0.25, 0, 0))
 		set(anim, "Hip_R", compress * CFrame.Angles(-swing + attackPitch * 0.25, 0, 0))
 		set(
@@ -320,7 +342,8 @@ RunService.Heartbeat:Connect(function(dt)
 					name,
 					compress
 						* CFrame.Angles(
-							math.sin(legPhase) * math.rad(30) * moving + attackPitch * 0.35,
+							math.sin(legPhase) * math.rad(profile.SwingDegrees * (30 / 35)) * moving
+								+ attackPitch * 0.35,
 							0,
 							0
 						)

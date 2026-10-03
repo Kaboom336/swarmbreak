@@ -12,6 +12,7 @@ local AutoAim = require(ReplicatedStorage.Shared.AutoAim)
 local Settings = require(ReplicatedStorage.Shared.Settings)
 local TouchTracker = require(ReplicatedStorage.Shared.TouchTracker)
 local CameraConfig = require(ReplicatedStorage.Shared.CameraConfig)
+local AnimCurves = require(ReplicatedStorage.Shared.AnimCurves)
 local WeaponFeelEvent = script.Parent:WaitForChild("WeaponFeelEvent") :: BindableEvent
 
 local player = Players.LocalPlayer
@@ -33,6 +34,8 @@ local touchState = TouchTracker.new()
 local currentTarget: BasePart? = nil
 local aimedMotor: Motor6D? = nil
 local aimedBaseC0: CFrame? = nil
+local comboStage = 0
+local lastMeleeAt = -math.huge
 
 StatsChanged.OnClientEvent:Connect(function(stats)
 	equipped = stats.Equipped or "Starter"
@@ -221,7 +224,13 @@ local function tryShoot(root: BasePart, weapon, origin: Vector3, direction: Vect
 		root.CFrame = CFrame.lookAt(root.Position, root.Position + facing.Unit)
 	end
 	Shoot:FireServer(origin, direction)
-	WeaponFeelEvent:Fire(if weapon.Kind == "Melee" then "swing" else "shot", direction)
+	if weapon.Kind == "Melee" then
+		comboStage = AnimCurves.nextComboStage(comboStage, lastMeleeAt, now)
+		lastMeleeAt = now
+		WeaponFeelEvent:Fire("swing", direction, comboStage)
+	else
+		WeaponFeelEvent:Fire("shot", direction)
+	end
 end
 
 local function autoFireEnabled(): boolean

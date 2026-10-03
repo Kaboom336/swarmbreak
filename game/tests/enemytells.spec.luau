@@ -49,6 +49,14 @@ test("Spitter and bosses show a ground area warning", function()
 	end
 end)
 
+test("every enemy wind-up lights a ground telegraph decal", function()
+	for enemyType in Enemies.Defs do
+		local tell = EnemyTells.Defs[enemyType]
+		local timeline = EnemyTells.attackTimeline(tell, 0)
+		eq(timeline.ShowWindupDecal, true, enemyType .. " must show a windup decal")
+	end
+end)
+
 test("attack damage cannot land before the windup ends", function()
 	local now = 12.5
 	for enemyType, tell in EnemyTells.Defs do

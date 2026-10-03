@@ -192,7 +192,7 @@ local function queueAttack(e: Live, target: BasePart, radius: number, attack: (V
 		GlowPulse = tell.GlowPulse,
 		GlowColor = tell.GlowColor,
 		Duration = timeline.DamageAt - timeline.TellStartsAt,
-		GroundPosition = if timeline.ShowGroundCircle
+		GroundPosition = if timeline.ShowWindupDecal
 			then impactPosition - Vector3.new(0, 3, 0)
 			else nil,
 		Radius = radius,
