@@ -38,3 +38,18 @@ test("cards reveal left to right in under half a second", function()
 	end
 	assert(CardStyle.totalRevealTime(WaveRewards.OfferSize) <= 0.5, "reveal completes quickly")
 end)
+
+test("card chrome covers every category and highlights effect keywords", function()
+	eq(CardStyle.categoryFor("Weapon"), "WEAPON", "weapon category")
+	eq(CardStyle.categoryFor("Utility"), "PASSIVE", "passive category")
+	eq(CardStyle.categoryFor("Stat"), "UPGRADE", "upgrade category")
+	eq(CardStyle.categoryFor("Weapon", "Nature"), "ELEMENT", "element category wins")
+	for _, category in { "WEAPON", "PASSIVE", "ELEMENT", "UPGRADE" } do
+		assert(CardStyle.CategoryColors[category], "category color for " .. category)
+	end
+	local rich = CardStyle.richEffect("Chain fire, pierce, slow and heal")
+	assert(rich:find("<font color=", 1, true), "keywords receive RichText color tags")
+	for _, keyword in { "Chain", "fire", "pierce", "slow", "heal" } do
+		assert(rich:find(keyword, 1, true), "keeps keyword " .. keyword)
+	end
+end)

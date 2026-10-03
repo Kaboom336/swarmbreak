@@ -36,6 +36,12 @@ export type Boosts = {
 
 local WaveRewards = {}
 
+WaveRewards.Actions = {
+	Pick = "PICK",
+	Reroll = "REROLL",
+	Skip = "SKIP",
+	Banish = "BANISH",
+}
 WaveRewards.Fields = {
 	"DamageMult",
 	"FireRateMult",
@@ -213,12 +219,16 @@ function WaveRewards.newBoosts(): Boosts
 end
 
 -- Ids (in Order) a run can still be offered: not at MaxStacks, and made for the equipped weapon.
-function WaveRewards.eligible(stacks: { [string]: number }, equippedKind: string): { string }
+function WaveRewards.eligible(
+	stacks: { [string]: number },
+	equippedKind: string,
+	excluded: { [string]: boolean }?
+): { string }
 	local out = {}
 	for _, id in WaveRewards.Order do
 		local c = WaveRewards.Defs[id]
 		local fitsWeapon = c.Kinds == nil or table.find(c.Kinds :: { string }, equippedKind) ~= nil
-		if (stacks[id] or 0) < c.MaxStacks and fitsWeapon then
+		if (stacks[id] or 0) < c.MaxStacks and fitsWeapon and not (excluded and excluded[id]) then
 			table.insert(out, id)
 		end
 	end
@@ -254,11 +264,17 @@ function WaveRewards.offer(
 	wave: number,
 	stacks: { [string]: number },
 	equippedKind: string,
-	rolls: { number }
+	rolls: { number },
+	banished: { [string]: boolean }?,
+	excluded: { [string]: boolean }?
 ): { string }
 	local bossClear = wave > 0 and wave % Config.BossEvery == 0
 	local weights: { [string]: number } = {}
-	for _, id in WaveRewards.eligible(stacks, equippedKind) do
+	local unavailable = table.clone(banished or {})
+	for id in excluded or {} do
+		unavailable[id] = true
+	end
+	for _, id in WaveRewards.eligible(stacks, equippedKind, unavailable) do
 		local c = WaveRewards.Defs[id]
 		weights[id] = if bossClear and c.Kind ~= "Stat"
 			then c.Weight * WaveRewards.BossWeightMult

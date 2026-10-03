@@ -19,6 +19,12 @@ export type OfferCard = {
 	EvolutionPreview: EvolutionPreview?,
 }
 
+export type ActionState = {
+	RerollsUsed: number,
+	BanishesUsed: number,
+	Banished: { [string]: boolean },
+}
+
 local LevelUp = {}
 
 LevelUp.WaveOneKillRate = 0.2 -- one Walker kill every 5 seconds in the opening wave
@@ -45,6 +51,10 @@ LevelUp.RarityOdds = {
 LevelUp.ChestCrate = "Gem"
 LevelUp.ChestRevealSeconds = 2.25
 LevelUp.CardFlipSeconds = 0.12
+LevelUp.FreeRerolls = 1
+LevelUp.RerollLevelInterval = 5
+LevelUp.BanishesPerRun = 2
+LevelUp.SkipXpFraction = 0.10
 
 function LevelUp.requiredXp(level: number): number
 	local curveIndex = math.clamp(math.floor(level), 1, #LevelUp.XpCurve)
@@ -96,9 +106,11 @@ function LevelUp.offer(
 	stacks: { [string]: number },
 	equippedKind: string,
 	cardRolls: { number },
-	rarityRolls: { number }
+	rarityRolls: { number },
+	banished: { [string]: boolean }?,
+	excluded: { [string]: boolean }?
 ): { OfferCard }
-	local ids = WaveRewards.offer(level, stacks, equippedKind, cardRolls)
+	local ids = WaveRewards.offer(level, stacks, equippedKind, cardRolls, banished, excluded)
 	local cards = {}
 	for i, id in ids do
 		table.insert(cards, {
@@ -122,6 +134,45 @@ function LevelUp.offer(
 		end
 	end
 	return cards
+end
+
+function LevelUp.newActionState(): ActionState
+	return {
+		RerollsUsed = 0,
+		BanishesUsed = 0,
+		Banished = {},
+	}
+end
+
+function LevelUp.rerollsLeft(state: ActionState, level: number): number
+	local earned = LevelUp.FreeRerolls
+		+ math.floor(math.max(0, level) / LevelUp.RerollLevelInterval)
+	return math.max(0, earned - state.RerollsUsed)
+end
+
+function LevelUp.useReroll(state: ActionState, level: number): boolean
+	if LevelUp.rerollsLeft(state, level) <= 0 then
+		return false
+	end
+	state.RerollsUsed += 1
+	return true
+end
+
+function LevelUp.banishesLeft(state: ActionState): number
+	return math.max(0, LevelUp.BanishesPerRun - state.BanishesUsed)
+end
+
+function LevelUp.banish(state: ActionState, id: string): boolean
+	if state.Banished[id] or LevelUp.banishesLeft(state) <= 0 then
+		return false
+	end
+	state.Banished[id] = true
+	state.BanishesUsed += 1
+	return true
+end
+
+function LevelUp.skipXp(level: number): number
+	return math.floor(LevelUp.requiredXp(level + 1) * LevelUp.SkipXpFraction + 0.5)
 end
 
 -- Run chests use the existing Gem crate odds, then the shared crate pity rule.
