@@ -11,6 +11,13 @@ export type Rect = {
 	h: number,
 }
 
+export type Insets = {
+	left: number,
+	top: number,
+	right: number,
+	bottom: number,
+}
+
 local HudLayout = {}
 
 HudLayout.MinScale = 0.8
@@ -19,10 +26,15 @@ HudLayout.MinTouchTarget = 44
 HudLayout.MinButtonHeight = HudLayout.MinTouchTarget
 
 HudLayout.Anchors = {
+	xp = "top-full-width",
+	topStats = "top-center",
+	waveProgress = "top-center",
+	weaponRow = "bottom-left",
+	passiveRow = "bottom-right",
+	health = "bottom-center",
+	currencies = "left",
 	waveTimer = "top-center",
-	health = "bottom-left",
-	xp = "bottom-full-width",
-	ammo = "bottom-right",
+	ammo = "bottom-left",
 	icons = "left",
 	damageNumbers = "world",
 	hitDirection = "center",
@@ -31,7 +43,8 @@ HudLayout.Anchors = {
 	rewardCards = "center",
 }
 
-HudLayout.PlayElements = { "waveTimer", "health", "xp", "ammo", "icons" }
+HudLayout.PlayElements =
+	{ "topStats", "waveProgress", "health", "xp", "weaponRow", "passiveRow", "currencies" }
 HudLayout.UtilityPanels = { "quests", "shop", "settings", "stats" }
 HudLayout.MaxVisiblePlayPanels = 3
 
@@ -56,59 +69,90 @@ end
 function HudLayout.rects(
 	viewportX: number,
 	viewportY: number,
-	platform: Platform
+	platform: Platform,
+	insets: Insets?
 ): { [string]: Rect }
 	local scale = HudLayout.scaleFor(viewportX, viewportY, platform)
+	local safe = insets or { left = 0, top = 0, right = 0, bottom = 0 }
+	local safeLeft = safe.left
+	local safeTop = safe.top
+	local safeRight = viewportX - safe.right
+	local safeBottom = viewportY - safe.bottom
+	local safeWidth = safeRight - safeLeft
 	local margin = MARGIN * scale
 	local gap = GAP * scale
 	local iconSize = math.max(ICON_SIZE, HudLayout.buttonHeightFor(scale, platform)) * scale
-	local xpHeight = 10 * scale
-	local bottomHeight = 44 * scale
-	local bottomY = viewportY - xpHeight - gap - bottomHeight
-	local waveWidth = math.min(360 * scale, viewportX - margin * 2)
-	local healthWidth = math.min(280 * scale, viewportX * 0.3)
-	local ammoWidth = math.min(180 * scale, viewportX * 0.22)
+	local xpHeight = 8 * scale
+	local slotSize = 64 * scale
+	local bottomHeight = 40 * scale
+	local bottomY = safeBottom - margin - bottomHeight
+	local waveWidth = math.min(420 * scale, safeWidth - margin * 2)
+	local healthWidth = math.min(420 * scale, safeWidth * 0.38)
+	local weaponWidth = slotSize * 2 + gap
+	local passiveWidth = slotSize * 4 + gap * 3
 	local iconColumnHeight = iconSize * 3 + ICON_GAP * scale * 2
-	local panelX = margin + iconSize + gap
-	local panelY = 76 * scale
-	local panelWidth = math.min(340 * scale, viewportX - panelX - margin)
+	local panelY = safeTop + 76 * scale
+	local panelWidth = math.min(340 * scale, safeWidth - iconSize - gap - margin * 2)
+	local panelX = safeRight - margin - iconSize - gap - panelWidth
 	local panelHeight = math.max(0, bottomY - gap - panelY)
+	local compact = weaponWidth + passiveWidth + healthWidth + gap * 4 > safeWidth
+	local buildY = safeBottom - margin - slotSize
+	local passiveY = buildY
+	if compact then
+		buildY = bottomY - slotSize - gap
+		passiveY = buildY - slotSize - gap
+		weaponWidth = math.min(weaponWidth, safeWidth)
+		passiveWidth = math.min(passiveWidth, safeWidth)
+	end
+	panelHeight = math.max(0, math.min(buildY, passiveY) - gap - panelY)
 
-	local waveTimer = {
-		x = (viewportX - waveWidth) / 2,
-		y = margin,
+	local topStats = {
+		x = safeLeft + (safeWidth - waveWidth) / 2,
+		y = math.max(safeTop, xpHeight + 4 * scale),
 		w = waveWidth,
-		h = 44 * scale,
+		h = 24 * scale,
 	}
-	local bossBar = {
-		x = waveTimer.x,
-		y = waveTimer.y + waveTimer.h + gap,
-		w = waveTimer.w,
-		h = 22 * scale,
+	local waveProgress = {
+		x = topStats.x,
+		y = topStats.y + topStats.h + 4 * scale,
+		w = topStats.w,
+		h = 14 * scale,
 	}
 	local health = {
-		x = margin,
+		x = safeLeft + (safeWidth - healthWidth) / 2,
 		y = bottomY,
 		w = healthWidth,
 		h = bottomHeight,
 	}
-	local ammo = {
-		x = viewportX - margin - ammoWidth,
-		y = bottomY,
-		w = ammoWidth,
-		h = bottomHeight,
+	local weaponRow = {
+		x = safeLeft + margin,
+		y = buildY,
+		w = weaponWidth,
+		h = slotSize,
+	}
+	local passiveRow = {
+		x = safeRight - margin - passiveWidth,
+		y = passiveY,
+		w = passiveWidth,
+		h = slotSize,
 	}
 	local xp = {
 		x = 0,
-		y = viewportY - xpHeight,
+		y = 0,
 		w = viewportX,
 		h = xpHeight,
 	}
 	local icons = {
-		x = margin,
+		x = safeRight - margin - iconSize,
 		y = panelY,
 		w = iconSize,
 		h = iconColumnHeight,
+	}
+	local currencies = {
+		x = safeLeft + margin,
+		y = panelY,
+		w = iconSize,
+		h = iconSize * 2,
 	}
 	local utilityPanel = {
 		x = panelX,
@@ -131,21 +175,26 @@ function HudLayout.rects(
 	}
 
 	return {
-		waveTimer = waveTimer,
-		bossBar = bossBar,
+		topStats = topStats,
+		waveProgress = waveProgress,
+		waveTimer = topStats,
+		bossBar = waveProgress,
 		health = health,
 		xp = xp,
-		ammo = ammo,
+		weaponRow = weaponRow,
+		passiveRow = passiveRow,
+		currencies = currencies,
+		ammo = weaponRow,
 		icons = icons,
 		quests = utilityPanel,
 		shop = utilityPanel,
 		settings = utilityPanel,
 		stats = utilityPanel,
-		hotbar = ammo,
+		hotbar = weaponRow,
 		waveClearBanner = waveClearBanner,
 		rewardCards = rewardCards,
 		-- Compatibility names for transient elements owned by the existing HUD.
-		wave = waveTimer,
+		wave = topStats,
 		quest = utilityPanel,
 	}
 end

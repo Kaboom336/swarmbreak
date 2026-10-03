@@ -230,12 +230,11 @@ function finalHud.showHitDirection(playerPosition: Vector3)
 	end)
 end
 
--- Top: wave / phase / alive
-local waveLabel = text(screen, "Wave", UDim2.new(0.5, -200, 0, 8), UDim2.new(0, 400, 0, 34), "", 28)
+-- Top build status: level and wave share one centred row below the edge-to-edge XP bar.
+finalHud.LevelLabel = text(screen, "Level", UDim2.new(), UDim2.new(), "LV 0", 22)
+finalHud.LevelLabel.TextXAlignment = Enum.TextXAlignment.Right
+local waveLabel = text(screen, "Wave", UDim2.new(), UDim2.new(), "", 22)
 waveLabel.TextXAlignment = Enum.TextXAlignment.Left
-finalHud.TimerLabel =
-	text(screen, "RoundTimer", UDim2.new(0.5, 0, 0, 8), UDim2.new(0, 200, 0, 34), "0:00", 24)
-finalHud.TimerLabel.TextXAlignment = Enum.TextXAlignment.Right
 local bossChipLabel =
 	text(screen, "BossChip", UDim2.new(0.5, -100, 0, 42), UDim2.new(0, 200, 0, 18), "", 13)
 bossChipLabel.TextColor3 = Color3.fromRGB(255, 160, 80)
@@ -246,28 +245,28 @@ local mutationLabel =
 	text(screen, "Mutation", UDim2.new(0.5, -240, 0, 82), UDim2.new(0, 480, 0, 18), "", 14)
 mutationLabel.TextColor3 = Color3.fromRGB(255, 200, 60)
 
--- Boss bar
-local bossFrame = UiKit.Panel(screen, "BossBar")
+-- Wave progress becomes boss health while a boss is alive.
+local bossFrame = UiKit.Panel(screen, "WaveProgress")
 bossFrame.Size = UDim2.new(0, 480, 0, 22)
 bossFrame.Position = UDim2.new(0.5, -240, 0, 106)
 bossFrame.BackgroundColor3 = Color3.fromRGB(30, 10, 10)
 bossFrame.BorderSizePixel = 0
-bossFrame.Visible = false
+bossFrame.Visible = true
 bossFrame.Parent = screen
 local bossFill = Instance.new("Frame")
 bossFill.Size = UDim2.fromScale(1, 1)
 bossFill.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
 bossFill.BorderSizePixel = 0
 bossFill.Parent = bossFrame
-local bossLabel = text(bossFrame, "BossName", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), "", 16)
+local bossLabel = text(bossFrame, "Value", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), "", 12)
 
--- Run currency is useful between waves, but the fighting HUD stays clear.
+-- Currencies remain as one readable icon column on the left.
 finalHud.CurrencyFrame = Instance.new("Frame")
 finalHud.CurrencyFrame.Name = "Currencies"
 finalHud.CurrencyFrame.BackgroundColor3 = PANEL
 finalHud.CurrencyFrame.BackgroundTransparency = 0.1
 finalHud.CurrencyFrame.BorderSizePixel = 0
-finalHud.CurrencyFrame.Visible = false
+finalHud.CurrencyFrame.Visible = true
 finalHud.CurrencyFrame.Parent = screen
 local currencyCorner = Instance.new("UICorner")
 currencyCorner.CornerRadius = UDim.new(0, 8)
@@ -276,22 +275,22 @@ finalHud.CoinsLabel = text(
 	finalHud.CurrencyFrame,
 	"Coins",
 	UDim2.fromScale(0, 0),
-	UDim2.fromScale(0.5, 1),
-	"Coins 0",
+	UDim2.fromScale(1, 0.5),
+	"●  0",
 	18
 )
 finalHud.CoinsLabel.TextColor3 = ClientFX.c3(Theme.Coin)
 finalHud.GemsLabel = text(
 	finalHud.CurrencyFrame,
 	"Gems",
-	UDim2.fromScale(0.5, 0),
-	UDim2.fromScale(0.5, 1),
-	"Gems 0",
+	UDim2.fromScale(0, 0.5),
+	UDim2.fromScale(1, 0.5),
+	"◆  0",
 	18
 )
 finalHud.GemsLabel.TextColor3 = ClientFX.c3(Theme.NeonTeal)
 
--- Bottom-left: HP. Detailed run stats live behind this bar instead of in persistent rows.
+-- Bottom-centre: HP. Detailed run stats live behind this bar.
 local hpBack = UiKit.Panel(screen, "Health")
 hpBack.Size = UDim2.new(0, 260, 0, 18)
 hpBack.Position = UDim2.new(0, 12, 1, -80)
@@ -375,7 +374,7 @@ local statsLabel =
 statsLabel.TextXAlignment = Enum.TextXAlignment.Left
 statsLabel.TextYAlignment = Enum.TextYAlignment.Top
 
--- Full-width run XP, pinned to the bottom edge by HudLayout.
+-- Thin full-width run XP, pinned to the very top edge by HudLayout.
 local xpBack = Instance.new("Frame")
 xpBack.Name = "XP"
 xpBack.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -390,6 +389,7 @@ xpFill.BorderSizePixel = 0
 xpFill.Parent = xpBack
 local xpText = text(xpBack, "Value", UDim2.new(), UDim2.fromScale(1, 1), "", 11)
 xpText.ZIndex = xpFill.ZIndex + 1
+xpText.Visible = false
 
 -- A compact left icon column opens utility panels only when requested.
 local questToggle = button(screen, "Q", UDim2.fromOffset(48, 48))
@@ -624,27 +624,32 @@ autoFireButton.MouseButton1Click:Connect(function()
 end)
 setAutoFire(autoFireEnabled)
 
--- Weapon switching remains on number keys; the clean fighting HUD shows ammo instead of cards.
+-- Bottom build view. Number keys still switch inventory weapons; this row describes the
+-- equipped weapon and its current evolved/element state.
 local hotbar = Instance.new("Frame")
+hotbar.Name = "Weapons"
 hotbar.Size = UDim2.new(0, 420, 0, 46)
 hotbar.Position = UDim2.new(1, -432, 1, -72)
 hotbar.BackgroundTransparency = 1
-hotbar.Visible = false
+hotbar.Visible = true
 hotbar.Parent = screen
 local hotLayout = Instance.new("UIListLayout")
 hotLayout.FillDirection = Enum.FillDirection.Horizontal
 hotLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
 hotLayout.Padding = UDim.new(0, 4)
 hotLayout.Parent = hotbar
--- Under the hotbar: this run's reward cards as "Sharp x2  Greed x1" (empty until a pick)
-local boostsLabel =
-	text(screen, "Boosts", UDim2.new(1, -432, 1, -24), UDim2.new(0, 420, 0, 14), "", 12)
-boostsLabel.TextXAlignment = Enum.TextXAlignment.Right
-boostsLabel.TextColor3 = ClientFX.c3(Theme.NeonTeal)
-boostsLabel.Visible = false
 
-finalHud.AmmoLabel = text(screen, "Ammo", UDim2.new(), UDim2.new(), "AMMO UNLIMITED", 18)
-finalHud.AmmoLabel.TextXAlignment = Enum.TextXAlignment.Right
+finalHud.PassiveTray = Instance.new("Frame")
+finalHud.PassiveTray.Name = "Passives"
+finalHud.PassiveTray.BackgroundTransparency = 1
+finalHud.PassiveTray.Parent = screen
+do
+	local layout = Instance.new("UIListLayout")
+	layout.FillDirection = Enum.FillDirection.Horizontal
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+	layout.Padding = UDim.new(0, 10)
+	layout.Parent = finalHud.PassiveTray
+end
 
 -- Bottom-center first-run hint. Only the first unfinished tutorial step is visible.
 local tutorialPill = UiKit.Panel(screen, "Tutorial")
@@ -1537,11 +1542,11 @@ local function applyHudLayout()
 		return value / currentScale
 	end
 
-	local wave = rects.waveTimer
-	waveLabel.Position = UDim2.fromOffset(logical(wave.x), logical(wave.y))
-	waveLabel.Size = UDim2.fromOffset(logical(wave.w) / 2, 34)
-	finalHud.TimerLabel.Position = UDim2.fromOffset(logical(wave.x + wave.w / 2), logical(wave.y))
-	finalHud.TimerLabel.Size = UDim2.fromOffset(logical(wave.w) / 2, 34)
+	local wave = rects.topStats
+	finalHud.LevelLabel.Position = UDim2.fromOffset(logical(wave.x), logical(wave.y))
+	finalHud.LevelLabel.Size = UDim2.fromOffset(logical(wave.w) / 2 - 8, logical(wave.h))
+	waveLabel.Position = UDim2.fromOffset(logical(wave.x + wave.w / 2 + 8), logical(wave.y))
+	waveLabel.Size = UDim2.fromOffset(logical(wave.w) / 2 - 8, logical(wave.h))
 	bossChipLabel.Position =
 		UDim2.fromOffset(logical(wave.x + (wave.w - 200 * currentScale) / 2), logical(wave.y) + 34)
 	bossChipLabel.Size = UDim2.fromOffset(200, 18)
@@ -1550,21 +1555,31 @@ local function applyHudLayout()
 	mutationLabel.Position = UDim2.fromOffset(logical(wave.x), logical(wave.y) + 74)
 	mutationLabel.Size = UDim2.fromOffset(logical(wave.w), 18)
 
-	local boss = rects.bossBar
+	local boss = rects.waveProgress
 	bossFrame.Position = UDim2.fromOffset(logical(boss.x), logical(boss.y))
 	bossFrame.Size = UDim2.fromOffset(logical(boss.w), logical(boss.h))
 
 	local health = rects.health
 	hpBack.Position = UDim2.fromOffset(logical(health.x), logical(health.y))
 	hpBack.Size = UDim2.fromOffset(logical(health.w), logical(health.h))
+	tutorialPill.Position =
+		UDim2.fromOffset(logical(health.x + health.w / 2), logical(health.y) - 8)
 
 	local xp = rects.xp
 	xpBack.Position = UDim2.fromOffset(logical(xp.x), logical(xp.y))
 	xpBack.Size = UDim2.fromOffset(logical(xp.w), logical(xp.h))
 
-	local ammo = rects.ammo
-	finalHud.AmmoLabel.Position = UDim2.fromOffset(logical(ammo.x), logical(ammo.y))
-	finalHud.AmmoLabel.Size = UDim2.fromOffset(logical(ammo.w), logical(ammo.h))
+	local weapons = rects.weaponRow
+	hotbar.Position = UDim2.fromOffset(logical(weapons.x), logical(weapons.y))
+	hotbar.Size = UDim2.fromOffset(logical(weapons.w), logical(weapons.h))
+
+	local passives = rects.passiveRow
+	finalHud.PassiveTray.Position = UDim2.fromOffset(logical(passives.x), logical(passives.y))
+	finalHud.PassiveTray.Size = UDim2.fromOffset(logical(passives.w), logical(passives.h))
+
+	local currencies = rects.currencies
+	finalHud.CurrencyFrame.Position = UDim2.fromOffset(logical(currencies.x), logical(currencies.y))
+	finalHud.CurrencyFrame.Size = UDim2.fromOffset(logical(currencies.w), logical(currencies.h))
 
 	local targets = HudLayout.touchTargets(viewport.X, viewport.Y)
 	local function placeIcon(icon: TextButton, target: HudLayout.Rect)
@@ -1961,25 +1976,87 @@ local function rebuildHotbar()
 	table.sort(ids, function(a, b)
 		return Weapons.power(Weapons.Defs[a]) < Weapons.power(Weapons.Defs[b])
 	end)
-	for i, id in ids do
-		local def = Weapons.Defs[id]
-		local b = button(
+	local def = Weapons.Defs[stats.Equipped]
+	if def then
+		local weaponLevel = 1
+		for id, count in (stats.Boosts and stats.Boosts.Stacks) or {} do
+			local card = WaveRewards.Defs[id]
+			if
+				card
+				and card.Kind == "Weapon"
+				and (not card.Kinds or table.find(card.Kinds, def.Kind))
+			then
+				weaponLevel += count
+			end
+		end
+		local equipped = button(
 			hotbar,
-			string.format("%d  %s\n%s", i, def.Name, def.Kind),
-			UDim2.new(0, 100, 1, 0)
+			string.format("1\n%s\nLv %d", string.upper(def.Name), weaponLevel),
+			UDim2.new(0, 64, 1, 0)
 		)
-		b.TextSize = 11
-		b.TextWrapped = true
-		local c = Weapons.RarityColor[def.Rarity]
-		b.BackgroundColor3 = if id == stats.Equipped
-			then Color3.fromRGB(c[1], c[2], c[3])
-			else Color3.fromRGB(40, 40, 50)
-		b.MouseButton1Click:Connect(function()
-			EquipWeapon:FireServer(id)
-		end)
+		equipped.TextSize = 10
+		equipped.TextWrapped = true
+		local rarity = Weapons.RarityColor[def.Rarity]
+		local border = Instance.new("UIStroke")
+		border.Name = "Rarity"
+		border.Thickness = 3
+		border.Color = Color3.fromRGB(rarity[1], rarity[2], rarity[3])
+		border.Parent = equipped
+
+		local runRecipe = Evolutions.recipe(stats.EvolvedRecipe or "")
+		local ownedEvolution = (stats.Evolutions or {})[stats.Equipped]
+		local element = if runRecipe then runRecipe.Element else stats.RunElement
+		local stateName = if runRecipe
+			then runRecipe.Evolved
+			else if element
+				then element
+				else if ownedEvolution then ownedEvolution.Element else "BASE"
+		local stateLevel = if runRecipe
+			then 3
+			else if ownedEvolution then ownedEvolution.Tier else if element then 1 else 0
+		local stateSlot = button(
+			hotbar,
+			string.format("STATE\n%s\nLv %d", string.upper(stateName), stateLevel),
+			UDim2.new(0, 64, 1, 0)
+		)
+		stateSlot.TextSize = 10
+		stateSlot.TextWrapped = true
+		stateSlot.AutoButtonColor = false
 	end
 	-- number keys
 	stats._hotIds = ids
+
+	for _, child in finalHud.PassiveTray:GetChildren() do
+		if child:IsA("Frame") then
+			child:Destroy()
+		end
+	end
+	for _, name in Config.UpgradeOrder do
+		local upgrade = Upgrades.def(name)
+		local slot = Instance.new("Frame")
+		slot.Name = name
+		slot.Size = UDim2.new(0, 64, 1, 0)
+		slot.BackgroundColor3 = PANEL
+		slot.BorderSizePixel = 0
+		slot.Parent = finalHud.PassiveTray
+		local border = Instance.new("UIStroke")
+		border.Color = ClientFX.c3(Theme.NeonTeal)
+		border.Thickness = 2
+		border.Parent = slot
+		local label = text(
+			slot,
+			"Value",
+			UDim2.new(),
+			UDim2.fromScale(1, 1),
+			string.format(
+				"%s\nLv %d",
+				if upgrade then string.upper(upgrade.Label) else name,
+				(stats.Levels and stats.Levels[name]) or 0
+			),
+			10
+		)
+		label.TextWrapped = true
+	end
 end
 
 finalHud.AbilityUi.Cast = function()
@@ -2029,8 +2106,8 @@ local function refreshStats()
 	finalHud.AbilityUi.Dash.Text = string.format("DASH %d\nQ", dash)
 	finalHud.AbilityUi.Signature.Text = string.format("%s\nE", kit.Signature.Icon)
 	local shards = stats.Shards or {}
-	finalHud.CoinsLabel.Text = string.format("Coins %d", stats.Coins or 0)
-	finalHud.GemsLabel.Text = string.format("Gems %d", stats.Gems or 0)
+	finalHud.CoinsLabel.Text = string.format("●  %d", stats.Coins or 0)
+	finalHud.GemsLabel.Text = string.format("◆  %d", stats.Gems or 0)
 	statsLabel.Text = string.format(
 		"Kills %d    Level %d    Dash %d\nCoins %d    Gems %d\nShards  Nature %d  Tech %d  Lightning %d  Dark %d",
 		stats.Kills,
@@ -2046,13 +2123,10 @@ local function refreshStats()
 	local xp = stats.XP or 0
 	local xpNeeded = math.max(stats.XPNeeded or 1, 1)
 	xpFill.Size = UDim2.fromScale(math.clamp(xp / xpNeeded, 0, 1), 1)
-	xpText.Text = string.format("LEVEL %d    XP %d / %d", stats.Level or 0, xp, xpNeeded)
+	xpText.Text = string.format("XP %d / %d", xp, xpNeeded)
+	finalHud.LevelLabel.Text = string.format("LV %d", stats.Level or 0)
 	-- Evolution section follows the equipped weapon
 	local equippedDef = Weapons.Defs[stats.Equipped]
-	finalHud.AmmoLabel.Text = string.format(
-		"%s   AMMO UNLIMITED",
-		if equippedDef then string.upper(equippedDef.Name) else "WEAPON"
-	)
 	local evo = (stats.Evolutions or {})[stats.Equipped]
 	evoInfo.Text = string.format(
 		"%s: %s\nOne path per weapon. Shards drop from bosses (Dark, Nature, Lightning) and every 5th wave (Tech).",
@@ -2105,7 +2179,6 @@ local function refreshStats()
 	refreshKitButtons()
 	refreshCrateButtons()
 	refreshRecipesTab()
-	boostsLabel.Text = WaveRewards.stacksText((stats.Boosts and stats.Boosts.Stacks) or {})
 	refreshCards()
 	refreshQuests(stats.Quests)
 	refreshTutorial()
@@ -2138,10 +2211,12 @@ end)
 player:GetAttributeChangedSignal("DashReady"):Connect(refreshStats)
 refreshStats()
 
--- State -> top labels
+-- State -> top labels and the shared wave/boss progress bar.
+finalHud.WavePeakAlive = 0
 onState("Wave", function(w)
 	waveLabel.Text = if w > 0 then string.format("WAVE %d", w) else "SWARM BREAK"
 	bossChipLabel.Text = if w > 0 then WaveTable.bossChipText(w) else ""
+	finalHud.WavePeakAlive = 0
 end)
 local function refreshPhase()
 	local phase = stateValue("Phase")
@@ -2153,8 +2228,21 @@ local function refreshPhase()
 		then workspace:GetServerTimeNow() - startedAt
 		else t
 	local wholeSeconds = math.max(0, math.floor(clock))
-	finalHud.TimerLabel.Text =
-		string.format("%d:%02d", math.floor(wholeSeconds / 60), wholeSeconds % 60)
+	if stateValue("BossMaxHealth") <= 0 then
+		finalHud.WavePeakAlive = math.max(finalHud.WavePeakAlive, alive)
+		bossFill.Size = UDim2.fromScale(
+			if finalHud.WavePeakAlive > 0
+				then math.clamp(1 - alive / finalHud.WavePeakAlive, 0, 1)
+				else 0,
+			1
+		)
+		bossLabel.Text = string.format(
+			"%d LEFT   %d:%02d",
+			alive,
+			math.floor(wholeSeconds / 60),
+			wholeSeconds % 60
+		)
+	end
 	if phase == "idle" then
 		phaseLabel.Text = "Waiting for players"
 	elseif phase == "starting" then
@@ -2180,8 +2268,8 @@ onState("Phase", function(phase)
 	phaseLabel.Visible = not fighting
 	bossChipLabel.Visible = not fighting
 	mutationLabel.Visible = not fighting and stateValue("MutationLabel") ~= ""
-	bossFrame.Visible = not fighting and stateValue("BossName") ~= ""
-	finalHud.CurrencyFrame.Visible = false
+	bossFrame.Visible = true
+	finalHud.CurrencyFrame.Visible = true
 	if phase ~= "over" then
 		summaryToken += 1
 		summaryPanel.Visible = false
@@ -2229,13 +2317,18 @@ onState("MutationLabel", function(label)
 	mutationLabel.Visible = label ~= "" and stateValue("Phase") ~= "fighting"
 end)
 onState("BossName", function(name)
-	bossFrame.Visible = name ~= "" and stateValue("Phase") ~= "fighting"
-	bossLabel.Text = name
+	if name ~= "" then
+		bossLabel.Text = name
+	end
 end)
 local function refreshBoss()
 	local max = stateValue("BossMaxHealth")
 	local h = stateValue("BossHealth")
-	bossFill.Size = UDim2.fromScale(if max > 0 then math.clamp(h / max, 0, 1) else 0, 1)
+	if max > 0 then
+		bossFill.Size = UDim2.fromScale(math.clamp(h / max, 0, 1), 1)
+		bossLabel.Text =
+			string.format("%s  %d / %d", stateValue("BossName"), math.ceil(h), math.ceil(max))
+	end
 end
 onState("BossHealth", refreshBoss)
 onState("BossMaxHealth", refreshBoss)
