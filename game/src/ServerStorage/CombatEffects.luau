@@ -44,7 +44,8 @@ local function rawHit(
 	plr: Player,
 	model: Model,
 	damage: number,
-	hitPos: Vector3
+	hitPos: Vector3,
+	critical: boolean?
 ): (boolean, boolean)
 	local ehum = model:FindFirstChildOfClass("Humanoid")
 	if not ehum or ehum.Health <= 0 or model.Parent ~= enemiesFolder then
@@ -66,7 +67,7 @@ local function rawHit(
 			end
 		end
 	end
-	HitMarker:FireClient(plr, hitPos, math.floor(damage + 0.5), killed, model)
+	HitMarker:FireClient(plr, hitPos, math.floor(damage + 0.5), killed, model, critical == true)
 	return true, killed
 end
 
@@ -75,9 +76,10 @@ function CombatEffects.hit(
 	plr: Player,
 	model: Model,
 	damage: number,
-	hitPos: Vector3
+	hitPos: Vector3,
+	critical: boolean?
 ): (boolean, boolean)
-	local landed, killed = rawHit(plr, model, damage, hitPos)
+	local landed, killed = rawHit(plr, model, damage, hitPos, critical)
 	if not landed then
 		return false, false
 	end
@@ -100,7 +102,7 @@ function CombatEffects.hit(
 			if others[1] then
 				local o = others[1]
 				local opos = (o.PrimaryPart :: BasePart).Position
-				rawHit(plr, o, damage * E.Arc.Value, opos)
+				rawHit(plr, o, damage * E.Arc.Value, opos, false)
 				FX:FireAllClients("chain", { Points = { root.Position, opos }, Color = color })
 			end
 		elseif key == "Chain" then
@@ -121,7 +123,7 @@ function CombatEffects.hit(
 				end
 				hitSet[nextModel] = true
 				local opos = (nextModel.PrimaryPart :: BasePart).Position
-				rawHit(plr, nextModel, damage * E.Chain.Value, opos)
+				rawHit(plr, nextModel, damage * E.Chain.Value, opos, false)
 				table.insert(points, opos)
 				last = opos
 			end

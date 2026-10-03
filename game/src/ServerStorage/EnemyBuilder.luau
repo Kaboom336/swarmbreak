@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local Enemies = require(ReplicatedStorage.Shared.Enemies)
 local Fit = require(ReplicatedStorage.Shared.Fit)
+local HitZones = require(ReplicatedStorage.Shared.HitZones)
 local ModelKey = require(ReplicatedStorage.Shared.ModelKey)
 local ModelParts = require(ReplicatedStorage.Shared.ModelParts)
 local Theme = require(ReplicatedStorage.Shared.Theme)
@@ -396,6 +397,17 @@ local function findPart(model: Model, name: string): BasePart?
 	return if found and found:IsA("BasePart") then found else nil
 end
 
+local function tagHitZones(model: Model, typeName: string)
+	for _, descendant in model:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			local zone = HitZones.zoneForPart(typeName, descendant.Name)
+			if zone then
+				descendant:SetAttribute(HitZones.AttributeName, zone.Id)
+			end
+		end
+	end
+end
+
 local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 	local model = ModelLibrary.get(ModelKey.make("enemies", typeName))
 	if not model then
@@ -433,6 +445,7 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 	root.Transparency = 1
 	root.CFrame = boundsCFrame * CFrame.new(0, importedHip / 2, 0)
 	root.CanCollide = true
+	root.CanQuery = false
 	root.Parent = model
 	model.PrimaryPart = root
 	weld(root, torso, root.CFrame:ToObjectSpace(torso.CFrame))
@@ -459,6 +472,7 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 			end
 		end
 	end
+	tagHitZones(model, typeName)
 
 	return { Model = model, Root = root, Torso = torso, HipHeight = importedHip }
 end
@@ -480,6 +494,7 @@ function EnemyBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig
 	root.Transparency = 1
 	root.CFrame = cf
 	root.CanCollide = true
+	root.CanQuery = false
 	root.Parent = model
 	model.PrimaryPart = root
 
@@ -518,6 +533,7 @@ function EnemyBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig
 	local halfHeight = math.max(0.5, root.Position.Y - minY - HIP)
 	root.Size = Vector3.new(root.Size.X, halfHeight * 2, root.Size.Z)
 	hip = HIP
+	tagHitZones(model, typeName)
 	return { Model = model, Root = root, Torso = torso, HipHeight = hip }
 end
 

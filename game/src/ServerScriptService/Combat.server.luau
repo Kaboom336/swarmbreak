@@ -6,6 +6,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local PlayerData = require(ServerStorage.PlayerData)
 local CombatEffects = require(ServerStorage.CombatEffects)
 local FireGuard = require(ReplicatedStorage.Shared.FireGuard)
+local HitZones = require(ReplicatedStorage.Shared.HitZones)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 
@@ -46,8 +47,14 @@ local function spreadDir(dir: Vector3, degrees: number): Vector3
 end
 
 -- Damage an enemy model (plus Evolution effects); returns true if it counted.
-local function damageEnemy(plr: Player, model: Model, damage: number, hitPos: Vector3): boolean
-	local landed = CombatEffects.hit(plr, model, damage, hitPos)
+local function damageEnemy(
+	plr: Player,
+	model: Model,
+	damage: number,
+	hitPos: Vector3,
+	critical: boolean?
+): boolean
+	local landed = CombatEffects.hit(plr, model, damage, hitPos, critical)
 	if landed then
 		PlayerData.recordHit(plr)
 	end
@@ -83,7 +90,20 @@ local function doHitscan(
 		table.insert(ends, if hit then hit.Position else origin + d * weapon.Range)
 		if hit then
 			local model = hit.Instance:FindFirstAncestorOfClass("Model")
-			if model and damageEnemy(plr, model, damage, hit.Position) then
+			local enemyType = if model then model:GetAttribute("TypeName") else nil
+			if type(enemyType) ~= "string" and model then
+				enemyType = model.Name
+			end
+			local tag = hit.Instance:GetAttribute(HitZones.AttributeName)
+			local zone = HitZones.resolve(
+				if type(enemyType) == "string" then enemyType else "",
+				if type(tag) == "string" then tag else nil,
+				weapon.Kind
+			)
+			if
+				model
+				and damageEnemy(plr, model, damage * zone.Multiplier, hit.Position, zone.WeakPoint)
+			then
 				table.insert(hits, hit.Position)
 			end
 		end
