@@ -152,11 +152,16 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 				local element = Evolutions.BossShards[typeName]
 				if element then
 					for _, plr in Players:GetPlayers() do
-						if not PlayerData.isWaiting(plr) then
-							PlayerData.addShard(plr, element, 1)
+						if
+							not PlayerData.isWaiting(plr) and PlayerData.addShard(plr, element, 1)
+						then
+							Toast:FireClient(
+								plr,
+								typeName .. " down! +1 " .. element .. " shard",
+								4
+							)
 						end
 					end
-					Toast:FireAllClients(typeName .. " down! +1 " .. element .. " shard", 4)
 				end
 				-- the first boss a player ever sees fall pays a free Gem crate: the way to a
 				-- second weapon without Robux. Once per profile, so only once it has loaded.
@@ -165,6 +170,7 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 					if
 						not PlayerData.isWaiting(plr)
 						and PlayerData.isLoaded(plr)
+						and PlayerData.participated(plr)
 						and not p.Flags.FirstBossCrate
 					then
 						p.Flags.FirstBossCrate = true
@@ -318,12 +324,11 @@ local function runWave(wave: number): boolean
 				Difficulty.scaleReward(Economy.waveClearBonus(wave), currentDifficultyId)
 			)
 			if techShard then
-				PlayerData.addShard(plr, "Tech", 1)
+				if PlayerData.addShard(plr, "Tech", 1) then
+					Toast:FireClient(plr, "Wave " .. wave .. " cleared: +1 Tech shard", 4)
+				end
 			end
 		end
-	end
-	if techShard then
-		Toast:FireAllClients("Wave " .. wave .. " cleared: +1 Tech shard", 4)
 	end
 	FX:FireAllClients("sound", { Event = "wave clear" })
 	return true
@@ -335,8 +340,10 @@ local function endRun(won: boolean, reachedWave: number)
 	GameState.set("Phase", "chest")
 	-- Every surviving participant sees the existing Gem crate open. The run version uses the
 	-- shared pity counter even though Gem crates bought in the shop do not.
+	local rewarded: { [Player]: boolean } = {}
 	for _, plr in Players:GetPlayers() do
-		if not PlayerData.isWaiting(plr) then
+		if not PlayerData.isWaiting(plr) and PlayerData.participated(plr) then
+			rewarded[plr] = true
 			PlayerData.openCrate(plr, LevelUp.ChestCrate, "RunEnd", true)
 		end
 	end
@@ -345,7 +352,7 @@ local function endRun(won: boolean, reachedWave: number)
 	-- each player gets their own run summary (Gems earned, next goal) for the results panel
 	for _, plr in Players:GetPlayers() do
 		if not PlayerData.isWaiting(plr) then
-			local summary = PlayerData.endRun(plr, reachedWave, won)
+			local summary = PlayerData.endRun(plr, reachedWave, won, rewarded[plr] == true)
 			GameOver:FireClient(plr, summary)
 		end
 	end
@@ -409,8 +416,12 @@ local function gameLoop()
 end
 
 local function onPlayerAdded(plr: Player)
+	local phase = GameState.get("Phase")
 	local joinedDuringWave = GameState.isWaveActive()
 	PlayerData.setWaiting(plr, joinedDuringWave)
+	if phase == "intermission" then
+		PlayerData.startLateRun(plr)
+	end
 	-- Players joining an active wave stay unspawned until its intermission.
 	task.wait(1)
 	if not joinedDuringWave and not plr.Character then

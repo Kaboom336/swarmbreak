@@ -6,6 +6,7 @@ local DataStoreService = game:GetService("DataStoreService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local AnalyticsService = game:GetService("AnalyticsService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
@@ -29,6 +30,10 @@ local WeaponModels = require(script.Parent.WeaponModels)
 
 local StatsChanged = ReplicatedStorage:WaitForChild("Remotes").StatsChanged :: RemoteEvent
 local CrateResult = ReplicatedStorage:WaitForChild("Remotes").CrateResult :: RemoteEvent
+local participationSignals = ServerStorage:WaitForChild("ParticipationSignals")
+local ParticipationReset = participationSignals:WaitForChild("Reset") :: BindableEvent
+local ParticipationRecord = participationSignals:WaitForChild("Record") :: BindableEvent
+local ParticipationEligible = participationSignals:WaitForChild("Eligible") :: BindableFunction
 -- GetOrderedDataStore throws in an unpublished Studio place; fall back to no leaderboard.
 local topStoreOk, topStoreResult = pcall(function()
 	return DataStoreService:GetOrderedDataStore("SwarmBreak_top_v1")
@@ -163,12 +168,23 @@ function PlayerData.get(plr: Player): Run
 end
 
 function PlayerData.setWaiting(plr: Player, value: boolean)
+	local wasWaiting = waiting[plr] == true
 	waiting[plr] = if value then true else nil
 	plr:SetAttribute("WaitingForIntermission", value)
+	if wasWaiting and not value then
+		PlayerData.startLateRun(plr)
+	end
 end
 
 function PlayerData.isWaiting(plr: Player): boolean
 	return waiting[plr] == true
+end
+
+function PlayerData.startLateRun(plr: Player)
+	local r = PlayerData.get(plr)
+	r.StartedAt = os.clock()
+	r.Active = true
+	ParticipationReset:Fire(plr, true)
 end
 
 function PlayerData.setRunCoins(plr: Player, coins: number)
@@ -242,6 +258,7 @@ end
 function PlayerData.addKill(plr: Player, boss: boolean?, enemyType: string?)
 	local r = PlayerData.get(plr)
 	r.Kills += 1
+	ParticipationRecord:Fire(plr, "Kill", 1)
 	sendFunnel(plr, "first_kill", { seconds = runSeconds(r) })
 	local newLevel, newXp, levelsGained =
 		LevelUp.advance(r.Level, r.XP, LevelUp.xpForKill(enemyType or "Walker"))
@@ -290,15 +307,25 @@ function PlayerData.addGems(plr: Player, n: number)
 	push(plr)
 end
 
-function PlayerData.addShard(plr: Player, element: string, n: number)
+function PlayerData.addShard(plr: Player, element: string, n: number): boolean
+	if not PlayerData.participated(plr) then
+		return false
+	end
 	local p = Profile.get(plr)
 	if p.Shards[element] == nil then
-		return
+		return false
 	end
 	p.Shards[element] += n
 	PlayerData.get(plr).ShardsEarned += n
 	Profile.markDirty(plr)
 	push(plr)
+	return true
+end
+
+-- Participation gates only permanent run payouts. Callers must not use it for coins,
+-- respawning, admission, or any other moment-to-moment gameplay.
+function PlayerData.participated(plr: Player): boolean
+	return ParticipationEligible:Invoke(plr) == true
 end
 
 -- Spend Gems (forever). False and nothing spent when the player has too few.
@@ -654,6 +681,7 @@ function PlayerData.resetRun(plr: Player)
 	r.Wave = 0
 	r.FunnelEvents = Funnel.newRun()
 	r.Active = true
+	ParticipationReset:Fire(plr, false)
 	sendFunnel(plr, "run_start", { seconds = 0 })
 	applyStats(plr) -- a survivor keeps their character, so last run's stats go now
 	push(plr)
@@ -664,24 +692,35 @@ function PlayerData.setRunWave(plr: Player, wave: number)
 end
 
 -- End of run: gems, best wave, leaderboard. Returns the summary the results panel shows.
-function PlayerData.endRun(plr: Player, wave: number, won: boolean): RunSummary
+function PlayerData.endRun(
+	plr: Player,
+	wave: number,
+	won: boolean,
+	participatedAtEnd: boolean?
+): RunSummary
 	local r = PlayerData.get(plr)
 	local p = Profile.get(plr)
 	local previousBest = p.BestWave
+	local participated = if participatedAtEnd == nil
+		then PlayerData.participated(plr)
+		else participatedAtEnd
 	-- gemsForRun before Runs counts this one; the Lucky card adds its share on top
-	local gemsEarned =
-		math.floor(Evolutions.gemsForRun(wave, won, p.Runs) * (1 + r.Boosts.GemMult) + 0.5)
-	p.Runs += 1
-	p.BestWave = math.max(p.BestWave, wave)
+	local gemsEarned = if participated
+		then math.floor(Evolutions.gemsForRun(wave, won, p.Runs) * (1 + r.Boosts.GemMult) + 0.5)
+		else 0
 	p.Gems += gemsEarned
-	progressQuest(plr, "Wave", wave)
-	progressQuest(plr, "Runs", 1)
-	for _, other in Players:GetPlayers() do
-		if other ~= plr then
-			local ok, isFriend = pcall(plr.IsFriendsWith, plr, other.UserId)
-			if ok and isFriend then
-				progressQuest(plr, "FriendRuns", 1)
-				break
+	if participated then
+		p.Runs += 1
+		p.BestWave = math.max(p.BestWave, wave)
+		progressQuest(plr, "Wave", wave)
+		progressQuest(plr, "Runs", 1)
+		for _, other in Players:GetPlayers() do
+			if other ~= plr then
+				local ok, isFriend = pcall(plr.IsFriendsWith, plr, other.UserId)
+				if ok and isFriend then
+					progressQuest(plr, "FriendRuns", 1)
+					break
+				end
 			end
 		end
 	end
@@ -697,20 +736,22 @@ function PlayerData.endRun(plr: Player, wave: number, won: boolean): RunSummary
 	r.Active = false
 	local ls = plr:FindFirstChild("leaderstats")
 	local best = ls and ls:FindFirstChild("Best Wave") :: IntValue?
-	if best and wave > best.Value then
+	if participated and best and wave > best.Value then
 		best.Value = wave
 	end
-	task.spawn(function()
-		local store = topStore
-		if not store then
-			return
-		end
-		pcall(function()
-			store:UpdateAsync(tostring(plr.UserId), function(old)
-				return math.max(old or 0, wave)
+	if participated then
+		task.spawn(function()
+			local store = topStore
+			if not store then
+				return
+			end
+			pcall(function()
+				store:UpdateAsync(tostring(plr.UserId), function(old)
+					return math.max(old or 0, wave)
+				end)
 			end)
 		end)
-	end)
+	end
 	push(plr)
 	return {
 		Won = won,
@@ -847,6 +888,7 @@ local function onPlayerAdded(plr: Player)
 			if health < previousHealth then
 				local r = PlayerData.get(plr)
 				sendFunnel(plr, "first_damage_taken", { seconds = runSeconds(r) })
+				ParticipationRecord:Fire(plr, "DamageTaken", previousHealth - health)
 			end
 			previousHealth = health
 		end)

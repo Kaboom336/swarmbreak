@@ -27,6 +27,9 @@ local Toast = Remotes.Toast :: RemoteEvent
 local Evolve = Remotes.Evolve :: RemoteFunction
 local RedeemCode = Remotes.RedeemCode :: RemoteFunction
 local FX = Remotes.FX :: RemoteEvent
+local ParticipationRecord = (ServerStorage:WaitForChild("ParticipationSignals")):WaitForChild(
+	"Record"
+) :: BindableEvent
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 
 local lastCodeAttempt: { [Player]: number } = {}
@@ -211,7 +214,11 @@ PickReward.OnServerInvoke = function(plr, id)
 	if typeof(id) ~= "string" then
 		return false, "Bad request."
 	end
-	return PlayerData.pickReward(plr, id)
+	local ok, why = PlayerData.pickReward(plr, id)
+	if ok then
+		ParticipationRecord:Fire(plr, "RewardChoice", 1)
+	end
+	return ok, why
 end
 
 MarketplaceService.ProcessReceipt = function(receipt)

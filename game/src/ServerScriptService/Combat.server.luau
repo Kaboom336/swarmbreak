@@ -12,6 +12,9 @@ local Theme = require(ReplicatedStorage.Shared.Theme)
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local Shoot = Remotes.Shoot :: RemoteEvent
 local FX = Remotes.FX :: RemoteEvent
+local ParticipationRecord = (ServerStorage:WaitForChild("ParticipationSignals")):WaitForChild(
+	"Record"
+) :: BindableEvent
 
 local lastAction: { [Player]: number } = {}
 local rejectedFireCounts: { [Player]: number } = {}
@@ -50,6 +53,7 @@ local function damageEnemy(plr: Player, model: Model, damage: number, hitPos: Ve
 	local landed = CombatEffects.hit(plr, model, damage, hitPos)
 	if landed then
 		PlayerData.recordHit(plr)
+		ParticipationRecord:Fire(plr, "Damage", damage)
 	end
 	return landed
 end
