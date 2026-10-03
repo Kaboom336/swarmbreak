@@ -43,6 +43,12 @@ local function nearestPlayerRoot(pos: Vector3): (BasePart?, number)
 	local best: BasePart? = nil
 	local bestDist = math.huge
 	for _, plr in Players:GetPlayers() do
+		if
+			plr:GetAttribute("InArena") == false
+			or plr:GetAttribute("WaitingForIntermission") == true
+		then
+			continue -- in the lobby or queued for the next intermission
+		end
 		local char = plr.Character
 		local hum = char and char:FindFirstChildOfClass("Humanoid")
 		local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?

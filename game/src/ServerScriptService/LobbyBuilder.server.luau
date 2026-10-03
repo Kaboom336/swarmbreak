@@ -12,6 +12,7 @@ local Kits = require(shared:WaitForChild("Kits"))
 local Quests = require(shared:WaitForChild("Quests"))
 local Theme = require(shared:WaitForChild("Theme"))
 local PlayerData = require(ServerStorage:WaitForChild("PlayerData"))
+local GameState = require(ServerStorage:WaitForChild("GameState"))
 
 local arena = workspace:WaitForChild("Arena")
 local arenaSpawn = arena:WaitForChild("PlayerSpawn") :: SpawnLocation
@@ -235,12 +236,20 @@ end
 
 local function sendParty(userIds: { number }, partyNumber: number)
 	local spacing = 4
+	-- Between runs the party starts the next run; mid-run it joins at the next intermission
+	-- (WaveManager admits waiting InArena players with catch-up coins).
+	local phase = GameState.get("Phase")
+	local joinNow = phase == "idle" or phase == "over"
 	for index, userId in userIds do
 		local player = Players:GetPlayerByUserId(userId)
 		if player and isOnPad(player) then
 			player:SetAttribute("LobbyParty", partyNumber)
 			player:SetAttribute("InArena", true)
 			player.RespawnLocation = arenaSpawn
+			if not joinNow then
+				continue
+			end
+			PlayerData.setWaiting(player, false)
 			local character = player.Character
 			if character then
 				local x = (index - (#userIds + 1) / 2) * spacing

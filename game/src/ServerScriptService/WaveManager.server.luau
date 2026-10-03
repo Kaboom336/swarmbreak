@@ -342,7 +342,8 @@ local function admitWaitingPlayers()
 	end
 	local catchUpCoins = Economy.catchUpCoins(aliveCoins)
 	for _, plr in Players:GetPlayers() do
-		if PlayerData.isWaiting(plr) then
+		-- Lobby players wait until they launch from the Start Here pad (InArena).
+		if PlayerData.isWaiting(plr) and plr:GetAttribute("InArena") == true then
 			PlayerData.setRunCoins(plr, catchUpCoins)
 			PlayerData.setWaiting(plr, false)
 			plr:LoadCharacter()
@@ -531,18 +532,32 @@ local function endRun(won: boolean, reachedWave: number)
 	end
 end
 
+local function anyPlayerInRun(): boolean
+	for _, plr in Players:GetPlayers() do
+		if not PlayerData.isWaiting(plr) then
+			return true
+		end
+	end
+	return false
+end
+
 local function gameLoop()
 	while true do
 		GameState.set("Phase", "idle")
 		GameState.set("Wave", 0)
-		while #Players:GetPlayers() == 0 do
-			task.wait(1)
+		-- A run starts once a party launches from the lobby's Start Here pad.
+		while not anyPlayerInRun() do
+			task.wait(0.25)
 		end
 		runStartedAt = os.clock()
 		currentDifficultyId = selectedDifficultyId()
 		GameState.set("Difficulty", currentDifficultyId)
-		local playerCount = #Players:GetPlayers()
+		local playerCount = 0
 		for _, plr in Players:GetPlayers() do
+			if PlayerData.isWaiting(plr) then
+				continue
+			end
+			playerCount += 1
 			PlayerData.resetRun(plr)
 			local profile = PlayerData.profile(plr)
 			sendTelemetry(plr, "RunStart", {
@@ -576,11 +591,10 @@ local function gameLoop()
 end
 
 local function onPlayerAdded(plr: Player)
-	local joinedDuringWave = GameState.isWaveActive()
-	PlayerData.setWaiting(plr, joinedDuringWave)
-	-- Players joining an active wave stay unspawned until its intermission.
+	-- Everyone starts in the lobby, out of the run, until the Start Here pad launches them.
+	PlayerData.setWaiting(plr, true)
 	task.wait(1)
-	if not joinedDuringWave and not plr.Character then
+	if not plr.Character then
 		plr:LoadCharacter()
 	end
 end
