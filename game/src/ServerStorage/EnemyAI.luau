@@ -10,6 +10,7 @@ local Fit = require(ReplicatedStorage.Shared.Fit)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local EnemyBuilder = require(script.Parent.EnemyBuilder)
+local EnemyIndex = require(script.Parent.EnemyIndex)
 local FX = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("FX") :: RemoteEvent
 
 type EnemyDef = Enemies.EnemyDef
@@ -251,6 +252,7 @@ function EnemyAI.spawn(
 		LastHitBy = nil,
 	}
 	live[model] = e
+	EnemyIndex.add(model, root)
 	if not def.Flying then
 		task.spawn(groundMover, e)
 	end
@@ -262,6 +264,7 @@ function EnemyAI.spawn(
 
 	hum.Died:Connect(function()
 		live[model] = nil
+		EnemyIndex.remove(model)
 		onDeath(e.LastHitBy)
 		local accent = (Theme.Enemy[typeName] or Theme.Enemy.Walker).Accent
 		FX:FireAllClients("death", {
@@ -303,6 +306,7 @@ end
 
 function EnemyAI.clearAll()
 	live = {}
+	EnemyIndex.clear()
 	folder:ClearAllChildren()
 end
 

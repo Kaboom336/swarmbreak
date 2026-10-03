@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PlayerData = require(script.Parent.PlayerData)
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 local Feel = require(ReplicatedStorage.Shared.Feel)
+local EnemyIndex = require(script.Parent.EnemyIndex)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local HitMarker = Remotes.HitMarker :: RemoteEvent
@@ -15,8 +16,8 @@ local CombatEffects = {}
 
 local function enemiesNear(pos: Vector3, radius: number, except: Model?): { Model }
 	local out = {}
-	for _, model in enemiesFolder:GetChildren() do
-		local root = model:IsA("Model") and model.PrimaryPart
+	for _, model in EnemyIndex.queryRadius(pos, radius) do
+		local root = model.PrimaryPart
 		if root and model ~= except and (root.Position - pos).Magnitude <= radius then
 			local hum = model:FindFirstChildOfClass("Humanoid")
 			if hum and hum.Health > 0 then
