@@ -216,7 +216,11 @@ Shoot.OnServerEvent:Connect(function(plr, origin: Vector3, dir: Vector3)
 		recordRejectedFire(plr)
 		return
 	end
-	lastAction[plr] = now
+	-- Advance by one fire interval instead of jumping to now, so two shots that the network
+	-- bunched together still pass; clamp to now - interval so idle time never banks a burst.
+	local interval = 1 / math.max(rate, 0.01)
+	local last = lastAction[plr]
+	lastAction[plr] = if last then math.max(now - interval, math.min(now, last + interval)) else now
 	PlayerData.completeTutorial(plr, "Shoot")
 	local damage = weapon.Damage * PlayerData.damageMultiplier(plr)
 	dir = dir.Unit

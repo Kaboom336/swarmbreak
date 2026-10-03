@@ -858,8 +858,9 @@ end
 -- Intermission over: resolve every queued level so nobody loses earned picks.
 function PlayerData.autoPick(plr: Player)
 	local r = PlayerData.get(plr)
+	-- Pick at random from each offer: always taking the first card stacked one card 17 times.
 	while #r.Offer > 0 do
-		PlayerData.pickReward(plr, r.Offer[1])
+		PlayerData.pickReward(plr, r.Offer[rng:NextInteger(1, #r.Offer)])
 	end
 end
 

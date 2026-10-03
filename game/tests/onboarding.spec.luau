@@ -1,7 +1,7 @@
 local Onboarding = load("Onboarding")
 
 test("opening objective is complete and lasts three seconds", function()
-	eq(Onboarding.ObjectiveText, "Survive 5 waves. Kill the Queen.", "objective text")
+	eq(Onboarding.ObjectiveText, "Survive 5 waves. Beat the Big Brute.", "objective text")
 	eq(Onboarding.ObjectiveSeconds, 3, "objective duration")
 	eq(Onboarding.CountdownSeconds, 3, "countdown duration")
 end)

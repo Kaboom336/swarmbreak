@@ -1,7 +1,7 @@
 --!strict
 -- Pure first-run presentation and spawn rules shared by the server, HUD, and tests.
 local Onboarding = {
-	ObjectiveText = "Survive 5 waves. Kill the Queen.",
+	ObjectiveText = "Survive 5 waves. Beat the Big Brute.",
 	ObjectiveSeconds = 3,
 	CountdownSeconds = 3,
 	SpawnDistanceMin = 25,

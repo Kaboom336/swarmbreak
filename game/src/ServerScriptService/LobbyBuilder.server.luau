@@ -219,7 +219,8 @@ local billboard = Instance.new("BillboardGui")
 billboard.Name = "Label"
 billboard.Size = UDim2.fromOffset(250, 70)
 billboard.StudsOffset = Vector3.new(0, 4, 0)
-billboard.AlwaysOnTop = true
+billboard.AlwaysOnTop = false -- AlwaysOnTop drew it over the arena fight
+billboard.MaxDistance = 80
 billboard.Parent = startPad
 local startText = Instance.new("TextLabel")
 startText.Name = "Text"
@@ -313,6 +314,19 @@ while true do
 			enteredAt[player] = nil
 		end
 	end
+	-- Pad countdown: show the time left for whoever has stood on it longest.
+	local earliest: number? = nil
+	for _, since in enteredAt do
+		if not earliest or since < earliest then
+			earliest = since
+		end
+	end
+	startText.Text = if earliest
+		then string.format(
+			"LAUNCH IN %d",
+			math.max(1, math.ceil(Lobby.StartPadSeconds - (now - earliest)))
+		)
+		else string.format("START HERE\nStand for %d seconds", Lobby.StartPadSeconds)
 	for _, party in Lobby.groupParties(readyUserIds) do
 		nextPartyNumber += 1
 		sendParty(party, nextPartyNumber)
