@@ -18,7 +18,7 @@ RemoteGuard.Policies = {
 	equip = { Capacity = 4, RefillPerSecond = 2 },
 	evolution = { Capacity = 2, RefillPerSecond = 0.5 },
 	code = { Capacity = 1, RefillPerSecond = 0.5 },
-	reward = { Capacity = 2, RefillPerSecond = 1 },
+	reward = { Capacity = 4, RefillPerSecond = 2 }, -- level-ups can queue; picks must feel instant
 	tutorial = { Capacity = 4, RefillPerSecond = 2 },
 }
 
