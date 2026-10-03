@@ -15,6 +15,8 @@ test("every kit has a valid start weapon and signature", function()
 	for _, id in Kits.Order do
 		local def = Kits.Defs[id]
 		eq(Weapons.Defs[def.StartWeapon] ~= nil, true, id .. " start weapon")
+		-- Choosing a kit grants its start weapon forever, so it must never be crate loot.
+		eq(Weapons.Defs[def.StartWeapon].Rarity, "Common", id .. " start weapon rarity")
 		eq(type(def.Signature.Id), "string", id .. " signature id")
 		eq(type(def.Signature.Label), "string", id .. " signature label")
 		eq(type(def.Signature.Icon), "string", id .. " signature icon")

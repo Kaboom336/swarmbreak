@@ -30,6 +30,8 @@ local WeaponModels = require(script.Parent.WeaponModels)
 
 local StatsChanged = ReplicatedStorage:WaitForChild("Remotes").StatsChanged :: RemoteEvent
 local CrateResult = ReplicatedStorage:WaitForChild("Remotes").CrateResult :: RemoteEvent
+local SignatureRemote =
+	ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Signature") :: RemoteEvent
 -- GetOrderedDataStore throws in an unpublished Studio place; fall back to no leaderboard.
 local topStoreOk, topStoreResult = pcall(function()
 	return DataStoreService:GetOrderedDataStore("SwarmBreak_top_v1")
@@ -423,6 +425,7 @@ local function bindSignature(plr: Player, resetCooldown: boolean)
 	plr:SetAttribute("SignatureCooldown", signature.Cooldown)
 	if resetCooldown then
 		plr:SetAttribute("SignatureReadyAt", 0)
+		SignatureRemote:FireClient(plr, 0) -- the HUD's cooldown ring resets with the server
 	end
 end
 
@@ -593,8 +596,15 @@ function PlayerData.chooseKit(plr: Player, id: string): (boolean, string)
 		end
 	end
 	p.Kit = id
+	-- Start weapons are Common (kits.spec), so granting one on choice is safe to persist.
+	local startWeapon = Kits.startWeapon(id)
+	if not table.find(p.Weapons, startWeapon) then
+		table.insert(p.Weapons, startWeapon)
+	end
+	p.Equipped = startWeapon
 	Profile.markDirty(plr)
 	bindSignature(plr, false)
+	attachWeapon(plr)
 	applyStats(plr)
 	if PlayerData.OnEquipChanged then
 		PlayerData.OnEquipChanged(plr)
@@ -704,17 +714,8 @@ function PlayerData.resetRun(plr: Player)
 	r.Wave = 0
 	r.FunnelEvents = Funnel.newRun()
 	r.Active = true
-	local startWeapon = Kits.startWeapon(p.Kit)
-	if not table.find(p.Weapons, startWeapon) then
-		table.insert(p.Weapons, startWeapon)
-		Profile.markDirty(plr)
-	end
-	p.Equipped = startWeapon
+	-- The weapon picked in the lobby stays equipped; choosing a kit equips its start weapon.
 	bindSignature(plr, true)
-	attachWeapon(plr)
-	if PlayerData.OnEquipChanged then
-		PlayerData.OnEquipChanged(plr)
-	end
 	sendFunnel(plr, "run_start", { seconds = 0 })
 	applyStats(plr) -- a survivor keeps their character, so last run's stats go now
 	push(plr)
