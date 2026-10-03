@@ -8,6 +8,7 @@ local Enemies = require(ReplicatedStorage.Shared.Enemies)
 local EnemyTells = require(ReplicatedStorage.Shared.EnemyTells)
 local Fit = require(ReplicatedStorage.Shared.Fit)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
+local SwarmlingStep = require(ReplicatedStorage.Shared.SwarmlingStep)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local EnemyBuilder = require(script.Parent.EnemyBuilder)
 local EnemyIndex = require(script.Parent.EnemyIndex)
@@ -33,6 +34,17 @@ type Live = {
 }
 
 local live: { [Model]: Live } = {}
+type SwarmLive = {
+	Model: Model,
+	Root: BasePart,
+	Def: EnemyDef,
+	Speed: number,
+	Damage: number,
+	AttackCooldown: number,
+	OnDeath: (Player?, Vector3) -> (),
+	LastHitBy: Player?,
+}
+local swarm: { [Model]: SwarmLive } = {}
 local EnemyAI = {}
 EnemyAI.OnSummon = nil :: ((string, CFrame) -> ())?
 
@@ -69,6 +81,25 @@ local function nearestPlayerRoot(pos: Vector3): (BasePart?, number)
 		end
 	end
 	return best, bestDist
+end
+
+local function eligiblePlayerRoots(): { BasePart }
+	local roots = {}
+	for _, plr in Players:GetPlayers() do
+		if
+			plr:GetAttribute("InArena") == false
+			or plr:GetAttribute("WaitingForIntermission") == true
+		then
+			continue
+		end
+		local character = plr.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if humanoid and humanoid.Health > 0 and root and root:IsA("BasePart") then
+			table.insert(roots, root)
+		end
+	end
+	return roots
 end
 
 local function makeHealthBar(model: Model, root: BasePart, hum: Humanoid, boss: boolean)
@@ -210,6 +241,54 @@ local function groundMover(e: Live)
 	end
 end
 
+local function spawnSwarmling(
+	typeName: string,
+	cf: CFrame,
+	healthScale: number,
+	damageScale: number,
+	mutationId: string,
+	onDeath: (Player?, Vector3) -> ()
+): Model
+	local def = Enemies.Defs[typeName]
+	local stats = Mutations.apply({
+		EnemySpeed = def.Speed,
+		EnemyHealth = def.Health * healthScale,
+		BossScale = 1,
+	}, mutationId)
+	local fittedSize = Fit.sizeForRelativeHeight(def.Size, def.Scale, 5)
+	local rig = EnemyBuilder.build(typeName, v3(fittedSize), cf)
+	local model = rig.Model
+	local root = rig.Root
+	local health = math.floor(stats.EnemyHealth + 0.5)
+	root.Anchored = true
+	root.CanCollide = false
+	model:SetAttribute("Boss", false)
+	model:SetAttribute("NoHumanoid", true)
+	model:SetAttribute("TypeName", typeName)
+	model:SetAttribute("Health", health)
+	model:SetAttribute("MaxHealth", health)
+	model:SetAttribute("LastHitBy", 0)
+	model.Parent = folder
+
+	local enemy: SwarmLive = {
+		Model = model,
+		Root = root,
+		Def = def,
+		Speed = stats.EnemySpeed,
+		Damage = math.floor(def.Damage * damageScale + 0.5),
+		AttackCooldown = 0,
+		OnDeath = onDeath,
+		LastHitBy = nil,
+	}
+	swarm[model] = enemy
+	EnemyIndex.add(model, root)
+	model:GetAttributeChangedSignal("LastHitBy"):Connect(function()
+		local id = model:GetAttribute("LastHitBy") :: number
+		enemy.LastHitBy = Players:GetPlayerByUserId(id)
+	end)
+	return model
+end
+
 function EnemyAI.spawn(
 	typeName: string,
 	cf: CFrame,
@@ -219,6 +298,9 @@ function EnemyAI.spawn(
 	onDeath: (Player?, Vector3) -> ()
 ): Model
 	local def = Enemies.Defs[typeName]
+	if def.NoHumanoid then
+		return spawnSwarmling(typeName, cf, healthScale, damageScale, mutationId, onDeath)
+	end
 	local stats = Mutations.apply({
 		EnemySpeed = def.Speed,
 		EnemyHealth = def.Health * healthScale,
@@ -316,13 +398,92 @@ function EnemyAI.aliveCount(): number
 	for _ in live do
 		n += 1
 	end
+	for _ in swarm do
+		n += 1
+	end
 	return n
+end
+
+function EnemyAI.regularAliveCount(): number
+	local count = 0
+	for _ in live do
+		count += 1
+	end
+	return count
+end
+
+function EnemyAI.swarmlingAliveCount(): number
+	local count = 0
+	for _ in swarm do
+		count += 1
+	end
+	return count
+end
+
+function EnemyAI.damageNoHumanoid(model: Model, damage: number): (boolean, boolean)
+	local enemy = swarm[model]
+	if not enemy or damage <= 0 or damage ~= damage then
+		return false, false
+	end
+	local health = (model:GetAttribute("Health") :: number?) or 0
+	if health <= 0 then
+		return false, false
+	end
+	local remaining = math.max(0, health - damage)
+	model:SetAttribute("Health", remaining)
+	if remaining > 0 then
+		return true, false
+	end
+
+	swarm[model] = nil
+	EnemyIndex.remove(model)
+	local lastHitById = (model:GetAttribute("LastHitBy") :: number?) or 0
+	local lastHitBy = Players:GetPlayerByUserId(lastHitById) or enemy.LastHitBy
+	enemy.OnDeath(lastHitBy, enemy.Root.Position)
+	local accent = (Theme.Enemy.Swarmling).Accent
+	FxRouter.emit("death", enemy.Root.Position, {
+		Position = enemy.Root.Position,
+		Size = enemy.Root.Size.Magnitude,
+		Color = accent,
+		EnemyType = "Swarmling",
+		Boss = false,
+	}, lastHitBy)
+	model:SetAttribute("Dead", true)
+	task.delay(0.6, function()
+		model:Destroy()
+	end)
+	return true, true
 end
 
 function EnemyAI.clearAll()
 	live = {}
+	swarm = {}
 	EnemyIndex.clear()
 	folder:ClearAllChildren()
+end
+
+local function queueSwarmlingAttack(enemy: SwarmLive, target: BasePart)
+	local tell = EnemyTells.Defs.Swarmling
+	local radius = enemy.Root.Size.Magnitude / 2 + 3
+	FxRouter.emit("tell", enemy.Root.Position, {
+		Model = enemy.Model,
+		Position = enemy.Root.Position,
+		Sound = tell.SoundKey,
+		GlowPulse = tell.GlowPulse,
+		GlowColor = tell.GlowColor,
+		Duration = tell.Windup,
+		Radius = radius,
+	}, playerFromRoot(target))
+	task.delay(tell.Windup, function()
+		if ((enemy.Model:GetAttribute("Health") :: number?) or 0) <= 0 or not target.Parent then
+			return
+		end
+		local distance = ((target.Position - enemy.Root.Position) * Vector3.new(1, 0, 1)).Magnitude
+		local humanoid = target.Parent:FindFirstChildOfClass("Humanoid")
+		if humanoid and distance <= radius + 1 then
+			humanoid:TakeDamage(enemy.Damage)
+		end
+	end)
 end
 
 RunService.Heartbeat:Connect(function(dt)
@@ -399,6 +560,56 @@ RunService.Heartbeat:Connect(function(dt)
 				end
 			end
 		end
+	end
+
+	local playerRoots = eligiblePlayerRoots()
+	if #playerRoots == 0 then
+		return
+	end
+	local targets = table.create(#playerRoots)
+	for _, root in playerRoots do
+		table.insert(targets, { x = root.Position.X, y = root.Position.Y, z = root.Position.Z })
+	end
+	local units = {}
+	local roots = {}
+	local entries = {}
+	for model, enemy in swarm do
+		if model.Parent and ((model:GetAttribute("Health") :: number?) or 0) > 0 then
+			local slowUntil = (model:GetAttribute("SlowUntil") :: number?) or 0
+			local speed = if os.clock() < slowUntil then enemy.Speed * 0.7 else enemy.Speed
+			table.insert(units, {
+				Position = {
+					x = enemy.Root.Position.X,
+					y = enemy.Root.Position.Y,
+					z = enemy.Root.Position.Z,
+				},
+				Speed = speed,
+			})
+			table.insert(roots, enemy.Root)
+			table.insert(entries, enemy)
+		end
+	end
+	local transforms = SwarmlingStep.step(units, targets, dt)
+	local cframes = table.create(#transforms)
+	for index, transform in transforms do
+		local position = Vector3.new(transform.x, transform.y, transform.z)
+		local look = Vector3.new(transform.lookX, 0, transform.lookZ)
+		table.insert(cframes, CFrame.lookAt(position, position + look))
+
+		local enemy = entries[index]
+		enemy.AttackCooldown -= dt
+		local target, distance = nearestPlayerRoot(position)
+		if
+			target
+			and distance <= enemy.Root.Size.Magnitude / 2 + 3
+			and enemy.AttackCooldown <= 0
+		then
+			enemy.AttackCooldown = 1
+			queueSwarmlingAttack(enemy, target)
+		end
+	end
+	if #roots > 0 then
+		workspace:BulkMoveTo(roots, cframes, Enum.BulkMoveMode.FireCFrameChanged)
 	end
 end)
 

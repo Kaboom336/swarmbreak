@@ -107,6 +107,28 @@ function WaveTable.packFits(alive: number, packSize: number, maxAlive: number): 
 	return alive + packSize <= maxAlive
 end
 
+function WaveTable.swarmlingCount(wave: number): number
+	if wave < 2 then
+		return 0
+	end
+	return math.min(Config.MaxSwarmlings, 10 + math.floor((wave - 2) * 1.5))
+end
+
+function WaveTable.swarmlingStreams(count: number): { number }
+	local total = math.max(0, math.floor(count))
+	if total < 10 then
+		return {}
+	end
+	local streamCount = math.ceil(total / 20)
+	local baseSize = math.floor(total / streamCount)
+	local remainder = total % streamCount
+	local streams = {}
+	for index = 1, streamCount do
+		table.insert(streams, baseSize + if index <= remainder then 1 else 0)
+	end
+	return streams
+end
+
 function WaveTable.enemyCount(wave: number): number
 	if wave == 1 then
 		return 8

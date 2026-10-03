@@ -33,6 +33,7 @@ LevelUp.WaveOneKillRate = 0.2 -- one Walker kill every 5 seconds in the opening 
 -- curve settles at 40 seconds per pick at the baseline kill rate below.
 LevelUp.XpCurve = { 30, 35, 40, 80 }
 LevelUp.KillXp = {
+	Swarmling = 3,
 	Walker = 10,
 	Runner = 10,
 	Flyer = 12,

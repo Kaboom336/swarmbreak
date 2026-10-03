@@ -23,6 +23,10 @@ function EnemyAnimCurves.walkPhase(phase: number, speed: number, dt: number): nu
 	return phase + math.max(0, dt) * (2 + math.max(0, speed) * 0.35)
 end
 
+function EnemyAnimCurves.swarmlingPose(phase: number): (number, number)
+	return math.sin(phase * 2) * 0.16, math.sin(phase) * math.rad(38)
+end
+
 function EnemyAnimCurves.attackWindup(tellDuration: number): number
 	return math.max(0, tellDuration)
 end

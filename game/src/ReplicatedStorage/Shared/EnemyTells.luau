@@ -15,6 +15,13 @@ export type AttackTimeline = {
 }
 
 local Defs: { [string]: EnemyTell } = {
+	Swarmling = {
+		SoundKey = "Hurt",
+		GlowPulse = true,
+		GlowColor = { 255, 180, 60 },
+		Windup = 0.4,
+		GroundAoeCircle = false,
+	},
 	Walker = {
 		SoundKey = "Hurt",
 		GlowPulse = true,

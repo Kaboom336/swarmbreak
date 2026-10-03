@@ -210,7 +210,9 @@ local function spawnDrops(plr: Player, position: Vector3, enemyType: string, coi
 		index += 1
 		makeDrop(plr, position, "XP", value, index)
 	end
-	makeDrop(plr, position, "Coin", coins, index + 1)
+	if coins > 0 then
+		makeDrop(plr, position, "Coin", coins, index + 1)
+	end
 end
 
 local function firstPackSpawnCFrame(): CFrame?
@@ -321,7 +323,7 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 end
 
 EnemyAI.OnSummon = function(typeName: string, cf: CFrame)
-	if EnemyAI.aliveCount() < Config.MaxAlive then
+	if EnemyAI.regularAliveCount() < Config.MaxAlive then
 		spawnEnemy(typeName, cf)
 	end
 end
@@ -440,8 +442,26 @@ local function runWave(wave: number): boolean
 		end
 	end
 
+	for _, streamSize in WaveTable.swarmlingStreams(WaveTable.swarmlingCount(wave)) do
+		while EnemyAI.swarmlingAliveCount() + streamSize > Config.MaxSwarmlings do
+			if not anyPlayersAlive() then
+				return false
+			end
+			task.wait(0.5)
+		end
+		local portals = spawnPortalCFrames(2)
+		for index = 1, streamSize do
+			local portal = portals[(index - 1) % #portals + 1]
+			spawnEnemy(
+				"Swarmling",
+				portal * CFrame.new(rng:NextNumber(-4, 4), 0, rng:NextNumber(-4, 4))
+			)
+		end
+		task.wait(Config.SpawnGapMin)
+	end
+
 	for packIndex, pack in WaveTable.packs(composition) do
-		while not WaveTable.packFits(EnemyAI.aliveCount(), pack.Size, Config.MaxAlive) do
+		while not WaveTable.packFits(EnemyAI.regularAliveCount(), pack.Size, Config.MaxAlive) do
 			if not anyPlayersAlive() then
 				return false
 			end

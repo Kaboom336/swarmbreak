@@ -12,7 +12,7 @@ local enemies = workspace:WaitForChild("Enemies")
 
 type Anim = {
 	Root: BasePart,
-	Humanoid: Humanoid,
+	Humanoid: Humanoid?,
 	Motors: { [string]: Motor6D },
 	Base: { [string]: CFrame },
 	Phase: number,
@@ -22,6 +22,8 @@ type Anim = {
 	AttackStarted: number?,
 	AttackWindup: number,
 	HitFlash: HitFlash?,
+	BodyMesh: SpecialMesh?,
+	BodyMeshOffset: Vector3,
 }
 type HitFlash = {
 	Highlight: Highlight,
@@ -71,7 +73,7 @@ end
 local function playDeath(model: Model, anim: Anim)
 	local ghost = model:Clone()
 	ghost.Name = model.Name .. "_Death"
-	local ghostRoot = ghost:FindFirstChild("HumanoidRootPart")
+	local ghostRoot = ghost.PrimaryPart or ghost:FindFirstChild("HumanoidRootPart")
 	if not ghostRoot or not ghostRoot:IsA("BasePart") then
 		ghost:Destroy()
 		return
@@ -176,12 +178,14 @@ local function register(model: Instance)
 		return
 	end
 	task.defer(function()
-		local root = model:FindFirstChild("HumanoidRootPart")
+		local root = model.PrimaryPart or model:FindFirstChild("HumanoidRootPart")
 		local humanoid = model:FindFirstChildOfClass("Humanoid")
-		if not root or not root:IsA("BasePart") or not humanoid then
+		local noHumanoid = model:GetAttribute("NoHumanoid") == true
+		if not root or not root:IsA("BasePart") or (not humanoid and not noHumanoid) then
 			return
 		end
 		local motors, base = motorMap(model)
+		local bodyMesh = model:FindFirstChild("BodyMesh", true)
 		nextEnemyIndex += 1
 		local anim: Anim = {
 			Root = root,
@@ -190,24 +194,43 @@ local function register(model: Instance)
 			Base = base,
 			Phase = math.random() * 6,
 			Index = nextEnemyIndex,
-			LastHealth = humanoid.Health,
+			LastHealth = if humanoid
+				then humanoid.Health
+				else (model:GetAttribute("Health") :: number?) or 0,
 			HitStarted = nil,
 			AttackStarted = nil,
 			AttackWindup = 0,
 			HitFlash = nil,
+			BodyMesh = if bodyMesh and bodyMesh:IsA("SpecialMesh") then bodyMesh else nil,
+			BodyMeshOffset = if bodyMesh and bodyMesh:IsA("SpecialMesh")
+				then bodyMesh.Offset
+				else Vector3.zero,
 		}
 		anims[model] = anim
-		humanoid.HealthChanged:Connect(function(health)
+		local function healthChanged(health: number)
 			if health < anim.LastHealth and health > 0 then
 				anim.HitStarted = os.clock()
 				flashHit(model, anim)
 			end
 			anim.LastHealth = health
-		end)
-		humanoid.Died:Connect(function()
-			anims[model] = nil
-			playDeath(model, anim)
-		end)
+		end
+		if humanoid then
+			humanoid.HealthChanged:Connect(healthChanged)
+			humanoid.Died:Connect(function()
+				anims[model] = nil
+				playDeath(model, anim)
+			end)
+		else
+			model:GetAttributeChangedSignal("Health"):Connect(function()
+				healthChanged((model:GetAttribute("Health") :: number?) or 0)
+			end)
+			model:GetAttributeChangedSignal("Dead"):Connect(function()
+				if model:GetAttribute("Dead") == true then
+					anims[model] = nil
+					playDeath(model, anim)
+				end
+			end)
+		end
 	end)
 end
 
@@ -256,7 +279,8 @@ RunService.Heartbeat:Connect(function(dt)
 			end
 		end
 
-		local speed = anim.Root.AssemblyLinearVelocity.Magnitude
+		local isSwarmling = model:GetAttribute("NoHumanoid") == true
+		local speed = if isSwarmling then 13 else anim.Root.AssemblyLinearVelocity.Magnitude
 		local moving = math.clamp(speed / 12, 0, 1.5)
 		anim.Phase = EnemyAnimCurves.walkPhase(anim.Phase, speed, dt)
 		local phase = anim.Phase
@@ -280,6 +304,16 @@ RunService.Heartbeat:Connect(function(dt)
 		end
 		local attackPitch = math.rad(-30) * windup + math.rad(48) * lunge
 		local compress = CFrame.new(0, -anim.Root.Size.Y * 0.04 * squash, 0)
+		if isSwarmling then
+			local bob, limbSwing = EnemyAnimCurves.swarmlingPose(phase)
+			if anim.BodyMesh then
+				anim.BodyMesh.Offset = anim.BodyMeshOffset + Vector3.new(0, bob, 0)
+			end
+			local bobOffset = compress * CFrame.new(0, bob, 0)
+			set(anim, "SwarmlingLimb_L", bobOffset * CFrame.Angles(limbSwing, 0, 0))
+			set(anim, "SwarmlingLimb_R", bobOffset * CFrame.Angles(-limbSwing, 0, 0))
+			continue
+		end
 
 		local swing = math.sin(phase) * math.rad(35) * moving
 		set(anim, "Hip_L", compress * CFrame.Angles(swing + attackPitch * 0.25, 0, 0))

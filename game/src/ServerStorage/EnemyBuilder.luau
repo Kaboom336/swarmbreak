@@ -353,6 +353,57 @@ local function buildWalker(
 	return 2.3 * s + 0.3 * s
 end
 
+local function buildSwarmling(size: Vector3, cf: CFrame): Rig
+	local palette = Theme.Enemy.Swarmling
+	local bodyColor = c3(palette.Body)
+	local accent = c3(palette.Accent)
+	local scale = size.Y / 6
+	local model = Instance.new("Model")
+	model.Name = "Swarmling"
+
+	local body = part(
+		"Body",
+		Vector3.new(2.4, 3.6, 2.4) * scale,
+		bodyColor,
+		Enum.Material.SmoothPlastic,
+		Enum.PartType.Ball
+	)
+	body.CFrame = cf
+	body.CanCollide = false
+	body.Massless = false
+	local bodyMesh = Instance.new("SpecialMesh")
+	bodyMesh.Name = "BodyMesh"
+	bodyMesh.MeshType = Enum.MeshType.Sphere
+	bodyMesh.Parent = body
+	body.Parent = model
+	model.PrimaryPart = body
+
+	for _, side in { { "L", -1 }, { "R", 1 } } do
+		local sign = side[2] :: number
+		local limb = part(
+			"Limb_" .. side[1],
+			Vector3.new(0.55, 2.6, 0.55) * scale,
+			accent,
+			Enum.Material.SmoothPlastic
+		)
+		limb.Parent = model
+		joint(
+			"SwarmlingLimb_" .. side[1],
+			body,
+			limb,
+			CFrame.new(sign * 0.65 * scale, -1.45 * scale, 0),
+			CFrame.new(0, 1.15 * scale, 0)
+		)
+	end
+
+	local light = Instance.new("PointLight")
+	light.Color = accent
+	light.Range = 5
+	light.Brightness = 0.6
+	light.Parent = body
+	return { Model = model, Root = body, Torso = body, HipHeight = 0 }
+end
+
 local function buildRunner(
 	model: Model,
 	root: BasePart,
@@ -672,6 +723,9 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 end
 
 function EnemyBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig
+	if typeName == "Swarmling" then
+		return buildSwarmling(size, cf)
+	end
 	local humanoid = buildHumanoid(typeName, size, cf)
 	if humanoid then
 		return humanoid

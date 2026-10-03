@@ -60,7 +60,10 @@ local function updateHighlights()
 		if child:IsA("Model") then
 			local root = child.PrimaryPart
 			local humanoid = child:FindFirstChildOfClass("Humanoid")
-			if root and humanoid and humanoid.Health > 0 then
+			local alive = if child:GetAttribute("NoHumanoid") == true
+				then ((child:GetAttribute("Health") :: number?) or 0) > 0
+				else humanoid ~= nil and humanoid.Health > 0
+			if root and alive then
 				table.insert(candidates, {
 					Model = child,
 					Distance = (root.Position - origin).Magnitude,

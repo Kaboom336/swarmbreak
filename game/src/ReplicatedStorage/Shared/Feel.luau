@@ -43,6 +43,7 @@ Feel.KnockbackStuds = 2
 
 -- Every enemy gets a bloodless teal/green goo-burst accent on death.
 Feel.DeathBurstColors = {
+	Swarmling = { 45, 225, 180 },
 	Walker = { 55, 230, 175 },
 	Runner = { 120, 255, 120 },
 	Flyer = { 60, 220, 210 },

@@ -9,6 +9,7 @@ local Config = {
 	WaveStartDelay = 3,
 	BossIntroSeconds = 4,
 	MaxAlive = 60,
+	MaxSwarmlings = 100,
 	SpawnGapMin = 0.5,
 	SpawnGapMax = 1.2,
 	SpawnProtectionSeconds = 2,

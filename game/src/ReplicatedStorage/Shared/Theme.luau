@@ -55,6 +55,7 @@ local Theme = {
 	},
 	-- enemy body palette per type (overrides Enemies.Defs Color for the rig)
 	Enemy = {
+		Swarmling = { Body = { 230, 250, 240 }, Accent = { 55, 235, 190 } },
 		Walker = { Body = { 245, 245, 250 }, Accent = { 255, 90, 120 } },
 		Runner = { Body = { 225, 240, 255 }, Accent = { 255, 230, 120 } },
 		Flyer = { Body = { 220, 205, 250 }, Accent = { 150, 120, 255 } },

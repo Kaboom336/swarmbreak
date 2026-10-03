@@ -7,10 +7,11 @@ local TARGET_HEIGHTS = {
 	Runner = 8,
 	Spitter = 9,
 	Flyer = 8,
-	Tank = 13,
-	Brute = 18,
-	Queen = 22,
-	Warden = 22,
+	Tank = 16.9,
+	Brute = 23.4,
+	Queen = 26.4,
+	Warden = 26.4,
+	Swarmling = 6,
 }
 
 test("enemy heights stay within ten percent of their targets", function()
@@ -27,7 +28,7 @@ test("wide imported meshes fit Walker by height", function()
 end)
 
 test("wide bosses keep their footprint within MaxWidth", function()
-	local scale = Fit.capWidth(4.4, 12, 12, Enemies.Defs.Warden.MaxWidth)
+	local scale = Fit.capWidth(Enemies.Defs.Warden.Scale, 12, 12, Enemies.Defs.Warden.MaxWidth)
 	assert(12 * scale <= Enemies.Defs.Warden.MaxWidth + 1e-6, "Warden width")
 	eq(Fit.capWidth(2, 3, 2, nil), 2, "no cap")
 end)

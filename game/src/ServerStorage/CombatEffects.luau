@@ -6,6 +6,7 @@ local PlayerData = require(script.Parent.PlayerData)
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 local Feel = require(ReplicatedStorage.Shared.Feel)
 local EnemyIndex = require(script.Parent.EnemyIndex)
+local EnemyAI = require(script.Parent.EnemyAI)
 local FxRouter = require(script.Parent.FxRouter)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -14,13 +15,20 @@ local enemiesFolder = workspace:WaitForChild("Enemies")
 
 local CombatEffects = {}
 
+local function enemyHealth(model: Model): number
+	if model:GetAttribute("NoHumanoid") == true then
+		return (model:GetAttribute("Health") :: number?) or 0
+	end
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	return if humanoid then humanoid.Health else 0
+end
+
 local function enemiesNear(pos: Vector3, radius: number, except: Model?): { Model }
 	local out = {}
 	for _, model in EnemyIndex.queryRadius(pos, radius) do
 		local root = model.PrimaryPart
 		if root and model ~= except and (root.Position - pos).Magnitude <= radius then
-			local hum = model:FindFirstChildOfClass("Humanoid")
-			if hum and hum.Health > 0 then
+			if enemyHealth(model) > 0 then
 				table.insert(out, model :: Model)
 			end
 		end
@@ -47,18 +55,27 @@ local function rawHit(
 	damage: number,
 	hitPos: Vector3
 ): (boolean, boolean)
-	local ehum = model:FindFirstChildOfClass("Humanoid")
-	if not ehum or ehum.Health <= 0 or model.Parent ~= enemiesFolder then
+	local health = enemyHealth(model)
+	if health <= 0 or model.Parent ~= enemiesFolder then
 		return false, false
 	end
 	if damage <= 0 or damage ~= damage then
 		return false, false
 	end
-	local creditedDamage = math.min(damage, ehum.Health)
+	local creditedDamage = math.min(damage, health)
 	PlayerData.recordDamage(model, plr, creditedDamage)
 	model:SetAttribute("LastHitBy", plr.UserId)
-	ehum:TakeDamage(damage)
-	local killed = ehum.Health <= 0
+	local landed, killed
+	if model:GetAttribute("NoHumanoid") == true then
+		landed, killed = EnemyAI.damageNoHumanoid(model, damage)
+	else
+		local humanoid = model:FindFirstChildOfClass("Humanoid") :: Humanoid
+		humanoid:TakeDamage(damage)
+		landed, killed = true, humanoid.Health <= 0
+	end
+	if not landed then
+		return false, false
+	end
 	local root = model.PrimaryPart
 	local playerRoot = plr.Character
 		and plr.Character:FindFirstChild("HumanoidRootPart") :: BasePart?

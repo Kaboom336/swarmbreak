@@ -65,7 +65,7 @@ test("enemy defs are well formed", function()
 	for name, d in Enemies.Defs do
 		assert(#d.Size == 3 and #d.Color == 3, name .. " size/color")
 		assert(
-			d.Health > 0 and d.Speed > 0 and d.Damage > 0 and d.Coins > 0,
+			d.Health > 0 and d.Speed > 0 and d.Damage > 0 and (d.Coins > 0 or d.NoHumanoid == true),
 			name .. " positive stats"
 		)
 		if d.Ranged then

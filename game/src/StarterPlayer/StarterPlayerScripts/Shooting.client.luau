@@ -85,9 +85,12 @@ local function aliveRoot(model: Instance): (BasePart?, Humanoid?)
 	if not model:IsA("Model") then
 		return nil, nil
 	end
-	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart?
+	local root = model.PrimaryPart or model:FindFirstChild("HumanoidRootPart") :: BasePart?
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
-	if not root or not humanoid or humanoid.Health <= 0 then
+	local alive = if model:GetAttribute("NoHumanoid") == true
+		then ((model:GetAttribute("Health") :: number?) or 0) > 0
+		else humanoid ~= nil and humanoid.Health > 0
+	if not root or not alive then
 		return nil, nil
 	end
 	return root, humanoid
