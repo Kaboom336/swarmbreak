@@ -24,6 +24,7 @@ local Tutorial = require(ReplicatedStorage.Shared.Tutorial)
 local Settings = require(ReplicatedStorage.Shared.Settings)
 local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local Funnel = require(ReplicatedStorage.Shared.Funnel)
+local DamageCredit = require(ReplicatedStorage.Shared.DamageCredit)
 local Profile = require(script.Parent.Profile)
 local WeaponModels = require(script.Parent.WeaponModels)
 
@@ -71,6 +72,7 @@ export type RunSummary = {
 
 local runs: { [Player]: Run } = {}
 local waiting: { [Player]: boolean } = {}
+local damageLedgers: { [Model]: DamageCredit.Ledger } = {}
 local PlayerData = {}
 PlayerData.OnEquipChanged = nil :: ((Player) -> ())?
 
@@ -266,6 +268,51 @@ function PlayerData.addKill(plr: Player, boss: boolean?, enemyType: string?)
 		PlayerData.offerLevelReward(plr)
 	end
 	push(plr)
+end
+
+function PlayerData.recordDamage(enemy: Model, plr: Player, damage: number)
+	local ledger = damageLedgers[enemy]
+	if not ledger then
+		ledger = DamageCredit.new()
+		damageLedgers[enemy] = ledger
+	end
+	DamageCredit.record(ledger, plr.UserId, damage, os.clock())
+end
+
+function PlayerData.clearDamageCredit(enemy: Model)
+	local ledger = damageLedgers[enemy]
+	if ledger then
+		DamageCredit.clear(ledger)
+		damageLedgers[enemy] = nil
+	end
+end
+
+function PlayerData.awardAssists(enemy: Model, killer: Player, killCoins: number, boss: boolean?)
+	local ledger = damageLedgers[enemy]
+	damageLedgers[enemy] = nil
+	if not ledger then
+		return
+	end
+	local connectedUserIds = {}
+	for _, plr in Players:GetPlayers() do
+		connectedUserIds[plr.UserId] = true
+	end
+	local rewards =
+		DamageCredit.split(ledger, killer.UserId, killCoins, os.clock(), connectedUserIds)
+	DamageCredit.clear(ledger)
+	for _, reward in rewards do
+		local helper = Players:GetPlayerByUserId(reward.UserId)
+		if helper then
+			if reward.Coins > 0 then
+				PlayerData.addCoins(helper, reward.Coins)
+			end
+			progressQuest(helper, "Kills", 1)
+			if boss then
+				progressQuest(helper, "BossKills", 1)
+			end
+			push(helper)
+		end
+	end
 end
 
 function PlayerData.recordHit(plr: Player)

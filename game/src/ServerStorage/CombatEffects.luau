@@ -50,6 +50,11 @@ local function rawHit(
 	if not ehum or ehum.Health <= 0 or model.Parent ~= enemiesFolder then
 		return false, false
 	end
+	if damage <= 0 or damage ~= damage then
+		return false, false
+	end
+	local creditedDamage = math.min(damage, ehum.Health)
+	PlayerData.recordDamage(model, plr, creditedDamage)
 	model:SetAttribute("LastHitBy", plr.UserId)
 	ehum:TakeDamage(damage)
 	local killed = ehum.Health <= 0
@@ -152,5 +157,11 @@ end
 
 -- Keep Players referenced for type checkers that flag unused services in strict mode.
 local _ = Players
+
+enemiesFolder.ChildRemoved:Connect(function(enemy)
+	if enemy:IsA("Model") then
+		PlayerData.clearDamageCredit(enemy)
+	end
+end)
 
 return CombatEffects
