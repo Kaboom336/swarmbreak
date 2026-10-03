@@ -808,10 +808,14 @@ local function selectCard(id: string)
 	cardUi.Selected = id
 	for cardId, outline in cardUi.Outlines do
 		local selected = cardId == id
+		local isEvolution = (stats.OfferEvolutions or {})[cardId] ~= nil
 		outline.Color = ClientFX.c3(
 			if selected
 				then CardStyle.SelectedStroke
-				else CardStyle.styleFor((stats.OfferRarities or {})[cardId] or "Common").Stroke
+				else CardStyle.strokeFor(
+					(stats.OfferRarities or {})[cardId] or "Common",
+					isEvolution
+				)
 		)
 		outline.Thickness = if selected
 			then CardStyle.SelectedStrokeThickness
@@ -839,8 +843,15 @@ local function rewardAction(action: string, id: string?)
 	if called and ok == true then
 		ClientFX.sound("Buy")
 		if action == WaveRewards.Actions.Pick then
+			local evolution = (stats.OfferEvolutions or {})[id or ""]
 			local def = WaveRewards.Defs[id or ""]
-			flash(toast, "Picked: " .. (if def then def.Label else id or "reward"), 2)
+			flash(
+				toast,
+				if evolution
+					then "EVOLVED: " .. evolution
+					else "Picked: " .. (if def then def.Label else id or "reward"),
+				2
+			)
 			if cardUi.Ids == offerBefore then
 				cardUi.Ids = {}
 				cardPanel.Visible = false
@@ -887,7 +898,8 @@ end)
 local function rebuildCards(
 	offer: { string },
 	rarities: { [string]: string },
-	elements: { [string]: string }
+	elements: { [string]: string },
+	evolutionOffers: { [string]: string }
 )
 	for _, c in cardUi.Row:GetChildren() do
 		if c:IsA("TextButton") then
@@ -898,7 +910,15 @@ local function rebuildCards(
 	cardUi.Outlines = {}
 	cardUi.Selected = nil
 	for _, id in offer do
-		local def = WaveRewards.Defs[id]
+		local evolutionId = evolutionOffers[id]
+		local recipe = if evolutionId then Evolutions.recipe(evolutionId) else nil
+		local def = if recipe
+			then {
+				Label = recipe.Evolved,
+				Blurb = "Transform the equipped weapon with " .. recipe.Element .. " power",
+				Kind = "Weapon",
+			}
+			else WaveRewards.Defs[id]
 		if def and #cardUi.Ids < WaveRewards.OfferSize then
 			table.insert(cardUi.Ids, id)
 			local i = #cardUi.Ids
@@ -916,7 +936,7 @@ local function rebuildCards(
 			local rarity = rarities[id] or "Common"
 			local style = CardStyle.styleFor(rarity)
 			local textColor = ClientFX.c3(style.Text)
-			local rarityColor = ClientFX.c3(style.Stroke)
+			local rarityColor = ClientFX.c3(CardStyle.strokeFor(rarity, recipe ~= nil))
 			local backgroundGradient = b:FindFirstChildOfClass("UIGradient")
 			if backgroundGradient then
 				backgroundGradient.Color = ColorSequence.new(
@@ -933,10 +953,14 @@ local function rebuildCards(
 				cardUi.Outlines[id] = outline
 			end
 			local elementName = elements[id]
-			local category = CardStyle.categoryFor(def.Kind, elementName)
-			local categoryColor = if elementName and Evolutions.Elements[elementName]
-				then Evolutions.Elements[elementName].Color
-				else CardStyle.CategoryColors[category]
+			local category = if recipe
+				then "EVOLVE"
+				else CardStyle.categoryFor(def.Kind, elementName)
+			local categoryColor = if recipe
+				then CardStyle.EvolveStroke
+				else if elementName and Evolutions.Elements[elementName]
+					then Evolutions.Elements[elementName].Color
+					else CardStyle.CategoryColors[category]
 			local categoryBar = Instance.new("Frame")
 			categoryBar.Name = "CategoryBar"
 			categoryBar.Size = UDim2.new(1, 0, 0, 28)
@@ -979,7 +1003,7 @@ local function rebuildCards(
 				"Icon",
 				UDim2.new(0, 12, 0, 50),
 				UDim2.new(1, -24, 0, 70),
-				CardStyle.iconFor(id, elementName) or "",
+				if recipe then recipe.Icon else CardStyle.iconFor(id, elementName) or "",
 				60
 			)
 			icon.Font = Enum.Font.GothamBlack
@@ -1016,6 +1040,39 @@ local function rebuildCards(
 			)
 			statTag.TextXAlignment = Enum.TextXAlignment.Right
 			statTag.TextColor3 = ClientFX.c3(CardStyle.CategoryColors.UPGRADE)
+			local equipped = Weapons.Defs[stats.Equipped or ""]
+			local cardRecipe = if equipped
+				then Evolutions.recipeForWeaponCard(id, equipped.Kind)
+				else nil
+			if cardRecipe then
+				local evolveStrip = text(
+					b,
+					"EvolutionStrip",
+					UDim2.new(0, 12, 0, 210),
+					UDim2.new(1, -24, 0, 30),
+					"CAN EVOLVE INTO  " .. cardRecipe.Icon .. "  " .. cardRecipe.Evolved,
+					12
+				)
+				evolveStrip.TextColor3 = ClientFX.c3(CardStyle.EvolveStroke)
+			end
+			if
+				equipped
+				and Evolutions.completesRecipe(
+					id,
+					((stats.Boosts or {}).Stacks or {}),
+					equipped.Kind
+				)
+			then
+				local evolvesTag = text(
+					b,
+					"EvolvesTag",
+					UDim2.new(0, 12, 0, 34),
+					UDim2.fromOffset(82, 22),
+					"EVOLVES",
+					13
+				)
+				evolvesTag.TextColor3 = ClientFX.c3(CardStyle.EvolveStroke)
+			end
 			if elementName then
 				local element = Evolutions.Elements[elementName]
 				local elementLabel = text(
@@ -1120,20 +1177,25 @@ local function refreshCards()
 	local offer: { string } = stats.Offer or {}
 	local rarities: { [string]: string } = stats.OfferRarities or {}
 	local elements: { [string]: string } = stats.OfferElements or {}
+	local evolutionOffers: { [string]: string } = stats.OfferEvolutions or {}
 	local rarityKey = {}
 	local elementKey = {}
+	local evolutionKey = {}
 	for _, id in offer do
 		table.insert(rarityKey, rarities[id] or "Common")
 		table.insert(elementKey, elements[id] or "")
+		table.insert(evolutionKey, evolutionOffers[id] or "")
 	end
 	local offerKey = table.concat(offer, "|")
 		.. ":"
 		.. table.concat(rarityKey, "|")
 		.. ":"
 		.. table.concat(elementKey, "|")
+		.. ":"
+		.. table.concat(evolutionKey, "|")
 	if offerKey ~= cardUi.Key then
 		cardUi.Key = offerKey
-		rebuildCards(offer, rarities, elements)
+		rebuildCards(offer, rarities, elements, evolutionOffers)
 	end
 	local actions = stats.RewardActions or {}
 	cardUi.RerollButton.Text = "REROLL  " .. tostring(actions.Rerolls or 0)
@@ -1312,6 +1374,57 @@ for _, element in Evolutions.Order do
 			flash(toast, why, 2.5)
 		end
 	end)
+end
+
+finalHud.RecipeLabels = {}
+do
+	local recipesButton = shopButton("RECIPES")
+	recipesButton.Name = "RecipesTabButton"
+	order += 1
+	local recipesTab = Instance.new("Frame")
+	recipesTab.Name = "RecipesTab"
+	recipesTab.Size = UDim2.new(1, 0, 0, #Evolutions.Recipes * 48)
+	recipesTab.BackgroundTransparency = 1
+	recipesTab.LayoutOrder = order
+	recipesTab.Visible = false
+	recipesTab.Parent = shop
+	local recipesLayout = Instance.new("UIListLayout")
+	recipesLayout.Padding = UDim.new(0, 4)
+	recipesLayout.Parent = recipesTab
+	for _, recipe in Evolutions.Recipes do
+		local recipeLabel = text(
+			recipesTab,
+			"Recipe" .. recipe.Id:gsub("%s", ""),
+			UDim2.new(),
+			UDim2.new(1, 0, 0, 44),
+			"???",
+			12
+		)
+		recipeLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 52)
+		recipeLabel.TextWrapped = true
+		recipeLabel.TextColor3 = ClientFX.c3(CardStyle.EvolveStroke)
+		finalHud.RecipeLabels[recipe.Id] = recipeLabel
+	end
+	recipesButton.MouseButton1Click:Connect(function()
+		recipesTab.Visible = not recipesTab.Visible
+		recipesButton.Text = if recipesTab.Visible then "RECIPES -" else "RECIPES"
+	end)
+end
+
+local function refreshRecipesTab()
+	local flags = stats.Flags or {}
+	for _, recipe in Evolutions.Recipes do
+		local found = flags[Evolutions.RecipeFlagPrefix .. recipe.Id] == true
+		finalHud.RecipeLabels[recipe.Id].Text = if found
+			then string.format(
+				"%s %s + %s -> %s",
+				recipe.Icon,
+				recipe.Weapon,
+				recipe.Passive,
+				recipe.Evolved
+			)
+			else "???"
+	end
 end
 
 section("PERKS (Gems, forever)")
@@ -1783,6 +1896,8 @@ stats = {
 	KitsOwned = { Soldier = true },
 	Offer = {},
 	OfferRarities = {},
+	OfferElements = {},
+	OfferEvolutions = {},
 	XP = 0,
 	Level = 0,
 	XPNeeded = LevelUp.requiredXp(1),
@@ -1989,6 +2104,7 @@ local function refreshStats()
 	refreshPerkButtons()
 	refreshKitButtons()
 	refreshCrateButtons()
+	refreshRecipesTab()
 	boostsLabel.Text = WaveRewards.stacksText((stats.Boosts and stats.Boosts.Stacks) or {})
 	refreshCards()
 	refreshQuests(stats.Quests)

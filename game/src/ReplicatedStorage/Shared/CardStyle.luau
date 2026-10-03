@@ -20,6 +20,7 @@ CardStyle.MinimumContrast = 4.5
 CardStyle.StrokeThickness = 5
 CardStyle.SelectedStrokeThickness = 9
 CardStyle.SelectedStroke = { 255, 255, 255 }
+CardStyle.EvolveStroke = { 255, 211, 72 }
 
 CardStyle.CategoryColors = {
 	WEAPON = { 245, 78, 78 },
@@ -118,6 +119,10 @@ end
 
 function CardStyle.styleFor(rarity: string): RarityStyle
 	return CardStyle.Rarities[rarity] or CardStyle.Rarities.Common
+end
+
+function CardStyle.strokeFor(rarity: string, isEvolution: boolean?): Color
+	return if isEvolution then CardStyle.EvolveStroke else CardStyle.styleFor(rarity).Stroke
 end
 
 function CardStyle.iconFor(upgradeId: string, elementName: string?): string?

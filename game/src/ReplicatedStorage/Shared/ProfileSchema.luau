@@ -147,6 +147,13 @@ function ProfileSchema.sanitize(raw: any): Profile
 				p.Flags[k] = true
 			end
 		end
+		-- In-run recipe discoveries (J2) are flags keyed per recipe id.
+		for _, recipe in Evolutions.Recipes do
+			local k = Evolutions.RecipeFlagPrefix .. recipe.Id
+			if raw.Flags[k] == true then
+				p.Flags[k] = true
+			end
+		end
 	end
 	if type(raw.Redeemed) == "table" then
 		for code, redeemed in raw.Redeemed do

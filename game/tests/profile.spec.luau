@@ -110,3 +110,15 @@ test("processed purchase ids persist through profile sanitizing", function()
 		"junk"
 	)
 end)
+
+test("sanitize keeps in-run recipe discoveries", function()
+	local Evolutions = load("Evolutions")
+	local recipe = Evolutions.Recipes[1]
+	local key = Evolutions.RecipeFlagPrefix .. recipe.Id
+	local raw = ProfileSchema.default()
+	raw.Flags[key] = true
+	raw.Flags.Recipe_Bogus = true
+	local p = ProfileSchema.sanitize(raw)
+	eq(p.Flags[key], true, "discovered recipe kept")
+	eq(p.Flags.Recipe_Bogus, nil, "unknown recipe dropped")
+end)
