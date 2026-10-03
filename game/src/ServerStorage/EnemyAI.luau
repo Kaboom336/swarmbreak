@@ -10,7 +10,7 @@ local Fit = require(ReplicatedStorage.Shared.Fit)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local EnemyBuilder = require(script.Parent.EnemyBuilder)
-local FX = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("FX") :: RemoteEvent
+local FxRouter = require(script.Parent.FxRouter)
 
 type EnemyDef = Enemies.EnemyDef
 
@@ -37,6 +37,13 @@ EnemyAI.OnSummon = nil :: ((string, CFrame) -> ())?
 
 local function v3(t: { number }): Vector3
 	return Vector3.new(t[1], t[2], t[3])
+end
+
+local function playerFromRoot(root: BasePart): Player?
+	local character = root.Parent
+	return if character and character:IsA("Model")
+		then Players:GetPlayerFromCharacter(character)
+		else nil
 end
 
 local function nearestPlayerRoot(pos: Vector3): (BasePart?, number)
@@ -103,7 +110,8 @@ local function rangedShot(e: Live, target: BasePart)
 	end
 	local typeName = e.Model:GetAttribute("TypeName") :: string
 	local accent = (Theme.Enemy[typeName] or Theme.Enemy.Walker).Accent
-	FX:FireAllClients("spit", { From = from, To = to, Color = accent })
+	local targetPlayer = playerFromRoot(target)
+	FxRouter.emit("spit", from, { From = from, To = to, Color = accent }, targetPlayer)
 	local hum = target.Parent and target.Parent:FindFirstChildOfClass("Humanoid")
 	if hum then
 		hum:TakeDamage(e.Damage)
@@ -115,7 +123,7 @@ local function queueAttack(e: Live, target: BasePart, radius: number, attack: (V
 	local tell = EnemyTells.Defs[typeName]
 	local impactPosition = target.Position
 	local timeline = EnemyTells.attackTimeline(tell, os.clock())
-	FX:FireAllClients("tell", {
+	FxRouter.emit("tell", e.Root.Position, {
 		Model = e.Model,
 		Position = e.Root.Position,
 		Sound = tell.SoundKey,
@@ -126,7 +134,7 @@ local function queueAttack(e: Live, target: BasePart, radius: number, attack: (V
 			then impactPosition - Vector3.new(0, 3, 0)
 			else nil,
 		Radius = radius,
-	})
+	}, playerFromRoot(target))
 
 	local function landAttack()
 		if e.Humanoid.Health > 0 and e.Model.Parent and target.Parent then
@@ -264,13 +272,13 @@ function EnemyAI.spawn(
 		live[model] = nil
 		onDeath(e.LastHitBy)
 		local accent = (Theme.Enemy[typeName] or Theme.Enemy.Walker).Accent
-		FX:FireAllClients("death", {
+		FxRouter.emit("death", root.Position, {
 			Position = root.Position,
 			Size = size.Magnitude,
 			Color = accent,
 			EnemyType = typeName,
 			Boss = def.Boss == true,
-		})
+		}, e.LastHitBy)
 		-- let the pieces fly for a moment, then remove
 		for _, p in model:GetDescendants() do
 			if p:IsA("BasePart") and p ~= root then

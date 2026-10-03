@@ -5,10 +5,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PlayerData = require(script.Parent.PlayerData)
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 local Feel = require(ReplicatedStorage.Shared.Feel)
+local FxRouter = require(script.Parent.FxRouter)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local HitMarker = Remotes.HitMarker :: RemoteEvent
-local FX = Remotes.FX :: RemoteEvent
 local enemiesFolder = workspace:WaitForChild("Enemies")
 
 local CombatEffects = {}
@@ -101,7 +101,12 @@ function CombatEffects.hit(
 				local o = others[1]
 				local opos = (o.PrimaryPart :: BasePart).Position
 				rawHit(plr, o, damage * E.Arc.Value, opos)
-				FX:FireAllClients("chain", { Points = { root.Position, opos }, Color = color })
+				FxRouter.emit(
+					"chain",
+					root.Position,
+					{ Points = { root.Position, opos }, Color = color },
+					plr
+				)
 			end
 		elseif key == "Chain" then
 			local points = { root.Position }
@@ -126,7 +131,7 @@ function CombatEffects.hit(
 				last = opos
 			end
 			if #points > 1 then
-				FX:FireAllClients("chain", { Points = points, Color = color })
+				FxRouter.emit("chain", root.Position, { Points = points, Color = color }, plr)
 			end
 		elseif key == "HealOnKill" and killed then
 			local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
@@ -144,7 +149,12 @@ function CombatEffects.hit(
 					end
 				end
 			end
-			FX:FireAllClients("pull", { Position = root.Position, Radius = radius, Color = color })
+			FxRouter.emit(
+				"pull",
+				root.Position,
+				{ Position = root.Position, Radius = radius, Color = color },
+				plr
+			)
 		end
 	end
 	return true, killed

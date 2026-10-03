@@ -5,13 +5,13 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local PlayerData = require(ServerStorage.PlayerData)
 local CombatEffects = require(ServerStorage.CombatEffects)
+local FxRouter = require(ServerStorage.FxRouter)
 local FireGuard = require(ReplicatedStorage.Shared.FireGuard)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local Shoot = Remotes.Shoot :: RemoteEvent
-local FX = Remotes.FX :: RemoteEvent
 
 local lastAction: { [Player]: number } = {}
 local rejectedFireCounts: { [Player]: number } = {}
@@ -88,14 +88,14 @@ local function doHitscan(
 			end
 		end
 	end
-	FX:FireAllClients("shot", {
+	FxRouter.emit("shot", origin, {
 		Shooter = plr,
 		Origin = origin,
 		Ends = ends,
 		Hits = hits,
 		Color = Theme.Rarity[weapon.Rarity],
 		Sound = Sounds.ForWeapon[weapon.Id] or "ShotPistol",
-	})
+	}, plr)
 end
 
 local function doMelee(
@@ -141,7 +141,7 @@ local function doMelee(
 	if damageDealt > 0 then
 		PlayerData.addMeleeDamage(plr, damageDealt)
 	end
-	FX:FireAllClients("swing", {
+	FxRouter.emit("swing", root.Position, {
 		Shooter = plr,
 		Origin = root.Position,
 		Dir = flatDir,
@@ -150,7 +150,7 @@ local function doMelee(
 		Hits = hits,
 		Color = Theme.Rarity[weapon.Rarity],
 		Sound = Sounds.ForWeapon[weapon.Id] or "Swing",
-	})
+	}, plr)
 end
 
 local function doBeam(
@@ -173,14 +173,14 @@ local function doBeam(
 			hitPos = hit.Position
 		end
 	end
-	FX:FireAllClients("beam", {
+	FxRouter.emit("beam", origin, {
 		Shooter = plr,
 		Origin = origin,
 		EndPos = endPos,
 		Hit = hitPos,
 		Color = Theme.Rarity[weapon.Rarity],
 		Sound = Sounds.ForWeapon[weapon.Id] or "Beam",
-	})
+	}, plr)
 end
 
 Shoot.OnServerEvent:Connect(function(plr, origin: Vector3, dir: Vector3)
