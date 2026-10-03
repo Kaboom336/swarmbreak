@@ -6,10 +6,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local PlayerData = require(ServerStorage.PlayerData)
 local CombatEffects = require(ServerStorage.CombatEffects)
+local EnemyIndex = require(ServerStorage.EnemyIndex)
 local Weapons = require(ReplicatedStorage.Shared.Weapons)
 local Theme = require(ReplicatedStorage.Shared.Theme)
-
-local enemiesFolder = workspace:WaitForChild("Enemies")
 
 type Orbit = {
 	Player: Player,
@@ -130,8 +129,9 @@ RunService.Heartbeat:Connect(function(dt)
 			if blade then
 				blade.CFrame = orb.CFrame * CFrame.Angles(0, 0, now * 12)
 			end
-			for _, model in enemiesFolder:GetChildren() do
-				local eroot = model:IsA("Model") and model.PrimaryPart
+			local searchRadius = orb.Size.X / 2 + EnemyIndex.maximumRootRadius()
+			for _, model in EnemyIndex.queryRadius(pos, searchRadius) do
+				local eroot = model.PrimaryPart
 				if
 					eroot
 					and (eroot.Position - pos).Magnitude

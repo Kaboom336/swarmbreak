@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local PlayerData = require(ServerStorage.PlayerData)
 local CombatEffects = require(ServerStorage.CombatEffects)
+local EnemyIndex = require(ServerStorage.EnemyIndex)
 local FireGuard = require(ReplicatedStorage.Shared.FireGuard)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Theme = require(ReplicatedStorage.Shared.Theme)
@@ -16,7 +17,6 @@ local FX = Remotes.FX :: RemoteEvent
 local lastAction: { [Player]: number } = {}
 local rejectedFireCounts: { [Player]: number } = {}
 local rng = Random.new()
-local enemiesFolder = workspace:WaitForChild("Enemies")
 
 local function point3(vector: Vector3): FireGuard.Point3
 	return { x = vector.X, y = vector.Y, z = vector.Z }
@@ -56,8 +56,9 @@ end
 
 local function enemiesNear(pos: Vector3, radius: number): { Model }
 	local out = {}
-	for _, model in enemiesFolder:GetChildren() do
-		local root = model:IsA("Model") and model.PrimaryPart
+	local searchRadius = radius + EnemyIndex.maximumRootRadius()
+	for _, model in EnemyIndex.queryRadius(pos, searchRadius) do
+		local root = model.PrimaryPart
 		if root and (root.Position - pos).Magnitude <= radius + root.Size.Magnitude / 2 then
 			table.insert(out, model :: Model)
 		end
