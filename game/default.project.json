@@ -188,11 +188,7 @@
         "EnvironmentDiffuseScale": 0.7,
         "EnvironmentSpecularScale": 0.8,
         "ShadowSoftness": 0.35,
-        "Ambient": [
-          0.4784313725,
-          0.3098039216,
-          0.8392156863
-        ],
+        "Ambient": [ 0.62, 0.55, 0.72 ],
         "OutdoorAmbient": [
           1,
           0.7019607843,
@@ -219,11 +215,7 @@
         "$properties": {
           "Contrast": 0.1,
           "Saturation": 0.05,
-          "TintColor": [
-            0.4784313725,
-            0.3098039216,
-            0.8392156863
-          ]
+          "TintColor": [ 1, 0.96, 0.91 ]
         }
       },
       "Atmosphere": {

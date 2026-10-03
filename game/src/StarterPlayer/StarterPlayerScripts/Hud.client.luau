@@ -1004,13 +1004,19 @@ local function rebuildCards(
 				b,
 				"Blurb",
 				UDim2.new(0, 12, 0, 156),
-				UDim2.new(1, -24, 0, 48),
+				UDim2.new(1, -24, 0, 44),
 				CardStyle.richEffect(def.Blurb),
 				CardStyle.EffectTextSize
 			)
 			blurb.Font = UiKit.Fonts.Body
 			blurb.RichText = true
 			blurb.TextWrapped = true
+			-- Long effects shrink instead of spilling into the rows below.
+			blurb.TextScaled = true
+			local blurbCap = Instance.new("UITextSizeConstraint")
+			blurbCap.MaxTextSize = CardStyle.EffectTextSize
+			blurbCap.MinTextSize = 10
+			blurbCap.Parent = blurb
 			blurb.TextYAlignment = Enum.TextYAlignment.Top
 			blurb.TextColor3 = textColor
 			local statTag = text(
@@ -1027,15 +1033,20 @@ local function rebuildCards(
 			local cardRecipe = if equipped
 				then Evolutions.recipeForWeaponCard(id, equipped.Kind)
 				else nil
+			if cardRecipe or elementName then
+				-- The stat tag repeats the effect line; drop it so the rows stack cleanly.
+				statTag.Visible = false
+			end
 			if cardRecipe then
 				local evolveStrip = text(
 					b,
 					"EvolutionStrip",
-					UDim2.new(0, 12, 0, 210),
-					UDim2.new(1, -24, 0, 30),
+					UDim2.new(0, 12, 0, 226),
+					UDim2.new(1, -24, 0, 20),
 					"CAN EVOLVE INTO  " .. cardRecipe.Icon .. "  " .. cardRecipe.Evolved,
 					12
 				)
+				evolveStrip.TextTruncate = Enum.TextTruncate.AtEnd
 				evolveStrip.TextColor3 = ClientFX.c3(CardStyle.EvolveStroke)
 			end
 			if
@@ -1061,8 +1072,8 @@ local function rebuildCards(
 				local elementLabel = text(
 					b,
 					"Element",
-					UDim2.new(0, 12, 0, 210),
-					UDim2.new(1, -24, 0, 28),
+					UDim2.new(0, 12, 0, 202),
+					UDim2.new(1, -24, 0, 22),
 					elementName .. " ELEMENT",
 					CardStyle.EffectTextSize
 				)
@@ -1075,8 +1086,8 @@ local function rebuildCards(
 			local hint = text(
 				b,
 				"Key",
-				UDim2.new(0, 12, 1, -38),
-				UDim2.new(1, -24, 0, 24),
+				UDim2.new(0, 12, 1, -28),
+				UDim2.new(1, -24, 0, 22),
 				"Press " .. i,
 				14
 			)
