@@ -1,61 +1,70 @@
 --!strict
--- Engine-free UI tokens. Colors use 0..255 channels so this module is testable in Lune.
+-- Engine-free S0 UI tokens. Colors use 0..255 channels so this module is testable in Lune.
 local Theme = require(script.Parent.Theme)
-
-local darkStroke = { 8, 10, 16 }
 
 local UiTheme = {
 	Font = {
-		Body = "Gotham",
+		Title = "FredokaOne",
+		Number = "FredokaOne",
+		Body = "GothamBold",
 		Strong = "GothamBold",
-		Display = "GothamBlack",
+		Display = "FredokaOne",
+		Banner = "LuckiestGuy",
 	},
 	Stroke = {
-		Color = darkStroke,
-		Thickness = 2,
-		Transparency = 0.15,
+		Color = Theme.UiStroke,
+		Thickness = 3,
+		Transparency = 0,
 	},
 	Corner = {
-		Small = 6,
-		Medium = 8,
-		Large = 12,
+		Small = 10,
+		Medium = 14,
+		Large = 14,
+		Panel = 14,
 		Round = 999,
 	},
+	Shadow = {
+		Offset = 4,
+		Transparency = 0.5,
+		Color = { 0, 0, 0 },
+	},
 	Colors = {
-		Text = { 255, 255, 255 },
-		MutedText = { 205, 212, 224 },
-		Stroke = darkStroke,
-		Panel = { 18, 18, 26 },
-		PanelRaised = { 29, 32, 44 },
-		Button = { 50, 90, 160 },
-		ButtonHover = { 62, 112, 194 },
-		Success = { 40, 160, 80 },
-		Danger = { 160, 40, 40 },
-		Disabled = { 60, 60, 70 },
-		Accent = Theme.NeonAmber,
+		Text = Theme.Text,
+		MutedText = Theme.OutpostShade,
+		Stroke = Theme.UiStroke,
+		Panel = Theme.UiPanel,
+		PanelRaised = Theme.Chitin,
+		Button = Theme.SignalOrange,
+		ButtonHover = Theme.Loot,
+		ButtonLip = Theme.ChitinDark,
+		Success = Theme.Goo,
+		Danger = Theme.Telegraph,
+		Disabled = Theme.ChitinDark,
+		Accent = Theme.SignalOrange,
+		BarTrack = Theme.ChitinDark,
 	},
 	TextStyles = {
-		Body = { TextColor = { 255, 255, 255 }, StrokeColor = darkStroke },
-		Muted = { TextColor = { 205, 212, 224 }, StrokeColor = darkStroke },
-		Accent = { TextColor = Theme.NeonAmber, StrokeColor = darkStroke },
+		Body = { TextColor = Theme.Text, StrokeColor = Theme.UiStroke },
+		Muted = { TextColor = Theme.OutpostShade, StrokeColor = { 0, 0, 0 } },
+		Accent = { TextColor = Theme.SignalOrange, StrokeColor = { 0, 0, 0 } },
 	},
 	Gradients = {
 		Panel = {
 			Rotation = 90,
-			Colors = { { 35, 38, 52 }, { 18, 18, 26 } },
+			Colors = { Theme.Chitin, Theme.UiPanel },
 		},
 		Button = {
 			Rotation = 90,
-			Colors = { { 70, 125, 210 }, { 38, 72, 135 } },
+			Colors = { Theme.Loot, Theme.SignalOrange },
 		},
 		Banner = {
 			Rotation = 0,
-			Colors = { Theme.NeonAmber, { 255, 235, 150 } },
+			Colors = { Theme.SignalOrange, Theme.Loot },
 		},
 	},
 	Rarity = Theme.Rarity,
 	Sizes = {
-		ReferenceViewport = { Width = 1334, Height = 750 },
+		ReferenceViewport = { Width = 1920, Height = 1080 },
 		MinimumTouchTarget = 44,
 		Text = { Small = 14, Body = 16, Heading = 24, Banner = 48 },
 		TouchTargets = {
@@ -75,5 +84,16 @@ local UiTheme = {
 		BannerSeconds = 0.2,
 	},
 }
+
+function UiTheme.scaleFor(viewportX: number, viewportY: number): number
+	return math.clamp(
+		math.min(
+			viewportX / UiTheme.Sizes.ReferenceViewport.Width,
+			viewportY / UiTheme.Sizes.ReferenceViewport.Height
+		),
+		0.6,
+		1.2
+	)
+end
 
 return UiTheme

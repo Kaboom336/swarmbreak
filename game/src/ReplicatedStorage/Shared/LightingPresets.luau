@@ -3,27 +3,32 @@
 -- directly into default.project.json.
 
 local LightingPresets = {
+	DuskGradient = {
+		Horizon = { 1, 0.7019607843, 0.4784313725 },
+		Top = { 0.4784313725, 0.3098039216, 0.8392156863 },
+		CloudSea = true,
+	},
 	Station = {
 		Lighting = {
 			Technology = "Future",
-			ClockTime = 14,
-			Brightness = 3,
-			ExposureCompensation = 0.1,
+			ClockTime = 18.5,
+			Brightness = 2.5,
+			ExposureCompensation = 0,
 			GlobalShadows = true,
 			EnvironmentDiffuseScale = 0.7,
 			EnvironmentSpecularScale = 0.8,
 			ShadowSoftness = 0.35,
-			Ambient = { 0.52, 0.48, 0.58 },
-			OutdoorAmbient = { 0.68, 0.62, 0.72 },
-			FogColor = { 0.88, 0.72, 0.92 },
+			Ambient = { 0.4784313725, 0.3098039216, 0.8392156863 },
+			OutdoorAmbient = { 1, 0.7019607843, 0.4784313725 },
+			FogColor = { 1, 0.7019607843, 0.4784313725 },
 			FogStart = 180,
 			FogEnd = 700,
 		},
 		Atmosphere = {
 			Density = 0.12,
 			Offset = 0.25,
-			Color = { 0.88, 0.72, 0.92 },
-			Decay = { 0.58, 0.46, 0.62 },
+			Color = { 1, 0.7019607843, 0.4784313725 },
+			Decay = { 0.4784313725, 0.3098039216, 0.8392156863 },
 			Glare = 0.12,
 			Haze = 0.8,
 		},
@@ -35,10 +40,10 @@ local LightingPresets = {
 		ColorCorrection = {
 			Contrast = 0.1,
 			Saturation = 0.05,
-			TintColor = { 0.98, 0.9, 1 },
+			TintColor = { 0.4784313725, 0.3098039216, 0.8392156863 },
 		},
 		Sky = {
-			Tint = { 0.98, 0.9, 1 },
+			Tint = { 0.4784313725, 0.3098039216, 0.8392156863 },
 			StarCount = 0,
 			CelestialBodiesShown = true,
 			SunAngularSize = 11,

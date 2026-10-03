@@ -53,10 +53,24 @@ LevelUp.RarityOdds = {
 LevelUp.ChestCrate = "Gem"
 LevelUp.ChestRevealSeconds = 2.25
 LevelUp.CardFlipSeconds = 0.12
+LevelUp.CardDamageMultiplier = 0.5
+LevelUp.CardProtectionSeconds = 6
 LevelUp.FreeRerolls = 1
 LevelUp.RerollLevelInterval = 5
 LevelUp.BanishesPerRun = 2
 LevelUp.SkipXpFraction = 0.10
+
+function LevelUp.incomingDamage(
+	damage: number,
+	offerOpenedAt: number,
+	now: number,
+	cardsOpen: boolean
+): number
+	if cardsOpen and now - offerOpenedAt <= LevelUp.CardProtectionSeconds then
+		return damage * LevelUp.CardDamageMultiplier
+	end
+	return damage
+end
 
 function LevelUp.requiredXp(level: number): number
 	local wholeLevel = math.max(1, math.floor(level))

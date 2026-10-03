@@ -20,8 +20,10 @@ export type Insets = {
 
 local HudLayout = {}
 
-HudLayout.MinScale = 0.8
-HudLayout.MaxScale = 1.25
+local UiTheme = require(script.Parent.UiTheme)
+
+HudLayout.MinScale = 0.6
+HudLayout.MaxScale = 1.2
 HudLayout.MinTouchTarget = 44
 HudLayout.MinButtonHeight = HudLayout.MinTouchTarget
 
@@ -48,15 +50,14 @@ HudLayout.PlayElements =
 HudLayout.UtilityPanels = { "quests", "shop", "settings", "stats" }
 HudLayout.MaxVisiblePlayPanels = 3
 
-local REFERENCE_HEIGHT = 750
 local MARGIN = 16
 local GAP = 10
 local BUTTON_HEIGHT = 34
 local ICON_SIZE = 48
 local ICON_GAP = 8
 
-function HudLayout.scaleFor(_viewportX: number, viewportY: number, _platform: Platform): number
-	return math.clamp(viewportY / REFERENCE_HEIGHT, HudLayout.MinScale, HudLayout.MaxScale)
+function HudLayout.scaleFor(viewportX: number, viewportY: number, _platform: Platform): number
+	return UiTheme.scaleFor(viewportX, viewportY)
 end
 
 function HudLayout.buttonHeightFor(scale: number, platform: Platform): number
@@ -167,11 +168,12 @@ function HudLayout.rects(
 		w = 600 * scale,
 		h = 80 * scale,
 	}
+	local rewardY = safeTop + (safeBottom - safeTop) * 0.45
 	local rewardCards = {
 		x = (viewportX - 600 * scale) / 2,
-		y = viewportY * 0.3,
+		y = rewardY,
 		w = 600 * scale,
-		h = 200 * scale,
+		h = math.max(0, safeBottom - rewardY),
 	}
 
 	return {

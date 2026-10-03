@@ -130,7 +130,7 @@ local function neonStrip(size: Vector3, cf: CFrame, color: Color3, range: number
 			segmentSize,
 			cf * CFrame.new(axis * offset),
 			color,
-			Enum.Material.Neon
+			if color == c3(Theme.Goo) then Enum.Material.Neon else Enum.Material.SmoothPlastic
 		)
 		p.CanCollide = false
 		p.CanQuery = false
@@ -150,7 +150,7 @@ local function configureMap()
 
 	local floor = arena:FindFirstChild("Floor") :: BasePart?
 	if floor then
-		floor.Material = Enum.Material.Concrete
+		floor.Material = Enum.Material.SmoothPlastic
 		floor.Color = c3(selectedMap.FloorColor)
 	end
 
@@ -176,7 +176,7 @@ local function configureMap()
 	for _, name in { "WallN", "WallS", "WallE", "WallW" } do
 		local w = arena:FindFirstChild(name) :: BasePart?
 		if w then
-			w.Material = Enum.Material.Metal
+			w.Material = Enum.Material.SmoothPlastic
 			w.Color = c3(Theme.Wall)
 		end
 	end
@@ -190,10 +190,23 @@ local function configureMap()
 	for _, name in { "GapPillar" } do
 		local p = arena:FindFirstChild(name) :: BasePart?
 		if p then
-			p.Material = Enum.Material.DiamondPlate
+			p.Material = Enum.Material.SmoothPlastic
 			p.Color = c3(Theme.Metal)
 		end
 	end
+end
+
+local function cloudSea()
+	local clouds = part(
+		"CloudSea",
+		Vector3.new(600, 2, 600),
+		CFrame.new(0, -35, 0),
+		c3(Theme.OutpostCream),
+		Enum.Material.SmoothPlastic
+	)
+	clouds.Transparency = 0.35
+	clouds.CanCollide = false
+	clouds.CanQuery = false
 end
 
 local function outerCover()
@@ -219,7 +232,7 @@ local function outerCover()
 			Vector3.new(spec.Width, spec.Height, spec.Depth),
 			CFrame.new(spec.x, 1 + spec.Height / 2, spec.z),
 			c3(if spec.Kind == "Pillar" then Theme.Metal else Theme.PropPastel),
-			if spec.Kind == "Pillar" then Enum.Material.DiamondPlate else Enum.Material.Metal
+			Enum.Material.SmoothPlastic
 		)
 		cover.CanCollide = true
 	end
@@ -247,7 +260,7 @@ local function laneStripes()
 		Vector3.new(0.1, 8, 8),
 		CFrame.new(0, 1.06, 0) * CFrame.Angles(0, 0, math.rad(90)),
 		c3(Theme.FloorTrim),
-		Enum.Material.Metal,
+		Enum.Material.SmoothPlastic,
 		Enum.PartType.Cylinder
 	)
 	emblem.CanCollide = false
@@ -349,7 +362,7 @@ local function wallsAndRails()
 				Vector3.new(1, 18, 1),
 				CFrame.new(x, 10, z),
 				c3(Theme.PropPastel),
-				Enum.Material.Metal
+				Enum.Material.SmoothPlastic
 			)
 			post.CanCollide = true
 			neonStrip(Vector3.new(1.4, 1.4, 1.4), CFrame.new(x, 19.5, z), amber, 26)
@@ -421,7 +434,7 @@ local function portals()
 					Vector3.new(3, 22, 3),
 					boss.CFrame * CFrame.new(sign * 9, 10, 0),
 					c3(Theme.PropPastel),
-					Enum.Material.Metal
+					Enum.Material.SmoothPlastic
 				)
 				pillar.CanCollide = true
 				neonStrip(
@@ -436,7 +449,7 @@ local function portals()
 				Vector3.new(21, 2.5, 3),
 				boss.CFrame * CFrame.new(0, 21, 0),
 				c3(Theme.PropPastel),
-				Enum.Material.Metal
+				Enum.Material.SmoothPlastic
 			)
 			top.CanCollide = true
 			neonStrip(Vector3.new(19, 0.4, 0.4), boss.CFrame * CFrame.new(0, 19.6, -1.7), amber, 30)
@@ -446,6 +459,7 @@ end
 
 applyLightingPreset(LightingPresets[selectedMap.LightingPreset])
 configureMap()
+cloudSea()
 outerCover()
 laneStripes()
 gooPatches()

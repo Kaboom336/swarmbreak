@@ -7,6 +7,18 @@ local UiTheme = require(ReplicatedStorage.Shared.UiTheme)
 
 local UiKit = {}
 
+local fontsByToken = {
+	FredokaOne = Enum.Font.FredokaOne,
+	GothamBold = Enum.Font.GothamBold,
+	LuckiestGuy = Enum.Font.LuckiestGuy,
+}
+UiKit.Fonts = {
+	Body = fontsByToken[UiTheme.Font.Body],
+	Title = fontsByToken[UiTheme.Font.Title],
+	Number = fontsByToken[UiTheme.Font.Number],
+	Banner = fontsByToken[UiTheme.Font.Banner],
+}
+
 local function color(value: { number }): Color3
 	return Color3.fromRGB(value[1], value[2], value[3])
 end
@@ -24,6 +36,72 @@ local function stroke(parent: Instance)
 	item.Thickness = UiTheme.Stroke.Thickness
 	item.Transparency = UiTheme.Stroke.Transparency
 	item.Parent = parent
+end
+
+local function shadowFor(panel: GuiObject)
+	local shadow = Instance.new("Frame")
+	shadow.Name = panel.Name .. "Shadow"
+	shadow.BackgroundColor3 = color(UiTheme.Shadow.Color)
+	shadow.BackgroundTransparency = UiTheme.Shadow.Transparency
+	shadow.BorderSizePixel = 0
+	shadow.AnchorPoint = panel.AnchorPoint
+	shadow.Position = panel.Position
+		+ UDim2.fromOffset(UiTheme.Shadow.Offset, UiTheme.Shadow.Offset)
+	shadow.Rotation = panel.Rotation
+	shadow.Size = panel.Size
+	shadow.ZIndex = panel.ZIndex
+	shadow.Parent = panel.Parent
+	corner(shadow, UiTheme.Corner.Panel)
+
+	panel:GetPropertyChangedSignal("Position"):Connect(function()
+		shadow.Position = panel.Position
+			+ UDim2.fromOffset(UiTheme.Shadow.Offset, UiTheme.Shadow.Offset)
+	end)
+	panel:GetPropertyChangedSignal("Size"):Connect(function()
+		shadow.Size = panel.Size
+	end)
+	panel:GetPropertyChangedSignal("AnchorPoint"):Connect(function()
+		shadow.AnchorPoint = panel.AnchorPoint
+	end)
+	panel:GetPropertyChangedSignal("Rotation"):Connect(function()
+		shadow.Rotation = panel.Rotation
+	end)
+	panel:GetPropertyChangedSignal("Visible"):Connect(function()
+		shadow.Visible = panel.Visible
+	end)
+	panel.AncestryChanged:Connect(function()
+		if panel.Parent == nil then
+			shadow:Destroy()
+		else
+			shadow.Parent = panel.Parent
+		end
+	end)
+end
+
+function UiKit.ScreenScale(screen: ScreenGui): UIScale
+	local scale = Instance.new("UIScale")
+	scale.Name = "ScreenScale"
+	scale.Parent = screen
+
+	local viewportConnection: RBXScriptConnection? = nil
+	local function update()
+		local camera = workspace.CurrentCamera
+		local viewport = if camera then camera.ViewportSize else Vector2.new(1920, 1080)
+		scale.Scale = UiTheme.scaleFor(viewport.X, viewport.Y)
+	end
+	local function watchCamera()
+		if viewportConnection then
+			viewportConnection:Disconnect()
+		end
+		local camera = workspace.CurrentCamera
+		if camera then
+			viewportConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
+		end
+		update()
+	end
+	workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchCamera)
+	watchCamera()
+	return scale
 end
 
 local function gradient(parent: Instance, definition: any)
@@ -46,7 +124,7 @@ function UiKit.Label(
 	label.Position = position
 	label.Size = size
 	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.GothamBold
+	label.Font = UiKit.Fonts.Body
 	label.TextColor3 = color(UiTheme.Colors.Text)
 	label.TextStrokeColor3 = color(UiTheme.Stroke.Color)
 	label.TextStrokeTransparency = UiTheme.Stroke.Transparency
@@ -63,7 +141,8 @@ function UiKit.Panel(parent: Instance, name: string): Frame
 	panel.BackgroundTransparency = 0.08
 	panel.BorderSizePixel = 0
 	panel.Parent = parent
-	corner(panel, UiTheme.Corner.Medium)
+	shadowFor(panel)
+	corner(panel, UiTheme.Corner.Panel)
 	stroke(panel)
 	gradient(panel, UiTheme.Gradients.Panel)
 	return panel
@@ -81,7 +160,7 @@ function UiKit.Button(parent: Instance, content: string, size: UDim2): TextButto
 	local button = Instance.new("TextButton")
 	button.Size = size
 	button.Text = content
-	button.Font = Enum.Font.Gotham
+	button.Font = UiKit.Fonts.Body
 	button.TextSize = UiTheme.Sizes.Text.Body
 	button.TextColor3 = color(UiTheme.Colors.Text)
 	button.TextStrokeColor3 = color(UiTheme.Stroke.Color)
@@ -93,6 +172,15 @@ function UiKit.Button(parent: Instance, content: string, size: UDim2): TextButto
 	corner(button, UiTheme.Corner.Small)
 	stroke(button)
 	gradient(button, UiTheme.Gradients.Button)
+	local lip = Instance.new("Frame")
+	lip.Name = "Lip"
+	lip.AnchorPoint = Vector2.new(0, 1)
+	lip.Position = UDim2.fromScale(0, 1)
+	lip.Size = UDim2.new(1, 0, 0, 4)
+	lip.BackgroundColor3 = color(UiTheme.Colors.ButtonLip)
+	lip.BorderSizePixel = 0
+	lip.Parent = button
+	corner(lip, UiTheme.Corner.Small)
 
 	local scale = Instance.new("UIScale")
 	scale.Parent = button
@@ -112,6 +200,49 @@ function UiKit.Button(parent: Instance, content: string, size: UDim2): TextButto
 		)
 	end)
 	return button
+end
+
+function UiKit.Badge(parent: Instance, name: string, glyph: string, diameter: number): Frame
+	local badge = Instance.new("Frame")
+	badge.Name = name
+	badge.Size = UDim2.fromOffset(diameter, diameter)
+	badge.BackgroundColor3 = color(UiTheme.Colors.Button)
+	badge.BorderSizePixel = 0
+	badge.Parent = parent
+	corner(badge, UiTheme.Corner.Round)
+	stroke(badge)
+	local label =
+		UiKit.Label(badge, "Glyph", UDim2.new(), UDim2.fromScale(1, 1), glyph, diameter * 0.5)
+	label.Font = UiKit.Fonts.Title
+	return badge
+end
+
+export type Bar = {
+	Frame: Frame,
+	Fill: Frame,
+	Label: TextLabel,
+}
+
+function UiKit.Bar(parent: Instance, name: string, size: UDim2, fillColor: { number }?): Bar
+	local frame = Instance.new("Frame")
+	frame.Name = name
+	frame.Size = size
+	frame.BackgroundColor3 = color(UiTheme.Colors.BarTrack)
+	frame.BorderSizePixel = 0
+	frame.ClipsDescendants = true
+	frame.Parent = parent
+	corner(frame, UiTheme.Corner.Round)
+	stroke(frame)
+	local fill = Instance.new("Frame")
+	fill.Name = "Fill"
+	fill.Size = UDim2.fromScale(1, 1)
+	fill.BackgroundColor3 = color(fillColor or UiTheme.Colors.Success)
+	fill.BorderSizePixel = 0
+	fill.Parent = frame
+	corner(fill, UiTheme.Corner.Round)
+	local label = UiKit.Label(frame, "Value", UDim2.new(), UDim2.fromScale(1, 1), "", 14)
+	label.ZIndex = fill.ZIndex + 1
+	return { Frame = frame, Fill = fill, Label = label }
 end
 
 export type Counter = {
@@ -170,7 +301,8 @@ function UiKit.Banner(parent: Instance, name: string, content: string): TextLabe
 		content,
 		UiTheme.Sizes.Text.Banner
 	)
-	label.Font = Enum.Font.GothamBlack
+	label.Font = UiKit.Fonts.Banner
+	gradient(label, UiTheme.Gradients.Banner)
 	return label
 end
 

@@ -176,7 +176,7 @@ local function rangedShot(e: Live, target: BasePart)
 	local targetPlayer = playerFromRoot(target)
 	FxRouter.emit("spit", from, { From = from, To = to, Color = accent }, targetPlayer)
 	if targetPlayer then
-		PlayerData.takeEnemyDamage(targetPlayer, e.Damage)
+		PlayerData.takeEnemyDamage(targetPlayer, PlayerData.incomingDamage(targetPlayer, e.Damage))
 	end
 end
 
@@ -518,7 +518,10 @@ RunService.Heartbeat:Connect(function(dt)
 					)).Magnitude
 					local targetPlayer = playerFromRoot(target)
 					if targetPlayer and currentDistance < (e.Root.Size.Magnitude / 2 + 4) then
-						PlayerData.takeEnemyDamage(targetPlayer, e.Damage)
+						PlayerData.takeEnemyDamage(
+							targetPlayer,
+							PlayerData.incomingDamage(targetPlayer, e.Damage)
+						)
 					end
 				end
 				queueAttack(e, target, if def.Boss then 10 else 6, hitTarget)

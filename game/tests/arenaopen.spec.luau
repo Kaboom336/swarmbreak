@@ -32,20 +32,20 @@ test("cover footprints leave the central 90 by 90 fight space open", function()
 	end
 end)
 
-test("station floor uses the deep violet theme color", function()
-	sameColor(Theme.Floor, { 70, 40, 140 }, "Theme.Floor")
+test("station floor uses the OutpostCream theme color", function()
+	sameColor(Theme.Floor, { 255, 233, 201 }, "Theme.Floor")
 	sameColor(Maps.get("Station Deck").FloorColor, Theme.Floor, "Station Deck floor")
 end)
 
-test("four wide neon lanes radiate from the arena centre", function()
+test("four wide flat-colour lanes radiate from the arena centre", function()
 	eq(#Theme.LaneStripes, 4, "lane stripe count")
 	for index, stripe in Theme.LaneStripes do
 		assert(stripe.Width >= 4, "lane stripe " .. index .. " is not wide")
 		assert(stripe.Length >= 60, "lane stripe " .. index .. " is too short")
 		assert(stripe.Thickness <= 0.15, "lane stripe " .. index .. " is not thin")
-		eq(stripe.Material, "Neon", "lane stripe " .. index .. " material")
+		eq(stripe.Material, "SmoothPlastic", "lane stripe " .. index .. " material")
 		eq(stripe.CanCollide, false, "lane stripe " .. index .. " collision")
-		local expectedColor = if index % 2 == 1 then Theme.NeonTeal else Theme.NeonAmber
+		local expectedColor = if index % 2 == 1 then Theme.SignalOrange else Theme.OutpostShade
 		assert(
 			stripe.Color[1] == expectedColor[1]
 				and stripe.Color[2] == expectedColor[2]
@@ -72,14 +72,12 @@ test("every arena corner has a crystal cluster", function()
 	end
 end)
 
-test("Station preset is bright afternoon", function()
+test("Station preset is dusk", function()
 	local station = LightingPresets.Station
-	eq(station.Lighting.ClockTime, 14, "Station ClockTime")
+	eq(station.Lighting.ClockTime, 18.5, "Station ClockTime")
 	assert(station.Lighting.Brightness >= 2.5, "Station is not bright")
 	assert(station.Atmosphere.Density <= 0.15, "Station atmosphere is too dense")
-	assert(
-		station.Atmosphere.Color[1] > station.Atmosphere.Color[2]
-			and station.Atmosphere.Color[3] > station.Atmosphere.Color[2],
-		"Station atmosphere is not purple-pink"
-	)
+	sameColor(LightingPresets.DuskGradient.Horizon, { 1, 0.7019607843, 0.4784313725 }, "horizon")
+	sameColor(LightingPresets.DuskGradient.Top, { 0.4784313725, 0.3098039216, 0.8392156863 }, "top")
+	eq(LightingPresets.DuskGradient.CloudSea, true, "cloud sea")
 end)

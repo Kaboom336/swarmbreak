@@ -8,6 +8,7 @@ local RunService = game:GetService("RunService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local MovementTuning = require(ReplicatedStorage.Shared.MovementTuning)
+local Theme = require(ReplicatedStorage.Shared.Theme)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 
 local player = Players.LocalPlayer
@@ -95,7 +96,7 @@ local function bind(character: Model)
 		DashRemote:FireServer()
 		player:SetAttribute("DashReady", charges)
 		ClientFX.sound("Dash")
-		ClientFX.burst(root.Position, Color3.fromRGB(40, 220, 210), 10, 0.5, 6, 0.3, false)
+		ClientFX.burst(root.Position, ClientFX.c3(Theme.Goo), 10, 0.5, 6, 0.3, false)
 
 		local direction = humanoid.MoveDirection
 		if direction.Magnitude < 0.1 then
@@ -153,7 +154,7 @@ local function bind(character: Model)
 				ClientFX.sound("Jump", nil, 0.2)
 				ClientFX.ring(
 					root.Position - Vector3.new(0, 2.5, 0),
-					Color3.fromRGB(40, 220, 210),
+					ClientFX.c3(Theme.Goo),
 					5,
 					0.3
 				)

@@ -3,6 +3,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Feel = require(ReplicatedStorage.Shared.Feel)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
+local Theme = require(ReplicatedStorage.Shared.Theme)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 local HitMarker = ReplicatedStorage:WaitForChild("Remotes").HitMarker :: RemoteEvent
 
@@ -28,8 +29,10 @@ HitMarker.OnClientEvent:Connect(
 			end)
 		end
 		local sparkColor = if killed
-			then Color3.fromRGB(255, 210, 60)
-			else if isCritical then Color3.fromRGB(255, 225, 70) else Color3.new(1, 1, 1)
+			then ClientFX.c3(Theme.Loot)
+			else if isCritical
+				then ClientFX.c3(Theme.SignalOrange)
+				else ClientFX.c3(Theme.Text)
 		ClientFX.burst(
 			pos,
 			sparkColor,
@@ -49,7 +52,7 @@ HitMarker.OnClientEvent:Connect(
 			if type(enemyType) ~= "string" and target then
 				enemyType = target.Name
 			end
-			local gooColor = Feel.deathBurstColor(enemyType, { 60, 220, 160 })
+			local gooColor = Feel.deathBurstColor(enemyType, Theme.Goo)
 			ClientFX.gooDecal(pos, ClientFX.c3(gooColor), 2.5, 2)
 		end
 		if killed then
@@ -57,15 +60,18 @@ HitMarker.OnClientEvent:Connect(
 		end
 		local budget = Feel.Events[event]
 		local numberColor = if killed
-			then Color3.fromRGB(255, 210, 60)
-			else if isCritical then Color3.fromRGB(255, 225, 70) else Color3.new(1, 1, 1)
+			then ClientFX.c3(Theme.Loot)
+			else if isCritical
+				then ClientFX.c3(Theme.SignalOrange)
+				else ClientFX.c3(Theme.Text)
 		ClientFX.damageNumber(
 			pos,
 			(if isCritical then "CRIT " else "") .. tostring(damage),
 			numberColor,
 			budget.NumberScale,
 			Feel.DamageNumberSeconds,
-			Feel.DamageNumberRiseStuds
+			Feel.DamageNumberRiseStuds,
+			isCritical
 		)
 	end
 )

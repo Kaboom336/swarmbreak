@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local WeeklyBoard = require(ReplicatedStorage.Shared.WeeklyBoard)
+local UiTheme = require(ReplicatedStorage.Shared.UiTheme)
 local PlayerData = require(ServerStorage.PlayerData)
 
 -- Keep a separate OrderedDataStore for each Monday-based UTC week. The all-time board below
@@ -49,9 +50,12 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0.15, 0)
 title.BackgroundTransparency = 1
 title.Text = "TOP SURVIVORS"
-title.Font = Enum.Font.GothamBlack
+title.Font = if UiTheme.Font.Title == "FredokaOne"
+	then Enum.Font.FredokaOne
+	else Enum.Font.GothamBold
 title.TextScaled = true
-title.TextColor3 = Color3.fromRGB(255, 200, 60)
+title.TextColor3 =
+	Color3.fromRGB(UiTheme.Colors.Accent[1], UiTheme.Colors.Accent[2], UiTheme.Colors.Accent[3])
 title.Parent = gui
 
 local list = Instance.new("TextLabel")
@@ -59,11 +63,12 @@ list.Position = UDim2.new(0.05, 0, 0.17, 0)
 list.Size = UDim2.new(0.9, 0, 0.8, 0)
 list.BackgroundTransparency = 1
 list.Text = "Loading..."
-list.Font = Enum.Font.Gotham
+list.Font = if UiTheme.Font.Body == "GothamBold" then Enum.Font.GothamBold else Enum.Font.FredokaOne
 list.TextScaled = true
 list.TextXAlignment = Enum.TextXAlignment.Left
 list.TextYAlignment = Enum.TextYAlignment.Top
-list.TextColor3 = Color3.new(1, 1, 1)
+list.TextColor3 =
+	Color3.fromRGB(UiTheme.Colors.Text[1], UiTheme.Colors.Text[2], UiTheme.Colors.Text[3])
 list.Parent = gui
 
 while true do
