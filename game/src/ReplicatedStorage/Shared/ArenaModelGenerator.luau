@@ -40,7 +40,7 @@ export type Layout = {
 export type Theme = {
 	Floor: { number },
 	Metal: { number },
-	MetalDark: { number },
+	PropPastel: { number },
 }
 
 export type OutputFile = {
@@ -149,7 +149,7 @@ function ArenaModelGenerator.build(layout: Layout, theme: Theme): { OutputFile }
 				"Bunker" .. index,
 				{ spec.Width, spec.Height, spec.Depth },
 				{ spec.x, 1 + spec.Height / 2, spec.z },
-				color(theme.MetalDark),
+				color(theme.PropPastel),
 				"DiamondPlate",
 				nil,
 				nil
@@ -198,7 +198,7 @@ function ArenaModelGenerator.build(layout: Layout, theme: Theme): { OutputFile }
 				spec.Kind,
 				{ spec.Width, spec.Height, spec.Depth },
 				{ spec.x, 1 + spec.Height / 2, spec.z },
-				color(if spec.Kind == "Pillar" then theme.Metal else theme.MetalDark),
+				color(if spec.Kind == "Pillar" then theme.Metal else theme.PropPastel),
 				if spec.Kind == "Pillar" then "DiamondPlate" else "Metal",
 				nil,
 				nil

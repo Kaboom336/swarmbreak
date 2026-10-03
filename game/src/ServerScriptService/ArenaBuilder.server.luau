@@ -214,7 +214,7 @@ local function outerCover()
 			spec.Kind,
 			Vector3.new(spec.Width, spec.Height, spec.Depth),
 			CFrame.new(spec.x, 1 + spec.Height / 2, spec.z),
-			c3(if spec.Kind == "Pillar" then Theme.Metal else Theme.MetalDark),
+			c3(if spec.Kind == "Pillar" then Theme.Metal else Theme.PropPastel),
 			if spec.Kind == "Pillar" then Enum.Material.DiamondPlate else Enum.Material.Metal
 		)
 		cover.CanCollide = true
@@ -344,7 +344,7 @@ local function wallsAndRails()
 				"Post",
 				Vector3.new(1, 18, 1),
 				CFrame.new(x, 10, z),
-				c3(Theme.MetalDark),
+				c3(Theme.PropPastel),
 				Enum.Material.Metal
 			)
 			post.CanCollide = true
@@ -416,7 +416,7 @@ local function portals()
 					"GatePillar",
 					Vector3.new(3, 22, 3),
 					boss.CFrame * CFrame.new(sign * 9, 10, 0),
-					c3(Theme.MetalDark),
+					c3(Theme.PropPastel),
 					Enum.Material.Metal
 				)
 				pillar.CanCollide = true
@@ -431,7 +431,7 @@ local function portals()
 				"GateTop",
 				Vector3.new(21, 2.5, 3),
 				boss.CFrame * CFrame.new(0, 21, 0),
-				c3(Theme.MetalDark),
+				c3(Theme.PropPastel),
 				Enum.Material.Metal
 			)
 			top.CanCollide = true
