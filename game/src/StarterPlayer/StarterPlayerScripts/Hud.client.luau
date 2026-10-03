@@ -312,6 +312,56 @@ finalHud.StatsToggle.Text = ""
 finalHud.StatsToggle.ZIndex = hpText.ZIndex + 1
 finalHud.StatsToggle.Parent = hpBack
 
+finalHud.AbilityUi = (function()
+	local tray = Instance.new("Frame")
+	tray.Name = "Abilities"
+	tray.Size = UDim2.fromOffset(116, 52)
+	tray.Position = UDim2.new(0, 282, 1, -98)
+	tray.BackgroundTransparency = 1
+	tray.Parent = screen
+	local layout = Instance.new("UIListLayout")
+	layout.FillDirection = Enum.FillDirection.Horizontal
+	layout.Padding = UDim.new(0, 12)
+	layout.Parent = tray
+
+	local function makeButton(name: string): (TextButton, UIStroke, TextLabel)
+		local b = Instance.new("TextButton")
+		b.Name = name
+		b.Size = UDim2.fromOffset(52, 52)
+		b.BackgroundColor3 = PANEL
+		b.TextColor3 = WHITE
+		b.TextSize = 11
+		b.Font = Enum.Font.GothamBold
+		b.TextWrapped = true
+		b.Parent = tray
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(1, 0)
+		corner.Parent = b
+		local ring = Instance.new("UIStroke")
+		ring.Name = "CooldownRing"
+		ring.Thickness = 4
+		ring.Color = OK
+		ring.Parent = b
+		local cooldown = text(b, "Cooldown", UDim2.new(), UDim2.fromScale(1, 1), "", 18)
+		cooldown.Font = Enum.Font.GothamBlack
+		cooldown.ZIndex = b.ZIndex + 1
+		return b, ring, cooldown
+	end
+
+	local dash = makeButton("Dash")
+	local signature, ring, cooldown = makeButton("Signature")
+	dash.Text = "DASH\nQ"
+	signature.Text = "ABILITY\nE"
+	cooldown.Text = ""
+	return {
+		Dash = dash,
+		Signature = signature,
+		Ring = ring,
+		Cooldown = cooldown,
+		ReadyAt = 0,
+	}
+end)()
+
 finalHud.StatsPanel = UiKit.Panel(screen, "Stats")
 finalHud.StatsPanel.BackgroundColor3 = PANEL
 finalHud.StatsPanel.BackgroundTransparency = 0.1
@@ -1161,7 +1211,14 @@ local function refreshKitButtons()
 		local b = kitButtons[id]
 		local isOwned = owned[id] == true
 		local cost = if isOwned then "Owned" else string.format("%d Gems", def.UnlockGems)
-		b.Text = string.format("%s\n%s\n%s", def.Label, def.Blurb, cost)
+		b.Text = string.format(
+			"%s\n%s\nWeapon: %s\nAbility: %s\n%s",
+			def.Label,
+			def.Blurb,
+			Weapons.Defs[def.StartWeapon].Name,
+			def.Signature.Label,
+			cost
+		)
 		b.BackgroundColor3 = if stats.Kit == id
 			then OK
 			else if isOwned or (stats.Gems or 0) >= def.UnlockGems then BUTTON else GREY
@@ -1677,6 +1734,37 @@ local function rebuildHotbar()
 	stats._hotIds = ids
 end
 
+finalHud.AbilityUi.Cast = function()
+	if os.clock() >= finalHud.AbilityUi.ReadyAt and not cardPanel.Visible then
+		(Remotes.Signature :: RemoteEvent):FireServer()
+	end
+end
+
+finalHud.AbilityUi.Signature.MouseButton1Click:Connect(finalHud.AbilityUi.Cast)
+Remotes.Signature.OnClientEvent:Connect(function(cooldown: number)
+	finalHud.AbilityUi.ReadyAt = os.clock() + cooldown
+end)
+
+RunService.RenderStepped:Connect(function()
+	local cooldown = (player:GetAttribute("SignatureCooldown") :: number?) or 1
+	local remaining = math.max(0, finalHud.AbilityUi.ReadyAt - os.clock())
+	finalHud.AbilityUi.Cooldown.Text = if remaining > 0 then tostring(math.ceil(remaining)) else ""
+	finalHud.AbilityUi.Ring.Color = if remaining > 0 then GREY else OK
+	finalHud.AbilityUi.Ring.Transparency = if remaining > 0
+		then math.clamp(1 - remaining / cooldown, 0, 0.8)
+		else 0
+	finalHud.AbilityUi.Signature.AutoButtonColor = remaining <= 0
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if
+		not gameProcessed
+		and (input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.ButtonX)
+	then
+		finalHud.AbilityUi.Cast()
+	end
+end)
+
 UserInputService.InputBegan:Connect(function(input, gp)
 	if gp or not stats._hotIds or cardPanel.Visible then
 		return -- while reward cards are up, the number keys pick a card instead
@@ -1689,6 +1777,9 @@ end)
 
 local function refreshStats()
 	local dash = (player:GetAttribute("DashReady") :: number?) or 0
+	local kit = Kits.Defs[stats.Kit] or Kits.Defs.Soldier
+	finalHud.AbilityUi.Dash.Text = string.format("DASH %d\nQ", dash)
+	finalHud.AbilityUi.Signature.Text = string.format("%s\nE", kit.Signature.Icon)
 	local shards = stats.Shards or {}
 	finalHud.CoinsLabel.Text = string.format("Coins %d", stats.Coins or 0)
 	finalHud.GemsLabel.Text = string.format("Gems %d", stats.Gems or 0)

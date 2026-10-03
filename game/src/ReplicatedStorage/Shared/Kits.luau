@@ -14,7 +14,17 @@ export type KitDef = {
 	Label: string,
 	Blurb: string,
 	UnlockGems: number,
+	StartWeapon: string,
+	Signature: SignatureDef,
 	Mods: Mods,
+}
+
+export type SignatureDef = {
+	Id: string,
+	Label: string,
+	Icon: string,
+	Cooldown: number,
+	Effect: string,
 }
 
 type KitProfile = {
@@ -32,6 +42,14 @@ Kits.Defs = {
 		Label = "Soldier",
 		Blurb = "+10% Hitscan damage",
 		UnlockGems = 0,
+		StartWeapon = "Arc",
+		Signature = {
+			Id = "FragBurst",
+			Label = "Frag Burst",
+			Icon = "FRAG",
+			Cooldown = 12,
+			Effect = "FragBurst",
+		},
 		Mods = {
 			DamageMultByKind = { Hitscan = 0.10 },
 			MaxHealth = 0,
@@ -44,7 +62,15 @@ Kits.Defs = {
 		Id = "Brawler",
 		Label = "Brawler",
 		Blurb = "+25 max HP, +15% Melee damage",
-		UnlockGems = 300,
+		UnlockGems = 0,
+		StartWeapon = "Blade",
+		Signature = {
+			Id = "GroundSlam",
+			Label = "Ground Slam",
+			Icon = "SLAM",
+			Cooldown = 10,
+			Effect = "GroundSlam",
+		},
 		Mods = {
 			DamageMultByKind = { Melee = 0.15 },
 			MaxHealth = 25,
@@ -57,7 +83,15 @@ Kits.Defs = {
 		Id = "Engineer",
 		Label = "Engineer",
 		Blurb = "+1 orb, +10% Orbital damage",
-		UnlockGems = 300,
+		UnlockGems = 0,
+		StartWeapon = "Guardian",
+		Signature = {
+			Id = "TurretDrop",
+			Label = "Turret Drop",
+			Icon = "TURRET",
+			Cooldown = 18,
+			Effect = "TurretDrop",
+		},
 		Mods = {
 			DamageMultByKind = { Orbital = 0.10 },
 			MaxHealth = 0,
@@ -70,7 +104,15 @@ Kits.Defs = {
 		Id = "Medic",
 		Label = "Medic",
 		Blurb = "Heal 2 HP per kill, +1 speed",
-		UnlockGems = 300,
+		UnlockGems = 0,
+		StartWeapon = "Starter",
+		Signature = {
+			Id = "HealPulse",
+			Label = "Heal Pulse",
+			Icon = "HEAL",
+			Cooldown = 14,
+			Effect = "HealPulse",
+		},
 		Mods = {
 			DamageMultByKind = {},
 			MaxHealth = 0,
@@ -80,6 +122,29 @@ Kits.Defs = {
 		},
 	},
 }
+
+function Kits.startWeapon(id: string): string
+	local def: KitDef = Kits.Defs[id] or Kits.Defs.Soldier
+	return def.StartWeapon
+end
+
+-- Pure cooldown gate shared by the server and specs. readyAt is the previous cast's deadline.
+function Kits.trySignature(id: string, now: number, readyAt: number): (boolean, number)
+	local def: KitDef? = Kits.Defs[id]
+	if not def then
+		for _, kitId in Kits.Order do
+			if Kits.Defs[kitId].Signature.Id == id then
+				def = Kits.Defs[kitId]
+				break
+			end
+		end
+	end
+	def = def or Kits.Defs.Soldier
+	if now < readyAt then
+		return false, readyAt
+	end
+	return true, now + (def :: KitDef).Signature.Cooldown
+end
 
 -- Resolve a kit for one weapon kind into damage, max HP, speed, orbs and healing numbers.
 function Kits.mods(id: string, weaponKind: string): (number, number, number, number, number)

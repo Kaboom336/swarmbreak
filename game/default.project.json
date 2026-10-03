@@ -26,6 +26,9 @@
         "Dash": {
           "$className": "RemoteEvent"
         },
+        "Signature": {
+          "$className": "RemoteEvent"
+        },
         "BuyUpgrade": {
           "$className": "RemoteFunction"
         },

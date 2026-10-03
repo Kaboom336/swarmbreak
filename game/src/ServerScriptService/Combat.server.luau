@@ -8,11 +8,13 @@ local CombatEffects = require(ServerStorage.CombatEffects)
 local EnemyIndex = require(ServerStorage.EnemyIndex)
 local FxRouter = require(ServerStorage.FxRouter)
 local FireGuard = require(ReplicatedStorage.Shared.FireGuard)
+local Kits = require(ReplicatedStorage.Shared.Kits)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local Shoot = Remotes.Shoot :: RemoteEvent
+local Signature = Remotes.Signature :: RemoteEvent
 
 local lastAction: { [Player]: number } = {}
 local rejectedFireCounts: { [Player]: number } = {}
@@ -224,6 +226,23 @@ Shoot.OnServerEvent:Connect(function(plr, origin: Vector3, dir: Vector3)
 		doMelee(plr, char, weapon, origin, dir, damage)
 	elseif weapon.Kind == "Beam" then
 		doBeam(plr, char, weapon, origin, dir, damage)
+	end
+end)
+
+Signature.OnServerEvent:Connect(function(plr)
+	if not PlayerData.get(plr).Active then
+		return
+	end
+	local signature = PlayerData.signature(plr)
+	local now = os.clock()
+	local oldReadyAt = (plr:GetAttribute("SignatureReadyAt") :: number?) or 0
+	local ready, nextReadyAt = Kits.trySignature(signature.Id, now, oldReadyAt)
+	if not ready then
+		return
+	end
+	if CombatEffects.castSignature(plr, signature.Effect) then
+		plr:SetAttribute("SignatureReadyAt", nextReadyAt)
+		Signature:FireClient(plr, signature.Cooldown)
 	end
 end)
 

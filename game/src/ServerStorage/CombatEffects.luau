@@ -157,7 +157,112 @@ function CombatEffects.hit(
 	return true, killed
 end
 
--- Keep Players referenced for type checkers that flag unused services in strict mode.
-local _ = Players
+local function areaHit(plr: Player, position: Vector3, radius: number, damage: number)
+	for _, model in enemiesNear(position, radius, nil) do
+		local root = model.PrimaryPart
+		if root then
+			CombatEffects.hit(plr, model, damage, root.Position)
+		end
+	end
+end
+
+local function fragBurst(plr: Player, root: BasePart, damage: number)
+	local position = root.Position + root.CFrame.LookVector * 8
+	areaHit(plr, position, 12, damage)
+	FxRouter.emit(
+		"pull",
+		position,
+		{ Position = position, Radius = 12, Color = { 40, 220, 200 } },
+		plr
+	)
+end
+
+local function groundSlam(plr: Player, root: BasePart, damage: number)
+	areaHit(plr, root.Position, 14, damage)
+	FxRouter.emit(
+		"pull",
+		root.Position,
+		{ Position = root.Position, Radius = 14, Color = { 45, 210, 155 } },
+		plr
+	)
+end
+
+local function turretDrop(plr: Player, root: BasePart, damage: number)
+	local turret = Instance.new("Part")
+	turret.Name = "EngineerTurret"
+	turret.Anchored = true
+	turret.CanCollide = false
+	turret.CanQuery = false
+	turret.Material = Enum.Material.Neon
+	turret.Color = Color3.fromRGB(40, 220, 200)
+	turret.Size = Vector3.new(2, 3, 2)
+	turret.CFrame = CFrame.new(root.Position - Vector3.new(0, 2, 0))
+	turret.Parent = workspace
+	task.spawn(function()
+		for _ = 1, 8 do
+			if not turret.Parent then
+				return
+			end
+			local targets = enemiesNear(turret.Position, 35, nil)
+			local target = targets[1]
+			local targetRoot = target and target.PrimaryPart
+			if target and targetRoot then
+				CombatEffects.hit(plr, target, damage, targetRoot.Position)
+				FxRouter.emit(
+					"chain",
+					turret.Position,
+					{ Points = { turret.Position, targetRoot.Position }, Color = { 40, 220, 200 } },
+					plr
+				)
+			end
+			task.wait(1)
+		end
+		turret:Destroy()
+	end)
+end
+
+local function healPulse(plr: Player, root: BasePart)
+	for _, other in Players:GetPlayers() do
+		local otherRoot = other.Character and other.Character:FindFirstChild("HumanoidRootPart")
+		local hum = other.Character and other.Character:FindFirstChildOfClass("Humanoid")
+		if
+			otherRoot
+			and otherRoot:IsA("BasePart")
+			and hum
+			and hum.Health > 0
+			and (otherRoot.Position - root.Position).Magnitude <= 30
+		then
+			heal(other, math.max(25, hum.MaxHealth * 0.25))
+		end
+	end
+	FxRouter.emit(
+		"pull",
+		root.Position,
+		{ Position = root.Position, Radius = 30, Color = { 45, 220, 160 } },
+		plr
+	)
+end
+
+-- Kit signatures reuse the same indexed targeting, damage attribution, hit effects and FX path.
+function CombatEffects.castSignature(plr: Player, effect: string): boolean
+	local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+	local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+	if not root or not root:IsA("BasePart") or not hum or hum.Health <= 0 then
+		return false
+	end
+	local damage = 45 * PlayerData.damageMultiplier(plr)
+	if effect == "FragBurst" then
+		fragBurst(plr, root, damage)
+	elseif effect == "GroundSlam" then
+		groundSlam(plr, root, damage * 1.4)
+	elseif effect == "TurretDrop" then
+		turretDrop(plr, root, damage * 0.45)
+	elseif effect == "HealPulse" then
+		healPulse(plr, root)
+	else
+		return false
+	end
+	return true
+end
 
 return CombatEffects

@@ -417,6 +417,19 @@ local function attachWeapon(plr: Player)
 	end
 end
 
+local function bindSignature(plr: Player, resetCooldown: boolean)
+	local signature = Kits.Defs[Profile.get(plr).Kit].Signature
+	plr:SetAttribute("SignatureId", signature.Id)
+	plr:SetAttribute("SignatureCooldown", signature.Cooldown)
+	if resetCooldown then
+		plr:SetAttribute("SignatureReadyAt", 0)
+	end
+end
+
+function PlayerData.signature(plr: Player): Kits.SignatureDef
+	return Kits.Defs[Profile.get(plr).Kit].Signature
+end
+
 function PlayerData.equip(plr: Player, id: string): boolean
 	if not PlayerData.ownsWeapon(plr, id) then
 		return false
@@ -581,6 +594,7 @@ function PlayerData.chooseKit(plr: Player, id: string): (boolean, string)
 	end
 	p.Kit = id
 	Profile.markDirty(plr)
+	bindSignature(plr, false)
 	applyStats(plr)
 	if PlayerData.OnEquipChanged then
 		PlayerData.OnEquipChanged(plr)
@@ -690,6 +704,17 @@ function PlayerData.resetRun(plr: Player)
 	r.Wave = 0
 	r.FunnelEvents = Funnel.newRun()
 	r.Active = true
+	local startWeapon = Kits.startWeapon(p.Kit)
+	if not table.find(p.Weapons, startWeapon) then
+		table.insert(p.Weapons, startWeapon)
+		Profile.markDirty(plr)
+	end
+	p.Equipped = startWeapon
+	bindSignature(plr, true)
+	attachWeapon(plr)
+	if PlayerData.OnEquipChanged then
+		PlayerData.OnEquipChanged(plr)
+	end
 	sendFunnel(plr, "run_start", { seconds = 0 })
 	applyStats(plr) -- a survivor keeps their character, so last run's stats go now
 	push(plr)

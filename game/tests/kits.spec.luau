@@ -1,14 +1,46 @@
 local Kits = load("Kits")
 local ProfileSchema = load("ProfileSchema")
+local Weapons = load("Weapons")
 
 test("the four kits have plain labels and placeholder prices", function()
 	eq(#Kits.Order, 4, "four kits")
-	eq(Kits.Defs.Soldier.UnlockGems, 0, "Soldier is free")
-	for _, id in { "Brawler", "Engineer", "Medic" } do
+	for _, id in Kits.Order do
 		eq(Kits.Defs[id].Id, id, id .. " id")
 		eq(Kits.Defs[id].Label, id, id .. " label")
-		eq(Kits.Defs[id].UnlockGems, 300, id .. " placeholder cost")
+		eq(Kits.Defs[id].UnlockGems, 0, id .. " placeholder cost")
 	end
+end)
+
+test("every kit has a valid start weapon and signature", function()
+	for _, id in Kits.Order do
+		local def = Kits.Defs[id]
+		eq(Weapons.Defs[def.StartWeapon] ~= nil, true, id .. " start weapon")
+		eq(type(def.Signature.Id), "string", id .. " signature id")
+		eq(type(def.Signature.Label), "string", id .. " signature label")
+		eq(type(def.Signature.Icon), "string", id .. " signature icon")
+		eq(def.Signature.Cooldown > 0, true, id .. " signature cooldown")
+		eq(type(def.Signature.Effect), "string", id .. " signature effect")
+	end
+end)
+
+test("signature cooldown blocks a second cast", function()
+	local ready, nextReadyAt = Kits.trySignature("Soldier", 10, 0)
+	eq(ready, true, "first cast")
+	eq(nextReadyAt, 10 + Kits.Defs.Soldier.Signature.Cooldown, "cooldown starts")
+
+	local blocked, unchanged = Kits.trySignature("Soldier", 10.1, nextReadyAt)
+	eq(blocked, false, "second cast blocked")
+	eq(unchanged, nextReadyAt, "blocked cast keeps cooldown")
+
+	local cooledDown = Kits.trySignature("Soldier", nextReadyAt, nextReadyAt)
+	eq(cooledDown, true, "cast allowed after cooldown")
+end)
+
+test("a run starts with the selected kit weapon", function()
+	for _, id in Kits.Order do
+		eq(Kits.startWeapon(id), Kits.Defs[id].StartWeapon, id .. " run weapon")
+	end
+	eq(Kits.startWeapon("Unknown"), Kits.Defs.Soldier.StartWeapon, "unknown kit fallback")
 end)
 
 test("mods resolve every field to a number for the weapon kind", function()
@@ -40,22 +72,22 @@ test("mods never changes definitions", function()
 	eq(Kits.Defs.Engineer.Mods.DamageMultByKind.Orbital, 0.10, "kind map untouched")
 end)
 
-test("unlock spends Gems once and failed unlocks spend nothing", function()
+test("unlock grants a free kit once", function()
 	local p = ProfileSchema.default()
-	p.Gems = 300
+	p.Gems = 0
 	local same, ok, why = Kits.unlock(p, "Brawler")
 	eq(same, p, "same profile")
 	eq(ok, true, "unlocked")
 	eq(why, "", "no failure reason")
-	eq(p.Gems, 0, "paid in Gems")
+	eq(p.Gems, 0, "no Gems spent")
 	eq(Kits.isUnlocked(p, "Brawler"), true, "owned")
 
 	local _, again = Kits.unlock(p, "Brawler")
 	eq(again, false, "cannot buy twice")
 	eq(p.Gems, 0, "duplicate spends nothing")
-	local _, poor = Kits.unlock(p, "Medic")
-	eq(poor, false, "cannot afford")
-	eq(p.KitsOwned.Medic, nil, "failed kit not granted")
+	local _, medic = Kits.unlock(p, "Medic")
+	eq(medic, true, "other free kit granted")
+	eq(p.KitsOwned.Medic, true, "free kit owned")
 end)
 
 test("profile defaults and sanitize repair kit ownership and selection", function()

@@ -106,12 +106,23 @@ end
 table.sort(weaponNames)
 local kitNames = {}
 for _, id in Kits.Order do
-	table.insert(kitNames, Kits.Defs[id].Label)
+	local kit = Kits.Defs[id]
+	local weapon = Weapons.Defs[kit.StartWeapon]
+	table.insert(
+		kitNames,
+		string.format(
+			"%s — %s — %s — %s",
+			kit.Label,
+			kit.Blurb,
+			weapon.Name,
+			kit.Signature.Label
+		)
+	)
 end
 local selectionBoard = addBoard(
 	"WeaponAndKitBoard",
 	Lobby.Boards.WeaponAndKit,
-	"Weapons: " .. table.concat(weaponNames, ", ") .. "\nKits: " .. table.concat(kitNames, ", "),
+	"Weapons: " .. table.concat(weaponNames, ", ") .. "\nKits:\n" .. table.concat(kitNames, "\n"),
 	Vector3.new(-18, 6.5, -28)
 )
 
