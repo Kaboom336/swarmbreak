@@ -824,6 +824,9 @@ local function rewardAction(action: string, id: string?)
 		return
 	end
 	cardUi.Pending = true
+	-- rebuildCards swaps in a new Ids table, so identity tells us whether the server pushed the
+	-- next offer (pending levels, or the skip refund levelling up) before this invoke returned.
+	local offerBefore = cardUi.Ids
 	-- pcall: a failed invoke (server error, remote gone on teleport) must never leave Pending
 	-- stuck and every later offer unpickable. The server's auto-pick still saves the reward.
 	local called, ok, why = pcall(function()
@@ -838,12 +841,16 @@ local function rewardAction(action: string, id: string?)
 		if action == WaveRewards.Actions.Pick then
 			local def = WaveRewards.Defs[id or ""]
 			flash(toast, "Picked: " .. (if def then def.Label else id or "reward"), 2)
-			cardUi.Ids = {}
-			cardPanel.Visible = false
+			if cardUi.Ids == offerBefore then
+				cardUi.Ids = {}
+				cardPanel.Visible = false
+			end
 		elseif action == WaveRewards.Actions.Skip then
 			flash(toast, "+10% XP", 2)
-			cardUi.Ids = {}
-			cardPanel.Visible = false
+			if cardUi.Ids == offerBefore then
+				cardUi.Ids = {}
+				cardPanel.Visible = false
+			end
 		elseif action == WaveRewards.Actions.Reroll then
 			flash(toast, "New cards", 1.5)
 		else
