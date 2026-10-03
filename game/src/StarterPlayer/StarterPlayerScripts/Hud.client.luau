@@ -764,45 +764,91 @@ end
 -- keys 1-3 pick one, and the server takes the first card for us when the countdown runs out.
 local cardPanel = Instance.new("Frame")
 cardPanel.Name = "RewardCards"
-cardPanel.Size = UDim2.fromOffset(CardStyle.Width * WaveRewards.OfferSize + 24, CardStyle.Height)
+cardPanel.Size =
+	UDim2.fromOffset(CardStyle.Width * WaveRewards.OfferSize + 24, CardStyle.Height + 52)
 cardPanel.Position = UDim2.new(0.5, -((CardStyle.Width * WaveRewards.OfferSize + 24) / 2), 0.22, 0)
 cardPanel.BackgroundTransparency = 1
 cardPanel.Visible = false
 cardPanel.ZIndex = 2 -- above the shop panel
 cardPanel.Parent = screen
 player:SetAttribute("CardPanelOpen", false)
+local cardUi: any = {
+	Ids = {},
+	Key = "",
+	Pending = false,
+	Selected = nil,
+	Outlines = {},
+}
+cardUi.Row = Instance.new("Frame")
+cardUi.Row.Name = "Cards"
+cardUi.Row.Size = UDim2.new(1, 0, 0, CardStyle.Height)
+cardUi.Row.BackgroundTransparency = 1
+cardUi.Row.Parent = cardPanel
 local cardLayout = Instance.new("UIListLayout")
 cardLayout.FillDirection = Enum.FillDirection.Horizontal
 cardLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 cardLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 cardLayout.SortOrder = Enum.SortOrder.LayoutOrder
 cardLayout.Padding = UDim.new(0, 12)
-cardLayout.Parent = cardPanel
+cardLayout.Parent = cardUi.Row
 
-local cardIds: { string } = {} -- ids on offer in card order (key 1 = first card)
-local cardKey = "" -- the offer the cards were last built from
-local cardPending = false -- our pick is in flight
+local actionRow = Instance.new("Frame")
+actionRow.Name = "Actions"
+actionRow.Size = UDim2.new(1, 0, 0, 40)
+actionRow.Position = UDim2.fromOffset(0, CardStyle.Height + 8)
+actionRow.BackgroundTransparency = 1
+actionRow.Parent = cardPanel
+local actionLayout = Instance.new("UIListLayout")
+actionLayout.FillDirection = Enum.FillDirection.Horizontal
+actionLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+actionLayout.Padding = UDim.new(0, 10)
+actionLayout.Parent = actionRow
 
-local function pickCard(id: string)
-	if cardPending then
+local function selectCard(id: string)
+	cardUi.Selected = id
+	for cardId, outline in cardUi.Outlines do
+		local selected = cardId == id
+		outline.Color = ClientFX.c3(
+			if selected
+				then CardStyle.SelectedStroke
+				else CardStyle.styleFor((stats.OfferRarities or {})[cardId] or "Common").Stroke
+		)
+		outline.Thickness = if selected
+			then CardStyle.SelectedStrokeThickness
+			else CardStyle.StrokeThickness
+	end
+end
+
+local function rewardAction(action: string, id: string?)
+	if cardUi.Pending then
 		return
 	end
-	cardPending = true
-	-- pcall: a failed invoke (server error, remote gone on teleport) must never leave cardPending
+	cardUi.Pending = true
+	-- pcall: a failed invoke (server error, remote gone on teleport) must never leave Pending
 	-- stuck and every later offer unpickable. The server's auto-pick still saves the reward.
 	local called, ok, why = pcall(function()
-		return PickReward:InvokeServer(id)
+		return PickReward:InvokeServer(action, id)
 	end)
-	cardPending = false
+	cardUi.Pending = false
 	if not called then
 		warn("PickReward failed:", ok)
 	end
 	if called and ok == true then
-		local def = WaveRewards.Defs[id]
 		ClientFX.sound("Buy")
-		flash(toast, "Picked: " .. (if def then def.Label else id), 2)
-		cardIds = {}
-		cardPanel.Visible = false
+		if action == WaveRewards.Actions.Pick then
+			local def = WaveRewards.Defs[id or ""]
+			flash(toast, "Picked: " .. (if def then def.Label else id or "reward"), 2)
+			cardUi.Ids = {}
+			cardPanel.Visible = false
+		elseif action == WaveRewards.Actions.Skip then
+			flash(toast, "+10% XP", 2)
+			cardUi.Ids = {}
+			cardPanel.Visible = false
+		elseif action == WaveRewards.Actions.Reroll then
+			flash(toast, "New cards", 1.5)
+		else
+			flash(toast, "Banished", 1.5)
+		end
 	else
 		ClientFX.sound("Deny")
 		if called and typeof(why) == "string" and why ~= "" then
@@ -811,24 +857,46 @@ local function pickCard(id: string)
 	end
 end
 
+local function pickCard(id: string)
+	rewardAction(WaveRewards.Actions.Pick, id)
+end
+
+cardUi.RerollButton = UiKit.Button(actionRow, "REROLL", UDim2.fromOffset(170, 40))
+cardUi.RerollButton.Name = "Reroll"
+cardUi.SkipButton = UiKit.Button(actionRow, "SKIP  +10% XP", UDim2.fromOffset(170, 40))
+cardUi.SkipButton.Name = "Skip"
+cardUi.BanishButton = UiKit.Button(actionRow, "BANISH", UDim2.fromOffset(170, 40))
+cardUi.BanishButton.Name = "Banish"
+cardUi.RerollButton.MouseButton1Click:Connect(function()
+	rewardAction(WaveRewards.Actions.Reroll)
+end)
+cardUi.SkipButton.MouseButton1Click:Connect(function()
+	rewardAction(WaveRewards.Actions.Skip)
+end)
+cardUi.BanishButton.MouseButton1Click:Connect(function()
+	rewardAction(WaveRewards.Actions.Banish, cardUi.Selected)
+end)
+
 local function rebuildCards(
 	offer: { string },
 	rarities: { [string]: string },
 	elements: { [string]: string }
 )
-	for _, c in cardPanel:GetChildren() do
+	for _, c in cardUi.Row:GetChildren() do
 		if c:IsA("TextButton") then
 			c:Destroy()
 		end
 	end
-	cardIds = {}
+	cardUi.Ids = {}
+	cardUi.Outlines = {}
+	cardUi.Selected = nil
 	for _, id in offer do
 		local def = WaveRewards.Defs[id]
-		if def and #cardIds < WaveRewards.OfferSize then
-			table.insert(cardIds, id)
-			local i = #cardIds
+		if def and #cardUi.Ids < WaveRewards.OfferSize then
+			table.insert(cardUi.Ids, id)
+			local i = #cardUi.Ids
 			local b =
-				UiKit.Button(cardPanel, "", UDim2.fromOffset(CardStyle.Width, CardStyle.Height))
+				UiKit.Button(cardUi.Row, "", UDim2.fromOffset(CardStyle.Width, CardStyle.Height))
 			b.Name = "Card" .. i
 			local targetSize = UDim2.fromOffset(CardStyle.Width, CardStyle.Height)
 			b.Size = UDim2.fromOffset(0, CardStyle.Height)
@@ -855,48 +923,92 @@ local function rebuildCards(
 				outline.Color = rarityColor
 				outline.Thickness = CardStyle.StrokeThickness
 				outline.Transparency = 0
+				cardUi.Outlines[id] = outline
 			end
+			local elementName = elements[id]
+			local category = CardStyle.categoryFor(def.Kind, elementName)
+			local categoryColor = if elementName and Evolutions.Elements[elementName]
+				then Evolutions.Elements[elementName].Color
+				else CardStyle.CategoryColors[category]
+			local categoryBar = Instance.new("Frame")
+			categoryBar.Name = "CategoryBar"
+			categoryBar.Size = UDim2.new(1, 0, 0, 28)
+			categoryBar.BackgroundColor3 = ClientFX.c3(categoryColor)
+			categoryBar.BorderSizePixel = 0
+			categoryBar.ZIndex = b.ZIndex + 2
+			categoryBar.Parent = b
+			local categoryLabel = text(
+				categoryBar,
+				"Category",
+				UDim2.fromOffset(10, 2),
+				UDim2.new(1, -20, 1, -4),
+				category,
+				14
+			)
+			categoryLabel.Font = Enum.Font.GothamBold
+			categoryLabel.TextColor3 = Color3.new(1, 1, 1)
+			categoryLabel.ZIndex = categoryBar.ZIndex + 1
 			local rarityLabel = text(
 				b,
 				"Rarity",
-				UDim2.new(0, 12, 0, 12),
-				UDim2.new(1, -24, 0, 20),
+				UDim2.new(0, 12, 0, 34),
+				UDim2.new(0.55, -12, 0, 20),
 				string.upper(rarity),
 				13
 			)
 			rarityLabel.TextColor3 = textColor
-			local elementName = elements[id]
+			local levelBadge = text(
+				b,
+				"Level",
+				UDim2.new(1, -72, 0, 34),
+				UDim2.fromOffset(60, 22),
+				"Lv " .. tostring((((stats.Boosts or {}).Stacks or {})[id] or 0) + 1),
+				14
+			)
+			levelBadge.TextXAlignment = Enum.TextXAlignment.Right
+			levelBadge.TextColor3 = rarityColor
 			local icon = text(
 				b,
 				"Icon",
-				UDim2.new(0, 12, 0, 38),
-				UDim2.new(1, -24, 0, 76),
+				UDim2.new(0, 12, 0, 50),
+				UDim2.new(1, -24, 0, 70),
 				CardStyle.iconFor(id, elementName) or "",
-				52
+				60
 			)
 			icon.Font = Enum.Font.GothamBlack
 			icon.TextColor3 = textColor
 			local nameLabel = text(
 				b,
 				"Label",
-				UDim2.new(0, 12, 0, 116),
+				UDim2.new(0, 12, 0, 120),
 				UDim2.new(1, -24, 0, 34),
 				def.Label,
 				CardStyle.NameTextSize
 			)
-			nameLabel.TextColor3 = textColor
+			nameLabel.TextColor3 = rarityColor
 			local blurb = text(
 				b,
 				"Blurb",
 				UDim2.new(0, 12, 0, 156),
 				UDim2.new(1, -24, 0, 48),
-				def.Blurb,
+				CardStyle.richEffect(def.Blurb),
 				CardStyle.EffectTextSize
 			)
 			blurb.Font = Enum.Font.Gotham
+			blurb.RichText = true
 			blurb.TextWrapped = true
 			blurb.TextYAlignment = Enum.TextYAlignment.Top
 			blurb.TextColor3 = textColor
+			local statTag = text(
+				b,
+				"StatTag",
+				UDim2.new(1, -102, 1, -66),
+				UDim2.fromOffset(90, 24),
+				"▲ " .. def.Blurb,
+				13
+			)
+			statTag.TextXAlignment = Enum.TextXAlignment.Right
+			statTag.TextColor3 = ClientFX.c3(CardStyle.CategoryColors.UPGRADE)
 			if elementName then
 				local element = Evolutions.Elements[elementName]
 				local elementLabel = text(
@@ -942,8 +1054,15 @@ local function rebuildCards(
 				})
 				shineGradient.Parent = shine
 			end
+			b.MouseEnter:Connect(function()
+				selectCard(id)
+			end)
 			b.MouseButton1Click:Connect(function()
-				pickCard(id)
+				if cardUi.Selected == id then
+					pickCard(id)
+				else
+					selectCard(id)
+				end
 			end)
 			task.delay((i - 1) * LevelUp.CardFlipSeconds, function()
 				if b.Parent then
@@ -1005,12 +1124,15 @@ local function refreshCards()
 		.. table.concat(rarityKey, "|")
 		.. ":"
 		.. table.concat(elementKey, "|")
-	if offerKey ~= cardKey then
-		cardKey = offerKey
+	if offerKey ~= cardUi.Key then
+		cardUi.Key = offerKey
 		rebuildCards(offer, rarities, elements)
 	end
+	local actions = stats.RewardActions or {}
+	cardUi.RerollButton.Text = "REROLL  " .. tostring(actions.Rerolls or 0)
+	cardUi.BanishButton.Text = "BANISH  " .. tostring(actions.Banishes or 0)
 	local phase = stateValue("Phase")
-	cardPanel.Visible = #cardIds > 0 and (phase == "fighting" or phase == "intermission")
+	cardPanel.Visible = #cardUi.Ids > 0 and (phase == "fighting" or phase == "intermission")
 end
 
 UserInputService.InputBegan:Connect(function(input, gp)
@@ -1018,8 +1140,8 @@ UserInputService.InputBegan:Connect(function(input, gp)
 		return
 	end
 	local n = input.KeyCode.Value - Enum.KeyCode.One.Value + 1
-	if n >= 1 and n <= #cardIds then
-		pickCard(cardIds[n])
+	if n >= 1 and n <= #cardUi.Ids then
+		pickCard(cardUi.Ids[n])
 	end
 end)
 
@@ -1355,8 +1477,12 @@ local function applyHudLayout()
 	banner.Position = UDim2.fromOffset(logical(bannerRect.x), logical(bannerRect.y))
 	banner.Size = UDim2.fromOffset(logical(bannerRect.w), logical(bannerRect.h))
 	local rewardRect = rects.rewardCards
-	cardPanel.Position = UDim2.fromOffset(logical(rewardRect.x), logical(rewardRect.y))
-	cardPanel.Size = UDim2.fromOffset(logical(rewardRect.w), logical(rewardRect.h))
+	local rewardWidth =
+		math.max(logical(rewardRect.w), CardStyle.Width * WaveRewards.OfferSize + 24)
+	cardPanel.Position =
+		UDim2.fromOffset((logical(viewport.X) - rewardWidth) / 2, logical(rewardRect.y))
+	cardPanel.Size =
+		UDim2.fromOffset(rewardWidth, math.max(logical(rewardRect.h), CardStyle.Height + 52))
 end
 
 applyHudLayout()
