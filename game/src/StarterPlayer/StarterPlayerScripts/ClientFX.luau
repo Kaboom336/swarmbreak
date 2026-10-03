@@ -62,14 +62,31 @@ end
 
 local music = Instance.new("Sound")
 music.Name = "Music"
-music.SoundId = Sounds.Music.Id
-music.Volume = Sounds.Music.Volume * musicVolume
-music.PlaybackSpeed = Sounds.Music.Pitch
 music.Looped = true
 music.Parent = SoundService
-if music.SoundId ~= "" then
-	music:Play()
+local musicTrack = Sounds.musicFor(false)
+
+-- Swap between the calm lobby loop and the fight loop when the player enters or leaves the arena.
+local function playMusicFor(inArena: boolean)
+	local track = Sounds.musicFor(inArena)
+	if music.SoundId == track.Id and music.IsPlaying then
+		return
+	end
+	musicTrack = track
+	music:Stop()
+	music.SoundId = track.Id
+	music.Volume = track.Volume * musicVolume
+	music.PlaybackSpeed = track.Pitch
+	if track.Id ~= "" then
+		music:Play()
+	end
 end
+
+local localPlayer = game:GetService("Players").LocalPlayer
+playMusicFor(localPlayer:GetAttribute("InArena") == true)
+localPlayer:GetAttributeChangedSignal("InArena"):Connect(function()
+	playMusicFor(localPlayer:GetAttribute("InArena") == true)
+end)
 
 local fxFolder = Instance.new("Folder")
 fxFolder.Name = "ClientFX"
@@ -204,7 +221,7 @@ end
 
 function ClientFX.setMusicVolume(value: any)
 	musicVolume = Settings.clamp(value)
-	music.Volume = Sounds.Music.Volume * musicVolume
+	music.Volume = musicTrack.Volume * musicVolume
 end
 
 function ClientFX.setSfxVolume(value: any)

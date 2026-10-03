@@ -37,9 +37,16 @@ local Sounds = {
 	EnemySpawn = { Id = "rbxasset://sounds/impact_water.mp3", Volume = 0.25, Pitch = 0.8 },
 	Explosion = { Id = "rbxasset://sounds/impact_explosion_01.mp3", Volume = 0.8, Pitch = 1.0 },
 	GameOver = { Id = "rbxasset://sounds/HalloweenLightning.wav", Volume = 0.8, Pitch = 0.5 },
-	-- music: 0 = none yet. Pick a Roblox-licensed track from the Creator Store on the laptop.
-	Music = { Id = "", Volume = 0.25, Pitch = 1.0 },
+	-- Music: Roblox licensed-partner tracks picked on the laptop (10/03). Backups: fight
+	-- 1837768143 "Big League (c)", lobby 102758532653468 "Grand Lobby Calm".
+	Music = { Id = "rbxassetid://1837768013", Volume = 0.25, Pitch = 1.0 }, -- "Rise to the Top (c)", APM
+	LobbyMusic = { Id = "rbxassetid://101945305370690", Volume = 0.2, Pitch = 1.0 }, -- "ROBOTS DREAMING OF RAIN"
 }
+
+-- Fight loop in the arena, calm loop in the lobby (InArena is set by LobbyBuilder).
+function Sounds.musicFor(inArena: boolean): { Id: string, Volume: number, Pitch: number }
+	return if inArena then Sounds.Music else Sounds.LobbyMusic
+end
 
 -- Which shot sound a weapon uses.
 Sounds.ForWeapon = {
