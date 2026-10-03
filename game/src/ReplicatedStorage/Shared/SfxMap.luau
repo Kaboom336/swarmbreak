@@ -18,6 +18,9 @@ local soundByEvent: { [string]: string } = {
 
 local SfxMap = {}
 
+-- Public so the content audit can validate every event without duplicating this list.
+SfxMap.ByEvent = soundByEvent
+
 function SfxMap.forEvent(eventName: string): string?
 	return soundByEvent[eventName]
 end

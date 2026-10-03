@@ -24,6 +24,18 @@ export type Definition = {
 
 local VfxDefs = {}
 
+-- Explicit usage contract. Keeping this separate from Definitions lets the content audit
+-- catch both a missing definition and an obsolete definition that is no longer used.
+VfxDefs.Order = {
+	"HitSpark",
+	"MuzzleFlash",
+	"DeathBurst",
+	"SpawnBuildIn",
+	"Telegraph",
+	"PickupMagnet",
+	"BossWeakPoint",
+}
+
 VfxDefs.MaxRate = 100
 VfxDefs.EmitBudgetPerSecond = 600 -- placeholder mobile budget
 VfxDefs.PlayerHues = {

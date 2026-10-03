@@ -27,6 +27,7 @@ Plan: ../GAME-PLAN.md. Zion's steps: ../PUBLISH-GUIDE.md and ../MONETIZATION-SET
 stylua --check src
 selene src
 lune run tests/run.luau
+lune run ../tools/content_audit.luau
 lune run ../tools/lint_runtime_apis.luau
 rojo build default.project.json -o out.rbxl
 ```
