@@ -83,8 +83,10 @@ export type RunSummary = {
 local runs: { [Player]: Run } = {}
 local waiting: { [Player]: boolean } = {}
 local damageLedgers: { [Model]: DamageCredit.Ledger } = {}
+local lastContactDamageAt: { [Player]: number } = {}
 local PlayerData = {}
 PlayerData.OnEquipChanged = nil :: ((Player) -> ())?
+PlayerData.DamageIFrameSeconds = 0.5
 
 local function sendTelemetry(plr: Player, name: string, fields: Telemetry.Fields)
 	pcall(function()
@@ -294,6 +296,50 @@ function PlayerData.addXp(plr: Player, amount: number)
 		PlayerData.offerLevelReward(plr)
 	end
 	push(plr)
+end
+
+local function flashDamageIFrame(character: Model)
+	local previous = character:FindFirstChild("DamageIFrameFlash")
+	if previous then
+		previous:Destroy()
+	end
+	local highlight = Instance.new("Highlight")
+	highlight.Name = "DamageIFrameFlash"
+	highlight.FillColor = Color3.new(1, 1, 1)
+	highlight.FillTransparency = 0.25
+	highlight.OutlineColor = Color3.new(1, 1, 1)
+	highlight.OutlineTransparency = 0
+	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	highlight.Parent = character
+	task.delay(PlayerData.DamageIFrameSeconds, function()
+		if highlight.Parent then
+			highlight:Destroy()
+		end
+	end)
+end
+
+-- The only enemy-to-player damage entry point. All contact and ranged hits share one
+-- short immunity window, so several enemies landing together cannot erase a health bar.
+function PlayerData.takeEnemyDamage(plr: Player, amount: number): boolean
+	local character = plr.Character
+	local hum = character and character:FindFirstChildOfClass("Humanoid")
+	if
+		not character
+		or not hum
+		or hum.Health <= 0
+		or amount <= 0
+		or character:FindFirstChildOfClass("ForceField")
+	then
+		return false
+	end
+	local now = os.clock()
+	if now - (lastContactDamageAt[plr] or -math.huge) < PlayerData.DamageIFrameSeconds then
+		return false
+	end
+	lastContactDamageAt[plr] = now
+	hum:TakeDamage(amount)
+	flashDamageIFrame(character)
+	return true
 end
 
 function PlayerData.magnetRadius(plr: Player): number
@@ -1078,6 +1124,7 @@ end
 local function onPlayerAdded(plr: Player)
 	PlayerData.get(plr)
 	plr.CharacterAdded:Connect(function(char)
+		lastContactDamageAt[plr] = nil
 		local hum = char:WaitForChild("Humanoid") :: Humanoid
 		hum.MaxHealth = maxHealthFor(plr)
 		hum.Health = hum.MaxHealth
@@ -1113,6 +1160,7 @@ Players.PlayerRemoving:Connect(function(plr)
 	end
 	runs[plr] = nil
 	waiting[plr] = nil
+	lastContactDamageAt[plr] = nil
 end)
 
 return PlayerData
