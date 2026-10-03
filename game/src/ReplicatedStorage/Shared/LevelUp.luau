@@ -29,9 +29,10 @@ export type ActionState = {
 local LevelUp = {}
 
 LevelUp.WaveOneKillRate = 0.2 -- one Walker kill every 5 seconds in the opening wave
--- XP needed for each level. Early picks are frequent; from wave 4 onward the
--- curve settles at 40 seconds per pick at the baseline kill rate below.
-LevelUp.XpCurve = { 30, 35, 40, 80 }
+-- XP needed for each level. Early picks are frequent, then the requirement grows
+-- steadily so rising weapon damage does not make late-run picks accelerate.
+LevelUp.XpCurve = { 30, 45, 55, 80, 80, 80, 80 }
+LevelUp.XpGrowthPerLevel = 10
 LevelUp.KillXp = {
 	Walker = 10,
 	Runner = 10,
@@ -58,8 +59,12 @@ LevelUp.BanishesPerRun = 2
 LevelUp.SkipXpFraction = 0.10
 
 function LevelUp.requiredXp(level: number): number
-	local curveIndex = math.clamp(math.floor(level), 1, #LevelUp.XpCurve)
-	return LevelUp.XpCurve[curveIndex]
+	local wholeLevel = math.max(1, math.floor(level))
+	if wholeLevel <= #LevelUp.XpCurve then
+		return LevelUp.XpCurve[wholeLevel]
+	end
+	return LevelUp.XpCurve[#LevelUp.XpCurve]
+		+ (wholeLevel - #LevelUp.XpCurve) * LevelUp.XpGrowthPerLevel
 end
 
 function LevelUp.secondsAtWaveOneRate(level: number): number

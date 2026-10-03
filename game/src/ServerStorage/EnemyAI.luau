@@ -13,6 +13,7 @@ local EnemyWatchdog = require(ReplicatedStorage.Shared.EnemyWatchdog)
 local EnemyBuilder = require(script.Parent.EnemyBuilder)
 local EnemyIndex = require(script.Parent.EnemyIndex)
 local FxRouter = require(script.Parent.FxRouter)
+local PlayerData = require(script.Parent.PlayerData)
 
 type EnemyDef = Enemies.EnemyDef
 
@@ -31,11 +32,15 @@ type Live = {
 	SummonCooldown: number,
 	OnDeath: (Player?, Vector3) -> (),
 	LastHitBy: Player?,
+	CircleRadius: number,
 }
 
 local live: { [Model]: Live } = {}
+local attackSlots: { [Player]: { [Model]: boolean } } = {}
+local slotOwners: { [Model]: Player } = {}
 local EnemyAI = {}
 EnemyAI.OnSummon = nil :: ((string, CFrame) -> ())?
+EnemyAI.AttackSlotsPerPlayer = 4
 
 local function v3(t: { number }): Vector3
 	return Vector3.new(t[1], t[2], t[3])
@@ -46,6 +51,56 @@ local function playerFromRoot(root: BasePart): Player?
 	return if character and character:IsA("Model")
 		then Players:GetPlayerFromCharacter(character)
 		else nil
+end
+
+local function releaseAttackSlot(e: Live)
+	local owner = slotOwners[e.Model]
+	if not owner then
+		return
+	end
+	local slots = attackSlots[owner]
+	if slots then
+		slots[e.Model] = nil
+		if next(slots) == nil then
+			attackSlots[owner] = nil
+		end
+	end
+	slotOwners[e.Model] = nil
+end
+
+local function acquireAttackSlot(e: Live, target: BasePart): boolean
+	local player = playerFromRoot(target)
+	if not player then
+		releaseAttackSlot(e)
+		return false
+	end
+	local owner = slotOwners[e.Model]
+	if owner == player then
+		return true
+	elseif owner then
+		releaseAttackSlot(e)
+	end
+	local slots = attackSlots[player]
+	if not slots then
+		slots = {}
+		attackSlots[player] = slots
+	end
+	local count = 0
+	for model in slots do
+		local occupant = live[model]
+		if occupant and occupant.Humanoid.Health > 0 and model.Parent then
+			count += 1
+		else
+			slots[model] = nil
+			slotOwners[model] = nil
+		end
+	end
+	if count >= EnemyAI.AttackSlotsPerPlayer then
+		return false
+	end
+	slots[e.Model] = true
+	slotOwners[e.Model] = player
+	return true
 end
 
 local function nearestPlayerRoot(pos: Vector3): (BasePart?, number)
@@ -120,9 +175,8 @@ local function rangedShot(e: Live, target: BasePart)
 	local accent = (Theme.Enemy[typeName] or Theme.Enemy.Walker).Accent
 	local targetPlayer = playerFromRoot(target)
 	FxRouter.emit("spit", from, { From = from, To = to, Color = accent }, targetPlayer)
-	local hum = target.Parent and target.Parent:FindFirstChildOfClass("Humanoid")
-	if hum then
-		hum:TakeDamage(e.Damage)
+	if targetPlayer then
+		PlayerData.takeEnemyDamage(targetPlayer, e.Damage)
 	end
 end
 
@@ -175,7 +229,16 @@ local function groundMover(e: Live)
 		hum.WalkSpeed = if os.clock() < slowUntil then e.Speed * 0.7 else e.Speed
 		local target, dist = nearestPlayerRoot(e.Root.Position)
 		if target then
-			if def.Ranged and dist < (def.Range or 40) * 0.8 then
+			if not def.Ranged and dist < 14 and not acquireAttackSlot(e, target) then
+				-- Enemies without one of the four tokens orbit outside contact range.
+				local offset = (e.Root.Position - target.Position) * Vector3.new(1, 0, 1)
+				local angle = if offset.Magnitude > 0.01
+					then math.atan2(offset.Z, offset.X) + 0.35
+					else 0
+				local circlePoint = target.Position
+					+ Vector3.new(math.cos(angle), 0, math.sin(angle)) * e.CircleRadius
+				hum:MoveTo(circlePoint)
+			elseif def.Ranged and dist < (def.Range or 40) * 0.8 then
 				hum:MoveTo(e.Root.Position) -- hold position and shoot
 			elseif dist < 10 then
 				hum:MoveTo(target.Position) -- close: go straight
@@ -194,6 +257,11 @@ local function groundMover(e: Live)
 					hum:MoveTo(target.Position)
 				end
 			end
+		else
+			releaseAttackSlot(e)
+		end
+		if not def.Ranged and dist >= 14 then
+			releaseAttackSlot(e)
 		end
 		-- stuck detection: barely moved while trying to move -> jump
 		local moved = (e.Root.Position - lastPos).Magnitude
@@ -266,6 +334,7 @@ function EnemyAI.spawn(
 		SummonCooldown = def.SummonEvery or 0,
 		OnDeath = onDeath,
 		LastHitBy = nil,
+		CircleRadius = 6 + math.abs(math.floor(cf.Position.X + cf.Position.Z)) % 4,
 	}
 	live[model] = e
 	EnemyIndex.add(model, root)
@@ -279,6 +348,7 @@ function EnemyAI.spawn(
 	end)
 
 	hum.Died:Connect(function()
+		releaseAttackSlot(e)
 		live[model] = nil
 		EnemyIndex.remove(model)
 		onDeath(e.LastHitBy, root.Position)
@@ -347,6 +417,7 @@ task.spawn(function()
 			local verdict =
 				EnemyWatchdog.verdict(model.Parent ~= nil, hasRoot, pos.X, pos.Y, pos.Z, w.Stuck)
 			if verdict == "Forget" then
+				releaseAttackSlot(e)
 				live[model] = nil
 				watch[model] = nil
 				EnemyIndex.remove(model)
@@ -374,6 +445,8 @@ end)
 
 function EnemyAI.clearAll()
 	live = {}
+	attackSlots = {}
+	slotOwners = {}
 	EnemyIndex.clear()
 	folder:ClearAllChildren()
 end
@@ -385,14 +458,26 @@ RunService.Heartbeat:Connect(function(dt)
 		end
 		local target, dist = nearestPlayerRoot(e.Root.Position)
 		if not target then
+			releaseAttackSlot(e)
 			continue
 		end
 		local def = e.Def
 		local flat = (target.Position - e.Root.Position) * Vector3.new(1, 0, 1)
 		local horizontalDist = flat.Magnitude
+		if not def.Ranged and horizontalDist >= 14 then
+			releaseAttackSlot(e)
+		end
 		if def.Flying then
 			local hover = if def.Ranged then math.min((def.Range or 40) * 0.25, 14) else 3
 			local goal = target.Position + Vector3.new(0, hover, 0)
+			if not def.Ranged and horizontalDist < 14 and not acquireAttackSlot(e, target) then
+				local radial = if horizontalDist > 0.01 then flat.Unit else Vector3.new(1, 0, 0)
+				local tangent = Vector3.new(-radial.Z, 0, radial.X)
+				goal = target.Position
+					+ radial * e.CircleRadius
+					+ tangent * 3
+					+ Vector3.new(0, hover, 0)
+			end
 			local dir = goal - e.Root.Position
 			if dir.Magnitude > 1 then
 				local slowUntil = (e.Model:GetAttribute("SlowUntil") :: number?) or 0
@@ -420,7 +505,10 @@ RunService.Heartbeat:Connect(function(dt)
 						end
 					end)
 				end
-			elseif horizontalDist < (e.Root.Size.Magnitude / 2 + 3) then
+			elseif
+				horizontalDist < (e.Root.Size.Magnitude / 2 + 3)
+				and acquireAttackSlot(e, target)
+			then
 				e.AttackCooldown = 1
 				local function hitTarget(_impactPosition: Vector3?)
 					local currentDistance = ((target.Position - e.Root.Position) * Vector3.new(
@@ -428,9 +516,9 @@ RunService.Heartbeat:Connect(function(dt)
 						0,
 						1
 					)).Magnitude
-					local hum = target.Parent and target.Parent:FindFirstChildOfClass("Humanoid")
-					if hum and currentDistance < (e.Root.Size.Magnitude / 2 + 4) then
-						hum:TakeDamage(e.Damage)
+					local targetPlayer = playerFromRoot(target)
+					if targetPlayer and currentDistance < (e.Root.Size.Magnitude / 2 + 4) then
+						PlayerData.takeEnemyDamage(targetPlayer, e.Damage)
 					end
 				end
 				queueAttack(e, target, if def.Boss then 10 else 6, hitTarget)
@@ -453,6 +541,16 @@ RunService.Heartbeat:Connect(function(dt)
 			end
 		end
 	end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+	local slots = attackSlots[player]
+	if slots then
+		for model in slots do
+			slotOwners[model] = nil
+		end
+	end
+	attackSlots[player] = nil
 end)
 
 return EnemyAI

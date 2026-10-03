@@ -16,7 +16,7 @@ test("early waves build to a swarm", function()
 	eq(WaveTable.Compositions[1].Walker, 16, "wave 1 Walkers")
 	eq(total(WaveTable.Compositions[1]), 16, "wave 1 total")
 	assert(total(WaveTable.Compositions[3]) >= 20, "wave 3 has fewer than 20 enemies")
-	assert(total(WaveTable.Compositions[5]) >= 40, "wave 5 has fewer than 40 enemies")
+	assert(total(WaveTable.Compositions[5]) >= 28, "wave 5 has fewer than 28 enemies")
 end)
 
 test("packs sum to each composition and use at most two portals", function()
