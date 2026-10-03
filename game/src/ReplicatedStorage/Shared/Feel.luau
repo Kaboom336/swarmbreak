@@ -29,6 +29,10 @@ Feel.WeaponCameraKick = 0.15 -- melee swings only
 Feel.HitFlashSeconds = 0.06
 Feel.DamageNumberSeconds = 0.6
 Feel.DamageNumberRiseStuds = 3
+Feel.DamageNumberNormalPixels = 28
+Feel.DamageNumberCritPixels = 40
+Feel.DamageNumberPopScale = 1.3
+Feel.DamageNumberFont = "FredokaOne"
 Feel.HitSparkScale = 0.35
 Feel.CritSparkScale = 0.55
 Feel.HitSparkCount = 12
@@ -43,14 +47,14 @@ Feel.KnockbackStuds = 2
 
 -- Every enemy gets a bloodless teal/green goo-burst accent on death.
 Feel.DeathBurstColors = {
-	Walker = { 55, 230, 175 },
-	Runner = { 120, 255, 120 },
-	Flyer = { 60, 220, 210 },
-	Tank = { 80, 190, 105 },
-	Spitter = { 180, 255, 70 },
-	Brute = { 35, 175, 125 },
-	Queen = { 75, 240, 180 },
-	Warden = { 45, 205, 160 },
+	Walker = { 46, 230, 197 },
+	Runner = { 46, 230, 197 },
+	Flyer = { 46, 230, 197 },
+	Tank = { 46, 230, 197 },
+	Spitter = { 46, 230, 197 },
+	Brute = { 46, 230, 197 },
+	Queen = { 46, 230, 197 },
+	Warden = { 46, 230, 197 },
 } :: { [string]: { number } }
 
 function Feel.eventFor(killed: boolean, critical: boolean): EventName

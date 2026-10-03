@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local PlayerPose = require(ReplicatedStorage.Shared.PlayerPose)
+local Theme = require(ReplicatedStorage.Shared.Theme)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 
 local player = Players.LocalPlayer
@@ -58,7 +59,7 @@ local function makeDashTrail(root: BasePart): Trail
 	trail.Name = "PlayerFeelDashTrail"
 	trail.Attachment0 = top
 	trail.Attachment1 = bottom
-	trail.Color = ColorSequence.new(Color3.fromRGB(40, 220, 210))
+	trail.Color = ColorSequence.new(ClientFX.c3(Theme.Goo))
 	trail.LightEmission = 1
 	trail.Lifetime = PlayerPose.DashTrailLifetime
 	trail.Transparency = NumberSequence.new({
@@ -189,7 +190,7 @@ StatsChanged.OnClientEvent:Connect(function(stats: any)
 		activeState.LevelStartedAt = os.clock()
 		ClientFX.ring(
 			activeState.Root.Position - Vector3.new(0, 2.5, 0),
-			Color3.fromRGB(255, 220, 80),
+			ClientFX.c3(Theme.Loot),
 			7,
 			PlayerPose.LevelUpDuration
 		)

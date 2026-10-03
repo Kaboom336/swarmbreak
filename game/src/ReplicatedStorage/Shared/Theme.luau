@@ -1,28 +1,53 @@
 --!strict
--- Visual theme: "Overrun research station" (deep violet floor, pastel structures, bright enemies).
--- Colors are {r, g, b} 0..255 so tests can load this file.
+-- S0 art-bible palette. Colors are {r, g, b} 0..255 so pure tests can load this file.
+local OUTPOST_CREAM = { 255, 233, 201 }
+local OUTPOST_SHADE = { 222, 190, 150 }
+local SIGNAL_ORANGE = { 255, 138, 43 }
+local CHITIN = { 91, 47, 147 }
+local CHITIN_DARK = { 62, 31, 107 }
+local GOO = { 46, 230, 197 }
+local HERO = { 61, 165, 255 }
+local LOOT = { 255, 210, 63 }
+local TELEGRAPH = { 255, 61, 110 }
+
 local Theme = {
-	Name = "Overrun Station",
-	Floor = { 70, 40, 140 },
-	FloorTrim = { 115, 80, 180 },
-	Wall = { 220, 205, 240 },
-	Metal = { 250, 248, 255 },
-	MetalDark = { 90, 95, 105 }, -- weapons and lobby boards (white text sits on it)
-	PropPastel = { 205, 185, 230 }, -- arena props and trims (V1 high-contrast look)
-	NeonTeal = { 40, 220, 210 },
-	NeonPurple = { 180, 70, 255 },
-	NeonAmber = { 255, 170, 40 },
-	NeonRed = { 255, 60, 60 },
-	Swarm = { 150, 40, 170 }, -- enemy accent glow
-	Coin = { 255, 210, 60 },
+	Name = "Swarm Break Dusk",
+	OutpostCream = OUTPOST_CREAM,
+	OutpostShade = OUTPOST_SHADE,
+	SignalOrange = SIGNAL_ORANGE,
+	Chitin = CHITIN,
+	ChitinDark = CHITIN_DARK,
+	Goo = GOO,
+	Hero = HERO,
+	Loot = LOOT,
+	Telegraph = TELEGRAPH,
+	UiPanel = { 42, 33, 86 },
+	UiStroke = { 74, 60, 140 },
+	Text = { 255, 247, 236 },
+	SkyHorizon = { 255, 179, 122 },
+	SkyTop = { 122, 79, 214 },
+
+	-- Compatibility names used by the existing builders, now mapped to S0 tokens.
+	Floor = OUTPOST_CREAM,
+	FloorTrim = SIGNAL_ORANGE,
+	Wall = OUTPOST_CREAM,
+	Metal = OUTPOST_SHADE,
+	MetalDark = CHITIN_DARK,
+	PropPastel = OUTPOST_SHADE,
+	NeonTeal = GOO,
+	NeonPurple = CHITIN,
+	NeonAmber = SIGNAL_ORANGE,
+	NeonRed = TELEGRAPH,
+	Swarm = CHITIN,
+	Coin = LOOT,
 	LaneStripes = {
 		{
 			Angle = 0,
 			Length = 68,
 			Width = 5,
 			Thickness = 0.1,
-			Color = { 40, 220, 210 },
-			Material = "Neon",
+			Color = SIGNAL_ORANGE,
+			Material = "SmoothPlastic",
 			CanCollide = false,
 		},
 		{
@@ -30,8 +55,8 @@ local Theme = {
 			Length = 68,
 			Width = 5,
 			Thickness = 0.1,
-			Color = { 255, 170, 40 },
-			Material = "Neon",
+			Color = OUTPOST_SHADE,
+			Material = "SmoothPlastic",
 			CanCollide = false,
 		},
 		{
@@ -39,8 +64,8 @@ local Theme = {
 			Length = 68,
 			Width = 5,
 			Thickness = 0.1,
-			Color = { 40, 220, 210 },
-			Material = "Neon",
+			Color = SIGNAL_ORANGE,
+			Material = "SmoothPlastic",
 			CanCollide = false,
 		},
 		{
@@ -48,27 +73,27 @@ local Theme = {
 			Length = 68,
 			Width = 5,
 			Thickness = 0.1,
-			Color = { 255, 170, 40 },
-			Material = "Neon",
+			Color = OUTPOST_SHADE,
+			Material = "SmoothPlastic",
 			CanCollide = false,
 		},
 	},
-	-- enemy body palette per type (overrides Enemies.Defs Color for the rig)
+	-- Enemies stay darker than the cream floor; only eyes and veins use neon Goo.
 	Enemy = {
-		Walker = { Body = { 245, 245, 250 }, Accent = { 255, 90, 120 } },
-		Runner = { Body = { 225, 240, 255 }, Accent = { 255, 230, 120 } },
-		Flyer = { Body = { 220, 205, 250 }, Accent = { 150, 120, 255 } },
-		Tank = { Body = { 210, 245, 220 }, Accent = { 120, 255, 140 } },
-		Spitter = { Body = { 220, 250, 190 }, Accent = { 190, 255, 90 } },
-		Brute = { Body = { 250, 220, 215 }, Accent = { 255, 40, 40 } },
-		Queen = { Body = { 240, 210, 245 }, Accent = { 255, 90, 255 } },
-		Warden = { Body = { 210, 230, 255 }, Accent = { 90, 200, 255 } },
+		Walker = { Body = CHITIN, Accent = GOO },
+		Runner = { Body = CHITIN_DARK, Accent = GOO },
+		Flyer = { Body = CHITIN, Accent = GOO },
+		Tank = { Body = CHITIN_DARK, Accent = GOO },
+		Spitter = { Body = CHITIN, Accent = GOO },
+		Brute = { Body = CHITIN_DARK, Accent = GOO },
+		Queen = { Body = CHITIN, Accent = GOO },
+		Warden = { Body = CHITIN_DARK, Accent = GOO },
 	},
 	Rarity = {
-		Common = { 190, 190, 200 },
-		Rare = { 70, 140, 255 },
-		Epic = { 170, 80, 255 },
-		Legendary = { 255, 170, 30 },
+		Common = OUTPOST_SHADE,
+		Rare = HERO,
+		Epic = CHITIN,
+		Legendary = LOOT,
 	},
 }
 

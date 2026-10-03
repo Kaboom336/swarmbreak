@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local AnimCull = require(ReplicatedStorage.Shared.AnimCull)
 local EnemyAnimCurves = require(ReplicatedStorage.Shared.EnemyAnimCurves)
+local Theme = require(ReplicatedStorage.Shared.Theme)
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local FX = remotes:WaitForChild("FX") :: RemoteEvent
@@ -51,7 +52,7 @@ local function gooBurst(root: BasePart)
 	attachment.Name = "GooBurst"
 	attachment.Parent = root
 	local emitter = Instance.new("ParticleEmitter")
-	emitter.Color = ColorSequence.new(Color3.fromRGB(35, 220, 190), Color3.fromRGB(65, 255, 130))
+	emitter.Color = ColorSequence.new(Color3.fromRGB(Theme.Goo[1], Theme.Goo[2], Theme.Goo[3]))
 	emitter.LightEmission = 0.6
 	emitter.Lifetime = NumberRange.new(0.3, 0.55)
 	emitter.Rate = 0

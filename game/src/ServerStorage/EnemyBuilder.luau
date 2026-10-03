@@ -465,12 +465,7 @@ local function buildTank(
 	local torso = part("Torso", Vector3.new(3.4, 1.8, 4.2) * s, body)
 	torso.Parent = model
 	weld(root, torso, CFrame.new(0, 0.2 * s, 0))
-	local shell = part(
-		"Shell",
-		Vector3.new(3.8, 2.2, 4.6) * s,
-		body:Lerp(Color3.new(0, 0, 0), 0.35),
-		Enum.Material.Metal
-	)
+	local shell = part("Shell", Vector3.new(3.8, 2.2, 4.6) * s, body, Enum.Material.SmoothPlastic)
 	local mesh = Instance.new("SpecialMesh")
 	mesh.MeshType = Enum.MeshType.Sphere
 	mesh.Parent = shell

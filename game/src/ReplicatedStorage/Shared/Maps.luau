@@ -42,7 +42,7 @@ Maps.All = {
 		},
 		Props = { "Low Ledges", "Pillars", "Crystal Clusters", "Hive Goo" },
 		Boss = "Brute",
-		FloorColor = { 70, 40, 140 },
+		FloorColor = { 255, 233, 201 },
 	},
 	{
 		Name = "Hive Caves",
@@ -60,7 +60,7 @@ Maps.All = {
 		},
 		Props = { "Purple Crystals", "Teal Crystals", "Rock Columns" },
 		Boss = "Queen",
-		FloorColor = { 55, 35, 95 },
+		FloorColor = { 255, 233, 201 },
 	},
 	{
 		Name = "Overgrown Hangar",
@@ -78,7 +78,7 @@ Maps.All = {
 		},
 		Props = { "Hanging Vines", "Planter Boxes", "Sunbeams" },
 		Boss = "Warden",
-		FloorColor = { 40, 75, 60 },
+		FloorColor = { 255, 233, 201 },
 	},
 } :: { MapDefinition }
 

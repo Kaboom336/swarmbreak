@@ -119,7 +119,7 @@ function ArenaModelGenerator.build(layout: Layout, theme: Theme): { OutputFile }
 		{ layout.Floor, 2, layout.Floor },
 		{ 0, 0, 0 },
 		color(theme.Floor),
-		"Concrete",
+		"SmoothPlastic",
 		nil,
 		nil
 	)
@@ -150,7 +150,7 @@ function ArenaModelGenerator.build(layout: Layout, theme: Theme): { OutputFile }
 				{ spec.Width, spec.Height, spec.Depth },
 				{ spec.x, 1 + spec.Height / 2, spec.z },
 				color(theme.PropPastel),
-				"DiamondPlate",
+				"SmoothPlastic",
 				nil,
 				nil
 			)
@@ -179,7 +179,7 @@ function ArenaModelGenerator.build(layout: Layout, theme: Theme): { OutputFile }
 						ringRadius * math.sin(angle),
 					},
 					color(theme.Metal),
-					"Metal",
+					"SmoothPlastic",
 					{
 						{ cosine, 0, sine },
 						{ 0, 1, 0 },
@@ -199,7 +199,7 @@ function ArenaModelGenerator.build(layout: Layout, theme: Theme): { OutputFile }
 				{ spec.Width, spec.Height, spec.Depth },
 				{ spec.x, 1 + spec.Height / 2, spec.z },
 				color(if spec.Kind == "Pillar" then theme.Metal else theme.PropPastel),
-				if spec.Kind == "Pillar" then "DiamondPlate" else "Metal",
+				"SmoothPlastic",
 				nil,
 				nil
 			)

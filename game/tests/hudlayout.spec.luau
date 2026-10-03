@@ -6,7 +6,7 @@ local VIEWPORTS = {
 }
 
 local PHONE =
-	{ width = 390, height = 844, insets = { left = 18, top = 47, right = 18, bottom = 34 } }
+	{ width = 844, height = 390, insets = { left = 47, top = 18, right = 34, bottom = 18 } }
 
 local function overlaps(a, b)
 	return not (a.x + a.w <= b.x or b.x + b.w <= a.x or a.y + a.h <= b.y or b.y + b.h <= a.y)
@@ -84,7 +84,7 @@ end)
 
 test("V3 HUD does not overlap at desktop resolutions or in phone safe areas", function()
 	local cases = {
-		{ width = 1366, height = 768, platform = "keyboard" },
+		{ width = 1280, height = 720, platform = "keyboard" },
 		{ width = 1920, height = 1080, platform = "keyboard" },
 		{ width = PHONE.width, height = PHONE.height, platform = "touch", insets = PHONE.insets },
 	}

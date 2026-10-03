@@ -49,6 +49,7 @@ export type Run = {
 	Passes: { [string]: boolean },
 	Boosts: WaveRewards.Boosts, -- wave reward cards picked this run
 	Offer: { string }, -- card ids on offer right now ({} when there is nothing to pick)
+	OfferOpenedAt: number,
 	OfferRarities: { [string]: string },
 	OfferElements: { [string]: string }, -- element cards in the current offer (H6)
 	OfferEvolutions: { [string]: string },
@@ -168,6 +169,7 @@ function PlayerData.get(plr: Player): Run
 			Passes = {},
 			Boosts = WaveRewards.newBoosts(),
 			Offer = {},
+			OfferOpenedAt = 0,
 			OfferRarities = {},
 			OfferElements = {},
 			OfferEvolutions = {},
@@ -696,6 +698,7 @@ local function rollLevelOffer(plr: Player, excluded: { [string]: boolean }?): { 
 end
 
 local function setLevelOffer(r: Run, offer: { LevelUp.OfferCard })
+	local wasOpen = #r.Offer > 0
 	r.Offer = {}
 	r.OfferRarities = {}
 	r.OfferElements = {}
@@ -710,6 +713,16 @@ local function setLevelOffer(r: Run, offer: { LevelUp.OfferCard })
 			r.OfferEvolutions[card.Id] = card.Evolution
 		end
 	end
+	if #r.Offer == 0 then
+		r.OfferOpenedAt = 0
+	elseif not wasOpen then
+		r.OfferOpenedAt = os.clock()
+	end
+end
+
+function PlayerData.incomingDamage(plr: Player, damage: number): number
+	local r = PlayerData.get(plr)
+	return LevelUp.incomingDamage(damage, r.OfferOpenedAt, os.clock(), #r.Offer > 0)
 end
 
 function PlayerData.offerLevelReward(plr: Player)
@@ -775,6 +788,7 @@ function PlayerData.pickReward(plr: Player, id: string): (boolean, string)
 	r.OfferRarities = {}
 	r.OfferElements = {}
 	r.OfferEvolutions = {}
+	r.OfferOpenedAt = 0
 	if pickedElement and not Profile.get(plr).Evolutions[Profile.get(plr).Equipped] then
 		r.RunElement = pickedElement
 		attachWeapon(plr)
@@ -880,6 +894,7 @@ function PlayerData.resetRun(plr: Player)
 	r.OfferRarities = {}
 	r.OfferElements = {}
 	r.OfferEvolutions = {}
+	r.OfferOpenedAt = 0
 	r.RewardActions = LevelUp.newActionState()
 	r.RunElement = nil
 	r.EvolvedRecipe = nil

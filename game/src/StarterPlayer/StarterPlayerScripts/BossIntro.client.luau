@@ -9,6 +9,8 @@ local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local BossIntro = ReplicatedStorage:WaitForChild("Remotes").BossIntro :: RemoteEvent
 local LightingPresets = require(ReplicatedStorage.Shared.LightingPresets)
+local Theme = require(ReplicatedStorage.Shared.Theme)
+local UiKit = require(script.Parent:WaitForChild("UiKit"))
 
 local function normalizedColor(t: { number }): Color3
 	return Color3.new(t[1], t[2], t[3])
@@ -64,6 +66,7 @@ BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number)
 	card.IgnoreGuiInset = true
 	card.DisplayOrder = 50
 	card.Parent = gui
+	UiKit.ScreenScale(card)
 	for _, y in { 0, 0.85 } do
 		local bar = Instance.new("Frame")
 		bar.Size = UDim2.new(1, 0, 0.15, 0)
@@ -77,9 +80,9 @@ BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number)
 	name.Position = UDim2.new(0, 0, 0.62, 0)
 	name.BackgroundTransparency = 1
 	name.Text = string.upper(bossName)
-	name.Font = Enum.Font.Antique
+	name.Font = UiKit.Fonts.Banner
 	name.TextSize = 64
-	name.TextColor3 = Color3.fromRGB(220, 40, 40)
+	name.TextColor3 = Color3.fromRGB(Theme.Telegraph[1], Theme.Telegraph[2], Theme.Telegraph[3])
 	name.TextStrokeTransparency = 0
 	name.TextTransparency = 1
 	name.Parent = card

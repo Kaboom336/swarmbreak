@@ -7,6 +7,8 @@ local UserInputService = game:GetService("UserInputService")
 
 local CameraConfig = require(ReplicatedStorage.Shared.CameraConfig)
 local MouseMode = require(ReplicatedStorage.Shared.MouseMode)
+local Theme = require(ReplicatedStorage.Shared.Theme)
+local UiKit = require(script.Parent:WaitForChild("UiKit"))
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -23,6 +25,7 @@ cameraGui.DisplayOrder = 5
 cameraGui.IgnoreGuiInset = true
 cameraGui.ResetOnSpawn = false
 cameraGui.Parent = player:WaitForChild("PlayerGui")
+UiKit.ScreenScale(cameraGui)
 
 local crosshair = Instance.new("Frame")
 crosshair.Name = "Crosshair"
@@ -39,7 +42,7 @@ local function crosshairLine(name: string, position: UDim2, size: UDim2)
 	line.Name = name
 	line.Position = position
 	line.Size = size
-	line.BackgroundColor3 = Color3.new(1, 1, 1)
+	line.BackgroundColor3 = Color3.fromRGB(Theme.Text[1], Theme.Text[2], Theme.Text[3])
 	line.BorderColor3 = Color3.new(0, 0, 0)
 	line.BorderSizePixel = 1
 	line.Parent = crosshair

@@ -92,9 +92,7 @@ local platform: HudLayout.Platform = if UserInputService.TouchEnabled
 local camera = workspace.CurrentCamera
 local viewport = if camera then camera.ViewportSize else Vector2.new(1280, 720) -- placeholder
 local currentScale = HudLayout.scaleFor(viewport.X, viewport.Y, platform)
-local hudScale = Instance.new("UIScale")
-hudScale.Scale = currentScale
-hudScale.Parent = screen
+local hudScale = UiKit.ScreenScale(screen)
 local managedButtons: { { Button: TextButton, BaseHeight: number } } = {}
 
 local function resizeManagedButtons()
@@ -146,7 +144,7 @@ vignette.ZIndex = 0
 vignette.Parent = screen
 for _, side in { "Top", "Bottom", "Left", "Right" } do
 	local f = Instance.new("Frame")
-	f.BackgroundColor3 = Color3.fromRGB(200, 20, 20)
+	f.BackgroundColor3 = ClientFX.c3(Theme.Telegraph)
 	f.BorderSizePixel = 0
 	if side == "Top" then
 		f.Size = UDim2.new(1, 0, 0.22, 0)
@@ -173,7 +171,7 @@ end
 finalHud.HitDirection =
 	text(screen, "HitDirection", UDim2.fromScale(0.5, 0.5), UDim2.fromOffset(48, 48), "^", 42)
 finalHud.HitDirection.AnchorPoint = Vector2.new(0.5, 0.5)
-finalHud.HitDirection.TextColor3 = Color3.fromRGB(255, 50, 50)
+finalHud.HitDirection.TextColor3 = ClientFX.c3(Theme.Telegraph)
 finalHud.HitDirection.TextStrokeTransparency = 0
 finalHud.HitDirection.Visible = false
 finalHud.HitDirection.ZIndex = 5
@@ -237,40 +235,27 @@ local waveLabel = text(screen, "Wave", UDim2.new(), UDim2.new(), "", 22)
 waveLabel.TextXAlignment = Enum.TextXAlignment.Left
 local bossChipLabel =
 	text(screen, "BossChip", UDim2.new(0.5, -100, 0, 42), UDim2.new(0, 200, 0, 18), "", 13)
-bossChipLabel.TextColor3 = Color3.fromRGB(255, 160, 80)
+bossChipLabel.TextColor3 = ClientFX.c3(Theme.SignalOrange)
 local phaseLabel =
 	text(screen, "Phase", UDim2.new(0.5, -200, 0, 60), UDim2.new(0, 400, 0, 22), "", 18)
-phaseLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+phaseLabel.TextColor3 = ClientFX.c3(Theme.Text)
 local mutationLabel =
 	text(screen, "Mutation", UDim2.new(0.5, -240, 0, 82), UDim2.new(0, 480, 0, 18), "", 14)
-mutationLabel.TextColor3 = Color3.fromRGB(255, 200, 60)
+mutationLabel.TextColor3 = ClientFX.c3(Theme.Loot)
 
 -- Wave progress becomes boss health while a boss is alive.
-local bossFrame = UiKit.Panel(screen, "WaveProgress")
-bossFrame.Size = UDim2.new(0, 480, 0, 22)
+local bossBar = UiKit.Bar(screen, "WaveProgress", UDim2.new(0, 480, 0, 22), Theme.Telegraph)
+local bossFrame = bossBar.Frame
 bossFrame.Position = UDim2.new(0.5, -240, 0, 106)
-bossFrame.BackgroundColor3 = Color3.fromRGB(30, 10, 10)
-bossFrame.BorderSizePixel = 0
 bossFrame.Visible = true
-bossFrame.Parent = screen
-local bossFill = Instance.new("Frame")
-bossFill.Size = UDim2.fromScale(1, 1)
-bossFill.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
-bossFill.BorderSizePixel = 0
-bossFill.Parent = bossFrame
-local bossLabel = text(bossFrame, "Value", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), "", 12)
+local bossFill = bossBar.Fill
+local bossLabel = bossBar.Label
+bossLabel.TextSize = 12
 
 -- Currencies remain as one readable icon column on the left.
-finalHud.CurrencyFrame = Instance.new("Frame")
+finalHud.CurrencyFrame = UiKit.Panel(screen, "Currencies")
 finalHud.CurrencyFrame.Name = "Currencies"
-finalHud.CurrencyFrame.BackgroundColor3 = PANEL
-finalHud.CurrencyFrame.BackgroundTransparency = 0.1
-finalHud.CurrencyFrame.BorderSizePixel = 0
 finalHud.CurrencyFrame.Visible = true
-finalHud.CurrencyFrame.Parent = screen
-local currencyCorner = Instance.new("UICorner")
-currencyCorner.CornerRadius = UDim.new(0, 8)
-currencyCorner.Parent = finalHud.CurrencyFrame
 finalHud.CoinsLabel = text(
 	finalHud.CurrencyFrame,
 	"Coins",
@@ -291,18 +276,11 @@ finalHud.GemsLabel = text(
 finalHud.GemsLabel.TextColor3 = ClientFX.c3(Theme.NeonTeal)
 
 -- Bottom-centre: HP. Detailed run stats live behind this bar.
-local hpBack = UiKit.Panel(screen, "Health")
-hpBack.Size = UDim2.new(0, 260, 0, 18)
+local healthBar = UiKit.Bar(screen, "Health", UDim2.new(0, 260, 0, 18), UiTheme.Colors.Success)
+local hpBack = healthBar.Frame
 hpBack.Position = UDim2.new(0, 12, 1, -80)
-hpBack.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-hpBack.BorderSizePixel = 0
-hpBack.Parent = screen
-local hpFill = Instance.new("Frame")
-hpFill.Size = UDim2.fromScale(1, 1)
-hpFill.BackgroundColor3 = OK
-hpFill.BorderSizePixel = 0
-hpFill.Parent = hpBack
-local hpText = text(hpBack, "HP", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), "", 14)
+local hpFill = healthBar.Fill
+local hpText = healthBar.Label
 finalHud.StatsToggle = Instance.new("TextButton")
 finalHud.StatsToggle.Name = "OpenStats"
 finalHud.StatsToggle.Size = UDim2.fromScale(1, 1)
@@ -324,15 +302,13 @@ finalHud.AbilityUi = (function()
 	layout.Parent = tray
 
 	local function makeButton(name: string): (TextButton, UIStroke, TextLabel)
-		local b = Instance.new("TextButton")
+		local b = UiKit.Button(tray, name, UDim2.fromOffset(52, 52))
 		b.Name = name
-		b.Size = UDim2.fromOffset(52, 52)
 		b.BackgroundColor3 = PANEL
 		b.TextColor3 = WHITE
 		b.TextSize = 11
-		b.Font = Enum.Font.GothamBold
+		b.Font = UiKit.Fonts.Body
 		b.TextWrapped = true
-		b.Parent = tray
 		local corner = Instance.new("UICorner")
 		corner.CornerRadius = UDim.new(1, 0)
 		corner.Parent = b
@@ -342,7 +318,7 @@ finalHud.AbilityUi = (function()
 		ring.Color = OK
 		ring.Parent = b
 		local cooldown = text(b, "Cooldown", UDim2.new(), UDim2.fromScale(1, 1), "", 18)
-		cooldown.Font = Enum.Font.GothamBlack
+		cooldown.Font = UiKit.Fonts.Number
 		cooldown.ZIndex = b.ZIndex + 1
 		return b, ring, cooldown
 	end
@@ -375,20 +351,12 @@ statsLabel.TextXAlignment = Enum.TextXAlignment.Left
 statsLabel.TextYAlignment = Enum.TextYAlignment.Top
 
 -- Thin full-width run XP, pinned to the very top edge by HudLayout.
-local xpBack = Instance.new("Frame")
-xpBack.Name = "XP"
-xpBack.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-xpBack.BorderSizePixel = 0
-xpBack.ClipsDescendants = true
-xpBack.Parent = screen
-local xpFill = Instance.new("Frame")
-xpFill.Name = "Fill"
+local experienceBar = UiKit.Bar(screen, "XP", UDim2.new(), Theme.Goo)
+local xpBack = experienceBar.Frame
+local xpFill = experienceBar.Fill
 xpFill.Size = UDim2.fromScale(0, 1)
-xpFill.BackgroundColor3 = ClientFX.c3(Theme.NeonTeal)
-xpFill.BorderSizePixel = 0
-xpFill.Parent = xpBack
-local xpText = text(xpBack, "Value", UDim2.new(), UDim2.fromScale(1, 1), "", 11)
-xpText.ZIndex = xpFill.ZIndex + 1
+local xpText = experienceBar.Label
+xpText.TextSize = 11
 xpText.Visible = false
 
 -- A compact left icon column opens utility panels only when requested.
@@ -438,7 +406,7 @@ local function refreshQuests(state: any)
 		local item = Instance.new("Frame")
 		item.Name = row.Id
 		item.Size = UDim2.new(1, 0, 0, 50)
-		item.BackgroundColor3 = Color3.fromRGB(32, 32, 44)
+		item.BackgroundColor3 = ClientFX.c3(UiTheme.Colors.PanelRaised)
 		item.BorderSizePixel = 0
 		item.LayoutOrder = order
 		item.Parent = questPanel
@@ -454,7 +422,7 @@ local function refreshQuests(state: any)
 		bar.Name = "Progress"
 		bar.Size = UDim2.new(0, 156, 0, 16)
 		bar.Position = UDim2.new(0, 8, 0, 31)
-		bar.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+		bar.BackgroundColor3 = ClientFX.c3(UiTheme.Colors.BarTrack)
 		bar.BorderSizePixel = 0
 		bar.Parent = item
 		local fill = Instance.new("Frame")
@@ -517,7 +485,7 @@ local function makeSlider(
 	track.Size = UDim2.new(1, -24, 0, 12)
 	track.Text = ""
 	track.AutoButtonColor = false
-	track.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+	track.BackgroundColor3 = ClientFX.c3(UiTheme.Colors.BarTrack)
 	track.BorderSizePixel = 0
 	track.Parent = settingsPanel
 	table.insert(managedButtons, { Button = track, BaseHeight = 12 })
@@ -735,7 +703,7 @@ function finalHud.showAreaWarning(position: Vector3, radius: number, duration: n
 	warning.CanTouch = false
 	warning.CastShadow = false
 	warning.Material = Enum.Material.Neon
-	warning.Color = Color3.fromRGB(255, 40, 40)
+	warning.Color = ClientFX.c3(Theme.Telegraph)
 	warning.Transparency = 0.45
 	warning.Parent = workspace:FindFirstChild("ClientFX") or workspace
 	TweenService:Create(
@@ -767,10 +735,20 @@ end
 -- Wave reward cards: pick 1 of 3 after every wave clear (Shared/WaveRewards). They sit over
 -- the open shop during the intermission while the server holds an offer for us; a click or
 -- keys 1-3 pick one, and the server takes the first card for us when the countdown runs out.
+local cardDimmer = Instance.new("Frame")
+cardDimmer.Name = "RewardDimmer"
+cardDimmer.Size = UDim2.fromScale(1, 1)
+cardDimmer.BackgroundColor3 = Color3.new(0, 0, 0)
+cardDimmer.BackgroundTransparency = CardStyle.WorldDimTransparency
+cardDimmer.BorderSizePixel = 0
+cardDimmer.Visible = false
+cardDimmer.ZIndex = 1
+cardDimmer.Parent = screen
+
 local cardPanel = Instance.new("Frame")
 cardPanel.Name = "RewardCards"
 cardPanel.Size =
-	UDim2.fromOffset(CardStyle.Width * WaveRewards.OfferSize + 24, CardStyle.Height + 52)
+	UDim2.fromOffset(CardStyle.Width * WaveRewards.OfferSize + 24, CardStyle.Height + 48)
 cardPanel.Position = UDim2.new(0.5, -((CardStyle.Width * WaveRewards.OfferSize + 24) / 2), 0.22, 0)
 cardPanel.BackgroundTransparency = 1
 cardPanel.Visible = false
@@ -933,7 +911,7 @@ local function rebuildCards(
 			local targetSize = UDim2.fromOffset(CardStyle.Width, CardStyle.Height)
 			b.Size = UDim2.fromOffset(0, CardStyle.Height)
 			b.Text = ""
-			b.BackgroundColor3 = Color3.new(1, 1, 1)
+			b.BackgroundColor3 = ClientFX.c3(Theme.ChitinDark)
 			b.BorderSizePixel = 0
 			b.Active = false
 			b.ClipsDescendants = true
@@ -981,8 +959,8 @@ local function rebuildCards(
 				category,
 				14
 			)
-			categoryLabel.Font = Enum.Font.GothamBold
-			categoryLabel.TextColor3 = Color3.new(1, 1, 1)
+			categoryLabel.Font = UiKit.Fonts.Body
+			categoryLabel.TextColor3 = ClientFX.c3(Theme.Text)
 			categoryLabel.ZIndex = categoryBar.ZIndex + 1
 			local rarityLabel = text(
 				b,
@@ -1011,7 +989,7 @@ local function rebuildCards(
 				if recipe then recipe.Icon else CardStyle.iconFor(id, elementName) or "",
 				60
 			)
-			icon.Font = Enum.Font.GothamBlack
+			icon.Font = UiKit.Fonts.Title
 			icon.TextColor3 = textColor
 			local nameLabel = text(
 				b,
@@ -1030,7 +1008,7 @@ local function rebuildCards(
 				CardStyle.richEffect(def.Blurb),
 				CardStyle.EffectTextSize
 			)
-			blurb.Font = Enum.Font.Gotham
+			blurb.Font = UiKit.Fonts.Body
 			blurb.RichText = true
 			blurb.TextWrapped = true
 			blurb.TextYAlignment = Enum.TextYAlignment.Top
@@ -1110,7 +1088,7 @@ local function rebuildCards(
 				shine.Size = UDim2.new(0, 54, 1.3, 0)
 				shine.Position = UDim2.new(0, -90, -0.15, 0)
 				shine.Rotation = 16
-				shine.BackgroundColor3 = Color3.new(1, 1, 1)
+				shine.BackgroundColor3 = ClientFX.c3(Theme.Text)
 				shine.BackgroundTransparency = 0.55
 				shine.BorderSizePixel = 0
 				shine.ZIndex = b.ZIndex + 2
@@ -1284,7 +1262,7 @@ local function section(str: string)
 	order += 1
 	local l = text(shop, "Sec" .. str, UDim2.new(), UDim2.new(1, 0, 0, 22), str, 16)
 	l.TextXAlignment = Enum.TextXAlignment.Left
-	l.TextColor3 = Color3.fromRGB(255, 200, 60)
+	l.TextColor3 = ClientFX.c3(Theme.Loot)
 	l.LayoutOrder = order
 end
 local function shopButton(str: string): TextButton
@@ -1355,7 +1333,7 @@ for _, key in Weapons.CrateOrder do
 	odds.LayoutOrder = order
 	odds.TextWrapped = true
 	odds.AutomaticSize = Enum.AutomaticSize.Y
-	odds.TextColor3 = Color3.fromRGB(200, 200, 200)
+	odds.TextColor3 = ClientFX.c3(UiTheme.Colors.MutedText)
 end
 
 section("WEAPON EVOLUTION (Gems + shards, forever)")
@@ -1365,7 +1343,7 @@ evoInfo.LayoutOrder = order
 evoInfo.TextXAlignment = Enum.TextXAlignment.Left
 evoInfo.TextYAlignment = Enum.TextYAlignment.Top
 evoInfo.TextWrapped = true
-evoInfo.TextColor3 = Color3.fromRGB(200, 200, 200)
+evoInfo.TextColor3 = ClientFX.c3(UiTheme.Colors.MutedText)
 local evoButtons: { [string]: TextButton } = {}
 for _, element in Evolutions.Order do
 	local b = shopButton(element)
@@ -1405,7 +1383,7 @@ do
 			"???",
 			12
 		)
-		recipeLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 52)
+		recipeLabel.BackgroundColor3 = ClientFX.c3(UiTheme.Colors.PanelRaised)
 		recipeLabel.TextWrapped = true
 		recipeLabel.TextColor3 = ClientFX.c3(CardStyle.EvolveStroke)
 		finalHud.RecipeLabels[recipe.Id] = recipeLabel
@@ -1510,7 +1488,7 @@ for _, key in { "DoubleCoins", "ExtraDash", "StarterPack" } do
 end
 
 local closeBtn = shopButton("Close  [B]")
-closeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
+closeBtn.BackgroundColor3 = GREY
 
 -- Third button in the compact utility icon column.
 local shopToggle = button(screen, "$", UDim2.fromOffset(48, 48))
@@ -1617,7 +1595,7 @@ local function applyHudLayout()
 	cardPanel.Position =
 		UDim2.fromOffset((logical(viewport.X) - rewardWidth) / 2, logical(rewardRect.y))
 	cardPanel.Size =
-		UDim2.fromOffset(rewardWidth, math.max(logical(rewardRect.h), CardStyle.Height + 52))
+		UDim2.fromOffset(rewardWidth, math.max(logical(rewardRect.h), CardStyle.Height + 48))
 end
 
 applyHudLayout()
@@ -1664,6 +1642,7 @@ shopToggle.MouseButton1Click:Connect(function()
 end)
 cardPanel:GetPropertyChangedSignal("Visible"):Connect(function()
 	player:SetAttribute("CardPanelOpen", cardPanel.Visible)
+	cardDimmer.Visible = cardPanel.Visible
 	if cardPanel.Visible then
 		setUtilityPanel(nil)
 	end
@@ -1776,7 +1755,7 @@ end
 -- popup rides on StatsChanged (PlayerData.claimDaily). It shows once per session and never over
 -- a fight: a popup that lands mid-wave waits for the next phase, and a wave that starts while
 -- the strip is still up hides it until the wave ends.
-local DAILY_LATER = Color3.fromRGB(40, 40, 50) -- a day not reached yet
+local DAILY_LATER = ClientFX.c3(Theme.ChitinDark) -- a day not reached yet
 local dailyStrip = UiKit.Panel(screen, "DailyReward")
 dailyStrip.Name = "DailyReward"
 dailyStrip.Size = UDim2.new(0, 540, 0, 130)
@@ -1832,13 +1811,13 @@ for i, reward in Daily.Rewards do
 		Daily.shortText(reward),
 		12
 	)
-	r.Font = Enum.Font.Gotham
+	r.Font = UiKit.Fonts.Body
 	r.TextWrapped = true
 	table.insert(dailyBoxes, box)
 end
 local dailyNext = text(dailyBody, "Next", UDim2.new(0, 14, 0, 98), UDim2.new(1, -28, 0, 20), "", 14)
 dailyNext.TextXAlignment = Enum.TextXAlignment.Left
-dailyNext.TextColor3 = Color3.fromRGB(200, 200, 200)
+dailyNext.TextColor3 = ClientFX.c3(UiTheme.Colors.MutedText)
 
 local dailyShown = false -- once per session: the popup stays in every stats push
 local dailyPopup: Daily.Popup? = nil -- this session's popup, once StatsChanged brought it
@@ -2172,10 +2151,10 @@ local function refreshStats()
 			)
 			b.BackgroundColor3 = if ok
 				then Color3.fromRGB(c[1], c[2], c[3]):Lerp(Color3.new(), 0.45)
-				else Color3.fromRGB(60, 60, 70)
+				else GREY
 		else
 			b.Text = string.format("%s  %s", element, why)
-			b.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+			b.BackgroundColor3 = ClientFX.c3(UiTheme.Colors.PanelRaised)
 		end
 		b.TextSize = 12
 	end
@@ -2186,10 +2165,10 @@ local function refreshStats()
 		local label = if u then u.Label else name
 		if cost then
 			b.Text = string.format("%s  Lv %d  ->  %d coins", label, level, cost)
-			b.BackgroundColor3 = if stats.Coins >= cost then BUTTON else Color3.fromRGB(60, 60, 70)
+			b.BackgroundColor3 = if stats.Coins >= cost then BUTTON else GREY
 		else
 			b.Text = string.format("%s  MAX", label)
-			b.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+			b.BackgroundColor3 = GREY
 		end
 	end
 	for key, b in passButtons do
@@ -2414,7 +2393,7 @@ RunService.Heartbeat:Connect(function()
 		hpFill.Size = UDim2.fromScale(frac, 1)
 		hpFill.BackgroundColor3 = if frac > 0.5
 			then OK
-			else if frac > 0.25 then Color3.fromRGB(220, 160, 40) else BAD
+			else if frac > 0.25 then ClientFX.c3(Theme.SignalOrange) else BAD
 		hpText.Text =
 			string.format("HP %d / %d   STATS", math.floor(hum.Health), math.floor(hum.MaxHealth))
 		local low = frac < 0.35 and hum.Health > 0

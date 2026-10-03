@@ -41,8 +41,8 @@ test("UI rarity colors share the gameplay rarity palette", function()
 end)
 
 test("touch targets remain at least 44 pixels at the reference viewport", function()
-	eq(UiTheme.Sizes.ReferenceViewport.Width, 1334, "reference width")
-	eq(UiTheme.Sizes.ReferenceViewport.Height, 750, "reference height")
+	eq(UiTheme.Sizes.ReferenceViewport.Width, 1920, "reference width")
+	eq(UiTheme.Sizes.ReferenceViewport.Height, 1080, "reference height")
 	assert(UiTheme.Sizes.MinimumTouchTarget >= 44, "minimum touch target is too small")
 	for name, size in UiTheme.Sizes.TouchTargets do
 		assert(size.Width >= 44, name .. " is too narrow")

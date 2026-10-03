@@ -11,6 +11,7 @@ local Weapons = require(shared:WaitForChild("Weapons"))
 local Kits = require(shared:WaitForChild("Kits"))
 local Quests = require(shared:WaitForChild("Quests"))
 local Theme = require(shared:WaitForChild("Theme"))
+local UiTheme = require(shared:WaitForChild("UiTheme"))
 local PlayerData = require(ServerStorage:WaitForChild("PlayerData"))
 local GameState = require(ServerStorage:WaitForChild("GameState"))
 
@@ -53,7 +54,7 @@ local floor = makePart(
 	Vector3.new(60, 2, 60),
 	origin,
 	color(Theme.Floor),
-	Enum.Material.Concrete
+	Enum.Material.SmoothPlastic
 )
 floor.CanCollide = true
 
@@ -77,7 +78,7 @@ local function addBoard(name: string, title: string, body: string, offset: Vecto
 		Vector3.new(16, 11, 1),
 		origin + offset,
 		color(Theme.MetalDark),
-		Enum.Material.Metal
+		Enum.Material.SmoothPlastic
 	)
 	local gui = Instance.new("SurfaceGui")
 	gui.Name = "Display"
@@ -90,9 +91,11 @@ local function addBoard(name: string, title: string, body: string, offset: Vecto
 	label.Name = "Text"
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.fromScale(1, 1)
-	label.Font = Enum.Font.GothamBold
+	label.Font = if UiTheme.Font.Body == "GothamBold"
+		then Enum.Font.GothamBold
+		else Enum.Font.FredokaOne
 	label.Text = title .. "\n\n" .. body
-	label.TextColor3 = Color3.fromRGB(245, 248, 255)
+	label.TextColor3 = color(UiTheme.Colors.Text)
 	label.TextSize = 22
 	label.TextWrapped = true
 	label.Parent = gui
@@ -226,9 +229,11 @@ local startText = Instance.new("TextLabel")
 startText.Name = "Text"
 startText.BackgroundTransparency = 1
 startText.Size = UDim2.fromScale(1, 1)
-startText.Font = Enum.Font.GothamBlack
+startText.Font = if UiTheme.Font.Title == "FredokaOne"
+	then Enum.Font.FredokaOne
+	else Enum.Font.GothamBold
 startText.Text = string.format("START HERE\nStand for %d seconds", Lobby.StartPadSeconds)
-startText.TextColor3 = Color3.fromRGB(255, 255, 255)
+startText.TextColor3 = color(UiTheme.Colors.Text)
 startText.TextScaled = true
 startText.Parent = billboard
 

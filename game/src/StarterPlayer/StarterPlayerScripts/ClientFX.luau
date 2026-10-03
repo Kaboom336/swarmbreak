@@ -10,6 +10,7 @@ local PoolSize = require(ReplicatedStorage.Shared.PoolSize)
 local SoundBudget = require(ReplicatedStorage.Shared.SoundBudget)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Settings = require(ReplicatedStorage.Shared.Settings)
+local UiTheme = require(ReplicatedStorage.Shared.UiTheme)
 local VfxDefs = require(ReplicatedStorage.Shared.VfxDefs)
 
 local ClientFX = {}
@@ -108,8 +109,10 @@ type DamageNumberEntry = {
 	Anchor: Part,
 	Billboard: BillboardGui,
 	Label: TextLabel,
+	Scale: UIScale,
 	RiseTween: Tween?,
 	FadeTween: Tween?,
+	PopTween: Tween?,
 	Token: number,
 }
 
@@ -397,22 +400,29 @@ local damageNumberPool = PoolSize.new(
 		anchor.Size = Vector3.new(0.1, 0.1, 0.1)
 		anchor.Parent = fxFolder
 		local billboard = Instance.new("BillboardGui")
-		billboard.Size = UDim2.fromOffset(80, 30)
+		billboard.Size = UDim2.fromOffset(160, 60)
 		billboard.AlwaysOnTop = true
 		billboard.Enabled = false
 		billboard.Parent = anchor
 		local label = Instance.new("TextLabel")
 		label.Size = UDim2.fromScale(1, 1)
 		label.BackgroundTransparency = 1
-		label.Font = Enum.Font.GothamBlack
+		label.Font = if UiTheme.Font.Number == "FredokaOne"
+			then Enum.Font.FredokaOne
+			else Enum.Font.GothamBold
 		label.TextStrokeTransparency = 0.3
 		label.Parent = billboard
+		local popScale = Instance.new("UIScale")
+		popScale.Name = "PopScale"
+		popScale.Parent = label
 		return {
 			Anchor = anchor,
 			Billboard = billboard,
 			Label = label,
+			Scale = popScale,
 			RiseTween = nil,
 			FadeTween = nil,
+			PopTween = nil,
 			Token = 0,
 		}
 	end
@@ -424,7 +434,8 @@ function ClientFX.damageNumber(
 	color: Color3,
 	scale: number,
 	life: number,
-	rise: number
+	rise: number,
+	critical: boolean?
 )
 	local entry = PoolSize.acquire(damageNumberPool)
 	entry.Token += 1
@@ -435,14 +446,25 @@ function ClientFX.damageNumber(
 	if entry.FadeTween then
 		entry.FadeTween:Cancel()
 	end
+	if entry.PopTween then
+		entry.PopTween:Cancel()
+	end
 	entry.Anchor.Position = at
 	entry.Billboard.StudsOffset = Vector3.zero
 	entry.Billboard.Enabled = true
 	entry.Label.Text = text
 	entry.Label.TextColor3 = color
-	entry.Label.TextSize = math.round(18 * scale)
+	entry.Label.TextSize = if critical
+		then Feel.DamageNumberCritPixels
+		else Feel.DamageNumberNormalPixels
 	entry.Label.TextTransparency = 0
 	entry.Label.TextStrokeTransparency = 0.3
+	entry.Scale.Scale = math.min(1, scale)
+	entry.PopTween = TweenService:Create(
+		entry.Scale,
+		TweenInfo.new(0.08, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+		{ Scale = Feel.DamageNumberPopScale }
+	)
 	entry.RiseTween = TweenService:Create(
 		entry.Billboard,
 		TweenInfo.new(life, Enum.EasingStyle.Quad),
@@ -454,6 +476,7 @@ function ClientFX.damageNumber(
 	})
 	entry.RiseTween:Play()
 	entry.FadeTween:Play()
+	entry.PopTween:Play()
 	task.delay(life, function()
 		if entry.Token == token then
 			entry.Billboard.Enabled = false

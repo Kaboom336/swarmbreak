@@ -1,6 +1,7 @@
 --!strict
 -- Pure presentation data and reveal timing for level-up cards.
 local LevelUp = require(script.Parent.LevelUp)
+local Theme = require(script.Parent.Theme)
 
 export type Color = { number }
 export type RarityStyle = {
@@ -12,62 +13,63 @@ export type RarityStyle = {
 
 local CardStyle = {}
 
+CardStyle.WorldDimTransparency = 0.75
 CardStyle.Width = 220
-CardStyle.Height = 300
+CardStyle.Height = 276
 CardStyle.NameTextSize = 22
 CardStyle.EffectTextSize = 16
 CardStyle.MinimumContrast = 4.5
-CardStyle.StrokeThickness = 5
+CardStyle.StrokeThickness = 3
 CardStyle.SelectedStrokeThickness = 9
-CardStyle.SelectedStroke = { 255, 255, 255 }
-CardStyle.EvolveStroke = { 255, 211, 72 }
+CardStyle.SelectedStroke = Theme.Text
+CardStyle.EvolveStroke = Theme.Loot
 
 CardStyle.CategoryColors = {
-	WEAPON = { 245, 78, 78 },
-	PASSIVE = { 68, 145, 255 },
-	ELEMENT = { 90, 220, 180 },
-	UPGRADE = { 74, 210, 110 },
+	WEAPON = Theme.SignalOrange,
+	PASSIVE = Theme.Hero,
+	ELEMENT = Theme.Goo,
+	UPGRADE = Theme.Loot,
 }
 
 CardStyle.KeywordColors = {
-	fire = "#FF765F",
-	chain = "#9DEBFF",
-	pierce = "#FFD166",
-	slow = "#74D6FF",
-	heal = "#6BE585",
-	damage = "#FF9B7A",
-	health = "#6BE585",
-	speed = "#8DDBFF",
-	range = "#FFD166",
-	orb = "#D8A8FF",
-	pellet = "#FFB36B",
-	coins = "#FFE16B",
-	gems = "#78E7FF",
+	fire = "#FF8A2B",
+	chain = "#2EE6C5",
+	pierce = "#FFD23F",
+	slow = "#3DA5FF",
+	heal = "#2EE6C5",
+	damage = "#FF3D6E",
+	health = "#2EE6C5",
+	speed = "#3DA5FF",
+	range = "#FFD23F",
+	orb = "#5B2F93",
+	pellet = "#FF8A2B",
+	coins = "#FFD23F",
+	gems = "#2EE6C5",
 }
 
 CardStyle.Rarities = {
 	Common = {
-		Background = { { 64, 78, 101 }, { 28, 37, 54 } },
-		Stroke = { 155, 177, 207 },
-		Text = { 250, 252, 255 },
+		Background = { Theme.UiPanel, Theme.ChitinDark },
+		Stroke = Theme.OutpostShade,
+		Text = Theme.Text,
 		Shine = false,
 	},
 	Rare = {
-		Background = { { 20, 68, 132 }, { 7, 28, 68 } },
-		Stroke = { 65, 157, 255 },
-		Text = { 250, 252, 255 },
+		Background = { Theme.UiPanel, Theme.ChitinDark },
+		Stroke = Theme.Hero,
+		Text = Theme.Text,
 		Shine = false,
 	},
 	Epic = {
-		Background = { { 91, 40, 143 }, { 38, 15, 70 } },
-		Stroke = { 202, 103, 255 },
-		Text = { 255, 250, 255 },
+		Background = { Theme.UiPanel, Theme.ChitinDark },
+		Stroke = Theme.Chitin,
+		Text = Theme.Text,
 		Shine = true,
 	},
 	Legendary = {
-		Background = { { 255, 205, 87 }, { 190, 118, 26 } },
-		Stroke = { 255, 232, 145 },
-		Text = { 25, 18, 7 },
+		Background = { Theme.UiPanel, Theme.ChitinDark },
+		Stroke = Theme.Loot,
+		Text = Theme.Text,
 		Shine = true,
 	},
 } :: { [string]: RarityStyle }

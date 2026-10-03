@@ -13,6 +13,7 @@ local EnemyWatchdog = require(ReplicatedStorage.Shared.EnemyWatchdog)
 local EnemyBuilder = require(script.Parent.EnemyBuilder)
 local EnemyIndex = require(script.Parent.EnemyIndex)
 local FxRouter = require(script.Parent.FxRouter)
+local PlayerData = require(script.Parent.PlayerData)
 
 type EnemyDef = Enemies.EnemyDef
 
@@ -122,7 +123,9 @@ local function rangedShot(e: Live, target: BasePart)
 	FxRouter.emit("spit", from, { From = from, To = to, Color = accent }, targetPlayer)
 	local hum = target.Parent and target.Parent:FindFirstChildOfClass("Humanoid")
 	if hum then
-		hum:TakeDamage(e.Damage)
+		hum:TakeDamage(
+			if targetPlayer then PlayerData.incomingDamage(targetPlayer, e.Damage) else e.Damage
+		)
 	end
 end
 
@@ -430,7 +433,12 @@ RunService.Heartbeat:Connect(function(dt)
 					)).Magnitude
 					local hum = target.Parent and target.Parent:FindFirstChildOfClass("Humanoid")
 					if hum and currentDistance < (e.Root.Size.Magnitude / 2 + 4) then
-						hum:TakeDamage(e.Damage)
+						local targetPlayer = playerFromRoot(target)
+						hum:TakeDamage(
+							if targetPlayer
+								then PlayerData.incomingDamage(targetPlayer, e.Damage)
+								else e.Damage
+						)
 					end
 				end
 				queueAttack(e, target, if def.Boss then 10 else 6, hitTarget)
