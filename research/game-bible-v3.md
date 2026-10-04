@@ -41,6 +41,13 @@ Each core has its own rooms, palette, drops and story beats. Nothing is added wi
   - Flipbook sprites with hard edges, not soft blurry glows.
 - **Ultimates:** anime impact frames. A 2-frame high-contrast silhouette flash, speed-line backdrop and bold kanji-free text callouts (the ability name in LuckiestGuy).
 - **UI:** bold rounded fonts, thick outlines and saturated buttons, matching the world.
+- **On-screen effects** follow the same style:
+  - Anime hit markers, damage numbers with thick outlines and a pop-scale, speed lines at the screen edge on dash, a bright low-HP vignette pulse (never red blood), and bold banners.
+  - Effects never cover the centre of the screen for longer than 0.3 s.
+- **Boss health bar:**
+  - A wide top bar with a thick outline, the boss portrait icon and name plate, phase notches (for example, the Queen at 55%), and a white "damage trail" that drains after the red/teal fill.
+  - It shakes slightly on big hits (UI only, never the camera), flashes when a phase changes, and plays an entry animation when the boss intro ends.
+  - The bar shows the boss's colours.
 - **Judging:** "does it look like a bright, sharp anime action game?" next to Hunty Zombie and other top anime-styled Roblox games.
 
 ## Base and lobby (Zion 10/04 15:54Z)
