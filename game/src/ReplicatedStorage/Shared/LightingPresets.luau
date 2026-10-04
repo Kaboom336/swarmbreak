@@ -60,7 +60,7 @@ local LightingPresets = {
 			EnvironmentSpecularScale = 0.800000011920929,
 			ShadowSoftness = 0.07999999821186066,
 			Ambient = { 40 / 255, 34 / 255, 38 / 255 },
-			OutdoorAmbient = { 118 / 255, 100 / 255, 100 / 255 },
+			OutdoorAmbient = { 92 / 255, 82 / 255, 132 / 255 },
 			FogColor = { 1, 196 / 255, 160 / 255 },
 			FogStart = 400,
 			FogEnd = 1500,
@@ -83,8 +83,8 @@ local LightingPresets = {
 		},
 		ColorCorrection = {
 			Brightness = -0.019999999552965164,
-			Contrast = 0.2199999988079071,
-			Saturation = 0.07999999821186066,
+			Contrast = 0.15,
+			Saturation = 0.3,
 			TintColor = { 1, 240 / 255, 222 / 255 },
 		},
 		Sky = {

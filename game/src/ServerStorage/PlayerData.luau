@@ -167,6 +167,8 @@ local function push(plr: Player)
 			MusicVolume = p.MusicVolume,
 			SfxVolume = p.SfxVolume,
 			MouseLockEnabled = p.MouseLockEnabled,
+			CombatCameraEnabled = p.CombatCameraEnabled,
+			UltimateCinematics = p.UltimateCinematics,
 		})
 	end
 end

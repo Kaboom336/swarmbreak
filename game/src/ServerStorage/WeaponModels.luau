@@ -267,6 +267,7 @@ function WeaponModels.build(id: string): Model
 		local body = imported:FindFirstChild("Body", true)
 		if body and body:IsA("BasePart") then
 			imported.Name = "Weapon"
+			imported:SetAttribute("WeaponId", id)
 			imported.PrimaryPart = body
 			local def = Weapons.Defs[id] or Weapons.Defs.Starter
 			local extents = imported:GetExtentsSize()
@@ -291,6 +292,7 @@ function WeaponModels.build(id: string): Model
 	local dark = c3(Theme.MetalDark)
 	local model = Instance.new("Model")
 	model.Name = "Weapon"
+	model:SetAttribute("WeaponId", id)
 	local grip = part(Vector3.new(0.3, 0.7, 0.35), dark)
 	grip.Name = "Grip"
 	grip.Parent = model

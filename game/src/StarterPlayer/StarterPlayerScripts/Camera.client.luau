@@ -1,11 +1,12 @@
 --!strict
--- Fixed over-the-shoulder camera for mouse and gamepad. Touch keeps Roblox's camera and auto-aim.
+-- Gentle combat framing for every platform; mouse/gamepad retain over-the-shoulder aim.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local CameraConfig = require(ReplicatedStorage.Shared.CameraConfig)
+local CombatCameraMath = require(ReplicatedStorage.Shared.CombatCameraMath)
 local MouseMode = require(ReplicatedStorage.Shared.MouseMode)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local UiKit = require(script.Parent:WaitForChild("UiKit"))
@@ -54,6 +55,22 @@ crosshairLine("Vertical", UDim2.new(0.5, -1, 0, 0), UDim2.new(0, 2, 1, 0))
 local alive = false
 local freeHeld = false
 local cameraPopped: { [BasePart]: boolean } = {}
+local lastCameraInputAt = -math.huge
+
+local function markCameraInput(input: InputObject)
+	if
+		input.UserInputType == Enum.UserInputType.MouseMovement
+		or input.UserInputType == Enum.UserInputType.Touch
+		or input.KeyCode == Enum.KeyCode.Thumbstick2
+		or input.KeyCode == Enum.KeyCode.Q
+		or input.KeyCode == Enum.KeyCode.ButtonB
+	then
+		lastCameraInputAt = os.clock()
+	end
+end
+
+UserInputService.InputBegan:Connect(markCameraInput)
+UserInputService.InputChanged:Connect(markCameraInput)
 
 local function fadeEnemiesNearCamera(dt: number)
 	local enemies = workspace:FindFirstChild("Enemies")
@@ -109,14 +126,16 @@ RunService:BindToRenderStep(
 	fadeEnemiesNearCamera
 )
 
-local function nearbyEnemyCount(origin: Vector3): number
+local function nearbyEnemyThreat(origin: Vector3): (number, boolean, boolean)
 	local enemies = workspace:FindFirstChild("Enemies")
 	if not enemies then
-		return 0
+		return 0, false, false
 	end
 
 	local radiusSquared = CameraConfig.CrowdRadius * CameraConfig.CrowdRadius
 	local count = 0
+	local hasElite = false
+	local hasBoss = false
 	for _, enemy in enemies:GetChildren() do
 		if enemy:IsA("Model") then
 			local enemyRoot = enemy.PrimaryPart or enemy:FindFirstChild("HumanoidRootPart")
@@ -124,11 +143,17 @@ local function nearbyEnemyCount(origin: Vector3): number
 				local offset = enemyRoot.Position - origin
 				if offset:Dot(offset) <= radiusSquared then
 					count += 1
+					hasBoss = hasBoss or enemy:GetAttribute("Boss") == true
+					local typeName = enemy:GetAttribute("TypeName")
+					hasElite = hasElite
+						or enemy:GetAttribute("Elite") == true
+						or typeName == "Tank"
+						or typeName == "Brute"
 				end
 			end
 		end
 	end
-	return count
+	return count, hasElite, hasBoss
 end
 
 local function mouseState(): MouseMode.State
@@ -190,17 +215,12 @@ local function bindCharacter(character: Model)
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 	local root = character:WaitForChild("HumanoidRootPart") :: BasePart
 
-	if touchOnly then
-		humanoid.AutoRotate = true
-		return
-	end
-
 	player.CameraMinZoomDistance = CameraConfig.Distance
 	player.CameraMaxZoomDistance = CameraConfig.Distance
 	humanoid.CameraOffset = Vector3.new(CameraConfig.RightOffset, CameraConfig.HeightOffset, 0)
-	humanoid.AutoRotate = false
+	humanoid.AutoRotate = touchOnly
 	alive = true
-	local currentDistance = CameraConfig.Distance
+	local framing = CombatCameraMath.target(0, false, false)
 	local pitchInitialized = false
 	humanoid.Died:Connect(function()
 		alive = false
@@ -220,20 +240,25 @@ local function bindCharacter(character: Model)
 			return
 		end
 
-		local enemyCount = 0
+		if player:GetAttribute("ReaperArcActive") == true then
+			return
+		end
+
+		local enemyCount, hasElite, hasBoss = 0, false, false
 		if
 			player:GetAttribute("AutoFire") ~= false
 			and player:GetAttribute("CardPanelOpen") ~= true
 		then
-			enemyCount = nearbyEnemyCount(root.Position)
+			enemyCount, hasElite, hasBoss = nearbyEnemyThreat(root.Position)
 		end
-		local targetDistance = CameraConfig.distanceForEnemyCount(enemyCount)
-		local distanceAlpha = 1 - math.exp(-CameraConfig.DistanceResponse * dt)
-		currentDistance += (targetDistance - currentDistance) * distanceAlpha
-		currentDistance =
-			math.clamp(currentDistance, CameraConfig.Distance, CameraConfig.CrowdedDistance)
-		player.CameraMinZoomDistance = currentDistance
-		player.CameraMaxZoomDistance = currentDistance
+		local target = if player:GetAttribute("CombatCameraEnabled") == false
+			then CombatCameraMath.target(0, false, false)
+			else CombatCameraMath.target(enemyCount, hasElite, hasBoss)
+		framing = CombatCameraMath.step(framing, target, dt, os.clock() - lastCameraInputAt)
+		player.CameraMinZoomDistance = framing.Distance
+		player.CameraMaxZoomDistance = framing.Distance
+		humanoid.CameraOffset = Vector3.new(CameraConfig.RightOffset, framing.Height, 0)
+		camera:SetAttribute("BaseFov", framing.Fov)
 
 		local look = camera.CFrame.LookVector
 		local horizontalLook = Vector3.new(look.X, 0, look.Z)
@@ -251,7 +276,7 @@ local function bindCharacter(character: Model)
 				CFrame.lookAt(camera.CFrame.Position, camera.CFrame.Position + direction)
 		end
 
-		if not MouseMode.aimsCharacter(mouseState()) then
+		if touchOnly or not MouseMode.aimsCharacter(mouseState()) then
 			return
 		end
 

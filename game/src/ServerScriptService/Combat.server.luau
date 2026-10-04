@@ -11,13 +11,16 @@ local FireGuard = require(ReplicatedStorage.Shared.FireGuard)
 local Kits = require(ReplicatedStorage.Shared.Kits)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Theme = require(ReplicatedStorage.Shared.Theme)
+local AbilityPool = require(ReplicatedStorage.Shared.AbilityPool)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local Shoot = Remotes.Shoot :: RemoteEvent
 local Signature = Remotes.Signature :: RemoteEvent
+local WeaponAbility = Remotes.WeaponAbility :: RemoteEvent
 
 local lastAction: { [Player]: number } = {}
 local rejectedFireCounts: { [Player]: number } = {}
+local abilityReadyAt: { [Player]: { [string]: number } } = {}
 local rng = Random.new()
 
 local function point3(vector: Vector3): FireGuard.Point3
@@ -156,6 +159,77 @@ local function doMelee(
 	}, plr)
 end
 
+local function doScytheAbility(plr: Player, abilityId: string, root: BasePart, damage: number)
+	local radius = if abilityId == "HeavySweep"
+		then 18
+		elseif abilityId == "DashSpin" then 16
+		elseif abilityId == "CrescentPull" then 22
+		else 24
+	local multiplier = if abilityId == "HeavySweep"
+		then 1.8
+		elseif abilityId == "DashSpin" then 1.35
+		elseif abilityId == "CrescentPull" then 1.1
+		else 2.4
+	local hits = {}
+	for _, model in enemiesNear(root.Position, radius) do
+		local enemyRoot = model.PrimaryPart
+		if enemyRoot and damageEnemy(plr, model, damage * multiplier, enemyRoot.Position) then
+			table.insert(hits, enemyRoot.Position)
+			if abilityId == "CrescentPull" and not enemyRoot.Anchored then
+				local toward = root.Position - enemyRoot.Position
+				if toward.Magnitude > 1 then
+					enemyRoot.AssemblyLinearVelocity = toward.Unit * 32
+				end
+			end
+		end
+	end
+	FxRouter.emit("swing", root.Position, {
+		Shooter = plr,
+		Origin = root.Position,
+		Dir = root.CFrame.LookVector,
+		Range = radius,
+		Slam = true,
+		Hits = hits,
+		Color = Theme.Rarity.Legendary,
+		Sound = Sounds.ForWeapon.Reaper or "Swing",
+	}, plr)
+end
+
+WeaponAbility.OnServerEvent:Connect(function(plr, abilityId: any)
+	if typeof(abilityId) ~= "string" then
+		return
+	end
+	local weapon = PlayerData.equippedWeapon(plr)
+	if weapon.Id ~= "Reaper" then
+		return
+	end
+	local char = plr.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+	if not root or not root:IsA("BasePart") or not humanoid or humanoid.Health <= 0 then
+		return
+	end
+	local loadout = AbilityPool.defaultLoadout("Reaper")
+	local isUltimate = abilityId == loadout.Ultimate
+	if not isUltimate and not table.find(loadout.Abilities, abilityId) then
+		return -- only the equipped loadout may fire (K1 review)
+	end
+	local ability = AbilityPool.find("Reaper", abilityId)
+	if (not ability or not ability.Implemented) and not isUltimate then
+		return
+	end
+	local cooldown = if isUltimate then 30 else (ability :: AbilityPool.Ability).Cooldown
+	local readyById = abilityReadyAt[plr] or {}
+	abilityReadyAt[plr] = readyById
+	local now = os.clock()
+	if now < (readyById[abilityId] or 0) then
+		return
+	end
+	readyById[abilityId] = now + cooldown
+	WeaponAbility:FireClient(plr, abilityId)
+	doScytheAbility(plr, abilityId, root, weapon.Damage * PlayerData.damageMultiplier(plr))
+end)
+
 local function doBeam(
 	plr: Player,
 	char: Model,
@@ -253,4 +327,5 @@ end)
 Players.PlayerRemoving:Connect(function(plr)
 	lastAction[plr] = nil
 	rejectedFireCounts[plr] = nil
+	abilityReadyAt[plr] = nil
 end)

@@ -135,10 +135,15 @@ RunService.RenderStepped:Connect(function()
 			end
 		end
 	end
-	if #fovStack.Kicks > 0 then
-		camera.FieldOfView = FovStack.valueAt(fovStack, now)
-		FovStack.prune(fovStack, now)
-	end
+end)
+
+-- Sole FieldOfView writer: Camera.client publishes BaseFov, kicks add on top (K1 review).
+RunService:BindToRenderStep("SwarmFov", Enum.RenderPriority.Camera.Value + 3, function()
+	local now = os.clock()
+	local base = camera:GetAttribute("BaseFov")
+	fovStack.Base = if type(base) == "number" then base else 70
+	camera.FieldOfView = FovStack.valueAt(fovStack, now)
+	FovStack.prune(fovStack, now)
 end)
 
 type PoolEntry = {
