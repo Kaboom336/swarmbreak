@@ -189,20 +189,19 @@ local function makeDrop(plr: Player, position: Vector3, kind: string, value: num
 				end
 				return
 			end
+			-- Only the killer collects their own drops, within their Magnet card radius.
 			local collector: Player? = nil
 			local collectorRoot: BasePart? = nil
-			local nearestDistance = Feel.GemMagnetRadius
-			for _, candidate in Players:GetPlayers() do
-				local candidateRoot = candidate.Character
-					and candidate.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
-				if candidateRoot and PlayerData.get(candidate).Active then
-					local distance = (candidateRoot.Position - part.Position).Magnitude
-					if distance <= nearestDistance then
-						collector = candidate
-						collectorRoot = candidateRoot
-						nearestDistance = distance
-					end
-				end
+			local ownerRoot = plr.Character
+				and plr.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			local radius = math.max(Feel.GemMagnetRadius, PlayerData.magnetRadius(plr))
+			if
+				ownerRoot
+				and PlayerData.get(plr).Active
+				and (ownerRoot.Position - part.Position).Magnitude <= radius
+			then
+				collector = plr
+				collectorRoot = ownerRoot
 			end
 			if collector and collectorRoot then
 				local tween = TweenService:Create(

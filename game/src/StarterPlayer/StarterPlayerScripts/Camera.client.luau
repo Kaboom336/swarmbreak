@@ -65,6 +65,10 @@ local function fadeEnemiesNearCamera(dt: number)
 		if not enemy:IsA("Model") then
 			continue
 		end
+		local humanoid = enemy:FindFirstChildOfClass("Humanoid")
+		if humanoid and humanoid.Health <= 0 then
+			continue -- EnemyAnimator.playDeath hides the corpse; don't fade it back in
+		end
 		local boss = enemy:GetAttribute("Boss") == true
 		local fade = math.min(
 			1,
