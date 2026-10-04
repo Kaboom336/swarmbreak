@@ -30,8 +30,8 @@
    222
   ],
   "Brightness": -0.019999999552965164,
-  "Saturation": 0.07999999821186066,
-  "Contrast": 0.2199999988079071
+  "Saturation": 0.3,
+  "Contrast": 0.15
  },
  "EnvironmentDiffuseScale": 0.6000000238418579,
  "EnvironmentSpecularScale": 0.800000011920929,
@@ -43,9 +43,9 @@
   38
  ],
  "OutdoorAmbient": [
-  118,
-  100,
-  100
+  92,
+  82,
+  132
  ],
  "Atmosphere": {
   "Density": 0.2800000011920929,

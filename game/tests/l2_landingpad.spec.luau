@@ -91,3 +91,27 @@ test("Landing Pad mood is shipped as a capped lighting preset", function()
 		"LandingPad mood is not zone-aware"
 	)
 end)
+
+test("Landing Pad grade has warm light and cool shadows", function()
+	local mood = serde.decode("json", fs.readFile("assets/art/LandingPadMood.json"))
+	local shippedMood =
+		serde.decode("json", fs.readFile("src/ReplicatedStorage/Shared/Art/LandingPadMood.json"))
+	local preset = LightingPresets.LandingPad
+	assert(math.abs(mood.ColorCorrection.Saturation - 0.3) <= 0.02, "mood saturation")
+	assert(math.abs(mood.ColorCorrection.Contrast - 0.15) <= 0.02, "mood contrast")
+	assert(mood.Brightness >= 3, "Landing Pad sun is not bright")
+	assert(mood.ColorShift_Top[1] > mood.ColorShift_Top[3], "sun is not warm")
+	assert(mood.OutdoorAmbient[3] > mood.OutdoorAmbient[2], "shadows are not blue or purple")
+	eq(
+		shippedMood.ColorCorrection.Saturation,
+		mood.ColorCorrection.Saturation,
+		"shipped saturation"
+	)
+	eq(shippedMood.ColorCorrection.Contrast, mood.ColorCorrection.Contrast, "shipped contrast")
+	eq(shippedMood.OutdoorAmbient[3], mood.OutdoorAmbient[3], "shipped shadow tint")
+	eq(preset.ColorCorrection.Saturation, mood.ColorCorrection.Saturation, "preset saturation")
+	eq(preset.ColorCorrection.Contrast, mood.ColorCorrection.Contrast, "preset contrast")
+	eq(preset.Lighting.OutdoorAmbient[3] * 255, mood.OutdoorAmbient[3], "preset shadow tint")
+	assert(preset.Bloom.Intensity <= 0.5, "LandingPad bloom is too intense")
+	assert(preset.Bloom.Threshold >= 1.5, "LandingPad bloom threshold is too low")
+end)

@@ -4,18 +4,15 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local Theme = require(ReplicatedStorage.Shared.Theme)
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local OutlinePool = require(Shared:WaitForChild("OutlinePool"))
+local Theme = require(Shared:WaitForChild("Theme"))
 local localPlayer = Players.LocalPlayer
 local enemies = workspace:WaitForChild("Enemies")
 
-local MAX_HIGHLIGHTS = 30
 local UPDATE_INTERVAL = 0.15
 local HIGHLIGHT_NAME = "EnemyOutline"
-
-type Candidate = {
-	Model: Model,
-	Distance: number,
-}
+local tracked: { [Model]: Highlight } = {}
 
 local function viewPosition(): Vector3?
 	local character = localPlayer.Character
@@ -27,25 +24,33 @@ local function viewPosition(): Vector3?
 	return if camera then camera.CFrame.Position else nil
 end
 
-local function addHighlight(model: Model)
-	if model:FindFirstChild(HIGHLIGHT_NAME) then
-		return
+local function addHighlight(model: Model): Highlight
+	local existing = model:FindFirstChild(HIGHLIGHT_NAME)
+	if existing and existing:IsA("Highlight") then
+		tracked[model] = existing
+		return existing
 	end
 	local outline = Instance.new("Highlight")
 	outline.Name = HIGHLIGHT_NAME
 	outline.Adornee = model
-	outline.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	outline.DepthMode = Enum.HighlightDepthMode.Occluded
 	outline.FillTransparency = 1
 	outline.OutlineColor =
-		Color3.fromRGB(Theme.NeonAmber[1], Theme.NeonAmber[2], Theme.NeonAmber[3])
+		Color3.fromRGB(Theme.ChitinDark[1], Theme.ChitinDark[2], Theme.ChitinDark[3])
 	outline.OutlineTransparency = 0.2
 	outline.Parent = model
+	tracked[model] = outline
+	return outline
 end
 
-local function removeHighlight(model: Model)
-	local outline = model:FindFirstChild(HIGHLIGHT_NAME)
-	if outline and outline:IsA("Highlight") then
-		outline:Destroy()
+local function addCandidate(candidates: { OutlinePool.Candidate }, model: Model, origin: Vector3)
+	local root = model.PrimaryPart or model:FindFirstChild("HumanoidRootPart")
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	if root and root:IsA("BasePart") and humanoid and humanoid.Health > 0 then
+		table.insert(candidates, {
+			Target = model,
+			Distance = (root.Position - origin).Magnitude,
+		})
 	end
 end
 
@@ -55,34 +60,34 @@ local function updateHighlights()
 		return
 	end
 
-	local candidates: { Candidate } = {}
+	local candidates: { OutlinePool.Candidate } = {}
 	for _, child in enemies:GetChildren() do
 		if child:IsA("Model") then
-			local root = child.PrimaryPart
-			local humanoid = child:FindFirstChildOfClass("Humanoid")
-			if root and humanoid and humanoid.Health > 0 then
-				table.insert(candidates, {
-					Model = child,
-					Distance = (root.Position - origin).Magnitude,
-				})
-			end
+			addCandidate(candidates, child, origin)
 		end
 	end
-	table.sort(candidates, function(a, b)
-		return a.Distance < b.Distance
-	end)
+	for _, player in Players:GetPlayers() do
+		if player.Character then
+			addCandidate(candidates, player.Character, origin)
+		end
+	end
 
 	local highlighted: { [Model]: boolean } = {}
-	for index, candidate in candidates do
-		if index > MAX_HIGHLIGHTS then
-			break
-		end
-		highlighted[candidate.Model] = true
-		addHighlight(candidate.Model)
+	for _, candidate in OutlinePool.nearest(candidates) do
+		highlighted[candidate.Target] = true
 	end
-	for _, child in enemies:GetChildren() do
-		if child:IsA("Model") and not highlighted[child] then
-			removeHighlight(child)
+	-- Remove displaced targets first, so a changing selection never briefly exceeds the cap.
+	for model, outline in tracked do
+		if not highlighted[model] then
+			if outline.Parent then
+				outline:Destroy()
+			end
+			tracked[model] = nil
+		end
+	end
+	for model in highlighted do
+		if model.Parent and not tracked[model] then
+			addHighlight(model)
 		end
 	end
 end
