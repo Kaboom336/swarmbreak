@@ -2,8 +2,9 @@
 Zion (10/04 13:36Z): "it just looks bad. I've seen so many good AI-made Roblox games on TikTok that look way better."
 Diagnosis: the whole world is flat-coloured blocks made in code. Lighting is already Future, so lighting isn't the gap; models, materials and composition are.
 
-## Rule
-No feature work until a Landing Pad screenshot matches Hunty Zombie side by side.
+## Rules
+- No feature work until a Landing Pad screenshot matches Hunty Zombie side by side.
+- **Stop rule:** at most 2 rounds. If round 2 still isn't "matches", Claude recommends to Zion that Roblox pauses until a money lane pays.
 
 ## Play thread (Studio, laptop), working on a copy of the place
 1. **Base:**
@@ -20,7 +21,7 @@ No feature work until a Landing Pad screenshot matches Hunty Zombie side by side
    - Atmosphere, Sky and ColorCorrection on our Station preset, tuned by eye.
    - Small PointLights only. No Neon slabs.
 5. **Save** the result as Workspace/Arena/Art/LandingPad (a Model, no scripts) and export it as an .rbxm to game/assets/art/. Push it to the art/landing-pad branch.
-6. **Judge:** 3 screenshots (spawn view, gameplay height, wide) beside matching Hunty Zombie shots. Self-score honestly: "matches", "close" or "worse". Iterate until "matches".
+6. **Judge:** 3 screenshots (spawn view, gameplay height, wide) beside matching Hunty Zombie shots. Self-score honestly: "matches", "close" or "worse". Iterate once if needed (2 rounds total; see the stop rule).
 
 ## Code side (Claude, after the art lands)
 Rojo can't read the .rbxm, so the code side loads the art the same way as the rigs: a JSON or asset route. ArenaBuilder then stops building primitive props on the Landing Pad when Art/LandingPad is present.
