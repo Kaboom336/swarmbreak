@@ -13,9 +13,11 @@ local PropScatter = require(ReplicatedStorage.Shared.PropScatter)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local GameState = require(ServerStorage.GameState)
 local ModelLibrary = require(ServerStorage.ModelLibrary)
+local ArtLoader = require(ServerStorage.ArtLoader)
 
 local arena = workspace:WaitForChild("Arena")
 local selectedMap = Maps.get(GameState.get("MapName"))
+local landingPadArt = ArtLoader.loadLandingPad(arena)
 
 local function c3(t: { number }): Color3
 	return Color3.fromRGB(t[1], t[2], t[3])
@@ -162,6 +164,13 @@ local function configureMap()
 	if floor then
 		floor.Material = Enum.Material.SmoothPlastic
 		floor.Color = c3(selectedMap.FloorColor)
+		if landingPadArt then
+			-- The authored floor is visual; this invisible slab guarantees the full
+			-- ArenaLayout Landing Pad rect remains walkable if an art tile fails.
+			floor.Transparency = 1
+			floor.CanCollide = true
+			floor.CanQuery = true
+		end
 	end
 
 	local spawnFolder = arena:FindFirstChild("EnemySpawns")
@@ -186,8 +195,12 @@ local function configureMap()
 	for _, name in { "WallN", "WallS", "WallE", "WallW" } do
 		local w = arena:FindFirstChild(name) :: BasePart?
 		if w then
-			w.Material = Enum.Material.SmoothPlastic
-			w.Color = c3(Theme.Wall)
+			if landingPadArt then
+				w:Destroy()
+			else
+				w.Material = Enum.Material.SmoothPlastic
+				w.Color = c3(Theme.Wall)
+			end
 		end
 	end
 	-- These legacy platforms occupied the new open fight space.
@@ -200,8 +213,12 @@ local function configureMap()
 	for _, name in { "GapPillar" } do
 		local p = arena:FindFirstChild(name) :: BasePart?
 		if p then
-			p.Material = Enum.Material.SmoothPlastic
-			p.Color = c3(Theme.Metal)
+			if landingPadArt then
+				p:Destroy()
+			else
+				p.Material = Enum.Material.SmoothPlastic
+				p.Color = c3(Theme.Metal)
+			end
 		end
 	end
 end
@@ -234,6 +251,9 @@ local function outerCover()
 				child:Destroy()
 			end
 		end
+	end
+	if landingPadArt then
+		return
 	end
 
 	for _, spec in ArenaLayout.Props do
@@ -282,6 +302,9 @@ local function scatterProps()
 		Lanes = lanes,
 	})
 	for index, spec in specs do
+		if landingPadArt and ArenaLayout.zoneContains(ArenaLayout.Zones[1], spec) then
+			continue
+		end
 		local size = Vector3.new(2.4, 2.4, 2.4) * spec.Scale
 		local shape = Enum.PartType.Block
 		local propColor = c3(Theme.OutpostShade)
@@ -551,15 +574,17 @@ local function buildOutpost9()
 		model:SetAttribute("FirstWave", zone.FirstWave)
 		model:SetAttribute("LastWave", zone.LastWave)
 		model.Parent = zones
-		for _, rect in ArenaLayout.floorRects(zone) do
-			local floor = part(
-				"Floor",
-				Vector3.new(rect.bx - rect.ax, 2, rect.bz - rect.az),
-				CFrame.new((rect.ax + rect.bx) / 2, 0, (rect.az + rect.bz) / 2),
-				c3(Theme.OutpostCream),
-				Enum.Material.SmoothPlastic
-			)
-			floor.Parent = model
+		if not landingPadArt or zone.Id ~= "LandingPad" then
+			for _, rect in ArenaLayout.floorRects(zone) do
+				local floor = part(
+					"Floor",
+					Vector3.new(rect.bx - rect.ax, 2, rect.bz - rect.az),
+					CFrame.new((rect.ax + rect.bx) / 2, 0, (rect.az + rect.bz) / 2),
+					c3(Theme.OutpostCream),
+					Enum.Material.SmoothPlastic
+				)
+				floor.Parent = model
+			end
 		end
 	end
 
@@ -700,22 +725,24 @@ local function buildOutpost9()
 			world
 	end
 
-	part(
-		"RadioMast",
-		Vector3.new(8, 58, 8),
-		CFrame.new(-48, 30, -42),
-		c3(Theme.OutpostShade),
-		Enum.Material.SmoothPlastic
-	).Parent =
-		world
-	part(
-		"Beacon",
-		Vector3.new(10, 5, 10),
-		CFrame.new(-48, 61.5, -42),
-		c3(Theme.SignalOrange),
-		Enum.Material.SmoothPlastic
-	).Parent =
-		world
+	if not landingPadArt then
+		part(
+			"RadioMast",
+			Vector3.new(8, 58, 8),
+			CFrame.new(-48, 30, -42),
+			c3(Theme.OutpostShade),
+			Enum.Material.SmoothPlastic
+		).Parent =
+			world
+		part(
+			"Beacon",
+			Vector3.new(10, 5, 10),
+			CFrame.new(-48, 61.5, -42),
+			c3(Theme.SignalOrange),
+			Enum.Material.SmoothPlastic
+		).Parent =
+			world
+	end
 	part(
 		"NestWall",
 		Vector3.new(12, 32, 120),
@@ -754,9 +781,11 @@ configureMap()
 cloudSea()
 outerCover()
 scatterProps()
-laneStripes()
-gooPatches()
-crystalClusters()
-wallsAndRails()
+if not landingPadArt then
+	laneStripes()
+	gooPatches()
+	crystalClusters()
+	wallsAndRails()
+end
 portals()
 buildOutpost9()

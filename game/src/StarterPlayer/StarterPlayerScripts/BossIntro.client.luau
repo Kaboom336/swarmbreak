@@ -10,6 +10,7 @@ local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local BossIntro = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BossIntro") :: RemoteEvent
+local ArenaLayout = require(Shared:WaitForChild("ArenaLayout"))
 local Feel = require(Shared:WaitForChild("Feel"))
 local LightingPresets = require(Shared:WaitForChild("LightingPresets"))
 local Maps = require(Shared:WaitForChild("Maps"))
@@ -41,6 +42,9 @@ local function applyLightingPreset(preset: any)
 	Lighting.FogColor = normalizedColor(properties.FogColor)
 	Lighting.FogStart = properties.FogStart
 	Lighting.FogEnd = properties.FogEnd
+	Lighting.ColorShift_Bottom = normalizedColor(properties.ColorShift_Bottom or { 0, 0, 0 })
+	Lighting.ColorShift_Top = normalizedColor(properties.ColorShift_Top or { 0, 0, 0 })
+	Lighting.GeographicLatitude = properties.GeographicLatitude or 41.733
 
 	local atmosphere = Lighting:FindFirstChild("Atmosphere") :: Atmosphere
 	atmosphere.Density = preset.Atmosphere.Density
@@ -58,12 +62,21 @@ local function applyLightingPreset(preset: any)
 	local correction = Lighting:FindFirstChild("ColorCorrection") :: ColorCorrectionEffect
 	correction.Contrast = preset.ColorCorrection.Contrast
 	correction.Saturation = preset.ColorCorrection.Saturation
+	correction.Brightness = preset.ColorCorrection.Brightness or 0
 	correction.TintColor = normalizedColor(preset.ColorCorrection.TintColor)
 
 	local sky = Lighting:FindFirstChild("Sky") :: Sky
 	sky.StarCount = preset.Sky.StarCount
 	sky.CelestialBodiesShown = preset.Sky.CelestialBodiesShown
 	sky.SunAngularSize = preset.Sky.SunAngularSize
+	sky.SkyboxBk = preset.Sky.SkyboxBk or "rbxasset://textures/sky/sky512_bk.tex"
+	sky.SkyboxDn = preset.Sky.SkyboxDn or "rbxasset://textures/sky/sky512_dn.tex"
+	sky.SkyboxFt = preset.Sky.SkyboxFt or "rbxasset://textures/sky/sky512_ft.tex"
+	sky.SkyboxLf = preset.Sky.SkyboxLf or "rbxasset://textures/sky/sky512_lf.tex"
+	sky.SkyboxRt = preset.Sky.SkyboxRt or "rbxasset://textures/sky/sky512_rt.tex"
+	sky.SkyboxUp = preset.Sky.SkyboxUp or "rbxasset://textures/sky/sky512_up.tex"
+	sky.MoonTextureId = preset.Sky.MoonTextureId or "rbxasset://sky/moon.jpg"
+	sky.SunTextureId = preset.Sky.SunTextureId or "rbxasset://sky/sun.jpg"
 end
 
 BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number, bossAt: Vector3?)
@@ -141,5 +154,14 @@ BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number, boss
 	card:Destroy()
 	local mapName = if arena then arena:GetAttribute("MapName") else nil
 	local map = Maps.get(if type(mapName) == "string" then mapName else nil)
-	applyLightingPreset(LightingPresets[map.LightingPreset])
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local zone = if root and root:IsA("BasePart")
+		then ArenaLayout.zoneAt({ x = root.Position.X, z = root.Position.Z })
+		else nil
+	applyLightingPreset(
+		if zone and zone.Id == "LandingPad"
+			then LightingPresets.LandingPad
+			else LightingPresets[map.LightingPreset]
+	)
 end)
