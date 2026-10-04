@@ -10,6 +10,7 @@ local Fit = require(ReplicatedStorage.Shared.Fit)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local EnemyWatchdog = require(ReplicatedStorage.Shared.EnemyWatchdog)
+local ArenaLayout = require(ReplicatedStorage.Shared.ArenaLayout)
 local EnemyBuilder = require(script.Parent.EnemyBuilder)
 local EnemyIndex = require(script.Parent.EnemyIndex)
 local FxRouter = require(script.Parent.FxRouter)
@@ -397,7 +398,13 @@ task.spawn(function()
 			local pos = if hasRoot then root.Position else Vector3.zero
 			local w = watch[model]
 			if not w then
-				w = { Last = pos, Stuck = 0, Air = 0, Progress = { Best = math.huge, Seconds = 0 } }
+				w = {
+					Last = pos,
+					Stuck = 0,
+					Air = 0,
+					Respawns = 0,
+					Progress = { Best = math.huge, Seconds = 0 },
+				}
 				watch[model] = w
 			end
 			-- Ranged enemies hold still in range on purpose; only count chasers.
@@ -418,15 +425,18 @@ task.spawn(function()
 				e.Humanoid.FloorMaterial == Enum.Material.Air,
 				e.Def.Flying == true
 			)
-			local verdict = EnemyWatchdog.verdict(
-				model.Parent ~= nil,
-				hasRoot,
-				pos.X,
-				pos.Y,
-				pos.Z,
-				w.Stuck,
-				w.Air,
-				w.Progress.Seconds
+			local verdict = EnemyWatchdog.capRespawns(
+				EnemyWatchdog.verdict(
+					model.Parent ~= nil,
+					hasRoot,
+					pos.X,
+					pos.Y,
+					pos.Z,
+					w.Stuck,
+					w.Air,
+					w.Progress.Seconds
+				),
+				w.Respawns
 			)
 			if verdict == "Forget" then
 				releaseAttackSlot(e)
@@ -445,20 +455,49 @@ task.spawn(function()
 				local waveValue = ReplicatedStorage:FindFirstChild("State")
 					and (ReplicatedStorage :: any).State:FindFirstChild("Wave")
 				local wave = if waveValue then waveValue.Value else 0
-				local points = {}
+				w.Respawns += 1
+				local playerPositions = {}
+				for _, player in Players:GetPlayers() do
+					local character = player.Character
+					local playerRoot = if character
+						then character:FindFirstChild("HumanoidRootPart")
+						else nil
+					if playerRoot and playerRoot:IsA("BasePart") then
+						table.insert(
+							playerPositions,
+							{ x = playerRoot.Position.X, z = playerRoot.Position.Z }
+						)
+					end
+				end
+				local playerZones = ArenaLayout.playerZones(playerPositions)
+				-- Come back at the open gate nearest the player it was chasing, not a random far one.
+				local best: BasePart? = nil
+				local bestDistance = math.huge
 				for _, child in (if spawns then spawns:GetChildren() else {}) do
 					local first = child:GetAttribute("FirstWave")
 					local last = child:GetAttribute("LastWave")
+					local zoneId = child:GetAttribute("ZoneId")
 					if
-						(type(first) ~= "number" or wave >= first)
-						and (type(last) ~= "number" or wave <= last)
+						child:IsA("BasePart")
+						and ArenaLayout.gateOpen(
+							if type(first) == "number" then first else nil,
+							if type(last) == "number" then last else nil,
+							if type(zoneId) == "string" then zoneId else nil,
+							wave,
+							playerZones
+						)
 					then
-						table.insert(points, child)
+						local distance = if target
+							then (child.Position - target.Position).Magnitude
+							else 0
+						if distance < bestDistance then
+							best = child
+							bestDistance = distance
+						end
 					end
 				end
-				local point = points[math.random(1, math.max(#points, 1))]
-				if point and point:IsA("BasePart") then
-					model:PivotTo(point.CFrame + Vector3.new(0, e.Root.Size.Y, 0))
+				if best then
+					model:PivotTo(best.CFrame + Vector3.new(0, e.Root.Size.Y, 0))
 				end
 			end
 		end

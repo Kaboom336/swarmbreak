@@ -171,15 +171,19 @@ function EnemyRigBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig
 		warnOnce(rigKey, "template has zero height")
 		return nil
 	end
-	model:ScaleTo(size.Y / height)
+	model:ScaleTo((EnemyFamilies.rigHeight("Nest", typeName) or size.Y) / height)
 	model:PivotTo(cf)
 	model.Name = typeName
 
+	-- The root matches the scaled rig, so the hitbox is what the player sees and the
+	-- Humanoid keeps the feet on the floor (root bottom sits HipHeight above them).
+	local boundsCFrame, bounds = model:GetBoundingBox()
+	local hipHeight = 0.4
 	local root = Instance.new("Part")
 	root.Name = "HumanoidRootPart"
-	root.Size = size
+	root.Size = Vector3.new(bounds.X, math.max(1, bounds.Y - hipHeight), bounds.Z)
 	root.Transparency = 1
-	root.CFrame = cf
+	root.CFrame = boundsCFrame * CFrame.new(0, hipHeight / 2, 0)
 	root.CanCollide = true
 	root.Parent = model
 	model.PrimaryPart = root
@@ -199,7 +203,7 @@ function EnemyRigBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig
 	rootWeld.C1 = CFrame.new()
 	rootWeld.Parent = root
 
-	return { Model = model, Root = root, Torso = body, HipHeight = 0.4 }
+	return { Model = model, Root = root, Torso = body, HipHeight = hipHeight }
 end
 
 return EnemyRigBuilder

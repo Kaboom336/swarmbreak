@@ -44,6 +44,9 @@ export type ZoneSpawn = Position & {
 	ZoneId: string,
 }
 
+-- Axis-aligned walkable floor slab, by its min and max corners.
+export type FloorRect = { ax: number, az: number, bx: number, bz: number }
+
 export type Bridge = {
 	Id: string,
 	FromZone: string,
@@ -209,8 +212,10 @@ ArenaLayout.JumpPads = {
 	{ Name = "RefineryLoop", x = 240, z = -42, Velocity = { -45, 72, 8 } },
 }
 
+-- A dash gap is a local hole (Width along x, Length along z), never a full-depth trench:
+-- enemies must still be able to walk around it to cross the island.
 ArenaLayout.DashGaps = {
-	{ Name = "RefineryGap", x = 200, z = 24, Width = 16 },
+	{ Name = "RefineryGap", ZoneId = "Refinery", x = 200, z = 24, Width = 16, Length = 24 },
 }
 
 ArenaLayout.Landmarks = {
@@ -272,11 +277,106 @@ function ArenaLayout.openBridges(wave: number): { Bridge }
 	return result
 end
 
+-- Floor slabs for a zone: the full island, minus any dash-gap holes cut out of it.
+function ArenaLayout.floorRects(zone: Zone): { FloorRect }
+	local rects: { FloorRect } = {
+		{
+			ax = zone.x - zone.Width / 2,
+			az = zone.z - zone.Depth / 2,
+			bx = zone.x + zone.Width / 2,
+			bz = zone.z + zone.Depth / 2,
+		},
+	}
+	for _, gap in ArenaLayout.DashGaps do
+		if gap.ZoneId == zone.Id then
+			local hx0, hx1 = gap.x - gap.Width / 2, gap.x + gap.Width / 2
+			local hz0, hz1 = gap.z - gap.Length / 2, gap.z + gap.Length / 2
+			local cut: { FloorRect } = {}
+			for _, r in rects do
+				if hx1 <= r.ax or hx0 >= r.bx or hz1 <= r.az or hz0 >= r.bz then
+					table.insert(cut, r)
+				else
+					local x0, x1 = math.max(r.ax, hx0), math.min(r.bx, hx1)
+					local pieces = {
+						{ ax = r.ax, az = r.az, bx = x0, bz = r.bz },
+						{ ax = x1, az = r.az, bx = r.bx, bz = r.bz },
+						{ ax = x0, az = r.az, bx = x1, bz = math.max(r.az, hz0) },
+						{ ax = x0, az = math.min(r.bz, hz1), bx = x1, bz = r.bz },
+					}
+					for _, piece in pieces do
+						if piece.bx > piece.ax and piece.bz > piece.az then
+							table.insert(cut, piece)
+						end
+					end
+				end
+			end
+			rects = cut
+		end
+	end
+	return rects
+end
+
+function ArenaLayout.onFloor(position: Position): boolean
+	for _, zone in ArenaLayout.Zones do
+		for _, r in ArenaLayout.floorRects(zone) do
+			if
+				position.x >= r.ax
+				and position.x <= r.bx
+				and position.z >= r.az
+				and position.z <= r.bz
+			then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+function ArenaLayout.zoneAt(position: Position): Zone?
+	for _, zone in ArenaLayout.Zones do
+		if ArenaLayout.zoneContains(zone, position) then
+			return zone
+		end
+	end
+	return nil
+end
+
+-- A gate spawns in its own zone's waves, and also in any later wave while a player is
+-- still standing in its (already open) zone, so lingering players are never out of reach.
+function ArenaLayout.gateOpen(
+	firstWave: number?,
+	lastWave: number?,
+	zoneId: string?,
+	wave: number,
+	playerZones: { [string]: boolean }
+): boolean
+	if firstWave and wave < firstWave then
+		return false
+	end
+	if not lastWave or wave <= lastWave then
+		return true
+	end
+	return zoneId ~= nil and playerZones[zoneId] == true
+end
+
+function ArenaLayout.playerZones(positions: { Position }): { [string]: boolean }
+	local zones = {}
+	for _, position in positions do
+		local zone = ArenaLayout.zoneAt(position)
+		if zone then
+			zones[zone.Id] = true
+		end
+	end
+	return zones
+end
+
 local gridCells = {}
 for _, zone in ArenaLayout.Zones do
 	for x = zone.x - 72, zone.x + 72, 16 do
 		for z = zone.z - 72, zone.z + 72, 16 do
-			table.insert(gridCells, { x = x, z = z, ZoneId = zone.Id })
+			if ArenaLayout.onFloor({ x = x, z = z }) then
+				table.insert(gridCells, { x = x, z = z, ZoneId = zone.Id })
+			end
 		end
 	end
 end

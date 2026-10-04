@@ -11,6 +11,7 @@ local EnemyWatchdog = {
 	ProgressStuds = 3,
 	ProgressMinDistance = 35, -- slot-waiting circlers stay well inside this
 	AirborneSeconds = 4, -- f96b4f8: a Walker sat in Freefall on top of the boss gate
+	MaxRespawns = 3, -- e38b458: a Tank looped Hive gate -> stuck -> Hive gate for 8 minutes
 }
 
 export type Verdict = "Ok" | "Forget" | "Kill" | "Respawn"
@@ -39,6 +40,14 @@ function EnemyWatchdog.verdict(
 		return "Respawn"
 	end
 	return "Ok"
+end
+
+-- An enemy that keeps getting stuck after respawning can't reach anyone: end it.
+function EnemyWatchdog.capRespawns(verdict: Verdict, respawns: number): Verdict
+	if verdict == "Respawn" and respawns >= EnemyWatchdog.MaxRespawns then
+		return "Kill"
+	end
+	return verdict
 end
 
 -- Seconds an enemy has been stuck after this check: moving resets, holding still accumulates.

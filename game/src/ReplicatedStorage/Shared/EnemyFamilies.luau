@@ -26,6 +26,34 @@ EnemyFamilies.All = {
 	},
 } :: { [string]: Family }
 
+-- Rig height in studs per role (S6 bands; a player is about 5). Rigs scale to these, not
+-- to the old primitive Size, which made every Nest rig about twice its band.
+EnemyFamilies.RigHeights = {
+	Swarmer = 4.5,
+	Runner = 5.5,
+	Shooter = 6.5,
+	Tank = 10,
+	Flyer = 6,
+} :: { [string]: number }
+
+function EnemyFamilies.roleForEnemy(familyId: string, enemyType: string): string?
+	local family = EnemyFamilies.All[familyId]
+	if not family then
+		return nil
+	end
+	for role, mappedEnemy in family.Roles do
+		if mappedEnemy == enemyType then
+			return role
+		end
+	end
+	return nil
+end
+
+function EnemyFamilies.rigHeight(familyId: string, enemyType: string): number?
+	local role = EnemyFamilies.roleForEnemy(familyId, enemyType)
+	return if role then EnemyFamilies.RigHeights[role] else nil
+end
+
 function EnemyFamilies.isRole(role: string): boolean
 	return table.find(EnemyFamilies.RequiredRoles, role) ~= nil or role == "Elite"
 end

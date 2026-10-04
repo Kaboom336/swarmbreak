@@ -15,6 +15,7 @@ local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local SpawnPicker = require(ReplicatedStorage.Shared.SpawnPicker)
+local ArenaLayout = require(ReplicatedStorage.Shared.ArenaLayout)
 local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
 local Drops = require(ReplicatedStorage.Shared.Drops)
@@ -101,27 +102,34 @@ local function publishMutation()
 end
 
 local function spawnPortalCFrames(count: number): { CFrame }
-	local parts: { BasePart } = {}
-	local portalPositions = {}
-	for _, child in spawns:GetChildren() do
-		local firstWave = child:GetAttribute("FirstWave")
-		local lastWave = child:GetAttribute("LastWave")
-		if
-			child:IsA("BasePart")
-			and (type(firstWave) ~= "number" or currentWave >= firstWave)
-			and (type(lastWave) ~= "number" or currentWave <= lastWave)
-		then
-			table.insert(parts, child)
-			table.insert(portalPositions, { x = child.Position.X, z = child.Position.Z })
-		end
-	end
-
 	local playerPositions = {}
 	for _, player in Players:GetPlayers() do
 		local character = player.Character
 		local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
 		if root and root:IsA("BasePart") then
 			table.insert(playerPositions, { x = root.Position.X, z = root.Position.Z })
+		end
+	end
+	local playerZones = ArenaLayout.playerZones(playerPositions)
+
+	local parts: { BasePart } = {}
+	local portalPositions = {}
+	for _, child in spawns:GetChildren() do
+		local firstWave = child:GetAttribute("FirstWave")
+		local lastWave = child:GetAttribute("LastWave")
+		local zoneId = child:GetAttribute("ZoneId")
+		if
+			child:IsA("BasePart")
+			and ArenaLayout.gateOpen(
+				if type(firstWave) == "number" then firstWave else nil,
+				if type(lastWave) == "number" then lastWave else nil,
+				if type(zoneId) == "string" then zoneId else nil,
+				currentWave,
+				playerZones
+			)
+		then
+			table.insert(parts, child)
+			table.insert(portalPositions, { x = child.Position.X, z = child.Position.Z })
 		end
 	end
 

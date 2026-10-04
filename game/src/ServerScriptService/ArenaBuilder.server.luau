@@ -551,23 +551,11 @@ local function buildOutpost9()
 		model:SetAttribute("FirstWave", zone.FirstWave)
 		model:SetAttribute("LastWave", zone.LastWave)
 		model.Parent = zones
-		if zone.Id == "Refinery" then
-			for side in { -1, 1 } do
-				local width = (zone.Width - 16) / 2
-				local floor = part(
-					"Floor",
-					Vector3.new(width, 2, zone.Depth),
-					CFrame.new(zone.x + side * (width + 16) / 2, 0, zone.z),
-					c3(Theme.OutpostCream),
-					Enum.Material.SmoothPlastic
-				)
-				floor.Parent = model
-			end
-		else
+		for _, rect in ArenaLayout.floorRects(zone) do
 			local floor = part(
 				"Floor",
-				Vector3.new(zone.Width, 2, zone.Depth),
-				CFrame.new(zone.x, 0, zone.z),
+				Vector3.new(rect.bx - rect.ax, 2, rect.bz - rect.az),
+				CFrame.new((rect.ax + rect.bx) / 2, 0, (rect.az + rect.bz) / 2),
 				c3(Theme.OutpostCream),
 				Enum.Material.SmoothPlastic
 			)
@@ -602,6 +590,7 @@ local function buildOutpost9()
 			gate.Position = Vector3.new(spawn.x, 2, spawn.z)
 			gate:SetAttribute("FirstWave", zone.FirstWave)
 			gate:SetAttribute("LastWave", zone.LastWave)
+			gate:SetAttribute("ZoneId", zone.Id)
 			gate.Parent = spawnFolder
 		end
 	end
