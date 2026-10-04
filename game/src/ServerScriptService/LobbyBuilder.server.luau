@@ -7,6 +7,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local Lobby = require(shared:WaitForChild("Lobby"))
 local Campaign = require(shared:WaitForChild("Campaign"))
+local CoreStages = require(shared:WaitForChild("CoreStages"))
 local Difficulty = require(shared:WaitForChild("Difficulty"))
 local Places = require(shared:WaitForChild("Places"))
 local Weapons = require(shared:WaitForChild("Weapons"))
@@ -239,6 +240,8 @@ mapPrompt.Triggered:Connect(function(player)
 		local map = Campaign.All[(currentIndex + offset - 1) % #Campaign.All + 1]
 		if Lobby.canSelectMap(profile, map.Id) then
 			player:SetAttribute("SelectedMapId", map.Id)
+			player:SetAttribute("SelectedDifficulty", Difficulty.Default)
+			player:SetAttribute("SelectedStage", CoreStages.DefaultStage)
 			return
 		end
 	end
@@ -269,6 +272,43 @@ difficultyPrompt.Triggered:Connect(function(player)
 		local tier = Difficulty.Order[(currentIndex + offset - 1) % #Difficulty.Order + 1]
 		if Lobby.canSelectDifficulty(profile, mapId, tier) then
 			player:SetAttribute("SelectedDifficulty", tier)
+			player:SetAttribute("SelectedStage", CoreStages.DefaultStage)
+			return
+		end
+	end
+end)
+
+local stageLines = {}
+for _, stage in CoreStages.forCore(Campaign.DefaultId) do
+	table.insert(stageLines, string.format("%d. %s - %d waves", stage.Id, stage.Name, stage.Waves))
+end
+local stageBoard = addBoard(
+	"StageBoard",
+	Lobby.Boards.Stage,
+	table.concat(stageLines, "\n"),
+	Vector3.new(18, 6.5, -15)
+)
+local stagePrompt = Instance.new("ProximityPrompt")
+stagePrompt.Name = "SelectStage"
+stagePrompt.ActionText = "Next unlocked stage"
+stagePrompt.ObjectText = Lobby.Boards.Stage
+stagePrompt.HoldDuration = 0
+stagePrompt.MaxActivationDistance = 12
+stagePrompt.Parent = stageBoard
+stagePrompt.Triggered:Connect(function(player)
+	if not PlayerData.isLoaded(player) then
+		return
+	end
+	local profile = PlayerData.profile(player)
+	local coreId = player:GetAttribute("SelectedMapId")
+	local difficulty = player:GetAttribute("SelectedDifficulty")
+	local current = player:GetAttribute("SelectedStage")
+	local stages = CoreStages.forCore(coreId)
+	local currentIndex = if type(current) == "number" then math.floor(current) else 0
+	for offset = 1, #stages do
+		local stageNumber = (currentIndex + offset - 1) % #stages + 1
+		if Lobby.canSelectStage(profile, coreId, difficulty, stageNumber) then
+			player:SetAttribute("SelectedStage", stageNumber)
 			return
 		end
 	end
@@ -346,15 +386,21 @@ local function sendParty(userIds: { number }, partyNumber: number)
 	local leader = Players:GetPlayerByUserId(userIds[1])
 	if joinNow and leader then
 		local map = Campaign.get(leader:GetAttribute("SelectedMapId") :: string?)
-		local tier = leader:GetAttribute("SelectedDifficulty")
+		local profile = PlayerData.profile(leader)
+		local selectedTier = leader:GetAttribute("SelectedDifficulty")
+		local tier = if type(selectedTier) == "string"
+				and Lobby.canSelectDifficulty(profile, map.Id, selectedTier)
+			then selectedTier
+			else Difficulty.Default
 		GameState.set("MapId", map.Id)
 		GameState.set("MapName", map.Name)
-		GameState.set(
-			"Difficulty",
-			if type(tier) == "string" and Difficulty.Defs[tier :: Difficulty.TierName]
-				then tier
-				else Difficulty.Default
-		)
+		local selectedStage = leader:GetAttribute("SelectedStage")
+		local stageNumber = if type(selectedStage) == "number" then math.floor(selectedStage) else 1
+		if not Lobby.canSelectStage(profile, map.Id, tier, stageNumber) then
+			stageNumber = CoreStages.DefaultStage
+		end
+		GameState.set("Stage", stageNumber)
+		GameState.set("Difficulty", tier)
 	end
 	for index, userId in userIds do
 		local player = Players:GetPlayerByUserId(userId)
@@ -384,6 +430,7 @@ end
 local function stagePlayer(player: Player)
 	player:SetAttribute("SelectedMapId", Campaign.DefaultId)
 	player:SetAttribute("SelectedDifficulty", Difficulty.Default)
+	player:SetAttribute("SelectedStage", CoreStages.DefaultStage)
 	player:SetAttribute("InArena", false)
 	player.RespawnLocation = lobbySpawn
 	player.CharacterAdded:Connect(function(character)

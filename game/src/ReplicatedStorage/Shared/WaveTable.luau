@@ -54,6 +54,26 @@ function WaveTable.resolveComposition(
 	return resolved
 end
 
+-- Campaign stages own their boss beat. Strip bosses inherited from the old fixed wave table,
+-- then add the selected stage's boss to its last wave.
+function WaveTable.resolveStageComposition(
+	composition: Composition,
+	familyId: string,
+	bossKey: string?,
+	finalWave: boolean
+): Composition
+	local resolved = WaveTable.resolveComposition(composition, familyId, bossKey or "Queen")
+	for enemyName in resolved do
+		if WaveTable.BossNames[enemyName] then
+			resolved[enemyName] = nil
+		end
+	end
+	if finalWave and bossKey then
+		resolved[bossKey] = 1
+	end
+	return resolved
+end
+
 -- Split a composition into balanced bursts. A target size of four gives wave 1
 -- exactly four packs while the bounds keep every burst between three and six.
 WaveTable.BossNames = { Brute = true, Queen = true, Warden = true, Elite = true, Boss = true }

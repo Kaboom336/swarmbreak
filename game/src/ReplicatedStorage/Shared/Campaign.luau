@@ -16,8 +16,8 @@ local Campaign = {}
 Campaign.All = {
 	{
 		Id = "Outpost9",
-		Name = "Outpost 9",
-		StoryLine = "The Nest has cut off Outpost 9. Break through and relight the beacon.",
+		Name = "Mars Core",
+		StoryLine = "A withered Martian factory outpost, overrun by a Nest feeding on its reactor.",
 		Family = "Nest",
 		Zones = { "Landing Pad", "Refinery", "Hive Core" },
 		BossKey = "Queen",

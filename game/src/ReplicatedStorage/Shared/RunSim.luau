@@ -3,6 +3,7 @@
 -- shoot the nearest spawned enemy, take every level-up, and never move.
 local BalanceMath = require(script.Parent.BalanceMath)
 local Campaign = require(script.Parent.Campaign)
+local CoreStages = require(script.Parent.CoreStages)
 local Config = require(script.Parent.Config)
 local Difficulty = require(script.Parent.Difficulty)
 local Enemies = require(script.Parent.Enemies)
@@ -13,6 +14,8 @@ local Weapons = require(script.Parent.Weapons)
 export type Options = {
 	Seed: number?,
 	Waves: number?,
+	CoreId: string?,
+	Stage: number?,
 	Difficulty: Difficulty.TierName?,
 	Weapon: string?,
 }
@@ -131,7 +134,10 @@ end
 function RunSim.simulate(options: Options?): Result
 	local settings = options or {}
 	local random = seededRandom(settings.Seed or 475)
-	local waveLimit = math.clamp(settings.Waves or 15, 1, #WaveTable.Compositions)
+	local coreId = settings.CoreId or Campaign.DefaultId
+	local stage = if settings.Stage then CoreStages.get(coreId, settings.Stage) else nil
+	local waveLimit =
+		math.clamp(settings.Waves or if stage then stage.Waves else 15, 1, #WaveTable.Compositions)
 	local difficultyId = settings.Difficulty or Difficulty.Default
 	local weapon = Weapons.Defs[settings.Weapon or "Starter"]
 	assert(weapon, "unknown simulation weapon")
@@ -144,13 +150,27 @@ function RunSim.simulate(options: Options?): Result
 
 	for wave = 1, waveLimit do
 		local healthScale, damageScale = WaveTable.scaling(wave)
+		if stage then
+			healthScale *= stage.HealthScale
+			damageScale *= stage.DamageScale
+		end
 		local scaled =
 			Difficulty.apply({ Health = healthScale, Damage = damageScale }, difficultyId)
 		local enemies = {} :: { SimEnemy }
 		local spawnAt = 0
-		local map = Campaign.get(Campaign.DefaultId)
-		local composition =
-			WaveTable.resolveComposition(WaveTable.Compositions[wave], map.Family, map.BossKey)
+		local map = Campaign.get(coreId)
+		local composition = if stage
+			then WaveTable.resolveStageComposition(
+				WaveTable.Compositions[wave],
+				stage.Family,
+				stage.Boss,
+				wave == waveLimit
+			)
+			else WaveTable.resolveComposition(
+				WaveTable.Compositions[wave],
+				map.Family,
+				map.BossKey
+			)
 		for packIndex, pack in WaveTable.packs(composition) do
 			if packIndex > 1 then
 				spawnAt += Config.SpawnGapMin + (Config.SpawnGapMax - Config.SpawnGapMin) * random()
@@ -202,9 +222,13 @@ function RunSim.simulate(options: Options?): Result
 				local efficiency = if target.Boss
 					then RunSim.BossFireEfficiency
 					else RunSim.AutoFireEfficiency
+				-- Stage 15 assumes the permanent power earned while unlocking it. The simulator keeps
+				-- the old fresh-profile baseline when no stage is selected.
+				local progressionPower = if stage then stage.HealthScale else 1
 				local dps = BalanceMath.damagePerSecond(weapon)
 					* efficiency
 					* (1 + level * RunSim.DpsPerPick)
+					* progressionPower
 				if target.Boss and not target.FirstDamagedAt then
 					target.FirstDamagedAt = now
 				end

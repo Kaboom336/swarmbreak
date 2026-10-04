@@ -8,6 +8,7 @@ local RunService = game:GetService("RunService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Campaign = require(ReplicatedStorage.Shared.Campaign)
+local CoreStages = require(ReplicatedStorage.Shared.CoreStages)
 local Difficulty = require(ReplicatedStorage.Shared.Difficulty)
 local Enemies = require(ReplicatedStorage.Shared.Enemies)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
@@ -48,6 +49,7 @@ dropsFolder.Parent = workspace
 local currentWave = 0
 local currentDifficultyId: Difficulty.TierName = Difficulty.Default
 local currentMap = Campaign.get(Campaign.DefaultId)
+local currentStage = CoreStages.get(Campaign.DefaultId, CoreStages.DefaultStage) :: CoreStages.Stage
 local runStartedAt = 0
 local playAgainRequested = false
 
@@ -94,6 +96,13 @@ local function selectedDifficultyId(): Difficulty.TierName
 		return selected :: Difficulty.TierName
 	end
 	return Difficulty.Default
+end
+
+local function selectedStage()
+	local selected = GameState.get("Stage")
+	local stageNumber = if type(selected) == "number" then math.floor(selected) else nil
+	return CoreStages.get(currentMap.Id, stageNumber)
+		or CoreStages.get(currentMap.Id, CoreStages.DefaultStage)
 end
 
 local function sendTelemetry(plr: Player, name: string, fields: Telemetry.Fields)
@@ -293,6 +302,8 @@ end
 local function spawnEnemy(typeName: string, cf: CFrame?, active: boolean?)
 	local def = Enemies.Defs[typeName]
 	local hs, ds = WaveTable.scaling(currentWave)
+	hs *= currentStage.HealthScale
+	ds *= currentStage.DamageScale
 	local scaled = Difficulty.apply({ Health = hs, Damage = ds }, currentDifficultyId)
 	local healthScale = (scaled.Health :: number) * WaveTable.bossHealthBonus(typeName, currentWave)
 	local damageScale = scaled.Damage :: number
@@ -523,7 +534,7 @@ local function trackBoss(model: Model)
 		if model:GetAttribute("TypeName") == "Queen" then
 			queenEncounterToken += 1
 			FX:FireAllClients("queenKill", { Position = model:GetPivot().Position })
-			Toast:FireAllClients("OUTPOST 9 CLEARED", 4)
+			Toast:FireAllClients("MARS CORE CLEARED", 4)
 		end
 		GameState.set("BossName", "")
 		-- 0 tells the HUD to go back to the wave-progress bar.
@@ -553,9 +564,7 @@ local function runWave(wave: number): boolean
 	end
 	countdown(if wave == 1 then Onboarding.CountdownSeconds else Config.WaveStartDelay)
 
-	local bossName = if wave == Config.NormalWaves
-		then currentMap.BossKey
-		else if wave % Config.BossEvery == 0 then "Brute" else nil
+	local bossName = if wave == currentStage.Waves then currentStage.Boss else nil
 
 	workspace:SetAttribute("WaveStartedAt", workspace:GetServerTimeNow()) -- HUD wave clock
 	GameState.set("Phase", "fighting")
@@ -576,8 +585,12 @@ local function runWave(wave: number): boolean
 			composition[bossName] = (composition[bossName] or 0) + 1
 		end
 	else
-		composition =
-			WaveTable.resolveComposition(composition, currentMap.Family, currentMap.BossKey)
+		composition = WaveTable.resolveStageComposition(
+			composition,
+			currentStage.Family,
+			currentStage.Boss,
+			wave == currentStage.Waves
+		)
 	end
 
 	if bossName then
@@ -704,8 +717,14 @@ local function endRun(won: boolean, reachedWave: number)
 	-- each player gets their own run summary (Gems earned, next goal) for the results panel
 	for _, plr in Players:GetPlayers() do
 		if not PlayerData.isWaiting(plr) then
-			local summary =
-				PlayerData.endRun(plr, reachedWave, won, currentMap.Id, currentDifficultyId)
+			local summary = PlayerData.endRun(
+				plr,
+				reachedWave,
+				won,
+				currentMap.Id,
+				currentDifficultyId,
+				currentStage.Id
+			)
 			GameOver:FireClient(plr, summary)
 		end
 	end
@@ -744,7 +763,9 @@ local function gameLoop()
 		runStartedAt = os.clock()
 		currentMap = Campaign.get(GameState.get("MapId"))
 		currentDifficultyId = selectedDifficultyId()
+		currentStage = selectedStage() :: CoreStages.Stage
 		GameState.set("Difficulty", currentDifficultyId)
+		GameState.set("Stage", currentStage.Id)
 		local playerCount = 0
 		for _, plr in Players:GetPlayers() do
 			if PlayerData.isWaiting(plr) then
@@ -763,11 +784,11 @@ local function gameLoop()
 
 		local wave = 0
 		local alive = true
-		while alive and wave < Config.NormalWaves do
+		while alive and wave < currentStage.Waves do
 			wave += 1
 			alive = runWave(wave)
 			if alive then
-				if WaveTable.isFinalNormalWave(wave) then
+				if wave == currentStage.Waves then
 					break
 				end
 				GameState.set("Phase", "intermission")
@@ -779,7 +800,7 @@ local function gameLoop()
 				end
 			end
 		end
-		endRun(alive and wave == Config.NormalWaves, wave)
+		endRun(alive and wave == currentStage.Waves, wave)
 	end
 end
 

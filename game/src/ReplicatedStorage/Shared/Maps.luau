@@ -18,7 +18,7 @@ export type MapDefinition = {
 
 local Maps = {}
 
-Maps.DefaultName = "Outpost 9"
+Maps.DefaultName = Campaign.get(Campaign.DefaultId).Name
 Maps.All = {} :: { MapDefinition }
 
 local outpostSpawns = {}

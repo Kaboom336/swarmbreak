@@ -123,3 +123,18 @@ test("Outpost 9 clears in twelve to fifteen minutes on Normal", function()
 	end
 	assert(seconds >= 12 * 60 and seconds <= 15 * 60, string.format("run took %.1fs", seconds))
 end)
+
+test("Mars Core stage fifteen clears in five to eight minutes on Normal", function()
+	local stageResult = RunSim.simulate({
+		Seed = 475,
+		CoreId = "Outpost9",
+		Stage = 15,
+		Difficulty = "Normal",
+	})
+	local seconds = 0
+	for _, wave in stageResult.Waves do
+		seconds += wave.TimeToClear
+	end
+	eq(#stageResult.Waves, 8, "stage wave count")
+	assert(seconds >= 5 * 60 and seconds <= 8 * 60, string.format("stage took %.1fs", seconds))
+end)

@@ -4,7 +4,7 @@ local ProfileSchema = load("ProfileSchema")
 test("campaign maps unlock in order after a Normal clear", function()
 	local profile = ProfileSchema.default()
 	local unlocked = Campaign.unlockedMaps(profile)
-	eq(#unlocked, 1, "only Outpost 9 starts unlocked")
+	eq(#unlocked, 1, "only Mars Core starts unlocked")
 	eq(unlocked[1].Id, "Outpost9", "first map")
 
 	profile.Flags.MapClear_Outpost9_Normal = true

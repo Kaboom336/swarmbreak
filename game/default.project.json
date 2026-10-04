@@ -89,7 +89,7 @@
         "MapName": {
           "$className": "StringValue",
           "$properties": {
-            "Value": "Outpost 9"
+            "Value": "Mars Core"
           }
         },
         "MapId": {
@@ -102,6 +102,12 @@
           "$className": "StringValue",
           "$properties": {
             "Value": "Normal"
+          }
+        },
+        "Stage": {
+          "$className": "IntValue",
+          "$properties": {
+            "Value": 1
           }
         },
         "ZoneBanner": {
