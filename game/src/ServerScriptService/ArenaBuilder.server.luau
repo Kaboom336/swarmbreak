@@ -3,6 +3,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
 local ArenaLayout = require(ReplicatedStorage.Shared.ArenaLayout)
 local Fit = require(ReplicatedStorage.Shared.Fit)
 local LightingPresets = require(ReplicatedStorage.Shared.LightingPresets)
@@ -457,6 +458,217 @@ local function portals()
 	end
 end
 
+local function buildOutpost9()
+	local world = Instance.new("Folder")
+	world.Name = "Outpost9"
+	world.Parent = arena
+
+	local zones = Instance.new("Folder")
+	zones.Name = "Zones"
+	zones.Parent = world
+	for _, zone in ArenaLayout.Zones do
+		local model = Instance.new("Model")
+		model.Name = zone.Id
+		model:SetAttribute("FirstWave", zone.FirstWave)
+		model:SetAttribute("LastWave", zone.LastWave)
+		model.Parent = zones
+		if zone.Id == "Refinery" then
+			for side in { -1, 1 } do
+				local width = (zone.Width - 16) / 2
+				local floor = part(
+					"Floor",
+					Vector3.new(width, 2, zone.Depth),
+					CFrame.new(zone.x + side * (width + 16) / 2, 0, zone.z),
+					c3(Theme.OutpostCream),
+					Enum.Material.SmoothPlastic
+				)
+				floor.Parent = model
+			end
+		else
+			local floor = part(
+				"Floor",
+				Vector3.new(zone.Width, 2, zone.Depth),
+				CFrame.new(zone.x, 0, zone.z),
+				c3(Theme.OutpostCream),
+				Enum.Material.SmoothPlastic
+			)
+			floor.Parent = model
+		end
+	end
+
+	local spawnFolder = arena:FindFirstChild("EnemySpawns")
+	if spawnFolder then
+		spawnFolder:ClearAllChildren()
+	else
+		spawnFolder = Instance.new("Folder")
+		spawnFolder.Name = "EnemySpawns"
+		spawnFolder.Parent = arena
+	end
+	for _, spawn in ArenaLayout.ZoneSpawns do
+		local zone
+		for _, candidate in ArenaLayout.Zones do
+			if candidate.Id == spawn.ZoneId then
+				zone = candidate
+				break
+			end
+		end
+		if zone then
+			local gate = Instance.new("Part")
+			gate.Name = spawn.Name
+			gate.Anchored = true
+			gate.CanCollide = false
+			gate.CanQuery = false
+			gate.Transparency = 1
+			gate.Size = Vector3.new(6, 1, 6)
+			gate.Position = Vector3.new(spawn.x, 2, spawn.z)
+			gate:SetAttribute("FirstWave", zone.FirstWave)
+			gate:SetAttribute("LastWave", zone.LastWave)
+			gate.Parent = spawnFolder
+		end
+	end
+
+	local bridges = Instance.new("Folder")
+	bridges.Name = "Bridges"
+	bridges.Parent = world
+	local bridgeDecks: { [string]: BasePart } = {}
+	for _, bridge in ArenaLayout.Bridges do
+		local deck = Instance.new("Part")
+		deck.Name = bridge.Id
+		deck.Anchored = true
+		deck.CanCollide = false
+		deck.Size = Vector3.new(0.6, 2, bridge.Depth)
+		deck.Position = Vector3.new(bridge.x - bridge.Width / 2, 0, bridge.z)
+		deck.Color = c3(Theme.SignalOrange)
+		deck.Material = Enum.Material.SmoothPlastic
+		deck:SetAttribute("OpenWave", bridge.OpenWave)
+		deck.Parent = bridges
+		bridgeDecks[bridge.Id] = deck
+	end
+
+	local opened: { [string]: boolean } = {}
+	local function openBridges(wave: number)
+		for _, bridge in ArenaLayout.Bridges do
+			if wave >= bridge.OpenWave and not opened[bridge.Id] then
+				opened[bridge.Id] = true
+				local deck = bridgeDecks[bridge.Id]
+				deck.CanCollide = true
+				TweenService
+					:Create(
+						deck,
+						TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+						{
+							Size = Vector3.new(bridge.Width, 2, bridge.Depth),
+							Position = Vector3.new(bridge.x, 0, bridge.z),
+						}
+					)
+					:Play()
+				local state = ReplicatedStorage:WaitForChild("State")
+				local banner = state:WaitForChild("ZoneBanner") :: StringValue
+				banner.Value = "NEW ZONE"
+				task.delay(0.5, function()
+					if banner.Value == "NEW ZONE" then
+						banner.Value = ""
+					end
+				end)
+			end
+		end
+	end
+	local state = ReplicatedStorage:WaitForChild("State")
+	local waveValue = state:WaitForChild("Wave") :: IntValue
+	waveValue.Changed:Connect(openBridges)
+	openBridges(waveValue.Value)
+
+	local traversal = Instance.new("Folder")
+	traversal.Name = "Traversal"
+	traversal.Parent = world
+	for _, padSpec in ArenaLayout.JumpPads do
+		local pad = part(
+			padSpec.Name,
+			Vector3.new(10, 1, 10),
+			CFrame.new(padSpec.x, 1.5, padSpec.z),
+			c3(Theme.SignalOrange),
+			Enum.Material.SmoothPlastic
+		)
+		pad.Parent = traversal
+		pad.Touched:Connect(function(hit)
+			local root = hit.Parent and hit.Parent:FindFirstChild("HumanoidRootPart")
+			if root and root:IsA("BasePart") then
+				root.AssemblyLinearVelocity =
+					Vector3.new(padSpec.Velocity[1], padSpec.Velocity[2], padSpec.Velocity[3])
+			end
+		end)
+	end
+
+	local refineryProps = {
+		{ "Pipe", Vector3.new(52, 5, 5), Vector3.new(200, 5, -52) },
+		{ "Catwalk", Vector3.new(70, 3, 14), Vector3.new(205, 13, 36) },
+		{ "HighLoop", Vector3.new(52, 3, 12), Vector3.new(230, 25, -22) },
+		{ "RefineryTower", Vector3.new(18, 52, 18), Vector3.new(232, 27, -42) },
+	}
+	for _, spec in refineryProps do
+		part(
+			spec[1] :: string,
+			spec[2] :: Vector3,
+			CFrame.new(spec[3] :: Vector3),
+			c3(Theme.OutpostShade),
+			Enum.Material.SmoothPlastic
+		).Parent =
+			world
+	end
+
+	part(
+		"RadioMast",
+		Vector3.new(8, 58, 8),
+		CFrame.new(-48, 30, -42),
+		c3(Theme.OutpostShade),
+		Enum.Material.SmoothPlastic
+	).Parent =
+		world
+	part(
+		"Beacon",
+		Vector3.new(10, 5, 10),
+		CFrame.new(-48, 61.5, -42),
+		c3(Theme.SignalOrange),
+		Enum.Material.SmoothPlastic
+	).Parent =
+		world
+	part(
+		"NestWall",
+		Vector3.new(12, 32, 120),
+		CFrame.new(438, 17, 0),
+		c3(Theme.ChitinDark),
+		Enum.Material.SmoothPlastic
+	).Parent =
+		world
+	part(
+		"NestCore",
+		Vector3.new(18, 24, 18),
+		CFrame.new(448, 13, 0),
+		c3(Theme.Goo),
+		Enum.Material.Neon,
+		Enum.PartType.Ball
+	).Parent =
+		world
+	for index, z in { -34, 34 } do
+		local pool = part(
+			"GooPool" .. index,
+			Vector3.new(32, 0.6, 18),
+			CFrame.new(390, 1.3, z),
+			c3(Theme.Goo),
+			Enum.Material.Neon
+		)
+		pool.CanCollide = false
+		pool.Parent = world
+	end
+
+	local bossSpawn = arena:FindFirstChild("BossSpawn") :: BasePart?
+	if bossSpawn then
+		bossSpawn.Position = Vector3.new(462, 2, 0)
+	end
+	world:SetAttribute("WalkableCellSize", ArenaLayout.WalkableGrid.CellSize)
+	world:SetAttribute("WalkableCellCount", #ArenaLayout.WalkableGrid.Cells)
+end
+
 applyLightingPreset(LightingPresets[selectedMap.LightingPreset])
 configureMap()
 cloudSea()
@@ -466,3 +678,4 @@ gooPatches()
 crystalClusters()
 wallsAndRails()
 portals()
+buildOutpost9()

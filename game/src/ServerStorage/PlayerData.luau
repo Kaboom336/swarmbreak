@@ -8,6 +8,8 @@ local AnalyticsService = game:GetService("AnalyticsService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local Campaign = require(ReplicatedStorage.Shared.Campaign)
+local Difficulty = require(ReplicatedStorage.Shared.Difficulty)
 local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
 local Weapons = require(ReplicatedStorage.Shared.Weapons)
 local Monetization = require(ReplicatedStorage.Shared.Monetization)
@@ -79,6 +81,8 @@ export type RunSummary = {
 	BestWave: number,
 	NewBest: boolean,
 	Goal: Goals.Goal?,
+	NewMapUnlocked: boolean,
+	UnlockedMapName: string?,
 }
 
 local runs: { [Player]: Run } = {}
@@ -966,7 +970,13 @@ function PlayerData.setRunWave(plr: Player, wave: number)
 end
 
 -- End of run: gems, best wave, leaderboard. Returns the summary the results panel shows.
-function PlayerData.endRun(plr: Player, wave: number, won: boolean): RunSummary
+function PlayerData.endRun(
+	plr: Player,
+	wave: number,
+	won: boolean,
+	mapId: string?,
+	difficultyId: Difficulty.TierName?
+): RunSummary
 	local r = PlayerData.get(plr)
 	local p = Profile.get(plr)
 	local previousBest = p.BestWave
@@ -976,6 +986,16 @@ function PlayerData.endRun(plr: Player, wave: number, won: boolean): RunSummary
 	p.Runs += 1
 	p.BestWave = math.max(p.BestWave, wave)
 	p.Gems += gemsEarned
+	local clearedMapId = mapId or Campaign.DefaultId
+	local clearedTier = difficultyId or Difficulty.Default
+	local clearFlag = Campaign.clearFlag(clearedMapId, clearedTier)
+	local firstClear = won and p.Flags[clearFlag] ~= true
+	if won then
+		p.Flags[clearFlag] = true
+	end
+	local nextMap = if firstClear and clearedTier == "Normal"
+		then Campaign.nextMap(clearedMapId)
+		else nil
 	progressQuest(plr, "Wave", wave)
 	progressQuest(plr, "Runs", 1)
 	for _, other in Players:GetPlayers() do
@@ -1025,6 +1045,8 @@ function PlayerData.endRun(plr: Player, wave: number, won: boolean): RunSummary
 		BestWave = p.BestWave,
 		NewBest = wave > previousBest,
 		Goal = Goals.next(p),
+		NewMapUnlocked = nextMap ~= nil,
+		UnlockedMapName = if nextMap then nextMap.Name else nil,
 	}
 end
 

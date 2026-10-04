@@ -6,6 +6,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local TweenService = game:GetService("TweenService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local Campaign = require(ReplicatedStorage.Shared.Campaign)
 local Difficulty = require(ReplicatedStorage.Shared.Difficulty)
 local Enemies = require(ReplicatedStorage.Shared.Enemies)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
@@ -41,6 +42,7 @@ dropsFolder.Parent = workspace
 
 local currentWave = 0
 local currentDifficultyId: Difficulty.TierName = Difficulty.Default
+local currentMap = Campaign.get(Campaign.DefaultId)
 local runStartedAt = 0
 local playAgainRequested = false
 
@@ -101,7 +103,13 @@ local function spawnPortalCFrames(count: number): { CFrame }
 	local parts: { BasePart } = {}
 	local portalPositions = {}
 	for _, child in spawns:GetChildren() do
-		if child:IsA("BasePart") then
+		local firstWave = child:GetAttribute("FirstWave")
+		local lastWave = child:GetAttribute("LastWave")
+		if
+			child:IsA("BasePart")
+			and (type(firstWave) ~= "number" or currentWave >= firstWave)
+			and (type(lastWave) ~= "number" or currentWave <= lastWave)
+		then
 			table.insert(parts, child)
 			table.insert(portalPositions, { x = child.Position.X, z = child.Position.Z })
 		end
@@ -414,7 +422,9 @@ local function runWave(wave: number): boolean
 	end
 	countdown(if wave == 1 then Onboarding.CountdownSeconds else Config.WaveStartDelay)
 
-	local bossName = Enemies.bossForWave(wave)
+	local bossName = if wave == Config.NormalWaves
+		then currentMap.BossKey
+		else if wave % Config.BossEvery == 0 then "Brute" else nil
 	if bossName then
 		BossIntro:FireAllClients(Enemies.Defs[bossName].Name, Config.BossIntroSeconds)
 		task.wait(Config.BossIntroSeconds)
@@ -438,6 +448,9 @@ local function runWave(wave: number): boolean
 		if bossName then
 			composition[bossName] = (composition[bossName] or 0) + 1
 		end
+	else
+		composition =
+			WaveTable.resolveComposition(composition, currentMap.Family, currentMap.BossKey)
 	end
 
 	for packIndex, pack in WaveTable.packs(composition) do
@@ -522,7 +535,8 @@ local function endRun(won: boolean, reachedWave: number)
 	-- each player gets their own run summary (Gems earned, next goal) for the results panel
 	for _, plr in Players:GetPlayers() do
 		if not PlayerData.isWaiting(plr) then
-			local summary = PlayerData.endRun(plr, reachedWave, won)
+			local summary =
+				PlayerData.endRun(plr, reachedWave, won, currentMap.Id, currentDifficultyId)
 			GameOver:FireClient(plr, summary)
 		end
 	end
@@ -559,6 +573,7 @@ local function gameLoop()
 			task.wait(0.25)
 		end
 		runStartedAt = os.clock()
+		currentMap = Campaign.get(GameState.get("MapId"))
 		currentDifficultyId = selectedDifficultyId()
 		GameState.set("Difficulty", currentDifficultyId)
 		local playerCount = 0
@@ -579,12 +594,12 @@ local function gameLoop()
 
 		local wave = 0
 		local alive = true
-		while alive do
+		while alive and wave < Config.NormalWaves do
 			wave += 1
 			alive = runWave(wave)
 			if alive then
 				if WaveTable.isFinalNormalWave(wave) then
-					Toast:FireAllClients("Normal mode cleared! Infinite mode begins.", 5)
+					break
 				end
 				GameState.set("Phase", "intermission")
 				admitWaitingPlayers()
@@ -595,7 +610,7 @@ local function gameLoop()
 				end
 			end
 		end
-		endRun(wave > Config.NormalWaves, wave)
+		endRun(alive and wave == Config.NormalWaves, wave)
 	end
 end
 

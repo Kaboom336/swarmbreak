@@ -115,3 +115,11 @@ test("Brute and Queen kills take 20 to 40 seconds", function()
 		)
 	end
 end)
+
+test("Outpost 9 clears in twelve to fifteen minutes on Normal", function()
+	local seconds = 0
+	for _, wave in result.Waves do
+		seconds += wave.TimeToClear
+	end
+	assert(seconds >= 12 * 60 and seconds <= 15 * 60, string.format("run took %.1fs", seconds))
+end)

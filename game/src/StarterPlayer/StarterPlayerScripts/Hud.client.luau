@@ -690,6 +690,12 @@ local function flash(label: TextLabel, str: string, seconds: number)
 	end)
 end
 
+onState("ZoneBanner", function(message)
+	if message ~= "" then
+		flash(banner, message, 0.5)
+	end
+end)
+
 function finalHud.showAreaWarning(position: Vector3, radius: number, duration: number)
 	local warning = Instance.new("Part")
 	warning.Name = "AreaWarning"
@@ -2443,7 +2449,9 @@ GameOver.OnClientEvent:Connect(function(summary: any)
 			return
 		end
 		spectateLabel.Visible = false
-		summaryTitle.Text = "RUN OVER"
+		summaryTitle.Text = if summary.NewMapUnlocked
+			then "NEW MAP UNLOCKED\n" .. (summary.UnlockedMapName or "")
+			else if summary.Won then "VICTORIOUS" else "RUN OVER"
 		summaryWave.Text = "Wave " .. commas(summary.Wave or 0)
 		summaryKills.Text = "Kills " .. commas(summary.Kills or 0)
 		summaryGems.Text = "Gems +" .. commas(summary.GemsEarned or 0)

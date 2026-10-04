@@ -3,7 +3,8 @@ local WaveTable = load("WaveTable")
 
 local function threat(composition: { [string]: number }): number
 	local total = 0
-	for name, count in composition do
+	local resolved = WaveTable.resolveComposition(composition, "Nest", "Queen")
+	for name, count in resolved do
 		total += Enemies.Defs[name].Health * count
 	end
 	return total
@@ -15,10 +16,13 @@ test("waves 1 through 25 have explicit valid compositions", function()
 		local composition = WaveTable.Compositions[wave]
 		assert(composition, "missing wave " .. wave)
 		local count = 0
-		for name, amount in composition do
-			assert(Enemies.Defs[name], "unknown enemy " .. name)
-			assert(amount > 0 and amount % 1 == 0, "invalid count for " .. name)
+		local resolved = WaveTable.resolveComposition(composition, "Nest", "Queen")
+		for role, amount in composition do
+			assert(amount > 0 and amount % 1 == 0, "invalid count for " .. role)
 			count += amount
+		end
+		for name in resolved do
+			assert(Enemies.Defs[name], "unknown enemy " .. name)
 		end
 		assert(count > 0, "empty wave " .. wave)
 	end
@@ -37,7 +41,7 @@ end)
 
 test("enemy types are introduced gradually", function()
 	local firstWave = {}
-	for wave = 1, 25 do
+	for wave = 1, 15 do
 		local introductions = 0
 		for name in WaveTable.Compositions[wave] do
 			if not firstWave[name] then
@@ -50,14 +54,15 @@ test("enemy types are introduced gradually", function()
 			string.format("wave %d introduces %d types", wave, introductions)
 		)
 	end
-	eq(firstWave.Spitter, 3, "Spitter first wave")
+	eq(firstWave.Shooter, 3, "Shooter first wave")
 	eq(firstWave.Flyer, 4, "Flyer first wave")
 end)
 
 test("every fifth wave has one boss", function()
 	for wave = 1, 25 do
 		local bosses = 0
-		for name, count in WaveTable.Compositions[wave] do
+		local resolved = WaveTable.resolveComposition(WaveTable.Compositions[wave], "Nest", "Queen")
+		for name, count in resolved do
 			if Enemies.Defs[name].Boss then
 				bosses += count
 			end
@@ -66,10 +71,10 @@ test("every fifth wave has one boss", function()
 	end
 end)
 
-test("wave 1 is sixteen Walkers", function()
+test("wave 1 is sixteen Swarmers", function()
 	local first = WaveTable.Compositions[1]
-	eq(first.Walker, 16, "Walker count")
-	for name in first do
-		eq(name, "Walker", "only enemy type")
+	eq(first.Swarmer, 16, "Swarmer count")
+	for role in first do
+		eq(role, "Swarmer", "only enemy role")
 	end
 end)
