@@ -25,3 +25,6 @@ Zion OK'd Studio's Import 3D in the thread. Both packs are CC0; licences are in 
 - **game/assets/art/LandingPadMood.json**: Lighting, Atmosphere, ColorCorrection, Bloom and Sky.
 - Compact copies of both JSONs are in game/src/ReplicatedStorage/Shared/Art/.
 - The terrain under the pad is only in the .rbxm (TerrainRegion, pasted at (-32,-20,-32)..(32,4,32)).
+- Terrain is not code-managed: Rojo does not touch `Workspace.Terrain`. Import the
+  `LandingPadTerrain` TerrainRegion from the `.rbxm` in Studio; the runtime art loader
+  neither creates nor clears Terrain.
