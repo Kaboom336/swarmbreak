@@ -9,6 +9,7 @@ local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local BossIntro = ReplicatedStorage:WaitForChild("Remotes").BossIntro :: RemoteEvent
 local LightingPresets = require(ReplicatedStorage.Shared.LightingPresets)
+local Maps = require(ReplicatedStorage.Shared.Maps)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local UiKit = require(script.Parent:WaitForChild("UiKit"))
 
@@ -100,5 +101,7 @@ BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number)
 	task.wait(seconds)
 	camera.CameraType = Enum.CameraType.Custom
 	card:Destroy()
-	applyLightingPreset(LightingPresets.Station)
+	local mapName = if arena then arena:GetAttribute("MapName") else nil
+	local map = Maps.get(if type(mapName) == "string" then mapName else nil)
+	applyLightingPreset(LightingPresets[map.LightingPreset])
 end)

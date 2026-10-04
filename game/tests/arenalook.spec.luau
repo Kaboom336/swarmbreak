@@ -42,7 +42,7 @@ local function inspectNeon(value, path)
 	end
 	if value.className == "Part" and value.properties.Material == "Neon" then
 		for axis, size in value.properties.Size do
-			assert(size <= 12, path .. " neon axis " .. axis .. " exceeds 12 studs")
+			assert(size <= 1.5, path .. " neon axis " .. axis .. " exceeds 1.5 studs")
 		end
 	end
 	for key, child in value do
@@ -69,7 +69,7 @@ test("Station uses the S0 dusk preset", function()
 	eq(station.Lighting.ExposureCompensation, 0, "ExposureCompensation")
 	eq(station.Lighting.Brightness, 2.5, "Brightness")
 	eq(station.Bloom.Threshold, 1.8, "Bloom threshold")
-	eq(station.ColorCorrection.Contrast, 0.1, "color correction contrast")
+	eq(station.ColorCorrection.Contrast, 0.15, "color correction contrast")
 end)
 
 test("default project Lighting equals Station", function()

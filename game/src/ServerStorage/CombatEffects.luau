@@ -68,7 +68,9 @@ local function rawHit(
 			root.CFrame += away.Unit * Feel.KnockbackStuds
 		end
 	end
-	HitMarker:FireClient(plr, hitPos, math.floor(damage + 0.5), killed, model)
+	local typeName = model:GetAttribute("TypeName")
+	local elite = model:GetAttribute("Boss") == true or typeName == "Tank" or typeName == "Brute"
+	HitMarker:FireClient(plr, hitPos, math.floor(damage + 0.5), killed, model, false, elite)
 	return true, killed
 end
 

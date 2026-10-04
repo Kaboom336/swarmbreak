@@ -1,7 +1,7 @@
 --!strict
 -- Shared tuning for hit stop, camera shake, and floating damage numbers.
 
-export type EventName = "Hit" | "Crit" | "Kill" | "BossHit" | "BossKill"
+export type EventName = "Hit" | "Crit" | "Kill" | "EliteKill" | "BossHit" | "BossKill"
 export type ShakeSetting = "Off" | "Low" | "Full"
 export type EventBudget = {
 	FreezeMs: number,
@@ -16,7 +16,8 @@ local Feel = {}
 Feel.Events = {
 	Hit = { FreezeMs = 0, Shake = 0, NumberScale = 1 }, -- auto-fire hits every few frames; no shake
 	Crit = { FreezeMs = 40, Shake = 0.2, NumberScale = 1.25 },
-	Kill = { FreezeMs = 0, Shake = 0, NumberScale = 1.4 },
+	Kill = { FreezeMs = 50, Shake = 0, NumberScale = 1.4 },
+	EliteKill = { FreezeMs = 80, Shake = 1, NumberScale = 1.6 },
 	BossHit = { FreezeMs = 60, Shake = 1, NumberScale = 1.6 },
 	BossKill = { FreezeMs = 80, Shake = 2, NumberScale = 2 },
 } :: { [EventName]: EventBudget }
@@ -44,6 +45,8 @@ Feel.HitFlashRange = 8
 Feel.CoinFlightSeconds = 0.55
 Feel.KnockbackSpeed = 8
 Feel.KnockbackStuds = 2
+Feel.GhostKnockbackStuds = 3
+Feel.GemMagnetRadius = 18
 
 -- Every enemy gets a bloodless teal/green goo-burst accent on death.
 Feel.DeathBurstColors = {

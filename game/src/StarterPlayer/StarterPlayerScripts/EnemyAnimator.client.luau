@@ -7,6 +7,7 @@ local AnimCull = require(ReplicatedStorage.Shared.AnimCull)
 local AnimCurves = require(ReplicatedStorage.Shared.AnimCurves)
 local EnemyAnimCurves = require(ReplicatedStorage.Shared.EnemyAnimCurves)
 local Theme = require(ReplicatedStorage.Shared.Theme)
+local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local FX = remotes:WaitForChild("FX") :: RemoteEvent
@@ -49,100 +50,15 @@ local function motorMap(model: Model): ({ [string]: Motor6D }, { [string]: CFram
 	return motors, base
 end
 
-local function gooBurst(root: BasePart)
-	local attachment = Instance.new("Attachment")
-	attachment.Name = "GooBurst"
-	attachment.Parent = root
-	local emitter = Instance.new("ParticleEmitter")
-	emitter.Color = ColorSequence.new(Color3.fromRGB(Theme.Goo[1], Theme.Goo[2], Theme.Goo[3]))
-	emitter.LightEmission = 0.6
-	emitter.Lifetime = NumberRange.new(0.3, 0.55)
-	emitter.Rate = 0
-	emitter.Size = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.7),
-		NumberSequenceKeypoint.new(1, 0),
-	})
-	emitter.Speed = NumberRange.new(10, 18)
-	emitter.SpreadAngle = Vector2.new(180, 180)
-	emitter.Parent = attachment
-	emitter:Emit(28)
-	task.delay(0.7, function()
-		attachment:Destroy()
-	end)
-end
-
 local function playDeath(model: Model, anim: Anim)
-	local ghost = model:Clone()
-	ghost.Name = model.Name .. "_Death"
-	local ghostRoot = ghost:FindFirstChild("HumanoidRootPart")
-	if not ghostRoot or not ghostRoot:IsA("BasePart") then
-		ghost:Destroy()
-		return
-	end
-
-	local transparencies: { [BasePart]: number } = {}
-	for _, descendant in ghost:GetDescendants() do
-		if descendant:IsA("Humanoid") or descendant:IsA("BillboardGui") then
-			descendant:Destroy()
-		elseif descendant:IsA("BasePart") then
-			descendant.Anchored = descendant == ghostRoot
-			descendant.CanCollide = false
-			descendant.CanQuery = false
-			descendant.Massless = true
-			transparencies[descendant] = descendant.Transparency
-		end
-	end
 	for _, descendant in model:GetDescendants() do
 		if descendant:IsA("BasePart") then
 			descendant.LocalTransparencyModifier = 1
 		end
 	end
-
-	ghost.Parent = workspace
-	local motors, base = motorMap(ghost)
-	local startPivot = ghost:GetPivot()
-	local drop = math.max(1, anim.Root.Size.Y * 0.3)
-	task.delay(AnimCurves.DeathSquashDuration, function()
-		if ghostRoot.Parent then
-			gooBurst(ghostRoot)
-		end
-	end)
-	task.spawn(function()
-		local started = os.clock()
-		while ghost.Parent do
-			local elapsed = os.clock() - started
-			if elapsed >= AnimCurves.DeathSquashDuration + EnemyAnimCurves.DeathDuration then
-				break
-			end
-			local squash = AnimCurves.deathSquash(elapsed / AnimCurves.DeathSquashDuration)
-			local collapseElapsed = math.max(0, elapsed - AnimCurves.DeathSquashDuration)
-			local collapse = EnemyAnimCurves.deathCollapse(
-				collapseElapsed / EnemyAnimCurves.DeathCollapseDuration
-			)
-			local dissolve = EnemyAnimCurves.deathDissolve(
-				(collapseElapsed - EnemyAnimCurves.DeathCollapseDuration)
-					/ EnemyAnimCurves.DeathDissolveDuration
-			)
-			ghost:PivotTo(
-				startPivot
-					* CFrame.new(0, -ghostRoot.Size.Y * 0.08 * squash, 0)
-					* CFrame.new(0, -drop * collapse, 0)
-					* CFrame.Angles(math.rad(70) * collapse, 0, 0)
-			)
-			for name, motor in motors do
-				local index = tonumber(name:match("(%d+)$"))
-				local side = if name:sub(-1) == "L" or (index and index % 2 == 1) then -1 else 1
-				motor.C0 = base[name]
-					* CFrame.new(0, -ghostRoot.Size.Y * 0.04 * squash, 0)
-					* CFrame.Angles(math.rad(55) * collapse, 0, side * math.rad(25) * collapse)
-			end
-			for part, transparency in transparencies do
-				part.Transparency = transparency + (1 - transparency) * dissolve
-			end
-			RunService.Heartbeat:Wait()
-		end
-		ghost:Destroy()
-	end)
+	local goo = Color3.fromRGB(Theme.Goo[1], Theme.Goo[2], Theme.Goo[3])
+	ClientFX.deathGhost(model, goo)
+	ClientFX.emit("DeathBurst", anim.Root.Position, 28)
 end
 
 local function flashHit(model: Model, anim: Anim)
@@ -218,8 +134,15 @@ local function register(model: Instance)
 			anim.LastHealth = health
 		end)
 		humanoid.Died:Connect(function()
-			anims[model] = nil
-			playDeath(model, anim)
+			task.defer(function()
+				local freezeUntil = model:GetAttribute("ClientHitstopUntil") or os.clock()
+				task.delay(math.max(0, freezeUntil - os.clock()), function()
+					anims[model] = nil
+					if model.Parent then
+						playDeath(model, anim)
+					end
+				end)
+			end)
 		end)
 	end)
 end
@@ -259,6 +182,9 @@ RunService.Heartbeat:Connect(function(dt)
 	for model, anim in anims do
 		if not model.Parent then
 			anims[model] = nil
+			continue
+		end
+		if (model:GetAttribute("ClientHitstopUntil") or 0) > now then
 			continue
 		end
 		if camera then

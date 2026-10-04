@@ -20,6 +20,7 @@ export type Definition = {
 	EmitCount: number,
 	MaxTriggersPerSecond: number,
 	PoolSize: number,
+	Texture: string,
 }
 
 local VfxDefs = {}
@@ -33,6 +34,7 @@ VfxDefs.PlayerHues = {
 
 local Definitions: { [string]: Definition } = {
 	HitSpark = {
+		Texture = "spark",
 		Colors = { { 255, 245, 210 }, { 255, 150, 45 } },
 		Transparency = {
 			{ Time = 0, Value = 1 },
@@ -52,6 +54,7 @@ local Definitions: { [string]: Definition } = {
 		PoolSize = 16,
 	},
 	MuzzleFlash = {
+		Texture = "softglow",
 		Colors = { { 255, 255, 230 }, { 255, 185, 70 } },
 		Transparency = {
 			{ Time = 0, Value = 1 },
@@ -71,6 +74,7 @@ local Definitions: { [string]: Definition } = {
 		PoolSize = 10,
 	},
 	DeathBurst = {
+		Texture = "goo",
 		Colors = { { 210, 90, 255 }, { 105, 35, 150 } },
 		Transparency = {
 			{ Time = 0, Value = 1 },
@@ -90,6 +94,7 @@ local Definitions: { [string]: Definition } = {
 		PoolSize = 6,
 	},
 	SpawnBuildIn = {
+		Texture = "smoke",
 		Colors = { { 185, 80, 255 }, { 90, 35, 140 } },
 		Transparency = {
 			{ Time = 0, Value = 1 },
@@ -109,6 +114,7 @@ local Definitions: { [string]: Definition } = {
 		PoolSize = 4,
 	},
 	Telegraph = {
+		Texture = "ring",
 		Colors = { { 255, 105, 35 }, { 255, 190, 55 } },
 		Transparency = {
 			{ Time = 0, Value = 1 },
@@ -129,6 +135,7 @@ local Definitions: { [string]: Definition } = {
 		PoolSize = 8,
 	},
 	PickupMagnet = {
+		Texture = "softglow",
 		Colors = { { 255, 235, 100 }, { 255, 165, 35 } },
 		Transparency = {
 			{ Time = 0, Value = 1 },
@@ -148,6 +155,7 @@ local Definitions: { [string]: Definition } = {
 		PoolSize = 8,
 	},
 	BossWeakPoint = {
+		Texture = "slash",
 		Colors = { { 255, 255, 235 }, { 255, 65, 150 } },
 		Transparency = {
 			{ Time = 0, Value = 1 },

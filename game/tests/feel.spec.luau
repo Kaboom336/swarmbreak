@@ -33,7 +33,8 @@ test("freeze times stay inside the feel budget", function()
 		assert(event.FreezeMs <= 80, name .. " freeze is above 80 ms")
 	end
 	eq(Feel.Events.Hit.FreezeMs, 0, "ordinary hits do not freeze")
-	eq(Feel.Events.Kill.FreezeMs, 0, "ordinary kills do not freeze")
+	eq(Feel.Events.Kill.FreezeMs, 50, "ordinary kill freeze")
+	eq(Feel.Events.EliteKill.FreezeMs, 80, "elite kill freeze")
 end)
 
 test("shake settings respect accessibility levels", function()

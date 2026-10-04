@@ -20,6 +20,9 @@ local Sounds = {
 	Hit = { Id = "rbxassetid://98609496290942", Volume = 0.3, Pitch = 1.0 }, -- alt 131554175554758
 	HitMarker = { Id = "rbxassetid://110940518591889", Volume = 0.25, Pitch = 1.0 },
 	Kill = { Id = "rbxassetid://116062165012558", Volume = 0.5, Pitch = 1.0 }, -- alt 9119559518
+	KillCrunch = { Id = "rbxassetid://116062165012558", Volume = 0.5, Pitch = 0.86 },
+	KillGoo = { Id = "rbxasset://sounds/impact_water.mp3", Volume = 0.35, Pitch = 0.8 },
+	KillTick = { Id = "rbxassetid://110940518591889", Volume = 0.35, Pitch = 1.15 },
 	Hurt = { Id = "rbxasset://sounds/uuhhh.mp3", Volume = 0.5, Pitch = 1.0 },
 	Dash = { Id = "rbxassetid://119573908217733", Volume = 0.5, Pitch = 1.0 }, -- alt 15674975792
 	Jump = { Id = "rbxasset://sounds/action_jump.mp3", Volume = 0.4, Pitch = 1.0 },

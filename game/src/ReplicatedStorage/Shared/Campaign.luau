@@ -31,7 +31,7 @@ Campaign.All = {
 		Family = "Nest",
 		Zones = { "Relay Approach", "Coolant Works", "Signal Vault" },
 		BossKey = "Queen",
-		LightingPreset = "Station",
+		LightingPreset = "FrostRelay",
 		Locked = true,
 	},
 	{
@@ -41,7 +41,7 @@ Campaign.All = {
 		Family = "Nest",
 		Zones = { "Freight Deck", "Smelter", "Magma Heart" },
 		BossKey = "Queen",
-		LightingPreset = "Station",
+		LightingPreset = "MagmaRefinery",
 		Locked = true,
 	},
 	{
@@ -51,7 +51,7 @@ Campaign.All = {
 		Family = "Nest",
 		Zones = { "Outer Shell", "Brood Tunnels", "Heart Chamber" },
 		BossKey = "Queen",
-		LightingPreset = "NestInterior",
+		LightingPreset = "HiveHeart",
 		Locked = true,
 	},
 } :: { MapDefinition }

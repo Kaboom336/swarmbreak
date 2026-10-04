@@ -25,7 +25,7 @@ local LightingPresets = {
 			FogEnd = 1500,
 		},
 		Atmosphere = {
-			Density = 0.12,
+			Density = 0.3,
 			Offset = 0.25,
 			Color = { 1, 0.93, 0.85 },
 			Decay = { 0.4784313725, 0.3098039216, 0.8392156863 },
@@ -38,8 +38,8 @@ local LightingPresets = {
 			Threshold = 1.8,
 		},
 		ColorCorrection = {
-			Contrast = 0.1,
-			Saturation = 0.05,
+			Contrast = 0.15,
+			Saturation = 0.15,
 			TintColor = { 1, 0.96, 0.91 },
 		},
 		Sky = {
@@ -120,8 +120,8 @@ local LightingPresets = {
 			Threshold = 1.8,
 		},
 		ColorCorrection = {
-			Contrast = 0.18,
-			Saturation = 0.12,
+			Contrast = 0.15,
+			Saturation = 0.15,
 			TintColor = { 0.82, 0.7, 1 },
 		},
 		Sky = {
@@ -133,17 +133,17 @@ local LightingPresets = {
 		LightSources = {
 			Crystal = {
 				Kind = "PointLight",
-				FixtureMaterial = "Neon",
+				FixtureMaterial = "SmoothPlastic",
 				Color = { 0.68, 0.2, 1 },
-				Brightness = 2.4,
-				Range = 28,
+				Brightness = 1.5,
+				Range = 12,
 			},
 			Fungus = {
 				Kind = "PointLight",
-				FixtureMaterial = "Neon",
+				FixtureMaterial = "SmoothPlastic",
 				Color = { 0.15, 1, 0.82 },
-				Brightness = 2,
-				Range = 24,
+				Brightness = 1.5,
+				Range = 12,
 			},
 		},
 	},
@@ -230,5 +230,52 @@ local LightingPresets = {
 		},
 	},
 }
+
+local function copy(value: any): any
+	if type(value) ~= "table" then
+		return value
+	end
+	local result = {}
+	for key, child in value do
+		result[key] = copy(child)
+	end
+	return result
+end
+
+local function mapGrade(
+	tint: { number },
+	atmosphere: { number },
+	decay: { number },
+	clockTime: number
+)
+	local preset = copy(LightingPresets.Station)
+	preset.Lighting.ClockTime = clockTime
+	preset.Lighting.FogColor = atmosphere
+	preset.Atmosphere.Color = atmosphere
+	preset.Atmosphere.Decay = decay
+	preset.ColorCorrection.TintColor = tint
+	preset.Sky.Tint = tint
+	return preset
+end
+
+-- Each campaign entry owns a visibly different sky/grade while retaining the checked-in bloom.
+LightingPresets.FrostRelay = mapGrade(
+	{ 0.78, 0.9, 1 },
+	{ 0.66, 0.82, 0.98 },
+	{ 0.35, 0.5, 0.72 },
+	10.5
+)
+LightingPresets.MagmaRefinery = mapGrade(
+	{ 1, 0.72, 0.52 },
+	{ 0.94, 0.48, 0.3 },
+	{ 0.48, 0.16, 0.12 },
+	18
+)
+LightingPresets.HiveHeart = copy(LightingPresets.NestInterior)
+LightingPresets.HiveHeart.Atmosphere.Density = 0.32
+LightingPresets.HiveHeart.ColorCorrection.Contrast = 0.15
+LightingPresets.HiveHeart.ColorCorrection.Saturation = 0.15
+LightingPresets.HiveHeart.ColorCorrection.TintColor = { 0.76, 0.62, 0.94 }
+LightingPresets.HiveHeart.Sky.Tint = { 0.76, 0.62, 0.94 }
 
 return LightingPresets

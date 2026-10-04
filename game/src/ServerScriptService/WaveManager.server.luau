@@ -18,6 +18,7 @@ local SpawnPicker = require(ReplicatedStorage.Shared.SpawnPicker)
 local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
 local Drops = require(ReplicatedStorage.Shared.Drops)
+local Feel = require(ReplicatedStorage.Shared.Feel)
 local Onboarding = require(ReplicatedStorage.Shared.Onboarding)
 local EnemyAI = require(ServerStorage.EnemyAI)
 local PlayerData = require(ServerStorage.PlayerData)
@@ -180,8 +181,6 @@ local function makeDrop(plr: Player, position: Vector3, kind: string, value: num
 				part:Destroy()
 				return
 			end
-			local root = plr.Character
-				and plr.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 			local fallback = os.clock() >= expiresAt
 			if fallback then
 				if part.Parent and plr.Parent == Players then
@@ -190,19 +189,31 @@ local function makeDrop(plr: Player, position: Vector3, kind: string, value: num
 				end
 				return
 			end
-			if
-				root
-				and (root.Position - part.Position).Magnitude <= PlayerData.magnetRadius(plr)
-			then
+			local collector: Player? = nil
+			local collectorRoot: BasePart? = nil
+			local nearestDistance = Feel.GemMagnetRadius
+			for _, candidate in Players:GetPlayers() do
+				local candidateRoot = candidate.Character
+					and candidate.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if candidateRoot and PlayerData.get(candidate).Active then
+					local distance = (candidateRoot.Position - part.Position).Magnitude
+					if distance <= nearestDistance then
+						collector = candidate
+						collectorRoot = candidateRoot
+						nearestDistance = distance
+					end
+				end
+			end
+			if collector and collectorRoot then
 				local tween = TweenService:Create(
 					part,
 					TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-					{ Position = root.Position }
+					{ Position = collectorRoot.Position }
 				)
 				tween:Play()
 				tween.Completed:Wait()
-				if part.Parent and plr.Parent == Players then
-					awardDrop(plr, kind, value)
+				if part.Parent and collector.Parent == Players then
+					awardDrop(collector, kind, value)
 					part:Destroy()
 				end
 				return
