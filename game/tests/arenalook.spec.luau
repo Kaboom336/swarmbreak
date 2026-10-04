@@ -68,7 +68,7 @@ test("Station uses the S0 dusk preset", function()
 	eq(station.Lighting.ClockTime, 18.5, "ClockTime")
 	eq(station.Lighting.ExposureCompensation, 0, "ExposureCompensation")
 	eq(station.Lighting.Brightness, 2.5, "Brightness")
-	eq(station.Bloom.Threshold, 0.9, "Bloom threshold")
+	eq(station.Bloom.Threshold, 1.8, "Bloom threshold")
 	eq(station.ColorCorrection.Contrast, 0.1, "color correction contrast")
 end)
 

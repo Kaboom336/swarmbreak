@@ -15,8 +15,8 @@ local Feel = {}
 -- Placeholder values until playtesting establishes final feel tuning.
 Feel.Events = {
 	Hit = { FreezeMs = 0, Shake = 0, NumberScale = 1 }, -- auto-fire hits every few frames; no shake
-	Crit = { FreezeMs = 40, Shake = 0.5, NumberScale = 1.25 },
-	Kill = { FreezeMs = 0, Shake = 0.15, NumberScale = 1.4 },
+	Crit = { FreezeMs = 40, Shake = 0.2, NumberScale = 1.25 },
+	Kill = { FreezeMs = 0, Shake = 0, NumberScale = 1.4 },
 	BossHit = { FreezeMs = 60, Shake = 1, NumberScale = 1.6 },
 	BossKill = { FreezeMs = 80, Shake = 2, NumberScale = 2 },
 } :: { [EventName]: EventBudget }

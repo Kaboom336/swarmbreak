@@ -33,9 +33,9 @@ local LightingPresets = {
 			Haze = 0.8,
 		},
 		Bloom = {
-			Intensity = 1.2,
-			Size = 24,
-			Threshold = 0.9,
+			Intensity = 0.4,
+			Size = 16,
+			Threshold = 1.8,
 		},
 		ColorCorrection = {
 			Contrast = 0.1,
@@ -74,9 +74,9 @@ local LightingPresets = {
 			Haze = 1.7,
 		},
 		Bloom = {
-			Intensity = 1.3,
-			Size = 24,
-			Threshold = 0.85,
+			Intensity = 0.4,
+			Size = 16,
+			Threshold = 1.8,
 		},
 		ColorCorrection = {
 			Contrast = 0.2,
@@ -115,9 +115,9 @@ local LightingPresets = {
 			Haze = 2,
 		},
 		Bloom = {
-			Intensity = 1.35,
-			Size = 24,
-			Threshold = 0.85,
+			Intensity = 0.4,
+			Size = 16,
+			Threshold = 1.8,
 		},
 		ColorCorrection = {
 			Contrast = 0.18,
@@ -172,9 +172,9 @@ local LightingPresets = {
 			Haze = 1.2,
 		},
 		Bloom = {
-			Intensity = 1,
-			Size = 24,
-			Threshold = 0.9,
+			Intensity = 0.4,
+			Size = 16,
+			Threshold = 1.8,
 		},
 		ColorCorrection = {
 			Contrast = 0.1,
@@ -213,9 +213,9 @@ local LightingPresets = {
 			Haze = 1,
 		},
 		Bloom = {
-			Intensity = 0.8,
+			Intensity = 0.4,
 			Size = 16,
-			Threshold = 1,
+			Threshold = 1.8,
 		},
 		ColorCorrection = {
 			Contrast = 0.12,
