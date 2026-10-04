@@ -24,6 +24,9 @@ type FeelState = {
 	RightShoulderBase: CFrame?,
 	Trail: Trail,
 	DashStartedAt: number,
+	MoveAction: string,
+	MoveVariant: number,
+	MoveStartedAt: number,
 	HitStartedAt: number,
 	LevelStartedAt: number,
 	Pitch: number,
@@ -116,6 +119,9 @@ local function bind(character: Model)
 		RightShoulderBase = if rightShoulder then rightShoulder.C0 else nil,
 		Trail = makeDashTrail(root),
 		DashStartedAt = -math.huge,
+		MoveAction = "",
+		MoveVariant = 1,
+		MoveStartedAt = -math.huge,
 		HitStartedAt = -math.huge,
 		LevelStartedAt = -math.huge,
 		Pitch = 0,
@@ -124,7 +130,6 @@ local function bind(character: Model)
 	activeState = state
 
 	local previousHealth = humanoid.Health
-	local previousDashReady = player:GetAttribute("DashReady") :: number?
 	table.insert(
 		characterConnections,
 		humanoid.HealthChanged:Connect(function(health)
@@ -136,12 +141,19 @@ local function bind(character: Model)
 	)
 	table.insert(
 		characterConnections,
-		player:GetAttributeChangedSignal("DashReady"):Connect(function()
-			local ready = player:GetAttribute("DashReady") :: number?
-			if ready and previousDashReady and ready < previousDashReady then
-				state.DashStartedAt = os.clock()
+		player:GetAttributeChangedSignal("MoveActionSerial"):Connect(function()
+			local action = player:GetAttribute("MoveAction")
+			local variant = player:GetAttribute("MoveVariant")
+			if type(action) ~= "string" or type(variant) ~= "number" then
+				return
 			end
-			previousDashReady = ready
+			local startedAt = os.clock()
+			state.MoveAction = action
+			state.MoveVariant = variant
+			state.MoveStartedAt = startedAt
+			if action == "Dash" then
+				state.DashStartedAt = startedAt
+			end
 		end)
 	)
 	table.insert(
@@ -170,19 +182,25 @@ local function bind(character: Model)
 
 			local currentTime = os.clock()
 			local dashElapsed = currentTime - state.DashStartedAt
-			local dash = PlayerPose.dashPose(dashElapsed)
-			local dashRoll = AnimCurves.dashRollAt(dashElapsed)
+			local moveCurve =
+				AnimCurves.movementAt(state.MoveAction, currentTime - state.MoveStartedAt)
+			local movePose = PlayerPose.movementPose(
+				state.MoveAction,
+				state.MoveVariant,
+				moveCurve.Envelope,
+				moveCurve.Progress
+			)
 			local flinch = AnimCurves.hitFlinch(currentTime - state.HitStartedAt)
 			local pop = PlayerPose.levelUpPop(currentTime - state.LevelStartedAt)
 			local flourish = AnimCurves.levelUpFlourish(currentTime - state.LevelStartedAt)
 			state.Trail.Enabled = dashElapsed >= 0 and dashElapsed < PlayerPose.DashDuration
 
 			if state.PoseJoint then
-				local offset = CFrame.new(0, dash.Stretch + pop, 0)
+				local offset = CFrame.new(0, movePose.TuckStuds + pop, 0)
 					* CFrame.Angles(
-						math.rad(-state.Pitch - dash.LeanDegrees - dashRoll),
+						math.rad(-state.Pitch - movePose.LeanDegrees),
 						0,
-						math.rad(state.Roll + flinch)
+						math.rad(state.Roll + flinch + movePose.SpinDegrees)
 					)
 				-- Transform persists when no animation drives this joint, so remove last frame's
 				-- offset first; otherwise the lean would compound every frame.
@@ -196,11 +214,15 @@ local function bind(character: Model)
 			end
 			if state.LeftShoulder and state.LeftShoulderBase then
 				state.LeftShoulder.C0 = state.LeftShoulderBase
-					* CFrame.Angles(math.rad(flourish.LeftDegrees), 0, 0)
+					* CFrame.Angles(math.rad(flourish.LeftDegrees + movePose.ArmSweepDegrees), 0, 0)
 			end
 			if state.RightShoulder and state.RightShoulderBase then
 				state.RightShoulder.C0 = state.RightShoulderBase
-					* CFrame.Angles(math.rad(flourish.RightDegrees), 0, 0)
+					* CFrame.Angles(
+						math.rad(flourish.RightDegrees - movePose.ArmSweepDegrees),
+						0,
+						0
+					)
 			end
 		end
 	)

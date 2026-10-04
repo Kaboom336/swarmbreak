@@ -8,6 +8,7 @@ local TweenService = game:GetService("TweenService")
 local AnimCurves = require(ReplicatedStorage.Shared.AnimCurves)
 local EffectCurves = require(ReplicatedStorage.Shared.EffectCurves)
 local Feel = require(ReplicatedStorage.Shared.Feel)
+local FovStack = require(ReplicatedStorage.Shared.FovStack)
 local PoolSize = require(ReplicatedStorage.Shared.PoolSize)
 local SoundBudget = require(ReplicatedStorage.Shared.SoundBudget)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
@@ -106,6 +107,7 @@ type Motion = {
 	Complete: (() -> ())?,
 }
 local motions: { Motion } = {}
+local fovStack = FovStack.new(70)
 
 local function animate(duration: number, update: (number, number) -> (), complete: (() -> ())?)
 	update(0, 0)
@@ -131,6 +133,10 @@ RunService.RenderStepped:Connect(function()
 				motion.Complete()
 			end
 		end
+	end
+	if #fovStack.Kicks > 0 then
+		camera.FieldOfView = FovStack.valueAt(fovStack, now)
+		FovStack.prune(fovStack, now)
 	end
 end)
 
@@ -311,7 +317,7 @@ end)
 
 function ClientFX.sound(name: string, at: Vector3?, pitchJitter: number?)
 	local def = (Sounds :: any)[name]
-	if not def or def.Id == "" then
+	if not def or not Sounds.isPlayable(def.Id) then
 		return
 	end
 	local allowed
@@ -365,19 +371,8 @@ function ClientFX.shakeFor(event: Feel.EventName, setting: Feel.ShakeSetting)
 end
 
 -- ---------- FOV kick ----------
-local baseFov = 70
-local fovTween: Tween? = nil
 function ClientFX.fovKick(delta: number, seconds: number)
-	if fovTween then
-		fovTween:Cancel()
-	end
-	camera.FieldOfView = baseFov + delta
-	fovTween = TweenService:Create(
-		camera,
-		TweenInfo.new(seconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		{ FieldOfView = baseFov }
-	)
-	fovTween:Play()
+	FovStack.add(fovStack, delta, seconds, os.clock())
 end
 
 -- ---------- world primitives ----------
@@ -457,6 +452,31 @@ function ClientFX.burst(
 	pe.Rate = 0
 	pe.Texture = VfxTextures.asset(if spark then "spark" else "goo")
 	pe:Emit(count)
+end
+
+function ClientFX.dust(at: Vector3, count: number)
+	local life = 0.45
+	local entry = claimEmitter(customPool, life)
+	local emitter = entry.Emitter
+	entry.Holder.Position = at
+	emitter.Color = ColorSequence.new(Color3.fromRGB(188, 174, 145), Color3.fromRGB(92, 82, 68))
+	emitter.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.7),
+		NumberSequenceKeypoint.new(1, 1.8),
+	})
+	emitter.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.35),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	emitter.Lifetime = NumberRange.new(0.25, life)
+	emitter.Speed = NumberRange.new(3, 8)
+	emitter.SpreadAngle = Vector2.new(70, 25)
+	emitter.Drag = 5
+	emitter.Acceleration = Vector3.new(0, 3, 0)
+	emitter.LightEmission = 0
+	emitter.Rate = 0
+	emitter.Texture = VfxTextures.asset("smoke")
+	emitter:Emit(count)
 end
 
 local damageNumberPool = PoolSize.new(

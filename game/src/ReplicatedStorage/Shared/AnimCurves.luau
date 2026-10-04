@@ -24,6 +24,10 @@ export type GemPose = {
 	SpinDegrees: number,
 	BounceHeight: number,
 }
+export type MovementCurve = {
+	Envelope: number,
+	Progress: number,
+}
 
 local AnimCurves = {}
 
@@ -46,6 +50,11 @@ AnimCurves.EvolutionRingStagger = 0.08
 AnimCurves.SlowMoScale = 0.35
 AnimCurves.SlowMoSeconds = 0.6
 AnimCurves.EnemyHitFlinchDegrees = 6
+AnimCurves.MovementDurations = {
+	Dash = 0.28,
+	DoubleJump = 0.4,
+	Slide = 0.6,
+}
 
 local function unit(value: number): number
 	return math.clamp(value, 0, 1)
@@ -95,6 +104,18 @@ function AnimCurves.dashRollAt(elapsed: number): number
 		return 0
 	end
 	return 360 * smooth(elapsed / AnimCurves.DashRollDuration)
+end
+
+function AnimCurves.movementAt(action: string, elapsed: number): MovementCurve
+	local duration = (AnimCurves.MovementDurations :: any)[action]
+	if type(duration) ~= "number" or elapsed < 0 or elapsed >= duration then
+		return { Envelope = 0, Progress = 0 }
+	end
+	local progress = unit(elapsed / duration)
+	return {
+		Envelope = math.sin(progress * math.pi),
+		Progress = smooth(progress),
+	}
 end
 
 function AnimCurves.hitFlinch(elapsed: number): number

@@ -13,8 +13,38 @@ local PlayerPose = {
 	LevelUpPop = 0.6,
 }
 
+export type MovementPose = {
+	LeanDegrees: number,
+	TuckStuds: number,
+	SpinDegrees: number,
+	ArmSweepDegrees: number,
+}
+
+local poseProfiles = {
+	Dash = {
+		{ LeanDegrees = 18, TuckStuds = 0.05, SpinDegrees = 0, ArmSweepDegrees = 20 },
+		{ LeanDegrees = 11, TuckStuds = 0.45, SpinDegrees = 0, ArmSweepDegrees = -35 },
+		{ LeanDegrees = 8, TuckStuds = 0.1, SpinDegrees = 180, ArmSweepDegrees = 80 },
+	},
+	DoubleJump = {
+		{ LeanDegrees = -10, TuckStuds = 0.35, SpinDegrees = 0, ArmSweepDegrees = 45 },
+		{ LeanDegrees = 0, TuckStuds = 0.5, SpinDegrees = 360, ArmSweepDegrees = 15 },
+		{ LeanDegrees = 8, TuckStuds = 0.15, SpinDegrees = 0, ArmSweepDegrees = 110 },
+	},
+	Slide = {
+		{ LeanDegrees = 22, TuckStuds = -0.25, SpinDegrees = 0, ArmSweepDegrees = -25 },
+		{ LeanDegrees = 14, TuckStuds = -0.4, SpinDegrees = 0, ArmSweepDegrees = 65 },
+		{ LeanDegrees = 18, TuckStuds = -0.2, SpinDegrees = 120, ArmSweepDegrees = 95 },
+	},
+}
+
 local function clamp01(value: number): number
 	return math.max(0, math.min(1, value))
+end
+
+function PlayerPose.spinAngle(progress: number): number
+	local remaining = 1 - clamp01(progress)
+	return (1 - remaining * remaining) * 2 * math.pi
 end
 
 function PlayerPose.targetRunLean(moveRight: number, moveForward: number): (number, number)
@@ -48,6 +78,26 @@ function PlayerPose.dashPose(elapsed: number): { LeanDegrees: number, Stretch: n
 	return {
 		LeanDegrees = PlayerPose.DashLeanDegrees * curve,
 		Stretch = PlayerPose.DashStretch * curve,
+	}
+end
+
+function PlayerPose.movementPose(
+	action: string,
+	variant: number,
+	envelope: number,
+	progress: number
+): MovementPose
+	local profiles = (poseProfiles :: any)[action]
+	local profile = if profiles then profiles[math.clamp(math.floor(variant), 1, 3)] else nil
+	if not profile then
+		return { LeanDegrees = 0, TuckStuds = 0, SpinDegrees = 0, ArmSweepDegrees = 0 }
+	end
+	local weight = clamp01(envelope)
+	return {
+		LeanDegrees = profile.LeanDegrees * weight,
+		TuckStuds = profile.TuckStuds * weight,
+		SpinDegrees = profile.SpinDegrees * PlayerPose.spinAngle(progress) / (2 * math.pi),
+		ArmSweepDegrees = profile.ArmSweepDegrees * weight,
 	}
 end
 

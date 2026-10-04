@@ -1,0 +1,16 @@
+local fs = require("@lune/fs")
+local Sounds = load("Sounds")
+
+test("id-zero sounds leave pool and budget untouched", function()
+	eq(Sounds.isPlayable("rbxassetid://0"), false, "numeric zero asset id")
+	eq(Sounds.isPlayable(""), false, "empty asset id")
+	eq(Sounds.isPlayable("rbxassetid://123"), true, "published asset id")
+
+	local source = fs.readFile("src/StarterPlayer/StarterPlayerScripts/ClientFX.luau")
+	local zeroGuard = source:find("Sounds.isPlayable(def.Id)", 1, true)
+	local budget = source:find("SoundBudget.allow", 1, true)
+	local pool = source:find("PoolSize.acquire(soundPool)", 1, true)
+	assert(zeroGuard ~= nil, "sound playback must reject id-zero definitions")
+	assert(budget ~= nil and zeroGuard < budget, "id-zero guard must run before budget acquisition")
+	assert(pool ~= nil and zeroGuard < pool, "id-zero guard must run before pool acquisition")
+end)

@@ -34,3 +34,35 @@ test("hit flinch lasts one tenth of a second", function()
 	near(PlayerPose.hitFlinch(PlayerPose.HitDuration), 0, 1e-6, "hit flinch returns")
 	near(PlayerPose.HitDuration, 0.1, 1e-6, "hit duration")
 end)
+
+test("each movement action has three distinct procedural poses", function()
+	for _, action in { "Dash", "DoubleJump", "Slide" } do
+		local seen = {}
+		for variant = 1, 3 do
+			local pose = PlayerPose.movementPose(action, variant, 1, 0.5)
+			local signature = string.format(
+				"%.2f/%.2f/%.2f/%.2f",
+				pose.LeanDegrees,
+				pose.TuckStuds,
+				pose.SpinDegrees,
+				pose.ArmSweepDegrees
+			)
+			assert(not seen[signature], action .. " variants must be visually distinct")
+			seen[signature] = true
+		end
+	end
+end)
+
+test("double-jump spin eases monotonically through a full turn", function()
+	local previous = PlayerPose.spinAngle(0)
+	near(previous, 0, 1e-6, "spin starts neutral")
+	for step = 1, 20 do
+		local angle = PlayerPose.spinAngle(step / 20)
+		assert(angle >= previous, "spin angle must never reverse")
+		previous = angle
+	end
+	near(previous, 2 * math.pi, 1e-6, "spin completes one turn")
+
+	local pose = PlayerPose.movementPose("DoubleJump", 2, 0, 1)
+	near(pose.SpinDegrees, 360, 1e-6, "double-jump spin completes visually")
+end)
