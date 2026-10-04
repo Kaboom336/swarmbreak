@@ -27,6 +27,20 @@ You build up yourself and your base, then raid **Swarm Cores** (themed dungeons 
 
 Each core has its own rooms, palette, drops and story beats. Nothing is added without a story reason.
 
+## Base and lobby (Zion 10/04 15:54Z)
+- **Lobby:** a decently big town map you can explore. Base plots are spread out so nobody is too close.
+- **Bases are built from rooms, not blocks.** Unlock or buy a room, then pick its skin.
+- **Customise mode:** a top-down camera you slide to move. Tap a room and swap its look. It should feel easy, smooth and satisfying.
+- **Suggest a room:** a corner button in customise mode where players send room ideas, to add later as skins.
+- **Base themes:**
+  - The Starter Factory is free.
+  - Clearing a core's campaign (stage 15, the hardest, with its boss) unlocks that core's base theme: Mars outpost, Tech flying base, Fantasy mountain base, Elemental underground bunker, and so on.
+  - Each theme then gets its own room layout and skins.
+  - Important parts (generator, factory, armoury) upgrade in levels.
+- **Campaign per core:** 15 stages of rising difficulty, each with its own boss beat, plus 3 difficulties (Normal, Hard, Nightmare); each harder difficulty unlocks after clearing the one below. This pattern is inferred from similar Roblox wave and tower-defence games and should be checked against the top games before tuning.
+- **Launch:** Mars is built first, but it isn't the first map at launch. We launch with 2 or more cores.
+- **Robux:** never pay-to-win. Sell cosmetics (room skins, base themes early, weapon skins, emotes), convenience items (extra loadout slots, auto-deposit) and a VIP pass. Power only comes from playing.
+
 ## Movement and feel
 - Sprint is always on. Clean dash, double jump and slide.
 - Every frequent action (dash, double jump, slide) has 3 animation variants played at random.
