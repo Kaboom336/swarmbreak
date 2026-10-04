@@ -69,3 +69,16 @@ test("numbered rig hips use odd-even antiphase", function()
 		"tripod phases must be pi radians apart"
 	)
 end)
+
+test("CreateMeshPartAsync gets an options table, not Enum args", function()
+	local source = fs.readFile("src/ServerStorage/EnemyRigBuilder.luau")
+	local start = source:find("CreateMeshPartAsync", 1, true)
+	assert(start, "rig builder must call CreateMeshPartAsync")
+	local call = source:sub(start, (source:find("\n\t\t%)", start)) or #source)
+	assert(call:find("CollisionFidelity%s*=") ~= nil, "CollisionFidelity must be an options key")
+	assert(call:find("RenderFidelity%s*=") ~= nil, "RenderFidelity must be an options key")
+	assert(
+		call:find(",%s*Enum%.") == nil,
+		"Enum values passed positionally fail with 'Unable to cast to Dictionary'"
+	)
+end)

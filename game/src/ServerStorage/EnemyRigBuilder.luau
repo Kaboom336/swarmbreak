@@ -47,13 +47,11 @@ local function makePart(definition: any): BasePart
 	local built: BasePart
 	if definition.ClassName == "MeshPart" then
 		assert(assetId(definition.MeshId) > 0, definition.Name .. " has no mesh asset")
-		local ok, result = pcall(
-			AssetService.CreateMeshPartAsync,
-			AssetService,
-			definition.MeshId,
-			Enum.CollisionFidelity.Default,
-			Enum.RenderFidelity.Automatic
-		)
+		local ok, result =
+			pcall(AssetService.CreateMeshPartAsync, AssetService, definition.MeshId, {
+				CollisionFidelity = Enum.CollisionFidelity.Default,
+				RenderFidelity = Enum.RenderFidelity.Automatic,
+			})
 		assert(ok and typeof(result) == "Instance" and result:IsA("MeshPart"), result)
 		local mesh = result :: MeshPart
 		mesh.TextureID = if assetId(definition.TextureID) > 0 then definition.TextureID else ""
