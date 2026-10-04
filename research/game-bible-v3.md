@@ -1,0 +1,47 @@
+# Swarm Break game bible v3 (2026-10-04, from Zion's direction PDF)
+This supersedes v2 wherever they conflict. v2's look rules, kill feel, budgets and "no blood" rule still apply.
+
+## The game in one line
+You build up yourself and your base, then raid **Swarm Cores** (themed dungeons from anywhere in the multiverse) to bring back gems and gold.
+
+## Loop
+1. **Lobby:**
+   - Your own base plot: energy/power, an equipment factory, a home, and pets/robots.
+   - The hub centre: Play, Shop, Upgrade, Enchant, Tech Shop, Subclass Station, Gym, Bank, and a PvP Arena (later).
+2. **Raid a Core:**
+   - Rooms, paths, ladders, stairs and unlockables, stitched procedurally from hand-made room pieces for that core's theme.
+   - Waves of that core's creatures, and a boss.
+   - Run-only upgrades (the current level-up cards) last for that raid only.
+3. **Bring back currency:**
+   - Gems (inside every creature) and Gold (from kills).
+   - Spend them on permanent stats and on your base. XP from mobs levels you up.
+4. **Loot:** mainly from playing. Some items can be bought with Robux, Gold or Gems.
+
+## Cores (each tells the story of where its civilisation gets its energy)
+| Core | Look | Enemies | Boss |
+|---|---|---|---|
+| Fantasy | castles, forests | dragons, elves, small trolls | a dragon |
+| Tech | clean labs, an AI voice narrating | robots, tech ball spiders | a giant transformer, plus an aircraft carrier flyer that drops its own swarm |
+| Mars | a withered factory outpost | martian creatures (our Nest bugs fit here) | the Swarm Queen |
+| Elemental | forest spawn, then a crystal cave with dwarf miners and falling rocks, then an underwater city, then a volcano | wolves, tree golems, fire birds, ice penguins, dwarfs, water creatures | the volcano energy miners |
+
+Each core has its own rooms, palette, drops and story beats. Nothing is added without a story reason.
+
+## Movement and feel
+- Sprint is always on. Clean dash, double jump and slide.
+- Every frequent action (dash, double jump, slide) has 3 animation variants played at random.
+- Classes and gear add movement perks: extra jumps, water walking, faster swimming.
+- Build abilities: place quick walls or ramps to escape the swarm.
+- Clean, simple weapon animations. Short, clean cutscenes between areas and for ultimate abilities.
+- Difficulty is semi-hard: starter cores are easy and higher difficulties are challenging, but always fair.
+
+## Character
+- Shown through equipment, tools, class and subclass (from the skill tree and your core path).
+- **Races (Claude's call):** not at launch. Class plus gear gives the same perks with fewer models to make well. Revisit after the first two cores.
+
+## Build order (each step must look good before the next)
+1. **M1 Movement:** always-sprint, dash, double jump and slide, with 3 variants each (Codex, code only).
+2. **Mars Core v1:** Outpost 9 becomes the Mars Core, with the kit art (after the Studio importer upload), the Nest creatures as martians, and the Queen as its boss.
+3. **Lobby hub v1:** the hub centre built from the space kit, with Play, Shop and Upgrade working. Base plots come later.
+4. Persistent Gems and Gold with stat upgrades. The skill tree and subclass come after.
+5. The second core (Tech, which reuses the most kit art), then base building, then Fantasy and Elemental.
