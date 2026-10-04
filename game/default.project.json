@@ -89,7 +89,25 @@
         "MapName": {
           "$className": "StringValue",
           "$properties": {
-            "Value": "Station Deck"
+            "Value": "Outpost 9"
+          }
+        },
+        "MapId": {
+          "$className": "StringValue",
+          "$properties": {
+            "Value": "Outpost9"
+          }
+        },
+        "Difficulty": {
+          "$className": "StringValue",
+          "$properties": {
+            "Value": "Normal"
+          }
+        },
+        "ZoneBanner": {
+          "$className": "StringValue",
+          "$properties": {
+            "Value": ""
           }
         },
         "TimeLeft": {

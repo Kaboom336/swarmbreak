@@ -30,6 +30,31 @@ export type Beacon = Position & {
 	Color: { number },
 }
 
+export type Zone = Position & {
+	Id: string,
+	Name: string,
+	FirstWave: number,
+	LastWave: number,
+	Width: number,
+	Depth: number,
+}
+
+export type ZoneSpawn = Position & {
+	Name: string,
+	ZoneId: string,
+}
+
+export type Bridge = {
+	Id: string,
+	FromZone: string,
+	ToZone: string,
+	OpenWave: number,
+	x: number,
+	z: number,
+	Width: number,
+	Depth: number,
+}
+
 local ArenaLayout = {}
 
 ArenaLayout.Floor = 160 -- placeholder
@@ -108,6 +133,148 @@ ArenaLayout.Beacons = {
 	{ Name = "South", x = 0, z = 76, Width = 6, Height = 0.15, Color = { 40, 220, 210 } },
 	{ Name = "West", x = -76, z = 0, Width = 6, Height = 0.15, Color = { 255, 170, 40 } },
 } :: { Beacon }
+
+-- S3 Outpost 9: three equal sky islands, separated by forty-stud bridge gaps.
+-- Their combined walkable area is exactly three times the former 160 by 160 deck.
+ArenaLayout.Zones = {
+	{
+		Id = "LandingPad",
+		Name = "Landing Pad",
+		FirstWave = 1,
+		LastWave = 5,
+		x = 0,
+		z = 0,
+		Width = 160,
+		Depth = 160,
+	},
+	{
+		Id = "Refinery",
+		Name = "Refinery",
+		FirstWave = 6,
+		LastWave = 10,
+		x = 200,
+		z = 0,
+		Width = 160,
+		Depth = 160,
+	},
+	{
+		Id = "HiveCore",
+		Name = "Hive Core",
+		FirstWave = 11,
+		LastWave = 15,
+		x = 400,
+		z = 0,
+		Width = 160,
+		Depth = 160,
+	},
+} :: { Zone }
+
+ArenaLayout.ZoneSpawns = {
+	{ Name = "LandingGateNorth", ZoneId = "LandingPad", x = -55, z = -65 },
+	{ Name = "LandingGateSouth", ZoneId = "LandingPad", x = -55, z = 65 },
+	{ Name = "LandingGateWest", ZoneId = "LandingPad", x = -70, z = 0 },
+	{ Name = "RefineryGateNorth", ZoneId = "Refinery", x = 200, z = -68 },
+	{ Name = "RefineryGateSouth", ZoneId = "Refinery", x = 200, z = 68 },
+	{ Name = "RefineryGateEast", ZoneId = "Refinery", x = 268, z = 0 },
+	{ Name = "HiveGateNorth", ZoneId = "HiveCore", x = 400, z = -68 },
+	{ Name = "HiveGateSouth", ZoneId = "HiveCore", x = 400, z = 68 },
+	{ Name = "HiveGateEast", ZoneId = "HiveCore", x = 468, z = 0 },
+} :: { ZoneSpawn }
+
+ArenaLayout.Bridges = {
+	{
+		Id = "LandingToRefinery",
+		FromZone = "LandingPad",
+		ToZone = "Refinery",
+		OpenWave = 6,
+		x = 100,
+		z = 0,
+		Width = 40,
+		Depth = 18,
+	},
+	{
+		Id = "RefineryToHive",
+		FromZone = "Refinery",
+		ToZone = "HiveCore",
+		OpenWave = 11,
+		x = 300,
+		z = 0,
+		Width = 40,
+		Depth = 18,
+	},
+} :: { Bridge }
+
+ArenaLayout.JumpPads = {
+	{ Name = "RefineryLower", x = 160, z = 38, Velocity = { 54, 68, 0 } },
+	{ Name = "RefineryLoop", x = 240, z = -42, Velocity = { -45, 72, 8 } },
+}
+
+ArenaLayout.DashGaps = {
+	{ Name = "RefineryGap", x = 200, z = 24, Width = 16 },
+}
+
+ArenaLayout.Landmarks = {
+	{ Name = "RadioMast", ZoneId = "LandingPad", x = -48, z = -42, Kind = "OrangeBeacon" },
+	{ Name = "RefineryTower", ZoneId = "Refinery", x = 232, z = -42, Kind = "Tower" },
+	{ Name = "NestCore", ZoneId = "HiveCore", x = 448, z = 0, Kind = "GooCore" },
+}
+
+function ArenaLayout.zoneContains(zone: Zone, position: Position): boolean
+	return math.abs(position.x - zone.x) <= zone.Width / 2
+		and math.abs(position.z - zone.z) <= zone.Depth / 2
+end
+
+function ArenaLayout.zoneForWave(wave: number): Zone
+	for _, zone in ArenaLayout.Zones do
+		if wave >= zone.FirstWave and wave <= zone.LastWave then
+			return zone
+		end
+	end
+	return ArenaLayout.Zones[#ArenaLayout.Zones]
+end
+
+function ArenaLayout.spawnsForWave(wave: number): { ZoneSpawn }
+	local zone = ArenaLayout.zoneForWave(wave)
+	local result = {}
+	for _, spawn in ArenaLayout.ZoneSpawns do
+		if spawn.ZoneId == zone.Id then
+			table.insert(result, spawn)
+		end
+	end
+	return result
+end
+
+function ArenaLayout.bridgeOpenWave(id: string): number?
+	for _, bridge in ArenaLayout.Bridges do
+		if bridge.Id == id then
+			return bridge.OpenWave
+		end
+	end
+	return nil
+end
+
+function ArenaLayout.openBridges(wave: number): { Bridge }
+	local result = {}
+	for _, bridge in ArenaLayout.Bridges do
+		if wave >= bridge.OpenWave then
+			table.insert(result, bridge)
+		end
+	end
+	return result
+end
+
+local gridCells = {}
+for _, zone in ArenaLayout.Zones do
+	for x = zone.x - 72, zone.x + 72, 16 do
+		for z = zone.z - 72, zone.z + 72, 16 do
+			table.insert(gridCells, { x = x, z = z, ZoneId = zone.Id })
+		end
+	end
+end
+ArenaLayout.WalkableGrid = {
+	CellSize = 16,
+	Cells = gridCells,
+}
 
 function ArenaLayout.playArea(players: number): number
 	if players < 4 then

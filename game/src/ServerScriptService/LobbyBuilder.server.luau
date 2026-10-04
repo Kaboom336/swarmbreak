@@ -6,6 +6,8 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local Lobby = require(shared:WaitForChild("Lobby"))
+local Campaign = require(shared:WaitForChild("Campaign"))
+local Difficulty = require(shared:WaitForChild("Difficulty"))
 local Places = require(shared:WaitForChild("Places"))
 local Weapons = require(shared:WaitForChild("Weapons"))
 local Kits = require(shared:WaitForChild("Kits"))
@@ -188,6 +190,77 @@ for _, item in Lobby.ShopItems do
 end
 addBoard("ShopBoard", Lobby.Boards.Shop, table.concat(shopLines, "\n"), Vector3.new(18, 6.5, -28))
 
+local mapLines = {}
+for index, map in Campaign.All do
+	local previous = Campaign.All[index - 1]
+	table.insert(
+		mapLines,
+		map.Name
+			.. if map.Id == Campaign.DefaultId
+				then " - READY"
+				else " - [PADLOCK] Clear " .. previous.Name .. " on Normal / coming soon"
+	)
+end
+local mapBoard =
+	addBoard("MapBoard", Lobby.Boards.Map, table.concat(mapLines, "\n"), Vector3.new(-18, 6.5, -15))
+local mapPrompt = Instance.new("ProximityPrompt")
+mapPrompt.Name = "SelectMap"
+mapPrompt.ActionText = "Next available map"
+mapPrompt.ObjectText = Lobby.Boards.Map
+mapPrompt.HoldDuration = 0
+mapPrompt.MaxActivationDistance = 12
+mapPrompt.Parent = mapBoard
+mapPrompt.Triggered:Connect(function(player)
+	if not PlayerData.isLoaded(player) then
+		return
+	end
+	local profile = PlayerData.profile(player)
+	local currentId = player:GetAttribute("SelectedMapId")
+	local currentIndex = 0
+	for index, map in Campaign.All do
+		if map.Id == currentId then
+			currentIndex = index
+		end
+	end
+	for offset = 1, #Campaign.All do
+		local map = Campaign.All[(currentIndex + offset - 1) % #Campaign.All + 1]
+		if Lobby.canSelectMap(profile, map.Id) then
+			player:SetAttribute("SelectedMapId", map.Id)
+			return
+		end
+	end
+end)
+
+local difficultyBoard = addBoard(
+	"DifficultyBoard",
+	Lobby.Boards.Difficulty,
+	"Normal\nHard - Clear Normal\nNightmare - Clear Hard",
+	Vector3.new(0, 6.5, -15)
+)
+local difficultyPrompt = Instance.new("ProximityPrompt")
+difficultyPrompt.Name = "SelectDifficulty"
+difficultyPrompt.ActionText = "Next unlocked tier"
+difficultyPrompt.ObjectText = Lobby.Boards.Difficulty
+difficultyPrompt.HoldDuration = 0
+difficultyPrompt.MaxActivationDistance = 12
+difficultyPrompt.Parent = difficultyBoard
+difficultyPrompt.Triggered:Connect(function(player)
+	if not PlayerData.isLoaded(player) then
+		return
+	end
+	local profile = PlayerData.profile(player)
+	local mapId = player:GetAttribute("SelectedMapId")
+	local current = player:GetAttribute("SelectedDifficulty")
+	local currentIndex = table.find(Difficulty.Order, current) or 0
+	for offset = 1, #Difficulty.Order do
+		local tier = Difficulty.Order[(currentIndex + offset - 1) % #Difficulty.Order + 1]
+		if Lobby.canSelectDifficulty(profile, mapId, tier) then
+			player:SetAttribute("SelectedDifficulty", tier)
+			return
+		end
+	end
+end)
+
 local teleportRing = Instance.new("Model")
 teleportRing.Name = "TeleportRing"
 teleportRing.Parent = lobby
@@ -257,6 +330,19 @@ local function sendParty(userIds: { number }, partyNumber: number)
 	-- (WaveManager admits waiting InArena players with catch-up coins).
 	local phase = GameState.get("Phase")
 	local joinNow = phase == "idle" or phase == "over"
+	local leader = Players:GetPlayerByUserId(userIds[1])
+	if joinNow and leader then
+		local map = Campaign.get(leader:GetAttribute("SelectedMapId") :: string?)
+		local tier = leader:GetAttribute("SelectedDifficulty")
+		GameState.set("MapId", map.Id)
+		GameState.set("MapName", map.Name)
+		GameState.set(
+			"Difficulty",
+			if type(tier) == "string" and Difficulty.Defs[tier :: Difficulty.TierName]
+				then tier
+				else Difficulty.Default
+		)
+	end
 	for index, userId in userIds do
 		local player = Players:GetPlayerByUserId(userId)
 		if player and isOnPad(player) then
@@ -283,6 +369,8 @@ local function sendParty(userIds: { number }, partyNumber: number)
 end
 
 local function stagePlayer(player: Player)
+	player:SetAttribute("SelectedMapId", Campaign.DefaultId)
+	player:SetAttribute("SelectedDifficulty", Difficulty.Default)
 	player:SetAttribute("InArena", false)
 	player.RespawnLocation = lobbySpawn
 	player.CharacterAdded:Connect(function(character)

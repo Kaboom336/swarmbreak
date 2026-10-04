@@ -32,9 +32,9 @@ test("cover footprints leave the central 90 by 90 fight space open", function()
 	end
 end)
 
-test("station floor uses the OutpostCream theme color", function()
+test("Outpost 9 floor uses the OutpostCream theme color", function()
 	sameColor(Theme.Floor, { 255, 233, 201 }, "Theme.Floor")
-	sameColor(Maps.get("Station Deck").FloorColor, Theme.Floor, "Station Deck floor")
+	sameColor(Maps.get("Outpost 9").FloorColor, Theme.Floor, "Outpost 9 floor")
 end)
 
 test("four wide flat-colour lanes radiate from the arena centre", function()

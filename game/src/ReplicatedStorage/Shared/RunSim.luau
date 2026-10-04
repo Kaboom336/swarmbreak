@@ -2,6 +2,7 @@
 -- Pure, seeded solo-run simulator. It deliberately models player decisions simply:
 -- shoot the nearest spawned enemy, take every level-up, and never move.
 local BalanceMath = require(script.Parent.BalanceMath)
+local Campaign = require(script.Parent.Campaign)
 local Config = require(script.Parent.Config)
 local Difficulty = require(script.Parent.Difficulty)
 local Enemies = require(script.Parent.Enemies)
@@ -103,6 +104,7 @@ end
 
 local function makeEnemy(
 	name: string,
+	wave: number,
 	spawnAt: number,
 	healthScale: number,
 	damageScale: number,
@@ -111,7 +113,9 @@ local function makeEnemy(
 	local def = Enemies.Defs[name]
 	return {
 		Name = name,
-		Health = def.Health * healthScale,
+		Health = def.Health * healthScale * if name == "Brute"
+			then if wave >= 10 then 1.35 else 1.08
+			else 1,
 		Distance = RunSim.SpawnDistanceMin
 			+ (RunSim.SpawnDistanceMax - RunSim.SpawnDistanceMin) * random(),
 		Speed = def.Speed,
@@ -146,7 +150,10 @@ function RunSim.simulate(options: Options?): Result
 			Difficulty.apply({ Health = healthScale, Damage = damageScale }, difficultyId)
 		local enemies = {} :: { SimEnemy }
 		local spawnAt = 0
-		for packIndex, pack in WaveTable.packs(WaveTable.Compositions[wave]) do
+		local map = Campaign.get(Campaign.DefaultId)
+		local composition =
+			WaveTable.resolveComposition(WaveTable.Compositions[wave], map.Family, map.BossKey)
+		for packIndex, pack in WaveTable.packs(composition) do
 			if packIndex > 1 then
 				spawnAt += Config.SpawnGapMin + (Config.SpawnGapMax - Config.SpawnGapMin) * random()
 			end
@@ -156,6 +163,7 @@ function RunSim.simulate(options: Options?): Result
 						enemies,
 						makeEnemy(
 							name,
+							wave,
 							spawnAt,
 							scaled.Health :: number,
 							scaled.Damage :: number,
