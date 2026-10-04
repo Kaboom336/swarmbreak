@@ -13,8 +13,12 @@ testcmd: cd game && stylua --check src tests && selene src && lune run tests/run
 - game/assets/rigs/<Role>.rbxm plus <Role>.json for Mite, Runner, Shooter, Tank and Flyer.
   - These were made with Studio's generate-mesh tool and rigged on the laptop. The Tank is being regenerated (its legs came out as wheels), so keep it swappable.
   - Rojo 7.4.4 can't read the .rbxm files. Keep them out of default.project.json.
-- The laptop uploader (wave 8) uploads each .rbxm as a Model asset. The ids go in Shared/ModelAssets under the keys `enemies/Mite`, `enemies/Runner`, `enemies/Shooter`, `enemies/Tank` and `enemies/Flyer`.
-  - Add these keys with 0 now. The existing ModelLibrary LoadAsset path loads them once they're non-zero.
+- **No upload step.** Build each rig at server start from its JSON:
+  - Create each MeshPart with `AssetService:CreateMeshPartAsync(MeshId)` inside a pcall, then set TextureID, Size, Color and Material.
+  - Place it at Body-relative CFrames and add the Motor6Ds and welds.
+  - Cache one template per role and clone it per spawn.
+  - Ship the JSON as Rojo JSON modules: copy to src/ReplicatedStorage/Shared/Rigs/<Role>.json, and keep game/assets/rigs as the source.
+  - If CreateMeshPartAsync fails, or the lint flags it, fall back to today's model and log once.
 
 ## Rig contract (from the JSON)
 - **Root:** Body is the PrimaryPart and is anchored in the file. Unanchor it on spawn and weld it to the enemy root.
@@ -51,4 +55,4 @@ testcmd: cd game && stylua --check src tests && selene src && lune run tests/run
    - Parse each rigs JSON (lune can read it) and check that it has Body, Head, Neck, at least 4 Hips with matching Legs, and 2 Eye_Glow.
    - Check the role mapping covers all 5 roles.
    - Check the gait phase table puts odd and even legs in antiphase.
-4. **Result:** list the asset ids the uploader needs to fill, plus the shot list the Play thread should retake (04 wave pack, 05 crowd, 07 enemy closeups, clip c3 enemy walk).
+4. **Result:** the shot list the Play thread should retake (04 wave pack, 05 crowd, 07 enemy closeups, clip c3 enemy walk).
