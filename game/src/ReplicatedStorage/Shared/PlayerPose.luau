@@ -117,4 +117,33 @@ function PlayerPose.levelUpPop(elapsed: number): number
 	return PlayerPose.LevelUpPop * math.sin(progress * math.pi)
 end
 
+function PlayerPose.scytheIdleAt(elapsed: number): MovementPose
+	local breath = math.sin(elapsed * math.pi * 2 / 2.4)
+	return {
+		LeanDegrees = 2 + breath * 1.5,
+		TuckStuds = breath * 0.03,
+		SpinDegrees = 0,
+		ArmSweepDegrees = 12 + breath * 3,
+	}
+end
+
+function PlayerPose.scytheAbilityAt(kind: string, progress: number): MovementPose
+	local t = clamp01(progress)
+	local envelope = math.sin(t * math.pi)
+	if kind == "DashSpin" or kind == "ReaperArc" then
+		return {
+			LeanDegrees = 12 * envelope,
+			TuckStuds = 0.25 * envelope,
+			SpinDegrees = 360 * (1 - (1 - t) * (1 - t)),
+			ArmSweepDegrees = 100 * envelope,
+		}
+	end
+	return {
+		LeanDegrees = -10 * envelope,
+		TuckStuds = 0.12 * envelope,
+		SpinDegrees = 0,
+		ArmSweepDegrees = 145 * envelope,
+	}
+end
+
 return PlayerPose

@@ -55,6 +55,12 @@ AnimCurves.MovementDurations = {
 	DoubleJump = 0.4,
 	Slide = 0.6,
 }
+AnimCurves.ScytheAbilityDurations = {
+	HeavySweep = 0.55,
+	DashSpin = 0.7,
+	CrescentPull = 0.65,
+	ReaperArc = 1.5,
+}
 
 local function unit(value: number): number
 	return math.clamp(value, 0, 1)
@@ -120,6 +126,18 @@ end
 
 function AnimCurves.hitFlinch(elapsed: number): number
 	return PlayerPose.hitFlinch(elapsed)
+end
+
+function AnimCurves.scytheIdleAt(elapsed: number): PlayerPose.MovementPose
+	return PlayerPose.scytheIdleAt(elapsed)
+end
+
+function AnimCurves.scytheAbilityAt(kind: string, elapsed: number): PlayerPose.MovementPose
+	local duration = (AnimCurves.ScytheAbilityDurations :: any)[kind]
+	if type(duration) ~= "number" or elapsed < 0 or elapsed >= duration then
+		return PlayerPose.scytheAbilityAt(kind, 0)
+	end
+	return PlayerPose.scytheAbilityAt(kind, elapsed / duration)
 end
 
 function AnimCurves.levelUpFlourish(elapsed: number): FlourishPose

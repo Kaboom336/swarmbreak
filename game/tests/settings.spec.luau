@@ -6,6 +6,8 @@ test("settings default to half volume", function()
 	eq(p.MusicVolume, 0.5, "music default")
 	eq(p.SfxVolume, 0.5, "SFX default")
 	eq(p.MouseLockEnabled, true, "mouse lock default")
+	eq(p.CombatCameraEnabled, true, "combat camera default")
+	eq(p.UltimateCinematics, "Full", "ultimate cinematic default")
 end)
 
 test("volume is clamped to its valid range", function()
@@ -19,10 +21,14 @@ test("sanitize repairs junk settings", function()
 		MusicVolume = "loud",
 		SfxVolume = 2,
 		MouseLockEnabled = false,
+		CombatCameraEnabled = false,
+		UltimateCinematics = "Short",
 	})
 	eq(p.MusicVolume, 0.5, "junk music repaired")
 	eq(p.SfxVolume, 1, "SFX clamped")
 	eq(p.MouseLockEnabled, false, "mouse lock preserved")
+	eq(p.CombatCameraEnabled, false, "combat camera preserved")
+	eq(p.UltimateCinematics, "Short", "cinematic mode preserved")
 
 	local q = ProfileSchema.sanitize({
 		MusicVolume = -1,
@@ -35,14 +41,27 @@ test("sanitize repairs junk settings", function()
 end)
 
 test("apply changes only settings", function()
-	local p = { MusicVolume = 0.2, SfxVolume = 0.3, MouseLockEnabled = true, Gems = 10 }
-	local result = Settings.apply(
-		p,
-		{ MusicVolume = 0.8, SfxVolume = -1, MouseLockEnabled = false, Gems = 999 }
-	)
+	local p = {
+		MusicVolume = 0.2,
+		SfxVolume = 0.3,
+		MouseLockEnabled = true,
+		CombatCameraEnabled = true,
+		UltimateCinematics = "Full",
+		Gems = 10,
+	}
+	local result = Settings.apply(p, {
+		MusicVolume = 0.8,
+		SfxVolume = -1,
+		MouseLockEnabled = false,
+		CombatCameraEnabled = false,
+		UltimateCinematics = "Off",
+		Gems = 999,
+	})
 	eq(result, p, "same profile")
 	eq(p.MusicVolume, 0.8, "music applied")
 	eq(p.SfxVolume, 0, "SFX applied and clamped")
 	eq(p.MouseLockEnabled, false, "mouse lock applied")
+	eq(p.CombatCameraEnabled, false, "combat camera applied")
+	eq(p.UltimateCinematics, "Off", "cinematic mode applied")
 	eq(p.Gems, 10, "unrelated fields ignored")
 end)

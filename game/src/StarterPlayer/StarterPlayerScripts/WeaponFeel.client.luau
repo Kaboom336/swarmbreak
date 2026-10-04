@@ -19,6 +19,8 @@ local player = Players.LocalPlayer
 local recoilStartedAt: number? = nil
 local swingStartedAt: number? = nil
 local swingStage = 1
+local abilityStartedAt: number? = nil
+local abilityKind = ""
 local aimDirection: Vector3? = nil
 local aimExpiresAt = 0
 local activeCharacter: Model? = nil
@@ -143,7 +145,7 @@ local function muzzleFlash(char: Model)
 	Debris:AddItem(flash, Feel.WeaponMuzzleFlashSeconds)
 end
 
-event.Event:Connect(function(kind: string, direction: Vector3?, comboStage: number?)
+event.Event:Connect(function(kind: string, direction: Vector3?, detail: any)
 	if kind == "aim" then
 		aimDirection = direction
 		aimExpiresAt = if direction then os.clock() + 0.1 else 0
@@ -157,9 +159,13 @@ event.Event:Connect(function(kind: string, direction: Vector3?, comboStage: numb
 	aimExpiresAt = os.clock() + 0.5
 	if kind == "swing" then
 		swingStartedAt = os.clock()
-		swingStage = comboStage or 1
+		swingStage = detail or 1
 		trailFor(char)
 		ClientFX.shake(Feel.WeaponCameraKick)
+	elseif kind == "ability" then
+		abilityStartedAt = os.clock()
+		abilityKind = tostring(detail)
+		trailFor(char)
 	else
 		-- No camera shake per shot: with auto-fire it shook every few frames and read as jank
 		-- (Zion 10/03). Hits, kills and bosses keep their own shake in Feel.Events.
@@ -210,11 +216,19 @@ RunService:BindToRenderStep("WeaponFeel", Enum.RenderPriority.Character.Value + 
 	local swing = if swingStartedAt
 		then AnimCurves.comboSwingAt(swingStage, now - swingStartedAt)
 		else { PitchDegrees = 0, RollDegrees = 0 }
+	local ability = if abilityStartedAt
+		then AnimCurves.scytheAbilityAt(
+			abilityKind,
+			(now - abilityStartedAt)
+				* ((player:GetAttribute("LocalAnimationSpeed") :: number?) or 1)
+		)
+		elseif weapon:GetAttribute("WeaponId") == "Reaper" then AnimCurves.scytheIdleAt(now)
+		else AnimCurves.scytheAbilityAt("", 0)
 	if shoulder then
 		shoulder.Transform = CFrame.Angles(
-			math.rad(-75 + swing.PitchDegrees) - pitch,
+			math.rad(-75 + swing.PitchDegrees + ability.ArmSweepDegrees * 0.25) - pitch,
 			yaw * 0.7,
-			math.rad(10 + swing.RollDegrees)
+			math.rad(10 + swing.RollDegrees + ability.SpinDegrees)
 		)
 	end
 	if elbow then
@@ -232,5 +246,14 @@ RunService:BindToRenderStep("WeaponFeel", Enum.RenderPriority.Character.Value + 
 	end
 	if swingStartedAt and now - swingStartedAt >= AnimCurves.ComboDuration then
 		swingStartedAt = nil
+	end
+	local abilityDuration = (AnimCurves.ScytheAbilityDurations :: any)[abilityKind]
+	if
+		abilityStartedAt
+		and type(abilityDuration) == "number"
+		and now - abilityStartedAt >= abilityDuration
+	then
+		abilityStartedAt = nil
+		abilityKind = ""
 	end
 end)
