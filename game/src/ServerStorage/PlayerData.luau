@@ -9,7 +9,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Campaign = require(ReplicatedStorage.Shared.Campaign)
+local CoreStages = require(ReplicatedStorage.Shared.CoreStages)
 local Difficulty = require(ReplicatedStorage.Shared.Difficulty)
+local LeaderboardScore = require(ReplicatedStorage.Shared.LeaderboardScore)
 local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
 local Weapons = require(ReplicatedStorage.Shared.Weapons)
 local Monetization = require(ReplicatedStorage.Shared.Monetization)
@@ -40,7 +42,7 @@ local SignatureRemote =
 	ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Signature") :: RemoteEvent
 -- GetOrderedDataStore throws in an unpublished Studio place; fall back to no leaderboard.
 local topStoreOk, topStoreResult = pcall(function()
-	return DataStoreService:GetOrderedDataStore("SwarmBreak_top_v1")
+	return DataStoreService:GetOrderedDataStore("SwarmBreak_top_v2")
 end)
 local topStore: OrderedDataStore? = if topStoreOk then topStoreResult else nil
 local rng = Random.new()
@@ -88,6 +90,10 @@ export type RunSummary = {
 	Goal: Goals.Goal?,
 	NewMapUnlocked: boolean,
 	UnlockedMapName: string?,
+	FirstStageClear: boolean,
+	StageRewardGold: number,
+	StageRewardGems: number,
+	BaseThemeUnlocked: string?,
 }
 
 local runs: { [Player]: Run } = {}
@@ -980,7 +986,8 @@ function PlayerData.endRun(
 	wave: number,
 	won: boolean,
 	mapId: string?,
-	difficultyId: Difficulty.TierName?
+	difficultyId: Difficulty.TierName?,
+	stageNumber: number?
 ): RunSummary
 	local r = PlayerData.get(plr)
 	local p = Profile.get(plr)
@@ -999,12 +1006,19 @@ function PlayerData.endRun(
 	p.Gems += deposited.Gems
 	local clearedMapId = mapId or Campaign.DefaultId
 	local clearedTier = difficultyId or Difficulty.Default
+	local clearedStage = stageNumber or CoreStages.DefaultStage
+	local clearedWaves = if won then wave else math.max(0, wave - 1)
+	local leaderboardScore = LeaderboardScore.score(clearedTier, clearedStage, clearedWaves)
 	local clearFlag = Campaign.clearFlag(clearedMapId, clearedTier)
-	local firstClear = won and p.Flags[clearFlag] ~= true
+	local firstMapClear = won and p.Flags[clearFlag] ~= true
+	local hadMarsTheme = p.BaseThemes.Mars == true
+	local stageReward = { Gold = 0, Gems = 0, FirstClear = false }
 	if won then
-		p.Flags[clearFlag] = true
+		stageReward = CoreStages.complete(p, clearedMapId, clearedTier, clearedStage)
 	end
-	local nextMap = if firstClear and clearedTier == "Normal"
+	local nextMap = if firstMapClear
+			and clearedStage == CoreStages.Count
+			and clearedTier == "Normal"
 		then Campaign.nextMap(clearedMapId)
 		else nil
 	progressQuest(plr, "Wave", wave)
@@ -1040,7 +1054,7 @@ function PlayerData.endRun(
 		end
 		pcall(function()
 			store:UpdateAsync(tostring(plr.UserId), function(old)
-				return math.max(old or 0, wave)
+				return math.max(old or 0, leaderboardScore)
 			end)
 		end)
 	end)
@@ -1050,9 +1064,9 @@ function PlayerData.endRun(
 		Wave = wave,
 		Kills = r.Kills,
 		Coins = r.Coins,
-		GoldDeposited = deposited.Gold,
-		GemsEarned = deposited.Gems,
-		GemsDeposited = deposited.Gems,
+		GoldDeposited = deposited.Gold + stageReward.Gold,
+		GemsEarned = deposited.Gems + stageReward.Gems,
+		GemsDeposited = deposited.Gems + stageReward.Gems,
 		Gold = p.Gold,
 		Gems = p.Gems,
 		ShardsEarned = r.ShardsEarned,
@@ -1061,10 +1075,21 @@ function PlayerData.endRun(
 		Goal = Goals.next(p),
 		NewMapUnlocked = nextMap ~= nil,
 		UnlockedMapName = if nextMap then nextMap.Name else nil,
+		FirstStageClear = stageReward.FirstClear,
+		StageRewardGold = stageReward.Gold,
+		StageRewardGems = stageReward.Gems,
+		BaseThemeUnlocked = if not hadMarsTheme and p.BaseThemes.Mars then "Mars" else nil,
 	}
 end
 
-function PlayerData.topWaves(n: number): { { Name: string, Wave: number } }
+function PlayerData.topWaves(n: number): {
+	{
+		Name: string,
+		Difficulty: Difficulty.TierName,
+		Stage: number,
+		Waves: number,
+	}
+}
 	local out = {}
 	local store = topStore
 	if not store then
@@ -1085,7 +1110,13 @@ function PlayerData.topWaves(n: number): { { Name: string, Wave: number } }
 				name = n2
 			end
 		end
-		table.insert(out, { Name = name, Wave = entry.value })
+		local difficulty, stage, waves = LeaderboardScore.decode(entry.value)
+		table.insert(out, {
+			Name = name,
+			Difficulty = difficulty,
+			Stage = stage,
+			Waves = waves,
+		})
 	end
 	return out
 end

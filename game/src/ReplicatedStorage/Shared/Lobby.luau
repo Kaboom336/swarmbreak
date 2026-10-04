@@ -2,6 +2,7 @@
 -- Pure lobby rules and display data. Runtime geometry lives in LobbyBuilder.
 local Places = require(script.Parent.Places)
 local Campaign = require(script.Parent.Campaign)
+local CoreStages = require(script.Parent.CoreStages)
 local Difficulty = require(script.Parent.Difficulty)
 
 export type ShopItem = {
@@ -20,6 +21,7 @@ Lobby.Boards = {
 	DailyQuests = "DAILY QUESTS",
 	Shop = "SHOP",
 	Map = "MAP SELECT",
+	Stage = "STAGE SELECT",
 	Difficulty = "DIFFICULTY SELECT",
 }
 
@@ -79,6 +81,36 @@ function Lobby.canSelectDifficulty(
 		if definition and definition.UnlockAfter
 			then "Clear " .. mapId .. " on " .. definition.UnlockAfter
 			else "Locked"
+end
+
+function Lobby.stageOptions(
+	profile: { Flags: { [string]: boolean } },
+	coreId: string,
+	difficulty: string
+)
+	local options = {}
+	for _, stage in CoreStages.forCore(coreId) do
+		local reason = CoreStages.lockReason(profile, coreId, difficulty, stage.Id)
+		table.insert(options, {
+			Id = stage.Id,
+			Name = stage.Name,
+			Zone = stage.Zone,
+			Waves = stage.Waves,
+			Locked = reason ~= nil,
+			LockText = reason,
+		})
+	end
+	return options
+end
+
+function Lobby.canSelectStage(
+	profile: { Flags: { [string]: boolean } },
+	coreId: string,
+	difficulty: string,
+	stageNumber: number
+): (boolean, string)
+	local reason = CoreStages.lockReason(profile, coreId, difficulty, stageNumber)
+	return reason == nil, reason or ""
 end
 
 -- Placeholder storefront prices stay at zero until products are configured and published.

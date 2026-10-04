@@ -7,6 +7,7 @@ local Kits = require(script.Parent.Kits)
 local Settings = require(script.Parent.Settings)
 local ReceiptLedger = require(script.Parent.ReceiptLedger)
 local Campaign = require(script.Parent.Campaign)
+local CoreStages = require(script.Parent.CoreStages)
 local Difficulty = require(script.Parent.Difficulty)
 
 export type Profile = {
@@ -22,6 +23,7 @@ export type Profile = {
 	Runs: number,
 	CratesSinceLegendary: number, -- Robux crates opened since the last Legendary (pity counter)
 	Flags: { [string]: boolean }, -- one-time events already paid out (see FlagKeys)
+	BaseThemes: { [string]: boolean },
 	Redeemed: { [string]: boolean }, -- redeemable codes already paid out
 	LastClaimDay: number, -- UTC day number (Daily.dayIndex) of the last daily reward, 0 = never
 	Streak: number, -- days in a row the daily reward was claimed
@@ -108,6 +110,7 @@ function ProfileSchema.default(): Profile
 		Runs = 0,
 		CratesSinceLegendary = 0,
 		Flags = {},
+		BaseThemes = {},
 		Redeemed = {},
 		LastClaimDay = 0,
 		Streak = 0,
@@ -203,9 +206,21 @@ function ProfileSchema.sanitize(raw: any): Profile
 				local key = Campaign.clearFlag(map.Id, tier)
 				if raw.Flags[key] == true then
 					p.Flags[key] = true
+					for stageNumber = 1, CoreStages.Count do
+						p.Flags[CoreStages.clearFlag(map.Id, tier, stageNumber)] = true
+					end
+				end
+				for stageNumber = 1, CoreStages.Count do
+					local stageKey = CoreStages.clearFlag(map.Id, tier, stageNumber)
+					if CoreStages.get(map.Id, stageNumber) and raw.Flags[stageKey] == true then
+						p.Flags[stageKey] = true
+					end
 				end
 			end
 		end
+	end
+	if type(raw.BaseThemes) == "table" and raw.BaseThemes.Mars == true then
+		p.BaseThemes.Mars = true
 	end
 	if type(raw.Redeemed) == "table" then
 		for code, redeemed in raw.Redeemed do

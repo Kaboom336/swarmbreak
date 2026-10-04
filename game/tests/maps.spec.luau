@@ -14,7 +14,7 @@ test("maps have unique plain English names and valid references", function()
 	end
 
 	eq(#Maps.All, 4, "map count")
-	assert(names["Outpost 9"], "Outpost 9 is missing")
+	assert(names["Mars Core"], "Mars Core is missing")
 	assert(names["Frost Relay"], "Frost Relay is missing")
 	assert(names["Magma Refinery"], "Magma Refinery is missing")
 	assert(names["Hive Heart"], "Hive Heart is missing")
@@ -48,9 +48,9 @@ test("every map floor keeps enemy silhouettes readable", function()
 	end
 end)
 
-test("map selection defaults to Outpost 9", function()
-	eq(Maps.DefaultName, "Outpost 9", "default map name")
-	eq(Maps.get(nil).Name, "Outpost 9", "missing map fallback")
-	eq(Maps.get("Not A Map").Name, "Outpost 9", "invalid map fallback")
+test("map selection defaults to Mars Core", function()
+	eq(Maps.DefaultName, "Mars Core", "default map name")
+	eq(Maps.get(nil).Name, "Mars Core", "missing map fallback")
+	eq(Maps.get("Not A Map").Name, "Mars Core", "invalid map fallback")
 	eq(Maps.get("FrostRelay").Name, "Frost Relay", "selected map")
 end)
