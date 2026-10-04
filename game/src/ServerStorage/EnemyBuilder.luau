@@ -37,7 +37,10 @@ local function part(
 	p.Name = name
 	p.Size = size
 	p.Color = color
-	p.Material = material or Enum.Material.SmoothPlastic
+	local oversizedNeon = material == Enum.Material.Neon and math.max(size.X, size.Y, size.Z) > 1.5
+	p.Material = if oversizedNeon
+		then Enum.Material.SmoothPlastic
+		else material or Enum.Material.SmoothPlastic
 	p.Shape = shape or Enum.PartType.Block
 	p.CanCollide = false
 	p.CanQuery = true
@@ -45,6 +48,13 @@ local function part(
 	p.TopSurface = Enum.SurfaceType.Smooth
 	p.BottomSurface = Enum.SurfaceType.Smooth
 	p.CastShadow = true
+	if oversizedNeon then
+		local light = Instance.new("PointLight")
+		light.Color = color
+		light.Range = 8
+		light.Brightness = 1
+		light.Parent = p
+	end
 	return p
 end
 

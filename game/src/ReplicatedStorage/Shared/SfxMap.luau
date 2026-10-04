@@ -2,6 +2,9 @@
 -- Maps gameplay events to entries in Sounds. Keep event names independent of asset choices.
 local soundByEvent: { [string]: string } = {
 	["enemy kill"] = "Kill",
+	["kill crunch"] = "KillCrunch",
+	["kill goo"] = "KillGoo",
+	["kill tick"] = "KillTick",
 	["wave clear"] = "WaveClear",
 	["quest done"] = "Coin",
 	["kit equip"] = "Buy",

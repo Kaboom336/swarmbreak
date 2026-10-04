@@ -1,46 +1,21 @@
 --!strict
 -- Floating damage numbers where your shots land.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local AnimCurves = require(ReplicatedStorage.Shared.AnimCurves)
 local Feel = require(ReplicatedStorage.Shared.Feel)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 local HitMarker = ReplicatedStorage:WaitForChild("Remotes").HitMarker :: RemoteEvent
 
-local function xpGemPop(position: Vector3)
-	local gem = Instance.new("Part")
-	gem.Name = "XPGemPop"
-	gem.Shape = Enum.PartType.Ball
-	gem.Size = Vector3.new(0.45, 0.7, 0.45)
-	gem.Anchored = true
-	gem.CanCollide = false
-	gem.CanQuery = false
-	gem.CanTouch = false
-	gem.CastShadow = false
-	gem.Material = Enum.Material.Neon
-	gem.Color = ClientFX.c3(Theme.Loot)
-	gem.CFrame = CFrame.new(position)
-	gem.Parent = workspace:FindFirstChild("ClientFX") or workspace
-	task.spawn(function()
-		local startedAt = os.clock()
-		while gem.Parent do
-			local elapsed = os.clock() - startedAt
-			if elapsed >= AnimCurves.GemPopDuration then
-				break
-			end
-			local pose = AnimCurves.gemPop(elapsed)
-			gem.CFrame = CFrame.new(position + Vector3.new(0, pose.BounceHeight, 0))
-				* CFrame.Angles(0, math.rad(pose.SpinDegrees), math.rad(45))
-			RunService.Heartbeat:Wait()
-		end
-		gem:Destroy()
-	end)
-end
-
 HitMarker.OnClientEvent:Connect(
-	function(pos: Vector3, damage: number, killed: boolean, target: Model?, critical: boolean?)
+	function(
+		pos: Vector3,
+		damage: number,
+		killed: boolean,
+		target: Model?,
+		critical: boolean?,
+		eliteKill: boolean?
+	)
 		local isCritical = critical == true
 		local event = Feel.eventFor(killed, isCritical)
 		if target and target.Parent then
@@ -75,7 +50,7 @@ HitMarker.OnClientEvent:Connect(
 			true
 		)
 		ClientFX.flash(pos, Color3.new(1, 1, 1), Feel.HitFlashRange, Feel.HitFlashSeconds)
-		local soundName = if killed then SfxMap.forEvent("enemy kill") else "Hit"
+		local soundName = if killed then nil else "Hit"
 		if soundName then
 			ClientFX.sound(soundName, pos)
 		end
@@ -86,7 +61,16 @@ HitMarker.OnClientEvent:Connect(
 			end
 			local gooColor = Feel.deathBurstColor(enemyType, Theme.Goo)
 			ClientFX.gooDecal(pos, ClientFX.c3(gooColor), 2.5, 3)
-			xpGemPop(pos)
+			ClientFX.gemPop(pos, ClientFX.c3(Theme.Loot))
+			if target then
+				ClientFX.hitstop(target, eliteKill == true)
+			end
+			for _, layer in { "kill crunch", "kill goo", "kill tick" } do
+				local layerName = SfxMap.forEvent(layer)
+				if layerName then
+					ClientFX.sound(layerName, pos, if layer == "kill tick" then 0.16 else 0)
+				end
+			end
 		end
 		if killed then
 			ClientFX.shakeFor("Kill", "Full")

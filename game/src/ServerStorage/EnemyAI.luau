@@ -360,19 +360,11 @@ function EnemyAI.spawn(
 			EnemyType = typeName,
 			Boss = def.Boss == true,
 		}, e.LastHitBy)
-		-- let the pieces fly for a moment, then remove
+		-- Clients render the pooled squash/ghost; keep the server rig inert (no ragdoll).
 		for _, p in model:GetDescendants() do
-			if p:IsA("BasePart") and p ~= root then
-				p.Anchored = false
-				p.CanCollide = true
-				p.Massless = false
-				p.AssemblyLinearVelocity = (p.Position - root.Position).Unit * 25
-					+ Vector3.new(0, 20, 0)
-			end
-		end
-		for _, m in model:GetDescendants() do
-			if m:IsA("Motor6D") or m:IsA("WeldConstraint") then
-				m:Destroy()
+			if p:IsA("BasePart") then
+				p.CanCollide = false
+				p.AssemblyLinearVelocity = Vector3.zero
 			end
 		end
 		task.delay(1.2, function()

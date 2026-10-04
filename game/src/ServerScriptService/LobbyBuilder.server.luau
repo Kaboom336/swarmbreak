@@ -43,10 +43,18 @@ local function makePart(
 	item.Size = size
 	item.Position = position
 	item.Color = partColor
-	item.Material = material
+	local oversizedNeon = material == Enum.Material.Neon and math.max(size.X, size.Y, size.Z) > 1.5
+	item.Material = if oversizedNeon then Enum.Material.SmoothPlastic else material
 	item.TopSurface = Enum.SurfaceType.Smooth
 	item.BottomSurface = Enum.SurfaceType.Smooth
 	item.Parent = parent
+	if oversizedNeon then
+		local light = Instance.new("PointLight")
+		light.Color = partColor
+		light.Range = 10
+		light.Brightness = 1.2
+		light.Parent = item
+	end
 	return item
 end
 
@@ -70,8 +78,13 @@ lobbySpawn.Size = Vector3.new(8, 1, 8)
 lobbySpawn.Position = origin + Vector3.new(20, 1.5, 0)
 lobbySpawn.Transparency = 0.35
 lobbySpawn.Color = color(Theme.NeonTeal)
-lobbySpawn.Material = Enum.Material.Neon
+lobbySpawn.Material = Enum.Material.SmoothPlastic
 lobbySpawn.Parent = lobby
+local lobbySpawnLight = Instance.new("PointLight")
+lobbySpawnLight.Color = lobbySpawn.Color
+lobbySpawnLight.Range = 10
+lobbySpawnLight.Brightness = 1.2
+lobbySpawnLight.Parent = lobbySpawn
 
 local function addBoard(name: string, title: string, body: string, offset: Vector3): Part
 	local board = makePart(

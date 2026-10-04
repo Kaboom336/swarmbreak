@@ -9,6 +9,7 @@ local Fit = require(ReplicatedStorage.Shared.Fit)
 local LightingPresets = require(ReplicatedStorage.Shared.LightingPresets)
 local Maps = require(ReplicatedStorage.Shared.Maps)
 local ModelKey = require(ReplicatedStorage.Shared.ModelKey)
+local PropScatter = require(ReplicatedStorage.Shared.PropScatter)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local GameState = require(ServerStorage.GameState)
 local ModelLibrary = require(ServerStorage.ModelLibrary)
@@ -77,12 +78,20 @@ local function part(
 	p.Size = size
 	p.CFrame = cf
 	p.Color = color
-	p.Material = material
+	local oversizedNeon = material == Enum.Material.Neon and math.max(size.X, size.Y, size.Z) > 1.5
+	p.Material = if oversizedNeon then Enum.Material.SmoothPlastic else material
 	p.Shape = shape or Enum.PartType.Block
 	p.Anchored = true
 	p.TopSurface = Enum.SurfaceType.Smooth
 	p.BottomSurface = Enum.SurfaceType.Smooth
 	p.Parent = arena
+	if oversizedNeon then
+		local light = Instance.new("PointLight")
+		light.Color = color
+		light.Range = 10
+		light.Brightness = 1.2
+		light.Parent = p
+	end
 	return p
 end
 
@@ -138,7 +147,7 @@ local function neonStrip(size: Vector3, cf: CFrame, color: Color3, range: number
 		if range and range > 0 and index == math.ceil(segmentCount / 2) then
 			local light = Instance.new("PointLight")
 			light.Color = color
-			light.Range = range
+			light.Range = math.min(range, 12)
 			light.Brightness = 1.2
 			light.Parent = p
 		end
@@ -239,6 +248,76 @@ local function outerCover()
 	end
 end
 
+local function scatterProps()
+	local folder = Instance.new("Folder")
+	folder.Name = "PropScatter"
+	folder.Parent = arena
+	local seed = 0
+	for index = 1, #selectedMap.Id do
+		seed += string.byte(selectedMap.Id, index) * index
+	end
+	local lanes = {}
+	for _, zone in ArenaLayout.Zones do
+		table.insert(lanes, {
+			ax = zone.x - zone.Width / 2,
+			az = zone.z,
+			bx = zone.x + zone.Width / 2,
+			bz = zone.z,
+			HalfWidth = 5,
+		})
+		table.insert(lanes, {
+			ax = zone.x,
+			az = zone.z - zone.Depth / 2,
+			bx = zone.x,
+			bz = zone.z + zone.Depth / 2,
+			HalfWidth = 5,
+		})
+	end
+	local specs = PropScatter.generate({
+		Seed = seed,
+		Bounds = selectedMap.Bounds,
+		Spacing = 8,
+		Spawns = selectedMap.Spawns,
+		SpawnClearance = 10,
+		Lanes = lanes,
+	})
+	for index, spec in specs do
+		local size = Vector3.new(2.4, 2.4, 2.4) * spec.Scale
+		local shape = Enum.PartType.Block
+		local propColor = c3(Theme.OutpostShade)
+		if spec.Kind == "Pipe" then
+			size = Vector3.new(4, 1.2, 1.2) * spec.Scale
+			shape = Enum.PartType.Cylinder
+		elseif spec.Kind == "Antenna" then
+			size = Vector3.new(0.8, 4.5, 0.8) * spec.Scale
+		elseif spec.Kind == "Rock" then
+			size = Vector3.new(2.8, 1.6, 2.2) * spec.Scale
+			shape = Enum.PartType.Ball
+			propColor = c3(Theme.ChitinDark)
+		elseif spec.Kind == "GooPuddle" then
+			size = Vector3.new(0.08, 3.6, 3.6) * spec.Scale
+			shape = Enum.PartType.Cylinder
+			propColor = c3(Theme.Goo)
+		elseif spec.Kind == "Cable" then
+			size = Vector3.new(0.6, 0.6, 5) * spec.Scale
+			propColor = c3(Theme.MetalDark)
+		end
+		local y = 1 + size.Y / 2
+		local cf = CFrame.new(spec.x, y, spec.z) * CFrame.Angles(0, spec.Rotation, 0)
+		if shape == Enum.PartType.Cylinder then
+			y = 1 + size.X / 2
+			cf = CFrame.new(spec.x, y, spec.z)
+				* CFrame.Angles(0, spec.Rotation, 0)
+				* CFrame.Angles(0, 0, math.rad(90))
+		end
+		local prop =
+			part(spec.Kind .. index, size, cf, propColor, Enum.Material.SmoothPlastic, shape)
+		prop.CanCollide = false
+		prop.CanQuery = false
+		prop.Parent = folder
+	end
+end
+
 -- Wide, bright lanes point outward without adding cover to the open fight space.
 local function laneStripes()
 	for _, stripe in Theme.LaneStripes do
@@ -334,7 +413,7 @@ local function crystalClusters()
 			crystal.Parent = cluster
 			local light = Instance.new("PointLight")
 			light.Color = color
-			light.Range = 14
+			light.Range = 12
 			light.Brightness = 1.4
 			light.Parent = crystal
 		end
@@ -673,6 +752,7 @@ applyLightingPreset(LightingPresets[selectedMap.LightingPreset])
 configureMap()
 cloudSea()
 outerCover()
+scatterProps()
 laneStripes()
 gooPatches()
 crystalClusters()

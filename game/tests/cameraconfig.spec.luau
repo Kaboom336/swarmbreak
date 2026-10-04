@@ -1,7 +1,7 @@
 local CameraConfig = load("CameraConfig")
 
 test("camera is close, low, and pitched down", function()
-	eq(CameraConfig.Distance, 9, "camera distance")
+	eq(CameraConfig.Distance, 12, "camera distance")
 	eq(CameraConfig.HeightOffset, 2.2, "camera height")
 	eq(CameraConfig.RightOffset, 2.5, "camera shoulder offset")
 	eq(CameraConfig.StartPitchDegrees, 18, "starting pitch")

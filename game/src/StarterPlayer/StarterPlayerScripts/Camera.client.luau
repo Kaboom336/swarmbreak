@@ -53,6 +53,57 @@ crosshairLine("Vertical", UDim2.new(0.5, -1, 0, 0), UDim2.new(0, 2, 1, 0))
 
 local alive = false
 local freeHeld = false
+local cameraPopped: { [BasePart]: boolean } = {}
+
+local function fadeEnemiesNearCamera(dt: number)
+	local enemies = workspace:FindFirstChild("Enemies")
+	if not enemies or not camera then
+		return
+	end
+	local seen: { [BasePart]: boolean } = {}
+	for _, enemy in enemies:GetChildren() do
+		if not enemy:IsA("Model") then
+			continue
+		end
+		local boss = enemy:GetAttribute("Boss") == true
+		local fade = math.min(
+			1,
+			CameraConfig.EnemyFadeTransparency
+				* (if boss then CameraConfig.BossFadeMultiplier else 1)
+		)
+		for _, descendant in enemy:GetDescendants() do
+			if descendant:IsA("BasePart") then
+				seen[descendant] = true
+				local near = (descendant.Position - camera.CFrame.Position).Magnitude
+					<= CameraConfig.EnemyFadeRadius
+				local target = if near then fade else 0
+				local alpha = 1 - math.exp(-12 * dt)
+				descendant.LocalTransparencyModifier += (target - descendant.LocalTransparencyModifier) * alpha
+				if near and cameraPopped[descendant] == nil then
+					cameraPopped[descendant] = descendant.CanCollide
+					descendant.CanCollide = false
+				elseif not near and cameraPopped[descendant] ~= nil then
+					descendant.CanCollide = cameraPopped[descendant]
+					cameraPopped[descendant] = nil
+				end
+			end
+		end
+	end
+	for part, originalCanCollide in cameraPopped do
+		if not seen[part] or not part.Parent then
+			if part.Parent then
+				part.CanCollide = originalCanCollide
+			end
+			cameraPopped[part] = nil
+		end
+	end
+end
+
+RunService:BindToRenderStep(
+	"SwarmBreakEnemyCameraFade",
+	Enum.RenderPriority.Camera.Value + 4,
+	fadeEnemiesNearCamera
+)
 
 local function nearbyEnemyCount(origin: Vector3): number
 	local enemies = workspace:FindFirstChild("Enemies")

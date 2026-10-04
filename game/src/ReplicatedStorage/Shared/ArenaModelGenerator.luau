@@ -207,18 +207,27 @@ function ArenaModelGenerator.build(layout: Layout, theme: Theme): { OutputFile }
 	end
 
 	for _, spec in layout.Beacons do
-		table.insert(
-			pieces,
-			part(
-				"Beacon" .. spec.Name,
-				{ spec.Width, spec.Height, spec.Width },
-				{ spec.x, 1 + spec.Height / 2, spec.z },
-				color(spec.Color),
-				"Neon",
-				nil,
-				{ CanCollide = false, CanQuery = false }
-			)
+		local beacon = part(
+			"Beacon" .. spec.Name,
+			{ spec.Width, spec.Height, spec.Width },
+			{ spec.x, 1 + spec.Height / 2, spec.z },
+			color(spec.Color),
+			"SmoothPlastic",
+			nil,
+			{ CanCollide = false, CanQuery = false }
 		)
+		beacon.children = {
+			{
+				name = "BeaconLight",
+				className = "PointLight",
+				properties = {
+					Color = color(spec.Color),
+					Range = 12,
+					Brightness = 1.5,
+				},
+			},
+		}
+		table.insert(pieces, beacon)
 	end
 
 	return {
