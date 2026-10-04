@@ -56,9 +56,14 @@ function PoolSize.forQuality(level: number): Sizes
 	return copySizes(HIGH)
 end
 
+-- Each tracer shot uses two pooled layers: an outer streak and a coloured core.
+PoolSize.TracerLayers = 2
+
 function PoolSize.total(sizes: Sizes): number
-	-- Each tracer entry owns an outer streak and a coloured core.
-	return sizes.Tracers * 2 + sizes.HitSparks + sizes.DamageNumbers + sizes.GooDecals
+	return sizes.Tracers * PoolSize.TracerLayers
+		+ sizes.HitSparks
+		+ sizes.DamageNumbers
+		+ sizes.GooDecals
 end
 
 function PoolSize.new<T>(capacity: number, create: (number) -> T): Pool<T>

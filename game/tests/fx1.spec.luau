@@ -86,3 +86,23 @@ test("FX1 reward picks time out server-side without gating waves or auto-fire", 
 	assert(not waves:find("PlayerData.autoPick(plr)", 1, true), "wave advance waits on a pick")
 	assert(shooting:find("elseif autoFireEnabled() then", 1, true), "auto-fire continues")
 end)
+
+test(
+	"FX1 review: tracer pool fits both layers, particle ring keeps colour and expansion",
+	function()
+		local source =
+			require("@lune/fs").readFile("src/StarterPlayer/StarterPlayerScripts/ClientFX.luau")
+		assert(
+			source:find("effectPoolSizes.Tracers * PoolSize.TracerLayers", 1, true),
+			"tracer pool must hold both layers"
+		)
+		assert(
+			source:find("entry.Emitter.Color = ColorSequence.new(color)", 1, true),
+			"particle ring ignores colour"
+		)
+		assert(
+			source:find("NumberSequenceKeypoint.new(1, math.max(radius * 2", 1, true),
+			"particle ring must expand"
+		)
+	end
+)

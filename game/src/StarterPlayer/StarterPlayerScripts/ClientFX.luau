@@ -389,19 +389,22 @@ function ClientFX.fovKick(delta: number, seconds: number)
 end
 
 -- ---------- world primitives ----------
-local tracerPool = PoolSize.new(effectPoolSizes.Tracers, function(index): TracerEntry
-	local part = Instance.new("Part")
-	part.Name = "Tracer" .. index
-	part.Anchored = true
-	part.CanCollide = false
-	part.CanQuery = false
-	part.CanTouch = false
-	part.CastShadow = false
-	part.Material = Enum.Material.Neon
-	part.Transparency = 1
-	part.Parent = fxFolder
-	return { Part = part, Tween = nil, Token = 0 }
-end)
+local tracerPool = PoolSize.new(
+	effectPoolSizes.Tracers * PoolSize.TracerLayers,
+	function(index): TracerEntry
+		local part = Instance.new("Part")
+		part.Name = "Tracer" .. index
+		part.Anchored = true
+		part.CanCollide = false
+		part.CanQuery = false
+		part.CanTouch = false
+		part.CastShadow = false
+		part.Material = Enum.Material.Neon
+		part.Transparency = 1
+		part.Parent = fxFolder
+		return { Part = part, Tween = nil, Token = 0 }
+	end
+)
 
 local function tracerLayer(
 	from: Vector3,
@@ -784,8 +787,18 @@ function ClientFX.ring(at: Vector3, color: Color3, radius: number, life: number)
 	if texture ~= "" then
 		local entry = claimEmitter(ringParticlePool, life)
 		entry.Holder.Position = at
+		-- The particle ring keeps the caller's colour and expansion (FX1 review).
 		entry.Emitter.Texture = texture
-		entry.Emitter.Size = NumberSequence.new(radius * 2)
+		entry.Emitter.Color = ColorSequence.new(color)
+		entry.Emitter.Lifetime = NumberRange.new(life)
+		entry.Emitter.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.5),
+			NumberSequenceKeypoint.new(1, math.max(radius * 2, 0.5)),
+		})
+		entry.Emitter.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(1, 1),
+		})
 		entry.Emitter:Emit(1)
 		return
 	end
