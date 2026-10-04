@@ -265,6 +265,12 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 RunService.RenderStepped:Connect(function()
+	if player:GetAttribute("BossIntroInputLocked") == true then
+		currentTarget = nil
+		manualFiring = false
+		restoreUpperBody()
+		return
+	end
 	local char = player.Character
 	local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
 	local humanoid = char and char:FindFirstChildOfClass("Humanoid")
