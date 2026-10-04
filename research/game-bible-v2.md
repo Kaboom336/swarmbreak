@@ -59,3 +59,31 @@ This replaces earlier briefs wherever they conflict. Research behind it: r5-draw
    - **Own:** Blender with textured gradient maps and AO, judged against store-quality references.
 3. **The first 3 minutes of Outpost 9 (Landing Pad, waves 1-3)** made great and captured on video. Zion is shown it only when it beats Hunty Zombie on the shot list.
 4. **Then:** S3 zones, the S4 boss, more maps.
+
+## Zion 10/04 03:11Z: model bar
+"Our models should be good and professional, our game should feel unique, with good quality and animation, with optimization of the game in mind."
+
+**Rules for our own models (weapons, bosses):**
+- **Look:** textured gradient ColorMap with baked AO, a readable silhouette, and a unique shape language. The Nest motif shows on every model: chitin plates, goo-glass cores, orange outpost hardware.
+- **Animation:** every model ships with idle, attack and hit animations.
+- **Judging:** a model is shown to Zion only after it scores "matches or beats" against Hunty Zombie in a side-by-side render.
+
+**Restyling store packs:**
+- Repaint every store pack to our palette.
+- Add our motif pieces.
+- Never ship a pack as it comes.
+
+**Optimization budgets:**
+
+| Item | Triangle budget |
+|---|---|
+| Swarm enemy | ≤ 2.5k |
+| Elite | ≤ 6k |
+| Boss | ≤ 15k |
+| Weapon | ≤ 3k |
+| Prop | ≤ 1.5k |
+
+- One 1024 texture atlas per map.
+- No more than 60 live enemies, using pooled models and animation culling (AnimCull) beyond 120 studs.
+- Effects come from pooled particles, with no per-hit Instance.new.
+- The target is 60 fps on a mid phone. Performance is checked in every capture through the Studio MicroProfiler stats from the Play thread.
