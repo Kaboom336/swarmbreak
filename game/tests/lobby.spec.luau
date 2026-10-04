@@ -1,9 +1,22 @@
 local Lobby = load("Lobby")
+local ProfileSchema = load("ProfileSchema")
 
 test("start pad requires three full seconds", function()
 	eq(Lobby.StartPadSeconds, 3, "pad duration")
 	assert(not Lobby.isPadReady(10, 12.99), "pad should still be charging")
 	assert(Lobby.isPadReady(10, 13), "pad should start at three seconds")
+end)
+
+test("map and difficulty pickers explain locked choices", function()
+	local profile = ProfileSchema.default()
+	local maps = Lobby.mapOptions(profile)
+	eq(maps[1].Locked, false, "Outpost available")
+	eq(maps[2].LockText, "Clear Outpost 9 on Normal", "next-map requirement")
+	local ok, reason = Lobby.canSelectDifficulty(profile, "Outpost9", "Hard")
+	eq(ok, false, "Hard locked")
+	assert(reason:find("Normal"), reason)
+	profile.Flags.MapClear_Outpost9_Normal = true
+	eq(Lobby.canSelectDifficulty(profile, "Outpost9", "Hard"), true, "Hard unlocked")
 end)
 
 test("players are grouped into parties without exceeding the party size", function()

@@ -6,6 +6,8 @@ local Quests = require(script.Parent.Quests)
 local Kits = require(script.Parent.Kits)
 local Settings = require(script.Parent.Settings)
 local ReceiptLedger = require(script.Parent.ReceiptLedger)
+local Campaign = require(script.Parent.Campaign)
+local Difficulty = require(script.Parent.Difficulty)
 
 export type Profile = {
 	Version: number,
@@ -152,6 +154,14 @@ function ProfileSchema.sanitize(raw: any): Profile
 			local k = Evolutions.RecipeFlagPrefix .. recipe.Id
 			if raw.Flags[k] == true then
 				p.Flags[k] = true
+			end
+		end
+		for _, map in Campaign.All do
+			for _, tier in Difficulty.Order do
+				local key = Campaign.clearFlag(map.Id, tier)
+				if raw.Flags[key] == true then
+					p.Flags[key] = true
+				end
 			end
 		end
 	end

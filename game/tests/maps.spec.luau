@@ -13,18 +13,25 @@ test("maps have unique plain English names and valid references", function()
 		assert(#map.Props > 0, map.Name .. " needs props")
 	end
 
-	eq(#Maps.All, 3, "map count")
-	assert(names["Station Deck"], "Station Deck is missing")
-	assert(names["Hive Caves"], "Hive Caves is missing")
-	assert(names["Overgrown Hangar"], "Overgrown Hangar is missing")
+	eq(#Maps.All, 4, "map count")
+	assert(names["Outpost 9"], "Outpost 9 is missing")
+	assert(names["Frost Relay"], "Frost Relay is missing")
+	assert(names["Magma Refinery"], "Magma Refinery is missing")
+	assert(names["Hive Heart"], "Hive Heart is missing")
 end)
 
 test("each map has at least six spawns inside its bounds", function()
 	for _, map in Maps.All do
 		assert(#map.Spawns >= 6, map.Name .. " needs at least six spawns")
 		for index, spawn in map.Spawns do
-			assert(math.abs(spawn.x) < map.Bounds.Width / 2, map.Name .. " spawn " .. index .. " x")
-			assert(math.abs(spawn.z) < map.Bounds.Depth / 2, map.Name .. " spawn " .. index .. " z")
+			assert(
+				math.abs(spawn.x - (map.Bounds.x or 0)) < map.Bounds.Width / 2,
+				map.Name .. " spawn " .. index .. " x"
+			)
+			assert(
+				math.abs(spawn.z - (map.Bounds.z or 0)) < map.Bounds.Depth / 2,
+				map.Name .. " spawn " .. index .. " z"
+			)
 		end
 	end
 end)
@@ -41,9 +48,9 @@ test("every map floor keeps enemy silhouettes readable", function()
 	end
 end)
 
-test("map selection defaults to Station Deck", function()
-	eq(Maps.DefaultName, "Station Deck", "default map name")
-	eq(Maps.get(nil).Name, "Station Deck", "missing map fallback")
-	eq(Maps.get("Not A Map").Name, "Station Deck", "invalid map fallback")
-	eq(Maps.get("Hive Caves").Name, "Hive Caves", "selected map")
+test("map selection defaults to Outpost 9", function()
+	eq(Maps.DefaultName, "Outpost 9", "default map name")
+	eq(Maps.get(nil).Name, "Outpost 9", "missing map fallback")
+	eq(Maps.get("Not A Map").Name, "Outpost 9", "invalid map fallback")
+	eq(Maps.get("FrostRelay").Name, "Frost Relay", "selected map")
 end)

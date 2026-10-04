@@ -1,6 +1,7 @@
 --!strict
 -- Pure wave math: counts and infinite-mode scaling.
 local Config = require(script.Parent.Config)
+local EnemyFamilies = require(script.Parent.EnemyFamilies)
 
 export type Composition = { [string]: number }
 export type Pack = {
@@ -11,37 +12,51 @@ export type Pack = {
 
 local WaveTable = {
 	Compositions = {
-		{ Walker = 16 },
-		{ Walker = 16, Runner = 2 },
-		{ Walker = 17, Runner = 5, Spitter = 2 },
-		{ Walker = 20, Runner = 7, Spitter = 3, Flyer = 2 },
-		{ Walker = 15, Runner = 8, Spitter = 3, Flyer = 2, Brute = 1 },
-		{ Walker = 14, Runner = 6, Spitter = 4, Flyer = 3, Tank = 2 },
-		{ Walker = 14, Runner = 8, Spitter = 6, Flyer = 4, Tank = 2 },
-		{ Walker = 15, Runner = 9, Spitter = 6, Flyer = 6, Tank = 2 },
-		{ Walker = 16, Runner = 9, Spitter = 8, Flyer = 6, Tank = 2 },
-		{ Walker = 12, Runner = 8, Spitter = 4, Flyer = 4, Tank = 1, Queen = 1 },
-		{ Walker = 18, Runner = 12, Spitter = 9, Flyer = 8, Tank = 8 },
-		{ Walker = 18, Runner = 12, Spitter = 10, Flyer = 9, Tank = 9 },
-		{ Walker = 20, Runner = 14, Spitter = 10, Flyer = 9, Tank = 10 },
-		{ Walker = 21, Runner = 14, Spitter = 12, Flyer = 10, Tank = 10 },
-		{ Walker = 21, Runner = 15, Spitter = 12, Flyer = 10, Tank = 12, Warden = 1 },
-		{ Walker = 24, Runner = 16, Spitter = 14, Flyer = 12, Tank = 14 },
-		{ Walker = 26, Runner = 18, Spitter = 15, Flyer = 14, Tank = 15 },
-		{ Walker = 27, Runner = 20, Spitter = 16, Flyer = 15, Tank = 16 },
-		{ Walker = 28, Runner = 21, Spitter = 18, Flyer = 16, Tank = 18 },
-		{ Walker = 30, Runner = 21, Spitter = 18, Flyer = 18, Tank = 21, Brute = 1 },
-		{ Walker = 32, Runner = 22, Spitter = 20, Flyer = 20, Tank = 24 },
-		{ Walker = 30, Runner = 22, Spitter = 21, Flyer = 21, Tank = 26 },
-		{ Walker = 28, Runner = 22, Spitter = 21, Flyer = 21, Tank = 27 },
-		{ Walker = 27, Runner = 22, Spitter = 21, Flyer = 21, Tank = 28 },
-		{ Walker = 26, Runner = 22, Spitter = 21, Flyer = 21, Tank = 28, Queen = 1 },
+		{ Swarmer = 16 },
+		{ Swarmer = 16, Runner = 2 },
+		{ Swarmer = 17, Runner = 5, Shooter = 2 },
+		{ Swarmer = 20, Runner = 7, Shooter = 3, Flyer = 2 },
+		{ Swarmer = 15, Runner = 8, Shooter = 3, Flyer = 2, Elite = 1 },
+		{ Swarmer = 14, Runner = 6, Shooter = 4, Flyer = 3, Tank = 2 },
+		{ Swarmer = 14, Runner = 8, Shooter = 6, Flyer = 4, Tank = 2 },
+		{ Swarmer = 15, Runner = 9, Shooter = 6, Flyer = 6, Tank = 2 },
+		{ Swarmer = 16, Runner = 9, Shooter = 8, Flyer = 6, Tank = 2 },
+		{ Swarmer = 12, Runner = 8, Shooter = 4, Flyer = 4, Tank = 1, Elite = 1 },
+		{ Swarmer = 14, Runner = 8, Shooter = 6, Flyer = 5, Tank = 2 },
+		{ Swarmer = 14, Runner = 9, Shooter = 6, Flyer = 5, Tank = 3 },
+		{ Swarmer = 15, Runner = 9, Shooter = 6, Flyer = 6, Tank = 3 },
+		{ Swarmer = 15, Runner = 10, Shooter = 7, Flyer = 6, Tank = 3 },
+		{ Swarmer = 10, Runner = 7, Shooter = 4, Flyer = 4, Tank = 2, Boss = 1 },
+		{ Swarmer = 24, Runner = 16, Shooter = 14, Flyer = 12, Tank = 14 },
+		{ Swarmer = 26, Runner = 18, Shooter = 15, Flyer = 14, Tank = 15 },
+		{ Swarmer = 27, Runner = 20, Shooter = 16, Flyer = 15, Tank = 16 },
+		{ Swarmer = 28, Runner = 21, Shooter = 18, Flyer = 16, Tank = 18 },
+		{ Swarmer = 30, Runner = 21, Shooter = 18, Flyer = 18, Tank = 21, Elite = 1 },
+		{ Swarmer = 32, Runner = 22, Shooter = 20, Flyer = 20, Tank = 24 },
+		{ Swarmer = 30, Runner = 22, Shooter = 21, Flyer = 21, Tank = 26 },
+		{ Swarmer = 28, Runner = 22, Shooter = 21, Flyer = 21, Tank = 27 },
+		{ Swarmer = 27, Runner = 22, Shooter = 21, Flyer = 21, Tank = 28 },
+		{ Swarmer = 26, Runner = 22, Shooter = 21, Flyer = 21, Tank = 28, Boss = 1 },
 	} :: { Composition },
 }
 
+function WaveTable.resolveComposition(
+	composition: Composition,
+	familyId: string,
+	bossKey: string
+): Composition
+	local resolved = {}
+	for role, count in composition do
+		local enemyKey = if role == "Boss" then bossKey else EnemyFamilies.resolve(familyId, role)
+		assert(enemyKey, string.format("%s has no enemy for role %s", familyId, role))
+		resolved[enemyKey] = (resolved[enemyKey] or 0) + count
+	end
+	return resolved
+end
+
 -- Split a composition into balanced bursts. A target size of four gives wave 1
 -- exactly four packs while the bounds keep every burst between three and six.
-WaveTable.BossNames = { Brute = true, Queen = true, Warden = true }
+WaveTable.BossNames = { Brute = true, Queen = true, Warden = true, Elite = true, Boss = true }
 
 function WaveTable.packs(composition: Composition): { Pack }
 	-- Mix types across packs (round-robin in name order) and send bosses last, so a pack is
