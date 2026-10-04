@@ -25,3 +25,32 @@ Diagnosis: the whole world is flat-coloured blocks made in code. Lighting is alr
 
 ## Code side (Claude, after the art lands)
 Rojo can't read the .rbxm, so the code side loads the art the same way as the rigs: a JSON or asset route. ArenaBuilder then stops building primitive props on the Landing Pad when Art/LandingPad is present.
+
+## Round 1 verdict (2958921, Claude): worse, but the right direction
+- **Better:** real materials, terrain and readable lanes. A big step up from the flat blocks.
+- **Worse:**
+  - The 160-stud square reads as an empty parking lot.
+  - Props are scattered evenly instead of clustered.
+  - The cool cyan sky and haze flatten everything.
+  - No focal point at gameplay height.
+  - Hunty's frame is mostly effects and an enclosed, warm-lit room. Ours has neither.
+
+## Round 2 (last round before the stop rule)
+1. **Space:** split the square into 3-4 readable pockets:
+   - a hangar with a roof over 1/3 of the pad, open on 2 sides
+   - container alleys of 2-high stacks
+   - a raised catwalk ring along 2 walls
+   - half-walls with sandbags at the gates
+
+   Keep the floor rects, the gate lanes and a 20-stud clear arena core.
+2. **Clusters:** props in tight clusters of 3-7 (crates, barrels and cables together) with empty floor between them, not sprinkled.
+3. **Mood:**
+   - Late golden hour: ClockTime about 17.2, warm key light, deeper shadows.
+   - Lower Atmosphere Haze/Density, so the sky reads as warm-to-teal and not cyan.
+   - Sodium practicals: small orange PointLights or SpotLights on the hangar and the masts, Range ≤ 16.
+   - Floor decals: oil stains, skid marks and grime.
+4. **Kits:**
+   - If Zion has typed the download OK in Play, use KayKit "Space Base" and Kenney "Space Kit" (CC0, textured) for the hangar, pipes, barriers and consoles.
+   - Otherwise, use generate_mesh in smaller batches to avoid the "Too Many Requests" error.
+5. **Hero shot:** retake 02 gameplay-height with live enemies, mid-fight, the kill burst visible and the HUD on, to match how Hunty's reference is framed.
+6. **Score again** with 3 shots plus the side-by-side. If it's still not "matches", stop and report. Claude then recommends pausing Roblox.
