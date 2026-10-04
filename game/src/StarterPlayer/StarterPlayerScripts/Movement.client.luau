@@ -12,12 +12,9 @@ local MoveVariants = require(ReplicatedStorage.Shared.MoveVariants)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 
 local player = Players.LocalPlayer
-local camera = workspace.CurrentCamera
 local DashRemote = (ReplicatedStorage:WaitForChild("Remotes") :: Folder):WaitForChild(
 		"Dash"
 	) :: RemoteEvent
-
-local RENDER_STEP_NAME = "SwarmMovementCamera"
 
 local function bind(character: Model)
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
@@ -29,7 +26,6 @@ local function bind(character: Model)
 	local slideStartedAt = 0
 	local slideVelocity: LinearVelocity? = nil
 	local slideAttachment: Attachment? = nil
-	local dashStartedAt = -math.huge
 	local lastGroundedAt = os.clock()
 	local lastJumpRequestAt = -math.huge
 	local airJumpsRemaining = 0
@@ -44,10 +40,6 @@ local function bind(character: Model)
 		return {
 			ExtraJumps = player:GetAttribute("ExtraJumps"),
 		}
-	end
-
-	local function setWalkSpeed()
-		humanoid.WalkSpeed = MovementTuning.runSpeed(baseWalkSpeed)
 	end
 
 	local function playMove(action: string)
@@ -74,7 +66,6 @@ local function bind(character: Model)
 			slideAttachment:Destroy()
 			slideAttachment = nil
 		end
-		setWalkSpeed()
 	end
 
 	local function beginSlide()
@@ -105,6 +96,7 @@ local function bind(character: Model)
 			* (baseWalkSpeed / MovementTuning.WalkSpeed)
 		slideVelocity.Parent = root
 		playMove("Slide")
+		ClientFX.fovKick(MovementTuning.Fov.SlideKick, MovementTuning.Fov.ReturnTime)
 		ClientFX.sound("SlideWhoosh", nil, 0.08)
 		ClientFX.dust(root.Position - Vector3.new(0, 2.5, 0), 12)
 	end
@@ -115,10 +107,10 @@ local function bind(character: Model)
 		end
 		finishSlide()
 		charges -= 1
-		dashStartedAt = os.clock()
 		playMove("Dash")
 		DashRemote:FireServer()
 		player:SetAttribute("DashReady", charges)
+		ClientFX.fovKick(MovementTuning.Fov.DashKick, MovementTuning.Fov.ReturnTime)
 		ClientFX.sound("DashWhoosh", nil, 0.08)
 		ClientFX.dust(root.Position - Vector3.new(0, 2.5, 0), 10)
 
@@ -148,6 +140,13 @@ local function bind(character: Model)
 			end
 		end)
 	end
+
+	table.insert(
+		connections,
+		humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+			baseWalkSpeed = humanoid.WalkSpeed
+		end)
+	)
 
 	table.insert(
 		connections,
@@ -255,33 +254,18 @@ local function bind(character: Model)
 		end)
 	)
 
-	RunService:BindToRenderStep(RENDER_STEP_NAME, Enum.RenderPriority.Camera.Value + 2, function()
-		local dashFov = MovementTuning.fovAt(
-			os.clock() - dashStartedAt,
-			MovementTuning.Fov.DashKick
-		) - MovementTuning.Fov.Base
-		local slideFov = if sliding
-			then MovementTuning.fovAt(os.clock() - slideStartedAt, MovementTuning.Fov.SlideKick)
-				- MovementTuning.Fov.Base
-			else 0
-		camera.FieldOfView = MovementTuning.Fov.Base + math.max(dashFov, slideFov)
-	end)
-
 	table.insert(
 		connections,
 		humanoid.Died:Connect(function()
 			finishSlide()
 			ContextActionService:UnbindAction("Slide")
 			ContextActionService:UnbindAction("Dash")
-			RunService:UnbindFromRenderStep(RENDER_STEP_NAME)
 			for _, connection in connections do
 				connection:Disconnect()
 			end
-			camera.FieldOfView = MovementTuning.Fov.Base
 		end)
 	)
 
-	setWalkSpeed()
 	player:SetAttribute("DashReady", charges)
 end
 

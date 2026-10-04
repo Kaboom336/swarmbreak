@@ -8,6 +8,7 @@ local TweenService = game:GetService("TweenService")
 local AnimCurves = require(ReplicatedStorage.Shared.AnimCurves)
 local EffectCurves = require(ReplicatedStorage.Shared.EffectCurves)
 local Feel = require(ReplicatedStorage.Shared.Feel)
+local FovStack = require(ReplicatedStorage.Shared.FovStack)
 local PoolSize = require(ReplicatedStorage.Shared.PoolSize)
 local SoundBudget = require(ReplicatedStorage.Shared.SoundBudget)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
@@ -106,6 +107,7 @@ type Motion = {
 	Complete: (() -> ())?,
 }
 local motions: { Motion } = {}
+local fovStack = FovStack.new(70)
 
 local function animate(duration: number, update: (number, number) -> (), complete: (() -> ())?)
 	update(0, 0)
@@ -131,6 +133,10 @@ RunService.RenderStepped:Connect(function()
 				motion.Complete()
 			end
 		end
+	end
+	if #fovStack.Kicks > 0 then
+		camera.FieldOfView = FovStack.valueAt(fovStack, now)
+		FovStack.prune(fovStack, now)
 	end
 end)
 
@@ -311,7 +317,7 @@ end)
 
 function ClientFX.sound(name: string, at: Vector3?, pitchJitter: number?)
 	local def = (Sounds :: any)[name]
-	if not def or def.Id == "" then
+	if not def or not Sounds.isPlayable(def.Id) then
 		return
 	end
 	local allowed
@@ -365,19 +371,8 @@ function ClientFX.shakeFor(event: Feel.EventName, setting: Feel.ShakeSetting)
 end
 
 -- ---------- FOV kick ----------
-local baseFov = 70
-local fovTween: Tween? = nil
 function ClientFX.fovKick(delta: number, seconds: number)
-	if fovTween then
-		fovTween:Cancel()
-	end
-	camera.FieldOfView = baseFov + delta
-	fovTween = TweenService:Create(
-		camera,
-		TweenInfo.new(seconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		{ FieldOfView = baseFov }
-	)
-	fovTween:Play()
+	FovStack.add(fovStack, delta, seconds, os.clock())
 end
 
 -- ---------- world primitives ----------

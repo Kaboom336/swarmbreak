@@ -42,6 +42,11 @@ local function clamp01(value: number): number
 	return math.max(0, math.min(1, value))
 end
 
+function PlayerPose.spinAngle(progress: number): number
+	local remaining = 1 - clamp01(progress)
+	return (1 - remaining * remaining) * 2 * math.pi
+end
+
 function PlayerPose.targetRunLean(moveRight: number, moveForward: number): (number, number)
 	local magnitude = math.sqrt(moveRight * moveRight + moveForward * moveForward)
 	if magnitude <= 1e-4 then
@@ -91,7 +96,7 @@ function PlayerPose.movementPose(
 	return {
 		LeanDegrees = profile.LeanDegrees * weight,
 		TuckStuds = profile.TuckStuds * weight,
-		SpinDegrees = profile.SpinDegrees * math.sin(clamp01(progress) * math.pi),
+		SpinDegrees = profile.SpinDegrees * PlayerPose.spinAngle(progress) / (2 * math.pi),
 		ArmSweepDegrees = profile.ArmSweepDegrees * weight,
 	}
 end

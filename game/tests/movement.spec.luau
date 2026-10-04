@@ -1,3 +1,4 @@
+local fs = require("@lune/fs")
 local MovementTuning = load("MovementTuning")
 
 test("slide speed decays to walk speed", function()
@@ -58,6 +59,26 @@ end)
 
 test("sprint is always on at the tuned run speed", function()
 	eq(MovementTuning.runSpeed(20), 27, "run speed comes from movement tuning")
+end)
+
+test("stat rewards preserve the always-sprint multiplier", function()
+	local rewardedSpeed = 24
+	eq(
+		MovementTuning.runSpeed(rewardedSpeed),
+		rewardedSpeed * MovementTuning.RunSpeedMultiplier,
+		"rewarded speed remains sprinting"
+	)
+
+	local playerData = fs.readFile("src/ServerStorage/PlayerData.luau")
+	assert(
+		playerData:find("hum.WalkSpeed = MovementTuning.runSpeed(speed)", 1, true),
+		"PlayerData.applyStats must apply the sprint multiplier"
+	)
+	local movement = fs.readFile("src/StarterPlayer/StarterPlayerScripts/Movement.client.luau")
+	assert(
+		not movement:find("humanoid.WalkSpeed =", 1, true),
+		"Movement.client must not overwrite the server-owned speed"
+	)
 end)
 
 test("slide jump carries its horizontal momentum", function()

@@ -52,3 +52,17 @@ test("each movement action has three distinct procedural poses", function()
 		end
 	end
 end)
+
+test("double-jump spin eases monotonically through a full turn", function()
+	local previous = PlayerPose.spinAngle(0)
+	near(previous, 0, 1e-6, "spin starts neutral")
+	for step = 1, 20 do
+		local angle = PlayerPose.spinAngle(step / 20)
+		assert(angle >= previous, "spin angle must never reverse")
+		previous = angle
+	end
+	near(previous, 2 * math.pi, 1e-6, "spin completes one turn")
+
+	local pose = PlayerPose.movementPose("DoubleJump", 2, 0, 1)
+	near(pose.SpinDegrees, 360, 1e-6, "double-jump spin completes visually")
+end)

@@ -50,6 +50,14 @@ local Sounds = {
 	LobbyMusic = { Id = "rbxassetid://101945305370690", Volume = 0.2, Pitch = 1.0 }, -- "ROBOTS DREAMING OF RAIN"
 }
 
+function Sounds.isPlayable(assetId: string): boolean
+	if assetId == "" then
+		return false
+	end
+	local numericId = assetId:match("^rbxassetid://(%d+)$")
+	return numericId == nil or tonumber(numericId) ~= 0
+end
+
 -- Fight loop in the arena, calm loop in the lobby (InArena is set by LobbyBuilder).
 function Sounds.musicFor(inArena: boolean): { Id: string, Volume: number, Pitch: number }
 	return if inArena then Sounds.Music else Sounds.LobbyMusic

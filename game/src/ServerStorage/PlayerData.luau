@@ -28,6 +28,7 @@ local Settings = require(ReplicatedStorage.Shared.Settings)
 local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local Funnel = require(ReplicatedStorage.Shared.Funnel)
 local DamageCredit = require(ReplicatedStorage.Shared.DamageCredit)
+local MovementTuning = require(ReplicatedStorage.Shared.MovementTuning)
 local Profile = require(script.Parent.Profile)
 local WeaponModels = require(script.Parent.WeaponModels)
 
@@ -647,7 +648,7 @@ local function applyStats(plr: Player)
 		if PlayerData.hasEffect(plr, "Haste") then
 			speed *= 1 + Evolutions.Effects.Haste.Value
 		end
-		hum.WalkSpeed = speed
+		hum.WalkSpeed = MovementTuning.runSpeed(speed)
 		local maxHp = maxHealthFor(plr)
 		local ratio = hum.Health / math.max(hum.MaxHealth, 1)
 		hum.MaxHealth = maxHp
