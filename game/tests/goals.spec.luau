@@ -14,6 +14,7 @@ end)
 
 test("perks follow their display order once one is maxed", function()
 	local p = ProfileSchema.default()
+	p.Gold = 100
 	p.Gems = 4
 	local g = Goals.next(p)
 	eq(g.Key, "MaxHealth", "one Gem short is still the closest")
@@ -26,6 +27,26 @@ test("perks follow their display order once one is maxed", function()
 	eq(g2.Kind, "Perk", "kind")
 	eq(g2.Key, "DamagePercent", "next perk in order")
 	eq(g2.Need, 5, "need")
+end)
+
+test("perk goals require both currencies and show the scarcer one", function()
+	local p = ProfileSchema.default()
+	p.Gems = 5
+	p.Gold = 40
+	local g = Goals.next(p)
+	eq(g.Kind, "Perk", "kind")
+	eq(g.Key, "MaxHealth", "key")
+	eq(g.Have, 40, "Gold in hand")
+	eq(g.Need, 100, "Gold cost")
+	assert((g.Need - g.Have) / g.Need > 0, "an unfunded perk has a positive gap")
+	assert(g.Label:find("need 60 Gold", 1, true), g.Label)
+	local canBuy = ProfileSchema.canBuyPerk(p, g.Key)
+	eq(canBuy, false, "the goal is not presented as funded when purchase rejects it")
+
+	p.Gold = 100
+	local funded = Goals.next(p)
+	assert(funded.Have >= funded.Need, "a buyable perk is presented as funded")
+	eq(ProfileSchema.canBuyPerk(p, funded.Key), true, "funded goal can be purchased")
 end)
 
 test("all perks maxed: the equipped weapon's next tier; shards in hand break ties", function()

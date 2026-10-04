@@ -7,15 +7,15 @@ local Evolutions = require(script.Parent.Evolutions)
 
 export type Goal = {
 	Label: string,
-	Have: number, -- Gems the player has
-	Need: number, -- Gems the unlock costs
+	Have: number, -- amount held of the currency currently blocking this unlock
+	Need: number, -- cost in that currency
 	Kind: "Perk" | "Evolution",
 	Key: string, -- perk key, or the element for an evolution
 }
 
 local Goals = {}
 
--- Perks are considered in this order; ties in Gems gap go to the earlier one.
+-- Perks are considered in this order; ties in funding gap go to the earlier one.
 Goals.PerkOrder = {
 	"MaxHealth",
 	"DamagePercent",
@@ -50,9 +50,12 @@ end
 function Goals.next(p: ProfileSchema.Profile): Goal?
 	local gems = p.Gems or 0
 	local best: Candidate? = nil
-	local function consider(goal: Goal, shardsShort: boolean)
-		local c =
-			{ Goal = goal, Gap = math.max(0, goal.Need - goal.Have), ShardsShort = shardsShort }
+	local function consider(goal: Goal, shardsShort: boolean, gap: number?)
+		local c = {
+			Goal = goal,
+			Gap = gap or math.max(0, goal.Need - goal.Have),
+			ShardsShort = shardsShort,
+		}
 		if better(c, best) then
 			best = c
 		end
@@ -64,13 +67,24 @@ function Goals.next(p: ProfileSchema.Profile): Goal?
 		local def = ProfileSchema.PerkDefs[key]
 		if cost and def then
 			local lvl = ProfileSchema.perkLevel(p, key)
+			local goldGap = math.max(0, (cost.Gold - p.Gold) / cost.Gold)
+			local gemsGap = math.max(0, (cost.Gems - gems) / cost.Gems)
+			local useGold = goldGap > gemsGap
+			local have = if useGold then p.Gold else gems
+			local need = if useGold then cost.Gold else cost.Gems
+			local currency = if useGold then "Gold" else "Gems"
+			local label = string.format("%s Lv %d", def.Label, lvl + 1)
+			local gap = math.max(goldGap, gemsGap)
+			if gap > 0 then
+				label ..= string.format(": need %d %s", need - have, currency)
+			end
 			consider({
-				Label = string.format("%s Lv %d", def.Label, lvl + 1),
-				Have = gems,
-				Need = cost.Gems,
+				Label = label,
+				Have = have,
+				Need = need,
 				Kind = "Perk",
 				Key = key,
-			}, false)
+			}, false, gap)
 		end
 	end
 
