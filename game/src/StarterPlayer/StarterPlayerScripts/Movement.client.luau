@@ -93,7 +93,7 @@ local function bind(character: Model)
 		slideVelocity.RelativeTo = Enum.ActuatorRelativeTo.World
 		slideVelocity.VectorVelocity = direction
 			* MovementTuning.Slide.StartSpeed
-			* (baseWalkSpeed / MovementTuning.WalkSpeed)
+			* (baseWalkSpeed / MovementTuning.runSpeed(MovementTuning.WalkSpeed)) -- WalkSpeed already includes sprint
 		slideVelocity.Parent = root
 		playMove("Slide")
 		ClientFX.fovKick(MovementTuning.Fov.SlideKick, MovementTuning.Fov.ReturnTime)
@@ -247,7 +247,7 @@ local function bind(character: Model)
 				elseif slideVelocity then
 					local direction = slideVelocity.VectorVelocity.Unit
 					local speed = MovementTuning.slideSpeed(elapsed)
-						* (baseWalkSpeed / MovementTuning.WalkSpeed)
+						* (baseWalkSpeed / MovementTuning.runSpeed(MovementTuning.WalkSpeed)) -- WalkSpeed already includes sprint
 					slideVelocity.VectorVelocity = direction * speed
 				end
 			end

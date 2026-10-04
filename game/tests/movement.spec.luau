@@ -111,3 +111,15 @@ test("movement cooldown table stays within play-safe bounds", function()
 		"cooldown multiplier clamps high"
 	)
 end)
+
+test("slide speed scales by stat ratio only, not the sprint multiplier twice", function()
+	local fsx = require("@lune/fs")
+	local src = fsx.readFile("src/StarterPlayer/StarterPlayerScripts/Movement.client.luau")
+	assert(
+		not src:find("baseWalkSpeed / MovementTuning.WalkSpeed)", 1, true),
+		"sprint applied twice"
+	)
+	local _, count =
+		src:gsub("baseWalkSpeed / MovementTuning%.runSpeed%(MovementTuning%.WalkSpeed%)", "")
+	eq(count, 2, "both slide sites normalise by run speed")
+end)
