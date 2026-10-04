@@ -232,6 +232,7 @@ local frame = 0
 RunService.Heartbeat:Connect(function(dt)
 	frame += 1
 	local now = os.clock()
+	local animationDt = dt * ((workspace:GetAttribute("ClientTimeScale") :: number?) or 1)
 	local camera = workspace.CurrentCamera
 	for model, anim in anims do
 		if not model.Parent then
@@ -252,7 +253,7 @@ RunService.Heartbeat:Connect(function(dt)
 		local speed = anim.Root.AssemblyLinearVelocity.Magnitude
 		local moving = math.clamp(speed / 12, 0, 1.5)
 		local profile = AnimCurves.enemyWalkProfileFor(anim.TypeName)
-		anim.Phase = AnimCurves.enemyWalkPhase(anim.Phase, speed, dt, anim.TypeName)
+		anim.Phase = AnimCurves.enemyWalkPhase(anim.Phase, speed, animationDt, anim.TypeName)
 		local phase = anim.Phase
 		local windup, lunge = 0, 0
 		if anim.AttackStarted then

@@ -79,3 +79,24 @@ test("spawn queue drains no more than four jobs per frame", function()
 		eq(value, id, "queue preserves order")
 	end
 end)
+
+test(
+	"P1 review: released rigs drop the dead Humanoid; failed templates are never pooled",
+	function()
+		local fsx = require("@lune/fs")
+		local pool = fsx.readFile("src/ServerStorage/EnemyPool.luau")
+		assert(pool:find("humanoid:Destroy()", 1, true), "a Dead Humanoid must not be reused")
+		assert(
+			not pool:find("humanoid.Health = humanoid.MaxHealth", 1, true),
+			"resetting Health does not revive"
+		)
+		assert(
+			pool:find("if not factories[rigKey] then", 1, true),
+			"refill must skip unregistered rigs"
+		)
+		local rigs = fsx.readFile("src/ServerStorage/EnemyRigBuilder.luau")
+		local guard = rigs:find("if not templates[rigKey] then\n\t\tcontinue", 1, true)
+		local register = rigs:find("EnemyPool.register(rigKey", 1, true)
+		assert(guard and register and guard < register, "only built templates get a pool factory")
+	end
+)

@@ -11,6 +11,7 @@ local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local EnemyWatchdog = require(ReplicatedStorage.Shared.EnemyWatchdog)
 local ArenaLayout = require(ReplicatedStorage.Shared.ArenaLayout)
+local BossFight = require(ReplicatedStorage.Shared.BossFight)
 local EnemyBuilder = require(script.Parent.EnemyBuilder)
 local EnemyIndex = require(script.Parent.EnemyIndex)
 local FxRouter = require(script.Parent.FxRouter)
@@ -37,6 +38,9 @@ type Live = {
 	AttributeConnection: RBXScriptConnection?,
 	HealthConnection: RBXScriptConnection?,
 	DeathConnection: RBXScriptConnection?,
+	Active: boolean,
+	AttackIndex: number,
+	Phase: number,
 }
 
 local live: { [Model]: Live } = {}
@@ -222,6 +226,83 @@ local function queueAttack(e: Live, target: BasePart, radius: number, attack: (V
 	end
 end
 
+local function flatDistanceToSegment(point: Vector3, from: Vector3, to: Vector3): number
+	local segment = (to - from) * Vector3.new(1, 0, 1)
+	local relative = (point - from) * Vector3.new(1, 0, 1)
+	local lengthSquared = segment:Dot(segment)
+	if lengthSquared <= 0.001 then
+		return relative.Magnitude
+	end
+	local alpha = math.clamp(relative:Dot(segment) / lengthSquared, 0, 1)
+	return (relative - segment * alpha).Magnitude
+end
+
+local function queueQueenAttack(e: Live, target: BasePart)
+	local attack = BossFight.Attacks[e.AttackIndex]
+	e.AttackIndex = e.AttackIndex % #BossFight.Attacks + 1
+	local origin = e.Root.Position
+	local targetPosition = target.Position
+	local flat = (targetPosition - origin) * Vector3.new(1, 0, 1)
+	local direction = if flat.Magnitude > 0.01 then flat.Unit else e.Root.CFrame.LookVector
+	local right = Vector3.new(-direction.Z, 0, direction.X)
+	local circles = {
+		targetPosition,
+		targetPosition + right * 10,
+		targetPosition - right * 10,
+	}
+
+	FxRouter.emit("queenTell", origin, {
+		Model = e.Model,
+		Attack = attack.Name,
+		Shape = attack.Shape,
+		Origin = origin,
+		Target = targetPosition,
+		Direction = direction,
+		Circles = circles,
+		Duration = attack.TelegraphSeconds,
+		Color = EnemyTells.Defs.Queen.GlowColor,
+	})
+
+	task.delay(attack.TelegraphSeconds, function()
+		if e.Humanoid.Health <= 0 or not e.Model.Parent or not e.Active then
+			return
+		end
+		for _, player in Players:GetPlayers() do
+			local character = player.Character
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			local root = character and character:FindFirstChild("HumanoidRootPart")
+			if not humanoid or humanoid.Health <= 0 or not root or not root:IsA("BasePart") then
+				continue
+			end
+			local playerFlat = (root.Position - origin) * Vector3.new(1, 0, 1)
+			local hit = false
+			if attack.Shape == "Arc" then
+				hit = playerFlat.Magnitude <= 22
+					and (playerFlat.Magnitude <= 0.01 or playerFlat.Unit:Dot(direction) >= -0.2)
+			elseif attack.Shape == "ThreeCircles" then
+				for _, circle in circles do
+					if ((root.Position - circle) * Vector3.new(1, 0, 1)).Magnitude <= 7 then
+						hit = true
+						break
+					end
+				end
+			else
+				hit = flatDistanceToSegment(root.Position, origin, targetPosition) <= 4
+			end
+			if hit then
+				PlayerData.takeEnemyDamage(player, PlayerData.incomingDamage(player, e.Damage))
+			end
+		end
+		FxRouter.emit("queenAttack", origin, {
+			Attack = attack.Name,
+			Shape = attack.Shape,
+			Origin = origin,
+			Target = targetPosition,
+			Circles = circles,
+		})
+	end)
+end
+
 -- Ground enemies path around towers and walls; re-plan every 0.4 s, jump when stuck.
 local function groundMover(e: Live)
 	local hum = e.Humanoid
@@ -235,6 +316,10 @@ local function groundMover(e: Live)
 	local lastPos = e.Root.Position
 	local stuckTime = 0
 	while hum.Health > 0 and e.Model.Parent do
+		if not e.Active then
+			task.wait(0.1)
+			continue
+		end
 		-- Nature poison: slowed while SlowUntil (set by CombatEffects) is in the future
 		local slowUntil = (e.Model:GetAttribute("SlowUntil") :: number?) or 0
 		hum.WalkSpeed = if os.clock() < slowUntil then e.Speed * 0.7 else e.Speed
@@ -296,7 +381,8 @@ function EnemyAI.spawn(
 	healthScale: number,
 	damageScale: number,
 	mutationId: string,
-	onDeath: (Player?, Vector3) -> ()
+	onDeath: (Player?, Vector3) -> (),
+	active: boolean?
 ): Model
 	local def = Enemies.Defs[typeName]
 	local stats = Mutations.apply({
@@ -332,6 +418,7 @@ function EnemyAI.spawn(
 		previousHealthBar:Destroy()
 	end
 	local healthConnection = makeHealthBar(model, root, hum, def.Boss == true)
+	model:SetAttribute("Active", active ~= false)
 	model.Parent = folder
 	EnemyBuilder.startLocomotion(rig)
 	if not def.Flying then
@@ -353,6 +440,9 @@ function EnemyAI.spawn(
 		AttributeConnection = nil,
 		HealthConnection = healthConnection,
 		DeathConnection = nil,
+		Active = active ~= false,
+		AttackIndex = 1,
+		Phase = 1,
 	}
 	live[model] = e
 	EnemyIndex.add(model, root)
@@ -401,6 +491,17 @@ function EnemyAI.spawn(
 		end)
 	end)
 	return model
+end
+
+function EnemyAI.setActive(model: Model, active: boolean)
+	local enemy = live[model]
+	if enemy then
+		enemy.Active = active
+		enemy.Model:SetAttribute("Active", active)
+		if not active then
+			enemy.Humanoid:MoveTo(enemy.Root.Position)
+		end
+	end
 end
 
 function EnemyAI.aliveCount(): number
@@ -551,7 +652,7 @@ end
 
 RunService.Heartbeat:Connect(function(dt)
 	for model, e in live do
-		if e.Humanoid.Health <= 0 or not model.Parent then
+		if e.Humanoid.Health <= 0 or not model.Parent or not e.Active then
 			continue
 		end
 		local target, dist = nearestPlayerRoot(e.Root.Position)
@@ -592,7 +693,15 @@ RunService.Heartbeat:Connect(function(dt)
 		e.AttackCooldown -= dt
 		if e.AttackCooldown <= 0 then
 			local typeName = e.Model:GetAttribute("TypeName") :: string
-			if def.Ranged then
+			if typeName == "Queen" then
+				local phase = BossFight.phaseForHealth(e.Humanoid.Health, e.Humanoid.MaxHealth)
+				if phase ~= e.Phase then
+					e.Phase = phase
+					e.Model:SetAttribute("BossPhase", phase)
+				end
+				e.AttackCooldown = BossFight.attackInterval(phase)
+				queueQueenAttack(e, target)
+			elseif def.Ranged then
 				if dist <= (def.Range or 40) then
 					e.AttackCooldown = def.AttackCooldown or 2
 					local tellRadius = if def.Boss then 10 else 6

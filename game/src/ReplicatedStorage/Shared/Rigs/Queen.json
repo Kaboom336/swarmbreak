@@ -1,0 +1,40 @@
+{
+  "Name": "Queen",
+  "PrimaryPart": "Body",
+  "Welds": [
+    { "Part0": "Body", "Part1": "BackPlate" },
+    { "Part0": "Body", "Part1": "CrownPlate" },
+    { "Part0": "Body", "Part1": "GooCore" },
+    { "Part0": "Head", "Part1": "Eye_Glow_L" },
+    { "Part0": "Head", "Part1": "Eye_Glow_R" }
+  ],
+  "Motor6Ds": [
+    { "Name": "Neck", "Part0": "Body", "Part1": "Head", "C0": [0, 2, -5.5, 1, 0, 0, 0, 1, 0, 0, 0, 1], "C1": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1] },
+    { "Name": "Hip_1", "Part0": "Body", "Part1": "Leg_1", "C0": [5, -4, -4, 1, 0, 0, 0, 1, 0, 0, 0, 1], "C1": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1] },
+    { "Name": "Hip_2", "Part0": "Body", "Part1": "Leg_2", "C0": [-5, -4, -4, 1, 0, 0, 0, 1, 0, 0, 0, 1], "C1": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1] },
+    { "Name": "Hip_3", "Part0": "Body", "Part1": "Leg_3", "C0": [5.5, -4, -1.5, 1, 0, 0, 0, 1, 0, 0, 0, 1], "C1": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1] },
+    { "Name": "Hip_4", "Part0": "Body", "Part1": "Leg_4", "C0": [-5.5, -4, -1.5, 1, 0, 0, 0, 1, 0, 0, 0, 1], "C1": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1] },
+    { "Name": "Hip_5", "Part0": "Body", "Part1": "Leg_5", "C0": [5.5, -4, 1.5, 1, 0, 0, 0, 1, 0, 0, 0, 1], "C1": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1] },
+    { "Name": "Hip_6", "Part0": "Body", "Part1": "Leg_6", "C0": [-5.5, -4, 1.5, 1, 0, 0, 0, 1, 0, 0, 0, 1], "C1": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1] },
+    { "Name": "Hip_7", "Part0": "Body", "Part1": "Leg_7", "C0": [5, -4, 4, 1, 0, 0, 0, 1, 0, 0, 0, 1], "C1": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1] },
+    { "Name": "Hip_8", "Part0": "Body", "Part1": "Leg_8", "C0": [-5, -4, 4, 1, 0, 0, 0, 1, 0, 0, 0, 1], "C1": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1] }
+  ],
+  "Attributes": { "Role": "Boss", "Front": "-Z", "Motif": "Nest" },
+  "Parts": [
+    { "Name": "Body", "ClassName": "Part", "Size": [8, 6, 9], "CFrame": [0, 8, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [91, 47, 147], "Material": "SmoothPlastic", "Transparency": 0 },
+    { "Name": "Head", "ClassName": "Part", "Size": [5, 4, 4], "CFrame": [0, 10, -5.5, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [62, 31, 107], "Material": "SmoothPlastic", "Transparency": 0 },
+    { "Name": "BackPlate", "ClassName": "Part", "Size": [6.5, 2, 7], "CFrame": [0, 11.5, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [62, 31, 107], "Material": "Slate", "Transparency": 0 },
+    { "Name": "CrownPlate", "ClassName": "Part", "Size": [4, 4, 2], "CFrame": [0, 14, -2, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [91, 47, 147], "Material": "Slate", "Transparency": 0 },
+    { "Name": "GooCore", "ClassName": "Part", "Shape": "Ball", "Size": [1.4, 1.4, 1.4], "CFrame": [0, 8, -4.6, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [46, 230, 197], "Material": "Glass", "Transparency": 0.15 },
+    { "Name": "Eye_Glow_L", "ClassName": "Part", "Shape": "Ball", "Size": [0.7, 0.7, 0.7], "CFrame": [-1.2, 10.5, -7.6, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [46, 230, 197], "Material": "Neon", "Transparency": 0 },
+    { "Name": "Eye_Glow_R", "ClassName": "Part", "Shape": "Ball", "Size": [0.7, 0.7, 0.7], "CFrame": [1.2, 10.5, -7.6, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [46, 230, 197], "Material": "Neon", "Transparency": 0 },
+    { "Name": "Leg_1", "ClassName": "Part", "Size": [2, 8, 2], "CFrame": [5, 4, -4, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [62, 31, 107], "Material": "Slate", "Transparency": 0 },
+    { "Name": "Leg_2", "ClassName": "Part", "Size": [2, 8, 2], "CFrame": [-5, 4, -4, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [62, 31, 107], "Material": "Slate", "Transparency": 0 },
+    { "Name": "Leg_3", "ClassName": "Part", "Size": [2, 8, 2], "CFrame": [5.5, 4, -1.5, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [91, 47, 147], "Material": "Slate", "Transparency": 0 },
+    { "Name": "Leg_4", "ClassName": "Part", "Size": [2, 8, 2], "CFrame": [-5.5, 4, -1.5, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [91, 47, 147], "Material": "Slate", "Transparency": 0 },
+    { "Name": "Leg_5", "ClassName": "Part", "Size": [2, 8, 2], "CFrame": [5.5, 4, 1.5, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [91, 47, 147], "Material": "Slate", "Transparency": 0 },
+    { "Name": "Leg_6", "ClassName": "Part", "Size": [2, 8, 2], "CFrame": [-5.5, 4, 1.5, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [91, 47, 147], "Material": "Slate", "Transparency": 0 },
+    { "Name": "Leg_7", "ClassName": "Part", "Size": [2, 8, 2], "CFrame": [5, 4, 4, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [62, 31, 107], "Material": "Slate", "Transparency": 0 },
+    { "Name": "Leg_8", "ClassName": "Part", "Size": [2, 8, 2], "CFrame": [-5, 4, 4, 1, 0, 0, 0, 1, 0, 0, 0, 1], "Color": [62, 31, 107], "Material": "Slate", "Transparency": 0 }
+  ]
+}

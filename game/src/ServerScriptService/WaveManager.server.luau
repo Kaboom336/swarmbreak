@@ -18,6 +18,7 @@ local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local SpawnPicker = require(ReplicatedStorage.Shared.SpawnPicker)
 local SpawnQueue = require(ReplicatedStorage.Shared.SpawnQueue)
 local ArenaLayout = require(ReplicatedStorage.Shared.ArenaLayout)
+local BossFight = require(ReplicatedStorage.Shared.BossFight)
 local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
 local Drops = require(ReplicatedStorage.Shared.Drops)
@@ -289,7 +290,7 @@ local function firstPackSpawnCFrame(): CFrame?
 	return nil
 end
 
-local function spawnEnemy(typeName: string, cf: CFrame?)
+local function spawnEnemy(typeName: string, cf: CFrame?, active: boolean?)
 	local def = Enemies.Defs[typeName]
 	local hs, ds = WaveTable.scaling(currentWave)
 	local scaled = Difficulty.apply({ Health = hs, Damage = ds }, currentDifficultyId)
@@ -354,7 +355,8 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 					end
 				end
 			end
-		end
+		end,
+		active
 	)
 	GameState.set("Alive", EnemyAI.aliveCount())
 	return model
@@ -366,6 +368,87 @@ EnemyAI.OnSummon = function(typeName: string, cf: CFrame)
 			spawnEnemy(typeName, cf)
 		end)
 	end
+end
+
+local queenEncounterToken = 0
+
+local function playerZoneSet(): { [string]: boolean }
+	local positions = {}
+	for _, player in Players:GetPlayers() do
+		local character = player.Character
+		local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+		if root and root:IsA("BasePart") then
+			table.insert(positions, { x = root.Position.X, z = root.Position.Z })
+		end
+	end
+	return ArenaLayout.playerZones(positions)
+end
+
+local function startQueenPhaseTwo(model: Model, humanoid: Humanoid)
+	queenEncounterToken += 1
+	local token = queenEncounterToken
+	local zone = ArenaLayout.zoneForWave(Config.NormalWaves)
+	local pools = BossFight.gooPools(ArenaLayout.floorRects(zone), ArenaLayout.ZoneSpawns)
+	FX:FireAllClients("queenPhase", { Position = model:GetPivot().Position, Pools = pools })
+
+	-- The server owns damage, while clients render the teal outlined pools locally.
+	task.spawn(function()
+		while queenEncounterToken == token and humanoid.Health > 0 and model.Parent do
+			task.wait(0.5)
+			for _, player in Players:GetPlayers() do
+				local character = player.Character
+				local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+				if not root or not root:IsA("BasePart") then
+					continue
+				end
+				for _, pool in pools do
+					local dx = root.Position.X - pool.x
+					local dz = root.Position.Z - pool.z
+					if dx * dx + dz * dz <= pool.Radius * pool.Radius then
+						PlayerData.takeEnemyDamage(
+							player,
+							PlayerData.incomingDamage(player, BossFight.GooDamagePerSecond * 0.5)
+						)
+						break
+					end
+				end
+			end
+		end
+	end)
+
+	-- Adds enter only through the two named, currently-open Hive Core gates.
+	task.spawn(function()
+		while queenEncounterToken == token and humanoid.Health > 0 and model.Parent do
+			task.wait(BossFight.AddEverySeconds)
+			if queenEncounterToken ~= token or humanoid.Health <= 0 or not model.Parent then
+				break
+			end
+			local occupiedZones = playerZoneSet()
+			for _, gateName in BossFight.AddGateNames do
+				if not BossFight.canAdd(EnemyAI.aliveCount(), Config.MaxAlive) then
+					break
+				end
+				local gate = spawns:FindFirstChild(gateName)
+				if not gate or not gate:IsA("BasePart") then
+					continue
+				end
+				local firstWave = gate:GetAttribute("FirstWave")
+				local lastWave = gate:GetAttribute("LastWave")
+				local zoneId = gate:GetAttribute("ZoneId")
+				if
+					ArenaLayout.gateOpen(
+						if type(firstWave) == "number" then firstWave else nil,
+						if type(lastWave) == "number" then lastWave else nil,
+						if type(zoneId) == "string" then zoneId else nil,
+						currentWave,
+						occupiedZones
+					)
+				then
+					spawnEnemy("Runner", gate.CFrame + Vector3.new(0, 4, 0))
+				end
+			end
+		end
+	end)
 end
 
 local function anyPlayersAlive(): boolean
@@ -424,10 +507,24 @@ local function trackBoss(model: Model)
 	GameState.set("BossName", model.Name)
 	GameState.set("BossMaxHealth", hum.MaxHealth)
 	GameState.set("BossHealth", hum.Health)
+	local phaseTwoStarted = false
 	hum.HealthChanged:Connect(function(h)
 		GameState.set("BossHealth", math.max(h, 0))
+		if
+			not phaseTwoStarted
+			and model:GetAttribute("TypeName") == "Queen"
+			and BossFight.phaseForHealth(h, hum.MaxHealth) == 2
+		then
+			phaseTwoStarted = true
+			startQueenPhaseTwo(model, hum)
+		end
 	end)
 	hum.Died:Connect(function()
+		if model:GetAttribute("TypeName") == "Queen" then
+			queenEncounterToken += 1
+			FX:FireAllClients("queenKill", { Position = model:GetPivot().Position })
+			Toast:FireAllClients("OUTPOST 9 CLEARED", 4)
+		end
 		GameState.set("BossName", "")
 		-- 0 tells the HUD to go back to the wave-progress bar.
 		GameState.set("BossMaxHealth", 0)
@@ -459,10 +556,6 @@ local function runWave(wave: number): boolean
 	local bossName = if wave == Config.NormalWaves
 		then currentMap.BossKey
 		else if wave % Config.BossEvery == 0 then "Brute" else nil
-	if bossName then
-		BossIntro:FireAllClients(Enemies.Defs[bossName].Name, Config.BossIntroSeconds)
-		task.wait(Config.BossIntroSeconds)
-	end
 
 	workspace:SetAttribute("WaveStartedAt", workspace:GetServerTimeNow()) -- HUD wave clock
 	GameState.set("Phase", "fighting")
@@ -485,6 +578,26 @@ local function runWave(wave: number): boolean
 	else
 		composition =
 			WaveTable.resolveComposition(composition, currentMap.Family, currentMap.BossKey)
+	end
+
+	if bossName then
+		local spot = ArenaLayout.bossSpawnForWave(wave)
+		local bossAt = CFrame.new(spot.x, bossSpawn.Position.Y + 6, spot.z)
+		local model = spawnEnemy(bossName, bossAt, false)
+		trackBoss(model)
+		composition[bossName] = math.max(0, (composition[bossName] or 1) - 1)
+		if composition[bossName] == 0 then
+			composition[bossName] = nil
+		end
+		BossIntro:FireAllClients(
+			Enemies.Defs[bossName].Name,
+			Config.BossIntroSeconds,
+			bossAt.Position
+		)
+		task.wait(Config.BossIntroSeconds)
+		EnemyAI.setActive(model, true)
+		-- Protection from the wave start ran out during the intro; give it again as the boss wakes.
+		protectPlayers()
 	end
 
 	for packIndex, pack in WaveTable.packs(composition) do
@@ -570,6 +683,8 @@ end
 
 local function endRun(won: boolean, reachedWave: number)
 	playAgainRequested = false
+	queenEncounterToken += 1
+	FX:FireAllClients("queenEnd", {})
 	GameState.set("BossName", "")
 	GameState.set("Phase", "chest")
 	-- Every surviving participant sees the existing Gem crate open. The run version uses the

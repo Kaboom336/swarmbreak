@@ -57,6 +57,11 @@ function EnemyPool.refill(composition: { [string]: number }, familyId: string)
 	local targets = EnemyPoolLogic.targetsForComposition(composition, function(role)
 		return EnemyFamilies.resolveRig(familyId, role)
 	end)
+	for rigKey in targets do
+		if not factories[rigKey] then
+			targets[rigKey] = nil -- template failed to build; that role spawns the fallback model
+		end
+	end
 	EnemyPoolLogic.setTargets(pool, targets)
 	EnemyPoolLogic.trim(pool, function(model)
 		snapshots[model] = nil
@@ -92,9 +97,11 @@ function EnemyPool.release(model: Model)
 			motor.C1 = state.C1
 		end
 	end
+	-- A Humanoid can never leave the Dead state, so a reused one would not move or fire
+	-- Died again. Drop it; EnemyAI.spawn adds a fresh one.
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
 	if humanoid then
-		humanoid.Health = humanoid.MaxHealth
+		humanoid:Destroy()
 	end
 	model:SetAttribute("LastHitBy", 0)
 	if EnemyPoolLogic.give(pool, rigKey, model) then

@@ -20,7 +20,7 @@ export type Rig = {
 	Humanoid: Humanoid?,
 }
 
-local RIG_KEYS = { "Mite", "Runner", "Shooter", "Tank", "Flyer" }
+local RIG_KEYS = { "Mite", "Runner", "Shooter", "Tank", "Flyer", "Queen" }
 local templates: { [string]: Model } = {}
 local warned: { [string]: boolean } = {}
 
@@ -212,6 +212,10 @@ end
 for _, role in EnemyFamilies.RequiredRoles do
 	local typeName = assert(EnemyFamilies.resolve("Nest", role))
 	local rigKey = assert(EnemyFamilies.resolveRig("Nest", role))
+	-- A rig whose template failed to build keeps the old model; never pool it.
+	if not templates[rigKey] then
+		continue
+	end
 	EnemyPool.register(rigKey, function(): Model
 		local rig = assert(buildFresh(typeName, Vector3.one, CFrame.new()))
 		return rig.Model

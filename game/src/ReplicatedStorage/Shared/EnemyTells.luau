@@ -69,7 +69,7 @@ local Defs: { [string]: EnemyTell } = {
 		SoundKey = "BossRoar",
 		GlowPulse = true,
 		GlowColor = { 255, 120, 30 },
-		Windup = 0.7,
+		Windup = 0.8,
 		GroundAoeCircle = true,
 		WindupDecal = true,
 	},
