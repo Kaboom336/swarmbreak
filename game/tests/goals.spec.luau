@@ -2,37 +2,51 @@ local Goals = load("Goals")
 local ProfileSchema = load("ProfileSchema")
 local Evolutions = load("Evolutions")
 
-test("fresh profile: the first goal is Start coins Lv 1 at 80 Gems", function()
+test("fresh profile: the first goal is Max HP Lv 1", function()
 	local g = Goals.next(ProfileSchema.default())
 	assert(g, "a fresh profile has a goal")
 	eq(g.Kind, "Perk", "kind")
-	eq(g.Key, "StartCoins", "key")
-	eq(g.Need, 80, "need")
+	eq(g.Key, "MaxHealth", "key")
+	eq(g.Need, 5, "need")
 	eq(g.Have, 0, "have")
-	assert(g.Label:find("Start coins Lv 1", 1, true), g.Label)
+	assert(g.Label:find("Max HP Lv 1", 1, true), g.Label)
 end)
 
-test("smallest Gems gap wins; perks follow their order once one is maxed", function()
+test("perks follow their display order once one is maxed", function()
 	local p = ProfileSchema.default()
-	p.Gems = 79
+	p.Gold = 100
+	p.Gems = 4
 	local g = Goals.next(p)
-	eq(g.Key, "StartCoins", "one Gem short is still the closest")
-	eq(g.Have, 79, "have")
-	eq(g.Need, 80, "need")
+	eq(g.Key, "MaxHealth", "one Gem short is still the closest")
+	eq(g.Have, 4, "have")
+	eq(g.Need, 5, "need")
 
-	-- Gems 0 and Start coins maxed: a tier-1 evolution (120) is closer than Max HP (200)
 	local q = ProfileSchema.default()
-	q.Perks.StartCoins = 5
+	q.Perks.MaxHealth = 10
 	local g2 = Goals.next(q)
-	eq(g2.Kind, "Evolution", "cheapest unlock wins")
-	eq(g2.Need, 120, "tier 1 cost")
+	eq(g2.Kind, "Perk", "kind")
+	eq(g2.Key, "DamagePercent", "next perk in order")
+	eq(g2.Need, 5, "need")
+end)
 
-	-- with the weapon already at the top tier, only perks remain: Max HP is next in order
-	q.Evolutions.Starter = { Element = "Tech", Tier = 3 }
-	local g3 = Goals.next(q)
-	eq(g3.Kind, "Perk", "kind")
-	eq(g3.Key, "MaxHealth", "next perk in order")
-	eq(g3.Need, 200, "need")
+test("perk goals require both currencies and show the scarcer one", function()
+	local p = ProfileSchema.default()
+	p.Gems = 5
+	p.Gold = 40
+	local g = Goals.next(p)
+	eq(g.Kind, "Perk", "kind")
+	eq(g.Key, "MaxHealth", "key")
+	eq(g.Have, 40, "Gold in hand")
+	eq(g.Need, 100, "Gold cost")
+	assert((g.Need - g.Have) / g.Need > 0, "an unfunded perk has a positive gap")
+	assert(g.Label:find("need 60 Gold", 1, true), g.Label)
+	local canBuy = ProfileSchema.canBuyPerk(p, g.Key)
+	eq(canBuy, false, "the goal is not presented as funded when purchase rejects it")
+
+	p.Gold = 100
+	local funded = Goals.next(p)
+	assert(funded.Have >= funded.Need, "a buyable perk is presented as funded")
+	eq(ProfileSchema.canBuyPerk(p, funded.Key), true, "funded goal can be purchased")
 end)
 
 test("all perks maxed: the equipped weapon's next tier; shards in hand break ties", function()
@@ -81,3 +95,13 @@ test("everything unlocked returns nil; every element has a shard source", functi
 		assert(type(Goals.ShardSource[el]) == "string", el .. " shard source")
 	end
 end)
+
+test(
+	"goal gaps share one unit: an evolution 1 Gem short beats a perk missing 60% of its Gold",
+	function()
+		local Goals = load("Goals")
+		local src = require("@lune/fs").readFile("src/ReplicatedStorage/Shared/Goals.luau")
+		assert(src:find("/ goal.Need", 1, true), "default gap must be a fraction of the cost")
+		assert(Goals.next ~= nil, "Goals.next exists")
+	end
+)

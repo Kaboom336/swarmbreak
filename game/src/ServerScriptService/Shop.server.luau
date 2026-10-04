@@ -257,7 +257,7 @@ local function grantProduct(plr: Player, kind: ReceiptLedger.ProductKind, prod: 
 			plr:LoadCharacter()
 		else
 			PlayerData.addCoins(plr, 200)
-			Toast:FireClient(plr, "Revive not needed right now: +200 coins instead.", 3)
+			Toast:FireClient(plr, "Revive not needed right now: +200 Gold instead.", 3)
 		end
 		return true
 	end

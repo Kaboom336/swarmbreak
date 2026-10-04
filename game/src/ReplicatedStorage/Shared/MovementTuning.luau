@@ -45,8 +45,9 @@ function MovementTuning.slideSpeed(elapsed: number): number
 		+ (MovementTuning.Slide.StartSpeed - MovementTuning.WalkSpeed) * remaining * remaining
 end
 
-function MovementTuning.runSpeed(baseSpeed: number): number
-	return math.max(0, baseSpeed) * MovementTuning.RunSpeedMultiplier
+function MovementTuning.runSpeed(baseSpeed: number, moveSpeedPercent: number?): number
+	local perkMultiplier = 1 + math.max(0, moveSpeedPercent or 0) / 100
+	return math.max(0, baseSpeed) * perkMultiplier * MovementTuning.RunSpeedMultiplier
 end
 
 function MovementTuning.slideJumpMomentum(currentSpeed: number, elapsed: number): number

@@ -59,6 +59,11 @@ end)
 
 test("sprint is always on at the tuned run speed", function()
 	eq(MovementTuning.runSpeed(20), 27, "run speed comes from movement tuning")
+	eq(
+		MovementTuning.runSpeed(20, 10),
+		20 * 1.1 * MovementTuning.RunSpeedMultiplier,
+		"move speed perk is applied once"
+	)
 end)
 
 test("stat rewards preserve the always-sprint multiplier", function()
@@ -71,8 +76,12 @@ test("stat rewards preserve the always-sprint multiplier", function()
 
 	local playerData = fs.readFile("src/ServerStorage/PlayerData.luau")
 	assert(
-		playerData:find("hum.WalkSpeed = MovementTuning.runSpeed(speed)", 1, true),
-		"PlayerData.applyStats must apply the sprint multiplier"
+		playerData:find(
+			'MovementTuning.runSpeed(speed, ProfileSchema.perkValue(p, "MoveSpeedPercent"))',
+			1,
+			true
+		),
+		"PlayerData.applyStats must apply the speed perk through movement tuning"
 	)
 	local movement = fs.readFile("src/StarterPlayer/StarterPlayerScripts/Movement.client.luau")
 	assert(
