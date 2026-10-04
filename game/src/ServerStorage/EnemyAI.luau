@@ -486,7 +486,11 @@ RunService.Heartbeat:Connect(function(dt)
 			releaseAttackSlot(e)
 		end
 		if def.Flying then
-			local hover = if def.Ranged then math.min((def.Range or 40) * 0.25, 14) else 3
+			local rigHover = e.Model:GetAttribute("HoverHeight")
+			local hover = if typeof(rigHover) == "number"
+				then rigHover
+				elseif def.Ranged then math.min((def.Range or 40) * 0.25, 14)
+				else 3
 			local goal = target.Position + Vector3.new(0, hover, 0)
 			if not def.Ranged and horizontalDist < 14 and not acquireAttackSlot(e, target) then
 				local radial = if horizontalDist > 0.01 then flat.Unit else Vector3.new(1, 0, 0)

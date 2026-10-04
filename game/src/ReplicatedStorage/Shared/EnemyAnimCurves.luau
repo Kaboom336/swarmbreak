@@ -3,6 +3,11 @@
 
 local EnemyAnimCurves = {}
 
+EnemyAnimCurves.RigGaitPhase = {
+	Odd = 0,
+	Even = math.pi,
+}
+
 export type WalkProfile = {
 	PhaseRate: number,
 	SwingDegrees: number,
@@ -41,6 +46,12 @@ end
 
 function EnemyAnimCurves.walkProfileFor(typeName: string?): WalkProfile
 	return (typeName and WalkProfiles[typeName]) or DEFAULT_WALK_PROFILE
+end
+
+function EnemyAnimCurves.rigGaitPhase(index: number): number
+	return if index % 2 == 1
+		then EnemyAnimCurves.RigGaitPhase.Odd
+		else EnemyAnimCurves.RigGaitPhase.Even
 end
 
 function EnemyAnimCurves.walkPhase(
