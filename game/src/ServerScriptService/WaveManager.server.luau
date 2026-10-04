@@ -389,7 +389,10 @@ local function startQueenPhaseTwo(model: Model, humanoid: Humanoid)
 					local dx = root.Position.X - pool.x
 					local dz = root.Position.Z - pool.z
 					if dx * dx + dz * dz <= pool.Radius * pool.Radius then
-						PlayerData.takeEnemyDamage(player, BossFight.GooDamagePerSecond * 0.5)
+						PlayerData.takeEnemyDamage(
+							player,
+							PlayerData.incomingDamage(player, BossFight.GooDamagePerSecond * 0.5)
+						)
 						break
 					end
 				end
@@ -570,9 +573,15 @@ local function runWave(wave: number): boolean
 		if composition[bossName] == 0 then
 			composition[bossName] = nil
 		end
-		BossIntro:FireAllClients(Enemies.Defs[bossName].Name, Config.BossIntroSeconds)
+		BossIntro:FireAllClients(
+			Enemies.Defs[bossName].Name,
+			Config.BossIntroSeconds,
+			bossAt.Position
+		)
 		task.wait(Config.BossIntroSeconds)
 		EnemyAI.setActive(model, true)
+		-- Protection from the wave start ran out during the intro; give it again as the boss wakes.
+		protectPlayers()
 	end
 
 	for packIndex, pack in WaveTable.packs(composition) do

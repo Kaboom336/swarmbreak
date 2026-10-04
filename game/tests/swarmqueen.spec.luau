@@ -164,3 +164,31 @@ test("Queen rig is an all-Part Nest rig with eight legs", function()
 		eq(motor.Part1, "Leg_" .. index, "Hip Part1")
 	end
 end)
+
+test("S4 review: intro boss is untouchable, framed where it stands, players protected", function()
+	local fsx = require("@lune/fs")
+	local combat = fsx.readFile("src/ServerStorage/CombatEffects.luau")
+	assert(
+		combat:find('GetAttribute("Active") == false', 1, true),
+		"rawHit must skip inactive bosses"
+	)
+	local waves = fsx.readFile("src/ServerScriptService/WaveManager.server.luau")
+	local activate = waves:find("EnemyAI.setActive(model, true)", 1, true)
+	assert(activate, "boss activation missing")
+	assert(
+		waves:find("protectPlayers()", activate, true),
+		"protection must be renewed when the boss wakes"
+	)
+	assert(
+		waves:find("Config.BossIntroSeconds,%s*bossAt%.Position"),
+		"intro must get the boss position"
+	)
+	assert(
+		waves:find("PlayerData.incomingDamage(player, BossFight.GooDamagePerSecond", 1, true),
+		"goo must respect card protection"
+	)
+	local intro = fsx.readFile("src/StarterPlayer/StarterPlayerScripts/BossIntro.client.luau")
+	assert(intro:find("bossAt: Vector3?", 1, true), "intro must accept the boss position")
+	local effects = fsx.readFile("src/StarterPlayer/StarterPlayerScripts/Effects.client.luau")
+	assert(not effects:find("banner.Parent = playerGui", 1, true), "banner needs a ScreenGui")
+end)

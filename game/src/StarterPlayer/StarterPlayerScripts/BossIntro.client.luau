@@ -66,7 +66,7 @@ local function applyLightingPreset(preset: any)
 	sky.SunAngularSize = preset.Sky.SunAngularSize
 end
 
-BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number)
+BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number, bossAt: Vector3?)
 	applyLightingPreset(LightingPresets.BossFight)
 	player:SetAttribute("BossIntroInputLocked", true)
 	local lockedInputs: { EnumItem } = Enum.PlayerActions:GetEnumItems()
@@ -80,8 +80,10 @@ BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number)
 		Enum.ContextActionPriority.High.Value,
 		table.unpack(lockedInputs)
 	)
+	-- The server sends where the boss actually stands (its zone's far end), not Arena/BossSpawn.
 	local arena = workspace:FindFirstChild("Arena")
-	local bossSpawn = arena and arena:FindFirstChild("BossSpawn") :: BasePart?
+	local spawnPart = arena and arena:FindFirstChild("BossSpawn") :: BasePart?
+	local focus: Vector3? = bossAt or (if spawnPart then spawnPart.Position else nil)
 	local gui = player:WaitForChild("PlayerGui")
 
 	local card = Instance.new("ScreenGui")
@@ -112,24 +114,24 @@ BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number)
 	name.TextTransparency = 1
 	name.Parent = card
 	TweenService:Create(name, TweenInfo.new(0.8), { TextTransparency = 0 }):Play()
-	if bossSpawn then
+	if focus then
 		ClientFX.ring(
-			bossSpawn.Position,
+			focus,
 			Color3.fromRGB(Theme.OutpostShade[1], Theme.OutpostShade[2], Theme.OutpostShade[3]),
 			38,
 			0.8
 		)
-		ClientFX.sound("BossRoar", bossSpawn.Position)
+		ClientFX.sound("BossRoar", focus)
 	end
 	ClientFX.shake(Feel.BossIntroShakePulse)
 
-	if bossSpawn then
+	if focus then
 		camera.CameraType = Enum.CameraType.Scriptable
-		local from = bossSpawn.Position + Vector3.new(30, 25, 30)
-		local to = bossSpawn.Position + Vector3.new(14, 10, 14)
-		camera.CFrame = CFrame.lookAt(from, bossSpawn.Position)
+		local from = focus + Vector3.new(30, 25, 30)
+		local to = focus + Vector3.new(14, 10, 14)
+		camera.CFrame = CFrame.lookAt(from, focus)
 		TweenService:Create(camera, TweenInfo.new(seconds, Enum.EasingStyle.Sine), {
-			CFrame = CFrame.lookAt(to, bossSpawn.Position + Vector3.new(0, 6, 0)),
+			CFrame = CFrame.lookAt(to, focus + Vector3.new(0, 6, 0)),
 		}):Play()
 	end
 	task.wait(seconds)

@@ -51,6 +51,10 @@ local function rawHit(
 	if not ehum or ehum.Health <= 0 or model.Parent ~= enemiesFolder then
 		return false, false
 	end
+	-- A boss still in its intro is not in the fight yet: orbitals, turrets and shots pass it.
+	if model:GetAttribute("Active") == false then
+		return false, false
+	end
 	if damage <= 0 or damage ~= damage then
 		return false, false
 	end

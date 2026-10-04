@@ -294,6 +294,13 @@ handlers.queenKill = function(d)
 	ClientFX.sound("Explosion", position)
 
 	local playerGui = player:WaitForChild("PlayerGui")
+	-- A TextLabel only renders inside a ScreenGui.
+	local bannerGui = Instance.new("ScreenGui")
+	bannerGui.Name = "OutpostClearedGui"
+	bannerGui.IgnoreGuiInset = true
+	bannerGui.DisplayOrder = 60
+	bannerGui.ResetOnSpawn = false
+	bannerGui.Parent = playerGui
 	local banner = Instance.new("TextLabel")
 	banner.Name = "OutpostCleared"
 	banner.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -305,14 +312,17 @@ handlers.queenKill = function(d)
 	banner.TextColor3 = c3(Theme.Loot)
 	banner.TextSize = 64
 	banner.TextStrokeTransparency = 0
-	banner.Parent = playerGui
-	TweenService:Create(
-		banner,
-		TweenInfo.new(Feel.BossKillSlowMoSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		{ TextTransparency = 1, TextStrokeTransparency = 1 }
-	):Play()
-	task.delay(Feel.BossKillSlowMoSeconds, function()
-		banner:Destroy()
+	banner.Parent = bannerGui
+	-- Hold long enough to read, then fade (the slow-mo itself is only 0.6 s).
+	task.delay(2.5, function()
+		TweenService:Create(
+			banner,
+			TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{ TextTransparency = 1, TextStrokeTransparency = 1 }
+		):Play()
+	end)
+	task.delay(3.4, function()
+		bannerGui:Destroy()
 	end)
 
 	local camera = workspace.CurrentCamera
