@@ -459,6 +459,31 @@ function ClientFX.burst(
 	pe:Emit(count)
 end
 
+function ClientFX.dust(at: Vector3, count: number)
+	local life = 0.45
+	local entry = claimEmitter(customPool, life)
+	local emitter = entry.Emitter
+	entry.Holder.Position = at
+	emitter.Color = ColorSequence.new(Color3.fromRGB(188, 174, 145), Color3.fromRGB(92, 82, 68))
+	emitter.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.7),
+		NumberSequenceKeypoint.new(1, 1.8),
+	})
+	emitter.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.35),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	emitter.Lifetime = NumberRange.new(0.25, life)
+	emitter.Speed = NumberRange.new(3, 8)
+	emitter.SpreadAngle = Vector2.new(70, 25)
+	emitter.Drag = 5
+	emitter.Acceleration = Vector3.new(0, 3, 0)
+	emitter.LightEmission = 0
+	emitter.Rate = 0
+	emitter.Texture = VfxTextures.asset("smoke")
+	emitter:Emit(count)
+end
+
 local damageNumberPool = PoolSize.new(
 	effectPoolSizes.DamageNumbers,
 	function(index): DamageNumberEntry

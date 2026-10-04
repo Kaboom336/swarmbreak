@@ -26,6 +26,10 @@ local Sounds = {
 	Hurt = { Id = "rbxasset://sounds/uuhhh.mp3", Volume = 0.5, Pitch = 1.0 },
 	Dash = { Id = "rbxassetid://119573908217733", Volume = 0.5, Pitch = 1.0 }, -- alt 15674975792
 	Jump = { Id = "rbxasset://sounds/action_jump.mp3", Volume = 0.4, Pitch = 1.0 },
+	-- Movement whooshes are intentionally unpublished placeholders for this code-only pass.
+	DashWhoosh = { Id = "rbxassetid://0", Volume = 0.18, Pitch = 1.1 },
+	SlideWhoosh = { Id = "rbxassetid://0", Volume = 0.16, Pitch = 0.9 },
+	DoubleJumpWhoosh = { Id = "rbxassetid://0", Volume = 0.16, Pitch = 1.2 },
 	Coin = { Id = "rbxassetid://135483737426662", Volume = 0.3, Pitch = 1.0 },
 	LevelUp = { Id = "rbxassetid://112485797063762", Volume = 0.6, Pitch = 1.0 },
 	CardPick = { Id = "rbxassetid://3406813517", Volume = 0.5, Pitch = 1.0 },

@@ -8,7 +8,7 @@ local RunService = game:GetService("RunService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local MovementTuning = require(ReplicatedStorage.Shared.MovementTuning)
-local Theme = require(ReplicatedStorage.Shared.Theme)
+local MoveVariants = require(ReplicatedStorage.Shared.MoveVariants)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 
 local player = Players.LocalPlayer
@@ -23,30 +23,40 @@ local function bind(character: Model)
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 	local root = character:WaitForChild("HumanoidRootPart") :: BasePart
 	local baseWalkSpeed = humanoid.WalkSpeed
-	local mobileSprint = MovementTuning.defaultSprint(UserInputService.TouchEnabled)
-	local sprintHeld = false
+	local baseRootSize = root.Size
+	local baseHipHeight = humanoid.HipHeight
 	local sliding = false
 	local slideStartedAt = 0
 	local slideVelocity: LinearVelocity? = nil
 	local slideAttachment: Attachment? = nil
-	local cameraTilt = 0
 	local dashStartedAt = -math.huge
 	local lastGroundedAt = os.clock()
 	local lastJumpRequestAt = -math.huge
-	local canDoubleJump = false
+	local airJumpsRemaining = 0
 	local wasGrounded = true
 	local charges = (player:GetAttribute("DashCharges") :: number?) or Config.Dash.Charges
 	local maxCharges = charges
 	local connections: { RBXScriptConnection } = {}
+	local lastVariants: { [string]: number } = {}
+	local actionSerial = (player:GetAttribute("MoveActionSerial") :: number?) or 0
 
-	local function isSprinting(): boolean
-		return mobileSprint or sprintHeld
+	local function movementPerks(): { [string]: any }
+		return {
+			ExtraJumps = player:GetAttribute("ExtraJumps"),
+		}
 	end
 
 	local function setWalkSpeed()
-		humanoid.WalkSpeed = if isSprinting()
-			then baseWalkSpeed * MovementTuning.Sprint.SpeedMultiplier
-			else baseWalkSpeed
+		humanoid.WalkSpeed = MovementTuning.runSpeed(baseWalkSpeed)
+	end
+
+	local function playMove(action: string)
+		local variant = MoveVariants.pick(action, lastVariants[action], math.random())
+		lastVariants[action] = variant
+		actionSerial += 1
+		player:SetAttribute("MoveAction", action)
+		player:SetAttribute("MoveVariant", variant)
+		player:SetAttribute("MoveActionSerial", actionSerial)
 	end
 
 	local function finishSlide()
@@ -54,6 +64,8 @@ local function bind(character: Model)
 			return
 		end
 		sliding = false
+		root.Size = baseRootSize
+		humanoid.HipHeight = baseHipHeight
 		if slideVelocity then
 			slideVelocity:Destroy()
 			slideVelocity = nil
@@ -66,7 +78,7 @@ local function bind(character: Model)
 	end
 
 	local function beginSlide()
-		if sliding or not isSprinting() or humanoid.Health <= 0 then
+		if sliding or humanoid.FloorMaterial == Enum.Material.Air or humanoid.Health <= 0 then
 			return
 		end
 		local direction = humanoid.MoveDirection
@@ -76,14 +88,25 @@ local function bind(character: Model)
 		direction = Vector3.new(direction.X, 0, direction.Z).Unit
 		sliding = true
 		slideStartedAt = os.clock()
+		root.Size = Vector3.new(
+			baseRootSize.X,
+			baseRootSize.Y * MovementTuning.Slide.HeightScale,
+			baseRootSize.Z
+		)
+		humanoid.HipHeight = baseHipHeight * MovementTuning.Slide.HeightScale
 		slideAttachment = Instance.new("Attachment")
 		slideAttachment.Parent = root
 		slideVelocity = Instance.new("LinearVelocity")
 		slideVelocity.Attachment0 = slideAttachment
 		slideVelocity.MaxForce = math.huge
 		slideVelocity.RelativeTo = Enum.ActuatorRelativeTo.World
-		slideVelocity.VectorVelocity = direction * MovementTuning.Slide.StartSpeed
+		slideVelocity.VectorVelocity = direction
+			* MovementTuning.Slide.StartSpeed
+			* (baseWalkSpeed / MovementTuning.WalkSpeed)
 		slideVelocity.Parent = root
+		playMove("Slide")
+		ClientFX.sound("SlideWhoosh", nil, 0.08)
+		ClientFX.dust(root.Position - Vector3.new(0, 2.5, 0), 12)
 	end
 
 	local function dash()
@@ -93,10 +116,11 @@ local function bind(character: Model)
 		finishSlide()
 		charges -= 1
 		dashStartedAt = os.clock()
+		playMove("Dash")
 		DashRemote:FireServer()
 		player:SetAttribute("DashReady", charges)
-		ClientFX.sound("Dash")
-		ClientFX.burst(root.Position, ClientFX.c3(Theme.Goo), 10, 0.5, 6, 0.3, false)
+		ClientFX.sound("DashWhoosh", nil, 0.08)
+		ClientFX.dust(root.Position - Vector3.new(0, 2.5, 0), 10)
 
 		local direction = humanoid.MoveDirection
 		if direction.Magnitude < 0.1 then
@@ -117,7 +141,7 @@ local function bind(character: Model)
 		end)
 
 		local cooldownMultiplier = (player:GetAttribute("DashCooldownMult") :: number?) or 1
-		task.delay(MovementTuning.Dash.Cooldown * cooldownMultiplier, function()
+		task.delay(MovementTuning.cooldown("Dash", cooldownMultiplier), function()
 			if humanoid.Health > 0 then
 				charges = math.min(charges + 1, maxCharges)
 				player:SetAttribute("DashReady", charges)
@@ -140,6 +164,20 @@ local function bind(character: Model)
 		UserInputService.JumpRequest:Connect(function()
 			local now = os.clock()
 			lastJumpRequestAt = now
+			if sliding and slideVelocity then
+				local slideDirection = slideVelocity.VectorVelocity.Unit
+				local currentVelocity = root.AssemblyLinearVelocity
+				local horizontalSpeed =
+					Vector3.new(currentVelocity.X, 0, currentVelocity.Z).Magnitude
+				local momentum =
+					MovementTuning.slideJumpMomentum(horizontalSpeed, now - slideStartedAt)
+				finishSlide()
+				root.AssemblyLinearVelocity = Vector3.new(
+					slideDirection.X * momentum,
+					currentVelocity.Y,
+					slideDirection.Z * momentum
+				)
+			end
 			if humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then
 				return
 			end
@@ -147,36 +185,25 @@ local function bind(character: Model)
 				lastGroundedAt = -math.huge
 				lastJumpRequestAt = -math.huge
 				humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-			elseif canDoubleJump then
-				canDoubleJump = false
+			elseif airJumpsRemaining > 0 then
+				airJumpsRemaining -= 1
 				lastJumpRequestAt = -math.huge
 				humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-				ClientFX.sound("Jump", nil, 0.2)
+				playMove("DoubleJump")
+				ClientFX.sound("DoubleJumpWhoosh", nil, 0.08)
 				ClientFX.ring(
 					root.Position - Vector3.new(0, 2.5, 0),
-					ClientFX.c3(Theme.Goo),
+					Color3.fromRGB(188, 174, 145),
 					5,
 					0.3
 				)
+				ClientFX.dust(root.Position - Vector3.new(0, 2.5, 0), 8)
 				local currentVelocity = root.AssemblyLinearVelocity
 				root.AssemblyLinearVelocity =
 					Vector3.new(currentVelocity.X, Config.DoubleJump.Power, currentVelocity.Z)
 			end
 		end)
 	)
-
-	ContextActionService:BindAction("Sprint", function(_, inputState)
-		if inputState == Enum.UserInputState.Begin then
-			sprintHeld = true
-			setWalkSpeed()
-		elseif
-			inputState == Enum.UserInputState.End or inputState == Enum.UserInputState.Cancel
-		then
-			sprintHeld = false
-			setWalkSpeed()
-		end
-		return Enum.ContextActionResult.Pass
-	end, false, Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonL2)
 
 	ContextActionService:BindAction("Slide", function(_, inputState)
 		if inputState == Enum.UserInputState.Begin then
@@ -203,7 +230,7 @@ local function bind(character: Model)
 			local grounded = humanoid.FloorMaterial ~= Enum.Material.Air
 			if grounded then
 				lastGroundedAt = now
-				canDoubleJump = false
+				airJumpsRemaining = MovementTuning.airJumps(movementPerks())
 				if
 					not wasGrounded
 					and now - lastJumpRequestAt <= MovementTuning.Jump.BufferTime
@@ -211,12 +238,6 @@ local function bind(character: Model)
 					lastJumpRequestAt = -math.huge
 					humanoid.Jump = true
 				end
-			elseif wasGrounded then
-				task.delay(0.15, function()
-					if humanoid:GetState() == Enum.HumanoidStateType.Freefall then
-						canDoubleJump = true
-					end
-				end)
 			end
 			wasGrounded = grounded
 
@@ -234,32 +255,22 @@ local function bind(character: Model)
 		end)
 	)
 
-	RunService:BindToRenderStep(RENDER_STEP_NAME, Enum.RenderPriority.Camera.Value + 2, function(dt)
-		local moving = humanoid.MoveDirection.Magnitude > 0.1
-		local targetTilt = if sliding then MovementTuning.Slide.CameraTiltDegrees else 0
-		cameraTilt += (targetTilt - cameraTilt) * math.min(1, dt * 12)
-		if camera.CameraType ~= Enum.CameraType.Scriptable then
-			camera.CFrame *= CFrame.Angles(0, 0, math.rad(cameraTilt))
-		end
-
-		local sprintKick = if isSprinting()
-				and moving
-				and not sliding
-			then MovementTuning.Fov.SprintKick
-			else 0
+	RunService:BindToRenderStep(RENDER_STEP_NAME, Enum.RenderPriority.Camera.Value + 2, function()
 		local dashFov = MovementTuning.fovAt(
 			os.clock() - dashStartedAt,
 			MovementTuning.Fov.DashKick
 		) - MovementTuning.Fov.Base
-		local targetFov = MovementTuning.Fov.Base + sprintKick + dashFov
-		camera.FieldOfView += (targetFov - camera.FieldOfView) * math.min(1, dt * 12)
+		local slideFov = if sliding
+			then MovementTuning.fovAt(os.clock() - slideStartedAt, MovementTuning.Fov.SlideKick)
+				- MovementTuning.Fov.Base
+			else 0
+		camera.FieldOfView = MovementTuning.Fov.Base + math.max(dashFov, slideFov)
 	end)
 
 	table.insert(
 		connections,
 		humanoid.Died:Connect(function()
 			finishSlide()
-			ContextActionService:UnbindAction("Sprint")
 			ContextActionService:UnbindAction("Slide")
 			ContextActionService:UnbindAction("Dash")
 			RunService:UnbindFromRenderStep(RENDER_STEP_NAME)
