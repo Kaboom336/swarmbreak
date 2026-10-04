@@ -2,6 +2,7 @@
 -- Procedural locomotion and combat animation for every enemy rig.
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 
 local AnimCull = require(ReplicatedStorage.Shared.AnimCull)
 local AnimCurves = require(ReplicatedStorage.Shared.AnimCurves)
@@ -26,6 +27,11 @@ type Anim = {
 	AttackStarted: number?,
 	AttackWindup: number,
 	HitFlash: HitFlash?,
+	RigMode: boolean,
+	Eyes: { BasePart },
+	EyeColors: { [BasePart]: Color3 },
+	Sac: BasePart?,
+	SacSize: Vector3?,
 }
 type HitFlash = {
 	Highlight: Highlight,
@@ -37,6 +43,44 @@ type HitFlash = {
 }
 local anims: { [Model]: Anim } = {}
 local nextEnemyIndex = 0
+
+local function rigParts(model: Model): ({ BasePart }, { [BasePart]: Color3 }, BasePart?)
+	local eyes = {}
+	local colors = {}
+	local sac = nil
+	for _, descendant in model:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			if descendant.Name == "Eye_Glow" then
+				table.insert(eyes, descendant)
+				colors[descendant] = descendant.Color
+			elseif descendant.Name == "Sac" then
+				sac = descendant
+			end
+		end
+	end
+	return eyes, colors, sac
+end
+
+local function targetYaw(root: BasePart): number
+	local nearestPosition = nil
+	local nearestDistance = math.huge
+	for _, player in Players:GetPlayers() do
+		local character = player.Character
+		local target = character and character:FindFirstChild("HumanoidRootPart")
+		if target and target:IsA("BasePart") then
+			local distance = (target.Position - root.Position).Magnitude
+			if distance < nearestDistance then
+				nearestDistance = distance
+				nearestPosition = target.Position
+			end
+		end
+	end
+	if not nearestPosition then
+		return 0
+	end
+	local localTarget = root.CFrame:PointToObjectSpace(nearestPosition)
+	return math.clamp(math.atan2(-localTarget.X, -localTarget.Z), math.rad(-20), math.rad(20))
+end
 
 local function motorMap(model: Model): ({ [string]: Motor6D }, { [string]: CFrame })
 	local motors: { [string]: Motor6D } = {}
@@ -110,6 +154,8 @@ local function register(model: Instance)
 			return
 		end
 		local motors, base = motorMap(model)
+		local rigMode = model:GetAttribute("RigMode") == true
+		local eyes, eyeColors, sac = rigParts(model)
 		nextEnemyIndex += 1
 		local anim: Anim = {
 			Root = root,
@@ -124,6 +170,11 @@ local function register(model: Instance)
 			AttackStarted = nil,
 			AttackWindup = 0,
 			HitFlash = nil,
+			RigMode = rigMode,
+			Eyes = eyes,
+			EyeColors = eyeColors,
+			Sac = sac,
+			SacSize = if sac then sac.Size else nil,
 		}
 		anims[model] = anim
 		humanoid.HealthChanged:Connect(function(health)
@@ -134,6 +185,9 @@ local function register(model: Instance)
 			anim.LastHealth = health
 		end)
 		humanoid.Died:Connect(function()
+			for _, eye in anim.Eyes do
+				eye.Color = anim.EyeColors[eye]:Lerp(Color3.new(0, 0, 0), 0.6)
+			end
 			task.defer(function()
 				local freezeUntil = model:GetAttribute("ClientHitstopUntil") or os.clock()
 				task.delay(math.max(0, freezeUntil - os.clock()), function()
@@ -231,6 +285,35 @@ RunService.Heartbeat:Connect(function(dt)
 			CFrame.new(0, anim.Root.Size.Y * breathing - anim.Root.Size.Y * 0.04 * squash, 0)
 
 		local swing = math.sin(phase) * math.rad(profile.SwingDegrees) * moving
+		if anim.RigMode then
+			local rootMotion = CFrame.new(
+				0,
+				if anim.TypeName == "Flyer" then math.sin(now * math.pi * 2) * 0.5 else 0,
+				windup * 0.6 - lunge * 1.2
+			)
+			set(anim, "RootWeld", rootMotion)
+			for index = 1, 8 do
+				local name = "Hip_" .. index
+				if anim.Motors[name] then
+					local legPhase = phase + EnemyAnimCurves.rigGaitPhase(index)
+					local liftDegrees = math.clamp(profile.SwingDegrees, 20, 30)
+					local lift = math.sin(legPhase) * math.rad(liftDegrees) * moving
+					set(anim, name, CFrame.Angles(lift + attackPitch * 0.25, 0, 0))
+				end
+			end
+			local neckBob = math.sin(phase * 2) * math.rad(6) * moving
+			set(anim, "Neck", CFrame.Angles(neckBob - attackPitch * 0.4, targetYaw(anim.Root), 0))
+			local flap = math.sin(now * math.pi * 2 * 14) * math.rad(35)
+			set(anim, "WingJoint_L", CFrame.Angles(flap, 0, 0))
+			set(anim, "WingJoint_R", CFrame.Angles(-flap, 0, 0))
+			if anim.Sac and anim.SacSize then
+				anim.Sac.Size = anim.SacSize * (1 + math.sin(windup * math.pi) * 0.25)
+			end
+			for _, eye in anim.Eyes do
+				local baseColor = anim.EyeColors[eye]
+				eye.Color = baseColor:Lerp(Color3.new(1, 1, 1), windup * 0.35)
+			end
+		end
 		set(anim, "Hip_L", compress * CFrame.Angles(swing + attackPitch * 0.25, 0, 0))
 		set(anim, "Hip_R", compress * CFrame.Angles(-swing + attackPitch * 0.25, 0, 0))
 		set(

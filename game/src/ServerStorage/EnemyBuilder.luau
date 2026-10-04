@@ -11,6 +11,7 @@ local ModelKey = require(ReplicatedStorage.Shared.ModelKey)
 local ModelParts = require(ReplicatedStorage.Shared.ModelParts)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local ModelLibrary = require(ServerStorage.ModelLibrary)
+local EnemyRigBuilder = require(ServerStorage.EnemyRigBuilder)
 
 local EnemyBuilder = {}
 
@@ -682,6 +683,10 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 end
 
 function EnemyBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig
+	local nestRig = EnemyRigBuilder.build(typeName, size, cf)
+	if nestRig then
+		return nestRig
+	end
 	local humanoid = buildHumanoid(typeName, size, cf)
 	if humanoid then
 		if typeName == "Brute" then
