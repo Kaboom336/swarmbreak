@@ -296,7 +296,7 @@ function UiKit.Banner(parent: Instance, name: string, content: string): TextLabe
 	local label = UiKit.Label(
 		parent,
 		name,
-		UDim2.new(0.5, -300, 0.38, 0),
+		UDim2.new(0.5, -300, 0.22, 0),
 		UDim2.new(0, 600, 0, 80),
 		content,
 		UiTheme.Sizes.Text.Banner

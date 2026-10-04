@@ -11,6 +11,7 @@ local Theme = require(ReplicatedStorage.Shared.Theme)
 local VfxDefs = require(ReplicatedStorage.Shared.VfxDefs)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 local UiKit = require(script.Parent:WaitForChild("UiKit"))
+local AnimeEffects = require(script.Parent:WaitForChild("AnimeEffects"))
 
 local player = Players.LocalPlayer
 local FX = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("FX") :: RemoteEvent
@@ -295,7 +296,7 @@ handlers.queenKill = function(d)
 	local banner = Instance.new("TextLabel")
 	banner.Name = "CoreCleared"
 	banner.AnchorPoint = Vector2.new(0.5, 0.5)
-	banner.Position = UDim2.fromScale(0.5, 0.35)
+	banner.Position = UDim2.fromScale(0.5, 0.22)
 	banner.Size = UDim2.fromOffset(720, 100)
 	banner.BackgroundTransparency = 1
 	banner.Font = UiKit.Fonts.Banner
@@ -304,6 +305,7 @@ handlers.queenKill = function(d)
 	banner.TextSize = 64
 	banner.TextStrokeTransparency = 0
 	banner.Parent = bannerGui
+	AnimeEffects.slam(banner)
 	-- Hold long enough to read, then fade (the slow-mo itself is only 0.6 s).
 	task.delay(2.5, function()
 		TweenService:Create(

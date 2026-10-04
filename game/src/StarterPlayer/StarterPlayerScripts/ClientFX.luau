@@ -14,6 +14,7 @@ local PoolSize = require(ReplicatedStorage.Shared.PoolSize)
 local SoundBudget = require(ReplicatedStorage.Shared.SoundBudget)
 local Sounds = require(ReplicatedStorage.Shared.Sounds)
 local Settings = require(ReplicatedStorage.Shared.Settings)
+local ScreenEffects = require(ReplicatedStorage.Shared.ScreenEffects)
 local UiTheme = require(ReplicatedStorage.Shared.UiTheme)
 local VfxDefs = require(ReplicatedStorage.Shared.VfxDefs)
 local VfxTextures = require(ReplicatedStorage.Shared.VfxTextures)
@@ -615,16 +616,20 @@ function ClientFX.damageNumber(
 	entry.Billboard.Enabled = true
 	entry.Label.Text = text
 	entry.Label.TextColor3 = color
-	entry.Label.TextSize = if critical
-		then Feel.DamageNumberCritPixels
-		else Feel.DamageNumberNormalPixels
+	entry.Label.TextSize = (
+		if critical then Feel.DamageNumberCritPixels else Feel.DamageNumberNormalPixels
+	) * scale
 	entry.Label.TextTransparency = 0
-	entry.Label.TextStrokeTransparency = 0.3
-	entry.Scale.Scale = math.min(1, scale)
+	entry.Label.TextStrokeTransparency = 0
+	entry.Scale.Scale = Feel.DamageNumberPopScale
 	entry.PopTween = TweenService:Create(
 		entry.Scale,
-		TweenInfo.new(0.08, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-		{ Scale = Feel.DamageNumberPopScale }
+		TweenInfo.new(
+			ScreenEffects.DamageNumberPopSeconds,
+			Enum.EasingStyle.Quad,
+			Enum.EasingDirection.Out
+		),
+		{ Scale = 1 }
 	)
 	entry.RiseTween = TweenService:Create(
 		entry.Billboard,

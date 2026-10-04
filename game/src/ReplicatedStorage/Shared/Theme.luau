@@ -89,6 +89,12 @@ local Theme = {
 		Queen = { Body = CHITIN, Accent = GOO },
 		Warden = { Body = CHITIN_DARK, Accent = GOO },
 	},
+	Boss = {
+		-- Fills are bright so they read against the ChitinDark track (U1 review).
+		["Big Brute"] = { Fill = SIGNAL_ORANGE, Accent = LOOT, Outline = CHITIN },
+		["Swarm Queen"] = { Fill = TELEGRAPH, Accent = GOO, Outline = CHITIN_DARK },
+		["Sky King"] = { Fill = HERO, Accent = LOOT, Outline = CHITIN },
+	},
 	Rarity = {
 		Common = OUTPOST_SHADE,
 		Rare = HERO,
