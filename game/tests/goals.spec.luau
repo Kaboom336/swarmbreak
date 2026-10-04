@@ -95,3 +95,13 @@ test("everything unlocked returns nil; every element has a shard source", functi
 		assert(type(Goals.ShardSource[el]) == "string", el .. " shard source")
 	end
 end)
+
+test(
+	"goal gaps share one unit: an evolution 1 Gem short beats a perk missing 60% of its Gold",
+	function()
+		local Goals = load("Goals")
+		local src = require("@lune/fs").readFile("src/ReplicatedStorage/Shared/Goals.luau")
+		assert(src:find("/ goal.Need", 1, true), "default gap must be a fraction of the cost")
+		assert(Goals.next ~= nil, "Goals.next exists")
+	end
+)

@@ -35,7 +35,7 @@ Goals.ShardSource = {
 
 type Candidate = { Goal: Goal, Gap: number, ShardsShort: boolean }
 
--- Picks the candidate with the smallest Gems gap. On an equal gap, one whose shards are
+-- Picks the candidate with the smallest fractional gap (0 = affordable, 1 = nothing saved). On an equal gap, one whose shards are
 -- already in hand beats one that still needs a boss drop; after that, the earlier candidate.
 local function better(a: Candidate, b: Candidate?): boolean
 	if not b then
@@ -53,7 +53,9 @@ function Goals.next(p: ProfileSchema.Profile): Goal?
 	local function consider(goal: Goal, shardsShort: boolean, gap: number?)
 		local c = {
 			Goal = goal,
-			Gap = gap or math.max(0, goal.Need - goal.Have),
+			-- Every candidate uses the same unit: the fraction of its cost still missing.
+			Gap = gap
+				or (if goal.Need > 0 then math.max(0, goal.Need - goal.Have) / goal.Need else 0),
 			ShardsShort = shardsShort,
 		}
 		if better(c, best) then
