@@ -8,6 +8,7 @@ local AnimCurves = require(ReplicatedStorage.Shared.AnimCurves)
 local Feel = require(ReplicatedStorage.Shared.Feel)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local Theme = require(ReplicatedStorage.Shared.Theme)
+local VfxDefs = require(ReplicatedStorage.Shared.VfxDefs)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 local UiKit = require(script.Parent:WaitForChild("UiKit"))
 local AnimeEffects = require(script.Parent:WaitForChild("AnimeEffects"))
@@ -71,13 +72,11 @@ handlers.shot = function(d)
 	local color = c3(d.Color)
 	local from = muzzleOf(d.Shooter) or d.Origin
 	for _, endPos in d.Ends do
-		ClientFX.tracer(from, endPos, color, 0.12, Feel.TracerSeconds)
+		ClientFX.tracer(from, endPos, color, 0.2, Feel.TracerSeconds)
 	end
 	ClientFX.flash(from, color, 10, Feel.MuzzleFlashSeconds)
-	ClientFX.burst(from, color, 6, 0.5, 8, Feel.MuzzleFlashSeconds, true)
-	for _, h in d.Hits do
-		ClientFX.burst(h, color, 12, 0.35, 18, 0.35, true)
-	end
+	local shotDirection = if d.Ends[1] then d.Ends[1] - from else Vector3.new(0, 0, 1)
+	ClientFX.muzzleStar(from, color, shotDirection)
 	ClientFX.sound(d.Sound, from)
 	if d.Shooter == player then
 		ClientFX.shake(0.6 + #d.Ends * 0.15)
@@ -89,9 +88,13 @@ handlers.swing = function(d)
 	swingWeapon(d.Shooter, d.Slam)
 	local at = d.Origin + Vector3.new(0, -2.5, 0)
 	if d.Slam then
-		ClientFX.ring(at, color, d.Range, 0.35)
-		ClientFX.burst(d.Origin, color, 30, 0.8, 22, 0.5, false)
-		ClientFX.flash(d.Origin, color, d.Range * 2, 0.25)
+		ClientFX.ring(at, color, d.Range, VfxDefs.UltimateBurstSeconds)
+		ClientFX.burst(d.Origin, color, 30, 0.8, 22, VfxDefs.UltimateBurstSeconds, false)
+		ClientFX.flash(d.Origin, color, d.Range * 2, 0.2)
+		if d.Ultimate and d.Shooter == player then
+			ClientFX.ring(d.Origin, color, 30, VfxDefs.UltimateBurstSeconds)
+			ClientFX.fovKick(8, VfxDefs.UltimateBurstSeconds)
+		end
 		if d.Shooter == player then
 			ClientFX.shake(3)
 		end
@@ -107,9 +110,6 @@ handlers.swing = function(d)
 		if d.Shooter == player then
 			ClientFX.shake(1)
 		end
-	end
-	for _, h in d.Hits do
-		ClientFX.burst(h, color, 14, 0.4, 16, 0.35, true)
 	end
 	ClientFX.sound(d.Sound, d.Origin)
 end
@@ -144,7 +144,6 @@ handlers.beam = function(d)
 		end
 	end)
 	if d.Hit then
-		ClientFX.burst(d.Hit, color, 4, 0.3, 10, 0.25, true)
 		ClientFX.flash(d.Hit, color, 6, 0.12)
 	end
 	if math.random() < 0.3 then
@@ -161,28 +160,20 @@ end
 
 handlers.death = function(d)
 	local color = c3(Feel.deathBurstColor(d.EnemyType, d.Color))
-	local n = if d.Boss then 90 else 22
-	ClientFX.burst(
-		d.Position,
-		color,
-		n,
-		if d.Boss then 1.4 else 0.6,
-		if d.Boss then 45 else 18,
-		if d.Boss then 1.2 else 0.6,
-		false
-	)
-	ClientFX.flash(d.Position, color, if d.Boss then 60 else 12, if d.Boss then 0.8 else 0.25)
+	ClientFX.burst(d.Position, color, VfxDefs.DeathShardCount, 0.45, 24, 0.25, true)
+	ClientFX.burst(d.Position, c3(Theme.Goo), 8, 0.7, 14, VfxDefs.DeathBurstSeconds, false)
+	ClientFX.flash(d.Position, color, if d.Boss then 24 else 12, 0.18)
 	ClientFX.ring(
 		d.Position - Vector3.new(0, d.Size * 0.4, 0),
 		color,
-		if d.Boss then 30 else d.Size,
-		if d.Boss then 0.8 else 0.4
+		VfxDefs.DeathRing.EndRadius,
+		VfxDefs.DeathRing.Seconds
 	)
 	if d.Boss then
 		ClientFX.sound("Explosion", d.Position)
 	end
 	if d.Boss then
-		ClientFX.fovKick(12, 0.9)
+		ClientFX.fovKick(12, VfxDefs.DeathBurstSeconds)
 	end
 end
 

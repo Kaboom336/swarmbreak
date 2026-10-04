@@ -9,6 +9,8 @@ export type Stage = {
 	Waves: number,
 	Family: string,
 	Boss: string?,
+	Finale: boolean,
+	FinaleCountMultiplier: number,
 	HealthScale: number,
 	DamageScale: number,
 	StoryBeat: string,
@@ -31,6 +33,8 @@ local CoreStages = {}
 
 CoreStages.Count = 15
 CoreStages.DefaultStage = 1
+CoreStages.FinaleCountMultiplier = 1.6
+CoreStages.FinaleMinClearSeconds = 20
 
 local names = {
 	"Dustfall",
@@ -83,6 +87,8 @@ for stageNumber = 1, CoreStages.Count do
 		Waves = 3 + math.floor(progress * 5 + 0.5),
 		Family = "Nest",
 		Boss = boss,
+		Finale = boss == nil,
+		FinaleCountMultiplier = if boss == nil then CoreStages.FinaleCountMultiplier else 1,
 		HealthScale = 1 + progress * 2,
 		DamageScale = 1 + progress * 2,
 		StoryBeat = storyBeats[stageNumber],

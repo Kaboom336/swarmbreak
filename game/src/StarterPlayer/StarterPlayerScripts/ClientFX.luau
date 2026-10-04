@@ -5,6 +5,7 @@ local RunService = game:GetService("RunService")
 local Debris = game:GetService("Debris")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local AnimCurves = require(ReplicatedStorage.Shared.AnimCurves)
 local EffectCurves = require(ReplicatedStorage.Shared.EffectCurves)
 local Feel = require(ReplicatedStorage.Shared.Feel)
@@ -27,6 +28,7 @@ local soundBudget = SoundBudget.new()
 local configuredQuality = UserSettings():GetService("UserGameSettings").SavedQualityLevel
 -- SavedQualityLevel is 0 when the player leaves graphics on Automatic.
 local qualityLevel = if configuredQuality.Value > 0 then configuredQuality.Value else 5
+local lowQuality = qualityLevel <= 3 or UserInputService.TouchEnabled
 local effectPoolSizes = PoolSize.forQuality(qualityLevel)
 
 local p0Sounds = {
@@ -175,6 +177,11 @@ type GooDecalEntry = {
 	Token: number,
 }
 
+type HighlightEntry = {
+	Highlight: Highlight,
+	Token: number,
+}
+
 local function numberSequence(keypoints: { VfxDefs.Keypoint }): NumberSequence
 	local values = {}
 	for _, keypoint in keypoints do
@@ -275,7 +282,7 @@ function ClientFX.emit(name: string, at: Vector3, count: number?)
 	local lifetime = definition.Lifetime[2]
 	local entry = claimEmitter(pool, lifetime)
 	entry.Holder.Position = at
-	entry.Emitter:Emit(count or definition.EmitCount)
+	entry.Emitter:Emit(VfxDefs.particleCount(count or definition.EmitCount, lowQuality))
 end
 
 function ClientFX.c3(t: { number }): Color3
@@ -382,21 +389,30 @@ function ClientFX.fovKick(delta: number, seconds: number)
 end
 
 -- ---------- world primitives ----------
-local tracerPool = PoolSize.new(effectPoolSizes.Tracers, function(index): TracerEntry
-	local part = Instance.new("Part")
-	part.Name = "Tracer" .. index
-	part.Anchored = true
-	part.CanCollide = false
-	part.CanQuery = false
-	part.CanTouch = false
-	part.CastShadow = false
-	part.Material = Enum.Material.Neon
-	part.Transparency = 1
-	part.Parent = fxFolder
-	return { Part = part, Tween = nil, Token = 0 }
-end)
+local tracerPool = PoolSize.new(
+	effectPoolSizes.Tracers * PoolSize.TracerLayers,
+	function(index): TracerEntry
+		local part = Instance.new("Part")
+		part.Name = "Tracer" .. index
+		part.Anchored = true
+		part.CanCollide = false
+		part.CanQuery = false
+		part.CanTouch = false
+		part.CastShadow = false
+		part.Material = Enum.Material.Neon
+		part.Transparency = 1
+		part.Parent = fxFolder
+		return { Part = part, Tween = nil, Token = 0 }
+	end
+)
 
-function ClientFX.tracer(from: Vector3, to: Vector3, color: Color3, thickness: number, life: number)
+local function tracerLayer(
+	from: Vector3,
+	to: Vector3,
+	color: Color3,
+	thickness: number,
+	life: number
+)
 	local len = (to - from).Magnitude
 	if len < 0.5 then
 		return
@@ -425,6 +441,57 @@ function ClientFX.tracer(from: Vector3, to: Vector3, color: Color3, thickness: n
 			PoolSize.release(tracerPool, entry)
 		end
 	end)
+end
+
+function ClientFX.tracer(from: Vector3, to: Vector3, color: Color3, thickness: number, life: number)
+	-- A darker outer streak and a narrower bright core stay readable against both Mars dust
+	-- and the purple Nest silhouettes.
+	tracerLayer(from, to, color:Lerp(Color3.new(0, 0, 0), 0.2), thickness, life)
+	tracerLayer(from, to, color:Lerp(Color3.new(1, 1, 1), 0.3), thickness * 0.4, life)
+end
+
+function ClientFX.hitSpark(at: Vector3, color: Color3, normal: Vector3)
+	local direction = if normal.Magnitude > 0.001 then normal.Unit else Vector3.new(0, 0, 1)
+	local plane = CFrame.lookAt(at, at + direction)
+	local diagonalA = (plane.RightVector + plane.UpVector).Unit * 0.55
+	local diagonalB = (plane.RightVector - plane.UpVector).Unit * 0.55
+	tracerLayer(at - diagonalA, at + diagonalA, color, 0.12, VfxDefs.HitSeconds)
+	tracerLayer(at - diagonalB, at + diagonalB, color, 0.12, VfxDefs.HitSeconds)
+
+	local entry = claimEmitter(customPool, VfxDefs.HitSeconds)
+	entry.Holder.CFrame = plane
+	local emitter = entry.Emitter
+	emitter.Color = ColorSequence.new(color)
+	emitter.Size = NumberSequence.new(0.18, 0)
+	emitter.Lifetime = NumberRange.new(0.08, VfxDefs.HitSeconds)
+	emitter.Speed = NumberRange.new(16, 24)
+	emitter.SpreadAngle = Vector2.new(8, 8)
+	emitter.Acceleration = Vector3.zero
+	emitter.Drag = 2
+	emitter.LightEmission = 1
+	emitter.EmissionDirection = Enum.NormalId.Front
+	emitter.Texture = VfxTextures.asset("spark")
+	emitter:Emit(VfxDefs.particleCount(VfxDefs.HitStreakCount, lowQuality))
+end
+
+function ClientFX.muzzleStar(at: Vector3, color: Color3, direction: Vector3)
+	local normal = if direction.Magnitude > 0.001 then direction.Unit else Vector3.new(0, 0, 1)
+	local plane = CFrame.lookAt(at, at + normal)
+	local radius = 0.45
+	for _, axis in
+		{
+			plane.RightVector,
+			plane.UpVector,
+			(plane.RightVector + plane.UpVector).Unit,
+		}
+	do
+		tracerLayer(at - axis * radius, at + axis * radius, color, 0.1, VfxDefs.MuzzleFlashSeconds)
+	end
+	local entry = claimEmitter(emitterPools.MuzzleFlash, VfxDefs.MuzzleFlashSeconds)
+	entry.Holder.CFrame = plane
+	entry.Emitter.Color = ColorSequence.new(color)
+	entry.Emitter.EmissionDirection = Enum.NormalId.Front
+	entry.Emitter:Emit(VfxDefs.particleCount(VfxDefs.MuzzleFlash.EmitCount, lowQuality))
 end
 
 function ClientFX.burst(
@@ -457,7 +524,7 @@ function ClientFX.burst(
 	pe.LightEmission = 1
 	pe.Rate = 0
 	pe.Texture = VfxTextures.asset(if spark then "spark" else "goo")
-	pe:Emit(count)
+	pe:Emit(VfxDefs.particleCount(count, lowQuality))
 end
 
 function ClientFX.dust(at: Vector3, count: number)
@@ -587,6 +654,32 @@ function ClientFX.damageNumber(
 	end)
 end
 
+local hitFlashPool = PoolSize.new(16, function(index): HighlightEntry
+	local highlight = Instance.new("Highlight")
+	highlight.Name = "HitFlash" .. index
+	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	highlight.FillColor = Color3.new(1, 1, 1)
+	highlight.FillTransparency = 1
+	highlight.OutlineTransparency = 1
+	highlight.Parent = fxFolder
+	return { Highlight = highlight, Token = 0 }
+end)
+
+function ClientFX.hitFlash(target: Model, life: number)
+	local entry = PoolSize.acquire(hitFlashPool)
+	entry.Token += 1
+	local token = entry.Token
+	entry.Highlight.Adornee = target
+	entry.Highlight.FillTransparency = 0
+	task.delay(life, function()
+		if entry.Token == token then
+			entry.Highlight.FillTransparency = 1
+			entry.Highlight.Adornee = nil
+			PoolSize.release(hitFlashPool, entry)
+		end
+	end)
+end
+
 local gooDecalPool = PoolSize.new(effectPoolSizes.GooDecals, function(index): GooDecalEntry
 	local part = Instance.new("Part")
 	part.Name = "GooDecal" .. index
@@ -694,8 +787,18 @@ function ClientFX.ring(at: Vector3, color: Color3, radius: number, life: number)
 	if texture ~= "" then
 		local entry = claimEmitter(ringParticlePool, life)
 		entry.Holder.Position = at
+		-- The particle ring keeps the caller's colour and expansion (FX1 review).
 		entry.Emitter.Texture = texture
-		entry.Emitter.Size = NumberSequence.new(radius * 2)
+		entry.Emitter.Color = ColorSequence.new(color)
+		entry.Emitter.Lifetime = NumberRange.new(life)
+		entry.Emitter.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.5),
+			NumberSequenceKeypoint.new(1, math.max(radius * 2, 0.5)),
+		})
+		entry.Emitter.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(1, 1),
+		})
 		entry.Emitter:Emit(1)
 		return
 	end

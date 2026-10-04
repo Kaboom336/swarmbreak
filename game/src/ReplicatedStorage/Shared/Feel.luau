@@ -1,5 +1,6 @@
 --!strict
 -- Shared tuning for hit stop, camera shake, and floating damage numbers.
+local Theme = require(script.Parent.Theme)
 
 export type EventName = "Hit" | "Crit" | "Kill" | "EliteKill" | "BossHit" | "BossKill"
 export type ShakeSetting = "Off" | "Low" | "Full"
@@ -24,7 +25,7 @@ Feel.Events = {
 
 Feel.NumberCapPerSecond = 20 -- placeholder
 Feel.TracerSeconds = 0.08
-Feel.MuzzleFlashSeconds = 0.08
+Feel.MuzzleFlashSeconds = 0.06
 Feel.WeaponMuzzleFlashSeconds = 0.05
 Feel.WeaponCameraKick = 0.15 -- melee swings only
 Feel.HitFlashSeconds = 0.08
@@ -36,11 +37,11 @@ Feel.DamageNumberPopScale = 1.3
 Feel.DamageNumberFont = "FredokaOne"
 Feel.HitSparkScale = 0.35
 Feel.CritSparkScale = 0.55
-Feel.HitSparkCount = 12
-Feel.CritSparkCount = 20
+Feel.HitSparkCount = 4
+Feel.CritSparkCount = 4
 Feel.HitSparkSpeed = 18
 Feel.CritSparkSpeed = 24
-Feel.HitSparkSeconds = 0.35
+Feel.HitSparkSeconds = 0.1
 Feel.HitFlashRange = 8
 Feel.CoinFlightSeconds = 0.55
 Feel.KnockbackSpeed = 8
@@ -53,14 +54,14 @@ Feel.BossKillSlowMoScale = 0.35
 
 -- Every enemy gets a bloodless teal/green goo-burst accent on death.
 Feel.DeathBurstColors = {
-	Walker = { 46, 230, 197 },
-	Runner = { 46, 230, 197 },
-	Flyer = { 46, 230, 197 },
-	Tank = { 46, 230, 197 },
-	Spitter = { 46, 230, 197 },
-	Brute = { 46, 230, 197 },
-	Queen = { 46, 230, 197 },
-	Warden = { 46, 230, 197 },
+	Walker = Theme.Enemy.Walker.Accent,
+	Runner = Theme.Enemy.Runner.Accent,
+	Flyer = Theme.Enemy.Flyer.Accent,
+	Tank = Theme.Enemy.Tank.Accent,
+	Spitter = Theme.Enemy.Spitter.Accent,
+	Brute = Theme.Enemy.Brute.Accent,
+	Queen = Theme.Enemy.Queen.Accent,
+	Warden = Theme.Enemy.Warden.Accent,
 } :: { [string]: { number } }
 
 function Feel.eventFor(killed: boolean, critical: boolean): EventName

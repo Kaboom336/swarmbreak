@@ -111,7 +111,7 @@ end
 local function playSlashRing(root: BasePart, large: boolean)
 	task.spawn(function()
 		local started = os.clock()
-		local duration = if large then 0.45 else 0.28
+		local duration = if large then 0.3 else 0.28
 		repeat
 			local progress = math.clamp((os.clock() - started) / duration, 0, 1)
 			local radius = (if large then 5 else 3) + progress * (if large then 18 else 10)

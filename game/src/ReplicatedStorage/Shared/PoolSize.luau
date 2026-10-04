@@ -17,24 +17,25 @@ export type Pool<T> = {
 }
 
 local PoolSize = {}
+PoolSize.MaxLiveVfxParts = 60
 
 local LOW: Sizes = {
-	Tracers = 16,
-	HitSparks = 12,
-	DamageNumbers = 10,
-	GooDecals = 6,
+	Tracers = 4,
+	HitSparks = 4,
+	DamageNumbers = 4,
+	GooDecals = 2,
 }
 local MEDIUM: Sizes = {
-	Tracers = 32,
-	HitSparks = 24,
-	DamageNumbers = 20,
-	GooDecals = 12,
+	Tracers = 8,
+	HitSparks = 8,
+	DamageNumbers = 8,
+	GooDecals = 4,
 }
 local HIGH: Sizes = {
-	Tracers = 48,
-	HitSparks = 36,
-	DamageNumbers = 30,
-	GooDecals = 18,
+	Tracers = 12,
+	HitSparks = 12,
+	DamageNumbers = 12,
+	GooDecals = 8,
 }
 
 local function copySizes(sizes: Sizes): Sizes
@@ -53,6 +54,16 @@ function PoolSize.forQuality(level: number): Sizes
 		return copySizes(MEDIUM)
 	end
 	return copySizes(HIGH)
+end
+
+-- Each tracer shot uses two pooled layers: an outer streak and a coloured core.
+PoolSize.TracerLayers = 2
+
+function PoolSize.total(sizes: Sizes): number
+	return sizes.Tracers * PoolSize.TracerLayers
+		+ sizes.HitSparks
+		+ sizes.DamageNumbers
+		+ sizes.GooDecals
 end
 
 function PoolSize.new<T>(capacity: number, create: (number) -> T): Pool<T>

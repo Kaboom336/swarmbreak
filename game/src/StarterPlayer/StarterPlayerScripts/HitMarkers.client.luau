@@ -15,41 +15,21 @@ HitMarker.OnClientEvent:Connect(
 		killed: boolean,
 		target: Model?,
 		critical: boolean?,
-		eliteKill: boolean?
+		eliteKill: boolean?,
+		hitNormal: Vector3?
 	)
 		local isCritical = critical == true
 		AnimeEffects.hitMarker(isCritical)
 		local event = Feel.eventFor(killed, isCritical)
 		if target and target.Parent then
-			local previous = target:FindFirstChild("HitFlash")
-			if previous then
-				previous:Destroy()
-			end
-			local highlight = Instance.new("Highlight")
-			highlight.Name = "HitFlash"
-			highlight.Adornee = target
-			highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-			highlight.FillColor = Color3.new(1, 1, 1)
-			highlight.FillTransparency = 0
-			highlight.OutlineTransparency = 1
-			highlight.Parent = target
-			task.delay(Feel.HitFlashSeconds, function()
-				highlight:Destroy()
-			end)
+			ClientFX.hitFlash(target, Feel.HitFlashSeconds)
 		end
 		local sparkColor = if killed
 			then ClientFX.c3(Theme.Goo)
-			else if isCritical then ClientFX.c3(Theme.Loot) else ClientFX.c3(Theme.Text)
-		ClientFX.burst(
-			pos,
-			sparkColor,
-			if isCritical then Feel.CritSparkCount else Feel.HitSparkCount,
-			if isCritical then Feel.CritSparkScale else Feel.HitSparkScale,
-			if isCritical then Feel.CritSparkSpeed else Feel.HitSparkSpeed,
-			Feel.HitSparkSeconds,
-			true
-		)
-		ClientFX.flash(pos, Color3.new(1, 1, 1), Feel.HitFlashRange, Feel.HitFlashSeconds)
+			else if isCritical
+				then ClientFX.c3(Theme.SignalOrange)
+				else ClientFX.c3(Theme.Hero)
+		ClientFX.hitSpark(pos, sparkColor, hitNormal or Vector3.new(0, 0, 1))
 		local soundName = if killed then nil else "Hit"
 		if soundName then
 			ClientFX.sound(soundName, pos)
@@ -60,7 +40,7 @@ HitMarker.OnClientEvent:Connect(
 				enemyType = target.Name
 			end
 			local gooColor = Feel.deathBurstColor(enemyType, Theme.Goo)
-			ClientFX.gooDecal(pos, ClientFX.c3(gooColor), 2.5, 3)
+			ClientFX.gooDecal(pos, ClientFX.c3(gooColor), 2.5, 0.4)
 			ClientFX.gemPop(pos, ClientFX.c3(Theme.Loot))
 			if target then
 				ClientFX.hitstop(target, eliteKill == true)

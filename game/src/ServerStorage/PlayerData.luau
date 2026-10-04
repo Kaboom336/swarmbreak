@@ -20,6 +20,7 @@ local ProfileSchema = require(ReplicatedStorage.Shared.ProfileSchema)
 local Goals = require(ReplicatedStorage.Shared.Goals)
 local WaveRewards = require(ReplicatedStorage.Shared.WaveRewards)
 local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
+local RewardTimeout = require(ReplicatedStorage.Shared.RewardTimeout)
 local Drops = require(ReplicatedStorage.Shared.Drops)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Quests = require(ReplicatedStorage.Shared.Quests)
@@ -103,6 +104,7 @@ local lastContactDamageAt: { [Player]: number } = {}
 local PlayerData = {}
 PlayerData.OnEquipChanged = nil :: ((Player) -> ())?
 PlayerData.DamageIFrameSeconds = 0.5
+PlayerData.RewardAutoPickSeconds = RewardTimeout.Seconds
 
 local function sendTelemetry(plr: Player, name: string, fields: Telemetry.Fields)
 	pcall(function()
@@ -797,6 +799,20 @@ function PlayerData.offerLevelReward(plr: Player)
 	setLevelOffer(r, rollLevelOffer(plr))
 	r.PendingLevels -= 1
 	push(plr)
+	local openedAt = r.OfferOpenedAt
+	if openedAt > 0 then
+		task.delay(RewardTimeout.Seconds, function()
+			local current = runs[plr]
+			if
+				current == r
+				and current.OfferOpenedAt == openedAt
+				and RewardTimeout.shouldAutoPick(openedAt, os.clock(), #current.Offer)
+			then
+				-- Server authority makes a hidden or broken card panel harmless.
+				PlayerData.pickReward(plr, RewardTimeout.first(current.Offer) :: string)
+			end
+		end)
+	end
 end
 
 -- Take one of the offered cards. Returns ok, reason.
@@ -935,12 +951,12 @@ function PlayerData.rewardAction(plr: Player, action: string, id: string?): (boo
 	return false, "Bad request."
 end
 
--- Intermission over: resolve every queued level so nobody loses earned picks.
+-- Resolve the current offer deterministically. Normal play uses the eight-second timer above;
+-- this remains available to server teardown paths without involving the client.
 function PlayerData.autoPick(plr: Player)
 	local r = PlayerData.get(plr)
-	-- Pick at random from each offer: always taking the first card stacked one card 17 times.
-	while #r.Offer > 0 do
-		PlayerData.pickReward(plr, r.Offer[rng:NextInteger(1, #r.Offer)])
+	if #r.Offer > 0 then
+		PlayerData.pickReward(plr, RewardTimeout.first(r.Offer) :: string)
 	end
 end
 
