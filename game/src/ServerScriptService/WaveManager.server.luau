@@ -583,21 +583,26 @@ local function runWave(wave: number): boolean
 	if bossName then
 		local spot = ArenaLayout.bossSpawnForWave(wave)
 		local bossAt = CFrame.new(spot.x, bossSpawn.Position.Y + 6, spot.z)
-		local model = spawnEnemy(bossName, bossAt, false)
-		trackBoss(model)
 		composition[bossName] = math.max(0, (composition[bossName] or 1) - 1)
 		if composition[bossName] == 0 then
 			composition[bossName] = nil
 		end
-		BossIntro:FireAllClients(
-			Enemies.Defs[bossName].Name,
-			Config.BossIntroSeconds,
-			bossAt.Position
-		)
-		task.wait(Config.BossIntroSeconds)
-		EnemyAI.setActive(model, true)
-		-- Protection from the wave start ran out during the intro; give it again as the boss wakes.
-		protectPlayers()
+		-- 28929ca: a boss spawn error killed gameLoop and froze the run on wave 15.
+		local spawned, model = pcall(spawnEnemy, bossName, bossAt, false)
+		if spawned and model then
+			trackBoss(model)
+			BossIntro:FireAllClients(
+				Enemies.Defs[bossName].Name,
+				Config.BossIntroSeconds,
+				bossAt.Position
+			)
+			task.wait(Config.BossIntroSeconds)
+			EnemyAI.setActive(model, true)
+			-- Protection from the wave start ran out during the intro; give it again as the boss wakes.
+			protectPlayers()
+		else
+			warn("Boss " .. bossName .. " failed to spawn: " .. tostring(model))
+		end
 	end
 
 	for packIndex, pack in WaveTable.packs(composition) do

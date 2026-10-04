@@ -100,3 +100,24 @@ test(
 		assert(guard and register and guard < register, "only built templates get a pool factory")
 	end
 )
+
+test("28929ca: bosses bypass the pool and a rig error never kills the game loop", function()
+	local fsx = require("@lune/fs")
+	local rigs = fsx.readFile("src/ServerStorage/EnemyRigBuilder.luau")
+	local bypass = rigs:find("if not EnemyPool.has(rigKey) then", 1, true)
+	local take = rigs:find("pcall(EnemyPool.take, rigKey)", 1, true)
+	assert(
+		bypass and take and bypass < take,
+		"unpooled rigs (the Queen) must build fresh before any take"
+	)
+	local builder = fsx.readFile("src/ServerStorage/EnemyBuilder.luau")
+	assert(builder:find("pcall(EnemyRigBuilder.build", 1, true), "rig errors must fall back")
+	local waves = fsx.readFile("src/ServerScriptService/WaveManager.server.luau")
+	assert(waves:find("pcall(spawnEnemy, bossName", 1, true), "boss spawn must be guarded")
+	local family = load("EnemyFamilies")
+	local pooled = {}
+	for _, role in family.RequiredRoles do
+		pooled[family.resolveRig("Nest", role)] = true
+	end
+	assert(not pooled.Queen, "the Queen is not a pooled role, so it relies on the bypass")
+end)

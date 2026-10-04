@@ -47,6 +47,10 @@ function EnemyPool.register(rigKey: string, factory: () -> Model)
 	factories[rigKey] = factory
 end
 
+function EnemyPool.has(rigKey: string): boolean
+	return factories[rigKey] ~= nil
+end
+
 function EnemyPool.take(rigKey: string): Model
 	local model = EnemyPoolLogic.take(pool, rigKey)
 	model.Parent = nil

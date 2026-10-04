@@ -230,7 +230,16 @@ function EnemyRigBuilder.build(typeName: string, _size: Vector3, cf: CFrame): Ri
 	if not rigKey or not templates[rigKey] then
 		return nil
 	end
-	local model = EnemyPool.take(rigKey)
+	-- Bosses (the Queen) are one-offs and never pooled: build them straight from the template.
+	if not EnemyPool.has(rigKey) then
+		return buildFresh(typeName, _size, cf)
+	end
+	local ok, taken = pcall(EnemyPool.take, rigKey)
+	if not ok then
+		warnOnce(rigKey, "pool take failed: " .. tostring(taken))
+		return buildFresh(typeName, _size, cf)
+	end
+	local model = taken :: Model
 	local root = model:FindFirstChild("HumanoidRootPart")
 	local body = model:FindFirstChild("Body")
 	if not root or not root:IsA("BasePart") or not body or not body:IsA("BasePart") then

@@ -683,9 +683,17 @@ local function buildImported(typeName: string, size: Vector3, cf: CFrame): Rig?
 end
 
 function EnemyBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig
-	local nestRig = EnemyRigBuilder.build(typeName, size, cf)
-	if nestRig then
+	-- A rig or pool error must never kill the game loop: fall back to the old model.
+	local ok, nestRig = pcall(EnemyRigBuilder.build, typeName, size, cf)
+	if ok and nestRig then
 		return nestRig
+	elseif not ok then
+		warn(
+			"Nest rig build failed for "
+				.. typeName
+				.. "; using fallback model: "
+				.. tostring(nestRig)
+		)
 	end
 	local humanoid = buildHumanoid(typeName, size, cf)
 	if humanoid then
