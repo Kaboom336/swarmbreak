@@ -31,3 +31,14 @@ test("boss countdown reads BossEvery from Config", function()
 	eq(WaveTable.wavesUntilBoss(3), 0, "changed boss wave")
 	Config.BossEvery = originalBossEvery
 end)
+
+test("boss bar fills stand out from the ChitinDark track (U1 review)", function()
+	local Theme = load("Theme")
+	local track = Theme.ChitinDark
+	for name, palette in Theme.Boss do
+		local dr, dg, db =
+			palette.Fill[1] - track[1], palette.Fill[2] - track[2], palette.Fill[3] - track[3]
+		assert(math.sqrt(dr * dr + dg * dg + db * db) >= 150, name .. " fill blends into the track")
+		assert(palette.Fill ~= Theme.Goo, name .. " fill hides the Goo phase notches")
+	end
+end)

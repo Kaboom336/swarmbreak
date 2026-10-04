@@ -164,7 +164,7 @@ function HudLayout.rects(
 
 	local waveClearBanner = {
 		x = (viewportX - 600 * scale) / 2,
-		y = viewportY * 0.38,
+		y = viewportY * 0.22,
 		w = 600 * scale,
 		h = 80 * scale,
 	}

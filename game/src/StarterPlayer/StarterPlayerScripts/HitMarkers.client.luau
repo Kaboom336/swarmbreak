@@ -5,6 +5,7 @@ local Feel = require(ReplicatedStorage.Shared.Feel)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
 local Theme = require(ReplicatedStorage.Shared.Theme)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
+local AnimeEffects = require(script.Parent:WaitForChild("AnimeEffects"))
 local HitMarker = ReplicatedStorage:WaitForChild("Remotes").HitMarker :: RemoteEvent
 
 HitMarker.OnClientEvent:Connect(
@@ -17,6 +18,7 @@ HitMarker.OnClientEvent:Connect(
 		eliteKill: boolean?
 	)
 		local isCritical = critical == true
+		AnimeEffects.hitMarker(isCritical)
 		local event = Feel.eventFor(killed, isCritical)
 		if target and target.Parent then
 			local previous = target:FindFirstChild("HitFlash")
@@ -37,9 +39,7 @@ HitMarker.OnClientEvent:Connect(
 		end
 		local sparkColor = if killed
 			then ClientFX.c3(Theme.Goo)
-			else if isCritical
-				then ClientFX.c3(Theme.SignalOrange)
-				else ClientFX.c3(Theme.Text)
+			else if isCritical then ClientFX.c3(Theme.Loot) else ClientFX.c3(Theme.Text)
 		ClientFX.burst(
 			pos,
 			sparkColor,
@@ -78,9 +78,7 @@ HitMarker.OnClientEvent:Connect(
 		local budget = Feel.Events[event]
 		local numberColor = if killed
 			then ClientFX.c3(Theme.Loot)
-			else if isCritical
-				then ClientFX.c3(Theme.SignalOrange)
-				else ClientFX.c3(Theme.Text)
+			else if isCritical then ClientFX.c3(Theme.Loot) else ClientFX.c3(Theme.Text)
 		ClientFX.damageNumber(
 			pos,
 			(if isCritical then "CRIT " else "") .. tostring(damage),

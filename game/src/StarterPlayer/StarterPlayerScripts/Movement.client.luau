@@ -12,6 +12,7 @@ local MovementTuning = require(ReplicatedStorage.Shared.MovementTuning)
 local MoveVariants = require(ReplicatedStorage.Shared.MoveVariants)
 local TouchLayout = require(ReplicatedStorage.Shared.TouchLayout)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
+local AnimeEffects = require(script.Parent:WaitForChild("AnimeEffects"))
 
 local dashRequestEvent = Instance.new("BindableEvent")
 dashRequestEvent.Name = "DashRequestEvent"
@@ -102,6 +103,7 @@ local function bind(character: Model)
 			* (baseWalkSpeed / MovementTuning.runSpeed(MovementTuning.WalkSpeed)) -- WalkSpeed already includes sprint
 		slideVelocity.Parent = root
 		playMove("Slide")
+		AnimeEffects.speedLines("Slide")
 		ClientFX.fovKick(MovementTuning.Fov.SlideKick, MovementTuning.Fov.ReturnTime)
 		ClientFX.sound("SlideWhoosh", nil, 0.08)
 		ClientFX.dust(root.Position - Vector3.new(0, 2.5, 0), 12)
@@ -114,6 +116,7 @@ local function bind(character: Model)
 		finishSlide()
 		charges -= 1
 		playMove("Dash")
+		AnimeEffects.speedLines("Dash")
 		DashRemote:FireServer()
 		player:SetAttribute("DashReady", charges)
 		ClientFX.fovKick(MovementTuning.Fov.DashKick, MovementTuning.Fov.ReturnTime)
