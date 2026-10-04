@@ -54,9 +54,10 @@ This replaces earlier briefs wherever they conflict. Research behind it: r5-draw
 
 ## Order of work (one great slice first)
 1. **L1 look and feel pass** (Codex, code only, works with any models): see codex-wave20-L1.md.
-2. **Art source.** Zion picks between store packs and our own models on the open card.
-   - **Store:** the Play thread finds candidates, I pick them, Codex wires them in.
-   - **Own:** Blender with textured gradient maps and AO, judged against store-quality references.
+2. **Art source** (Zion picked Mix on 10/04; the store hunt found no usable enemy packs):
+   - **Map base:** Low Poly Floating Island Base (135113645221575), repainted. It's clean, a single mesh with no scripts.
+   - **Enemies, weapons and bosses:** our own. Start from CC0 kits (Kenney, KayKit, Quaternius) and Studio's generate-mesh tool on the laptop. Reshape to the Nest motif, textured, with baked AO.
+   - **Rule:** never insert store items that carry scripts.
 3. **The first 3 minutes of Outpost 9 (Landing Pad, waves 1-3)** made great and captured on video. Zion is shown it only when it beats Hunty Zombie on the shot list.
 4. **Then:** S3 zones, the S4 boss, more maps.
 
