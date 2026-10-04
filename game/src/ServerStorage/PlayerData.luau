@@ -29,6 +29,7 @@ local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local Funnel = require(ReplicatedStorage.Shared.Funnel)
 local DamageCredit = require(ReplicatedStorage.Shared.DamageCredit)
 local MovementTuning = require(ReplicatedStorage.Shared.MovementTuning)
+local Deposit = require(ReplicatedStorage.Shared.Deposit)
 local Profile = require(script.Parent.Profile)
 local WeaponModels = require(script.Parent.WeaponModels)
 
@@ -76,7 +77,10 @@ export type RunSummary = {
 	Wave: number,
 	Kills: number,
 	Coins: number,
+	GoldDeposited: number,
 	GemsEarned: number,
+	GemsDeposited: number,
+	Gold: number,
 	Gems: number, -- Gems after this run's payout
 	ShardsEarned: number,
 	BestWave: number,
@@ -122,6 +126,7 @@ local function push(plr: Player)
 	if r then
 		StatsChanged:FireClient(plr, {
 			Coins = r.Coins,
+			Gold = p.Gold,
 			Kills = r.Kills,
 			Levels = r.Levels,
 			Weapons = p.Weapons,
@@ -253,7 +258,7 @@ function PlayerData.addCoins(plr: Player, n: number)
 	local mutationId = Mutations.forDay(Daily.dayIndex(os.time()))
 	local coinAmount = Mutations.apply({ Coin = n }, mutationId).Coin
 	local bonus = 1
-		+ ProfileSchema.perkValue(Profile.get(plr), "CoinBonus") / 100
+		+ ProfileSchema.perkValue(Profile.get(plr), "GoldFindPercent") / 100
 		+ r.Boosts.CoinMult
 	r.Coins += math.floor(coinAmount * bonus + 0.5)
 	push(plr)
@@ -606,6 +611,7 @@ function PlayerData.damageMultiplier(plr: Player): number
 		* evoDmg
 		* (1 + r.Boosts.DamageMult)
 		* kitDmg
+		* (1 + ProfileSchema.perkValue(p, "DamagePercent") / 100)
 	local mutationId = Mutations.forDay(Daily.dayIndex(os.time()))
 	return Mutations.apply({ PlayerDamage = base }, mutationId).PlayerDamage
 end
@@ -648,13 +654,15 @@ local function applyStats(plr: Player)
 		if PlayerData.hasEffect(plr, "Haste") then
 			speed *= 1 + Evolutions.Effects.Haste.Value
 		end
-		hum.WalkSpeed = MovementTuning.runSpeed(speed)
+		hum.WalkSpeed =
+			MovementTuning.runSpeed(speed, ProfileSchema.perkValue(p, "MoveSpeedPercent"))
 		local maxHp = maxHealthFor(plr)
 		local ratio = hum.Health / math.max(hum.MaxHealth, 1)
 		hum.MaxHealth = maxHp
 		hum.Health = math.max(hum.Health, maxHp * ratio)
 	end
 	local charges = if r.Passes.ExtraDash then Config.Dash.ExtraDashCharges else Config.Dash.Charges
+	charges += ProfileSchema.perkValue(Profile.get(plr), "DashCharges")
 	plr:SetAttribute("DashCharges", charges)
 	-- Movement.client scales Config.Dash.Cooldown by this (the Fast Dash card)
 	plr:SetAttribute("DashCooldownMult", 1 - r.Boosts.DashCooldown)
@@ -690,13 +698,10 @@ end
 -- Buy the next level of a lobby perk with Gems (forever). Returns ok, reason.
 function PlayerData.buyPerk(plr: Player, key: string): (boolean, string)
 	local p = Profile.get(plr)
-	local ok, why = ProfileSchema.canBuyPerk(p, key)
+	local ok, why = ProfileSchema.buyPerk(p, key)
 	if not ok then
 		return false, why
 	end
-	local cost = ProfileSchema.perkCost(p, key) or 0
-	p.Gems -= cost
-	p.Perks[key] = ProfileSchema.perkLevel(p, key) + 1
 	Profile.markDirty(plr)
 	applyStats(plr) -- a Max HP perk raises the character's max HP right away
 	push(plr)
@@ -934,9 +939,8 @@ end
 -- New run: coins, levels and reward boosts reset; profile persists.
 function PlayerData.resetRun(plr: Player)
 	local r = PlayerData.get(plr)
-	local p = Profile.get(plr)
 	PlayerData.setWaiting(plr, false)
-	r.Coins = ProfileSchema.perkValue(p, "StartCoins") + (if r.Passes.StarterPack then 300 else 0)
+	r.Coins = if r.Passes.StarterPack then 300 else 0
 	r.Kills = 0
 	r.ShardsEarned = 0
 	for name in r.Levels do
@@ -981,12 +985,18 @@ function PlayerData.endRun(
 	local r = PlayerData.get(plr)
 	local p = Profile.get(plr)
 	local previousBest = p.BestWave
-	-- gemsForRun before Runs counts this one; the Lucky card adds its share on top
-	local gemsEarned =
-		math.floor(Evolutions.gemsForRun(wave, won, p.Runs) * (1 + r.Boosts.GemMult) + 0.5)
+	-- gemsForRun before Runs counts this one. Find and card bonuses affect what was collected;
+	-- the raid outcome then decides how much of both run currencies reaches the bank.
+	local gemsCollected = math.floor(
+		Evolutions.gemsForRun(wave, won, p.Runs)
+				* (1 + r.Boosts.GemMult + ProfileSchema.perkValue(p, "GemFindPercent") / 100)
+			+ 0.5
+	)
+	local deposited = Deposit.calculate(r.Coins, gemsCollected, if won then "Clear" else "Death")
 	p.Runs += 1
 	p.BestWave = math.max(p.BestWave, wave)
-	p.Gems += gemsEarned
+	p.Gold += deposited.Gold
+	p.Gems += deposited.Gems
 	local clearedMapId = mapId or Campaign.DefaultId
 	local clearedTier = difficultyId or Difficulty.Default
 	local clearFlag = Campaign.clearFlag(clearedMapId, clearedTier)
@@ -1014,7 +1024,7 @@ function PlayerData.endRun(
 		wave = wave,
 		kills = r.Kills,
 		coins = r.Coins,
-		gems = gemsEarned,
+		gems = deposited.Gems,
 		seconds = os.clock() - r.StartedAt,
 	})
 	r.Active = false
@@ -1040,7 +1050,10 @@ function PlayerData.endRun(
 		Wave = wave,
 		Kills = r.Kills,
 		Coins = r.Coins,
-		GemsEarned = gemsEarned,
+		GoldDeposited = deposited.Gold,
+		GemsEarned = deposited.Gems,
+		GemsDeposited = deposited.Gems,
+		Gold = p.Gold,
 		Gems = p.Gems,
 		ShardsEarned = r.ShardsEarned,
 		BestWave = p.BestWave,

@@ -728,6 +728,7 @@ local stats: any
 -- The parts of the stats snapshot that the pure profile helpers (perk costs, next goal) read.
 local function profileSnapshot(): any
 	return {
+		Gold = stats.Gold or 0,
 		Gems = stats.Gems or 0,
 		Shards = stats.Shards or {},
 		Equipped = stats.Equipped or "Starter",
@@ -1214,18 +1215,27 @@ UserInputService.InputBegan:Connect(function(input, gp)
 	end
 end)
 
--- Lobby perk buttons (Gems, forever). One helper builds them for both the shop and the run
--- summary panel; refreshPerkButtons repaints every one from the latest stats.
+-- Lobby perk buttons (Gold + Gems, forever). refreshPerkButtons repaints every one from the
+-- latest server snapshot.
 local perkButtons: { { Key: string, Button: TextButton } } = {}
 local function refreshPerkButtons()
 	local p = profileSnapshot()
+	finalHud.PerkCurrencyLabel.Text = string.format("Bank: %d Gold   %d Gems", p.Gold, p.Gems)
 	for _, row in perkButtons do
 		local def = ProfileSchema.PerkDefs[row.Key]
 		local cost = ProfileSchema.perkCost(p, row.Key)
 		if cost then
 			local lvl = ProfileSchema.perkLevel(p, row.Key)
-			row.Button.Text = string.format("%s  Lv %d  ->  %d Gems", def.Label, lvl + 1, cost)
-			row.Button.BackgroundColor3 = if p.Gems >= cost then BUTTON else GREY
+			row.Button.Text = string.format(
+				"%s  Lv %d  ->  %d Gold + %d Gems",
+				def.Label,
+				lvl + 1,
+				cost.Gold,
+				cost.Gems
+			)
+			row.Button.BackgroundColor3 = if p.Gold >= cost.Gold and p.Gems >= cost.Gems
+				then BUTTON
+				else GREY
 		else
 			row.Button.Text = string.format("%s  MAX", def.Label)
 			row.Button.BackgroundColor3 = GREY
@@ -1289,7 +1299,7 @@ local function shopButton(str: string): TextButton
 	return b
 end
 
-section("UPGRADES (coins)")
+section("RUN UPGRADES (Gold)")
 local upgradeButtons: { [string]: TextButton } = {}
 for _, name in Config.UpgradeOrder do
 	local b = shopButton(name)
@@ -1427,7 +1437,11 @@ local function refreshRecipesTab()
 	end
 end
 
-section("PERKS (Gems, forever)")
+section("PERMANENT STATS")
+order += 1
+finalHud.PerkCurrencyLabel = text(shop, "Bank", UDim2.new(), UDim2.new(1, 0, 0, 24), "", 15)
+finalHud.PerkCurrencyLabel.LayoutOrder = order
+finalHud.PerkCurrencyLabel.TextXAlignment = Enum.TextXAlignment.Left
 for _, key in Goals.PerkOrder do
 	order += 1
 	perkRow(shop, key, 34).LayoutOrder = order
@@ -1486,7 +1500,7 @@ for _, id in Kits.Order do
 	end)
 end
 
-section("COINS (Robux)")
+section("GOLD (Robux)")
 for _, key in { "Coins500", "Coins1500" } do
 	local b = shopButton(Monetization.DeveloperProducts[key].Name)
 	b.MouseButton1Click:Connect(function()
@@ -1706,7 +1720,7 @@ end
 local summaryTitle = summaryRow("Title", 36, 34)
 local summaryWave = summaryRow("Wave", 26, 18)
 local summaryKills = summaryRow("Kills", 26, 18)
-local summaryGems = summaryRow("Gems", 26, 18)
+local summaryGems = summaryRow("Deposit", 26, 18)
 for _, l in { summaryWave, summaryKills, summaryGems } do
 	l.TextXAlignment = Enum.TextXAlignment.Left
 end
@@ -1894,6 +1908,7 @@ end
 -- Stats -> labels, upgrade buttons, hotbar
 stats = {
 	Coins = 0,
+	Gold = 0,
 	Kills = 0,
 	Levels = {},
 	Weapons = { "Starter" },
@@ -2125,14 +2140,15 @@ local function refreshStats()
 	finalHud.AbilityUi.Dash.Text = string.format("DASH %d\nQ", dash)
 	finalHud.AbilityUi.Signature.Text = string.format("%s\nE", kit.Signature.Icon)
 	local shards = stats.Shards or {}
-	finalHud.CoinsLabel.Text = string.format("●  %d", stats.Coins or 0)
+	finalHud.CoinsLabel.Text = string.format("●  %d Gold", stats.Coins or 0)
 	finalHud.GemsLabel.Text = string.format("◆  %d", stats.Gems or 0)
 	statsLabel.Text = string.format(
-		"Kills %d    Level %d    Dash %d\nCoins %d    Gems %d\nShards  Nature %d  Tech %d  Lightning %d  Dark %d",
+		"Kills %d    Level %d    Dash %d\nRun Gold %d    Bank %d Gold / %d Gems\nShards  Nature %d  Tech %d  Lightning %d  Dark %d",
 		stats.Kills,
 		stats.Level or 0,
 		dash,
 		stats.Coins or 0,
+		stats.Gold or 0,
 		stats.Gems or 0,
 		shards.Nature or 0,
 		shards.Tech or 0,
@@ -2181,7 +2197,7 @@ local function refreshStats()
 		local u = Upgrades.def(name)
 		local label = if u then u.Label else name
 		if cost then
-			b.Text = string.format("%s  Lv %d  ->  %d coins", label, level, cost)
+			b.Text = string.format("%s  Lv %d  ->  %d Gold", label, level, cost)
 			b.BackgroundColor3 = if stats.Coins >= cost then BUTTON else GREY
 		else
 			b.Text = string.format("%s  MAX", label)
@@ -2300,7 +2316,7 @@ onState("Phase", function(phase)
 		setShop(false)
 		banner.TextColor3 = WHITE
 		local wave = stateValue("Wave")
-		flash(banner, string.format("Wave clear  +%d Coins", 10 * wave), 2)
+		flash(banner, string.format("Wave clear  +%d Gold", 10 * wave), 2)
 	elseif phase == "starting" then
 		setShop(false)
 		if stateValue("Wave") == 1 then
@@ -2454,8 +2470,26 @@ GameOver.OnClientEvent:Connect(function(summary: any)
 			else if summary.Won then "VICTORIOUS" else "RUN OVER"
 		summaryWave.Text = "Wave " .. commas(summary.Wave or 0)
 		summaryKills.Text = "Kills " .. commas(summary.Kills or 0)
-		summaryGems.Text = "Gems +" .. commas(summary.GemsEarned or 0)
+		local goldDeposited = summary.GoldDeposited or 0
+		local gemsDeposited = summary.GemsDeposited or summary.GemsEarned or 0
+		summaryGems.Text = "Deposited: 0 Gold, 0 Gems"
 		summaryPanel.Visible = true
+		task.spawn(function()
+			local startedAt = os.clock()
+			local duration = 0.9
+			while token == summaryToken and summaryPanel.Visible do
+				local progress = math.clamp((os.clock() - startedAt) / duration, 0, 1)
+				summaryGems.Text = string.format(
+					"Deposited: %s Gold, %s Gems",
+					commas(goldDeposited * progress),
+					commas(gemsDeposited * progress)
+				)
+				if progress >= 1 then
+					break
+				end
+				task.wait()
+			end
+		end)
 	end)
 end)
 

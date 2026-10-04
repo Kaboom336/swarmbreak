@@ -2,37 +2,30 @@ local Goals = load("Goals")
 local ProfileSchema = load("ProfileSchema")
 local Evolutions = load("Evolutions")
 
-test("fresh profile: the first goal is Start coins Lv 1 at 80 Gems", function()
+test("fresh profile: the first goal is Max HP Lv 1", function()
 	local g = Goals.next(ProfileSchema.default())
 	assert(g, "a fresh profile has a goal")
 	eq(g.Kind, "Perk", "kind")
-	eq(g.Key, "StartCoins", "key")
-	eq(g.Need, 80, "need")
+	eq(g.Key, "MaxHealth", "key")
+	eq(g.Need, 5, "need")
 	eq(g.Have, 0, "have")
-	assert(g.Label:find("Start coins Lv 1", 1, true), g.Label)
+	assert(g.Label:find("Max HP Lv 1", 1, true), g.Label)
 end)
 
-test("smallest Gems gap wins; perks follow their order once one is maxed", function()
+test("perks follow their display order once one is maxed", function()
 	local p = ProfileSchema.default()
-	p.Gems = 79
+	p.Gems = 4
 	local g = Goals.next(p)
-	eq(g.Key, "StartCoins", "one Gem short is still the closest")
-	eq(g.Have, 79, "have")
-	eq(g.Need, 80, "need")
+	eq(g.Key, "MaxHealth", "one Gem short is still the closest")
+	eq(g.Have, 4, "have")
+	eq(g.Need, 5, "need")
 
-	-- Gems 0 and Start coins maxed: a tier-1 evolution (120) is closer than Max HP (200)
 	local q = ProfileSchema.default()
-	q.Perks.StartCoins = 5
+	q.Perks.MaxHealth = 10
 	local g2 = Goals.next(q)
-	eq(g2.Kind, "Evolution", "cheapest unlock wins")
-	eq(g2.Need, 120, "tier 1 cost")
-
-	-- with the weapon already at the top tier, only perks remain: Max HP is next in order
-	q.Evolutions.Starter = { Element = "Tech", Tier = 3 }
-	local g3 = Goals.next(q)
-	eq(g3.Kind, "Perk", "kind")
-	eq(g3.Key, "MaxHealth", "next perk in order")
-	eq(g3.Need, 200, "need")
+	eq(g2.Kind, "Perk", "kind")
+	eq(g2.Key, "DamagePercent", "next perk in order")
+	eq(g2.Need, 5, "need")
 end)
 
 test("all perks maxed: the equipped weapon's next tier; shards in hand break ties", function()

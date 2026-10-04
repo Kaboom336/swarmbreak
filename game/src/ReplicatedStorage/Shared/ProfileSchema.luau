@@ -11,6 +11,7 @@ local Difficulty = require(script.Parent.Difficulty)
 
 export type Profile = {
 	Version: number,
+	Gold: number,
 	Gems: number,
 	Shards: { [string]: number }, -- per element
 	Weapons: { string }, -- owned weapon ids
@@ -35,10 +36,47 @@ export type Profile = {
 
 local ProfileSchema = { Version = 1 }
 
+ProfileSchema.PerkMaxLevel = 10
+ProfileSchema.PerkCostCurve = {
+	{ Gold = 100, Gems = 5 },
+	{ Gold = 180, Gems = 8 },
+	{ Gold = 300, Gems = 12 },
+	{ Gold = 480, Gems = 18 },
+	{ Gold = 750, Gems = 27 },
+	{ Gold = 1100, Gems = 40 },
+	{ Gold = 1600, Gems = 58 },
+	{ Gold = 2300, Gems = 82 },
+	{ Gold = 3200, Gems = 115 },
+	{ Gold = 4400, Gems = 155 },
+}
+
 ProfileSchema.PerkDefs = {
-	StartCoins = { Label = "Start coins", PerLevel = 100, MaxLevel = 5, GemsCost = 80 },
-	MaxHealth = { Label = "Max HP", PerLevel = 10, MaxLevel = 5, GemsCost = 200 },
-	CoinBonus = { Label = "Coin bonus %", PerLevel = 5, MaxLevel = 5, GemsCost = 250 },
+	MaxHealth = { Label = "Max HP", PerLevel = 10, MaxLevel = ProfileSchema.PerkMaxLevel },
+	DamagePercent = {
+		Label = "Damage %",
+		PerLevel = 5,
+		MaxLevel = ProfileSchema.PerkMaxLevel,
+	},
+	MoveSpeedPercent = {
+		Label = "Move Speed %",
+		PerLevel = 2,
+		MaxLevel = ProfileSchema.PerkMaxLevel,
+	},
+	DashCharges = {
+		Label = "Dash charges",
+		PerLevel = 1,
+		MaxLevel = ProfileSchema.PerkMaxLevel,
+	},
+	GoldFindPercent = {
+		Label = "Gold find %",
+		PerLevel = 5,
+		MaxLevel = ProfileSchema.PerkMaxLevel,
+	},
+	GemFindPercent = {
+		Label = "Gem find %",
+		PerLevel = 5,
+		MaxLevel = ProfileSchema.PerkMaxLevel,
+	},
 }
 
 -- The only flags a profile may carry. FirstBossCrate: the free Gem crate for the first boss kill.
@@ -59,6 +97,7 @@ function ProfileSchema.default(): Profile
 	end
 	return {
 		Version = ProfileSchema.Version,
+		Gold = 0,
 		Gems = 0,
 		Shards = shards,
 		Weapons = { "Starter" },
@@ -87,6 +126,9 @@ function ProfileSchema.sanitize(raw: any): Profile
 	local p = ProfileSchema.default()
 	if type(raw) ~= "table" then
 		return p
+	end
+	if type(raw.Gold) == "number" and raw.Gold >= 0 then
+		p.Gold = math.floor(raw.Gold)
 	end
 	if type(raw.Gems) == "number" and raw.Gems >= 0 then
 		p.Gems = math.floor(raw.Gems)
@@ -251,14 +293,17 @@ function ProfileSchema.canBuyPerk(p: Profile, key: string): (boolean, string)
 	if lvl >= def.MaxLevel then
 		return false, "Maxed."
 	end
-	local cost = def.GemsCost * (lvl + 1)
-	if p.Gems < cost then
-		return false, string.format("Need %d Gems.", cost)
+	local cost = ProfileSchema.PerkCostCurve[lvl + 1]
+	if p.Gold < cost.Gold then
+		return false, string.format("Need %d Gold.", cost.Gold)
+	end
+	if p.Gems < cost.Gems then
+		return false, string.format("Need %d Gems.", cost.Gems)
 	end
 	return true, ""
 end
 
-function ProfileSchema.perkCost(p: Profile, key: string): number?
+function ProfileSchema.perkCost(p: Profile, key: string): { Gold: number, Gems: number }?
 	local def = ProfileSchema.PerkDefs[key]
 	if not def then
 		return nil
@@ -267,7 +312,23 @@ function ProfileSchema.perkCost(p: Profile, key: string): number?
 	if lvl >= def.MaxLevel then
 		return nil
 	end
-	return def.GemsCost * (lvl + 1)
+	return ProfileSchema.PerkCostCurve[lvl + 1]
+end
+
+-- Validates both balances before changing either one, so a rejected purchase is atomic.
+function ProfileSchema.buyPerk(p: Profile, key: string): (boolean, string)
+	local ok, why = ProfileSchema.canBuyPerk(p, key)
+	if not ok then
+		return false, why
+	end
+	local cost = ProfileSchema.perkCost(p, key)
+	if not cost then
+		return false, "Maxed."
+	end
+	p.Gold -= cost.Gold
+	p.Gems -= cost.Gems
+	p.Perks[key] = ProfileSchema.perkLevel(p, key) + 1
+	return true, ""
 end
 
 return ProfileSchema

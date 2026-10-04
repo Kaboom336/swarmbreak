@@ -16,7 +16,14 @@ export type Goal = {
 local Goals = {}
 
 -- Perks are considered in this order; ties in Gems gap go to the earlier one.
-Goals.PerkOrder = { "StartCoins", "MaxHealth", "CoinBonus" }
+Goals.PerkOrder = {
+	"MaxHealth",
+	"DamagePercent",
+	"MoveSpeedPercent",
+	"DashCharges",
+	"GoldFindPercent",
+	"GemFindPercent",
+}
 
 -- Where each element's shards come from, in plain words, for the goal label.
 Goals.ShardSource = {
@@ -60,7 +67,7 @@ function Goals.next(p: ProfileSchema.Profile): Goal?
 			consider({
 				Label = string.format("%s Lv %d", def.Label, lvl + 1),
 				Have = gems,
-				Need = cost,
+				Need = cost.Gems,
 				Kind = "Perk",
 				Key = key,
 			}, false)

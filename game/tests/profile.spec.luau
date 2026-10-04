@@ -3,6 +3,7 @@ local ProfileSchema = load("ProfileSchema")
 test("default profile is valid and minimal", function()
 	local p = ProfileSchema.default()
 	eq(p.Gems, 0, "gems")
+	eq(p.Gold, 0, "gold")
 	eq(#p.Weapons, 1, "starter only")
 	eq(p.Equipped, "Starter", "equipped")
 	eq(p.Shards.Dark, 0, "shards")
@@ -10,6 +11,7 @@ end)
 
 test("sanitize drops junk and keeps good data", function()
 	local p = ProfileSchema.sanitize({
+		Gold = 321.9,
 		Gems = 512.7,
 		Shards = { Dark = 3, Bogus = 9, Lightning = -2 },
 		Weapons = { "Starter", "Nova", "NotAWeapon", "Nova", 42 },
@@ -19,10 +21,11 @@ test("sanitize drops junk and keeps good data", function()
 			Blade = { Element = "Fire", Tier = 3 },
 			Starter = { Element = "Lightning", Tier = 9 },
 		},
-		Perks = { StartCoins = 99, Fake = 2 },
+		Perks = { MaxHealth = 99, Fake = 2 },
 		BestWave = 12,
 	})
 	eq(p.Gems, 512, "gems floored")
+	eq(p.Gold, 321, "gold floored")
 	eq(p.Shards.Dark, 3, "void kept")
 	eq(p.Shards.Lightning, 0, "negative dropped")
 	eq(p.Shards.Bogus, nil, "unknown element dropped")
@@ -31,9 +34,14 @@ test("sanitize drops junk and keeps good data", function()
 	eq(p.Evolutions.Nova.Tier, 2, "evo kept")
 	eq(p.Evolutions.Blade, nil, "bad element dropped")
 	eq(p.Evolutions.Starter.Tier, 3, "tier clamped")
-	eq(p.Perks.StartCoins, 5, "perk clamped to max")
+	eq(p.Perks.MaxHealth, 10, "perk clamped to max")
 	eq(p.Perks.Fake, nil, "unknown perk dropped")
 	eq(p.BestWave, 12, "best wave")
+end)
+
+test("sanitize rejects negative and NaN Gold", function()
+	eq(ProfileSchema.sanitize({ Gold = -1 }).Gold, 0, "negative")
+	eq(ProfileSchema.sanitize({ Gold = 0 / 0 }).Gold, 0, "NaN")
 end)
 
 test("sanitize of garbage returns default; equipped must be owned", function()
@@ -43,30 +51,49 @@ test("sanitize of garbage returns default; equipped must be owned", function()
 	eq(q.Equipped, "Starter", "not owned -> starter")
 end)
 
-test("perks cost more per level and stop at max", function()
+test("permanent perk costs rise and stop at level ten", function()
 	local p = ProfileSchema.default()
+	p.Gold = 100000
 	p.Gems = 10000
-	local ok = ProfileSchema.canBuyPerk(p, "StartCoins")
+	local ok = ProfileSchema.canBuyPerk(p, "MaxHealth")
 	eq(ok, true, "affordable")
-	eq(ProfileSchema.perkCost(p, "StartCoins"), 80, "lvl 1 cost")
-	p.Perks.StartCoins = 5
-	eq(ProfileSchema.perkCost(p, "StartCoins"), nil, "maxed")
-	eq(ProfileSchema.perkValue(p, "StartCoins"), 500, "value")
-	p.Gems = 0
-	p.Perks.MaxHealth = 1
-	local ok2, why = ProfileSchema.canBuyPerk(p, "MaxHealth")
-	eq(ok2, false, "poor")
-	assert(why:find("400"), why)
+	for key, def in ProfileSchema.PerkDefs do
+		eq(def.MaxLevel, 10, key .. " max level")
+		local previousGold = -1
+		local previousGems = -1
+		for level = 0, def.MaxLevel - 1 do
+			p.Perks[key] = level
+			local cost = ProfileSchema.perkCost(p, key)
+			assert(cost.Gold > previousGold, key .. " Gold cost must rise")
+			assert(cost.Gems > previousGems, key .. " Gems cost must rise")
+			previousGold = cost.Gold
+			previousGems = cost.Gems
+		end
+		p.Perks[key] = def.MaxLevel
+		eq(ProfileSchema.perkCost(p, key), nil, key .. " caps")
+	end
 end)
 
-test("the first perk is in reach at exactly 80 Gems", function()
+test("perk purchase needs both Gold and Gems", function()
 	local p = ProfileSchema.default()
-	p.Gems = 80
-	eq(ProfileSchema.canBuyPerk(p, "StartCoins"), true, "80 buys it")
-	p.Gems = 79
-	local ok, why = ProfileSchema.canBuyPerk(p, "StartCoins")
-	eq(ok, false, "79 does not")
-	assert(why:find("80"), why)
+	local cost = ProfileSchema.perkCost(p, "DamagePercent")
+	p.Gold = cost.Gold - 1
+	p.Gems = cost.Gems
+	local goldOk, goldWhy = ProfileSchema.canBuyPerk(p, "DamagePercent")
+	eq(goldOk, false, "short Gold")
+	assert(goldWhy:find("Gold"), goldWhy)
+	p.Gold = cost.Gold
+	p.Gems = cost.Gems - 1
+	local gemsOk, gemsWhy = ProfileSchema.buyPerk(p, "DamagePercent")
+	eq(gemsOk, false, "short Gems")
+	assert(gemsWhy:find("Gems"), gemsWhy)
+	eq(p.Gold, cost.Gold, "failed purchase keeps Gold")
+	eq(p.Gems, cost.Gems - 1, "failed purchase keeps Gems")
+	p.Gems = cost.Gems
+	eq(ProfileSchema.buyPerk(p, "DamagePercent"), true, "both currencies")
+	eq(p.Gold, 0, "Gold deducted")
+	eq(p.Gems, 0, "Gems deducted")
+	eq(p.Perks.DamagePercent, 1, "level granted")
 end)
 
 test("pity counter and flags are sanitized", function()

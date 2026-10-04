@@ -4,20 +4,20 @@
 -- See ../../MONETIZATION-SETUP.md for the exact list to create.
 local Monetization = {
 	GamePasses = {
-		DoubleCoins = { Id = 0, Name = "2x Coins" },
+		DoubleCoins = { Id = 0, Name = "2x Gold" },
 		ExtraDash = { Id = 0, Name = "Extra Dash" },
 		QuickCrate = { Id = 0, Name = "Quick Crate", Price = 0 }, -- placeholder
 		LuckyCrate = { Id = 0, Name = "Lucky Crate", Price = 0 }, -- placeholder
 		VIP = { Id = 0, Name = "VIP", Price = 0 }, -- placeholder
 		StarterPack = {
 			Id = 0,
-			Name = "Starter Pack (Shotgun + 300 coins)",
+			Name = "Starter Pack (Shotgun + 300 Gold)",
 			Price = 0, -- placeholder
 		},
 	},
 	DeveloperProducts = {
-		Coins500 = { Id = 0, Name = "500 Coins", Coins = 500 },
-		Coins1500 = { Id = 0, Name = "1,500 Coins", Coins = 1500 },
+		Coins500 = { Id = 0, Name = "500 Gold", Coins = 500 },
+		Coins1500 = { Id = 0, Name = "1,500 Gold", Coins = 1500 },
 		Revive = { Id = 0, Name = "Revive" },
 		WeaponCrate = { Id = 0, Name = "Weapon Crate" },
 		EpicCrate = { Id = 0, Name = "Epic Crate" },
