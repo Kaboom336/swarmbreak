@@ -197,6 +197,9 @@ RunService:BindToRenderStep("WeaponFeel", Enum.RenderPriority.Character.Value + 
 	end
 
 	local now = os.clock()
+	if (player:GetAttribute("WeaponHitstopUntil") or 0) > now then
+		return
+	end
 	local direction = if aimDirection and now <= aimExpiresAt
 		then aimDirection
 		else mouseDirection(root)

@@ -63,7 +63,7 @@ end
 test("Station is the dusk preset", function()
 	assert(LightingPresets.Station.Lighting.Brightness >= 2, "Station is too dim")
 	eq(LightingPresets.Station.Lighting.ClockTime, 14.5, "Station ClockTime")
-	assert(LightingPresets.Station.Atmosphere.Density <= 0.15, "Station atmosphere is too dense")
+	assert(LightingPresets.Station.Atmosphere.Density >= 0.25, "Station atmosphere is too thin")
 end)
 
 test("every lighting preset has the complete schema", function()
@@ -109,16 +109,16 @@ end)
 test("NestInterior defines purple crystal and teal fungus light sources", function()
 	local sources = LightingPresets.NestInterior.LightSources
 	eq(sources.Crystal.Kind, "PointLight", "crystal light kind")
-	eq(sources.Crystal.FixtureMaterial, "Neon", "crystal fixture material")
+	eq(sources.Crystal.FixtureMaterial, "SmoothPlastic", "crystal fixture material")
 	assert(sources.Crystal.Color[1] > sources.Crystal.Color[2], "crystal light is not purple")
 	assert(sources.Crystal.Color[3] > sources.Crystal.Color[2], "crystal light is not purple")
 	eq(sources.Fungus.Kind, "PointLight", "fungus light kind")
-	eq(sources.Fungus.FixtureMaterial, "Neon", "fungus fixture material")
+	eq(sources.Fungus.FixtureMaterial, "SmoothPlastic", "fungus fixture material")
 	assert(sources.Fungus.Color[2] > sources.Fungus.Color[1], "fungus light is not teal")
 	assert(sources.Fungus.Color[3] > sources.Fungus.Color[1], "fungus light is not teal")
 	assert(
-		sources.Crystal.Range >= 18 and sources.Fungus.Range >= 18,
-		"NestInterior leaves black corners"
+		sources.Crystal.Range <= 12 and sources.Fungus.Range <= 12,
+		"NestInterior light range exceeds the L1 cap"
 	)
 end)
 

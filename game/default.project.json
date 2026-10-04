@@ -235,8 +235,8 @@
       "ColorCorrection": {
         "$className": "ColorCorrectionEffect",
         "$properties": {
-          "Contrast": 0.1,
-          "Saturation": 0.05,
+          "Contrast": 0.15,
+          "Saturation": 0.15,
           "TintColor": [
             1,
             0.96,
@@ -247,7 +247,7 @@
       "Atmosphere": {
         "$className": "Atmosphere",
         "$properties": {
-          "Density": 0.12,
+          "Density": 0.3,
           "Offset": 0.25,
           "Color": [
             1,
