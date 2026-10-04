@@ -62,7 +62,7 @@ end
 
 test("Station is the dusk preset", function()
 	assert(LightingPresets.Station.Lighting.Brightness >= 2, "Station is too dim")
-	eq(LightingPresets.Station.Lighting.ClockTime, 18.5, "Station ClockTime")
+	eq(LightingPresets.Station.Lighting.ClockTime, 14.5, "Station ClockTime")
 	assert(LightingPresets.Station.Atmosphere.Density <= 0.15, "Station atmosphere is too dense")
 end)
 

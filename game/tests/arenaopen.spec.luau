@@ -74,7 +74,7 @@ end)
 
 test("Station preset is dusk", function()
 	local station = LightingPresets.Station
-	eq(station.Lighting.ClockTime, 18.5, "Station ClockTime")
+	eq(station.Lighting.ClockTime, 14.5, "Station ClockTime")
 	assert(station.Lighting.Brightness >= 2.5, "Station is not bright")
 	assert(station.Atmosphere.Density <= 0.15, "Station atmosphere is too dense")
 	sameColor(LightingPresets.DuskGradient.Horizon, { 1, 0.7019607843, 0.4784313725 }, "horizon")

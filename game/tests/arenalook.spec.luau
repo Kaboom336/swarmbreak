@@ -65,7 +65,7 @@ end)
 
 test("Station uses the S0 dusk preset", function()
 	local station = LightingPresets.Station
-	eq(station.Lighting.ClockTime, 18.5, "ClockTime")
+	eq(station.Lighting.ClockTime, 14.5, "ClockTime")
 	eq(station.Lighting.ExposureCompensation, 0, "ExposureCompensation")
 	eq(station.Lighting.Brightness, 2.5, "Brightness")
 	eq(station.Bloom.Threshold, 1.8, "Bloom threshold")

@@ -38,3 +38,8 @@ Zion's playtest (10/04): "bland with no details, the glow is unbearable I can't 
    - Spec: deterministic for a seed, keeps lanes clear, density within a band.
 7. **Captures:**
    - In the result, list the shot-list stills the Play thread should retake: shots 01, 03, 05, 06 and 09, plus clip B, the kill burst.
+8. **Camera inside enemies** (capture 17-camera-inside-boss):
+   - The camera sits at a fixed 12 studs, so enemies walk through it.
+   - Each frame, any enemy part within 4 studs of the camera fades its LocalTransparencyModifier to 0.7.
+   - Enemy parts set CanCollide=false only for the camera popper. Don't change CanQuery.
+   - The boss gets a 1.5x stronger fade.

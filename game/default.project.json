@@ -181,26 +181,30 @@
       "$className": "Lighting",
       "$properties": {
         "Technology": "Future",
-        "ClockTime": 18.5,
+        "ClockTime": 14.5,
         "Brightness": 2.5,
         "ExposureCompensation": 0,
         "GlobalShadows": true,
-        "EnvironmentDiffuseScale": 0.7,
-        "EnvironmentSpecularScale": 0.8,
+        "EnvironmentDiffuseScale": 1,
+        "EnvironmentSpecularScale": 0.5,
         "ShadowSoftness": 0.35,
-        "Ambient": [ 0.62, 0.55, 0.72 ],
+        "Ambient": [
+          0.62,
+          0.55,
+          0.72
+        ],
         "OutdoorAmbient": [
-          1,
-          0.7019607843,
-          0.4784313725
+          0.55,
+          0.52,
+          0.5
         ],
         "FogColor": [
           1,
-          0.7019607843,
-          0.4784313725
+          0.93,
+          0.85
         ],
-        "FogStart": 180,
-        "FogEnd": 700
+        "FogStart": 400,
+        "FogEnd": 1500
       },
       "Bloom": {
         "$className": "BloomEffect",
@@ -215,7 +219,11 @@
         "$properties": {
           "Contrast": 0.1,
           "Saturation": 0.05,
-          "TintColor": [ 1, 0.96, 0.91 ]
+          "TintColor": [
+            1,
+            0.96,
+            0.91
+          ]
         }
       },
       "Atmosphere": {
@@ -225,16 +233,16 @@
           "Offset": 0.25,
           "Color": [
             1,
-            0.7019607843,
-            0.4784313725
+            0.93,
+            0.85
           ],
           "Decay": [
             0.4784313725,
             0.3098039216,
             0.8392156863
           ],
-          "Glare": 0.12,
-          "Haze": 0.8
+          "Glare": 0,
+          "Haze": 0.2
         }
       },
       "Sky": {
