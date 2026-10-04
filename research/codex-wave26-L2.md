@@ -30,3 +30,8 @@ Inputs:
    - The Landing Pad floor rects are covered.
    - The mood preset respects the bloom caps.
    - The part count is 1,500 or fewer.
+
+## Style addendum (Zion 17:06Z, see the bible's "Art style")
+- **LandingPad mood:** push ColorCorrection Saturation to about 0.3 and Contrast to 0.15, use a warm bright sun, and tint shadows purple or blue through OutdoorAmbient. Bloom stays capped.
+- **Outline pool:** a client OutlinePool that keeps Highlight outlines (OutlineOnly, dark) on the nearest 20 enemies, characters and bosses.
+  - Spec: it never exceeds 20 active outlines.
