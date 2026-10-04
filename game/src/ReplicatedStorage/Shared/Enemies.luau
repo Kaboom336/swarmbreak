@@ -103,8 +103,6 @@ local Defs: { [string]: EnemyDef } = {
 		Flying = false,
 		Coins = 120,
 		Boss = true,
-		Summons = "Runner",
-		SummonEvery = 6,
 	},
 	Warden = {
 		Name = "Sky King",

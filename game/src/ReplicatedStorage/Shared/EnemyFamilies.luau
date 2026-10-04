@@ -15,6 +15,7 @@ EnemyFamilies.All = {
 			Tank = "Tank",
 			Flyer = "Flyer",
 			Elite = "Brute",
+			Boss = "Queen",
 		},
 		Rigs = {
 			Swarmer = "Mite",
@@ -22,6 +23,7 @@ EnemyFamilies.All = {
 			Shooter = "Shooter",
 			Tank = "Tank",
 			Flyer = "Flyer",
+			Boss = "Queen",
 		},
 	},
 } :: { [string]: Family }
@@ -34,6 +36,7 @@ EnemyFamilies.RigHeights = {
 	Shooter = 6.5,
 	Tank = 10,
 	Flyer = 6,
+	Boss = 16,
 } :: { [string]: number }
 
 function EnemyFamilies.roleForEnemy(familyId: string, enemyType: string): string?

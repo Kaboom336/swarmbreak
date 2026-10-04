@@ -56,6 +56,15 @@ local function swingWeapon(shooter: Player, slam: boolean)
 end
 
 local handlers: { [string]: (any) -> () } = {}
+local queenHazards: { Instance } = {}
+local QUEEN_KILL_CAMERA = "SwarmQueenKillCamera"
+
+local function clearQueenHazards()
+	for _, hazard in queenHazards do
+		hazard:Destroy()
+	end
+	table.clear(queenHazards)
+end
 
 handlers.shot = function(d)
 	local color = c3(d.Color)
@@ -172,7 +181,6 @@ handlers.death = function(d)
 		ClientFX.sound("Explosion", d.Position)
 	end
 	if d.Boss then
-		ClientFX.shake(5)
 		ClientFX.fovKick(12, 0.9)
 	end
 end
@@ -198,8 +206,140 @@ end
 handlers.boss = function(d)
 	ClientFX.sound("BossRoar")
 	ClientFX.sound("BossThunder")
-	ClientFX.shake(4)
 	ClientFX.ring(d.Position, c3(d.Color), 40, 1.5)
+end
+
+handlers.queenTell = function(d)
+	local telegraph = c3(Theme.Telegraph)
+	if d.Model and d.Model.Parent then
+		ClientFX.glowPulse(d.Model, telegraph, d.Duration)
+	end
+	ClientFX.sound("BossRoar", d.Origin, 0.45)
+	local groundY = d.Target.Y - 3
+	local originGround = Vector3.new(d.Origin.X, groundY, d.Origin.Z)
+	if d.Shape == "Arc" then
+		local previous = originGround + (CFrame.Angles(0, math.rad(-100), 0) * d.Direction) * 22
+		for step = 1, 10 do
+			local angle = -100 + step * 20
+			local point = originGround + (CFrame.Angles(0, math.rad(angle), 0) * d.Direction) * 22
+			ClientFX.tracer(previous, point, telegraph, 2, d.Duration)
+			previous = point
+		end
+	elseif d.Shape == "ThreeCircles" then
+		for _, position in d.Circles do
+			ClientFX.groundCircle(position - Vector3.new(0, 3, 0), telegraph, 7, d.Duration)
+		end
+	else
+		ClientFX.tracer(
+			originGround,
+			Vector3.new(d.Target.X, groundY, d.Target.Z),
+			telegraph,
+			8,
+			d.Duration
+		)
+	end
+end
+
+handlers.queenAttack = function(d)
+	local goo = c3(Theme.Goo)
+	if d.Shape == "ThreeCircles" then
+		for _, position in d.Circles do
+			ClientFX.burst(position, goo, 18, 0.5, 12, 0.35, false)
+		end
+	else
+		ClientFX.burst(d.Target, goo, 24, 0.6, 18, 0.4, false)
+	end
+end
+
+handlers.queenPhase = function(d)
+	clearQueenHazards()
+	ClientFX.sound("BossRoar", d.Position)
+	local parent = workspace:FindFirstChild("ClientFX") or workspace
+	for index, pool in d.Pools do
+		local hazard = Instance.new("Part")
+		hazard.Name = "QueenGoo_" .. index
+		hazard.Anchored = true
+		hazard.CanCollide = false
+		hazard.CanQuery = false
+		hazard.CanTouch = false
+		hazard.CastShadow = false
+		hazard.Shape = Enum.PartType.Cylinder
+		hazard.Size = Vector3.new(0.15, pool.Radius * 2, pool.Radius * 2)
+		hazard.CFrame = CFrame.new(pool.x, 1.1, pool.z) * CFrame.Angles(0, 0, math.pi / 2)
+		hazard.Color = c3(Theme.Goo)
+		hazard.Material = Enum.Material.Glass
+		hazard.Transparency = 0.3
+		hazard.Parent = parent
+		local outline = Instance.new("SelectionBox")
+		outline.Name = "TelegraphOutline"
+		outline.Adornee = hazard
+		outline.Color3 = c3(Theme.Telegraph)
+		outline.LineThickness = 0.05
+		outline.SurfaceTransparency = 1
+		outline.Parent = hazard
+		table.insert(queenHazards, hazard)
+	end
+end
+
+handlers.queenEnd = function(_d)
+	clearQueenHazards()
+end
+
+handlers.queenKill = function(d)
+	clearQueenHazards()
+	local position = d.Position :: Vector3
+	local goo = c3(Theme.Goo)
+	ClientFX.burst(position, goo, 90, 1.5, 48, Feel.BossKillSlowMoSeconds, false)
+	ClientFX.burst(position + Vector3.new(0, 6, 0), c3(Theme.Loot), 45, 1, 36, 0.6, false)
+	ClientFX.sound("Explosion", position)
+
+	local playerGui = player:WaitForChild("PlayerGui")
+	local banner = Instance.new("TextLabel")
+	banner.Name = "OutpostCleared"
+	banner.AnchorPoint = Vector2.new(0.5, 0.5)
+	banner.Position = UDim2.fromScale(0.5, 0.35)
+	banner.Size = UDim2.fromOffset(720, 100)
+	banner.BackgroundTransparency = 1
+	banner.Font = UiKit.Fonts.Banner
+	banner.Text = "OUTPOST 9 CLEARED"
+	banner.TextColor3 = c3(Theme.Loot)
+	banner.TextSize = 64
+	banner.TextStrokeTransparency = 0
+	banner.Parent = playerGui
+	TweenService:Create(
+		banner,
+		TweenInfo.new(Feel.BossKillSlowMoSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{ TextTransparency = 1, TextStrokeTransparency = 1 }
+	):Play()
+	task.delay(Feel.BossKillSlowMoSeconds, function()
+		banner:Destroy()
+	end)
+
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return
+	end
+	RunService:UnbindFromRenderStep(QUEEN_KILL_CAMERA)
+	local startedAt = os.clock()
+	local startOffset = camera.CFrame.Position - position
+	local radius = math.max(18, (startOffset * Vector3.new(1, 0, 1)).Magnitude)
+	local height = math.max(8, startOffset.Y)
+	local angle = math.atan2(startOffset.Z, startOffset.X)
+	workspace:SetAttribute("ClientTimeScale", Feel.BossKillSlowMoScale)
+	camera.CameraType = Enum.CameraType.Scriptable
+	RunService:BindToRenderStep(QUEEN_KILL_CAMERA, Enum.RenderPriority.Camera.Value + 1, function()
+		local elapsed = os.clock() - startedAt
+		local alpha = math.clamp(elapsed / Feel.BossKillSlowMoSeconds, 0, 1)
+		local orbit = angle + alpha * math.pi * 0.8
+		local cameraPosition = position
+			+ Vector3.new(math.cos(orbit) * radius, height, math.sin(orbit) * radius)
+		camera.CFrame = CFrame.lookAt(cameraPosition, position + Vector3.new(0, 5, 0))
+		if alpha >= 1 then
+			RunService:UnbindFromRenderStep(QUEEN_KILL_CAMERA)
+			workspace:SetAttribute("ClientTimeScale", 1)
+			camera.CameraType = Enum.CameraType.Custom
+		end
+	end)
 end
 
 handlers.sound = function(d)

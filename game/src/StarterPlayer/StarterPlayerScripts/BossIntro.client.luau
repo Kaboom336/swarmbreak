@@ -4,14 +4,24 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
+local ContextActionService = game:GetService("ContextActionService")
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
-local BossIntro = ReplicatedStorage:WaitForChild("Remotes").BossIntro :: RemoteEvent
-local LightingPresets = require(ReplicatedStorage.Shared.LightingPresets)
-local Maps = require(ReplicatedStorage.Shared.Maps)
-local Theme = require(ReplicatedStorage.Shared.Theme)
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local BossIntro = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BossIntro") :: RemoteEvent
+local Feel = require(Shared:WaitForChild("Feel"))
+local LightingPresets = require(Shared:WaitForChild("LightingPresets"))
+local Maps = require(Shared:WaitForChild("Maps"))
+local Theme = require(Shared:WaitForChild("Theme"))
+local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 local UiKit = require(script.Parent:WaitForChild("UiKit"))
+
+local INPUT_LOCK = "SwarmQueenIntroLock"
+
+local function sinkInput(): Enum.ContextActionResult
+	return Enum.ContextActionResult.Sink
+end
 
 local function normalizedColor(t: { number }): Color3
 	return Color3.new(t[1], t[2], t[3])
@@ -58,6 +68,18 @@ end
 
 BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number)
 	applyLightingPreset(LightingPresets.BossFight)
+	player:SetAttribute("BossIntroInputLocked", true)
+	local lockedInputs: { EnumItem } = Enum.PlayerActions:GetEnumItems()
+	table.insert(lockedInputs, Enum.UserInputType.MouseButton1)
+	table.insert(lockedInputs, Enum.UserInputType.Touch)
+	table.insert(lockedInputs, Enum.KeyCode.ButtonR2)
+	ContextActionService:BindActionAtPriority(
+		INPUT_LOCK,
+		sinkInput,
+		false,
+		Enum.ContextActionPriority.High.Value,
+		table.unpack(lockedInputs)
+	)
 	local arena = workspace:FindFirstChild("Arena")
 	local bossSpawn = arena and arena:FindFirstChild("BossSpawn") :: BasePart?
 	local gui = player:WaitForChild("PlayerGui")
@@ -80,7 +102,9 @@ BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number)
 	name.Size = UDim2.new(1, 0, 0, 80)
 	name.Position = UDim2.new(0, 0, 0.62, 0)
 	name.BackgroundTransparency = 1
-	name.Text = string.upper(bossName)
+	name.Text = if bossName == "Swarm Queen"
+		then "SWARM QUEEN\nMother of the Nest"
+		else string.upper(bossName)
 	name.Font = UiKit.Fonts.Banner
 	name.TextSize = 64
 	name.TextColor3 = Color3.fromRGB(Theme.Telegraph[1], Theme.Telegraph[2], Theme.Telegraph[3])
@@ -88,6 +112,16 @@ BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number)
 	name.TextTransparency = 1
 	name.Parent = card
 	TweenService:Create(name, TweenInfo.new(0.8), { TextTransparency = 0 }):Play()
+	if bossSpawn then
+		ClientFX.ring(
+			bossSpawn.Position,
+			Color3.fromRGB(Theme.OutpostShade[1], Theme.OutpostShade[2], Theme.OutpostShade[3]),
+			38,
+			0.8
+		)
+		ClientFX.sound("BossRoar", bossSpawn.Position)
+	end
+	ClientFX.shake(Feel.BossIntroShakePulse)
 
 	if bossSpawn then
 		camera.CameraType = Enum.CameraType.Scriptable
@@ -99,6 +133,8 @@ BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number)
 		}):Play()
 	end
 	task.wait(seconds)
+	ContextActionService:UnbindAction(INPUT_LOCK)
+	player:SetAttribute("BossIntroInputLocked", false)
 	camera.CameraType = Enum.CameraType.Custom
 	card:Destroy()
 	local mapName = if arena then arena:GetAttribute("MapName") else nil

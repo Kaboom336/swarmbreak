@@ -17,7 +17,7 @@ export type Rig = {
 	HipHeight: number,
 }
 
-local RIG_KEYS = { "Mite", "Runner", "Shooter", "Tank", "Flyer" }
+local RIG_KEYS = { "Mite", "Runner", "Shooter", "Tank", "Flyer", "Queen" }
 local templates: { [string]: Model } = {}
 local warned: { [string]: boolean } = {}
 

@@ -47,6 +47,9 @@ Feel.KnockbackSpeed = 8
 Feel.KnockbackStuds = 2
 Feel.GhostKnockbackStuds = 3
 Feel.GemMagnetRadius = 18
+Feel.BossIntroShakePulse = 0.3
+Feel.BossKillSlowMoSeconds = 0.6
+Feel.BossKillSlowMoScale = 0.35
 
 -- Every enemy gets a bloodless teal/green goo-burst accent on death.
 Feel.DeathBurstColors = {
