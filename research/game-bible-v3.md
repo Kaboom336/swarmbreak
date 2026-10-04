@@ -49,13 +49,28 @@ Each core has its own rooms, palette, drops and story beats. Nothing is added wi
 - Clean, simple weapon animations. Short, clean cutscenes between areas and for ultimate abilities.
 - Difficulty is semi-hard: starter cores are easy and higher difficulties are challenging, but always fair.
 
+## Cinematic combat (Zion 10/04 16:40Z)
+- **Combat camera:** during swarm rounds the camera shifts gently.
+  - It pulls wider when a crowd builds and tilts slightly lower and closer on elite and boss fights.
+  - It always eases and never cuts while the player is aiming. The control feel comes first.
+- **Ability cinematics:** each ultimate gets a 1-2 s action-movie shot. Example: a scythe dash-spin with an orbit camera, a brief time slow for the user only, then a snap back to the play camera.
+  - Server time never stops.
+  - Players can skip it or set it to "short" in settings.
+- **Weapons:** clean, smooth animations per weapon class (idle, attack combo, heavy, ultimate). Each weapon gets 2-3 abilities, chosen from a pool through the skill tree, so fights don't get stale.
+- **Mobile is a first-class platform.** Most Roblox players are on phones.
+  - Cinematics are auto-play and short, and never take control mid-fight except during an ultimate the player chose to use.
+  - The camera changes only frame the action; aiming stays auto-aim.
+  - Big touch buttons: attack, dash, jump, slide, 2 abilities and the ultimate.
+  - Test every build at phone size.
+
 ## Character
 - Shown through equipment, tools, class and subclass (from the skill tree and your core path).
 - **Races (Claude's call):** not at launch. Class plus gear gives the same perks with fewer models to make well. Revisit after the first two cores.
 
 ## Build order (each step must look good before the next)
 1. **M1 Movement:** always-sprint, dash, double jump and slide, with 3 variants each (Codex, code only).
-2. **Mars Core v1:** Outpost 9 becomes the Mars Core, with the kit art (after the Studio importer upload), the Nest creatures as martians, and the Queen as its boss.
+2. **K1 Combat camera and the first weapon kit** (a scythe with dash-spin and an ultimate cinematic), mobile-first. Codex.
+3. **Mars Core v1:** Outpost 9 becomes the Mars Core, with the kit art (after the Studio importer upload), the Nest creatures as martians, and the Queen as its boss.
 3. **Lobby hub v1:** the hub centre built from the space kit, with Play, Shop and Upgrade working. Base plots come later.
 4. Persistent Gems and Gold with stat upgrades. The skill tree and subclass come after.
 5. The second core (Tech, which reuses the most kit art), then base building, then Fantasy and Elemental.
