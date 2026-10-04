@@ -258,7 +258,7 @@ local function bindCharacter(character: Model)
 		player.CameraMinZoomDistance = framing.Distance
 		player.CameraMaxZoomDistance = framing.Distance
 		humanoid.CameraOffset = Vector3.new(CameraConfig.RightOffset, framing.Height, 0)
-		camera.FieldOfView = framing.Fov
+		camera:SetAttribute("BaseFov", framing.Fov)
 
 		local look = camera.CFrame.LookVector
 		local horizontalLook = Vector3.new(look.X, 0, look.Z)

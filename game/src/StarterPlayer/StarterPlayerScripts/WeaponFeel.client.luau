@@ -20,6 +20,8 @@ local recoilStartedAt: number? = nil
 local swingStartedAt: number? = nil
 local swingStage = 1
 local abilityStartedAt: number? = nil
+local abilityAnimTime = 0 -- animation-time seconds, scaled by LocalAnimationSpeed
+local lastFeelAt = os.clock()
 local abilityKind = ""
 local aimDirection: Vector3? = nil
 local aimExpiresAt = 0
@@ -164,6 +166,7 @@ event.Event:Connect(function(kind: string, direction: Vector3?, detail: any)
 		ClientFX.shake(Feel.WeaponCameraKick)
 	elseif kind == "ability" then
 		abilityStartedAt = os.clock()
+		abilityAnimTime = 0
 		abilityKind = tostring(detail)
 		trailFor(char)
 	else
@@ -203,6 +206,10 @@ RunService:BindToRenderStep("WeaponFeel", Enum.RenderPriority.Character.Value + 
 	end
 
 	local now = os.clock()
+	if abilityStartedAt then
+		abilityAnimTime += (now - lastFeelAt) * ((player:GetAttribute("LocalAnimationSpeed") :: number?) or 1)
+	end
+	lastFeelAt = now
 	if (player:GetAttribute("WeaponHitstopUntil") or 0) > now then
 		return
 	end
@@ -217,11 +224,7 @@ RunService:BindToRenderStep("WeaponFeel", Enum.RenderPriority.Character.Value + 
 		then AnimCurves.comboSwingAt(swingStage, now - swingStartedAt)
 		else { PitchDegrees = 0, RollDegrees = 0 }
 	local ability = if abilityStartedAt
-		then AnimCurves.scytheAbilityAt(
-			abilityKind,
-			(now - abilityStartedAt)
-				* ((player:GetAttribute("LocalAnimationSpeed") :: number?) or 1)
-		)
+		then AnimCurves.scytheAbilityAt(abilityKind, abilityAnimTime)
 		elseif weapon:GetAttribute("WeaponId") == "Reaper" then AnimCurves.scytheIdleAt(now)
 		else AnimCurves.scytheAbilityAt("", 0)
 	if shoulder then
@@ -251,7 +254,7 @@ RunService:BindToRenderStep("WeaponFeel", Enum.RenderPriority.Character.Value + 
 	if
 		abilityStartedAt
 		and type(abilityDuration) == "number"
-		and now - abilityStartedAt >= abilityDuration
+		and abilityAnimTime >= abilityDuration
 	then
 		abilityStartedAt = nil
 		abilityKind = ""

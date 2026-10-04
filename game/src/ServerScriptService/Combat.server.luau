@@ -209,8 +209,12 @@ WeaponAbility.OnServerEvent:Connect(function(plr, abilityId: any)
 	if not root or not root:IsA("BasePart") or not humanoid or humanoid.Health <= 0 then
 		return
 	end
+	local loadout = AbilityPool.defaultLoadout("Reaper")
+	local isUltimate = abilityId == loadout.Ultimate
+	if not isUltimate and not table.find(loadout.Abilities, abilityId) then
+		return -- only the equipped loadout may fire (K1 review)
+	end
 	local ability = AbilityPool.find("Reaper", abilityId)
-	local isUltimate = abilityId == AbilityPool.Ultimates.Reaper
 	if (not ability or not ability.Implemented) and not isUltimate then
 		return
 	end

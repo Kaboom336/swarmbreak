@@ -205,8 +205,30 @@ local actions = {
 	Ultimate = { Key = Enum.KeyCode.ButtonY, Label = "ULT" },
 }
 
-ContextActionService:BindAction("Attack", function(_, state)
+local function overGui(input: InputObject): boolean
+	if UserInputService:GetFocusedTextBox() then
+		return true
+	end
+	if input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+		return false
+	end
+	local playerGui = player:FindFirstChildOfClass("PlayerGui")
+	if not playerGui then
+		return false
+	end
+	for _, object in playerGui:GetGuiObjectsAtPosition(input.Position.X, input.Position.Y) do
+		if object:IsA("GuiButton") and object.Visible then
+			return true
+		end
+	end
+	return false
+end
+
+ContextActionService:BindAction("Attack", function(_, state, input)
 	if state == Enum.UserInputState.Begin then
+		if overGui(input) then
+			return Enum.ContextActionResult.Pass -- shop/settings clicks never attack (K1 review)
+		end
 		player:SetAttribute("CombatAttackHeld", true)
 	elseif state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
 		player:SetAttribute("CombatAttackHeld", false)
