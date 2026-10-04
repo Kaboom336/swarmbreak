@@ -815,9 +815,11 @@ function PlayerData.pickReward(plr: Player, id: string): (boolean, string)
 		local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
 		if root and root:IsA("BasePart") then
 			FX:FireAllClients("evolve", {
+				Player = plr,
 				Position = root.Position,
 				Color = Evolutions.Elements[recipe.Element].Color,
 				Tier = 3,
+				Name = recipe.Evolved,
 			})
 		end
 		sendFunnel(plr, "evolve_in_run", {

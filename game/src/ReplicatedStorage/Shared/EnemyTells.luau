@@ -6,12 +6,14 @@ export type EnemyTell = {
 	GlowColor: { number },
 	Windup: number,
 	GroundAoeCircle: boolean,
+	WindupDecal: boolean,
 }
 
 export type AttackTimeline = {
 	TellStartsAt: number,
 	DamageAt: number,
 	ShowGroundCircle: boolean,
+	ShowWindupDecal: boolean,
 }
 
 local Defs: { [string]: EnemyTell } = {
@@ -21,6 +23,7 @@ local Defs: { [string]: EnemyTell } = {
 		GlowColor = { 255, 130, 40 },
 		Windup = 0.4,
 		GroundAoeCircle = false,
+		WindupDecal = true,
 	},
 	Runner = {
 		SoundKey = "Dash",
@@ -28,6 +31,7 @@ local Defs: { [string]: EnemyTell } = {
 		GlowColor = { 255, 180, 50 },
 		Windup = 0.4,
 		GroundAoeCircle = false,
+		WindupDecal = true,
 	},
 	Flyer = {
 		SoundKey = "EnemySpawn",
@@ -35,6 +39,7 @@ local Defs: { [string]: EnemyTell } = {
 		GlowColor = { 255, 150, 70 },
 		Windup = 0.5,
 		GroundAoeCircle = false,
+		WindupDecal = true,
 	},
 	Tank = {
 		SoundKey = "Slam",
@@ -42,6 +47,7 @@ local Defs: { [string]: EnemyTell } = {
 		GlowColor = { 255, 100, 30 },
 		Windup = 0.7,
 		GroundAoeCircle = false,
+		WindupDecal = true,
 	},
 	Spitter = {
 		SoundKey = "Crate",
@@ -49,6 +55,7 @@ local Defs: { [string]: EnemyTell } = {
 		GlowColor = { 255, 190, 60 },
 		Windup = 0.6,
 		GroundAoeCircle = true,
+		WindupDecal = true,
 	},
 	Brute = {
 		SoundKey = "BossRoar",
@@ -56,6 +63,7 @@ local Defs: { [string]: EnemyTell } = {
 		GlowColor = { 255, 80, 20 },
 		Windup = 0.8,
 		GroundAoeCircle = true,
+		WindupDecal = true,
 	},
 	Queen = {
 		SoundKey = "BossRoar",
@@ -63,6 +71,7 @@ local Defs: { [string]: EnemyTell } = {
 		GlowColor = { 255, 120, 30 },
 		Windup = 0.7,
 		GroundAoeCircle = true,
+		WindupDecal = true,
 	},
 	Warden = {
 		SoundKey = "BossThunder",
@@ -70,6 +79,7 @@ local Defs: { [string]: EnemyTell } = {
 		GlowColor = { 255, 170, 40 },
 		Windup = 0.8,
 		GroundAoeCircle = true,
+		WindupDecal = true,
 	},
 }
 
@@ -80,6 +90,7 @@ function EnemyTells.attackTimeline(tell: EnemyTell, now: number): AttackTimeline
 		TellStartsAt = now,
 		DamageAt = now + math.max(0, tell.Windup),
 		ShowGroundCircle = tell.GroundAoeCircle,
+		ShowWindupDecal = tell.WindupDecal,
 	}
 end
 

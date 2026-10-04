@@ -8,7 +8,7 @@ local PlayerPose = {
 	DashDuration = 0.28,
 	DashTrailLifetime = 0.12,
 	HitDuration = 0.1,
-	HitFlinchDegrees = 10,
+	HitFlinchDegrees = 6,
 	LevelUpDuration = 0.45,
 	LevelUpPop = 0.6,
 }

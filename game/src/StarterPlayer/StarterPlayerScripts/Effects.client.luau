@@ -2,10 +2,14 @@
 -- Renders every FX event the server broadcasts. All visuals are local, so the server stays cheap.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local AnimCurves = require(ReplicatedStorage.Shared.AnimCurves)
 local Feel = require(ReplicatedStorage.Shared.Feel)
 local SfxMap = require(ReplicatedStorage.Shared.SfxMap)
+local Theme = require(ReplicatedStorage.Shared.Theme)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
+local UiKit = require(script.Parent:WaitForChild("UiKit"))
 
 local player = Players.LocalPlayer
 local FX = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("FX") :: RemoteEvent
@@ -187,7 +191,7 @@ handlers.tell = function(d)
 	end
 	ClientFX.sound(d.Sound, d.Position)
 	if d.GroundPosition then
-		ClientFX.groundCircle(d.GroundPosition, color, d.Radius, d.Duration)
+		ClientFX.groundCircle(d.GroundPosition, c3(Theme.Telegraph), d.Radius, d.Duration)
 	end
 end
 
@@ -226,16 +230,87 @@ handlers.pull = function(d)
 end
 
 -- Weapon evolved in the shop: a column of rings in the element's color.
-handlers.evolve = function(d)
-	local color = c3(d.Color)
-	for i = 1, d.Tier + 1 do
-		task.delay((i - 1) * 0.12, function()
-			ClientFX.ring(d.Position + Vector3.new(0, i * 1.5 - 1, 0), color, 4 + i, 0.6)
+local EVOLVE_CAMERA_BINDING = "SwarmBreakEvolutionCamera"
+local evolveToken = 0
+
+local function localEvolutionCinematic(d, color: Color3)
+	evolveToken += 1
+	local token = evolveToken
+	RunService:UnbindFromRenderStep(EVOLVE_CAMERA_BINDING)
+	local camera = workspace.CurrentCamera
+	local startCFrame = if camera then camera.CFrame else nil
+	local startedAt = os.clock()
+	if camera and startCFrame then
+		RunService:BindToRenderStep(
+			EVOLVE_CAMERA_BINDING,
+			Enum.RenderPriority.Camera.Value + 3,
+			function()
+				if token ~= evolveToken or not camera.Parent then
+					RunService:UnbindFromRenderStep(EVOLVE_CAMERA_BINDING)
+					return
+				end
+				local elapsed = os.clock() - startedAt
+				local slowElapsed = AnimCurves.slowMoElapsed(elapsed)
+				if slowElapsed >= AnimCurves.SlowMoSeconds then
+					RunService:UnbindFromRenderStep(EVOLVE_CAMERA_BINDING)
+					return
+				end
+				local push = AnimCurves.evolutionEnvelope(slowElapsed) * 2.5
+				local position = startCFrame.Position + startCFrame.LookVector * push
+				camera.CFrame = CFrame.lookAt(position, d.Position + Vector3.new(0, 1.5, 0))
+			end
+		)
+	end
+
+	local playerGui = player:WaitForChild("PlayerGui")
+	local hud = playerGui:WaitForChild("Hud", 2)
+	if hud and hud:IsA("ScreenGui") then
+		local previous = hud:FindFirstChild("EvolveBanner")
+		if previous then
+			previous:Destroy()
+		end
+		local banner = UiKit.Banner(hud, "EvolveBanner", "EVOLVED: " .. tostring(d.Name))
+		banner.TextTransparency = 1
+		banner.TextStrokeTransparency = 1
+		TweenService:Create(banner, TweenInfo.new(0.1), {
+			TextTransparency = 0,
+			TextStrokeTransparency = 0.2,
+		}):Play()
+		task.delay((AnimCurves.SlowMoSeconds - 0.15) / AnimCurves.SlowMoScale, function()
+			if banner.Parent then
+				local fade = TweenService:Create(banner, TweenInfo.new(0.15), {
+					TextTransparency = 1,
+					TextStrokeTransparency = 1,
+				})
+				fade:Play()
+				fade.Completed:Once(function()
+					banner:Destroy()
+				end)
+			end
 		end)
 	end
-	ClientFX.burst(d.Position, color, 30, 0.6, 18, 0.7, true)
+	ClientFX.flash(d.Position, color, 24, AnimCurves.SlowMoSeconds / AnimCurves.SlowMoScale)
+end
+
+handlers.evolve = function(d)
+	local color = c3(d.Color)
+	local isLocal = d.Player == player
+	for i = 1, d.Tier + 1 do
+		task.delay(AnimCurves.evolutionRingDelay(i, d.Tier + 1), function()
+			ClientFX.ring(
+				d.Position + Vector3.new(0, i * 1.5 - 1, 0),
+				color,
+				4 + i,
+				if isLocal then 0.9 else 0.6
+			)
+		end)
+	end
+	ClientFX.burst(d.Position, color, 30, 0.6, 18, if isLocal then 1.05 else 0.7, true)
 	ClientFX.flash(d.Position, color, 20, 0.5)
 	ClientFX.sound("Buy", d.Position)
+	if isLocal then
+		localEvolutionCinematic(d, color)
+	end
 end
 
 FX.OnClientEvent:Connect(function(kind: string, data: any)

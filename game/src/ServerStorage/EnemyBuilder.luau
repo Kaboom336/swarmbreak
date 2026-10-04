@@ -247,6 +247,11 @@ local function buildHumanoidTemplate(typeName: string, size: Vector3, cf: CFrame
 	model.PrimaryPart = root
 	model:SetAttribute("HumanoidEnemy", true)
 	local palette = Theme.Enemy[typeName] or Theme.Enemy.Walker
+	for _, descendant in model:GetDescendants() do
+		if descendant:IsA("BasePart") and not ModelParts.isGlow(descendant.Name) then
+			descendant.Color = body
+		end
+	end
 	attachImportedAccessories(model, typeName, size.Y, cf, body, c3(palette.Accent))
 	return {
 		Model = model,
@@ -669,6 +674,10 @@ end
 function EnemyBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig
 	local humanoid = buildHumanoid(typeName, size, cf)
 	if humanoid then
+		if typeName == "Brute" then
+			local palette = Theme.Enemy.Brute or Theme.Enemy.Walker
+			bossDressing(humanoid.Model, humanoid.Torso, size.Y / 5, c3(palette.Accent))
+		end
 		return humanoid
 	end
 	local imported = buildImported(typeName, size, cf)

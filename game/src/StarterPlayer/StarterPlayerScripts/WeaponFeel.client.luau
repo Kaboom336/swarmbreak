@@ -11,13 +11,14 @@ event.Name = "WeaponFeelEvent"
 event.Parent = script.Parent
 
 local Feel = require(ReplicatedStorage.Shared.Feel)
-local WeaponPose = require(ReplicatedStorage.Shared.WeaponPose)
+local AnimCurves = require(ReplicatedStorage.Shared.AnimCurves)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 
 local player = Players.LocalPlayer
 
 local recoilStartedAt: number? = nil
 local swingStartedAt: number? = nil
+local swingStage = 1
 local aimDirection: Vector3? = nil
 local aimExpiresAt = 0
 local activeCharacter: Model? = nil
@@ -95,12 +96,12 @@ local function trailFor(char: Model)
 	trail.LightEmission = 1
 	trail.FaceCamera = true
 	trail.Parent = blade
-	task.delay(WeaponPose.SwingSeconds, function()
+	task.delay(AnimCurves.ComboDuration, function()
 		trail.Enabled = false
 	end)
-	Debris:AddItem(first, WeaponPose.SwingSeconds + trail.Lifetime)
-	Debris:AddItem(second, WeaponPose.SwingSeconds + trail.Lifetime)
-	Debris:AddItem(trail, WeaponPose.SwingSeconds + trail.Lifetime)
+	Debris:AddItem(first, AnimCurves.ComboDuration + trail.Lifetime)
+	Debris:AddItem(second, AnimCurves.ComboDuration + trail.Lifetime)
+	Debris:AddItem(trail, AnimCurves.ComboDuration + trail.Lifetime)
 end
 
 local function muzzleFlash(char: Model)
@@ -142,7 +143,7 @@ local function muzzleFlash(char: Model)
 	Debris:AddItem(flash, Feel.WeaponMuzzleFlashSeconds)
 end
 
-event.Event:Connect(function(kind: string, direction: Vector3?)
+event.Event:Connect(function(kind: string, direction: Vector3?, comboStage: number?)
 	if kind == "aim" then
 		aimDirection = direction
 		aimExpiresAt = if direction then os.clock() + 0.1 else 0
@@ -156,6 +157,7 @@ event.Event:Connect(function(kind: string, direction: Vector3?)
 	aimExpiresAt = os.clock() + 0.5
 	if kind == "swing" then
 		swingStartedAt = os.clock()
+		swingStage = comboStage or 1
 		trailFor(char)
 		ClientFX.shake(Feel.WeaponCameraKick)
 	else
@@ -202,25 +204,30 @@ RunService:BindToRenderStep("WeaponFeel", Enum.RenderPriority.Character.Value + 
 	local yaw =
 		math.clamp(-math.atan2(localDirection.X, -localDirection.Z), math.rad(-60), math.rad(60))
 	local pitch = math.clamp(math.asin(localDirection.Y), math.rad(-45), math.rad(45))
-	local swingDegrees = if swingStartedAt then WeaponPose.swingAt(now - swingStartedAt) else 0
+	local swing = if swingStartedAt
+		then AnimCurves.comboSwingAt(swingStage, now - swingStartedAt)
+		else { PitchDegrees = 0, RollDegrees = 0 }
 	if shoulder then
-		shoulder.Transform =
-			CFrame.Angles(math.rad(-75) - pitch, yaw * 0.7, math.rad(10 + swingDegrees))
+		shoulder.Transform = CFrame.Angles(
+			math.rad(-75 + swing.PitchDegrees) - pitch,
+			yaw * 0.7,
+			math.rad(10 + swing.RollDegrees)
+		)
 	end
 	if elbow then
 		elbow.Transform = CFrame.Angles(math.rad(-25), yaw * 0.3, 0)
 	end
 	if grip then
 		local recoil = if recoilStartedAt
-			then WeaponPose.recoilAt(now - recoilStartedAt)
+			then AnimCurves.fireLoopAt(now - recoilStartedAt)
 			else { BackStuds = 0, UpDegrees = 0 }
 		grip.Transform = CFrame.new(0, 0, recoil.BackStuds)
 			* CFrame.Angles(math.rad(-recoil.UpDegrees), 0, 0)
 	end
-	if recoilStartedAt and now - recoilStartedAt >= WeaponPose.RecoilSeconds then
+	if recoilStartedAt and now - recoilStartedAt >= AnimCurves.FireLoopDuration then
 		recoilStartedAt = nil
 	end
-	if swingStartedAt and now - swingStartedAt >= WeaponPose.SwingSeconds then
+	if swingStartedAt and now - swingStartedAt >= AnimCurves.ComboDuration then
 		swingStartedAt = nil
 	end
 end)
