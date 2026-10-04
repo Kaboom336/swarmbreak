@@ -78,7 +78,17 @@ while true do
 	else
 		local lines = {}
 		for i, row in rows do
-			table.insert(lines, string.format("%2d. %-20s wave %d", i, row.Name, row.Wave))
+			table.insert(
+				lines,
+				string.format(
+					"%2d. %-20s %s S%d / %d waves",
+					i,
+					row.Name,
+					row.Difficulty,
+					row.Stage,
+					row.Waves
+				)
+			)
 		end
 		list.Text = table.concat(lines, "\n")
 	end

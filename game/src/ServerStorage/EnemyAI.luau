@@ -586,7 +586,7 @@ task.spawn(function()
 				local spawns = workspace:FindFirstChild("Arena")
 					and (workspace :: any).Arena:FindFirstChild("EnemySpawns")
 				local waveValue = ReplicatedStorage:FindFirstChild("State")
-					and (ReplicatedStorage :: any).State:FindFirstChild("Wave")
+					and (ReplicatedStorage :: any).State:FindFirstChild("LayoutWave")
 				local wave = if waveValue then waveValue.Value else 0
 				w.Respawns += 1
 				local playerPositions = {}

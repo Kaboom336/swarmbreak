@@ -33,6 +33,7 @@ export type Beacon = Position & {
 export type Zone = Position & {
 	Id: string,
 	Name: string,
+	LightingPreset: string,
 	FirstWave: number,
 	LastWave: number,
 	Width: number,
@@ -143,6 +144,7 @@ ArenaLayout.Zones = {
 	{
 		Id = "LandingPad",
 		Name = "Landing Pad",
+		LightingPreset = "Station",
 		FirstWave = 1,
 		LastWave = 5,
 		x = 0,
@@ -153,6 +155,7 @@ ArenaLayout.Zones = {
 	{
 		Id = "Refinery",
 		Name = "Refinery",
+		LightingPreset = "MagmaRefinery",
 		FirstWave = 6,
 		LastWave = 10,
 		x = 200,
@@ -163,6 +166,7 @@ ArenaLayout.Zones = {
 	{
 		Id = "HiveCore",
 		Name = "Hive Core",
+		LightingPreset = "HiveHeart",
 		FirstWave = 11,
 		LastWave = 15,
 		x = 400,
@@ -239,6 +243,15 @@ function ArenaLayout.zoneForWave(wave: number): Zone
 		end
 	end
 	return ArenaLayout.Zones[#ArenaLayout.Zones]
+end
+
+function ArenaLayout.layoutWave(zoneId: string, localWave: number): number
+	for _, zone in ArenaLayout.Zones do
+		if zone.Id == zoneId then
+			return math.clamp(zone.FirstWave + localWave - 1, zone.FirstWave, zone.LastWave)
+		end
+	end
+	error("unknown arena zone: " .. zoneId)
 end
 
 -- The boss and wave 5/10 mini-bosses enter at the far end of the zone being fought in.

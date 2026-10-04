@@ -10,12 +10,13 @@ local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local BossIntro = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BossIntro") :: RemoteEvent
+local ArenaLayout = require(Shared:WaitForChild("ArenaLayout"))
 local Feel = require(Shared:WaitForChild("Feel"))
 local LightingPresets = require(Shared:WaitForChild("LightingPresets"))
-local Maps = require(Shared:WaitForChild("Maps"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 local UiKit = require(script.Parent:WaitForChild("UiKit"))
+local layoutWave = ReplicatedStorage:WaitForChild("State"):WaitForChild("LayoutWave") :: IntValue
 
 local INPUT_LOCK = "SwarmQueenIntroLock"
 
@@ -139,7 +140,6 @@ BossIntro.OnClientEvent:Connect(function(bossName: string, seconds: number, boss
 	player:SetAttribute("BossIntroInputLocked", false)
 	camera.CameraType = Enum.CameraType.Custom
 	card:Destroy()
-	local mapName = if arena then arena:GetAttribute("MapName") else nil
-	local map = Maps.get(if type(mapName) == "string" then mapName else nil)
-	applyLightingPreset(LightingPresets[map.LightingPreset])
+	local zone = ArenaLayout.zoneForWave(layoutWave.Value)
+	applyLightingPreset(LightingPresets[zone.LightingPreset])
 end)

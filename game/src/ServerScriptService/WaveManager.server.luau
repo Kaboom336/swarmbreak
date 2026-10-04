@@ -47,6 +47,7 @@ dropsFolder.Name = "Drops"
 dropsFolder.Parent = workspace
 
 local currentWave = 0
+local currentLayoutWave = 0
 local currentDifficultyId: Difficulty.TierName = Difficulty.Default
 local currentMap = Campaign.get(Campaign.DefaultId)
 local currentStage = CoreStages.get(Campaign.DefaultId, CoreStages.DefaultStage) :: CoreStages.Stage
@@ -148,7 +149,7 @@ local function spawnPortalCFrames(count: number): { CFrame }
 				if type(firstWave) == "number" then firstWave else nil,
 				if type(lastWave) == "number" then lastWave else nil,
 				if type(zoneId) == "string" then zoneId else nil,
-				currentWave,
+				currentLayoutWave,
 				playerZones
 			)
 		then
@@ -286,12 +287,14 @@ local function firstPackSpawnCFrame(): CFrame?
 			local position = root.Position
 				+ direction * horizontalDistance
 				+ Vector3.new(0, height, 0)
-			-- Keep the pack inside the walls when the player stands near an edge.
-			local limit = 72
+			-- Keep the pack inside the current stage's walls when the player stands near an edge.
+			local zone = ArenaLayout.zoneForWave(currentLayoutWave)
+			local halfWidth = zone.Width / 2 - 8
+			local halfDepth = zone.Depth / 2 - 8
 			position = Vector3.new(
-				math.clamp(position.X, -limit, limit),
+				math.clamp(position.X, zone.x - halfWidth, zone.x + halfWidth),
 				position.Y,
-				math.clamp(position.Z, -limit, limit)
+				math.clamp(position.Z, zone.z - halfDepth, zone.z + halfDepth)
 			)
 			return CFrame.lookAt(position, root.Position)
 		end
@@ -398,7 +401,7 @@ end
 local function startQueenPhaseTwo(model: Model, humanoid: Humanoid)
 	queenEncounterToken += 1
 	local token = queenEncounterToken
-	local zone = ArenaLayout.zoneForWave(Config.NormalWaves)
+	local zone = ArenaLayout.zoneForWave(currentLayoutWave)
 	local pools = BossFight.gooPools(ArenaLayout.floorRects(zone), ArenaLayout.ZoneSpawns)
 	FX:FireAllClients("queenPhase", { Position = model:GetPivot().Position, Pools = pools })
 
@@ -451,7 +454,7 @@ local function startQueenPhaseTwo(model: Model, humanoid: Humanoid)
 						if type(firstWave) == "number" then firstWave else nil,
 						if type(lastWave) == "number" then lastWave else nil,
 						if type(zoneId) == "string" then zoneId else nil,
-						currentWave,
+						currentLayoutWave,
 						occupiedZones
 					)
 				then
@@ -472,6 +475,18 @@ local function anyPlayersAlive(): boolean
 	return false
 end
 
+local function placePlayerInStageZone(plr: Player, index: number)
+	if currentStage.Zone == "LandingPad" then
+		return
+	end
+	local character = plr.Character
+	if not character then
+		return
+	end
+	local stageZone = ArenaLayout.zoneForWave(ArenaLayout.layoutWave(currentStage.Zone, 1))
+	character:PivotTo(CFrame.new(stageZone.x, 5, stageZone.z + (index - 1) * 6))
+end
+
 local function admitWaitingPlayers()
 	local aliveCoins = {}
 	for _, plr in Players:GetPlayers() do
@@ -481,24 +496,33 @@ local function admitWaitingPlayers()
 		end
 	end
 	local catchUpCoins = Economy.catchUpCoins(aliveCoins)
+	local admittedIndex = 0
 	for _, plr in Players:GetPlayers() do
 		-- Lobby players wait until they launch from the Start Here pad (InArena).
 		if PlayerData.isWaiting(plr) and plr:GetAttribute("InArena") == true then
 			PlayerData.setRunCoins(plr, catchUpCoins)
 			PlayerData.setWaiting(plr, false)
 			plr:LoadCharacter()
+			admittedIndex += 1
+			placePlayerInStageZone(plr, admittedIndex)
 		end
 	end
 end
 
-local function respawnAll()
+local function respawnAll(placeAllInStage: boolean?)
+	local stagePlayerIndex = 0
 	for _, plr in Players:GetPlayers() do
 		if PlayerData.isWaiting(plr) then
 			continue
 		end
 		local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+		local respawned = not hum or hum.Health <= 0
 		if not hum or hum.Health <= 0 then
 			plr:LoadCharacter()
+		end
+		if placeAllInStage or respawned then
+			stagePlayerIndex += 1
+			placePlayerInStageZone(plr, stagePlayerIndex)
 		end
 	end
 end
@@ -546,9 +570,11 @@ end
 -- Returns true if the wave was cleared, false on team wipe.
 local function runWave(wave: number): boolean
 	currentWave = wave
+	currentLayoutWave = ArenaLayout.layoutWave(currentStage.Zone, wave)
 	GameState.set("BossMaxHealth", 0) -- a boss removed without dying must not stick to later waves
 	publishMutation()
 	GameState.set("Wave", wave)
+	GameState.set("LayoutWave", currentLayoutWave)
 	for _, plr in Players:GetPlayers() do
 		if not PlayerData.isWaiting(plr) then
 			PlayerData.setRunWave(plr, wave)
@@ -594,7 +620,7 @@ local function runWave(wave: number): boolean
 	end
 
 	if bossName then
-		local spot = ArenaLayout.bossSpawnForWave(wave)
+		local spot = ArenaLayout.bossSpawnForWave(currentLayoutWave)
 		local bossAt = CFrame.new(spot.x, bossSpawn.Position.Y + 6, spot.z)
 		composition[bossName] = math.max(0, (composition[bossName] or 1) - 1)
 		if composition[bossName] == 0 then
@@ -756,6 +782,8 @@ local function gameLoop()
 	while true do
 		GameState.set("Phase", "idle")
 		GameState.set("Wave", 0)
+		currentLayoutWave = 0
+		GameState.set("LayoutWave", 0)
 		-- A run starts once a party launches from the lobby's Start Here pad.
 		while not anyPlayerInRun() do
 			task.wait(0.25)
@@ -766,6 +794,8 @@ local function gameLoop()
 		currentStage = selectedStage() :: CoreStages.Stage
 		GameState.set("Difficulty", currentDifficultyId)
 		GameState.set("Stage", currentStage.Id)
+		currentLayoutWave = ArenaLayout.layoutWave(currentStage.Zone, 1)
+		GameState.set("LayoutWave", currentLayoutWave)
 		local playerCount = 0
 		for _, plr in Players:GetPlayers() do
 			if PlayerData.isWaiting(plr) then
@@ -780,7 +810,7 @@ local function gameLoop()
 				kit = profile.Kit,
 			})
 		end
-		respawnAll()
+		respawnAll(true)
 
 		local wave = 0
 		local alive = true

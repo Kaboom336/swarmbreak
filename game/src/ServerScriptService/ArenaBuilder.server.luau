@@ -613,9 +613,15 @@ local function buildOutpost9()
 		bridgeDecks[bridge.Id] = deck
 	end
 
+	local state = ReplicatedStorage:WaitForChild("State")
+	local localWaveValue = state:WaitForChild("Wave") :: IntValue
+	local layoutWaveValue = state:WaitForChild("LayoutWave") :: IntValue
+	local banner = state:WaitForChild("ZoneBanner") :: StringValue
 	local opened: { [string]: boolean } = {}
 	local bossSpawn = arena:FindFirstChild("BossSpawn") :: BasePart?
 	local function openBridges(wave: number)
+		local zone = ArenaLayout.zoneForWave(wave)
+		applyLightingPreset(LightingPresets[zone.LightingPreset])
 		if bossSpawn then
 			local spot = ArenaLayout.bossSpawnForWave(wave)
 			bossSpawn.Position = Vector3.new(spot.x, 2, spot.z)
@@ -646,21 +652,19 @@ local function buildOutpost9()
 						}
 					)
 					:Play()
-				local state = ReplicatedStorage:WaitForChild("State")
-				local banner = state:WaitForChild("ZoneBanner") :: StringValue
-				banner.Value = "NEW ZONE"
-				task.delay(0.5, function()
-					if banner.Value == "NEW ZONE" then
-						banner.Value = ""
-					end
-				end)
+				if localWaveValue.Value > 0 then
+					banner.Value = "NEW ZONE"
+					task.delay(0.5, function()
+						if banner.Value == "NEW ZONE" then
+							banner.Value = ""
+						end
+					end)
+				end
 			end
 		end
 	end
-	local state = ReplicatedStorage:WaitForChild("State")
-	local waveValue = state:WaitForChild("Wave") :: IntValue
-	waveValue.Changed:Connect(openBridges)
-	openBridges(waveValue.Value)
+	layoutWaveValue.Changed:Connect(openBridges)
+	openBridges(layoutWaveValue.Value)
 
 	local traversal = Instance.new("Folder")
 	traversal.Name = "Traversal"

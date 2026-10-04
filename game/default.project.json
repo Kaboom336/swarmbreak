@@ -80,6 +80,12 @@
             "Value": 0
           }
         },
+        "LayoutWave": {
+          "$className": "IntValue",
+          "$properties": {
+            "Value": 0
+          }
+        },
         "Phase": {
           "$className": "StringValue",
           "$properties": {

@@ -97,6 +97,33 @@ test("mini-bosses spawn in the zone the wave is fought in", function()
 	eq(ArenaLayout.zoneForWave(0).Id, "LandingPad", "lobby wave maps to the first zone")
 end)
 
+test("stage-local waves stay inside their selected layout zone", function()
+	for _, case in
+		{
+			{ ZoneId = "Refinery", FirstWave = 6, LastWave = 10 },
+			{ ZoneId = "HiveCore", FirstWave = 11, LastWave = 15 },
+		}
+	do
+		for localWave = 1, 8 do
+			local layoutWave = ArenaLayout.layoutWave(case.ZoneId, localWave)
+			assert(
+				layoutWave >= case.FirstWave and layoutWave <= case.LastWave,
+				case.ZoneId .. " layout wave escaped its zone"
+			)
+			eq(ArenaLayout.zoneForWave(layoutWave).Id, case.ZoneId, "resolved zone")
+			assert(
+				ArenaLayout.zoneContains(
+					ArenaLayout.zoneForWave(layoutWave),
+					ArenaLayout.bossSpawnForWave(layoutWave)
+				),
+				case.ZoneId .. " boss spot"
+			)
+		end
+	end
+	eq(#ArenaLayout.openBridges(ArenaLayout.layoutWave("Refinery", 1)), 1, "Refinery bridges")
+	eq(#ArenaLayout.openBridges(ArenaLayout.layoutWave("HiveCore", 1)), 2, "Hive bridges")
+end)
+
 test("every zone fits inside the watchdog radius", function()
 	local EnemyWatchdog = load("EnemyWatchdog")
 	for _, zone in ArenaLayout.Zones do
