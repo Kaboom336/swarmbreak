@@ -20,3 +20,14 @@ test("wedged enemies respawn after being stuck long enough", function()
 	eq(EnemyWatchdog.nextStuck(stuck, 3, true), 0, "moving resets")
 	eq(EnemyWatchdog.nextStuck(stuck, 0, false), 0, "holding position on purpose resets")
 end)
+
+test("ground enemies stranded in the air or on a ledge respawn", function()
+	local air = 0
+	for _ = 1, EnemyWatchdog.AirborneSeconds do
+		air = EnemyWatchdog.nextAirborne(air, true, false)
+	end
+	eq(EnemyWatchdog.verdict(true, true, 0, 21, 0, 0, air), "Respawn", "freefall on the gate")
+	eq(EnemyWatchdog.nextAirborne(air, false, false), 0, "landing resets")
+	eq(EnemyWatchdog.nextAirborne(air, true, true), 0, "flyers are meant to be airborne")
+	eq(EnemyWatchdog.verdict(true, true, 0, 5, 0, 0, 1), "Ok", "a short jump is fine")
+end)
