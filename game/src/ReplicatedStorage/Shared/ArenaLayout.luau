@@ -329,6 +329,15 @@ function ArenaLayout.floorRects(zone: Zone): { FloorRect }
 	return rects
 end
 
+-- Stage start slot for a player: rows of 4 behind the zone centre, clear of the Refinery dash gap.
+function ArenaLayout.stageSpawn(zone: Zone, index: number): Position
+	local slot = math.max(1, index) - 1
+	return {
+		x = zone.x + (slot % 4) * 6 - 9,
+		z = zone.z - 24 - math.floor(slot / 4) * 6,
+	}
+end
+
 function ArenaLayout.onFloor(position: Position): boolean
 	for _, zone in ArenaLayout.Zones do
 		for _, r in ArenaLayout.floorRects(zone) do

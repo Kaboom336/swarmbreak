@@ -484,7 +484,8 @@ local function placePlayerInStageZone(plr: Player, index: number)
 		return
 	end
 	local stageZone = ArenaLayout.zoneForWave(ArenaLayout.layoutWave(currentStage.Zone, 1))
-	character:PivotTo(CFrame.new(stageZone.x, 5, stageZone.z + (index - 1) * 6))
+	local spot = ArenaLayout.stageSpawn(stageZone, index)
+	character:PivotTo(CFrame.new(spot.x, 5, spot.z))
 end
 
 local function admitWaitingPlayers()

@@ -61,3 +61,25 @@ test("Nest rigs scale to the S6 height bands, not the old primitive sizes", func
 	local source = fs.readFile("src/ServerStorage/EnemyRigBuilder.luau")
 	assert(source:find("EnemyFamilies.rigHeight", 1, true), "rig builder must scale by rigHeight")
 end)
+
+test(
+	"stage start slots stand on floor for 8 players (C1b: player 4 spawned over the Refinery gap)",
+	function()
+		for _, zone in ArenaLayout.Zones do
+			for index = 1, 8 do
+				local spot = ArenaLayout.stageSpawn(zone, index)
+				for _, offset in { { 0, 0 }, { -2, -2 }, { 2, 2 }, { -2, 2 }, { 2, -2 } } do
+					assert(
+						ArenaLayout.onFloor({ x = spot.x + offset[1], z = spot.z + offset[2] }),
+						zone.Id .. " slot " .. index .. " has no floor"
+					)
+				end
+			end
+		end
+		local source = fs.readFile("src/ServerScriptService/WaveManager.server.luau")
+		assert(
+			source:find("ArenaLayout.stageSpawn", 1, true),
+			"WaveManager must place players with stageSpawn"
+		)
+	end
+)
