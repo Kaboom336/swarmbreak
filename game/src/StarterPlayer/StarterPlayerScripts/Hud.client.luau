@@ -67,6 +67,7 @@ local OK = ClientFX.c3(UiTheme.Colors.Success)
 local BAD = ClientFX.c3(UiTheme.Colors.Danger)
 local GREY = ClientFX.c3(UiTheme.Colors.Disabled) -- a button you cannot afford yet
 local finalHud = {}
+finalHud.AnimeEffects = require(script.Parent:WaitForChild("AnimeEffects"))
 
 local screen = Instance.new("ScreenGui")
 screen.Name = "Hud"
@@ -144,7 +145,7 @@ vignette.ZIndex = 0
 vignette.Parent = screen
 for _, side in { "Top", "Bottom", "Left", "Right" } do
 	local f = Instance.new("Frame")
-	f.BackgroundColor3 = ClientFX.c3(Theme.Telegraph)
+	f.BackgroundColor3 = ClientFX.c3(Theme.Goo)
 	f.BorderSizePixel = 0
 	if side == "Top" then
 		f.Size = UDim2.new(1, 0, 0.22, 0)
@@ -251,6 +252,13 @@ bossFrame.Visible = true
 local bossFill = bossBar.Fill
 local bossLabel = bossBar.Label
 bossLabel.TextSize = 12
+
+finalHud.BossUi = require(script.Parent:WaitForChild("BossBar")).new(
+	screen,
+	bossFrame,
+	State,
+	Remotes.BossIntro :: RemoteEvent
+)
 
 -- Currencies remain as one readable icon column on the left.
 finalHud.CurrencyFrame = UiKit.Panel(screen, "Currencies")
@@ -647,6 +655,7 @@ local objectiveBanner = text(
 )
 objectiveBanner.BackgroundColor3 = PANEL
 objectiveBanner.BackgroundTransparency = 0.08
+objectiveBanner.Font = UiKit.Fonts.Banner
 objectiveBanner.Visible = false
 local countdownLabel =
 	text(screen, "Countdown", UDim2.new(0.5, -100, 0.3, 0), UDim2.new(0, 200, 0, 120), "", 72)
@@ -674,7 +683,8 @@ local function flash(label: TextLabel, str: string, seconds: number)
 	label.Text = str
 	label.Visible = true
 	label.TextTransparency = 0
-	label.TextStrokeTransparency = 0.4
+	label.TextStrokeTransparency = 0
+	finalHud.AnimeEffects.slam(label)
 	task.delay(seconds, function()
 		if label.Text ~= str then
 			return
@@ -1567,6 +1577,7 @@ local function applyHudLayout()
 	local boss = rects.waveProgress
 	bossFrame.Position = UDim2.fromOffset(logical(boss.x), logical(boss.y))
 	bossFrame.Size = UDim2.fromOffset(logical(boss.w), logical(boss.h))
+	finalHud.BossUi:SetLayout(viewport, currentScale)
 
 	local health = rects.health
 	hpBack.Position = UDim2.fromOffset(logical(health.x), logical(health.y))
@@ -2095,7 +2106,9 @@ end
 
 finalHud.AbilityUi.Cast = function()
 	if os.clock() >= finalHud.AbilityUi.ReadyAt and not cardPanel.Visible then
-		(Remotes.Signature :: RemoteEvent):FireServer()
+		finalHud.AnimeEffects.speedLines("Ultimate")
+		local signature = Remotes.Signature :: RemoteEvent
+		signature:FireServer()
 	end
 end
 
@@ -2351,22 +2364,6 @@ onState("MutationLabel", function(label)
 	mutationLabel.Text = "Today: " .. label
 	mutationLabel.Visible = label ~= "" and stateValue("Phase") ~= "fighting"
 end)
-onState("BossName", function(name)
-	if name ~= "" then
-		bossLabel.Text = name
-	end
-end)
-local function refreshBoss()
-	local max = stateValue("BossMaxHealth")
-	local h = stateValue("BossHealth")
-	if max > 0 then
-		bossFill.Size = UDim2.fromScale(math.clamp(h / max, 0, 1), 1)
-		bossLabel.Text =
-			string.format("%s  %d / %d", stateValue("BossName"), math.ceil(h), math.ceil(max))
-	end
-end
-onState("BossHealth", refreshBoss)
-onState("BossMaxHealth", refreshBoss)
 
 -- HP bar and hit feedback.
 local lastHealth = 0

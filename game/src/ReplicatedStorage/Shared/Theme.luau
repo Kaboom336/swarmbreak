@@ -89,6 +89,11 @@ local Theme = {
 		Queen = { Body = CHITIN, Accent = GOO },
 		Warden = { Body = CHITIN_DARK, Accent = GOO },
 	},
+	Boss = {
+		["Big Brute"] = { Fill = CHITIN_DARK, Accent = SIGNAL_ORANGE, Outline = CHITIN },
+		["Swarm Queen"] = { Fill = CHITIN, Accent = GOO, Outline = CHITIN_DARK },
+		["Sky King"] = { Fill = CHITIN_DARK, Accent = HERO, Outline = CHITIN },
+	},
 	Rarity = {
 		Common = OUTPOST_SHADE,
 		Rare = HERO,
