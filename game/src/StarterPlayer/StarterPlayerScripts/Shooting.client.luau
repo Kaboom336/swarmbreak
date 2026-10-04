@@ -285,7 +285,7 @@ RunService.RenderStepped:Connect(function()
 	if manualFiring then
 		currentTarget = nil
 		direction = manualDirection(origin, root, weapon)
-	elseif autoFireEnabled() and player:GetAttribute("CardPanelOpen") ~= true then
+	elseif autoFireEnabled() then -- keep auto-firing while cards are open (eca9fb2: packs walked onto idle players)
 		direction = autoDirection(char, root, origin, weapon)
 	else
 		currentTarget = nil

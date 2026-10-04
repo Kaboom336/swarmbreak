@@ -170,9 +170,9 @@ ArenaLayout.Zones = {
 } :: { Zone }
 
 ArenaLayout.ZoneSpawns = {
-	{ Name = "LandingGateNorth", ZoneId = "LandingPad", x = -55, z = -65 },
-	{ Name = "LandingGateSouth", ZoneId = "LandingPad", x = -55, z = 65 },
-	{ Name = "LandingGateWest", ZoneId = "LandingPad", x = -70, z = 0 },
+	{ Name = "LandingGateNorth", ZoneId = "LandingPad", x = -40, z = -72 },
+	{ Name = "LandingGateSouth", ZoneId = "LandingPad", x = -40, z = 72 },
+	{ Name = "LandingGateWest", ZoneId = "LandingPad", x = -72, z = 0 },
 	{ Name = "RefineryGateNorth", ZoneId = "Refinery", x = 200, z = -68 },
 	{ Name = "RefineryGateSouth", ZoneId = "Refinery", x = 200, z = 68 },
 	{ Name = "RefineryGateEast", ZoneId = "Refinery", x = 268, z = 0 },

@@ -104,3 +104,17 @@ test("every zone fits inside the watchdog radius", function()
 		assert(far < EnemyWatchdog.MaxRadius, zone.Id .. " reaches past the watchdog radius")
 	end
 end)
+
+test("zone spawn gates keep clear of cover props", function()
+	-- eca9fb2: LandingGateSouth sat inside a LowWall, so Walkers spawned on top of it and stalled the wave.
+	for _, spawn in ArenaLayout.ZoneSpawns do
+		for _, prop in ArenaLayout.Props do
+			local clearX = math.abs(spawn.x - prop.x) >= prop.Width / 2 + 3 + 2
+			local clearZ = math.abs(spawn.z - prop.z) >= prop.Depth / 2 + 3 + 2
+			assert(
+				clearX or clearZ,
+				spawn.Name .. " overlaps a " .. prop.Kind .. " at " .. prop.x .. "," .. prop.z
+			)
+		end
+	end
+end)

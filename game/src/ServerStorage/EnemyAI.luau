@@ -383,7 +383,8 @@ function EnemyAI.aliveCount(): number
 end
 
 -- Watchdog: drop, kill or move enemies that can't be fought, so a wave never stalls on them.
-local watch: { [Model]: { Last: Vector3, Stuck: number, Air: number } } = {}
+local watch: { [Model]: { Last: Vector3, Stuck: number, Air: number, Progress: EnemyWatchdog.Progress } } =
+	{}
 task.spawn(function()
 	while true do
 		task.wait(EnemyWatchdog.CheckSeconds)
@@ -396,7 +397,7 @@ task.spawn(function()
 			local pos = if hasRoot then root.Position else Vector3.zero
 			local w = watch[model]
 			if not w then
-				w = { Last = pos, Stuck = 0, Air = 0 }
+				w = { Last = pos, Stuck = 0, Air = 0, Progress = { Best = math.huge, Seconds = 0 } }
 				watch[model] = w
 			end
 			-- Ranged enemies hold still in range on purpose; only count chasers.
@@ -406,6 +407,12 @@ task.spawn(function()
 				and not (e.Def.Ranged and dist < (e.Def.Range or 40) * 0.8)
 			w.Stuck = EnemyWatchdog.nextStuck(w.Stuck, (pos - w.Last).Magnitude, chasing)
 			w.Last = pos
+			-- Enemies circling a player while they wait for an attack slot hold distance on purpose.
+			w.Progress = EnemyWatchdog.nextProgress(
+				w.Progress,
+				dist or math.huge,
+				chasing and (dist or 0) > EnemyWatchdog.ProgressMinDistance
+			)
 			w.Air = EnemyWatchdog.nextAirborne(
 				w.Air,
 				e.Humanoid.FloorMaterial == Enum.Material.Air,
@@ -418,7 +425,8 @@ task.spawn(function()
 				pos.Y,
 				pos.Z,
 				w.Stuck,
-				w.Air
+				w.Air,
+				w.Progress.Seconds
 			)
 			if verdict == "Forget" then
 				releaseAttackSlot(e)
@@ -431,6 +439,7 @@ task.spawn(function()
 			elseif verdict == "Respawn" then
 				w.Stuck = 0
 				w.Air = 0
+				w.Progress = { Best = math.huge, Seconds = 0 }
 				local spawns = workspace:FindFirstChild("Arena")
 					and (workspace :: any).Arena:FindFirstChild("EnemySpawns")
 				local waveValue = ReplicatedStorage:FindFirstChild("State")
