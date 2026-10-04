@@ -29,3 +29,8 @@ testcmd: cd game && stylua --check src tests && selene src && lune run tests/run
    - The ultimate timeline length is ≤ 1.5 s, Short is ≤ 0.6 s, and the server time scale is untouched.
    - Ability pool: loadout validity.
    - Touch layout: buttons don't overlap at 667x375 and 1280x720.
+
+## Style addendum (Zion 17:06Z: cartoon/anime, sharp, bright, high saturation)
+- Scythe VFX: sharp crescent slash arcs, speed lines on Dash Spin, and bold sparkles. No soft glows.
+- Reaper Arc gets an anime impact frame: a 2-frame high-contrast flash (no strobe, a single flash), a speed-line backdrop and the name callout in LuckiestGuy.
+- Spec: the impact frame lasts ≤ 2 frames at 60 fps, and only once per ultimate.

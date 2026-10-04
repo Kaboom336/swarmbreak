@@ -27,6 +27,22 @@ You build up yourself and your base, then raid **Swarm Cores** (themed dungeons 
 
 Each core has its own rooms, palette, drops and story beats. Nothing is added without a story reason.
 
+## Art style (Zion 10/04 17:06Z): cartoon/anime, sharp and cool, bright, high saturation
+- **Shapes:** chunky cartoon proportions with crisp, sharp silhouettes: hard bevels, clean edges, bold readable shapes. No mushy low-poly blobs.
+- **Colour:**
+  - High saturation, bright base colours, each core with its own 3-colour key. Mars: hot orange and red ground, teal goo, gold loot.
+  - Shadows are tinted (purple or blue), never grey or black.
+  - ColorCorrection Saturation +0.25 to +0.35 and Contrast +0.15. Bloom stays capped (intensity ≤ 0.5, threshold ≥ 1.5) so bright never means blinding.
+- **Outlines:** a dark outline on characters, enemies and key props via a Highlight (OutlineOnly, DepthMode Occluded, dark tint, transparency 0.3-0.5).
+  - Characters, enemies and bosses always get one; key props only near the camera.
+  - Respect the Highlight limit with a pool that gives outlines to the nearest 20.
+- **VFX:** anime-style shapes.
+  - Sharp slash arcs, speed lines on dash and ultimates, star or impact-frame flashes (a single 1-2 frame white or ink flash, never a strobe), bold sparkles, and chunky goo splats.
+  - Flipbook sprites with hard edges, not soft blurry glows.
+- **Ultimates:** anime impact frames. A 2-frame high-contrast silhouette flash, speed-line backdrop and bold kanji-free text callouts (the ability name in LuckiestGuy).
+- **UI:** bold rounded fonts, thick outlines and saturated buttons, matching the world.
+- **Judging:** "does it look like a bright, sharp anime action game?" next to Hunty Zombie and other top anime-styled Roblox games.
+
 ## Base and lobby (Zion 10/04 15:54Z)
 - **Lobby:** a decently big town map you can explore. Base plots are spread out so nobody is too close.
 - **Bases are built from rooms, not blocks.** Unlock or buy a room, then pick its skin.
