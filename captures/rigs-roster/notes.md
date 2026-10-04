@@ -24,3 +24,11 @@ What I noticed:
 - Same .rbxm caveat as Mite: the files come from Roblox's SerializationService, which Rojo 7.4.4 can't parse. Insert them via Studio, or upgrade Rojo.
 
 The player in the shots is Zion's spawn avatar (about 5 studs tall).
+
+## Tank v3 (regenerated 2026-10-04)
+
+- The prompt for v2 ("...beetle tank... insect legs, no wheels...") still produced wheels, so I dropped the word "tank" and added "organic animal / living animal, no machinery".
+- There are 2 candidates (03-tank-v3-candidates.png; the camera looks +Z, so screen-left is candidate 1):
+  - Candidate 1 (asset 140399947563019) is a horned rhino beetle with an orange belt stripe.
+  - **Candidate 2 (asset 118746674016905, picked)** is a tall plated dome with mandibles and 6 legs.
+- The picked rig is about 9.5 studs tall, 10.5 x 9.5 x 9.1. Joints: Neck and Hip_1..6, plus 2 Eye_Glow parts. See 04-tank-v3-rigged.png.
