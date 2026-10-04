@@ -288,7 +288,7 @@ RunService.RenderStepped:Connect(function()
 	end
 	local origin = root.Position + Vector3.new(0, 1, 0)
 	local direction: Vector3? = nil
-	if manualFiring then
+	if manualFiring or player:GetAttribute("CombatAttackHeld") == true then
 		currentTarget = nil
 		direction = manualDirection(origin, root, weapon)
 	elseif autoFireEnabled() then -- keep auto-firing while cards are open (eca9fb2: packs walked onto idle players)

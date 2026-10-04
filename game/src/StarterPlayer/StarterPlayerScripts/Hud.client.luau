@@ -460,7 +460,7 @@ settingsToggle.Position = UDim2.new(1, -404, 0, 8)
 
 local settingsPanel = UiKit.Panel(screen, "Settings")
 settingsPanel.Name = "Settings"
-settingsPanel.Size = UDim2.new(0, 260, 0, 194)
+settingsPanel.Size = UDim2.new(0, 260, 0, 278)
 settingsPanel.Position = UDim2.new(1, -544, 0, 50)
 settingsPanel.BackgroundColor3 = PANEL
 settingsPanel.BackgroundTransparency = 0.1
@@ -591,6 +591,41 @@ autoFireButton.MouseButton1Click:Connect(function()
 	setAutoFire(not autoFireEnabled)
 end)
 setAutoFire(autoFireEnabled)
+
+do
+	local combatCameraButton = button(settingsPanel, "Combat camera  ON", UDim2.new(1, -24, 0, 34))
+	combatCameraButton.Name = "CombatCamera"
+	combatCameraButton.Position = UDim2.new(0, 12, 0, 192)
+	finalHud.CombatCameraEnabled = Settings.DefaultCombatCamera
+	finalHud.SetCombatCamera = function(enabled: boolean)
+		finalHud.CombatCameraEnabled = enabled
+		player:SetAttribute("CombatCameraEnabled", enabled)
+		combatCameraButton.Text = if enabled then "Combat camera  ON" else "Combat camera  OFF"
+	end
+	combatCameraButton.MouseButton1Click:Connect(function()
+		finalHud.SetCombatCamera(not finalHud.CombatCameraEnabled)
+		UpdateSettings:FireServer({ CombatCameraEnabled = finalHud.CombatCameraEnabled })
+	end)
+	finalHud.SetCombatCamera(finalHud.CombatCameraEnabled)
+end
+
+do
+	local cinematicModes = { Full = "Short", Short = "Off", Off = "Full" }
+	local cinematicButton = button(settingsPanel, "Ultimate  FULL", UDim2.new(1, -24, 0, 34))
+	cinematicButton.Name = "UltimateCinematics"
+	cinematicButton.Position = UDim2.new(0, 12, 0, 234)
+	finalHud.CinematicMode = Settings.DefaultUltimateCinematics
+	finalHud.SetCinematicMode = function(mode: string)
+		finalHud.CinematicMode = cinematicModes[mode] and mode or Settings.DefaultUltimateCinematics
+		player:SetAttribute("UltimateCinematics", finalHud.CinematicMode)
+		cinematicButton.Text = "Ultimate  " .. string.upper(finalHud.CinematicMode)
+	end
+	cinematicButton.MouseButton1Click:Connect(function()
+		finalHud.SetCinematicMode(cinematicModes[finalHud.CinematicMode])
+		UpdateSettings:FireServer({ UltimateCinematics = finalHud.CinematicMode })
+	end)
+	finalHud.SetCinematicMode(finalHud.CinematicMode)
+end
 
 -- Bottom build view. Number keys still switch inventory weapons; this row describes the
 -- equipped weapon and its current evolved/element state.
@@ -2240,6 +2275,8 @@ StatsChanged.OnClientEvent:Connect(function(s)
 	setMusicSlider(s.MusicVolume)
 	setSfxSlider(s.SfxVolume)
 	setMouseLock(s.MouseLockEnabled ~= false)
+	finalHud.SetCombatCamera(s.CombatCameraEnabled ~= false)
+	finalHud.SetCinematicMode(s.UltimateCinematics or Settings.DefaultUltimateCinematics)
 	refreshStats()
 	onDailyPopup(s.DailyPopup)
 end)

@@ -3,13 +3,19 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local ContextActionService = game:GetService("ContextActionService")
+local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local MovementTuning = require(ReplicatedStorage.Shared.MovementTuning)
 local MoveVariants = require(ReplicatedStorage.Shared.MoveVariants)
+local TouchLayout = require(ReplicatedStorage.Shared.TouchLayout)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
+
+local dashRequestEvent = Instance.new("BindableEvent")
+dashRequestEvent.Name = "DashRequestEvent"
+dashRequestEvent.Parent = script.Parent
 
 local player = Players.LocalPlayer
 local DashRemote = (ReplicatedStorage:WaitForChild("Remotes") :: Folder):WaitForChild(
@@ -141,6 +147,8 @@ local function bind(character: Model)
 		end)
 	end
 
+	table.insert(connections, dashRequestEvent.Event:Connect(dash))
+
 	table.insert(
 		connections,
 		humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
@@ -158,51 +166,48 @@ local function bind(character: Model)
 		end)
 	)
 
-	table.insert(
-		connections,
-		UserInputService.JumpRequest:Connect(function()
-			local now = os.clock()
-			lastJumpRequestAt = now
-			if sliding and slideVelocity then
-				local slideDirection = slideVelocity.VectorVelocity.Unit
-				local currentVelocity = root.AssemblyLinearVelocity
-				local horizontalSpeed =
-					Vector3.new(currentVelocity.X, 0, currentVelocity.Z).Magnitude
-				local momentum =
-					MovementTuning.slideJumpMomentum(horizontalSpeed, now - slideStartedAt)
-				finishSlide()
-				root.AssemblyLinearVelocity = Vector3.new(
-					slideDirection.X * momentum,
-					currentVelocity.Y,
-					slideDirection.Z * momentum
-				)
-			end
-			if humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then
-				return
-			end
-			if now - lastGroundedAt <= MovementTuning.Jump.CoyoteTime then
-				lastGroundedAt = -math.huge
-				lastJumpRequestAt = -math.huge
-				humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-			elseif airJumpsRemaining > 0 then
-				airJumpsRemaining -= 1
-				lastJumpRequestAt = -math.huge
-				humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-				playMove("DoubleJump")
-				ClientFX.sound("DoubleJumpWhoosh", nil, 0.08)
-				ClientFX.ring(
-					root.Position - Vector3.new(0, 2.5, 0),
-					Color3.fromRGB(188, 174, 145),
-					5,
-					0.3
-				)
-				ClientFX.dust(root.Position - Vector3.new(0, 2.5, 0), 8)
-				local currentVelocity = root.AssemblyLinearVelocity
-				root.AssemblyLinearVelocity =
-					Vector3.new(currentVelocity.X, Config.DoubleJump.Power, currentVelocity.Z)
-			end
-		end)
-	)
+	local function requestJump()
+		local now = os.clock()
+		lastJumpRequestAt = now
+		if sliding and slideVelocity then
+			local slideDirection = slideVelocity.VectorVelocity.Unit
+			local currentVelocity = root.AssemblyLinearVelocity
+			local horizontalSpeed = Vector3.new(currentVelocity.X, 0, currentVelocity.Z).Magnitude
+			local momentum = MovementTuning.slideJumpMomentum(horizontalSpeed, now - slideStartedAt)
+			finishSlide()
+			root.AssemblyLinearVelocity = Vector3.new(
+				slideDirection.X * momentum,
+				currentVelocity.Y,
+				slideDirection.Z * momentum
+			)
+		end
+		if humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then
+			return
+		end
+		if now - lastGroundedAt <= MovementTuning.Jump.CoyoteTime then
+			lastGroundedAt = -math.huge
+			lastJumpRequestAt = -math.huge
+			humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+		elseif airJumpsRemaining > 0 then
+			airJumpsRemaining -= 1
+			lastJumpRequestAt = -math.huge
+			humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+			playMove("DoubleJump")
+			ClientFX.sound("DoubleJumpWhoosh", nil, 0.08)
+			ClientFX.ring(
+				root.Position - Vector3.new(0, 2.5, 0),
+				Color3.fromRGB(188, 174, 145),
+				5,
+				0.3
+			)
+			ClientFX.dust(root.Position - Vector3.new(0, 2.5, 0), 8)
+			local currentVelocity = root.AssemblyLinearVelocity
+			root.AssemblyLinearVelocity =
+				Vector3.new(currentVelocity.X, Config.DoubleJump.Power, currentVelocity.Z)
+		end
+	end
+
+	table.insert(connections, UserInputService.JumpRequest:Connect(requestJump))
 
 	ContextActionService:BindAction("Slide", function(_, inputState)
 		if inputState == Enum.UserInputState.Begin then
@@ -221,6 +226,45 @@ local function bind(character: Model)
 	end, true, Enum.KeyCode.Q, Enum.KeyCode.ButtonB)
 	ContextActionService:SetTitle("Dash", "DASH")
 	ContextActionService:SetPosition("Dash", UDim2.fromScale(0.78, 0.72))
+
+	ContextActionService:BindAction("CombatJump", function(_, inputState)
+		if inputState == Enum.UserInputState.Begin then
+			requestJump()
+		end
+		return Enum.ContextActionResult.Pass
+	end, true, Enum.KeyCode.ButtonA)
+	ContextActionService:SetTitle("CombatJump", "JUMP")
+
+	local function layoutTouchButtons()
+		local camera = workspace.CurrentCamera
+		if not camera then
+			return
+		end
+		local topLeft, bottomRight = GuiService:GetGuiInset()
+		local rects = TouchLayout.layout(camera.ViewportSize.X, camera.ViewportSize.Y, {
+			Left = topLeft.X,
+			Top = topLeft.Y,
+			Right = bottomRight.X,
+			Bottom = bottomRight.Y,
+		})
+		for action, layoutName in { Slide = "Slide", Dash = "Dash", CombatJump = "Jump" } do
+			local touchButton = ContextActionService:GetButton(action)
+			local rect = rects[layoutName]
+			if touchButton and rect then
+				touchButton.Size = UDim2.fromOffset(rect.Size, rect.Size)
+				ContextActionService:SetPosition(action, UDim2.fromOffset(rect.X, rect.Y))
+			end
+		end
+	end
+	task.defer(layoutTouchButtons)
+	if workspace.CurrentCamera then
+		table.insert(
+			connections,
+			workspace.CurrentCamera
+				:GetPropertyChangedSignal("ViewportSize")
+				:Connect(layoutTouchButtons)
+		)
+	end
 
 	table.insert(
 		connections,
@@ -260,6 +304,7 @@ local function bind(character: Model)
 			finishSlide()
 			ContextActionService:UnbindAction("Slide")
 			ContextActionService:UnbindAction("Dash")
+			ContextActionService:UnbindAction("CombatJump")
 			for _, connection in connections do
 				connection:Disconnect()
 			end

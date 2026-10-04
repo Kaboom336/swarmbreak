@@ -33,6 +33,8 @@ export type Profile = {
 	MusicVolume: number,
 	SfxVolume: number,
 	MouseLockEnabled: boolean,
+	CombatCameraEnabled: boolean,
+	UltimateCinematics: string,
 	ProcessedPurchaseIds: { string },
 }
 
@@ -120,6 +122,8 @@ function ProfileSchema.default(): Profile
 		MusicVolume = Settings.DefaultVolume,
 		SfxVolume = Settings.DefaultVolume,
 		MouseLockEnabled = Settings.DefaultMouseLock,
+		CombatCameraEnabled = Settings.DefaultCombatCamera,
+		UltimateCinematics = Settings.DefaultUltimateCinematics,
 		ProcessedPurchaseIds = {},
 	}
 end
@@ -282,6 +286,13 @@ function ProfileSchema.sanitize(raw: any): Profile
 	p.MouseLockEnabled = if type(raw.MouseLockEnabled) == "boolean"
 		then raw.MouseLockEnabled
 		else Settings.DefaultMouseLock
+	p.CombatCameraEnabled = if type(raw.CombatCameraEnabled) == "boolean"
+		then raw.CombatCameraEnabled
+		else Settings.DefaultCombatCamera
+	p.UltimateCinematics = if raw.UltimateCinematics == "Short"
+			or raw.UltimateCinematics == "Off"
+		then raw.UltimateCinematics
+		else Settings.DefaultUltimateCinematics
 	p.ProcessedPurchaseIds = ReceiptLedger.sanitize(raw.ProcessedPurchaseIds)
 	return p
 end
