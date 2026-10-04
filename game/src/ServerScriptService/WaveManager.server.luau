@@ -826,9 +826,6 @@ local function gameLoop()
 				admitWaitingPlayers()
 				respawnAll()
 				countdown(Config.IntermissionSeconds)
-				for _, plr in Players:GetPlayers() do
-					PlayerData.autoPick(plr)
-				end
 			end
 		end
 		endRun(alive and wave == currentStage.Waves, wave)

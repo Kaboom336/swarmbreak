@@ -94,7 +94,7 @@ local function motorMap(model: Model): ({ [string]: Motor6D }, { [string]: CFram
 	return motors, base
 end
 
-local function playDeath(model: Model, anim: Anim)
+local function playDeath(model: Model)
 	for _, descendant in model:GetDescendants() do
 		if descendant:IsA("BasePart") then
 			descendant.LocalTransparencyModifier = 1
@@ -102,7 +102,6 @@ local function playDeath(model: Model, anim: Anim)
 	end
 	local goo = Color3.fromRGB(Theme.Goo[1], Theme.Goo[2], Theme.Goo[3])
 	ClientFX.deathGhost(model, goo)
-	ClientFX.emit("DeathBurst", anim.Root.Position, 28)
 end
 
 local function flashHit(model: Model, anim: Anim)
@@ -193,7 +192,7 @@ local function register(model: Instance)
 				task.delay(math.max(0, freezeUntil - os.clock()), function()
 					anims[model] = nil
 					if model.Parent then
-						playDeath(model, anim)
+						playDeath(model)
 					end
 				end)
 			end)

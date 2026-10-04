@@ -66,6 +66,9 @@ local function rawHit(
 	local root = model.PrimaryPart
 	local playerRoot = plr.Character
 		and plr.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	local hitNormal = if playerRoot and (hitPos - playerRoot.Position).Magnitude > 0.001
+		then (hitPos - playerRoot.Position).Unit
+		else Vector3.new(0, 0, 1)
 	if root and playerRoot and model:GetAttribute("Boss") ~= true then
 		local away = (root.Position - playerRoot.Position) * Vector3.new(1, 0, 1)
 		if away.Magnitude > 0.01 then
@@ -74,7 +77,16 @@ local function rawHit(
 	end
 	local typeName = model:GetAttribute("TypeName")
 	local elite = model:GetAttribute("Boss") == true or typeName == "Tank" or typeName == "Brute"
-	HitMarker:FireClient(plr, hitPos, math.floor(damage + 0.5), killed, model, false, elite)
+	HitMarker:FireClient(
+		plr,
+		hitPos,
+		math.floor(damage + 0.5),
+		killed,
+		model,
+		false,
+		elite,
+		hitNormal
+	)
 	return true, killed
 end
 

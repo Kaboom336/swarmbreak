@@ -41,7 +41,7 @@ test("combat feedback timings are immediate but readable", function()
 		"muzzle flash timing"
 	)
 	assert(Feel.HitFlashSeconds >= 0.04 and Feel.HitFlashSeconds <= 0.08, "hit flash timing")
-	assert(Feel.HitSparkSeconds >= 0.2 and Feel.HitSparkSeconds <= 0.5, "hit spark timing")
+	assert(Feel.HitSparkSeconds >= 0.08 and Feel.HitSparkSeconds <= 0.1, "hit spark timing")
 	assert(Feel.CoinFlightSeconds >= 0.35 and Feel.CoinFlightSeconds <= 0.8, "coin pop timing")
 	assert(Feel.KnockbackSpeed >= 4 and Feel.KnockbackSpeed <= 14, "knockback speed")
 end)

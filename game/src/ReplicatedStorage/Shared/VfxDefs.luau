@@ -1,5 +1,6 @@
 --!strict
 -- Pure particle tuning shared by the client renderer and budget tests.
+local Theme = require(script.Parent.Theme)
 
 export type Color = { number }
 export type Keypoint = {
@@ -27,6 +28,16 @@ local VfxDefs = {}
 
 VfxDefs.MaxRate = 100
 VfxDefs.EmitBudgetPerSecond = 600 -- placeholder mobile budget
+VfxDefs.MaxLiveParts = 60
+VfxDefs.LowQualityParticleMultiplier = 0.5
+VfxDefs.DeathBurstSeconds = 0.3
+VfxDefs.DeathRing = { StartRadius = 0.5, EndRadius = 6, Seconds = 0.18 }
+VfxDefs.DeathShardCount = 10
+VfxDefs.HitStreakCount = 4
+VfxDefs.HitSeconds = 0.1
+VfxDefs.MuzzleFlashSeconds = 0.06
+VfxDefs.TrailSeconds = 0.15
+VfxDefs.UltimateBurstSeconds = 0.3
 VfxDefs.PlayerHues = {
 	{ 40, 220, 210 }, -- station teal
 	{ 70, 140, 255 }, -- player weapon blue
@@ -35,61 +46,61 @@ VfxDefs.PlayerHues = {
 local Definitions: { [string]: Definition } = {
 	HitSpark = {
 		Texture = "spark",
-		Colors = { { 255, 245, 210 }, { 255, 150, 45 } },
+		Colors = { Theme.Loot, Theme.SignalOrange },
 		Transparency = {
 			{ Time = 0, Value = 1 },
 			{ Time = 0.08, Value = 0 },
 			{ Time = 1, Value = 1 },
 		},
 		Size = { { Time = 0, Value = 0.35 }, { Time = 1, Value = 0 } },
-		Lifetime = { 0.12, 0.28 },
-		Speed = { 12, 24 },
-		Spread = { 180, 180 },
-		Acceleration = { 0, -30, 0 },
+		Lifetime = { 0.08, 0.1 },
+		Speed = { 16, 24 },
+		Spread = { 8, 8 },
+		Acceleration = { 0, 0, 0 },
 		Drag = 4,
 		LightEmission = 1,
 		Rate = 0,
-		EmitCount = 12,
+		EmitCount = 4,
 		MaxTriggersPerSecond = 20,
 		PoolSize = 16,
 	},
 	MuzzleFlash = {
-		Texture = "softglow",
-		Colors = { { 255, 255, 230 }, { 255, 185, 70 } },
+		Texture = "spark",
+		Colors = { Theme.Loot, Theme.SignalOrange },
 		Transparency = {
 			{ Time = 0, Value = 1 },
 			{ Time = 0.05, Value = 0 },
 			{ Time = 1, Value = 1 },
 		},
 		Size = { { Time = 0, Value = 0.55 }, { Time = 1, Value = 0 } },
-		Lifetime = { 0.05, 0.1 },
+		Lifetime = { 0.04, 0.06 },
 		Speed = { 3, 7 },
 		Spread = { 25, 25 },
 		Acceleration = { 0, 0, 0 },
 		Drag = 2,
 		LightEmission = 1,
 		Rate = 0,
-		EmitCount = 6,
+		EmitCount = 4,
 		MaxTriggersPerSecond = 12,
 		PoolSize = 10,
 	},
 	DeathBurst = {
 		Texture = "goo",
-		Colors = { { 210, 90, 255 }, { 105, 35, 150 } },
+		Colors = { Theme.Goo, Theme.Chitin },
 		Transparency = {
 			{ Time = 0, Value = 1 },
 			{ Time = 0.1, Value = 0.05 },
 			{ Time = 1, Value = 1 },
 		},
 		Size = { { Time = 0, Value = 0.7 }, { Time = 0.7, Value = 0.35 }, { Time = 1, Value = 0 } },
-		Lifetime = { 0.35, 0.7 },
+		Lifetime = { 0.2, 0.3 },
 		Speed = { 10, 22 },
 		Spread = { 180, 180 },
 		Acceleration = { 0, -12, 0 },
 		Drag = 2,
-		LightEmission = 0.8,
+		LightEmission = 1,
 		Rate = 0,
-		EmitCount = 24,
+		EmitCount = 10,
 		MaxTriggersPerSecond = 3,
 		PoolSize = 6,
 	},
@@ -192,6 +203,13 @@ function VfxDefs.worstCaseEmitsPerSecond(): number
 		total += definition.Rate + definition.EmitCount * definition.MaxTriggersPerSecond
 	end
 	return total
+end
+
+function VfxDefs.particleCount(count: number, lowQuality: boolean): number
+	return math.max(
+		1,
+		math.floor(count * (if lowQuality then VfxDefs.LowQualityParticleMultiplier else 1))
+	)
 end
 
 return VfxDefs

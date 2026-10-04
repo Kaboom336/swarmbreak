@@ -189,6 +189,7 @@ local function doScytheAbility(plr: Player, abilityId: string, root: BasePart, d
 		Dir = root.CFrame.LookVector,
 		Range = radius,
 		Slam = true,
+		Ultimate = abilityId == "ReaperArc",
 		Hits = hits,
 		Color = Theme.Rarity.Legendary,
 		Sound = Sounds.ForWeapon.Reaper or "Swing",

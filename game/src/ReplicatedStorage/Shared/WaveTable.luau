@@ -11,6 +11,7 @@ export type Pack = {
 }
 
 local WaveTable = {
+	FinaleCountMultiplier = 1.6,
 	Compositions = {
 		{ Swarmer = 16 },
 		{ Swarmer = 16, Runner = 2 },
@@ -39,6 +40,29 @@ local WaveTable = {
 		{ Swarmer = 26, Runner = 22, Shooter = 21, Flyer = 21, Tank = 28, Boss = 1 },
 	} :: { Composition },
 }
+
+local function countEnemies(composition: Composition): number
+	local total = 0
+	for _, count in composition do
+		total += count
+	end
+	return total
+end
+
+function WaveTable.finaleComposition(
+	composition: Composition,
+	previousComposition: Composition,
+	familyId: string
+): Composition
+	local finale = table.clone(composition)
+	local tank = EnemyFamilies.resolve(familyId, "Tank")
+	local swarmer = EnemyFamilies.resolve(familyId, "Swarmer")
+	assert(tank and swarmer, familyId .. " cannot build a finale")
+	finale[tank] = math.max(1, finale[tank] or 0)
+	local target = math.ceil(countEnemies(previousComposition) * WaveTable.FinaleCountMultiplier)
+	finale[swarmer] = (finale[swarmer] or 0) + math.max(0, target - countEnemies(finale))
+	return finale
+end
 
 function WaveTable.resolveComposition(
 	composition: Composition,
@@ -70,6 +94,21 @@ function WaveTable.resolveStageComposition(
 	end
 	if finalWave and bossKey then
 		resolved[bossKey] = 1
+	elseif finalWave then
+		local compositionIndex = table.find(WaveTable.Compositions, composition)
+		local previous = if compositionIndex and compositionIndex > 1
+			then WaveTable.resolveComposition(
+				WaveTable.Compositions[compositionIndex - 1],
+				familyId,
+				bossKey or "Queen"
+			)
+			else {}
+		for enemyName in previous do
+			if WaveTable.BossNames[enemyName] then
+				previous[enemyName] = nil
+			end
+		end
+		resolved = WaveTable.finaleComposition(resolved, previous, familyId)
 	end
 	return resolved
 end

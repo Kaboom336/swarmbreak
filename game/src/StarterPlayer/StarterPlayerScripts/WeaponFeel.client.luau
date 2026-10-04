@@ -3,7 +3,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local Debris = game:GetService("Debris")
 
 -- Publish the local event before loading helpers so Shooting never misses its runtime producer.
 local event = Instance.new("BindableEvent")
@@ -12,6 +11,7 @@ event.Parent = script.Parent
 
 local Feel = require(ReplicatedStorage.Shared.Feel)
 local AnimCurves = require(ReplicatedStorage.Shared.AnimCurves)
+local VfxDefs = require(ReplicatedStorage.Shared.VfxDefs)
 local ClientFX = require(script.Parent:WaitForChild("ClientFX"))
 
 local player = Players.LocalPlayer
@@ -81,31 +81,39 @@ local function trailFor(char: Model)
 	if not blade then
 		return
 	end
-	local size = blade.Size
-	local axis = if size.X >= size.Y and size.X >= size.Z
-		then Vector3.new(size.X / 2, 0, 0)
-		elseif size.Y >= size.Z then Vector3.new(0, size.Y / 2, 0)
-		else Vector3.new(0, 0, size.Z / 2)
-	local first = Instance.new("Attachment")
-	first.Position = axis
-	first.Parent = blade
-	local second = Instance.new("Attachment")
-	second.Position = -axis
-	second.Parent = blade
-	local trail = Instance.new("Trail")
-	trail.Attachment0 = first
-	trail.Attachment1 = second
+	local trail = blade:FindFirstChild("CombatTrail") :: Trail?
+	if not trail then
+		local size = blade.Size
+		local axis = if size.X >= size.Y and size.X >= size.Z
+			then Vector3.new(size.X / 2, 0, 0)
+			elseif size.Y >= size.Z then Vector3.new(0, size.Y / 2, 0)
+			else Vector3.new(0, 0, size.Z / 2)
+		local first = Instance.new("Attachment")
+		first.Name = "CombatTrailTip"
+		first.Position = axis
+		first.Parent = blade
+		local second = Instance.new("Attachment")
+		second.Name = "CombatTrailBase"
+		second.Position = -axis
+		second.Parent = blade
+		trail = Instance.new("Trail")
+		trail.Name = "CombatTrail"
+		trail.Attachment0 = first
+		trail.Attachment1 = second
+		trail.LightEmission = 1
+		trail.FaceCamera = true
+		trail.Parent = blade
+	end
 	trail.Color = ColorSequence.new(blade.Color)
-	trail.Lifetime = 0.12
-	trail.LightEmission = 1
-	trail.FaceCamera = true
-	trail.Parent = blade
+	trail.Lifetime = VfxDefs.TrailSeconds
+	trail.Enabled = true
+	local token = ((trail:GetAttribute("EnableToken") :: number?) or 0) + 1
+	trail:SetAttribute("EnableToken", token)
 	task.delay(AnimCurves.ComboDuration, function()
-		trail.Enabled = false
+		if trail and trail.Parent and trail:GetAttribute("EnableToken") == token then
+			trail.Enabled = false
+		end
 	end)
-	Debris:AddItem(first, AnimCurves.ComboDuration + trail.Lifetime)
-	Debris:AddItem(second, AnimCurves.ComboDuration + trail.Lifetime)
-	Debris:AddItem(trail, AnimCurves.ComboDuration + trail.Lifetime)
 end
 
 local function muzzleFlash(char: Model)
@@ -126,25 +134,8 @@ local function muzzleFlash(char: Model)
 	else
 		return
 	end
-	local flash = Instance.new("Part")
-	flash.Name = "MuzzleFlash"
-	flash.Shape = Enum.PartType.Ball
-	flash.Size = Vector3.one * 0.3
-	flash.CFrame = flashCFrame
-	flash.Anchored = true
-	flash.CanCollide = false
-	flash.CanQuery = false
-	flash.CanTouch = false
-	flash.CastShadow = false
-	flash.Material = Enum.Material.Neon
-	flash.Color = flashColor
-	flash.Parent = workspace:FindFirstChild("ClientFX") or workspace
-	local light = Instance.new("PointLight")
-	light.Color = flash.Color
-	light.Brightness = 4
-	light.Range = 8
-	light.Parent = flash
-	Debris:AddItem(flash, Feel.WeaponMuzzleFlashSeconds)
+	ClientFX.muzzleStar(flashCFrame.Position, flashColor, flashCFrame.LookVector)
+	ClientFX.flash(flashCFrame.Position, flashColor, 8, Feel.WeaponMuzzleFlashSeconds)
 end
 
 event.Event:Connect(function(kind: string, direction: Vector3?, detail: any)

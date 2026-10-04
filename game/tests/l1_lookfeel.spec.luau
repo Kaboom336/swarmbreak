@@ -29,10 +29,17 @@ test("effect curves ease without linear motion", function()
 	assert(EffectCurves.easeIn(0.5) < 0.5, "magnet pull accelerates")
 end)
 
-test("VFX texture slots are explicit zero-price placeholders", function()
+test("VFX textures use only zero-price engine assets", function()
 	for _, key in { "spark", "smoke", "slash", "ring", "goo", "softglow" } do
-		eq(VfxTextures[key], 0, key .. " texture placeholder")
-		eq(VfxTextures.asset(key), "", key .. " zero texture fallback")
+		local texture = VfxTextures[key]
+		assert(
+			texture == 0 or (type(texture) == "string" and texture:sub(1, 11) == "rbxasset://"),
+			key .. " must be built in or zero"
+		)
+		assert(
+			not tostring(texture):find("rbxassetid://", 1, true),
+			key .. " uses an uploaded asset"
+		)
 	end
 end)
 

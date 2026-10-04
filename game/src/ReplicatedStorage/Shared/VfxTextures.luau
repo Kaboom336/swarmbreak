@@ -1,17 +1,17 @@
 --!strict
--- Asset placeholders. Zero keeps the existing untextured particle look until sprites are uploaded.
+-- Engine-shipped textures only: these do not depend on uploaded or store assets.
 local VfxTextures = {
-	spark = 0,
-	smoke = 0,
-	slash = 0,
-	ring = 0,
-	goo = 0,
-	softglow = 0,
+	spark = "rbxasset://textures/particles/sparkles_main.dds",
+	smoke = "rbxasset://textures/particles/smoke_main.dds",
+	slash = "rbxasset://textures/particles/sparkles_main.dds",
+	ring = "rbxasset://textures/particles/explosion01_implosion_main.dds",
+	goo = "rbxasset://textures/particles/smoke_main.dds",
+	softglow = "rbxasset://textures/particles/flare_main.dds",
 }
 
 function VfxTextures.asset(name: string): string
 	local id = VfxTextures[name]
-	return if type(id) == "number" and id > 0 then "rbxassetid://" .. tostring(id) else ""
+	return if type(id) == "string" and id:sub(1, 11) == "rbxasset://" then id else ""
 end
 
 return VfxTextures
