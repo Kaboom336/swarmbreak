@@ -4,6 +4,7 @@ local AnalyticsService = game:GetService("AnalyticsService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Campaign = require(ReplicatedStorage.Shared.Campaign)
@@ -15,6 +16,7 @@ local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
 local Daily = require(ReplicatedStorage.Shared.Daily)
 local Mutations = require(ReplicatedStorage.Shared.Mutations)
 local SpawnPicker = require(ReplicatedStorage.Shared.SpawnPicker)
+local SpawnQueue = require(ReplicatedStorage.Shared.SpawnQueue)
 local ArenaLayout = require(ReplicatedStorage.Shared.ArenaLayout)
 local Telemetry = require(ReplicatedStorage.Shared.Telemetry)
 local LevelUp = require(ReplicatedStorage.Shared.LevelUp)
@@ -47,6 +49,18 @@ local currentDifficultyId: Difficulty.TierName = Difficulty.Default
 local currentMap = Campaign.get(Campaign.DefaultId)
 local runStartedAt = 0
 local playAgainRequested = false
+
+type SpawnJob = { Run: () -> () }
+local spawnQueue = SpawnQueue.new(4)
+RunService.Heartbeat:Connect(function()
+	SpawnQueue.drain(spawnQueue, function(job: SpawnJob)
+		job.Run()
+	end)
+end)
+
+local function queueSpawn(run: () -> ())
+	SpawnQueue.push(spawnQueue, { Run = run })
+end
 
 PlayAgain.OnServerEvent:Connect(function(plr: Player)
 	if GameState.get("Phase") == "over" and not PlayerData.isWaiting(plr) then
@@ -348,7 +362,9 @@ end
 
 EnemyAI.OnSummon = function(typeName: string, cf: CFrame)
 	if EnemyAI.aliveCount() < Config.MaxAlive then
-		spawnEnemy(typeName, cf)
+		queueSpawn(function()
+			spawnEnemy(typeName, cf)
+		end)
 	end
 end
 
@@ -484,6 +500,7 @@ local function runWave(wave: number): boolean
 			then { onboardingSpawn }
 			else spawnPortalCFrames(pack.PortalCount)
 		local portalIndex = 1
+		local pendingSpawns = 0
 		for enemyName, amount in pack.Composition do
 			for _ = 1, amount do
 				local at = if Enemies.Defs[enemyName].Boss
@@ -495,12 +512,19 @@ local function runWave(wave: number): boolean
 							0,
 							rng:NextNumber(-4, 4)
 						)
-				local model = spawnEnemy(enemyName, at)
-				if Enemies.Defs[enemyName].Boss then
-					trackBoss(model)
-				end
+				pendingSpawns += 1
+				queueSpawn(function()
+					local model = spawnEnemy(enemyName, at)
+					if Enemies.Defs[enemyName].Boss then
+						trackBoss(model)
+					end
+					pendingSpawns -= 1
+				end)
 				portalIndex = portalIndex % #portals + 1
 			end
+		end
+		while pendingSpawns > 0 do
+			RunService.Heartbeat:Wait()
 		end
 		local spawnDelay = Difficulty.apply(
 			{ SpawnDelay = rng:NextNumber(Config.SpawnGapMin, Config.SpawnGapMax) },
@@ -532,6 +556,13 @@ local function runWave(wave: number): boolean
 	end
 	if techShard then
 		Toast:FireAllClients("Wave " .. wave .. " cleared: +1 Tech shard", 4)
+	end
+	local nextComposition = WaveTable.Compositions[wave + 1]
+	if nextComposition then
+		-- The delay lets the last client death ghost finish before its rig rejoins the pool.
+		task.delay(1.2, function()
+			EnemyAI.refillPool(nextComposition, currentMap.Family)
+		end)
 	end
 	FX:FireAllClients("sound", { Event = "wave clear" })
 	return true

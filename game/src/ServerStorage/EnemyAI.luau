@@ -34,6 +34,9 @@ type Live = {
 	OnDeath: (Player?, Vector3) -> (),
 	LastHitBy: Player?,
 	CircleRadius: number,
+	AttributeConnection: RBXScriptConnection?,
+	HealthConnection: RBXScriptConnection?,
+	DeathConnection: RBXScriptConnection?,
 }
 
 local live: { [Model]: Live } = {}
@@ -128,11 +131,17 @@ local function nearestPlayerRoot(pos: Vector3): (BasePart?, number)
 	return best, bestDist
 end
 
-local function makeHealthBar(model: Model, root: BasePart, hum: Humanoid, boss: boolean)
+local function makeHealthBar(
+	model: Model,
+	root: BasePart,
+	hum: Humanoid,
+	boss: boolean
+): RBXScriptConnection?
 	if boss then
-		return -- boss HP goes on the HUD
+		return nil -- boss HP goes on the HUD
 	end
 	local bb = Instance.new("BillboardGui")
+	bb.Name = "EnemyHealthBar"
 	bb.Size = UDim2.new(4, 0, 0.4, 0)
 	local head = model:FindFirstChild("Head", true)
 	local adornee = if head and head:IsA("BasePart") then head else root
@@ -152,7 +161,7 @@ local function makeHealthBar(model: Model, root: BasePart, hum: Humanoid, boss: 
 	fill.BorderSizePixel = 0
 	fill.Parent = back
 	local damaged = false
-	hum.HealthChanged:Connect(function(h)
+	local connection = hum.HealthChanged:Connect(function(h)
 		if h < hum.MaxHealth then
 			damaged = true
 		end
@@ -160,6 +169,7 @@ local function makeHealthBar(model: Model, root: BasePart, hum: Humanoid, boss: 
 		fill.Size = UDim2.fromScale(math.clamp(h / hum.MaxHealth, 0, 1), 1)
 	end)
 	bb.Parent = root
+	return connection
 end
 
 local function rangedShot(e: Live, target: BasePart)
@@ -302,7 +312,7 @@ function EnemyAI.spawn(
 	root.Anchored = def.Flying
 	root.CanCollide = not def.Flying
 
-	local hum = rig.Humanoid or Instance.new("Humanoid")
+	local hum = rig.Humanoid or model:FindFirstChildOfClass("Humanoid") or Instance.new("Humanoid")
 	hum.RigType = Enum.HumanoidRigType.R15
 	hum.HipHeight = rig.HipHeight
 	hum.MaxHealth = math.floor(stats.EnemyHealth + 0.5)
@@ -317,7 +327,11 @@ function EnemyAI.spawn(
 	model:SetAttribute("Boss", def.Boss == true)
 	model:SetAttribute("TypeName", typeName)
 	model:SetAttribute("LastHitBy", 0)
-	makeHealthBar(model, root, hum, def.Boss == true)
+	local previousHealthBar = root:FindFirstChild("EnemyHealthBar")
+	if previousHealthBar then
+		previousHealthBar:Destroy()
+	end
+	local healthConnection = makeHealthBar(model, root, hum, def.Boss == true)
 	model.Parent = folder
 	EnemyBuilder.startLocomotion(rig)
 	if not def.Flying then
@@ -336,6 +350,9 @@ function EnemyAI.spawn(
 		OnDeath = onDeath,
 		LastHitBy = nil,
 		CircleRadius = 6 + math.abs(math.floor(cf.Position.X + cf.Position.Z)) % 4,
+		AttributeConnection = nil,
+		HealthConnection = healthConnection,
+		DeathConnection = nil,
 	}
 	live[model] = e
 	EnemyIndex.add(model, root)
@@ -343,12 +360,21 @@ function EnemyAI.spawn(
 		task.spawn(groundMover, e)
 	end
 
-	model:GetAttributeChangedSignal("LastHitBy"):Connect(function()
+	e.AttributeConnection = model:GetAttributeChangedSignal("LastHitBy"):Connect(function()
 		local id = model:GetAttribute("LastHitBy") :: number
 		e.LastHitBy = Players:GetPlayerByUserId(id)
 	end)
 
-	hum.Died:Connect(function()
+	e.DeathConnection = hum.Died:Connect(function()
+		if e.AttributeConnection then
+			e.AttributeConnection:Disconnect()
+		end
+		if e.HealthConnection then
+			e.HealthConnection:Disconnect()
+		end
+		if e.DeathConnection then
+			e.DeathConnection:Disconnect()
+		end
 		releaseAttackSlot(e)
 		live[model] = nil
 		EnemyIndex.remove(model)
@@ -369,7 +395,9 @@ function EnemyAI.spawn(
 			end
 		end
 		task.delay(1.2, function()
-			model:Destroy()
+			if model.Parent then
+				EnemyBuilder.release(model)
+			end
 		end)
 	end)
 	return model
@@ -381,6 +409,10 @@ function EnemyAI.aliveCount(): number
 		n += 1
 	end
 	return n
+end
+
+function EnemyAI.refillPool(composition: { [string]: number }, familyId: string)
+	EnemyBuilder.refillPool(composition, familyId)
 end
 
 -- Watchdog: drop, kill or move enemies that can't be fought, so a wave never stalls on them.

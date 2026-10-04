@@ -758,4 +758,12 @@ function EnemyBuilder.startLocomotion(rig: Rig)
 	end
 end
 
+function EnemyBuilder.refillPool(composition: { [string]: number }, familyId: string)
+	EnemyRigBuilder.refill(composition, familyId)
+end
+
+function EnemyBuilder.release(model: Model)
+	EnemyRigBuilder.release(model)
+end
+
 return EnemyBuilder

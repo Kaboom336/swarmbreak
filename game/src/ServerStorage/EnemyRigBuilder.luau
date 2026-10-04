@@ -6,7 +6,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local EnemyFamilies = require(Shared.EnemyFamilies)
+local WaveTable = require(Shared.WaveTable)
 local Rigs = Shared:WaitForChild("Rigs")
+local EnemyPool = require(script.Parent.EnemyPool)
 
 local EnemyRigBuilder = {}
 
@@ -15,6 +17,7 @@ export type Rig = {
 	Root: BasePart,
 	Torso: BasePart,
 	HipHeight: number,
+	Humanoid: Humanoid?,
 }
 
 local RIG_KEYS = { "Mite", "Runner", "Shooter", "Tank", "Flyer" }
@@ -149,7 +152,7 @@ for _, rigKey in RIG_KEYS do
 	end
 end
 
-function EnemyRigBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig?
+local function buildFresh(typeName: string, size: Vector3, cf: CFrame): Rig?
 	local rigKey = EnemyFamilies.rigForEnemy("Nest", typeName)
 	if not rigKey then
 		return nil
@@ -204,6 +207,49 @@ function EnemyRigBuilder.build(typeName: string, size: Vector3, cf: CFrame): Rig
 	rootWeld.Parent = root
 
 	return { Model = model, Root = root, Torso = body, HipHeight = hipHeight }
+end
+
+for _, role in EnemyFamilies.RequiredRoles do
+	local typeName = assert(EnemyFamilies.resolve("Nest", role))
+	local rigKey = assert(EnemyFamilies.resolveRig("Nest", role))
+	EnemyPool.register(rigKey, function(): Model
+		local rig = assert(buildFresh(typeName, Vector3.one, CFrame.new()))
+		return rig.Model
+	end)
+end
+
+-- Wave one is ready before the game loop starts. Later waves refill during intermission.
+EnemyPool.refill(WaveTable.Compositions[1], "Nest")
+
+function EnemyRigBuilder.build(typeName: string, _size: Vector3, cf: CFrame): Rig?
+	local rigKey = EnemyFamilies.rigForEnemy("Nest", typeName)
+	if not rigKey or not templates[rigKey] then
+		return nil
+	end
+	local model = EnemyPool.take(rigKey)
+	local root = model:FindFirstChild("HumanoidRootPart")
+	local body = model:FindFirstChild("Body")
+	if not root or not root:IsA("BasePart") or not body or not body:IsA("BasePart") then
+		model:Destroy()
+		warnOnce(rigKey, "pooled rig lost its root or Body")
+		return nil
+	end
+	model.Name = typeName
+	model:PivotTo(cf)
+	return {
+		Model = model,
+		Root = root,
+		Torso = body,
+		HipHeight = 0.4,
+	}
+end
+
+function EnemyRigBuilder.refill(composition: { [string]: number }, familyId: string)
+	EnemyPool.refill(composition, familyId)
+end
+
+function EnemyRigBuilder.release(model: Model)
+	EnemyPool.release(model)
 end
 
 return EnemyRigBuilder
