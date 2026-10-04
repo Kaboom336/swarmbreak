@@ -441,7 +441,20 @@ task.spawn(function()
 				w.Air = 0
 				local spawns = workspace:FindFirstChild("Arena")
 					and (workspace :: any).Arena:FindFirstChild("EnemySpawns")
-				local points = if spawns then spawns:GetChildren() else {}
+				local waveValue = ReplicatedStorage:FindFirstChild("State")
+					and (ReplicatedStorage :: any).State:FindFirstChild("Wave")
+				local wave = if waveValue then waveValue.Value else 0
+				local points = {}
+				for _, child in (if spawns then spawns:GetChildren() else {}) do
+					local first = child:GetAttribute("FirstWave")
+					local last = child:GetAttribute("LastWave")
+					if
+						(type(first) ~= "number" or wave >= first)
+						and (type(last) ~= "number" or wave <= last)
+					then
+						table.insert(points, child)
+					end
+				end
 				local point = points[math.random(1, math.max(#points, 1))]
 				if point and point:IsA("BasePart") then
 					model:PivotTo(point.CFrame + Vector3.new(0, e.Root.Size.Y, 0))

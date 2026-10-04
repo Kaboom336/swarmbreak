@@ -83,3 +83,24 @@ test("play area grows at four players", function()
 	eq(ArenaLayout.playArea(3), 120, "three-player area")
 	eq(ArenaLayout.playArea(4), 160, "four-player area")
 end)
+
+test("mini-bosses spawn in the zone the wave is fought in", function()
+	for _, wave in { 5, 10, 15 } do
+		local zone = ArenaLayout.zoneForWave(wave)
+		local spot = ArenaLayout.bossSpawnForWave(wave)
+		assert(
+			ArenaLayout.zoneContains(zone, spot),
+			"boss spawn for wave " .. wave .. " is outside its zone"
+		)
+	end
+	eq(ArenaLayout.bossSpawnForWave(15).x, 462, "Hive Core boss spot")
+	eq(ArenaLayout.zoneForWave(0).Id, "LandingPad", "lobby wave maps to the first zone")
+end)
+
+test("every zone fits inside the watchdog radius", function()
+	local EnemyWatchdog = load("EnemyWatchdog")
+	for _, zone in ArenaLayout.Zones do
+		local far = math.abs(zone.x) + zone.Width / 2
+		assert(far < EnemyWatchdog.MaxRadius, zone.Id .. " reaches past the watchdog radius")
+	end
+end)

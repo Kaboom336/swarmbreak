@@ -7,7 +7,8 @@ end)
 
 test("fallen or escaped enemies are killed", function()
 	eq(EnemyWatchdog.verdict(true, true, 0, -40, 0, 0), "Kill", "fell")
-	eq(EnemyWatchdog.verdict(true, true, 300, 5, 0, 0), "Kill", "outside the map")
+	eq(EnemyWatchdog.verdict(true, true, 700, 5, 0, 0), "Kill", "outside the map")
+	eq(EnemyWatchdog.verdict(true, true, 462, 5, 0, 0), "Ok", "inside the Hive Core zone")
 	eq(EnemyWatchdog.verdict(true, true, 60, 5, 60, 0), "Ok", "inside the arena")
 end)
 

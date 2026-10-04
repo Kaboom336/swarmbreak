@@ -4,7 +4,7 @@
 local EnemyWatchdog = {
 	CheckSeconds = 1,
 	FallY = -25,
-	MaxRadius = 220, -- well past any arena wall, so only escaped enemies trip it
+	MaxRadius = 560, -- past the far edge of Hive Core (x 480), so only escaped enemies trip it
 	StuckSeconds = 10,
 	StuckMoveStuds = 1,
 	AirborneSeconds = 4, -- f96b4f8: a Walker sat in Freefall on top of the boss gate

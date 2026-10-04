@@ -225,12 +225,21 @@ function ArenaLayout.zoneContains(zone: Zone, position: Position): boolean
 end
 
 function ArenaLayout.zoneForWave(wave: number): Zone
+	if wave < ArenaLayout.Zones[1].FirstWave then
+		return ArenaLayout.Zones[1] -- lobby / intermission before wave 1
+	end
 	for _, zone in ArenaLayout.Zones do
 		if wave >= zone.FirstWave and wave <= zone.LastWave then
 			return zone
 		end
 	end
 	return ArenaLayout.Zones[#ArenaLayout.Zones]
+end
+
+-- The boss and wave 5/10 mini-bosses enter at the far end of the zone being fought in.
+function ArenaLayout.bossSpawnForWave(wave: number): Position
+	local zone = ArenaLayout.zoneForWave(math.max(wave, 1))
+	return { x = zone.x + zone.Width / 2 - 18, z = zone.z }
 end
 
 function ArenaLayout.spawnsForWave(wave: number): { ZoneSpawn }

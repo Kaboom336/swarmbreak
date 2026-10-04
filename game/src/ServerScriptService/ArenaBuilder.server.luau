@@ -546,7 +546,23 @@ local function buildOutpost9()
 	end
 
 	local opened: { [string]: boolean } = {}
+	local bossSpawn = arena:FindFirstChild("BossSpawn") :: BasePart?
 	local function openBridges(wave: number)
+		if bossSpawn then
+			local spot = ArenaLayout.bossSpawnForWave(wave)
+			bossSpawn.Position = Vector3.new(spot.x, 2, spot.z)
+		end
+		if wave <= 0 then
+			-- New run: fold the bridges back so zones open again during play.
+			for _, bridge in ArenaLayout.Bridges do
+				opened[bridge.Id] = nil
+				local deck = bridgeDecks[bridge.Id]
+				deck.CanCollide = false
+				deck.Size = Vector3.new(0.6, 2, bridge.Depth)
+				deck.Position = Vector3.new(bridge.x - bridge.Width / 2, 0, bridge.z)
+			end
+			return
+		end
 		for _, bridge in ArenaLayout.Bridges do
 			if wave >= bridge.OpenWave and not opened[bridge.Id] then
 				opened[bridge.Id] = true
@@ -661,10 +677,6 @@ local function buildOutpost9()
 		pool.Parent = world
 	end
 
-	local bossSpawn = arena:FindFirstChild("BossSpawn") :: BasePart?
-	if bossSpawn then
-		bossSpawn.Position = Vector3.new(462, 2, 0)
-	end
 	world:SetAttribute("WalkableCellSize", ArenaLayout.WalkableGrid.CellSize)
 	world:SetAttribute("WalkableCellCount", #ArenaLayout.WalkableGrid.Cells)
 end

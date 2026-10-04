@@ -164,4 +164,12 @@ function WaveTable.isFinalNormalWave(wave: number): boolean
 	return wave == Config.NormalWaves
 end
 
+-- Mini-boss Brutes get tougher at wave 10 so the fight lasts 20-40 s (RunSim spec).
+function WaveTable.bossHealthBonus(name: string, wave: number): number
+	if name ~= "Brute" then
+		return 1
+	end
+	return if wave >= 10 then 1.35 else 1.08
+end
+
 return WaveTable

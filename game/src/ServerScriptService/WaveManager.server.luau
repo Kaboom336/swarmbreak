@@ -261,7 +261,7 @@ local function spawnEnemy(typeName: string, cf: CFrame?)
 	local def = Enemies.Defs[typeName]
 	local hs, ds = WaveTable.scaling(currentWave)
 	local scaled = Difficulty.apply({ Health = hs, Damage = ds }, currentDifficultyId)
-	local healthScale = scaled.Health :: number
+	local healthScale = (scaled.Health :: number) * WaveTable.bossHealthBonus(typeName, currentWave)
 	local damageScale = scaled.Damage :: number
 	-- Keep the onboarding wave predictable even when a daily difficulty mutation is active.
 	local mutationId = if currentWave == 1 then "" else todaysMutation()

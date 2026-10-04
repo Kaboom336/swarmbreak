@@ -113,9 +113,7 @@ local function makeEnemy(
 	local def = Enemies.Defs[name]
 	return {
 		Name = name,
-		Health = def.Health * healthScale * if name == "Brute"
-			then if wave >= 10 then 1.35 else 1.08
-			else 1,
+		Health = def.Health * healthScale * WaveTable.bossHealthBonus(name, wave),
 		Distance = RunSim.SpawnDistanceMin
 			+ (RunSim.SpawnDistanceMax - RunSim.SpawnDistanceMin) * random(),
 		Speed = def.Speed,
