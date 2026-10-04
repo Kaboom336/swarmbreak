@@ -139,9 +139,10 @@ local function buildTemplate(rigKey: string, definition: any): Model
 end
 
 for _, rigKey in RIG_KEYS do
-	local module = Rigs:WaitForChild(rigKey)
+	local module = Rigs:WaitForChild(rigKey, 10)
 	local ok, result = pcall(function()
-		return buildTemplate(rigKey, require(module))
+		assert(module and module:IsA("ModuleScript"), "rig data missing: " .. rigKey)
+		return buildTemplate(rigKey, require(module) :: any)
 	end)
 	if ok then
 		templates[rigKey] = result :: Model

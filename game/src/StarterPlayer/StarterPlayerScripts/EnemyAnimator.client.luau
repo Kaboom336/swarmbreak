@@ -326,18 +326,20 @@ RunService.Heartbeat:Connect(function(dt)
 			"Shoulder_R",
 			compress * CFrame.Angles(swing * 0.8 + math.rad(-15) + attackPitch, 0, math.rad(-8))
 		)
-		set(
-			anim,
-			"Neck",
-			compress
-				* CFrame.Angles(
-					math.sin(phase * 2) * math.rad(6) * moving
-						+ math.sin(now * 1.5) * math.rad(3)
-						- attackPitch * 0.4,
-					math.sin(now * 0.7) * math.rad(10),
-					0
-				)
-		)
+		if not anim.RigMode then -- rigs aim their Neck at the target above
+			set(
+				anim,
+				"Neck",
+				compress
+					* CFrame.Angles(
+						math.sin(phase * 2) * math.rad(6) * moving
+							+ math.sin(now * 1.5) * math.rad(3)
+							- attackPitch * 0.4,
+						math.sin(now * 0.7) * math.rad(10),
+						0
+					)
+			)
+		end
 		set(anim, "Jaw", CFrame.Angles(math.abs(math.sin(now * 6)) * math.rad(35), 0, 0))
 
 		for index = 1, 8 do
