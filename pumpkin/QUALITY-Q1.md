@@ -102,3 +102,21 @@ testcmd: cd pumpkin && stylua --check src tests && selene src && lune run tests/
 
 Done when: the gate is green, with specs for the gift schedule, the free first hatch (only once), Index completion, and the starter pack (one purchase only, idempotent).
 6. **Smooth pet follow:** move the follow loop from the server Heartbeat to the client (RenderStepped), for all players' pets. The server only parents the models; the client sets their CFrames.
+
+## Codex task Q3-A "Ride and smash" (only if Zion picks it on the card; queue after Q2-A)
+Why: the grow-then-cash-in loop is right, but the cash-in is passive. Make it the best moment in the game.
+
+1. **Ride:** stepping on the start pad seats the player on top of their pumpkin, which rolls downhill on its own and speeds up with the slope.
+   - The player steers left and right: A/D on keyboard, thumbstick or tilt buttons on mobile.
+   - The server stays authoritative: Roll.simulate still decides the walls broken and the wins. Steering only collects bonuses.
+2. **Bonus targets along the track:**
+   - candy piles: +10% wins each;
+   - gold pumpkins: ×2 wins;
+   - speed pads.
+   - Spawn positions are seeded per roll and validated by the server: the client reports a pickup, and the server checks the pumpkin's time and lane against the seed. Cap: 6 pickups per roll.
+3. **Smash:**
+   - each wall breaks into 12-20 pooled chunks with physics-like arcs (client-side, tweened), plus a shockwave ring;
+   - hit-stop 0.05 s, a camera shake scaled by wall index, a rising pitch per wall in a combo, and a "WALL x7!" combo counter;
+   - the final stop gives a big "+N WINS" plus the coin fly.
+4. **Camera:** behind and above the pumpkin; FOV rises with speed.
+5. **Specs:** seeded bonus layout is deterministic; pickup validation rejects the wrong lane or time; the wins math with bonuses; the combo counter.
