@@ -1,0 +1,76 @@
+# Pumpkin quality round Q1 (2026-10-05)
+
+Zion's verdict on the screenshots: "not good enough". The game has to be comparable to today's best Roblox games.
+
+References: /mnt/project-files/roblox/research/r7-media/ (Break and Steal an Egg, +1 Stone Skipping, Drill for Eggs, plus the thumbnails sheet).
+
+## Side-by-side gaps, worst first
+1. **World is dark and murky.** Every reference is bright midday: blue sky, saturated green, light-blue water. Ours is a night sky over a floating green slab with a void below.
+2. **The HUD looks thin and empty.**
+   - References have a dense left column of square icon buttons with drawn icons, a bottom level/power bar, multiplier chips ("Friend Boost +0%", "2.13K Multiplier") and currency pills with icons.
+   - Ours has a few wide text buttons and big empty panels.
+3. **Numbers don't fly.** References fill the screen with big "+1"/"+67K" popups, currency bursts and a distance meter during the run. Ours shows small popups, with no meter or counter fly-in.
+4. **The thumbnail is a game screenshot.** References are illustrated scenes with these elements:
+   - an expressive avatar doing the action;
+   - a glowing rare item;
+   - a progression contrast ("LEVEL 1 / LEVEL 999", "+1 → +9.2M");
+   - 2-4 words of chunky text.
+5. **The map is a row of identical fence walls.** References use themed breakables (eggs, ore, stones), varied terrain, trees all around, and no visible void.
+6. **Pets are neon spheres.** References use real creature models.
+7. **No social boost.** All three references show a Friend Boost.
+
+## Codex task Q1-A (code only, on pumpkin/main)
+testcmd: cd pumpkin && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
+
+1. **Bright daytime look** in default.project.json Lighting:
+   - ClockTime 13.5;
+   - Brightness 3;
+   - a warm autumn colour shift;
+   - Atmosphere: light haze and blue-white colour;
+   - ColorCorrection: saturation 0.25, contrast 0.1;
+   - remove the night-only bloom threshold tweaks.
+
+   Also add a MapFallback ground plane or skirt (big grass baseplate, 2000×2000, 30 studs below the play area, with trees as simple parts) so no void shows past the map edge, unless a part named `Ground` already exists.
+2. **HUD rework to the reference layout.** Keep HudLayout pure, with specs at 667×375 and 1920×1080 checking no overlap and buttons at least 56 px.
+   - **Left:** a 2-column grid of square icon buttons (Shop, Pets, Rebirth, Codes, Daily, Passes, Settings). Each has an ImageLabel icon from `Config.Icons.<Name>` (an asset id string, default ""). With no id, draw a simple vector glyph from Frames: no emoji, no text-only tiles. A small label sits under each icon, and a red notification dot shows when Daily is claimable.
+   - **Top centre:** two compact currency pills (Size, Wins) with icons and abbreviated numbers. The number pops when it changes.
+   - **Bottom centre:** the GROW button. Above it, a progress bar "Size → next wall" that shows how many walls the current Size breaks in the current zone (from Roll.simulate) and the progress to the next one.
+   - **Bottom left:** multiplier chips: Pets ×N, Rebirth ×N, Friend Boost +N%, and 2x passes when owned.
+   - **Right:** the zone and next-unlock panel stays, but smaller.
+3. **Juice:**
+   - Grow popups are 2× bigger, spread randomly around the pumpkin, colour-tiered by amount (white, yellow, orange, pink, rainbow gradient at 1K+), and scale-pop then rise.
+   - Each grow sends a pumpkin-seed particle burst from the GROW button to the Size pill.
+   - During a roll:
+     - the camera follows from behind and above, with a FOV kick on each smash;
+     - a big distance meter counts up at the top ("123 m");
+     - each wall shows a "+N WINS" popup at the wall;
+     - at the end, win coins fly from the screen centre to the Wins pill and its number ticks up.
+   - All pooled, with at most 60 live effects.
+4. **Friend Boost:**
+   - +10% Size per friend in the same server, max +50%. Pure function plus a spec, applied in the server grow multiplier.
+   - Shown as a chip.
+   - Use Player:IsFriendsWith on the server, cached per pair and refreshed on join and leave.
+5. **Pets look:**
+   - If `ServerStorage.PetModels.<PetName>` exists, clone it; otherwise build a cute placeholder: a body with 2 eyes and ears or horns from parts, coloured by rarity, with no Neon on the body.
+   - Pets bob, and Legendary pets get a sparkle ParticleEmitter.
+
+Done when: the gate is green, there are new specs for HudLayout, Friend Boost and the wall-progress bar, and there are no new remotes without a rate limit.
+
+## Studio task Q1-B (Play, when the laptop is back)
+1. **Map:**
+   - Rebuild into a bright day map: terrain hills and grass around everything, autumn trees (orange and yellow), no void.
+   - Each zone's track goes steeply downhill.
+   - Walls become themed breakables: Patch has hay bales and pumpkin stacks; Forest has log piles; Graveyard has tombstone walls; Castle has stone or candy walls. Keep the names `Wall_n`.
+2. **Pets:** 15 pet meshes via generate_mesh (5 per egg, cute cartoon Halloween animals: bat, cat, ghost pup, candy bunny, pumpkin dragon and so on), under `ServerStorage.PetModels.<PetName>`, with names matching Pets.luau.
+3. **HUD icons:** 8 button icons (shop bag, paw, rebirth arrows, gift code, calendar, gamepass ticket, gear, star) as flat cartoon PNGs. Upload them, then put the IDs in Config.Icons.
+4. **Thumbnail v2,** in the reference style:
+   - an avatar posed with a giant glowing pumpkin smashing through a wall;
+   - a split "+1 → +1M" or "SIZE 1 / SIZE 999K";
+   - a bright day background;
+   - 2-4 chunky words.
+
+   Also an icon: the avatar's face plus the glowing pumpkin.
+5. **Proof:** record a real-input playthrough of the first 60 s and take 4 screenshots at the reference angles, for the re-judge.
+
+## Re-judge
+After Q1-A and Q1-B land, put new screenshots next to the references for each aspect: thumbnail, map, HUD, juice, pets and the first 60 s. Each aspect must match or beat the references. Anything that doesn't goes into Q2.
