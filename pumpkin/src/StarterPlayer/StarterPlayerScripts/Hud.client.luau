@@ -153,6 +153,63 @@ growButton.TextSize = 32
 growButton.TextStrokeColor3 = TEAL
 growButton.TextStrokeTransparency = 0
 
+local zonePanel = makeDepthObject(
+	"Frame",
+	"Zone",
+	UDim2.fromOffset(250, 104),
+	UDim2.new(1, -20, 0.5, 0),
+	Vector2.new(1, 0.5),
+	PURPLE,
+	Color3.fromRGB(73, 33, 130)
+)
+
+local zoneLabel = Instance.new("TextLabel")
+zoneLabel.Name = "ZoneName"
+zoneLabel.BackgroundTransparency = 1
+zoneLabel.Font = Enum.Font.GothamBlack
+zoneLabel.Position = UDim2.fromOffset(12, 9)
+zoneLabel.Size = UDim2.new(1, -24, 0, 48)
+zoneLabel.TextColor3 = WHITE
+zoneLabel.TextSize = 19
+zoneLabel.TextStrokeColor3 = TEAL
+zoneLabel.TextStrokeTransparency = 0
+zoneLabel.ZIndex = 4
+zoneLabel.Parent = zonePanel
+
+local progressBack = Instance.new("Frame")
+progressBack.Name = "UnlockProgress"
+progressBack.BackgroundColor3 = TEAL
+progressBack.BorderSizePixel = 0
+progressBack.Position = UDim2.fromOffset(14, 66)
+progressBack.Size = UDim2.new(1, -28, 0, 24)
+progressBack.ZIndex = 4
+progressBack.Parent = zonePanel
+local progressCorner = Instance.new("UICorner")
+progressCorner.CornerRadius = UDim.new(0, 12)
+progressCorner.Parent = progressBack
+
+local progressFill = Instance.new("Frame")
+progressFill.Name = "Fill"
+progressFill.BackgroundColor3 = LIME
+progressFill.BorderSizePixel = 0
+progressFill.Size = UDim2.fromScale(0, 1)
+progressFill.ZIndex = 5
+progressFill.Parent = progressBack
+local fillCorner = progressCorner:Clone()
+fillCorner.Parent = progressFill
+
+local progressText = Instance.new("TextLabel")
+progressText.Name = "NextUnlock"
+progressText.BackgroundTransparency = 1
+progressText.Font = Enum.Font.GothamBold
+progressText.Size = UDim2.fromScale(1, 1)
+progressText.TextColor3 = WHITE
+progressText.TextSize = 14
+progressText.TextStrokeColor3 = TEAL
+progressText.TextStrokeTransparency = 0
+progressText.ZIndex = 6
+progressText.Parent = progressBack
+
 local function abbreviate(value: number): string
 	local absolute = math.abs(value)
 	local suffixes = {
@@ -177,6 +234,32 @@ local function updateStats(size: number?, wins: number?)
 	local currentWins = wins or (player:GetAttribute("Wins") :: number?) or 0
 	sizeLabel.Text = "🎃 SIZE\n" .. abbreviate(currentSize)
 	winsLabel.Text = "★ WINS\n" .. abbreviate(currentWins)
+
+	local currentZoneName = (player:GetAttribute("CurrentZone") :: string?) or Config.Zones[1].Name
+	local currentDisplay = Config.Zones[1].DisplayName
+	for _, zone in Config.Zones do
+		if zone.Name == currentZoneName then
+			currentDisplay = zone.DisplayName
+			break
+		end
+	end
+	zoneLabel.Text = "ZONE\n" .. currentDisplay
+
+	local totalWins = (player:GetAttribute("TotalWins") :: number?) or 0
+	local nextZone = nil
+	for _, zone in Config.Zones do
+		if totalWins < zone.RequiredWins then
+			nextZone = zone
+			break
+		end
+	end
+	if nextZone then
+		progressFill.Size = UDim2.fromScale(math.clamp(totalWins / nextZone.RequiredWins, 0, 1), 1)
+		progressText.Text = abbreviate(totalWins) .. " / " .. abbreviate(nextZone.RequiredWins)
+	else
+		progressFill.Size = UDim2.fromScale(1, 1)
+		progressText.Text = "ALL ZONES UNLOCKED"
+	end
 end
 
 updateStats(nil, nil)
@@ -185,6 +268,12 @@ player:GetAttributeChangedSignal("Size"):Connect(function()
 	updateStats(nil, nil)
 end)
 player:GetAttributeChangedSignal("Wins"):Connect(function()
+	updateStats(nil, nil)
+end)
+player:GetAttributeChangedSignal("TotalWins"):Connect(function()
+	updateStats(nil, nil)
+end)
+player:GetAttributeChangedSignal("CurrentZone"):Connect(function()
 	updateStats(nil, nil)
 end)
 

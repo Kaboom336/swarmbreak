@@ -6,15 +6,20 @@ local ServerStorage = game:GetService("ServerStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Grow = require(Shared:WaitForChild("Grow"))
+local Roll = require(Shared:WaitForChild("Roll"))
 local Data = require(ServerStorage:WaitForChild("Data"))
 local PumpkinVisual = require(ServerStorage:WaitForChild("PumpkinVisual"))
 local RemotesBuilder = require(ServerStorage:WaitForChild("Remotes"))
+local MapFallback = require(script.Parent:WaitForChild("MapFallback"))
 
 local remotes = RemotesBuilder.build()
 local growRequest = remotes:FindFirstChild("GrowRequest") :: RemoteEvent
 local growEffect = remotes:FindFirstChild("GrowEffect") :: RemoteEvent
 local statsChanged = remotes:FindFirstChild("StatsChanged") :: RemoteEvent
+local rollPlayback = remotes:FindFirstChild("RollPlayback") :: RemoteEvent
 local limiter = Grow.newRateLimiter()
+local rolling: { [Player]: boolean } = {}
+local zoneParts = MapFallback.build()
 
 local function equippedPetMultipliers(profile: any): { number }
 	local equipped = {}
@@ -33,6 +38,7 @@ end
 local function syncPlayer(player: Player, profile: any)
 	player:SetAttribute("Size", profile.Size)
 	player:SetAttribute("Wins", profile.Wins)
+	player:SetAttribute("TotalWins", profile.TotalWins)
 
 	local leaderstats = player:FindFirstChild("leaderstats")
 	if leaderstats then
@@ -98,7 +104,7 @@ end
 
 growRequest.OnServerEvent:Connect(function(player: Player)
 	local profile = Data.get(player)
-	if not profile or not limiter:allow(player, os.clock()) then
+	if rolling[player] or not profile or not limiter:allow(player, os.clock()) then
 		return
 	end
 
@@ -116,6 +122,76 @@ growRequest.OnServerEvent:Connect(function(player: Player)
 	growEffect:FireClient(player, amount, profile.Size)
 end)
 
+local function playerFromHit(hit: BasePart): Player?
+	local character = hit:FindFirstAncestorOfClass("Model")
+	return if character then Players:GetPlayerFromCharacter(character) else nil
+end
+
+local function beginRoll(player: Player, zone: any, parts: any)
+	local profile = Data.get(player)
+	if rolling[player] or not profile or profile.Size <= 0 then
+		return
+	end
+	if not Roll.isZoneUnlocked(profile.TotalWins, zone) then
+		return
+	end
+
+	rolling[player] = true
+	player:SetAttribute("CurrentZone", zone.Name)
+	local rolledSize = profile.Size
+	local result = Roll.simulate(rolledSize, zone, #parts.walls)
+	local duration = Roll.duration(result.distance, rolledSize)
+	profile.Size = 0
+	Data.markDirty(player)
+	PumpkinVisual.update(player.Character, 0)
+	syncPlayer(player, profile)
+	rollPlayback:FireAllClients(
+		player.UserId,
+		zone.Name,
+		rolledSize,
+		result.wallsBroken,
+		result.distance,
+		result.wins,
+		duration
+	)
+
+	task.delay(duration, function()
+		local current = Data.get(player)
+		if current then
+			current.Wins += result.wins
+			current.TotalWins += result.wins
+			Data.markDirty(player)
+			syncPlayer(player, current)
+		end
+		task.delay(Config.RollCooldownSeconds, function()
+			rolling[player] = nil
+		end)
+	end)
+end
+
+for _, zone in Config.Zones do
+	local parts = zoneParts[zone.Name]
+	parts.start.Touched:Connect(function(hit)
+		local player = playerFromHit(hit)
+		if player then
+			beginRoll(player, zone, parts)
+		end
+	end)
+	if zone.RequiredWins > 0 then
+		parts.gate.Touched:Connect(function(hit)
+			local player = playerFromHit(hit)
+			local profile = if player then Data.get(player) else nil
+			if player and profile and not Roll.isZoneUnlocked(profile.TotalWins, zone) then
+				local root = player.Character
+					and player.Character:FindFirstChild("HumanoidRootPart")
+				if root and root:IsA("BasePart") then
+					root.CFrame = parts.gate.CFrame - parts.gate.CFrame.LookVector * 8
+				end
+			end
+		end)
+	end
+end
+
 Players.PlayerAdded:Connect(function(player)
 	task.spawn(loadPlayer, player)
 end)
@@ -125,6 +201,7 @@ end
 
 Players.PlayerRemoving:Connect(function(player)
 	limiter:clear(player)
+	rolling[player] = nil
 	Data.release(player)
 end)
 
