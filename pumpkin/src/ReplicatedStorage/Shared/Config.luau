@@ -55,9 +55,45 @@ local Config = {
 		},
 	},
 	Eggs = {
-		{ Name = "CandyEgg", DisplayName = "Candy Egg", Zone = "PumpkinPatch", Cost = 100 },
-		{ Name = "SpookyEgg", DisplayName = "Spooky Egg", Zone = "HauntedForest", Cost = 1_500 },
-		{ Name = "BoneEgg", DisplayName = "Bone Egg", Zone = "Graveyard", Cost = 15_000 },
+		{
+			Name = "CandyEgg",
+			DisplayName = "Candy Egg",
+			Zone = "PumpkinPatch",
+			Cost = 100,
+			Pets = {
+				Common = { Name = "Candy Corn", Multiplier = 1.2 },
+				Uncommon = { Name = "Caramel Bat", Multiplier = 1.5 },
+				Rare = { Name = "Gummy Ghost", Multiplier = 2 },
+				Epic = { Name = "Sugar Skull", Multiplier = 3 },
+				Legendary = { Name = "Golden Pumpkin", Multiplier = 5 },
+			},
+		},
+		{
+			Name = "SpookyEgg",
+			DisplayName = "Spooky Egg",
+			Zone = "HauntedForest",
+			Cost = 1_500,
+			Pets = {
+				Common = { Name = "Forest Spider", Multiplier = 2.4 },
+				Uncommon = { Name = "Moon Owl", Multiplier = 3 },
+				Rare = { Name = "Misty Ghost", Multiplier = 4 },
+				Epic = { Name = "Night Wolf", Multiplier = 6 },
+				Legendary = { Name = "Headless Horse", Multiplier = 10 },
+			},
+		},
+		{
+			Name = "BoneEgg",
+			DisplayName = "Bone Egg",
+			Zone = "Graveyard",
+			Cost = 15_000,
+			Pets = {
+				Common = { Name = "Bone Pup", Multiplier = 4.8 },
+				Uncommon = { Name = "Grave Raven", Multiplier = 6 },
+				Rare = { Name = "Crypt Cat", Multiplier = 8 },
+				Epic = { Name = "Phantom Knight", Multiplier = 12 },
+				Legendary = { Name = "Pumpkin Reaper", Multiplier = 20 },
+			},
+		},
 	},
 	PetRarityWeights = {
 		Common = 60,
@@ -66,6 +102,7 @@ local Config = {
 		Epic = 4.5,
 		Legendary = 0.5,
 	},
+	LuckyPotionMultiplier = 2,
 }
 
 return Config

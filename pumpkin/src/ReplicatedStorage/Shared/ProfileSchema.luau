@@ -21,6 +21,10 @@ export type Profile = {
 	Receipts: { [string]: boolean },
 	DoubleSize: boolean,
 	VIP: boolean,
+	ExtraPetEquip: boolean,
+	FastTripleHatch: boolean,
+	LuckyPotionExpiresAt: number,
+	ExpandedPetStorage: boolean,
 }
 
 local ProfileSchema = {}
@@ -39,6 +43,10 @@ function ProfileSchema.default(): Profile
 		Receipts = {},
 		DoubleSize = false,
 		VIP = false,
+		ExtraPetEquip = false,
+		FastTripleHatch = false,
+		LuckyPotionExpiresAt = 0,
+		ExpandedPetStorage = false,
 	}
 end
 
@@ -66,6 +74,10 @@ function ProfileSchema.fromStored(stored: any): Profile
 	profile.Receipts = copyMap(source.Receipts) :: any
 	profile.DoubleSize = source.DoubleSize == true
 	profile.VIP = source.VIP == true
+	profile.ExtraPetEquip = source.ExtraPetEquip == true
+	profile.FastTripleHatch = source.FastTripleHatch == true
+	profile.LuckyPotionExpiresAt = math.max(0, tonumber(source.LuckyPotionExpiresAt) or 0)
+	profile.ExpandedPetStorage = source.ExpandedPetStorage == true
 	return profile
 end
 
