@@ -11,6 +11,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Grow = require(Shared:WaitForChild("Grow"))
+local HudLayout = require(Shared:WaitForChild("HudLayout"))
 local Monetization = require(Shared:WaitForChild("Monetization"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local growRequest = remotes:WaitForChild("GrowRequest") :: RemoteEvent
@@ -68,7 +69,7 @@ local function decorate(guiObject: GuiObject, topColor: Color3, bottomColor: Col
 	highlightCorner.Parent = highlight
 end
 
-local function addButtonShadow(button: GuiButton)
+local function addButtonShadow(button: GuiObject)
 	local shadow = Instance.new("Frame")
 	shadow.Name = "Shadow"
 	shadow.BackgroundColor3 = SHADOW
@@ -204,6 +205,7 @@ progressBack.Position = UDim2.fromOffset(14, 66)
 progressBack.Size = UDim2.new(1, -28, 0, 24)
 progressBack.ZIndex = 4
 progressBack.Parent = zonePanel
+addButtonShadow(progressBack)
 local progressCorner = Instance.new("UICorner")
 progressCorner.CornerRadius = UDim.new(0, 12)
 progressCorner.Parent = progressBack
@@ -270,6 +272,143 @@ local petsButton = makeMenuButton("Pets", "PETS", PURPLE)
 local rebirthButton = makeMenuButton("Rebirth", "REBIRTH", LIME)
 local codesButton = makeMenuButton("Codes", "CODES", Color3.fromRGB(55, 190, 214))
 local dailyButton = makeMenuButton("Daily", "DAILY", Color3.fromRGB(255, 81, 158))
+
+local settingsButton = makeDepthObject(
+	"TextButton",
+	"Settings",
+	UDim2.fromOffset(56, 56),
+	UDim2.new(1, -18, 0, 18),
+	Vector2.new(1, 0),
+	Color3.fromRGB(55, 190, 214),
+	Color3.fromRGB(24, 105, 135)
+) :: TextButton
+settingsButton.AutoButtonColor = false
+settingsButton.Font = Enum.Font.GothamBlack
+settingsButton.Text = "SFX\nON"
+settingsButton.TextColor3 = WHITE
+settingsButton.TextSize = 15
+settingsButton.TextStrokeColor3 = TEAL
+settingsButton.TextStrokeTransparency = 0
+
+local tutorialPanel = makeDepthObject(
+	"TextLabel",
+	"Tutorial",
+	UDim2.fromOffset(380, 56),
+	UDim2.new(0.5, 0, 0, 104),
+	Vector2.new(0.5, 0),
+	PURPLE,
+	Color3.fromRGB(73, 33, 130)
+) :: TextLabel
+tutorialPanel.Font = Enum.Font.GothamBlack
+tutorialPanel.Text = "DOWN  Grow to 10 then roll!"
+tutorialPanel.TextColor3 = WHITE
+tutorialPanel.TextSize = 20
+tutorialPanel.TextStrokeColor3 = TEAL
+tutorialPanel.TextStrokeTransparency = 0
+tutorialPanel.ZIndex = 8
+
+local growArrow = Instance.new("TextLabel")
+growArrow.Name = "GrowArrow"
+growArrow.BackgroundTransparency = 1
+growArrow.Font = Enum.Font.GothamBlack
+growArrow.Text = utf8.char(0x2193)
+growArrow.TextColor3 = LIME
+growArrow.TextSize = 48
+growArrow.TextStrokeColor3 = TEAL
+growArrow.TextStrokeTransparency = 0
+growArrow.ZIndex = 8
+growArrow.Parent = screenGui
+
+local milestone = makeDepthObject(
+	"TextLabel",
+	"Milestone",
+	UDim2.fromOffset(380, 72),
+	UDim2.new(0.5, 0, 0.3, 0),
+	Vector2.new(0.5, 0.5),
+	ORANGE,
+	Color3.fromRGB(201, 55, 28)
+) :: TextLabel
+milestone.Font = Enum.Font.GothamBlack
+milestone.TextColor3 = WHITE
+milestone.TextSize = 34
+milestone.TextStrokeColor3 = TEAL
+milestone.TextStrokeTransparency = 0
+milestone.Visible = false
+milestone.ZIndex = 30
+local milestoneShadow = screenGui:FindFirstChild("MilestoneShadow") :: Frame
+milestoneShadow.Visible = false
+milestoneShadow.ZIndex = 29
+local milestoneScale = Instance.new("UIScale")
+milestoneScale.Parent = milestone
+
+local clickSound = Instance.new("Sound")
+clickSound.Name = "GrowClick"
+clickSound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
+clickSound.Volume = 0.45
+clickSound.Parent = screenGui
+
+local sfxEnabled = true
+player:SetAttribute("SFXEnabled", true)
+settingsButton.Activated:Connect(function()
+	sfxEnabled = not sfxEnabled
+	player:SetAttribute("SFXEnabled", sfxEnabled)
+	settingsButton.Text = if sfxEnabled then "SFX\nON" else "SFX\nOFF"
+end)
+
+local function applyRect(object: GuiObject, bounds: any, shadowName: string?)
+	object.AnchorPoint = Vector2.zero
+	object.Position = UDim2.fromOffset(bounds.x, bounds.y)
+	object.Size = UDim2.fromOffset(bounds.width, bounds.height)
+	if shadowName then
+		local shadow = screenGui:FindFirstChild(shadowName)
+		if shadow and shadow:IsA("GuiObject") then
+			shadow.AnchorPoint = Vector2.zero
+			shadow.Position = UDim2.fromOffset(bounds.x, bounds.y + 7)
+			shadow.Size = object.Size
+		end
+	end
+end
+
+local function applyLayout(viewport: Vector2)
+	local layout = HudLayout.compute(viewport.X, viewport.Y)
+	applyRect(statsPanel, layout.stats, "StatsShadow")
+	applyRect(growButton, layout.grow, "GrowShadow")
+	applyRect(zonePanel, layout.zone, "ZoneShadow")
+	applyRect(settingsButton, layout.settings, "SettingsShadow")
+	applyRect(tutorialPanel, layout.tutorial, "TutorialShadow")
+	applyRect(growArrow, layout.growArrow, nil)
+	menu.AnchorPoint = Vector2.zero
+	menu.Position = UDim2.fromOffset(layout.menu.x, layout.menu.y)
+	menu.Size = UDim2.fromOffset(layout.menu.width, layout.menu.height)
+	menuLayout.Padding = UDim.new(0, if layout.mobile then 6 else 7)
+	for _, button in { shopButton, petsButton, rebirthButton, codesButton, dailyButton } do
+		button.Size = UDim2.fromOffset(layout.menuButtons[1].width, layout.menuButtons[1].height)
+		button.TextSize = if layout.mobile then 16 else 20
+	end
+	sizeLabel.TextSize = if layout.mobile then 22 else 26
+	winsLabel.TextSize = if layout.mobile then 22 else 26
+	zoneLabel.TextSize = if layout.mobile then 16 else 19
+	progressBack.Position = UDim2.fromOffset(14, if layout.mobile then 53 else 66)
+	progressBack.Size = UDim2.new(1, -28, 0, if layout.mobile then 20 else 24)
+end
+
+local viewportConnection: RBXScriptConnection? = nil
+local function bindViewport()
+	if viewportConnection then
+		viewportConnection:Disconnect()
+		viewportConnection = nil
+	end
+	local camera = workspace.CurrentCamera
+	if camera then
+		applyLayout(camera.ViewportSize)
+		viewportConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+			applyLayout(camera.ViewportSize)
+		end)
+	end
+end
+
+bindViewport()
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(bindViewport)
 
 local modal = makeDepthObject(
 	"Frame",
@@ -493,6 +632,7 @@ local function showCodes()
 	box.TextSize = 24
 	box.ZIndex = 6
 	box.Parent = modalContent
+	addButtonShadow(box)
 	decorate(box, Color3.fromRGB(37, 106, 125), TEAL)
 	local redeem = actionButton(modalContent, "REDEEM", UDim2.new(0, 0, 0, 130), ORANGE)
 	redeem.Activated:Connect(function()
@@ -522,6 +662,7 @@ local function showDaily()
 		cell.TextSize = 15
 		cell.ZIndex = 6
 		cell.Parent = calendar
+		addButtonShadow(cell)
 		decorate(cell, cell.BackgroundColor3, cell.BackgroundColor3:Lerp(TEAL, 0.25))
 	end
 	local claim = actionButton(
@@ -547,8 +688,8 @@ closeButton.Activated:Connect(function()
 end)
 shopButton.Activated:Connect(showShop)
 petsButton.Activated:Connect(function()
-	showPanel("PETS")
-	notice.Text = "Find eggs in each zone to hatch pets!"
+	local request = (player:GetAttribute("PetsPanelRequest") :: number?) or 0
+	player:SetAttribute("PetsPanelRequest", request + 1)
 end)
 rebirthButton.Activated:Connect(showRebirth)
 codesButton.Activated:Connect(showCodes)
@@ -590,9 +731,105 @@ local function abbreviate(value: number): string
 	return string.format("%.1f", value)
 end
 
+local startArrow = Instance.new("BillboardGui")
+startArrow.Name = "TutorialStartArrow"
+startArrow.AlwaysOnTop = true
+startArrow.Enabled = false
+startArrow.LightInfluence = 0
+startArrow.Size = UDim2.fromOffset(190, 100)
+startArrow.StudsOffsetWorldSpace = Vector3.new(0, 7, 0)
+startArrow.Parent = playerGui
+local startArrowText = Instance.new("TextLabel")
+startArrowText.BackgroundTransparency = 1
+startArrowText.Font = Enum.Font.GothamBlack
+startArrowText.Size = UDim2.fromScale(1, 1)
+startArrowText.Text = "START HERE\n" .. utf8.char(0x2193)
+startArrowText.TextColor3 = LIME
+startArrowText.TextSize = 25
+startArrowText.TextStrokeColor3 = TEAL
+startArrowText.TextStrokeTransparency = 0
+startArrowText.Parent = startArrow
+
+task.spawn(function()
+	for _ = 1, 100 do
+		local candidate = workspace:FindFirstChild("ZoneStart_" .. Config.Zones[1].Name, true)
+		if candidate and candidate:IsA("BasePart") then
+			startArrow.Adornee = candidate
+			return
+		end
+		task.wait(0.1)
+	end
+end)
+
+local tutorialReady = false
+local function updateTutorial(size: number, wins: number)
+	if wins > 0 then
+		tutorialPanel.Visible = false
+		local shadow = screenGui:FindFirstChild("TutorialShadow")
+		if shadow and shadow:IsA("GuiObject") then
+			shadow.Visible = false
+		end
+		startArrow.Enabled = false
+		growArrow.Visible = false
+		return
+	end
+	if size >= Config.TutorialRollSize then
+		tutorialReady = true
+	end
+	tutorialPanel.Visible = true
+	local shadow = screenGui:FindFirstChild("TutorialShadow")
+	if shadow and shadow:IsA("GuiObject") then
+		shadow.Visible = true
+	end
+	if tutorialReady then
+		tutorialPanel.Text = "FOLLOW THE ARROW - STEP ON THE START PAD!"
+		startArrow.Enabled = startArrow.Adornee ~= nil
+		growArrow.Visible = false
+	else
+		tutorialPanel.Text = "Grow to 10 then roll!"
+		startArrow.Enabled = false
+		growArrow.Visible = true
+	end
+end
+
+local milestoneGeneration = 0
+local lastMilestoneSize = (player:GetAttribute("Size") :: number?) or 0
+local function showMilestone(newSize: number)
+	local crossed = nil
+	for _, target in { 10, 100, 1_000, 10_000, 100_000, 1_000_000 } do
+		if lastMilestoneSize < target and newSize >= target then
+			crossed = target
+		end
+	end
+	lastMilestoneSize = newSize
+	if not crossed then
+		return
+	end
+	milestoneGeneration += 1
+	local generation = milestoneGeneration
+	milestone.Text = "SIZE " .. string.upper(abbreviate(crossed)) .. "!"
+	milestone.Visible = true
+	milestoneShadow.Visible = true
+	milestoneScale.Scale = 0.55
+	TweenService:Create(
+		milestoneScale,
+		TweenInfo.new(0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+		{ Scale = 1 }
+	):Play()
+	task.delay(1.4, function()
+		if milestoneGeneration == generation then
+			milestone.Visible = false
+			milestoneShadow.Visible = false
+		end
+	end)
+end
+
 local function updateStats(size: number?, wins: number?)
 	local currentSize = size or (player:GetAttribute("Size") :: number?) or 0
 	local currentWins = wins or (player:GetAttribute("Wins") :: number?) or 0
+	if currentSize < lastMilestoneSize then
+		lastMilestoneSize = currentSize
+	end
 	sizeLabel.Text = "🎃 SIZE\n" .. abbreviate(currentSize)
 	winsLabel.Text = "★ WINS\n" .. abbreviate(currentWins)
 
@@ -621,6 +858,7 @@ local function updateStats(size: number?, wins: number?)
 		progressFill.Size = UDim2.fromScale(1, 1)
 		progressText.Text = "ALL ZONES UNLOCKED"
 	end
+	updateTutorial(currentSize, currentWins)
 end
 
 updateStats(nil, nil)
@@ -730,8 +968,12 @@ local function squashPumpkin(newSize: number)
 end
 
 growEffect.OnClientEvent:Connect(function(amount: number, newSize: number)
+	if sfxEnabled then
+		clickSound:Play()
+	end
 	showPopup(amount)
 	squashPumpkin(newSize)
+	showMilestone(newSize)
 end)
 
 local lastRequest = -math.huge

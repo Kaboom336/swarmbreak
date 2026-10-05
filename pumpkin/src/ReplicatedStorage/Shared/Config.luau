@@ -19,6 +19,7 @@ local Config = {
 
 	WallSpacing = 50,
 	WallBaseHealth = 10,
+	TutorialRollSize = 10,
 	WallHealthGrowth = 1.6,
 	FallbackWallCount = 10,
 	RollMinDuration = 2,
