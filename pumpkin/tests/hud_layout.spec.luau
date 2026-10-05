@@ -4,9 +4,11 @@ local HudLayout = load("HudLayout")
 local function primaryRects(layout)
 	local result = {
 		layout.stats,
+		layout.distanceMeter,
 		layout.grow,
 		layout.wallProgress,
 		layout.multipliers,
+		layout.starterPack,
 		layout.zone,
 		layout.tutorial,
 		layout.growArrow,
@@ -27,6 +29,7 @@ end
 for _, viewport in
 	{
 		{ width = 667, height = 375, name = "mobile landscape" },
+		{ width = 1399, height = 1080, name = "Studio desktop" },
 		{ width = 1920, height = 1080, name = "desktop" },
 	}
 do
@@ -48,7 +51,7 @@ end
 
 test("every mobile HUD button is at least 56 pixels", function()
 	local layout = HudLayout.compute(667, 375)
-	local buttons = { layout.grow }
+	local buttons = { layout.grow, layout.starterPack }
 	for _, button in layout.menuButtons do
 		table.insert(buttons, button)
 	end
@@ -56,4 +59,8 @@ test("every mobile HUD button is at least 56 pixels", function()
 		eq(button.width >= 56, true, "button " .. index .. " width")
 		eq(button.height >= 56, true, "button " .. index .. " height")
 	end
+end)
+
+test("multiplier chip text is near-white", function()
+	eq(HudLayout.isNearWhite(HudLayout.CHIP_TEXT_COLOR), true, "chip text contrast")
 end)

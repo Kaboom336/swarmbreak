@@ -44,3 +44,10 @@ test("pumpkin scale follows the logarithmic curve and cap", function()
 	eq(Grow.pumpkinScale(1e100), Config.PumpkinMaxScale, "scale cap")
 	eq(Grow.pumpkinScale(-10), 1, "negative size is clamped")
 end)
+
+test("head pumpkin visual diameter is capped relative to the character", function()
+	local characterHeight = 5
+	local maximum = characterHeight * Config.PumpkinMaxCharacterHeights
+	eq(Grow.pumpkinVisualDiameter(0, characterHeight), Config.PumpkinBaseDiameter, "base diameter")
+	eq(Grow.pumpkinVisualDiameter(1e100, characterHeight), maximum, "character-relative cap")
+end)

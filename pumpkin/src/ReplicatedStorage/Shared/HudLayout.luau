@@ -1,13 +1,16 @@
 --!strict
 
 export type Rect = { x: number, y: number, width: number, height: number }
+export type RGB = { r: number, g: number, b: number }
 export type Layout = {
 	stats: Rect,
+	distanceMeter: Rect,
 	menu: Rect,
 	menuButtons: { Rect },
 	grow: Rect,
 	wallProgress: Rect,
 	multipliers: Rect,
+	starterPack: Rect,
 	zone: Rect,
 	tutorial: Rect,
 	growArrow: Rect,
@@ -15,6 +18,12 @@ export type Layout = {
 }
 
 local HudLayout = {}
+
+HudLayout.CHIP_TEXT_COLOR = { r = 255, g = 255, b = 255 }
+
+function HudLayout.isNearWhite(color: RGB): boolean
+	return math.min(color.r, color.g, color.b) >= 240
+end
 
 local function rect(x: number, y: number, width: number, height: number): Rect
 	return { x = x, y = y, width = width, height = height }
@@ -43,6 +52,14 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number): Layou
 	local statsHeight = if mobile then 56 else 66
 	local stats =
 		rect(math.floor((viewportWidth - statsWidth) / 2), margin, statsWidth, statsHeight)
+	local distanceWidth = if mobile then 180 else 240
+	local distanceHeight = if mobile then 48 else 56
+	local distanceMeter = rect(
+		math.floor((viewportWidth - distanceWidth) / 2),
+		stats.y + stats.height + 8,
+		distanceWidth,
+		distanceHeight
+	)
 	local growWidth = if mobile then 200 else 270
 	local growHeight = if mobile then 64 else 78
 	local growBottom = if mobile then 8 else 24
@@ -72,10 +89,18 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number): Layou
 	local multiplierHeight = if mobile then 51 else 58
 	local multipliers =
 		rect(margin, viewportHeight - margin - multiplierHeight, multiplierWidth, multiplierHeight)
+	local starterPackWidth = 190
+	local starterPackHeight = 58
+	local starterPack = rect(
+		viewportWidth - margin - starterPackWidth,
+		viewportHeight - margin - starterPackHeight,
+		starterPackWidth,
+		starterPackHeight
+	)
 	local tutorialWidth = math.min(if mobile then 290 else 380, viewportWidth - 2 * margin)
 	local tutorial = rect(
 		math.floor((viewportWidth - tutorialWidth) / 2),
-		stats.y + stats.height + 8,
+		distanceMeter.y + distanceMeter.height + 8,
 		tutorialWidth,
 		if mobile then 44 else 52
 	)
@@ -83,11 +108,13 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number): Layou
 
 	return {
 		stats = stats,
+		distanceMeter = distanceMeter,
 		menu = menu,
 		menuButtons = menuButtons,
 		grow = grow,
 		wallProgress = wallProgress,
 		multipliers = multipliers,
+		starterPack = starterPack,
 		zone = zone,
 		tutorial = tutorial,
 		growArrow = growArrow,
