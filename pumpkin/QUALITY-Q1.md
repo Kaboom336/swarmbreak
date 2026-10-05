@@ -120,3 +120,12 @@ Why: the grow-then-cash-in loop is right, but the cash-in is passive. Make it th
    - the final stop gives a big "+N WINS" plus the coin fly.
 4. **Camera:** behind and above the pumpkin; FOV rises with speed.
 5. **Specs:** seeded bonus layout is deterministic; pickup validation rejects the wrong lane or time; the wins math with bonuses; the combo counter.
+
+## Codex task Q2-B: HUD fixes from Play's Studio check of 2d3a9ad (queue right after Q2-A, before Q3-A)
+1. The multiplier chip panel at the bottom left overlaps the GROW button at 1399×1080. Add the chips to HudLayout as their own rect, and extend the no-overlap spec to cover the chips (and every Q2 button) at 667×375, 1399×1080 and 1920×1080.
+2. Chip text is dark purple on purple. Use white text with a dark stroke, and set a contrast rule: chip text is always white or near-white.
+3. The roll distance meter ("76 m") draws over the Size/Wins pills. Put it in its own HudLayout rect below the pills, and add it to the no-overlap spec.
+4. At Size 16-24 the head pumpkin fills the camera. Fix it two ways:
+   - cap the head pumpkin's visual diameter relative to the character (about 3× character height);
+   - push the camera zoom out (CameraMinZoomDistance plus the default zoom scaled to the pumpkin diameter).
+5. Use Config.Icons.Size for the Size pill. Play will supply the asset ID.
