@@ -49,6 +49,11 @@ AI does the glue. Our build has the systems but almost no hit feedback: a new pl
 10. **Retention layer:** a daily reward calendar, a codes box, an always-visible quest panel, and a "next update" timer. Use Roblox analytics funnels for the first session.
 
 Bugs to carry:
+- Zion, 10/5: blocky "particles" that don't look like particles are scattered all over the maps. Suspects:
+  - ArenaBuilder scatterProps (PropScatter blocks);
+  - CoinDrop and XPDrop parts;
+  - leftover goo patches or cloud bits.
+  - Fix: find the source, then remove it or replace it with real ParticleEmitters or meshes.
 - Enemies chasing a player off the west edge fall about 47 studs: add a kill plane or a navmesh clamp.
 - The boss watchdog from R2 still needs verifying in a real playthrough.
 
