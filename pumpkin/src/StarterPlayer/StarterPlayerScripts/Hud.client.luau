@@ -1100,6 +1100,8 @@ local function popNumber(scale: UIScale)
 end
 
 local cameraZoomGeneration = 0
+-- Only move the camera when the zoom target really changes, so stat updates keep the player's own zoom
+local lastZoomTarget: number? = nil
 local function updateCameraZoom(size: number)
 	local character = player.Character
 	local pumpkin = if character then character:FindFirstChild("Pumpkin") else nil
@@ -1119,6 +1121,10 @@ local function updateCameraZoom(size: number)
 				+ Config.PumpkinCameraBaseDistance
 		)
 	)
+	if lastZoomTarget and math.abs(startingDistance - lastZoomTarget) < 0.5 then
+		return
+	end
+	lastZoomTarget = startingDistance
 	cameraZoomGeneration += 1
 	local generation = cameraZoomGeneration
 	player.CameraMinZoomDistance = startingDistance
@@ -1497,6 +1503,7 @@ local function watchPumpkinZoom(character: Model)
 	if not pumpkin then
 		return
 	end
+	lastZoomTarget = nil
 	local function refresh()
 		updateCameraZoom((player:GetAttribute("Size") :: number?) or 0)
 	end
