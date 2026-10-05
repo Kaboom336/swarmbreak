@@ -14,7 +14,7 @@ local function applySize(pumpkin: BasePart, size: number)
 		return
 	end
 	local diameter = Config.PumpkinBaseDiameter * Grow.pumpkinScale(size)
-	mesh.Scale = Vector3.new(diameter, diameter * 0.82, diameter)
+	mesh.Scale = Vector3.new(diameter, diameter * 0.82, diameter) * Config.PumpkinMeshScale
 	weld.C0 = CFrame.new(0, 1.25 + diameter * 0.42, 0)
 end
 
@@ -44,8 +44,9 @@ function PumpkinVisual.attach(character: Model, size: number): BasePart?
 
 	local mesh = Instance.new("SpecialMesh")
 	mesh.Name = "PumpkinMesh"
-	mesh.MeshType = Enum.MeshType.Sphere
-	mesh.VertexColor = Vector3.new(1, 0.28, 0.02)
+	mesh.MeshType = Enum.MeshType.FileMesh
+	mesh.MeshId = Config.PumpkinMeshId
+	mesh.TextureId = Config.PumpkinTextureId
 	mesh.Parent = pumpkin
 
 	local weld = Instance.new("Weld")

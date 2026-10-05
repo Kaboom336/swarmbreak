@@ -154,6 +154,25 @@ list.Size = UDim2.new(1, -32, 1, -154)
 list.ZIndex = 12
 list.Parent = panel
 decorate(list, Color3.fromRGB(25, 74, 88), TEAL)
+-- The grid layout would turn the depth-stack highlight into a grey pet cell
+local listHighlight = list:FindFirstChild("TopHighlight")
+if listHighlight then
+	listHighlight:Destroy()
+end
+local emptyLabel = Instance.new("TextLabel")
+emptyLabel.Name = "EmptyPets"
+emptyLabel.BackgroundTransparency = 1
+emptyLabel.Font = Enum.Font.GothamBlack
+emptyLabel.Position = list.Position
+emptyLabel.Size = list.Size
+emptyLabel.Text = "No pets yet - hatch an egg!"
+emptyLabel.TextColor3 = Color3.new(1, 1, 1)
+emptyLabel.TextSize = 22
+emptyLabel.TextStrokeColor3 = TEAL
+emptyLabel.TextStrokeTransparency = 0.2
+emptyLabel.TextWrapped = true
+emptyLabel.ZIndex = list.ZIndex + 2
+emptyLabel.Parent = panel
 local grid = Instance.new("UIGridLayout")
 grid.CellPadding = UDim2.fromOffset(10, 10)
 grid.CellSize = UDim2.fromOffset(150, 116)
@@ -174,7 +193,9 @@ equipBest.Font = Enum.Font.GothamBlack
 equipBest.Position = UDim2.new(0.5, 0, 1, -12)
 equipBest.Size = UDim2.fromOffset(220, 58)
 equipBest.Text = "EQUIP BEST"
-equipBest.TextColor3 = TEAL
+equipBest.TextColor3 = Color3.new(1, 1, 1)
+equipBest.TextStrokeColor3 = TEAL
+equipBest.TextStrokeTransparency = 0.2
 equipBest.TextSize = 22
 equipBest.ZIndex = 13
 equipBest.Parent = panel
@@ -250,6 +271,7 @@ local function renderState(state: any)
 	for _, petId in state.equippedPetIds or {} do
 		equipped[petId] = true
 	end
+	emptyLabel.Visible = #(state.pets or {}) == 0
 	for _, child in list:GetChildren() do
 		if child:IsA("GuiButton") then
 			child:Destroy()

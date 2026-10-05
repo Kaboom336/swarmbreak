@@ -141,6 +141,13 @@ local function playRoll(
 	pumpkin.Material = Enum.Material.SmoothPlastic
 	pumpkin.Size = Vector3.new(diameter, diameter * 0.82, diameter)
 	pumpkin.CFrame = CFrame.new(start.Position + Vector3.new(0, diameter * 0.5 + 1, 0))
+	pumpkin.Transparency = 0
+	local rollMesh = Instance.new("SpecialMesh")
+	rollMesh.MeshType = Enum.MeshType.FileMesh
+	rollMesh.MeshId = Config.PumpkinMeshId
+	rollMesh.TextureId = Config.PumpkinTextureId
+	rollMesh.Scale = Vector3.new(diameter, diameter * 0.82, diameter) * Config.PumpkinMeshScale
+	rollMesh.Parent = pumpkin
 	pumpkin.Parent = workspace
 
 	local smashSound = Instance.new("Sound")

@@ -16,6 +16,10 @@ local Config = {
 	PumpkinLogScale = 1.5,
 	PumpkinMaxScale = 12,
 	PumpkinBaseDiameter = 2.5,
+	-- Pumpkin mesh picked by Play (mesh asset only, no scripts). MeshScale converts mesh units to studs.
+	PumpkinMeshId = "rbxassetid://139105509213577",
+	PumpkinTextureId = "rbxassetid://78839540616611",
+	PumpkinMeshScale = 1,
 
 	WallSpacing = 50,
 	WallBaseHealth = 10,

@@ -965,7 +965,9 @@ local function squashPumpkin(newSize: number)
 	if not mesh or not mesh:IsA("SpecialMesh") then
 		return
 	end
-	local diameter = Config.PumpkinBaseDiameter * Grow.pumpkinScale(newSize)
+	local diameter = Config.PumpkinBaseDiameter
+		* Grow.pumpkinScale(newSize)
+		* Config.PumpkinMeshScale
 	mesh.Scale = Vector3.new(diameter * 1.14, diameter * 0.66, diameter * 1.14)
 	TweenService:Create(
 		mesh,
