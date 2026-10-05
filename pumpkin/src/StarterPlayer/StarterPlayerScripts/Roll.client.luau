@@ -741,6 +741,21 @@ local function playRoll(
 		local finalWins = completedWins[token] or wins
 		completedWins[token] = nil
 		showWins(finalWins)
+		-- Hide the pad's 3D signs while the end toast is up, so the two don't stack
+		local hiddenSigns: { BillboardGui } = {}
+		if start then
+			for _, descendant in start:GetDescendants() do
+				if descendant:IsA("BillboardGui") and descendant.Enabled then
+					descendant.Enabled = false
+					table.insert(hiddenSigns, descendant)
+				end
+			end
+		end
+		task.delay(1.6, function()
+			for _, sign in hiddenSigns do
+				sign.Enabled = true
+			end
+		end)
 		flyCoins(
 			Vector2.new(effectGui.AbsoluteSize.X * 0.5, effectGui.AbsoluteSize.Y * 0.5),
 			finalWins,

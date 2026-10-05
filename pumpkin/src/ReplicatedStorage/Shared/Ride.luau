@@ -107,9 +107,11 @@ function Ride.winsWithBonuses(baseWins: number, kinds: { BonusKind }): number
 			gold += 1
 		end
 	end
-	local candyMultiplier = 1 + candy * Config.RideCandyWinBonus
-	local goldMultiplier = Config.RideGoldWinMultiplier ^ gold
-	return math.floor(math.max(0, baseWins) * candyMultiplier * goldMultiplier)
+	-- Bonuses add up instead of compounding, so 6 golds give x7, not x64
+	local multiplier = 1
+		+ candy * Config.RideCandyWinBonus
+		+ gold * (Config.RideGoldWinMultiplier - 1)
+	return math.floor(math.max(0, baseWins) * multiplier)
 end
 
 function Ride.comboText(wallsBroken: number): string?
