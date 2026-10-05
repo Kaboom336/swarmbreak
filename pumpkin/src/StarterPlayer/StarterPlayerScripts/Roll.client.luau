@@ -177,7 +177,9 @@ local function playRoll(
 		if wallIndex <= wallsBroken then
 			wall.LocalTransparencyModifier = 1
 			burstDebris(wall.Position)
-			smashSound:Play()
+			if player:GetAttribute("SFXEnabled") ~= false then
+				smashSound:Play()
+			end
 			if isLocalRoll then
 				shakeCamera()
 			end

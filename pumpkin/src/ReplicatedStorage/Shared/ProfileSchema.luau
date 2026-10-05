@@ -28,6 +28,7 @@ export type Profile = {
 	DoubleWins: boolean,
 	ExtraPetEquip: boolean,
 	VIP: boolean,
+	TutorialDone: boolean,
 	FastTripleHatch: boolean,
 	ExpandedPetStorage: boolean,
 }
@@ -55,6 +56,7 @@ function ProfileSchema.default(): Profile
 		DoubleWins = false,
 		ExtraPetEquip = false,
 		VIP = false,
+		TutorialDone = false,
 		FastTripleHatch = false,
 		ExpandedPetStorage = false,
 	}
@@ -93,6 +95,10 @@ function ProfileSchema.fromStored(stored: any): Profile
 	profile.DoubleWins = source.DoubleWins == true
 	profile.ExtraPetEquip = source.ExtraPetEquip == true
 	profile.VIP = source.VIP == true
+	-- Profiles from before the flag count as done once they have any progress
+	profile.TutorialDone = source.TutorialDone == true
+		or (tonumber(source.TotalWins) or 0) > 0
+		or (tonumber(source.Rebirths) or 0) > 0
 	profile.FastTripleHatch = source.FastTripleHatch == true
 	profile.ExpandedPetStorage = source.ExpandedPetStorage == true
 	return profile

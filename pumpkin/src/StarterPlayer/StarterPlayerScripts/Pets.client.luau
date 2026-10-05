@@ -60,46 +60,19 @@ local function decorate(object: GuiObject, topColor: Color3, bottomColor: Color3
 	highlightCorner.Parent = highlight
 end
 
-local function makeButton(
-	name: string,
-	text: string,
-	size: UDim2,
-	position: UDim2,
-	color: Color3
-): TextButton
+local function addInnerShadow(object: GuiObject)
 	local shadow = Instance.new("Frame")
-	shadow.Name = name .. "Shadow"
+	shadow.Name = "Shadow"
 	shadow.BackgroundColor3 = SHADOW
 	shadow.BorderSizePixel = 0
-	shadow.Position = position + UDim2.fromOffset(0, 7)
-	shadow.Size = size
-	shadow.ZIndex = 1
-	shadow.Parent = gui
-	local shadowCorner = Instance.new("UICorner")
-	shadowCorner.CornerRadius = UDim.new(0, 12)
-	shadowCorner.Parent = shadow
-
-	local button = Instance.new("TextButton")
-	button.Name = name
-	button.AutoButtonColor = false
-	button.BackgroundColor3 = color
-	button.BorderSizePixel = 0
-	button.Font = Enum.Font.GothamBlack
-	button.Position = position
-	button.Size = size
-	button.Text = text
-	button.TextColor3 = WHITE
-	button.TextSize = 21
-	button.TextStrokeColor3 = TEAL
-	button.TextStrokeTransparency = 0
-	button.ZIndex = 2
-	button.Parent = gui
-	decorate(button, color, color:Lerp(TEAL, 0.35))
-	return button
+	shadow.Position = UDim2.fromOffset(0, 7)
+	shadow.Size = UDim2.fromScale(1, 1)
+	shadow.ZIndex = object.ZIndex - 1
+	shadow.Parent = object
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = shadow
 end
-
-local petsButton =
-	makeButton("Pets", "🐾 PETS", UDim2.fromOffset(150, 60), UDim2.new(0, 18, 0.5, -30), PURPLE)
 
 local panelShadow = Instance.new("Frame")
 panelShadow.Name = "InventoryShadow"
@@ -143,6 +116,7 @@ local close = Instance.new("TextButton")
 close.Name = "Close"
 close.AnchorPoint = Vector2.new(1, 0)
 close.BackgroundColor3 = ORANGE
+close.BorderSizePixel = 0
 close.Font = Enum.Font.GothamBlack
 close.Position = UDim2.new(1, -12, 0, 10)
 close.Size = UDim2.fromOffset(56, 56)
@@ -151,7 +125,20 @@ close.TextColor3 = WHITE
 close.TextSize = 34
 close.ZIndex = 13
 close.Parent = panel
+addInnerShadow(close)
 decorate(close, ORANGE, Color3.fromRGB(200, 54, 27))
+
+local listShadow = Instance.new("Frame")
+listShadow.Name = "PetListShadow"
+listShadow.BackgroundColor3 = SHADOW
+listShadow.BorderSizePixel = 0
+listShadow.Position = UDim2.fromOffset(16, 83)
+listShadow.Size = UDim2.new(1, -32, 1, -154)
+listShadow.ZIndex = 11
+listShadow.Parent = panel
+local listShadowCorner = Instance.new("UICorner")
+listShadowCorner.CornerRadius = UDim.new(0, 12)
+listShadowCorner.Parent = listShadow
 
 local list = Instance.new("ScrollingFrame")
 list.Name = "PetList"
@@ -165,9 +152,7 @@ list.ScrollBarThickness = 8
 list.Size = UDim2.new(1, -32, 1, -154)
 list.ZIndex = 12
 list.Parent = panel
-local listCorner = Instance.new("UICorner")
-listCorner.CornerRadius = UDim.new(0, 12)
-listCorner.Parent = list
+decorate(list, Color3.fromRGB(25, 74, 88), TEAL)
 local grid = Instance.new("UIGridLayout")
 grid.CellPadding = UDim2.fromOffset(10, 10)
 grid.CellSize = UDim2.fromOffset(150, 116)
@@ -183,6 +168,7 @@ local equipBest = Instance.new("TextButton")
 equipBest.Name = "EquipBest"
 equipBest.AnchorPoint = Vector2.new(0.5, 1)
 equipBest.BackgroundColor3 = LIME
+equipBest.BorderSizePixel = 0
 equipBest.Font = Enum.Font.GothamBlack
 equipBest.Position = UDim2.new(0.5, 0, 1, -12)
 equipBest.Size = UDim2.fromOffset(220, 58)
@@ -191,6 +177,7 @@ equipBest.TextColor3 = TEAL
 equipBest.TextSize = 22
 equipBest.ZIndex = 13
 equipBest.Parent = panel
+addInnerShadow(equipBest)
 decorate(equipBest, LIME, Color3.fromRGB(83, 190, 50))
 
 local toast = Instance.new("TextLabel")
@@ -206,6 +193,7 @@ toast.TextSize = 20
 toast.Visible = false
 toast.ZIndex = 40
 toast.Parent = gui
+addInnerShadow(toast)
 decorate(toast, ORANGE, Color3.fromRGB(195, 52, 27))
 
 local reveal = Instance.new("Frame")
@@ -277,6 +265,7 @@ local function renderState(state: any)
 		card.Name = pet.id
 		card.AutoButtonColor = false
 		card.BackgroundColor3 = RARITY_COLORS[pet.rarity] or ORANGE
+		card.BorderSizePixel = 0
 		card.Font = Enum.Font.GothamBold
 		card.LayoutOrder = index
 		card.Text = string.format(
@@ -292,6 +281,7 @@ local function renderState(state: any)
 		card.TextStrokeTransparency = 0
 		card.ZIndex = 13
 		card.Parent = list
+		addInnerShadow(card)
 		decorate(card, card.BackgroundColor3, card.BackgroundColor3:Lerp(TEAL, 0.4))
 		card.Activated:Connect(function()
 			if selectedId == pet.id then
@@ -308,7 +298,7 @@ local function renderState(state: any)
 	end
 end
 
-petsButton.Activated:Connect(function()
+player:GetAttributeChangedSignal("PetsPanelRequest"):Connect(function()
 	panel.Visible = not panel.Visible
 	panelShadow.Visible = panel.Visible
 	if panel.Visible and lastState then
