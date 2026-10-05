@@ -37,3 +37,13 @@ test("camera spring is damped and caps per-frame distance changes", function()
 	end
 	eq(current > 59, true, "approaches target")
 end)
+
+test("camera heading follows motion while keeping a roll-independent horizon", function()
+	local heading = CameraFraming.horizontalHeading(3, 4, 0, -1)
+	near(heading.x, 0.6, "motion x")
+	near(heading.z, 0.8, "motion z")
+
+	local fallback = CameraFraming.horizontalHeading(0, 0, -2, 0)
+	near(fallback.x, -1, "fallback x")
+	near(fallback.z, 0, "fallback z")
+end)

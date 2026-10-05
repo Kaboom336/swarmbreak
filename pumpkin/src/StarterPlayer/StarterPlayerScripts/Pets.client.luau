@@ -526,6 +526,7 @@ RunService.RenderStepped:Connect(function(deltaTime)
 		local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
 		local folder = followerRoot:FindFirstChild(tostring(owner.UserId))
 		if root and root:IsA("BasePart") and folder then
+			local rideTransparency = if owner:GetAttribute("Rolling") == true then 1 else 0
 			for _, follower in folder:GetChildren() do
 				local slot = (follower:GetAttribute("Slot") :: number?) or 1
 				local side = if slot % 2 == 0 then 1 else -1
@@ -536,6 +537,15 @@ RunService.RenderStepped:Connect(function(deltaTime)
 					follower:PivotTo(follower:GetPivot():Lerp(target, alpha))
 				elseif follower:IsA("BasePart") then
 					follower.CFrame = follower.CFrame:Lerp(target, alpha)
+				end
+				if follower:IsA("BasePart") then
+					follower.LocalTransparencyModifier += (rideTransparency - follower.LocalTransparencyModifier) * alpha
+				else
+					for _, descendant in follower:GetDescendants() do
+						if descendant:IsA("BasePart") then
+							descendant.LocalTransparencyModifier += (rideTransparency - descendant.LocalTransparencyModifier) * alpha
+						end
+					end
 				end
 			end
 		end

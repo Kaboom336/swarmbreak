@@ -8,6 +8,28 @@ export type Frame = {
 
 local CameraFraming = {}
 
+export type Heading = {
+	x: number,
+	z: number,
+}
+
+function CameraFraming.horizontalHeading(
+	deltaX: number,
+	deltaZ: number,
+	fallbackX: number,
+	fallbackZ: number
+): Heading
+	local magnitude = math.sqrt(deltaX * deltaX + deltaZ * deltaZ)
+	if magnitude < 1e-5 then
+		magnitude = math.sqrt(fallbackX * fallbackX + fallbackZ * fallbackZ)
+		if magnitude < 1e-5 then
+			return { x = 0, z = -1 }
+		end
+		return { x = fallbackX / magnitude, z = fallbackZ / magnitude }
+	end
+	return { x = deltaX / magnitude, z = deltaZ / magnitude }
+end
+
 function CameraFraming.compute(visualDiameter: number, rolling: boolean?): Frame
 	local diameter = math.max(0, visualDiameter)
 	local isRolling = rolling == true

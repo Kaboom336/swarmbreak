@@ -15,6 +15,7 @@ local Format = require(Shared:WaitForChild("Format"))
 local Grow = require(Shared:WaitForChild("Grow"))
 local HudLayout = require(Shared:WaitForChild("HudLayout"))
 local Ride = require(Shared:WaitForChild("Ride"))
+local RideSurface = require(Shared:WaitForChild("RideSurface"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local rollPlayback = remotes:WaitForChild("RollPlayback") :: RemoteEvent
 local rollControl = remotes:WaitForChild("RollControl") :: RemoteEvent
@@ -439,7 +440,7 @@ local function createBonusTargets(
 	folder.Name = "RideBonusTargets"
 	folder.Parent = workspace
 	local parts = {}
-	local direction = Vector3.new(start.CFrame.LookVector.X, -0.06, start.CFrame.LookVector.Z).Unit
+	local direction = start.CFrame.LookVector.Unit
 	local horizontal = Vector3.new(direction.X, 0, direction.Z).Unit
 	local right = Vector3.new(-horizontal.Z, 0, horizontal.X)
 	for _, target in Ride.layout(seed, physicalDuration) do
@@ -620,6 +621,7 @@ local function playRoll(
 	local bonusDuration = Ride.bonusDuration(bonusWalls)
 	local bonusDistance = bonusWalls * Config.WallSpacing
 	local physicalDistance = math.max(0, distance - bonusDistance)
+	local surfaces = RideSurface.collect(track)
 	local pumpkin = workspace:WaitForChild("RollingPumpkin_" .. userId, 3)
 	if not pumpkin or not pumpkin:IsA("BasePart") then
 		return
@@ -638,7 +640,7 @@ local function playRoll(
 	local previousFov = if camera then camera.FieldOfView else 70
 	local cameraConnection: RBXScriptConnection? = nil
 	local targetFolder: Folder? = nil
-	local occluded: { [BasePart]: boolean } = {}
+	local occluded: { [BasePart]: number } = {}
 	local controlConnection: RBXScriptConnection? = nil
 	local shakeUntil = 0
 	local shakeMagnitude = 0
@@ -646,6 +648,12 @@ local function playRoll(
 	local heldCamera: CFrame? = nil
 	local heldPumpkinPosition = Vector3.zero
 	if isLocalRoll and camera then
+		pumpkin.LocalTransparencyModifier = 0.35
+		TweenService:Create(
+			pumpkin,
+			TweenInfo.new(Config.RideLatchSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{ LocalTransparencyModifier = 0 }
+		):Play()
 		local folder, targetParts =
 			createBonusTargets(start, physicalDistance, physicalDuration, seed)
 		targetFolder = folder
@@ -718,10 +726,11 @@ local function playRoll(
 				end
 			end
 		end)
-		local rideDirection =
-			Vector3.new(start.CFrame.LookVector.X, -0.06, start.CFrame.LookVector.Z).Unit
+		local rideDirection = start.CFrame.LookVector.Unit
 		local rideHorizontal = Vector3.new(rideDirection.X, 0, rideDirection.Z).Unit
 		local rideRight = Vector3.new(-rideHorizontal.Z, 0, rideHorizontal.X)
+		local cameraForward = rideHorizontal
+		local previousPumpkinPosition = pumpkin.Position
 		local speedBonusElapsed = 0
 		local occlusionParams = RaycastParams.new()
 		occlusionParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -739,11 +748,14 @@ local function playRoll(
 					bonusDuration,
 					bonusDistance
 				)
-				local position = start.Position
+				local nominalPosition = start.Position
 					+ rideDirection * math.min(traveled, distance)
 					+ rideRight * (activeControl.lane * Config.RideLaneStuds)
-					+ Vector3.new(0, pumpkin.Size.X * 0.5 + 1, 0)
-				pumpkin.CFrame = CFrame.lookAt(position, position + rideHorizontal)
+				local radius = pumpkin.Size.X * 0.5
+				local position, normal, tangent =
+					RideSurface.sample(surfaces, nominalPosition, radius, rideDirection)
+				pumpkin.CFrame = CFrame.lookAt(position, position + tangent, normal)
+					* CFrame.Angles(Ride.axleRotation(traveled, radius), 0, 0)
 			end
 			if os.clock() < hitStopUntil and heldCamera then
 				-- Hold the framing, but keep following the moving pumpkin so a fast smash never pops the distance
@@ -758,15 +770,28 @@ local function playRoll(
 			)
 			smoothHeight, heightVelocity =
 				CameraFraming.springStep(smoothHeight, heightVelocity, framing.height, deltaTime)
-			local behind = -start.CFrame.LookVector * smoothDistance
-				+ Vector3.new(0, smoothHeight, 0)
+			local motion = pumpkin.Position - previousPumpkinPosition
+			previousPumpkinPosition = pumpkin.Position
+			local heading = CameraFraming.horizontalHeading(
+				motion.X,
+				motion.Z,
+				cameraForward.X,
+				cameraForward.Z
+			)
+			local measuredForward = Vector3.new(heading.x, 0, heading.z)
+			local headingAlpha = 1 - math.exp(-8 * deltaTime)
+			cameraForward = cameraForward:Lerp(measuredForward, headingAlpha).Unit
+			local behind = -cameraForward * smoothDistance + Vector3.new(0, smoothHeight, 0)
 			local shake = Vector3.zero
 			if os.clock() < shakeUntil then
 				shake = Vector3.new(math.random() - 0.5, math.random() - 0.5, 0) * shakeMagnitude
 			end
 			camera.CFrame = CFrame.lookAt(
 				pumpkin.Position + behind + shake,
-				pumpkin.Position + Vector3.new(0, 2, 0)
+				pumpkin.Position
+					+ cameraForward * math.min(12, smoothDistance * 0.25)
+					+ Vector3.new(0, 2, 0),
+				Vector3.yAxis
 			)
 			heldCamera = camera.CFrame
 			heldPumpkinPosition = pumpkin.Position
@@ -781,7 +806,7 @@ local function playRoll(
 			end
 			local origin = pumpkin.Position
 			local toCamera = camera.CFrame.Position - origin
-			for _ = 1, 4 do
+			for _ = 1, 6 do
 				occlusionParams.FilterDescendantsInstances = ignore
 				local hit = workspace:Raycast(origin, toCamera, occlusionParams)
 				if not hit then
@@ -790,16 +815,21 @@ local function playRoll(
 				local part = hit.Instance
 				if part:IsA("BasePart") then
 					blockers[part] = true
+					if occluded[part] == nil then
+						occluded[part] = part.LocalTransparencyModifier
+					end
 					part.LocalTransparencyModifier = 0.85
 				end
 				table.insert(ignore, part)
 			end
 			for part in occluded do
 				if not blockers[part] then
-					part.LocalTransparencyModifier = 0
+					if part.Parent then
+						part.LocalTransparencyModifier = occluded[part]
+					end
+					occluded[part] = nil
 				end
 			end
-			occluded = blockers
 			local rideProgress =
 				Ride.progress(workspace:GetServerTimeNow() - startedAt, physicalDuration)
 			local speedFov = 8 + rideProgress * 10
@@ -975,7 +1005,9 @@ local function playRoll(
 				cameraConnection:Disconnect()
 			end
 			for part in occluded do
-				part.LocalTransparencyModifier = 0
+				if part.Parent then
+					part.LocalTransparencyModifier = occluded[part]
+				end
 			end
 			table.clear(occluded)
 			if controlConnection then

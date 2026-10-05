@@ -2,6 +2,22 @@
 local Config = load("Config")
 local Ride = load("Ride")
 
+test("rolling angle accumulates distance over radius in the forward direction", function()
+	eq(Ride.axleRotation(12, 3), -4, "forward axle angle")
+	eq(Ride.axleRotation(5, 0), 0, "zero radius is safe")
+	eq(
+		Ride.axleRotation(4, 2) + Ride.axleRotation(6, 2),
+		Ride.axleRotation(10, 2),
+		"frame deltas accumulate"
+	)
+end)
+
+test("ride contact and latch tuning meet Q4-A bounds", function()
+	eq(Config.RideGroundClearance <= 0.15, true, "ground clearance")
+	eq(Config.RideLatchSeconds >= 0.35, true, "minimum latch")
+	eq(Config.RideLatchSeconds <= 0.6, true, "maximum latch")
+end)
+
 test("seeded bonus layout is deterministic", function()
 	local first = Ride.layout(812_345, 8)
 	local second = Ride.layout(812_345, 8)
