@@ -10,6 +10,26 @@ export type BonusTarget = {
 	time: number,
 }
 
+export type ObstacleKind = "RollingLog" | "Tombstone" | "LowFence"
+
+export type ObstacleWave = {
+	id: number,
+	kind: ObstacleKind,
+	time: number,
+	lanes: { number },
+	freeLane: number,
+}
+
+export type PathSample = {
+	forward: number,
+	height: number,
+	lateral: number,
+	forwardTangent: number,
+	heightTangent: number,
+	lateralTangent: number,
+	bank: number,
+}
+
 local MODULUS = 2_147_483_647
 local MULTIPLIER = 48_271
 local QUOTIENT = 44_488
@@ -38,7 +58,8 @@ local function makeRandom(seed: number): () -> number
 end
 
 function Ride.physicalDuration(size: number): number
-	return math.clamp(7 + 0.5 * math.log10(math.max(0, size) + 1), 7, 10)
+	local sizeEase = math.clamp(math.log10(math.max(0, size) + 1) / 6, 0, 1)
+	return Config.RidePhysicalSeconds + sizeEase * 0.5
 end
 
 function Ride.bonusDuration(bonusWalls: number): number
@@ -48,7 +69,75 @@ function Ride.bonusDuration(bonusWalls: number): number
 end
 
 function Ride.duration(size: number, bonusWalls: number): number
-	return Ride.physicalDuration(size) + Ride.bonusDuration(bonusWalls)
+	return math.min(14, Ride.physicalDuration(size) + Ride.bonusDuration(bonusWalls))
+end
+
+function Ride.speedAtTime(
+	elapsed: number,
+	duration: number,
+	speedScale: number?,
+	boostScale: number?
+): number
+	local alpha = math.clamp(elapsed / math.max(duration, 0.001), 0, 1)
+	local eased = alpha * alpha * (3 - 2 * alpha)
+	local base = Config.RideStartSpeed + (Config.RideTopSpeed - Config.RideStartSpeed) * eased
+	return base * math.max(0, speedScale or 1) * math.max(0, boostScale or 1)
+end
+
+function Ride.speedScaleAfterHit(elapsedSinceHit: number): number
+	local recovery = math.clamp(elapsedSinceHit / Config.RideHitRecoverySeconds, 0, 1)
+	return Config.RideHitSpeedScale + (1 - Config.RideHitSpeedScale) * recovery
+end
+
+function Ride.baseDistanceAtTime(elapsed: number, duration: number): number
+	local clamped = math.clamp(elapsed, 0, math.max(0, duration))
+	if duration <= 0 then
+		return 0
+	end
+	local delta = Config.RideTopSpeed - Config.RideStartSpeed
+	local normalized = clamped / duration
+	-- Integral of smoothstep (3a^2 - 2a^3).
+	return Config.RideStartSpeed * clamped
+		+ delta * duration * (normalized ^ 3 - 0.5 * normalized ^ 4)
+end
+
+function Ride.timeAtBaseDistance(distance: number, duration: number): number
+	local low = 0
+	local high = math.max(0, duration)
+	for _ = 1, 24 do
+		local midpoint = (low + high) * 0.5
+		if Ride.baseDistanceAtTime(midpoint, duration) < math.max(0, distance) then
+			low = midpoint
+		else
+			high = midpoint
+		end
+	end
+	return (low + high) * 0.5
+end
+
+function Ride.pathSample(distance: number): PathSample
+	local traveled = math.clamp(distance, 0, Config.RideTrackLength)
+	local slope = math.rad(Config.RideSlopeDegrees)
+	local curveAngle = traveled / Config.RidePathCurveLength * math.pi * 2
+	local lateral = Config.RidePathCurveStuds * (1 - math.cos(curveAngle)) * 0.5
+	local lateralDerivative = Config.RidePathCurveStuds
+		* math.pi
+		/ Config.RidePathCurveLength
+		* math.sin(curveAngle)
+	local forwardDerivative = math.cos(slope)
+	local heightDerivative = -math.sin(slope)
+	local magnitude =
+		math.sqrt(forwardDerivative ^ 2 + heightDerivative ^ 2 + lateralDerivative ^ 2)
+	local turn = math.sin(curveAngle)
+	return {
+		forward = traveled * forwardDerivative,
+		height = traveled * heightDerivative,
+		lateral = lateral,
+		forwardTangent = forwardDerivative / magnitude,
+		heightTangent = heightDerivative / magnitude,
+		lateralTangent = lateralDerivative / magnitude,
+		bank = math.rad(Config.RideBankDegrees) * turn,
+	}
 end
 
 function Ride.layout(seed: number, duration: number?, count: number?): { BonusTarget }
@@ -91,6 +180,49 @@ function Ride.layout(seed: number, duration: number?, count: number?): { BonusTa
 		})
 	end
 	return targets
+end
+
+function Ride.obstacleLayout(seed: number, duration: number?, count: number?): { ObstacleWave }
+	local waveCount = count or Config.RideObstacleCount
+	assert(waveCount >= 0 and waveCount % 1 == 0, "obstacle count must be a non-negative integer")
+	local rideDuration = duration or Config.RidePhysicalSeconds
+	local random = makeRandom(seed + 91_337)
+	local kinds: { ObstacleKind } = { "RollingLog", "Tombstone", "LowFence" }
+	local waves = {}
+	local firstTime = math.max(Config.RideGentleStartSeconds + 0.8, rideDuration * 0.24)
+	local lastTime = rideDuration * 0.88
+	for index = 1, waveCount do
+		local alpha = if waveCount > 1 then (index - 1) / (waveCount - 1) else 0
+		local freeLane = math.floor(random() * 3) - 1
+		local occupied = {}
+		for lane = -1, 1 do
+			if lane ~= freeLane and (index > 1 or #occupied == 0) then
+				table.insert(occupied, lane)
+			end
+		end
+		table.insert(waves, {
+			id = index,
+			kind = kinds[(index - 1) % #kinds + 1],
+			time = firstTime + (lastTime - firstTime) * alpha,
+			lanes = occupied,
+			freeLane = freeLane,
+		})
+	end
+	return waves
+end
+
+function Ride.waveHitsLane(wave: ObstacleWave, lane: number): boolean
+	for _, obstacleLane in wave.lanes do
+		if math.abs(lane - obstacleLane) <= Config.RideObstacleLaneTolerance then
+			return true
+		end
+	end
+	return false
+end
+
+function Ride.snapLane(lane: number, direction: number): number
+	local current = math.clamp(math.floor(lane + 0.5), -1, 1)
+	return math.clamp(current + (if direction < 0 then -1 else 1), -1, 1)
 end
 
 function Ride.progress(elapsed: number, duration: number): number
@@ -149,6 +281,26 @@ function Ride.validatePickup(
 	return true, nil
 end
 
+function Ride.validatePickupSpatial(
+	target: BonusTarget?,
+	elapsed: number,
+	duration: number,
+	lane: number,
+	longitudinalError: number,
+	claimed: { [number]: boolean },
+	claimedCount: number
+): (boolean, string?)
+	local accepted, reason =
+		Ride.validatePickup(target, elapsed, duration, lane, claimed, claimedCount)
+	if not accepted then
+		return false, reason
+	end
+	if math.abs(longitudinalError) > Config.RideStartSpeed * Config.RidePickupTimeTolerance then
+		return false, "position"
+	end
+	return true, nil
+end
+
 local function bonusMultiplier(kinds: { BonusKind }): number
 	local candy = 0
 	local gold = 0
@@ -167,17 +319,29 @@ function Ride.winsWithBonuses(baseWins: number, kinds: { BonusKind }): number
 	return math.floor(math.max(0, baseWins) * bonusMultiplier(kinds))
 end
 
-function Ride.finalWins(baseWins: number, kinds: { BonusKind }, multipliers: { number }): number
+function Ride.comboMultiplier(combo: number): number
+	return math.min(Config.RideComboCap, 1 + math.max(0, math.floor(combo)) * Config.RideComboStep)
+end
+
+function Ride.finalWins(
+	baseWins: number,
+	kinds: { BonusKind },
+	multipliers: { number },
+	combo: number?
+): number
 	local wins = math.max(0, baseWins) * bonusMultiplier(kinds)
 	for _, multiplier in multipliers do
 		wins *= math.max(0, multiplier)
 	end
+	wins *= Ride.comboMultiplier(combo or 0)
 	return math.floor(wins)
 end
 
-function Ride.comboText(wallsBroken: number): string?
-	local count = math.max(0, math.floor(wallsBroken))
-	return if count > 0 then "WALL x" .. count .. "!" else nil
+function Ride.comboText(combo: number): string?
+	local count = math.max(0, math.floor(combo))
+	return if count > 0
+		then string.format("COMBO %d  x%.1f", count, Ride.comboMultiplier(count))
+		else nil
 end
 
 return Ride

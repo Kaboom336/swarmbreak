@@ -121,3 +121,17 @@ Severity means: **P1** blocks the core fantasy, comprehension, or a fair playabl
 - Q4-E owns the remaining 34 rows. It is not optional cleanup: it contains onboarding, economy, rewards, sound, mobile/platform completeness, performance, and final proof.
 
 The counts above are a planning aid; the table is authoritative if a count and an ID list ever diverge. A task is green only when every row assigned to it has implementation evidence or an explicit test/capture proving the acceptance check.
+
+## Q4-B implementation evidence
+
+Completed in Q4-B. `tests/ride.spec.luau` covers the pure numeric/deterministic contracts; runtime evidence is in the named source files.
+
+| IDs | Evidence |
+|---|---|
+| 5, 37, 38 | The seeded course opens with a one-lane steering teach, then guarantees one free lane per wave and at least 1.35 s between decisions; fallback lane warnings span 1.35 s at 145 studs/s. |
+| 30, 33–35 | `Ride.pathSample` defines the shared 21° curved path and alternating ±12° banks; `MapFallback` builds its segmented floor, continuous 14-stud walls, 24-stud canyon, and tunnel roof from that path. |
+| 31, 32, 46, 50 | The measured velocity model starts at 60 studs/s, smoothsteps to 145, runs 10.5–14 s, applies a real timed ×1.25 pad boost, and drives smoothed FOV plus bounded speed-line rate. |
+| 36–40, 89, 90 | Seeded logs, tombstones, and low fences are server-resolved exactly once. A hit applies a 20% speed penalty and combo reset with bump, thud, line interruption, and magenta flash; a clean pass sends `DODGE +1` and a combo pop. |
+| 41–43, 74 | Clean pickups/dodges—not walls—advance combo. `Ride.comboMultiplier` applies ×1.1 per step capped at ×3 inside the single final-floor reward calculation; the dedicated meter shows count, multiplier, fill, pop, and lost state. |
+| 44, 45 | Spawned and claimable pickup counts are both six. The server validates token, claim state, lane, time, and authoritative longitudinal overlap, and logs Studio-only rejection reasons. |
+| 64 | Touch buttons are 72×72 lane-snap controls with three-lane intent dots and a 0.20 analog dead zone; keyboard/gamepad retain continuous steering. |

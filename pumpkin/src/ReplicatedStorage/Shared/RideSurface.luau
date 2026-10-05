@@ -5,12 +5,16 @@ local RideSurface = {}
 
 function RideSurface.collect(track: Instance): { Instance }
 	local surfaces: { Instance } = {}
+	local chuteFloors: { Instance } = {}
 	for _, descendant in track:GetDescendants() do
 		if descendant:IsA("BasePart") and not string.match(descendant.Name, "^Wall_") then
 			table.insert(surfaces, descendant)
+			if string.match(descendant.Name, "^ChuteFloor_") then
+				table.insert(chuteFloors, descendant)
+			end
 		end
 	end
-	return surfaces
+	return if #chuteFloors > 0 then chuteFloors else surfaces
 end
 
 function RideSurface.sample(

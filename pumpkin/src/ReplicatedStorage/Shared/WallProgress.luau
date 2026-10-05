@@ -1,5 +1,6 @@
 --!strict
 local Roll = require(script.Parent.Roll)
+local Ride = require(script.Parent.Ride)
 
 export type Progress = {
 	wallsBroken: number,
@@ -15,6 +16,7 @@ local WallProgress = {}
 function WallProgress.compute(size: number, zone: string | Roll.Zone, wallCount: number?): Progress
 	local count = wallCount or 10
 	local result = Roll.simulate(size, zone, count)
+	local baseWins = Ride.finalWins(result.wins, {}, {})
 	local nextWall = if result.physicalWallsBroken < count
 		then result.physicalWallsBroken + 1
 		else nil
@@ -22,7 +24,7 @@ function WallProgress.compute(size: number, zone: string | Roll.Zone, wallCount:
 		return {
 			wallsBroken = result.physicalWallsBroken,
 			totalWallsBroken = result.wallsBroken,
-			wins = result.wins,
+			wins = baseWins,
 			nextWall = nil,
 			nextHealth = nil,
 			progress = 1,
@@ -35,7 +37,7 @@ function WallProgress.compute(size: number, zone: string | Roll.Zone, wallCount:
 	return {
 		wallsBroken = result.physicalWallsBroken,
 		totalWallsBroken = result.wallsBroken,
-		wins = result.wins,
+		wins = baseWins,
 		nextWall = nextWall,
 		nextHealth = nextHealth,
 		progress = progress,
