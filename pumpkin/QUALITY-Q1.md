@@ -129,3 +129,23 @@ Why: the grow-then-cash-in loop is right, but the cash-in is passive. Make it th
    - cap the head pumpkin's visual diameter relative to the character (about 3× character height);
    - push the camera zoom out (CameraMinZoomDistance plus the default zoom scaled to the pumpkin diameter).
 5. Use Config.Icons.Size for the Size pill. Play will supply the asset ID.
+
+## Re-judge at d8ec9a7 (Play's 8 shots, 10:40Z)
+- **Matches the references:** the icon-button grid; the Gift button's red dot and countdown; the daylight map; the themed pumpkin-stack walls; the pets.
+- **Worse than the references:** text contrast, centre clutter, camera distance and number formatting.
+
+## Codex task Q2-C: HUD readability and camera (queue next)
+1. **Contrast rule, applied everywhere:** every label on a coloured panel or button is white or near-white with a dark (#2a0e3d) 2-3 px UIStroke. Today, dark purple text on purple fails on the tutorial banner and the multiplier chips, and orange text on orange fails on the GROW button. Add a spec that scans the HUD builder, plus a pure `Style.label(...)` helper that every label uses.
+2. **Keep the centre clear**, as the references do.
+   - Move the tutorial banner to the top, under the Size/Wins pills, at a smaller size. It must never cross the character.
+   - Hide the banner during a roll and once TutorialDone is set.
+   - Hide the wall-progress bar during a roll; the distance meter replaces it.
+   - Move the multiplier chips into a small vertical stack at the bottom left that never touches GROW. They are their own HudLayout rect, and the overlap spec must cover them at 1399×1080, 1920×1080 and 667×375.
+3. **Number format:** Size and Wins show as whole numbers or abbreviations (48, 1.2K, 3.4M), never "48.0". The same goes for the progress bar ("4 WALLS • 48 / 66 TO NEXT"). Pure `Format.abbrev`, with specs.
+4. **Camera:**
+   - The default third-person distance is about 2.2× the pumpkin's visual diameter plus 8 studs, with a minimum of 14.
+   - The camera pitch looks slightly down, so the pumpkin never covers the top third of the view.
+   - Keep the per-player MinZoomDistance from Q2-B, but make the starting zoom this value (set CameraMinZoomDistance briefly, then release it).
+5. **Toasts** ("You need 100 Wins!") show at the top centre under the pills, above every panel, including the Pets panel.
+
+Done when: the gate is green, with specs for the contrast scan, Format.abbrev and the HudLayout overlap (chips, banner, meter, GROW, grid) at all 3 sizes.
