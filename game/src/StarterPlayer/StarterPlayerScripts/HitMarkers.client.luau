@@ -16,7 +16,8 @@ HitMarker.OnClientEvent:Connect(
 		target: Model?,
 		critical: boolean?,
 		eliteKill: boolean?,
-		hitNormal: Vector3?
+		hitNormal: Vector3?,
+		scytheHit: boolean?
 	)
 		local isCritical = critical == true
 		AnimeEffects.hitMarker(isCritical)
@@ -34,6 +35,9 @@ HitMarker.OnClientEvent:Connect(
 		if soundName then
 			ClientFX.sound(soundName, pos)
 		end
+		if scytheHit and target then
+			ClientFX.hitstop(target, eliteKill == true, Feel.ScytheHitStopSeconds)
+		end
 		if killed then
 			local enemyType = if target then target:GetAttribute("EnemyType") else nil
 			if type(enemyType) ~= "string" and target then
@@ -42,7 +46,7 @@ HitMarker.OnClientEvent:Connect(
 			local gooColor = Feel.deathBurstColor(enemyType, Theme.Goo)
 			ClientFX.gooDecal(pos, ClientFX.c3(gooColor), 2.5, 0.4)
 			ClientFX.gemPop(pos, ClientFX.c3(Theme.Loot))
-			if target then
+			if target and not scytheHit then
 				ClientFX.hitstop(target, eliteKill == true)
 			end
 			for _, layer in { "kill crunch", "kill goo", "kill tick" } do
@@ -63,7 +67,7 @@ HitMarker.OnClientEvent:Connect(
 			pos,
 			(if isCritical then "CRIT " else "") .. tostring(damage),
 			numberColor,
-			budget.NumberScale,
+			budget.NumberScale * (if scytheHit then Feel.ScytheDamageNumberScale else 1),
 			Feel.DamageNumberSeconds,
 			Feel.DamageNumberRiseStuds,
 			isCritical

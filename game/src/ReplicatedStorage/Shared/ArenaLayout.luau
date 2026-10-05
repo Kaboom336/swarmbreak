@@ -62,6 +62,7 @@ export type Bridge = {
 local ArenaLayout = {}
 
 ArenaLayout.Floor = 160 -- placeholder
+ArenaLayout.FloorTopY = 1
 
 ArenaLayout.Spawns = {
 	{ x = -58, z = -58 },
@@ -258,6 +259,12 @@ end
 function ArenaLayout.bossSpawnForWave(wave: number): Position
 	local zone = ArenaLayout.zoneForWave(math.max(wave, 1))
 	return { x = zone.x + zone.Width / 2 - 18, z = zone.z }
+end
+
+-- Boss pivots are their rig centres. Keeping this math beside the floor layout prevents
+-- authored gate or marker heights from lifting a boss off the playable slab.
+function ArenaLayout.bossSpawnY(rigHeight: number): number
+	return ArenaLayout.FloorTopY + rigHeight / 2
 end
 
 function ArenaLayout.spawnsForWave(wave: number): { ZoneSpawn }

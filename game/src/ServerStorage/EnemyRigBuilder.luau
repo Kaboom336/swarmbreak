@@ -152,7 +152,7 @@ for _, rigKey in RIG_KEYS do
 	end
 end
 
-local function buildFresh(typeName: string, size: Vector3, cf: CFrame): Rig?
+local function buildFresh(typeName: string, _size: Vector3, cf: CFrame): Rig?
 	local rigKey = EnemyFamilies.rigForEnemy("Nest", typeName)
 	if not rigKey then
 		return nil
@@ -174,7 +174,13 @@ local function buildFresh(typeName: string, size: Vector3, cf: CFrame): Rig?
 		warnOnce(rigKey, "template has zero height")
 		return nil
 	end
-	model:ScaleTo((EnemyFamilies.rigHeight("Nest", typeName) or size.Y) / height)
+	local rigHeight = EnemyFamilies.rigHeight("Nest", typeName)
+	if not rigHeight then
+		model:Destroy()
+		warnOnce(rigKey, "enemy has no authored rig height")
+		return nil
+	end
+	model:ScaleTo(rigHeight / height)
 	model:PivotTo(cf)
 	model.Name = typeName
 
