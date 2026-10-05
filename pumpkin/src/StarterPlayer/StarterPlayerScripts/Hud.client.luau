@@ -18,6 +18,7 @@ local HudLayout = require(Shared:WaitForChild("HudLayout"))
 local Monetization = require(Shared:WaitForChild("Monetization"))
 local Style = require(Shared:WaitForChild("Style"))
 local Tutorial = require(Shared:WaitForChild("Tutorial"))
+local VisualRules = require(Shared:WaitForChild("VisualRules"))
 local WallProgress = require(Shared:WaitForChild("WallProgress"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local growRequest = remotes:WaitForChild("GrowRequest") :: RemoteEvent
@@ -92,7 +93,8 @@ RunService.RenderStepped:Connect(function()
 		contactShadow.Transparency = 1
 		return
 	end
-	local diameter = math.clamp(pumpkin.Size.X * 0.72, 3.2, 16)
+	local visualDiameter = (pumpkin:GetAttribute("VisualDiameter") :: number?) or pumpkin.Size.X
+	local diameter = VisualRules.contactShadowDiameter(visualDiameter)
 	contactShadow.Size = Vector3.new(0.08, diameter, diameter)
 	contactShadow.CFrame = CFrame.new(hit.Position + hit.Normal * 0.06)
 		* CFrame.Angles(0, 0, math.pi / 2)
@@ -776,8 +778,8 @@ local function applyLayout(viewport: Vector2)
 		button.Position = UDim2.fromOffset(bounds.x - layout.menu.x, bounds.y - layout.menu.y)
 		button.Size = UDim2.fromOffset(bounds.width, bounds.height)
 	end
-	sizeLabel.TextSize = if layout.mobile then 22 else 26
-	winsLabel.TextSize = if layout.mobile then 22 else 26
+	sizeLabel.TextSize = VisualRules.heroTextSize(layout.mobile)
+	winsLabel.TextSize = VisualRules.heroTextSize(layout.mobile)
 	zoneLabel.TextSize = if layout.mobile then 16 else 19
 	progressBack.Position = UDim2.fromOffset(14, if layout.mobile then 53 else 66)
 	progressBack.Size = UDim2.new(1, -28, 0, if layout.mobile then 20 else 24)
@@ -1363,6 +1365,8 @@ task.spawn(function()
 end)
 
 local guideClock = 0
+local guideRaycastParams = RaycastParams.new()
+guideRaycastParams.FilterType = Enum.RaycastFilterType.Exclude
 RunService.RenderStepped:Connect(function(deltaTime)
 	guideClock += deltaTime
 	local bounce = math.sin(guideClock * math.pi * 3)
@@ -1381,10 +1385,20 @@ RunService.RenderStepped:Connect(function(deltaTime)
 	end
 	local distance = (target.Position - root.Position).Magnitude
 	startArrowText.Text = string.format("ROLL HERE  %d STUDS\n%s", distance, utf8.char(0x25BC))
+	guideRaycastParams.FilterDescendantsInstances = { character :: Model }
 	for index, dot in guideDots do
 		local alpha = index / (#guideDots + 1)
 		local position = root.Position:Lerp(target.Position, alpha)
-		dot.Position = Vector3.new(position.X, math.max(0.15, position.Y - 2.8), position.Z)
+		local floorHit = workspace:Raycast(
+			position + Vector3.new(0, 40, 0),
+			Vector3.new(0, -120, 0),
+			guideRaycastParams
+		)
+		if floorHit then
+			dot.Position = floorHit.Position + floorHit.Normal * 0.12
+		else
+			dot.Position = position
+		end
 		dot.Transparency = 0.18 + 0.22 * math.sin(guideClock * 5 - index * 0.7) ^ 2
 	end
 end)
@@ -1712,7 +1726,6 @@ local function burstGrowDust(pumpkin: BasePart)
 	if not attachment or not attachment:IsA("Attachment") then
 		attachment = Instance.new("Attachment")
 		attachment.Name = "GrowDustAttachment"
-		attachment.Position = Vector3.new(0, -pumpkin.Size.Y * 0.5, 0)
 		attachment.Parent = pumpkin
 		local dust = Instance.new("ParticleEmitter")
 		dust.Name = "Dust"
@@ -1733,6 +1746,8 @@ local function burstGrowDust(pumpkin: BasePart)
 		dust.Texture = "rbxasset://textures/particles/smoke_main.dds"
 		dust.Parent = attachment
 	end
+	local visualDiameter = (pumpkin:GetAttribute("VisualDiameter") :: number?) or pumpkin.Size.Y
+	attachment.Position = Vector3.new(0, VisualRules.groundContactOffset(visualDiameter), 0)
 	local dust = attachment:FindFirstChild("Dust")
 	if dust and dust:IsA("ParticleEmitter") then
 		dust:Emit(if player:GetAttribute("ReducedEffects") == true then 3 else 7)

@@ -167,6 +167,21 @@ Completed in Q4-B. `tests/ride.spec.luau` covers the pure numeric/deterministic 
 | 44, 45 | Spawned and claimable pickup counts are both six. The server validates token, claim state, lane, time, and authoritative longitudinal overlap, and logs Studio-only rejection reasons. |
 | 64 | Touch buttons are 72×72 lane-snap controls with three-lane intent dots and a 0.20 analog dead zone; keyboard/gamepad retain continuous steering. |
 
+## Q4-D implementation evidence
+
+Completed in Q4-D. Pure visual, light-budget, required-pet, and asset-class contracts are covered by `tests/visual_rules.spec.luau`; runtime evidence is in `MapFallback`, `PumpkinVisual`, `Game.server`, `Pets.server`, and the ride client. The in-engine target is `research/Q4-D-ART-TARGET.md`.
+
+| IDs | Evidence |
+|---|---|
+| 1, 82 | The generated compact plaza is 96 by 86 studs, faces `PumpkinSpawn` directly at the first pad, frames that pad with the dominant candy arch, and conceals the back/sides with 22 to 25 stud rock cliffs and fences. The ramp and first egg remain in the forward plaza composition. |
+| 16, 101, 105 | The grow pumpkin now has five dark ribs, a stem, a Neon face, three-band colour separation, a size-capped warm light, grow flash and stem-lag reaction. The ride pumpkin adds a rotating emissive face and bounded glow whose brightness follows speed/combo and whose colour flashes for pickup/dodge/hit. Existing rider bump and pet hover/turn combine with these authored reactions without delaying control. |
+| 75, 84 | Server startup requires every one of the 15 configured pet names and recursively rejects Script, LocalScript, ModuleScript, PackageLink, RemoteEvent and RemoteFunction descendants. Missing or unsafe shipped art fails loudly; the placeholder remains unreachable in a valid build. |
+| 77 | Every egg stand now carries an oversized three-band egg, highlight plane, five-colour rarity preview, ink-separated outline, live cost/first-free badge and a 12-stud `HATCH` ProximityPrompt. Brief prices remain unchanged. |
+| 80, 81 | The fallback route uses reusable multi-part jack-o'-lantern, fence, gravestone, candy-arch and lamp kits. Each zone gets its own accent, prop family, named dominant landmark and candy finish set piece while preserving shared deterministic ride geometry. |
+| 83, 95 | Warm PointLights mark the plaza, early turn/tunnel region and first finish. `VisualRules` caps the total at 12, range at 18 and brightness at 1.35; every lamp has shadows disabled. |
+| 97, 98 | `Q4-D-ART-TARGET.md` fixes the chunky friendly-spooky shape language, exact six-role palette, near-black separation and three approved material families. Generated props declare/use dark underside, saturated base and highlight bands plus one semantic accent. |
+| 100 | Occluded, no-fill ink Highlights separate the hero pumpkin, eggs, hazards and local ride pickups; rare-and-up pets receive rarity-coloured separation. Pickups are client-local/ride-bounded and hide outside their two-second reaction window. |
+
 ## Q4-C implementation evidence
 
 Completed in Q4-C. Pure style, layout, obstacle-placement, and source-regression contracts are covered by `tests/style.spec.luau`, `tests/hud_layout.spec.luau`, and `tests/ride.spec.luau`; runtime evidence is in the named client/map source files.

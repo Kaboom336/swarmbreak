@@ -13,6 +13,7 @@ local PetIndex = require(Shared:WaitForChild("PetIndex"))
 local Ride = require(Shared:WaitForChild("Ride"))
 local RideSurface = require(Shared:WaitForChild("RideSurface"))
 local Roll = require(Shared:WaitForChild("Roll"))
+local VisualRules = require(Shared:WaitForChild("VisualRules"))
 local Data = require(ServerStorage:WaitForChild("Data"))
 local EconomyService = require(ServerStorage:WaitForChild("EconomyService"))
 local Leaderboards = require(ServerStorage:WaitForChild("Leaderboards"))
@@ -82,6 +83,7 @@ local function createRidePumpkin(player: Player, size: number, start: BasePart):
 	pumpkin.Material = Enum.Material.SmoothPlastic
 	pumpkin.Transparency = 0.28
 	pumpkin.Size = Vector3.new(diameter, diameter * 0.82, diameter)
+	pumpkin:SetAttribute("VisualDiameter", diameter)
 	pumpkin.CFrame = CFrame.new(start.Position + Vector3.new(0, diameter * 0.5 + 1, 0))
 
 	local mesh = Instance.new("SpecialMesh")
@@ -90,6 +92,43 @@ local function createRidePumpkin(player: Player, size: number, start: BasePart):
 	mesh.TextureId = Config.PumpkinTextureId
 	mesh.Scale = Vector3.new(diameter, diameter * 0.82, diameter) * Config.PumpkinMeshScale
 	mesh.Parent = pumpkin
+	local glow = Instance.new("PointLight")
+	glow.Name = "RidePumpkinGlow"
+	glow.Color = Color3.fromRGB(255, 126, 25)
+	glow.Brightness, glow.Range = VisualRules.cappedPumpkinLight(diameter)
+	glow.Shadows = false
+	glow.Parent = pumpkin
+	local outline = Instance.new("Highlight")
+	outline.Name = "HeroSeparation"
+	outline.Adornee = pumpkin
+	outline.DepthMode = Enum.HighlightDepthMode.Occluded
+	outline.FillTransparency = 1
+	outline.OutlineColor = Color3.fromRGB(23, 18, 37)
+	outline.OutlineTransparency = 0.06
+	outline.Parent = pumpkin
+	local face = Instance.new("SurfaceGui")
+	face.Name = "EmissiveFace"
+	face.AlwaysOnTop = false
+	face.Brightness = 2
+	face.CanvasSize = Vector2.new(256, 256)
+	face.Face = Enum.NormalId.Front
+	face.LightInfluence = 0
+	face.Parent = pumpkin
+	for index, position in
+		{
+			UDim2.fromScale(0.2, 0.28),
+			UDim2.fromScale(0.62, 0.28),
+			UDim2.fromScale(0.27, 0.65),
+		}
+	do
+		local feature = Instance.new("Frame")
+		feature.Name = if index < 3 then "Eye" .. index else "Mouth"
+		feature.BackgroundColor3 = Color3.fromRGB(255, 212, 0)
+		feature.BorderSizePixel = 0
+		feature.Position = position
+		feature.Size = if index < 3 then UDim2.fromScale(0.18, 0.22) else UDim2.fromScale(0.46, 0.1)
+		feature.Parent = face
+	end
 	pumpkin.Parent = workspace
 
 	local character = player.Character
@@ -386,6 +425,8 @@ rollControl.OnServerEvent:Connect(function(player: Player, action: any, token: a
 			state.speedBoostUntil = now + Config.RideSpeedPadSeconds
 		end
 		state.combo += 1
+		state.glowUntil = now + 0.22
+		state.glowColor = Color3.fromRGB(255, 212, 0)
 		player:SetAttribute("RideCombo", state.combo)
 		rollControl:FireClient(player, "PickupAccepted", token, value, target.kind)
 		rollControl:FireClient(player, "Combo", token, state.combo, "PICKUP +1")
@@ -457,6 +498,8 @@ local function beginRoll(player: Player, zone: any, parts: any)
 		currentSpeed = Config.RideStartSpeed,
 		traveled = 0,
 		nextTelemetryAt = 0,
+		glowUntil = 0,
+		glowColor = Color3.fromRGB(255, 126, 25),
 		surfaces = RideSurface.collect(parts.track),
 	}
 	rideStates[player] = state
@@ -518,6 +561,23 @@ local function beginRoll(player: Player, zone: any, parts: any)
 				then Config.RideSpeedPadMultiplier
 				else 1
 			state.currentSpeed = Ride.speedAtTime(elapsed, physicalDuration, speedScale, boostScale)
+			local rideGlow = pumpkin:FindFirstChild("RidePumpkinGlow")
+			if rideGlow and rideGlow:IsA("PointLight") then
+				local visualDiameter = pumpkin:GetAttribute("VisualDiameter") :: number?
+					or pumpkin.Size.X
+				local baseBrightness = VisualRules.cappedPumpkinLight(visualDiameter)
+				local speedAlpha = math.clamp(
+					(state.currentSpeed - Config.RideStartSpeed)
+						/ (Config.RideTopSpeed - Config.RideStartSpeed),
+					0,
+					1
+				)
+				rideGlow.Brightness =
+					math.min(1.5, baseBrightness + speedAlpha * 0.22 + state.combo * 0.025)
+				rideGlow.Color = if now < state.glowUntil
+					then state.glowColor
+					else Color3.fromRGB(255, 126, 25)
+			end
 			state.traveled =
 				math.min(Config.RideTrackLength, state.traveled + state.currentSpeed * deltaTime)
 			if now >= state.nextTelemetryAt then
@@ -529,6 +589,8 @@ local function beginRoll(player: Player, zone: any, parts: any)
 					state.resolvedObstacles[wave.id] = true
 					if Ride.waveHitsLane(wave, state.lane) then
 						state.combo = 0
+						state.glowUntil = now + 0.35
+						state.glowColor = Color3.fromRGB(156, 145, 151)
 						player:SetAttribute("RideCombo", 0)
 						state.lastHitAt = now
 						rollControl:FireClient(
@@ -540,6 +602,8 @@ local function beginRoll(player: Player, zone: any, parts: any)
 						)
 					else
 						state.combo += 1
+						state.glowUntil = now + 0.2
+						state.glowColor = Color3.fromRGB(183, 255, 26)
 						player:SetAttribute("RideCombo", state.combo)
 						rollControl:FireClient(player, "Dodge", token, wave.id, state.combo)
 						rollControl:FireClient(player, "Combo", token, state.combo, "DODGE +1")

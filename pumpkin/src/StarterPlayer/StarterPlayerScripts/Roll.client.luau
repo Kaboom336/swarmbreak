@@ -557,7 +557,11 @@ local function setTargetVisible(part: BasePart, visible: boolean)
 			descendant.Transparency = if visible
 				then (descendant:GetAttribute("VisibleTransparency") :: number?) or 0
 				else 1
-		elseif descendant:IsA("BillboardGui") or descendant:IsA("Beam") then
+		elseif
+			descendant:IsA("BillboardGui")
+			or descendant:IsA("Beam")
+			or descendant:IsA("Highlight")
+		then
 			descendant.Enabled = visible
 		end
 	end
@@ -603,6 +607,14 @@ local function createBonusTargets(
 		end
 		part.Parent = folder
 		parts[target.id] = part
+		local outline = Instance.new("Highlight")
+		outline.Name = "PickupSeparation"
+		outline.Adornee = part
+		outline.DepthMode = Enum.HighlightDepthMode.Occluded
+		outline.FillTransparency = 0.86
+		outline.OutlineColor = INK
+		outline.OutlineTransparency = 0.08
+		outline.Parent = part
 
 		local beaconBottom = Instance.new("Attachment")
 		beaconBottom.Name = "BeaconBottom"

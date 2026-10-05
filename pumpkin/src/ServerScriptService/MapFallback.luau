@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Ride = require(Shared:WaitForChild("Ride"))
+local VisualRules = require(Shared:WaitForChild("VisualRules"))
 
 local TRACK_WIDTH = 34
 local TRACK_START_Y = 620
@@ -18,6 +19,10 @@ local MAGENTA = Color3.fromRGB(255, 45, 149)
 local INK = Color3.fromRGB(23, 18, 37)
 local QUIET_GRASS = Color3.fromRGB(76, 142, 67)
 local TRACK_TEAL = Color3.fromRGB(21, 82, 88)
+local YELLOW = Color3.fromRGB(255, 212, 0)
+local CYAN = Color3.fromRGB(0, 217, 255)
+local QUIET_ORANGE = Color3.fromRGB(183, 75, 21)
+local QUIET_PURPLE = Color3.fromRGB(74, 39, 104)
 
 export type ZoneParts = {
 	start: BasePart,
@@ -28,6 +33,7 @@ export type ZoneParts = {
 
 local MapFallback = {}
 local makePart: (string, Vector3, CFrame, Color3) -> Part
+local activeMapLights = 0
 
 local function ensureGround()
 	local existing = workspace:FindFirstChild("Ground", true)
@@ -111,38 +117,312 @@ makePart = function(name: string, size: Vector3, cframe: CFrame, color: Color3):
 	return part
 end
 
-local function ensureLobby()
-	local folder = workspace:FindFirstChild("PumpkinFallbackLobby")
-	if not folder then
-		folder = Instance.new("Folder")
-		folder.Name = "PumpkinFallbackLobby"
-		folder.Parent = workspace
+local function addBandPart(
+	parent: Instance,
+	name: string,
+	size: Vector3,
+	frame: CFrame,
+	color: Color3,
+	material: Enum.Material?,
+	shape: Enum.PartType?
+): Part
+	local part = makePart(name, size, frame, color)
+	part.Material = material or Enum.Material.SmoothPlastic
+	part.Shape = shape or Enum.PartType.Block
+	part.CanTouch = false
+	part.Parent = parent
+	return part
+end
+
+local function buildJackOLantern(parent: Instance, frame: CFrame, scale: number): Model
+	local model = Instance.new("Model")
+	model.Name = "JackOLantern"
+	model.Parent = parent
+	addBandPart(
+		model,
+		"DarkUnderside",
+		Vector3.new(7.2, 4.6, 6.2) * scale,
+		frame * CFrame.new(0, 2.25 * scale, 0),
+		QUIET_ORANGE:Lerp(INK, 0.34),
+		Enum.Material.SmoothPlastic,
+		Enum.PartType.Ball
+	)
+	for rib = -2, 2 do
+		addBandPart(
+			model,
+			"PumpkinRib",
+			Vector3.new(2.6, 5.2, 6.4) * scale,
+			frame * CFrame.new(rib * 1.02 * scale, 2.7 * scale, 0),
+			if rib % 2 == 0 then ORANGE else Color3.fromRGB(226, 80, 8),
+			Enum.Material.SmoothPlastic,
+			Enum.PartType.Ball
+		)
 	end
-	if not workspace:FindFirstChildWhichIsA("SpawnLocation", true) then
+	addBandPart(
+		model,
+		"TopHighlight",
+		Vector3.new(4.6, 0.34, 4.4) * scale,
+		frame * CFrame.new(0, 5.05 * scale, 0),
+		Color3.fromRGB(255, 151, 42),
+		Enum.Material.SmoothPlastic,
+		Enum.PartType.Ball
+	)
+	addBandPart(
+		model,
+		"Stem",
+		Vector3.new(1.1, 2.2, 1.1) * scale,
+		frame * CFrame.new(0, 6 * scale, 0) * CFrame.Angles(0, 0, math.rad(-12)),
+		Color3.fromRGB(74, 115, 44),
+		Enum.Material.Wood
+	)
+	for index, offset in { Vector3.new(-1.35, 3.15, -3), Vector3.new(1.35, 3.15, -3) } do
+		local eye = addBandPart(
+			model,
+			"FaceGlow_" .. index,
+			Vector3.new(1.05, 1.05, 0.18) * scale,
+			frame * CFrame.new(offset * scale),
+			YELLOW,
+			Enum.Material.Neon
+		)
+		eye.CanCollide = false
+	end
+	return model
+end
+
+local function buildFence(parent: Instance, frame: CFrame, scale: number)
+	local model = Instance.new("Model")
+	model.Name = "Fence"
+	model.Parent = parent
+	for x = -1, 1 do
+		addBandPart(
+			model,
+			"FencePost",
+			Vector3.new(0.75, 5.8, 0.75) * scale,
+			frame * CFrame.new(x * 3.8 * scale, 2.9 * scale, 0),
+			Color3.fromRGB(73, 42, 30),
+			Enum.Material.WoodPlanks
+		)
+	end
+	for y = 1.8, 4.2, 2.4 do
+		addBandPart(
+			model,
+			"FenceRail",
+			Vector3.new(8.2, 0.72, 0.58) * scale,
+			frame
+				* CFrame.new(0, y * scale, 0)
+				* CFrame.Angles(0, 0, math.rad(if y < 3 then -4 else 4)),
+			Color3.fromRGB(132, 79, 44),
+			Enum.Material.WoodPlanks
+		)
+	end
+	addBandPart(
+		model,
+		"FenceHighlight",
+		Vector3.new(7.7, 0.16, 0.66) * scale,
+		frame * CFrame.new(0, 4.58 * scale, -0.05),
+		Color3.fromRGB(191, 119, 62),
+		Enum.Material.WoodPlanks
+	)
+end
+
+local function buildGravestone(parent: Instance, frame: CFrame, scale: number)
+	local model = Instance.new("Model")
+	model.Name = "Gravestone"
+	model.Parent = parent
+	addBandPart(
+		model,
+		"GraveShadow",
+		Vector3.new(4.8, 5.7, 1.65) * scale,
+		frame * CFrame.new(0, 2.85 * scale, 0.25 * scale),
+		Color3.fromRGB(48, 47, 66),
+		Enum.Material.Slate
+	)
+	addBandPart(
+		model,
+		"GraveFace",
+		Vector3.new(4.35, 5.35, 0.65) * scale,
+		frame * CFrame.new(0, 3.05 * scale, -0.72 * scale),
+		Color3.fromRGB(105, 105, 132),
+		Enum.Material.Slate
+	)
+	addBandPart(
+		model,
+		"GraveHighlight",
+		Vector3.new(3.5, 0.25, 0.16) * scale,
+		frame * CFrame.new(0, 5.2 * scale, -1.08 * scale),
+		Color3.fromRGB(172, 172, 192),
+		Enum.Material.SmoothPlastic
+	)
+	addBandPart(
+		model,
+		"GraveAccent",
+		Vector3.new(0.62, 2.5, 0.2) * scale,
+		frame * CFrame.new(0, 3.15 * scale, -1.12 * scale),
+		PURPLE,
+		Enum.Material.Neon
+	).CanCollide =
+		false
+end
+
+local function buildLampPost(parent: Instance, frame: CFrame, lightEnabled: boolean)
+	local model = Instance.new("Model")
+	model.Name = "LampPost"
+	model.Parent = parent
+	addBandPart(
+		model,
+		"LampBase",
+		Vector3.new(2.4, 0.8, 2.4),
+		frame * CFrame.new(0, 0.4, 0),
+		INK,
+		Enum.Material.Metal
+	)
+	addBandPart(
+		model,
+		"LampPole",
+		Vector3.new(0.7, 9, 0.7),
+		frame * CFrame.new(0, 4.9, 0),
+		Color3.fromRGB(55, 48, 70),
+		Enum.Material.Metal
+	)
+	local lantern = addBandPart(
+		model,
+		"LampGlow",
+		Vector3.new(2.8, 3.1, 2.8),
+		frame * CFrame.new(0, 9.7, 0),
+		YELLOW,
+		Enum.Material.Neon
+	)
+	lantern.Transparency = 0.12
+	if lightEnabled and activeMapLights < VisualRules.MAX_ACTIVE_MAP_LIGHTS then
+		activeMapLights += 1
+		local light = Instance.new("PointLight")
+		light.Name = "WarmPool"
+		light.Color = Color3.fromRGB(255, 178, 88)
+		light.Brightness = VisualRules.MAP_LIGHT_BRIGHTNESS
+		light.Range = VisualRules.MAP_LIGHT_RANGE
+		light.Shadows = false
+		light.Parent = lantern
+	end
+end
+
+local function buildCandyArch(parent: Instance, frame: CFrame, scale: number, name: string?)
+	local model = Instance.new("Model")
+	model.Name = name or "CandyArch"
+	model.Parent = parent
+	for side = -1, 1, 2 do
+		for level = 0, 4 do
+			addBandPart(
+				model,
+				"CandyStripe",
+				Vector3.new(2.5, 2.4, 2.5) * scale,
+				frame * CFrame.new(side * 8 * scale, (1.2 + level * 2.3) * scale, 0),
+				if level % 2 == 0 then ORANGE else PURPLE,
+				Enum.Material.SmoothPlastic,
+				Enum.PartType.Ball
+			)
+		end
+	end
+	for step = -4, 4 do
+		local height = 11 + (4 - math.abs(step)) * 0.75
+		addBandPart(
+			model,
+			"ArchSweet",
+			Vector3.new(2.5, 2.5, 2.5) * scale,
+			frame * CFrame.new(step * 2 * scale, height * scale, 0),
+			if step % 2 == 0 then YELLOW else Color3.fromRGB(255, 94, 181),
+			Enum.Material.SmoothPlastic,
+			Enum.PartType.Ball
+		)
+	end
+end
+
+local function ensureLobby()
+	local previous = workspace:FindFirstChild("PumpkinFallbackLobby")
+	if previous then
+		previous:Destroy()
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "PumpkinFallbackLobby"
+	folder.Parent = workspace
+	local firstStart = findPart("ZoneStart_" .. Config.Zones[1].Name)
+	local plazaCenter = if firstStart
+		then firstStart.Position - firstStart.CFrame.LookVector * 48
+		else Vector3.new(-48, TRACK_START_Y, 0)
+	local spawn = workspace:FindFirstChildWhichIsA("SpawnLocation", true)
+	if not spawn then
 		local floor = makePart(
 			"PumpkinLobbyFloor",
-			Vector3.new(80, 2, #Config.Zones * ZONE_GAP),
-			CFrame.new(-35, TRACK_START_Y - 1.5, (#Config.Zones - 1) * ZONE_GAP * 0.5),
+			Vector3.new(96, 2, 86),
+			CFrame.new(plazaCenter - Vector3.new(0, 1.5, 0)),
 			TRACK_TEAL
 		)
 		floor.Material = Enum.Material.Slate
 		floor.Parent = folder
 
-		local spawn = Instance.new("SpawnLocation")
+		spawn = Instance.new("SpawnLocation")
 		spawn.Name = "PumpkinSpawn"
 		spawn.Anchored = true
 		spawn.Neutral = true
 		spawn.Size = Vector3.new(16, 1, 16)
-		spawn.Position = Vector3.new(-55, TRACK_START_Y, 0)
 		spawn.Color = LIME
 		spawn.Parent = folder
+	end
+	if firstStart then
+		spawn.CFrame = CFrame.lookAt(
+			plazaCenter + Vector3.new(0, 0.5, 0),
+			firstStart.Position + Vector3.new(0, 4, 0)
+		)
+	end
+
+	local art = Instance.new("Model")
+	art.Name = "CompactPlazaArt"
+	art.Parent = folder
+	for _, side in { -1, 1 } do
+		local cliff = addBandPart(
+			art,
+			"PlazaCliff",
+			Vector3.new(90, 22, 10),
+			CFrame.new(plazaCenter + Vector3.new(-4, 8, side * 48)),
+			QUIET_PURPLE,
+			Enum.Material.Rock
+		)
+		cliff:SetAttribute("ValueBandCount", VisualRules.REQUIRED_VALUE_BANDS)
+		for offset = -36, 36, 18 do
+			buildFence(art, CFrame.new(plazaCenter + Vector3.new(offset, 0, side * 41)), 0.8)
+		end
+	end
+	addBandPart(
+		art,
+		"PlazaBackCliff",
+		Vector3.new(10, 25, 96),
+		CFrame.new(plazaCenter - Vector3.new(52, -9, 0)),
+		QUIET_PURPLE:Lerp(INK, 0.2),
+		Enum.Material.Rock
+	)
+	if firstStart then
+		buildCandyArch(
+			art,
+			CFrame.lookAt(firstStart.Position, firstStart.Position + firstStart.CFrame.LookVector),
+			1.15,
+			"DominantLandmark_CandyArch"
+		)
+		buildJackOLantern(
+			art,
+			CFrame.new(firstStart.Position - firstStart.CFrame.RightVector * 23),
+			1.55
+		)
+		buildLampPost(
+			art,
+			CFrame.new(firstStart.Position + firstStart.CFrame.RightVector * 22),
+			true
+		)
 	end
 	for index, name in { "Leaderboard_Wins", "Leaderboard_Size" } do
 		if not findPart(name) then
 			local board = makePart(
 				name,
 				Vector3.new(16, 10, 1),
-				CFrame.new(-45, TRACK_START_Y + 5, (index - 1.5) * 22),
+				CFrame.new(plazaCenter + Vector3.new(-31, 5, (index - 1.5) * 22)),
 				PURPLE:Lerp(INK, 0.35)
 			)
 			board.Parent = folder
@@ -170,6 +450,102 @@ local function pathWorld(start: BasePart, distance: number): (Vector3, Vector3, 
 		pathRight = pathRight.Unit
 	end
 	return position, tangent, pathRight, sample.bank
+end
+
+local function buildZoneArt(track: Model, start: BasePart, zone: any, zoneIndex: number)
+	local previous = track:FindFirstChild("GeneratedQ4Art")
+	if previous then
+		previous:Destroy()
+	end
+	local art = Instance.new("Model")
+	art.Name = "GeneratedQ4Art"
+	art:SetAttribute("ZoneIdentity", zone.DisplayName)
+	art:SetAttribute("ValueBandCount", VisualRules.REQUIRED_VALUE_BANDS)
+	art.Parent = track
+
+	local zoneAccent = ({ ORANGE, LIME, CYAN, PURPLE })[zoneIndex] or ORANGE
+	local propDistances = { 145, 390, 670, 960, 1_240, 1_500 }
+	for propIndex, distance in propDistances do
+		local position, tangent, right = pathWorld(start, distance)
+		local side = if propIndex % 2 == 0 then -1 else 1
+		local frame = CFrame.lookAt(
+			position + right * side * 24,
+			position + right * side * 24 + tangent,
+			Vector3.yAxis
+		)
+		if zoneIndex == 1 then
+			if propIndex % 2 == 0 then
+				buildFence(art, frame, 1.15)
+			else
+				buildJackOLantern(art, frame, 0.9 + propIndex * 0.04)
+			end
+		elseif zoneIndex == 2 then
+			buildFence(art, frame, 1.05)
+			local tree = addBandPart(
+				art,
+				"HauntedTree",
+				Vector3.new(3.2, 16, 3.2),
+				frame * CFrame.new(0, 8, 2),
+				Color3.fromRGB(69, 43, 58),
+				Enum.Material.Wood
+			)
+			tree.CFrame *= CFrame.Angles(0, 0, math.rad(side * 8))
+			addBandPart(
+				art,
+				"TreeGlow",
+				Vector3.new(4.4, 4.4, 4.4),
+				frame * CFrame.new(0, 14, 1),
+				LIME:Lerp(INK, 0.28),
+				Enum.Material.SmoothPlastic,
+				Enum.PartType.Ball
+			)
+		elseif zoneIndex == 3 then
+			buildGravestone(art, frame, 1.2)
+			buildGravestone(art, frame * CFrame.new(side * 5, 0, 3), 0.78)
+		else
+			buildCandyArch(art, frame, 0.62)
+		end
+		if propIndex == 1 or propIndex == 4 then
+			buildLampPost(art, frame * CFrame.new(side * 7, 0, -4), true)
+		end
+	end
+
+	local landmarkPosition, landmarkTangent, landmarkRight = pathWorld(start, 820)
+	local landmarkFrame = CFrame.lookAt(
+		landmarkPosition + landmarkRight * 29,
+		landmarkPosition + landmarkRight * 29 + landmarkTangent,
+		Vector3.yAxis
+	)
+	if zoneIndex == 1 then
+		local landmark = buildJackOLantern(art, landmarkFrame, 2.3)
+		landmark.Name = "DominantLandmark_GiantJack"
+	elseif zoneIndex == 2 then
+		buildCandyArch(art, landmarkFrame, 1.25, "DominantLandmark_MoonGate")
+	elseif zoneIndex == 3 then
+		local landmark = Instance.new("Model")
+		landmark.Name = "DominantLandmark_Crypt"
+		landmark.Parent = art
+		buildGravestone(landmark, landmarkFrame, 2.2)
+		buildLampPost(landmark, landmarkFrame * CFrame.new(-7, 0, 1), true)
+	else
+		buildCandyArch(art, landmarkFrame, 1.5, "DominantLandmark_WitchCastleGate")
+	end
+
+	local finishPosition, finishTangent = pathWorld(start, Config.RideTrackLength - 35)
+	local finishFrame = CFrame.lookAt(finishPosition, finishPosition + finishTangent, Vector3.yAxis)
+	buildCandyArch(art, finishFrame, 1.05, "FinishSetPiece_" .. zone.Name)
+	if zoneIndex == 1 then
+		buildLampPost(art, finishFrame * CFrame.new(-20, 0, 0), true)
+	end
+	local finishAccent = addBandPart(
+		art,
+		"FinishSetPiece_Glow",
+		Vector3.new(22, 0.22, 5),
+		finishFrame * CFrame.new(0, 1.15, 0),
+		zoneAccent,
+		Enum.Material.Neon
+	)
+	finishAccent.CanCollide = false
 end
 
 local function buildObstacle(track: Model, start: BasePart, wave: any, lane: number)
@@ -209,6 +585,14 @@ local function buildObstacle(track: Model, start: BasePart, wave: any, lane: num
 	obstacle:SetAttribute("Lane", lane)
 	obstacle:SetAttribute("Bank", bank)
 	obstacle.Parent = track
+	local outline = Instance.new("Highlight")
+	outline.Name = "HazardSeparation"
+	outline.Adornee = obstacle
+	outline.DepthMode = Enum.HighlightDepthMode.Occluded
+	outline.FillTransparency = 1
+	outline.OutlineColor = INK
+	outline.OutlineTransparency = 0.18
+	outline.Parent = obstacle
 
 	local warning = makePart(
 		string.format("ObstacleWarning_%d_%d", wave.id, lane),
@@ -362,6 +746,7 @@ local function ensureTrack(zone: any, zoneIndex: number): ZoneParts
 	chute.Name = "GeneratedQ4Chute"
 	chute.Parent = track
 	buildChute(chute, start, rideSeed)
+	buildZoneArt(track, start, zone, zoneIndex)
 
 	local walls = {}
 	for wallIndex = 1, Config.FallbackWallCount do
@@ -435,26 +820,126 @@ end
 local function ensureEggStands()
 	for index, egg in Config.Eggs do
 		local name = "Egg_" .. egg.Name
-		if not findPart(name) then
-			local stand = makePart(
+		local stand = findPart(name)
+		if not stand then
+			stand = makePart(
 				name,
-				Vector3.new(8, 2, 8),
+				Vector3.new(10, 2, 10),
 				CFrame.new(-24, TRACK_START_Y + 1, (index - 1) * ZONE_GAP),
-				PURPLE
+				INK:Lerp(PURPLE, 0.32)
 			)
 			stand.Parent = workspace
 		end
+		local previous = stand:FindFirstChild("GeneratedQ4EggVisual")
+		if previous then
+			previous:Destroy()
+		end
+		local visual = Instance.new("Model")
+		visual.Name = "GeneratedQ4EggVisual"
+		visual.Parent = stand
+		local eggModel = addBandPart(
+			visual,
+			"EggModel",
+			Vector3.new(6.6, 8.5, 6.6),
+			stand.CFrame * CFrame.new(0, 5.1, 0),
+			({ ORANGE, PURPLE, Color3.fromRGB(202, 211, 214) })[index] or ORANGE,
+			Enum.Material.SmoothPlastic,
+			Enum.PartType.Ball
+		)
+		eggModel.CanCollide = false
+		addBandPart(
+			visual,
+			"EggUnderside",
+			Vector3.new(6.8, 1.3, 6.8),
+			stand.CFrame * CFrame.new(0, 1.45, 0),
+			INK:Lerp(PURPLE, 0.22),
+			Enum.Material.Slate,
+			Enum.PartType.Cylinder
+		)
+		local highlight = addBandPart(
+			visual,
+			"EggHighlight",
+			Vector3.new(1.3, 4.8, 0.28),
+			stand.CFrame * CFrame.new(-1.55, 6, -3.05) * CFrame.Angles(0, 0, math.rad(-16)),
+			Color3.fromRGB(255, 242, 190),
+			Enum.Material.Neon
+		)
+		highlight.CanCollide = false
+		local eggOutline = Instance.new("Highlight")
+		eggOutline.Name = "EggSeparation"
+		eggOutline.Adornee = visual
+		eggOutline.DepthMode = Enum.HighlightDepthMode.Occluded
+		eggOutline.FillTransparency = 1
+		eggOutline.OutlineColor = INK
+		eggOutline.OutlineTransparency = 0.08
+		eggOutline.Parent = visual
+		for rarityIndex, rarityColor in { ORANGE, LIME, CYAN, PURPLE, YELLOW } do
+			local preview = addBandPart(
+				visual,
+				"RarityPreview_" .. rarityIndex,
+				Vector3.new(0.9, 0.9, 0.9),
+				stand.CFrame * CFrame.new((rarityIndex - 3) * 1.3, 1.35, -4.3),
+				rarityColor,
+				if rarityIndex >= 4 then Enum.Material.Neon else Enum.Material.SmoothPlastic,
+				Enum.PartType.Ball
+			)
+			preview.CanCollide = false
+		end
+		local badge = Instance.new("BillboardGui")
+		badge.Name = "EggCostBadge"
+		badge.AlwaysOnTop = true
+		badge.MaxDistance = 90
+		badge.Size = UDim2.fromOffset(190, 58)
+		badge.StudsOffsetWorldSpace = Vector3.new(0, 10.5, 0)
+		badge.Adornee = stand
+		badge.Parent = stand
+		local text = Instance.new("TextLabel")
+		text.Name = "CostAndFreeBadge"
+		text.BackgroundColor3 = PURPLE
+		text.BackgroundTransparency = 0.08
+		text.BorderSizePixel = 0
+		text.Font = Enum.Font.GothamBlack
+		text.Size = UDim2.fromScale(1, 1)
+		text.Text = string.format(
+			"%s\n%d WINS%s",
+			egg.DisplayName,
+			egg.Cost,
+			if index == 1 then "  |  FIRST FREE" else ""
+		)
+		text.TextColor3 = Color3.new(1, 1, 1)
+		text.TextScaled = true
+		text.TextStrokeColor3 = INK
+		text.TextStrokeTransparency = 0
+		text.Parent = badge
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 12)
+		corner.Parent = text
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = INK
+		stroke.Thickness = 3
+		stroke.Parent = text
+		local prompt = stand:FindFirstChildOfClass("ProximityPrompt")
+		if not prompt then
+			prompt = Instance.new("ProximityPrompt")
+			prompt.Name = "HatchPrompt"
+			prompt.Parent = stand
+		end
+		prompt.ActionText = "HATCH"
+		prompt.ObjectText = egg.DisplayName
+		prompt.HoldDuration = 0
+		prompt.MaxActivationDistance = 12
 	end
 end
 
 function MapFallback.build(): { [string]: ZoneParts }
+	activeMapLights = 0
 	ensureGround()
-	ensureLobby()
 	ensureEggStands()
 	local result = {}
 	for zoneIndex, zone in Config.Zones do
 		result[zone.Name] = ensureTrack(zone, zoneIndex)
 	end
+	ensureLobby()
 	disableGateCameraQueries()
 	return result
 end

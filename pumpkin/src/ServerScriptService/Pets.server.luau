@@ -9,6 +9,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local HatchEntitlements = require(Shared:WaitForChild("HatchEntitlements"))
 local PetIndex = require(Shared:WaitForChild("PetIndex"))
 local Pets = require(Shared:WaitForChild("Pets"))
+local VisualRules = require(Shared:WaitForChild("VisualRules"))
 local Data = require(ServerStorage:WaitForChild("Data"))
 local RemotesBuilder = require(ServerStorage:WaitForChild("Remotes"))
 
@@ -24,6 +25,26 @@ if not followerRoot then
 	followerRoot.Parent = workspace
 end
 local petModels = ServerStorage:FindFirstChild("PetModels")
+
+local function validatePetModels(container: Instance?): Instance
+	assert(container, "PetModels is required: all 15 named pet models must ship")
+	for _, descendant in container:GetDescendants() do
+		assert(
+			VisualRules.assetClassAllowed(descendant.ClassName),
+			string.format(
+				"unsafe class %s in PetModels at %s",
+				descendant.ClassName,
+				descendant:GetFullName()
+			)
+		)
+	end
+	for _, petName in VisualRules.petModelNames(Config.Eggs) do
+		assert(container:FindFirstChild(petName), "missing required pet model: " .. petName)
+	end
+	return container
+end
+
+petModels = validatePetModels(petModels)
 local randomSource = function(): number
 	return math.random()
 end
@@ -166,6 +187,17 @@ local function prepareFollower(instance: Instance, slot: number, pet: Pets.Pet)
 				emitter.Parent = host
 			end
 		end
+	end
+	if pet.rarity == "Rare" or pet.rarity == "Epic" or pet.rarity == "Legendary" then
+		local outline = Instance.new("Highlight")
+		outline.Name = "RaritySeparation"
+		outline.Adornee = instance
+		outline.DepthMode = Enum.HighlightDepthMode.Occluded
+		outline.FillColor = RARITY_COLORS[pet.rarity] or RARITY_COLORS.Rare
+		outline.FillTransparency = 0.88
+		outline.OutlineColor = RARITY_COLORS[pet.rarity] or RARITY_COLORS.Rare
+		outline.OutlineTransparency = 0.15
+		outline.Parent = instance
 	end
 end
 
