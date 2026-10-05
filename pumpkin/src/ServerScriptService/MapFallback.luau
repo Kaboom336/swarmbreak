@@ -17,6 +17,48 @@ export type ZoneParts = {
 }
 
 local MapFallback = {}
+local makePart: (string, Vector3, CFrame, Color3) -> Part
+
+local function ensureGround()
+	local existing = workspace:FindFirstChild("Ground", true)
+	if existing and existing:IsA("BasePart") then
+		return
+	end
+	local scenery = Instance.new("Folder")
+	scenery.Name = "FallbackGroundScenery"
+	scenery.Parent = workspace
+
+	local ground = makePart(
+		"Ground",
+		Vector3.new(2000, 8, 2000),
+		CFrame.new(250, 0, (#Config.Zones - 1) * ZONE_GAP * 0.5),
+		Color3.fromRGB(91, 168, 62)
+	)
+	ground.Material = Enum.Material.Grass
+	ground.Parent = scenery
+
+	for index = 1, 28 do
+		local side = if index % 2 == 0 then -1 else 1
+		local z = -220 + index * 25
+		local x = if side < 0 then -80 - (index % 4) * 18 else 630 + (index % 4) * 18
+		local trunk = makePart(
+			"TreeTrunk_" .. index,
+			Vector3.new(3, 14, 3),
+			CFrame.new(x, 15, z),
+			Color3.fromRGB(104, 63, 35)
+		)
+		trunk.Material = Enum.Material.Wood
+		trunk.Parent = scenery
+		local crown = makePart(
+			"TreeCrown_" .. index,
+			Vector3.new(13, 13, 13),
+			CFrame.new(x, 25, z),
+			if index % 3 == 0 then Color3.fromRGB(255, 190, 45) else Color3.fromRGB(235, 94, 36)
+		)
+		crown.Shape = Enum.PartType.Ball
+		crown.Parent = scenery
+	end
+end
 
 local function findPart(name: string): BasePart?
 	local named = workspace:FindFirstChild(name, true)
@@ -44,7 +86,7 @@ local function findModel(name: string): Model?
 	return nil
 end
 
-local function makePart(name: string, size: Vector3, cframe: CFrame, color: Color3): Part
+makePart = function(name: string, size: Vector3, cframe: CFrame, color: Color3): Part
 	local part = Instance.new("Part")
 	part.Name = name
 	part.Anchored = true
@@ -206,6 +248,7 @@ local function ensureEggStands()
 end
 
 function MapFallback.build(): { [string]: ZoneParts }
+	ensureGround()
 	ensureLobby()
 	ensureEggStands()
 	local result = {}

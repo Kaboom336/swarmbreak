@@ -13,6 +13,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local Grow = require(Shared:WaitForChild("Grow"))
 local HudLayout = require(Shared:WaitForChild("HudLayout"))
 local Monetization = require(Shared:WaitForChild("Monetization"))
+local WallProgress = require(Shared:WaitForChild("WallProgress"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local growRequest = remotes:WaitForChild("GrowRequest") :: RemoteEvent
 local growEffect = remotes:WaitForChild("GrowEffect") :: RemoteEvent
@@ -133,20 +134,53 @@ local sizeLabel = Instance.new("TextLabel")
 sizeLabel.Name = "Size"
 sizeLabel.BackgroundTransparency = 1
 sizeLabel.Font = Enum.Font.GothamBlack
-sizeLabel.Position = UDim2.fromOffset(10, 8)
-sizeLabel.Size = UDim2.new(0.5, -15, 1, -14)
+sizeLabel.Position = UDim2.fromOffset(40, 8)
+sizeLabel.Size = UDim2.new(0.5, -45, 1, -14)
 sizeLabel.TextColor3 = ORANGE
 sizeLabel.TextSize = 26
 sizeLabel.TextStrokeColor3 = TEAL
 sizeLabel.TextStrokeTransparency = 0
 sizeLabel.ZIndex = 4
 sizeLabel.Parent = statsPanel
+local sizeScale = Instance.new("UIScale")
+sizeScale.Parent = sizeLabel
+
+local function addStatIcon(name: string, iconId: string, xScale: number, color: Color3)
+	if iconId ~= "" then
+		local icon = Instance.new("ImageLabel")
+		icon.Name = name .. "Icon"
+		icon.BackgroundTransparency = 1
+		icon.Image = iconId
+		icon.Position = UDim2.new(xScale, 10, 0.5, -16)
+		icon.Size = UDim2.fromOffset(32, 32)
+		icon.ZIndex = 5
+		icon.Parent = statsPanel
+	else
+		local icon = Instance.new("Frame")
+		icon.Name = name .. "VectorIcon"
+		icon.BackgroundColor3 = color
+		icon.BorderSizePixel = 0
+		icon.Position = UDim2.new(xScale, 10, 0.5, -14)
+		icon.Size = UDim2.fromOffset(28, 28)
+		icon.Rotation = if name == "Wins" then 45 else 0
+		icon.ZIndex = 5
+		icon.Parent = statsPanel
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, if name == "Size" then 14 else 5)
+		corner.Parent = icon
+	end
+end
+
+addStatIcon("Size", Config.Icons.Size, 0, ORANGE)
 
 local winsLabel = sizeLabel:Clone()
 winsLabel.Name = "Wins"
-winsLabel.Position = UDim2.new(0.5, 5, 0, 8)
+winsLabel.Position = UDim2.new(0.5, 40, 0, 8)
 winsLabel.TextColor3 = LIME
 winsLabel.Parent = statsPanel
+local winsScale = Instance.new("UIScale")
+winsScale.Parent = winsLabel
+addStatIcon("Wins", Config.Icons.Wins, 0.5, LIME)
 
 local divider = Instance.new("Frame")
 divider.Name = "Divider"
@@ -169,7 +203,7 @@ local growButton = makeDepthObject(
 ) :: TextButton
 growButton.AutoButtonColor = false
 growButton.Font = Enum.Font.GothamBlack
-growButton.Text = "🎃  GROW  +1"
+growButton.Text = "GROW  +1"
 growButton.TextColor3 = WHITE
 growButton.TextSize = 32
 growButton.TextStrokeColor3 = TEAL
@@ -233,6 +267,53 @@ progressText.TextStrokeTransparency = 0
 progressText.ZIndex = 6
 progressText.Parent = progressBack
 
+local wallPanel = makeDepthObject(
+	"Frame",
+	"WallProgress",
+	UDim2.fromOffset(360, 42),
+	UDim2.new(0.5, 0, 1, -112),
+	Vector2.new(0.5, 1),
+	Color3.fromRGB(37, 96, 119),
+	TEAL
+)
+local wallFill = Instance.new("Frame")
+wallFill.Name = "Fill"
+wallFill.BackgroundColor3 = ORANGE
+wallFill.BorderSizePixel = 0
+wallFill.Size = UDim2.fromScale(0, 1)
+wallFill.ZIndex = 3
+wallFill.Parent = wallPanel
+local wallCorner = Instance.new("UICorner")
+wallCorner.CornerRadius = UDim.new(0, 12)
+wallCorner.Parent = wallFill
+local wallText = Instance.new("TextLabel")
+wallText.Name = "Label"
+wallText.BackgroundTransparency = 1
+wallText.Font = Enum.Font.GothamBlack
+wallText.Size = UDim2.fromScale(1, 1)
+wallText.TextColor3 = WHITE
+wallText.TextSize = 15
+wallText.TextStrokeColor3 = TEAL
+wallText.TextStrokeTransparency = 0
+wallText.ZIndex = 5
+wallText.Parent = wallPanel
+
+local multiplierPanel = makeDepthObject(
+	"TextLabel",
+	"Multipliers",
+	UDim2.fromOffset(310, 58),
+	UDim2.new(0, 18, 1, -18),
+	Vector2.new(0, 1),
+	PURPLE,
+	Color3.fromRGB(73, 33, 130)
+) :: TextLabel
+multiplierPanel.Font = Enum.Font.GothamBold
+multiplierPanel.TextColor3 = WHITE
+multiplierPanel.TextSize = 14
+multiplierPanel.TextStrokeColor3 = TEAL
+multiplierPanel.TextStrokeTransparency = 0.2
+multiplierPanel.TextWrapped = true
+
 local menu = Instance.new("Frame")
 menu.Name = "Menu"
 menu.AnchorPoint = Vector2.new(0, 0.5)
@@ -242,21 +323,14 @@ menu.Size = UDim2.fromOffset(150, 318)
 menu.ZIndex = 5
 menu.Parent = screenGui
 
-local menuLayout = Instance.new("UIListLayout")
-menuLayout.Padding = UDim.new(0, 7)
-menuLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-menuLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-menuLayout.Parent = menu
-
 local function makeMenuButton(name: string, text: string, color: Color3): TextButton
 	local button = Instance.new("TextButton")
 	button.Name = name
 	button.AutoButtonColor = false
 	button.BackgroundColor3 = color
 	button.BorderSizePixel = 0
-	button.Font = Enum.Font.GothamBlack
-	button.Size = UDim2.fromOffset(142, 58)
-	button.Text = text
+	button.Size = UDim2.fromOffset(64, 64)
+	button.Text = ""
 	button.TextColor3 = WHITE
 	button.TextSize = 20
 	button.TextStrokeColor3 = TEAL
@@ -265,6 +339,53 @@ local function makeMenuButton(name: string, text: string, color: Color3): TextBu
 	button.Parent = menu
 	addButtonShadow(button)
 	decorate(button, color, color:Lerp(TEAL, 0.3))
+	local iconId = Config.Icons[name]
+	if iconId and iconId ~= "" then
+		local icon = Instance.new("ImageLabel")
+		icon.Name = "Icon"
+		icon.BackgroundTransparency = 1
+		icon.Image = iconId
+		icon.Position = UDim2.new(0.5, -18, 0, 7)
+		icon.Size = UDim2.fromOffset(36, 32)
+		icon.ZIndex = 8
+		icon.Parent = button
+	else
+		local glyph = Instance.new("Frame")
+		glyph.Name = "VectorGlyph"
+		glyph.AnchorPoint = Vector2.new(0.5, 0)
+		glyph.BackgroundColor3 = WHITE
+		glyph.BorderSizePixel = 0
+		glyph.Position = UDim2.new(0.5, 0, 0, 10)
+		glyph.Size = UDim2.fromOffset(30, 25)
+		glyph.ZIndex = 8
+		glyph.Parent = button
+		local glyphCorner = Instance.new("UICorner")
+		glyphCorner.CornerRadius = UDim.new(0, if name == "Settings" then 12 else 5)
+		glyphCorner.Parent = glyph
+		local cutout = Instance.new("Frame")
+		cutout.Name = "GlyphCutout"
+		cutout.AnchorPoint = Vector2.new(0.5, 0.5)
+		cutout.BackgroundColor3 = color
+		cutout.BorderSizePixel = 0
+		cutout.Position = UDim2.fromScale(0.5, 0.5)
+		cutout.Size = UDim2.fromOffset(10, 10)
+		cutout.ZIndex = 9
+		cutout.Parent = glyph
+	end
+	local label = Instance.new("TextLabel")
+	label.Name = "Label"
+	label.AnchorPoint = Vector2.new(0.5, 1)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.GothamBlack
+	label.Position = UDim2.new(0.5, 0, 1, -3)
+	label.Size = UDim2.new(1, -4, 0, 18)
+	label.Text = text
+	label.TextColor3 = WHITE
+	label.TextSize = 10
+	label.TextStrokeColor3 = TEAL
+	label.TextStrokeTransparency = 0
+	label.ZIndex = 9
+	label.Parent = button
 	return button
 end
 
@@ -273,23 +394,21 @@ local petsButton = makeMenuButton("Pets", "PETS", PURPLE)
 local rebirthButton = makeMenuButton("Rebirth", "REBIRTH", LIME)
 local codesButton = makeMenuButton("Codes", "CODES", Color3.fromRGB(55, 190, 214))
 local dailyButton = makeMenuButton("Daily", "DAILY", Color3.fromRGB(255, 81, 158))
-
-local settingsButton = makeDepthObject(
-	"TextButton",
-	"Settings",
-	UDim2.fromOffset(56, 56),
-	UDim2.new(1, -18, 0, 18),
-	Vector2.new(1, 0),
-	Color3.fromRGB(55, 190, 214),
-	Color3.fromRGB(24, 105, 135)
-) :: TextButton
-settingsButton.AutoButtonColor = false
-settingsButton.Font = Enum.Font.GothamBlack
-settingsButton.Text = "SFX\nON"
-settingsButton.TextColor3 = WHITE
-settingsButton.TextSize = 15
-settingsButton.TextStrokeColor3 = TEAL
-settingsButton.TextStrokeTransparency = 0
+local passesButton = makeMenuButton("Passes", "PASSES", ORANGE)
+local settingsButton = makeMenuButton("Settings", "SETTINGS", Color3.fromRGB(55, 190, 214))
+local dailyDot = Instance.new("Frame")
+dailyDot.Name = "Notification"
+dailyDot.AnchorPoint = Vector2.new(1, 0)
+dailyDot.BackgroundColor3 = Color3.fromRGB(245, 45, 60)
+dailyDot.BorderSizePixel = 0
+dailyDot.Position = UDim2.new(1, 4, 0, -4)
+dailyDot.Size = UDim2.fromOffset(15, 15)
+dailyDot.Visible = false
+dailyDot.ZIndex = 12
+dailyDot.Parent = dailyButton
+local dailyDotCorner = Instance.new("UICorner")
+dailyDotCorner.CornerRadius = UDim.new(1, 0)
+dailyDotCorner.Parent = dailyDot
 
 local tutorialPanel = makeDepthObject(
 	"TextLabel",
@@ -353,7 +472,8 @@ player:SetAttribute("SFXEnabled", true)
 settingsButton.Activated:Connect(function()
 	sfxEnabled = not sfxEnabled
 	player:SetAttribute("SFXEnabled", sfxEnabled)
-	settingsButton.Text = if sfxEnabled then "SFX\nON" else "SFX\nOFF"
+	local label = settingsButton:FindFirstChild("Label") :: TextLabel
+	label.Text = if sfxEnabled then "SFX ON" else "SFX OFF"
 end)
 
 local function applyRect(object: GuiObject, bounds: any, shadowName: string?)
@@ -374,23 +494,36 @@ local function applyLayout(viewport: Vector2)
 	local layout = HudLayout.compute(viewport.X, viewport.Y)
 	applyRect(statsPanel, layout.stats, "StatsShadow")
 	applyRect(growButton, layout.grow, "GrowShadow")
+	applyRect(wallPanel, layout.wallProgress, "WallProgressShadow")
+	applyRect(multiplierPanel, layout.multipliers, "MultipliersShadow")
 	applyRect(zonePanel, layout.zone, "ZoneShadow")
-	applyRect(settingsButton, layout.settings, "SettingsShadow")
 	applyRect(tutorialPanel, layout.tutorial, "TutorialShadow")
 	applyRect(growArrow, layout.growArrow, nil)
 	menu.AnchorPoint = Vector2.zero
 	menu.Position = UDim2.fromOffset(layout.menu.x, layout.menu.y)
 	menu.Size = UDim2.fromOffset(layout.menu.width, layout.menu.height)
-	menuLayout.Padding = UDim.new(0, if layout.mobile then 6 else 7)
-	for _, button in { shopButton, petsButton, rebirthButton, codesButton, dailyButton } do
-		button.Size = UDim2.fromOffset(layout.menuButtons[1].width, layout.menuButtons[1].height)
-		button.TextSize = if layout.mobile then 16 else 20
+	for index, button in
+		{
+			shopButton,
+			petsButton,
+			rebirthButton,
+			codesButton,
+			dailyButton,
+			passesButton,
+			settingsButton,
+		}
+	do
+		local bounds = layout.menuButtons[index]
+		button.Position = UDim2.fromOffset(bounds.x - layout.menu.x, bounds.y - layout.menu.y)
+		button.Size = UDim2.fromOffset(bounds.width, bounds.height)
 	end
 	sizeLabel.TextSize = if layout.mobile then 22 else 26
 	winsLabel.TextSize = if layout.mobile then 22 else 26
 	zoneLabel.TextSize = if layout.mobile then 16 else 19
 	progressBack.Position = UDim2.fromOffset(14, if layout.mobile then 53 else 66)
 	progressBack.Size = UDim2.new(1, -28, 0, if layout.mobile then 20 else 24)
+	wallText.TextSize = if layout.mobile then 13 else 15
+	multiplierPanel.TextSize = if layout.mobile then 11 else 14
 end
 
 local viewportConnection: RBXScriptConnection? = nil
@@ -539,6 +672,7 @@ local function requestEconomy(action: string, value: any?): any
 	end
 	if response.State then
 		currentEconomyState = response.State
+		dailyDot.Visible = response.State.DailyClaimable == true
 	end
 	notice.Text = response.Message or ""
 	return response
@@ -700,8 +834,16 @@ end)
 rebirthButton.Activated:Connect(showRebirth)
 codesButton.Activated:Connect(showCodes)
 dailyButton.Activated:Connect(showDaily)
+passesButton.Activated:Connect(showShop)
 economyState.OnClientEvent:Connect(function(state)
 	currentEconomyState = state
+	dailyDot.Visible = state.DailyClaimable == true
+end)
+task.spawn(function()
+	local response = requestEconomy("GetState")
+	if response and response.State then
+		dailyDot.Visible = response.State.DailyClaimable == true
+	end
 end)
 
 TextChatService.OnIncomingMessage = function(message: TextChatMessage): TextChatMessageProperties?
@@ -831,11 +973,26 @@ local function showMilestone(amount: number, newSize: number)
 	end)
 end
 
+local displayedSize: number? = nil
+local displayedWins: number? = nil
+local function popNumber(scale: UIScale)
+	scale.Scale = 1.28
+	TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+end
+
 local function updateStats(size: number?, wins: number?)
 	local currentSize = size or (player:GetAttribute("Size") :: number?) or 0
 	local currentWins = wins or (player:GetAttribute("Wins") :: number?) or 0
-	sizeLabel.Text = "🎃 SIZE\n" .. abbreviate(currentSize)
-	winsLabel.Text = "★ WINS\n" .. abbreviate(currentWins)
+	if displayedSize ~= nil and displayedSize ~= currentSize then
+		popNumber(sizeScale)
+	end
+	if displayedWins ~= nil and displayedWins ~= currentWins then
+		popNumber(winsScale)
+	end
+	displayedSize = currentSize
+	displayedWins = currentWins
+	sizeLabel.Text = "SIZE\n" .. abbreviate(currentSize)
+	winsLabel.Text = "WINS\n" .. abbreviate(currentWins)
 
 	local currentZoneName = (player:GetAttribute("CurrentZone") :: string?) or Config.Zones[1].Name
 	local currentDisplay = Config.Zones[1].DisplayName
@@ -846,6 +1003,37 @@ local function updateStats(size: number?, wins: number?)
 		end
 	end
 	zoneLabel.Text = "ZONE\n" .. currentDisplay
+	local wallState = WallProgress.compute(currentSize, currentZoneName, Config.FallbackWallCount)
+	wallFill.Size = UDim2.fromScale(wallState.progress, 1)
+	if wallState.nextWall then
+		wallText.Text = string.format(
+			"%d WALLS  •  %s / %s TO NEXT",
+			wallState.wallsBroken,
+			abbreviate(currentSize),
+			abbreviate(wallState.nextHealth or 0)
+		)
+	else
+		wallText.Text = string.format("%d WALLS  •  TRACK CLEARED", wallState.wallsBroken)
+	end
+	local petMultiplier = (player:GetAttribute("PetMultiplier") :: number?) or 1
+	local rebirths = (player:GetAttribute("Rebirths") :: number?) or 0
+	local rebirthMultiplier = 1 + rebirths * Config.RebirthSizeBonus
+	local friendPercent =
+		math.floor(((player:GetAttribute("FriendBoost") :: number?) or 0) * 100 + 0.5)
+	local passChips = {}
+	if player:GetAttribute("DoubleSize") == true then
+		table.insert(passChips, "2x SIZE")
+	end
+	if player:GetAttribute("DoubleWins") == true then
+		table.insert(passChips, "2x WINS")
+	end
+	multiplierPanel.Text = string.format(
+		"PETS ×%.1f  •  REBIRTH ×%.1f\nFRIEND BOOST +%d%%%s",
+		petMultiplier,
+		rebirthMultiplier,
+		friendPercent,
+		if #passChips > 0 then "  •  " .. table.concat(passChips, "  ") else ""
+	)
 
 	local totalWins = (player:GetAttribute("TotalWins") :: number?) or 0
 	local nextZone = nil
@@ -882,6 +1070,11 @@ end)
 player:GetAttributeChangedSignal("TutorialDone"):Connect(function()
 	updateStats(nil, nil)
 end)
+for _, attribute in { "PetMultiplier", "Rebirths", "FriendBoost", "DoubleSize", "DoubleWins" } do
+	player:GetAttributeChangedSignal(attribute):Connect(function()
+		updateStats(nil, nil)
+	end)
+end
 
 local popupPool = {}
 for index = 1, 10 do
@@ -890,7 +1083,7 @@ for index = 1, 10 do
 	popup.AlwaysOnTop = true
 	popup.Enabled = false
 	popup.LightInfluence = 0
-	popup.Size = UDim2.fromOffset(150, 54)
+	popup.Size = UDim2.fromOffset(300, 108)
 	popup.StudsOffsetWorldSpace = Vector3.new(0, 3, 0)
 	popup.Parent = playerGui
 
@@ -902,7 +1095,7 @@ for index = 1, 10 do
 	label.Position = UDim2.fromScale(0.5, 0.5)
 	label.Size = UDim2.fromScale(1, 1)
 	label.TextColor3 = ORANGE
-	label.TextSize = 34
+	label.TextSize = 68
 	label.TextStrokeColor3 = TEAL
 	label.TextStrokeTransparency = 0
 	label.Parent = popup
@@ -911,6 +1104,46 @@ for index = 1, 10 do
 	scale.Name = "PopScale"
 	scale.Parent = label
 	table.insert(popupPool, popup)
+end
+
+local seedPool = {}
+for index = 1, 8 do
+	local seed = Instance.new("Frame")
+	seed.Name = "PumpkinSeed" .. index
+	seed.AnchorPoint = Vector2.new(0.5, 0.5)
+	seed.BackgroundColor3 = Color3.fromRGB(255, 211, 94)
+	seed.BorderSizePixel = 0
+	seed.Size = UDim2.fromOffset(12, 18)
+	seed.Rotation = 35
+	seed.Visible = false
+	seed.ZIndex = 25
+	seed.Parent = screenGui
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(1, 0)
+	corner.Parent = seed
+	table.insert(seedPool, seed)
+end
+
+local seedCursor = 0
+local function burstSeeds()
+	local start = growButton.AbsolutePosition + growButton.AbsoluteSize * 0.5
+	local target = sizeLabel.AbsolutePosition + sizeLabel.AbsoluteSize * 0.5
+	for index = 1, 5 do
+		seedCursor = seedCursor % #seedPool + 1
+		local seed = seedPool[seedCursor]
+		seed.Position = UDim2.fromOffset(start.X + (index - 3) * 12, start.Y + math.random(-6, 6))
+		seed.Visible = true
+		seed.BackgroundTransparency = 0
+		local tween = TweenService:Create(
+			seed,
+			TweenInfo.new(0.38 + index * 0.025, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+			{ Position = UDim2.fromOffset(target.X, target.Y), Rotation = seed.Rotation + 180 }
+		)
+		tween:Play()
+		tween.Completed:Connect(function()
+			seed.Visible = false
+		end)
+	end
 end
 
 local popupCursor = 0
@@ -927,11 +1160,36 @@ local function showPopup(amount: number)
 	popup:SetAttribute("Generation", generation)
 	popup.Adornee = pumpkin
 	popup.Enabled = true
-	popup.StudsOffsetWorldSpace = Vector3.new(0, 2.8, 0)
+	popup.StudsOffsetWorldSpace =
+		Vector3.new(math.random(-24, 24) / 10, 2.8, math.random(-12, 12) / 10)
 
 	local label = popup:FindFirstChild("Amount") :: TextLabel
 	local scale = label:FindFirstChild("PopScale") :: UIScale
 	label.Text = "+" .. abbreviate(amount)
+	local rainbow = label:FindFirstChild("Rainbow") :: UIGradient?
+	if amount >= 1_000 then
+		label.TextColor3 = Color3.new(1, 1, 1)
+		if not rainbow then
+			rainbow = Instance.new("UIGradient")
+			rainbow.Name = "Rainbow"
+			rainbow.Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 70, 130)),
+				ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 220, 55)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(90, 220, 255)),
+			})
+			rainbow.Parent = label
+		end
+		rainbow.Enabled = true
+	else
+		if rainbow then
+			rainbow.Enabled = false
+		end
+		label.TextColor3 = if amount >= 100
+			then Color3.fromRGB(255, 81, 158)
+			elseif amount >= 25 then ORANGE
+			elseif amount >= 5 then Color3.fromRGB(255, 224, 73)
+			else WHITE
+	end
 	label.TextTransparency = 0
 	label.TextStrokeTransparency = 0
 	scale.Scale = 0.55
@@ -983,6 +1241,7 @@ growEffect.OnClientEvent:Connect(function(amount: number, newSize: number)
 	showPopup(amount)
 	squashPumpkin(newSize)
 	showMilestone(amount, newSize)
+	burstSeeds()
 end)
 
 local lastRequest = -math.huge

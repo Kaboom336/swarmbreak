@@ -21,6 +21,17 @@ local Config = {
 	PumpkinTextureId = "rbxassetid://78839540616611",
 	-- The mesh is about 5.3 x 5 x 5.3 studs natively, so 0.19 makes its width match the diameter.
 	PumpkinMeshScale = 0.19,
+	Icons = {
+		Shop = "",
+		Pets = "",
+		Rebirth = "",
+		Codes = "",
+		Daily = "",
+		Passes = "",
+		Settings = "",
+		Size = "",
+		Wins = "",
+	},
 
 	WallSpacing = 50,
 	WallBaseHealth = 10,

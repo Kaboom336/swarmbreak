@@ -33,18 +33,18 @@
     "Lighting": {
       "$className": "Lighting",
       "$properties": {
-        "ClockTime": 19.1,
-        "Brightness": 2.5,
+        "ClockTime": 13.5,
+        "Brightness": 3,
         "GeographicLatitude": 20.0,
         "Ambient": [
-          0.4314,
-          0.3529,
-          0.549
+          0.6275,
+          0.549,
+          0.4706
         ],
         "OutdoorAmbient": [
-          0.5882,
-          0.549,
-          0.7451
+          0.7059,
+          0.6667,
+          0.5882
         ],
         "ColorShift_Top": [
           1,
@@ -56,20 +56,20 @@
       "Atmosphere": {
         "$className": "Atmosphere",
         "$properties": {
-          "Density": 0.32,
+          "Density": 0.18,
           "Decay": [
-            0.4706,
-            0.2745,
-            0.6667
+            0.8039,
+            0.8627,
+            0.9412
           ],
           "Color": [
-            0.3137,
-            0.6667,
-            0.7059
+            0.7843,
+            0.8824,
+            1
           ],
-          "Glare": 0.2,
+          "Glare": 0.1,
           "Offset": 0.0,
-          "Haze": 1.5
+          "Haze": 0.8
         }
       },
       "ColorCorrection": {
@@ -80,16 +80,8 @@
             0.9608,
             0.9216
           ],
-          "Saturation": 0.3,
-          "Contrast": 0.12
-        }
-      },
-      "Bloom": {
-        "$className": "BloomEffect",
-        "$properties": {
-          "Threshold": 1.6,
-          "Intensity": 0.4,
-          "Size": 20.0
+          "Saturation": 0.25,
+          "Contrast": 0.1
         }
       }
     }
