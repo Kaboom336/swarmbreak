@@ -5,8 +5,9 @@ local function primaryRects(layout)
 	local result = {
 		layout.stats,
 		layout.grow,
+		layout.wallProgress,
+		layout.multipliers,
 		layout.zone,
-		layout.settings,
 		layout.tutorial,
 		layout.growArrow,
 	}
@@ -47,7 +48,7 @@ end
 
 test("every mobile HUD button is at least 56 pixels", function()
 	local layout = HudLayout.compute(667, 375)
-	local buttons = { layout.grow, layout.settings }
+	local buttons = { layout.grow }
 	for _, button in layout.menuButtons do
 		table.insert(buttons, button)
 	end

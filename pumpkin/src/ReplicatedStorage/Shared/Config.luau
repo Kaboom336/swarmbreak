@@ -31,6 +31,8 @@ local Config = {
 		Passes = "rbxassetid://100122338049762",
 		Settings = "rbxassetid://117856754671192",
 		Star = "rbxassetid://107577320154261",
+		Size = "",
+		Wins = "rbxassetid://107577320154261",
 	},
 
 	WallSpacing = 50,

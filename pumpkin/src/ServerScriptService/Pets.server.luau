@@ -55,6 +55,7 @@ local function sendState(player: Player, message: string?)
 	if not profile then
 		return
 	end
+	player:SetAttribute("PetMultiplier", Pets.multiplierSum(profile.Pets, profile.EquippedPetIds))
 	petState:FireClient(player, {
 		pets = profile.Pets,
 		equippedPetIds = profile.EquippedPetIds,
@@ -84,29 +85,48 @@ local function clearFollowers(player: Player)
 	end
 end
 
-local function makePlaceholder(pet: Pets.Pet): BasePart
-	local part = Instance.new("Part")
-	part.Name = pet.name
-	part.Shape = Enum.PartType.Ball
-	part.Size = Vector3.new(1.8, 1.8, 1.8)
-	part.Color = RARITY_COLORS[pet.rarity] or RARITY_COLORS.Common
-	part.Material = Enum.Material.Neon
+local function makePlaceholder(pet: Pets.Pet): Model
+	local color = RARITY_COLORS[pet.rarity] or RARITY_COLORS.Common
+	local model = Instance.new("Model")
+	model.Name = pet.name
+	local body = Instance.new("Part")
+	body.Name = "Body"
+	body.Shape = Enum.PartType.Ball
+	body.Size = Vector3.new(2.2, 1.8, 2)
+	body.Color = color
+	body.Material = Enum.Material.SmoothPlastic
+	body.Parent = model
+	model.PrimaryPart = body
 
-	local face = Instance.new("BillboardGui")
-	face.Name = "Face"
-	face.AlwaysOnTop = true
-	face.Size = UDim2.fromOffset(72, 40)
-	face.StudsOffset = Vector3.new(0, 0, -0.9)
-	face.Parent = part
-	local label = Instance.new("TextLabel")
-	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.GothamBlack
-	label.Size = UDim2.fromScale(1, 1)
-	label.Text = "•ᴗ•"
-	label.TextColor3 = Color3.fromRGB(20, 33, 45)
-	label.TextScaled = true
-	label.Parent = face
-	return part
+	for index, x in { -0.42, 0.42 } do
+		local eye = Instance.new("Part")
+		eye.Name = "Eye" .. index
+		eye.Shape = Enum.PartType.Ball
+		eye.Size = Vector3.new(0.32, 0.42, 0.24)
+		eye.Color = Color3.fromRGB(24, 28, 38)
+		eye.Material = Enum.Material.SmoothPlastic
+		eye.CFrame = body.CFrame * CFrame.new(x, 0.18, -0.92)
+		eye.Parent = model
+
+		local ear = Instance.new("WedgePart")
+		ear.Name = "Ear" .. index
+		ear.Size = Vector3.new(0.55, 0.8, 0.55)
+		ear.Color = color:Lerp(Color3.new(1, 1, 1), 0.12)
+		ear.Material = Enum.Material.SmoothPlastic
+		ear.CFrame = body.CFrame * CFrame.new(x * 1.45, 1, 0) * CFrame.Angles(0, math.pi, 0)
+		ear.Parent = model
+	end
+	if pet.rarity == "Legendary" then
+		local sparkle = Instance.new("ParticleEmitter")
+		sparkle.Name = "LegendarySparkle"
+		sparkle.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		sparkle.Color = ColorSequence.new(color, Color3.new(1, 1, 1))
+		sparkle.Lifetime = NumberRange.new(0.5, 0.9)
+		sparkle.Rate = 8
+		sparkle.Speed = NumberRange.new(0.3, 0.7)
+		sparkle.Parent = body
+	end
+	return model
 end
 
 local function prepareFollower(instance: Instance, slot: number, pet: Pets.Pet)
@@ -126,6 +146,21 @@ local function prepareFollower(instance: Instance, slot: number, pet: Pets.Pet)
 		instance.CanCollide = false
 		instance.CanQuery = false
 		instance.CanTouch = false
+	end
+	if pet.rarity == "Legendary" then
+		local emitter = instance:FindFirstChild("LegendarySparkle", true)
+		if not emitter then
+			local host = if instance:IsA("BasePart")
+				then instance
+				else instance:FindFirstChildWhichIsA("BasePart", true)
+			if host then
+				emitter = Instance.new("ParticleEmitter")
+				emitter.Name = "LegendarySparkle"
+				emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+				emitter.Rate = 8
+				emitter.Parent = host
+			end
+		end
 	end
 end
 

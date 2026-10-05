@@ -5,6 +5,7 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local FriendBoost = require(Shared:WaitForChild("FriendBoost"))
 local Grow = require(Shared:WaitForChild("Grow"))
 local Roll = require(Shared:WaitForChild("Roll"))
 local Data = require(ServerStorage:WaitForChild("Data"))
@@ -22,6 +23,40 @@ local rollPlayback = remotes:FindFirstChild("RollPlayback") :: RemoteEvent
 local limiter = Grow.newRateLimiter()
 local rolling: { [Player]: boolean } = {}
 local zoneParts = MapFallback.build()
+local friendsByPlayer: { [Player]: { [Player]: boolean } } = {}
+
+local function updateFriendBoost(player: Player)
+	local count = 0
+	for _, isFriend in friendsByPlayer[player] or {} do
+		if isFriend then
+			count += 1
+		end
+	end
+	player:SetAttribute("FriendBoost", FriendBoost.boost(count))
+end
+
+local function refreshFriendships(player: Player)
+	friendsByPlayer[player] = friendsByPlayer[player] or {}
+	for _, other in Players:GetPlayers() do
+		if other ~= player then
+			local ok, isFriend = pcall(player.IsFriendsWith, player, other.UserId)
+			local cached = ok and isFriend
+			friendsByPlayer[player][other] = cached
+			friendsByPlayer[other] = friendsByPlayer[other] or {}
+			friendsByPlayer[other][player] = cached
+			updateFriendBoost(other)
+		end
+	end
+	updateFriendBoost(player)
+end
+
+local function removeFriendships(player: Player)
+	friendsByPlayer[player] = nil
+	for other, cache in friendsByPlayer do
+		cache[player] = nil
+		updateFriendBoost(other)
+	end
+end
 
 local function equippedPetMultipliers(profile: any): { number }
 	local equipped = {}
@@ -42,6 +77,13 @@ local function syncPlayer(player: Player, profile: any)
 	player:SetAttribute("Wins", profile.Wins)
 	player:SetAttribute("TotalWins", profile.TotalWins)
 	player:SetAttribute("TutorialDone", profile.TutorialDone)
+	player:SetAttribute("Rebirths", profile.Rebirths)
+	local equippedMultipliers = equippedPetMultipliers(profile)
+	local petMultiplier = if #equippedMultipliers > 0 then 0 else 1
+	for _, multiplier in equippedMultipliers do
+		petMultiplier += multiplier
+	end
+	player:SetAttribute("PetMultiplier", petMultiplier)
 
 	local leaderstats = player:FindFirstChild("leaderstats")
 	if leaderstats then
@@ -68,6 +110,7 @@ local function growPlayer(player: Player)
 		petMultipliers = equippedPetMultipliers(profile),
 		doubleSize = profile.DoubleSize,
 		vip = profile.VIP,
+		friendBoost = (player:GetAttribute("FriendBoost") :: number?) or 0,
 	})
 	profile.Size += amount
 	profile.BiggestPumpkin = math.max(profile.BiggestPumpkin, profile.Size)
@@ -116,6 +159,7 @@ local function loadPlayer(player: Player)
 	end
 
 	makeLeaderstats(player, profile)
+	refreshFriendships(player)
 	syncPlayer(player, profile)
 	EconomyService.playerLoaded(player)
 	player.CharacterAdded:Connect(function(character)
@@ -217,6 +261,7 @@ for _, player in Players:GetPlayers() do
 end
 
 Players.PlayerRemoving:Connect(function(player)
+	removeFriendships(player)
 	limiter:clear(player)
 	rolling[player] = nil
 
