@@ -8,6 +8,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local FriendBoost = require(Shared:WaitForChild("FriendBoost"))
 local Grow = require(Shared:WaitForChild("Grow"))
 local PetIndex = require(Shared:WaitForChild("PetIndex"))
+local Ride = require(Shared:WaitForChild("Ride"))
 local Roll = require(Shared:WaitForChild("Roll"))
 local Data = require(ServerStorage:WaitForChild("Data"))
 local EconomyService = require(ServerStorage:WaitForChild("EconomyService"))
@@ -21,10 +22,73 @@ local growRequest = remotes:FindFirstChild("GrowRequest") :: RemoteEvent
 local growEffect = remotes:FindFirstChild("GrowEffect") :: RemoteEvent
 local statsChanged = remotes:FindFirstChild("StatsChanged") :: RemoteEvent
 local rollPlayback = remotes:FindFirstChild("RollPlayback") :: RemoteEvent
+local rollControl = remotes:FindFirstChild("RollControl") :: RemoteEvent
 local limiter = Grow.newRateLimiter()
 local rolling: { [Player]: boolean } = {}
 local zoneParts = MapFallback.build()
 local friendsByPlayer: { [Player]: { [Player]: boolean } } = {}
+local rideStates: { [Player]: any } = {}
+local controlWindows: { [Player]: { startedAt: number, count: number } } = {}
+local nextRideToken = 0
+
+local function allowRideControl(player: Player, now: number): boolean
+	local window = controlWindows[player]
+	if not window or now - window.startedAt >= 1 then
+		controlWindows[player] = { startedAt = now, count = 1 }
+		return true
+	end
+	if window.count >= Config.RideRemotePerSecond then
+		return false
+	end
+	window.count += 1
+	return true
+end
+
+local function createRidePumpkin(player: Player, size: number, start: BasePart): (Part, Seat?)
+	local diameter = Config.PumpkinBaseDiameter * Grow.pumpkinScale(size)
+	local pumpkin = Instance.new("Part")
+	pumpkin.Name = "RollingPumpkin_" .. player.UserId
+	pumpkin.Shape = Enum.PartType.Ball
+	pumpkin.Anchored = true
+	pumpkin.CanCollide = false
+	pumpkin.CanQuery = false
+	pumpkin.CanTouch = false
+	pumpkin.Color = Color3.fromRGB(255, 116, 25)
+	pumpkin.Material = Enum.Material.SmoothPlastic
+	pumpkin.Size = Vector3.new(diameter, diameter * 0.82, diameter)
+	pumpkin.CFrame = CFrame.new(start.Position + Vector3.new(0, diameter * 0.5 + 1, 0))
+
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.FileMesh
+	mesh.MeshId = Config.PumpkinMeshId
+	mesh.TextureId = Config.PumpkinTextureId
+	mesh.Scale = Vector3.new(diameter, diameter * 0.82, diameter) * Config.PumpkinMeshScale
+	mesh.Parent = pumpkin
+	pumpkin.Parent = workspace
+
+	local character = player.Character
+	local humanoid = if character then character:FindFirstChildOfClass("Humanoid") else nil
+	if not humanoid then
+		return pumpkin, nil
+	end
+	local seat = Instance.new("Seat")
+	seat.Name = "RideSeat"
+	seat.Anchored = false
+	seat.CanCollide = false
+	seat.CanQuery = false
+	seat.CanTouch = false
+	seat.Massless = true
+	seat.Transparency = 1
+	seat.Size = Vector3.new(2, 1, 2)
+	seat.CFrame = pumpkin.CFrame + Vector3.new(0, diameter * 0.5 + 1.5, 0)
+	seat.Parent = pumpkin
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = pumpkin
+	weld.Part1 = seat
+	weld.Parent = seat
+	seat:Sit(humanoid)
+	return pumpkin, seat
+end
 
 local function updateFriendBoost(player: Player)
 	local count = 0
@@ -203,6 +267,43 @@ local function playerFromHit(hit: BasePart): Player?
 	return if character then Players:GetPlayerFromCharacter(character) else nil
 end
 
+rollControl.OnServerEvent:Connect(function(player: Player, action: any, token: any, value: any)
+	local now = workspace:GetServerTimeNow()
+	if not allowRideControl(player, now) then
+		return
+	end
+	local state = rideStates[player]
+	if not state or token ~= state.token then
+		return
+	end
+	if action == "Steer" then
+		if type(value) ~= "number" or value ~= value or math.abs(value) == math.huge then
+			return
+		end
+		state.lane = math.clamp(value, -1, 1)
+	elseif action == "Pickup" then
+		if type(value) ~= "number" or value % 1 ~= 0 then
+			return
+		end
+		local target = state.layout[value]
+		local accepted = Ride.validatePickup(
+			target,
+			now - state.startedAt,
+			state.duration,
+			state.lane,
+			state.claimed,
+			state.claimedCount
+		)
+		if not accepted then
+			return
+		end
+		state.claimed[value] = true
+		state.claimedCount += 1
+		table.insert(state.kinds, target.kind)
+		rollControl:FireClient(player, "PickupAccepted", token, value, target.kind)
+	end
+end)
+
 local function beginRoll(player: Player, zone: any, parts: any)
 	local profile = Data.get(player)
 	if rolling[player] or not profile or profile.Size <= 0 then
@@ -218,6 +319,27 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	local rolledSize = profile.Size
 	local result = Roll.simulate(rolledSize, zone, #parts.walls)
 	local duration = Roll.duration(result.distance, rolledSize, result.bonusWalls)
+	nextRideToken += 1
+	local token = nextRideToken
+	local seed = player.UserId * 1_009 + token * 7_919
+	local startedAt = workspace:GetServerTimeNow() + 0.15
+	local pumpkin, seat = createRidePumpkin(player, rolledSize, parts.start)
+	local state = {
+		token = token,
+		seed = seed,
+		startedAt = startedAt,
+		duration = duration,
+		distance = result.distance,
+		lane = 0,
+		layout = Ride.layout(seed),
+		claimed = {},
+		claimedCount = 0,
+		kinds = {},
+		pumpkin = pumpkin,
+		seat = seat,
+		baseWins = result.wins,
+	}
+	rideStates[player] = state
 	-- Credit wins in the same step that consumes Size, so leaving mid-playback loses nothing (T2 review).
 	profile.Size = 0
 	profile.Wins += result.wins
@@ -239,23 +361,71 @@ local function beginRoll(player: Player, zone: any, parts: any)
 		result.wins,
 		duration,
 		#parts.walls,
-		result.bonusWalls
+		result.bonusWalls,
+		token,
+		seed,
+		startedAt
 	)
 
-	task.delay(duration, function()
+	task.spawn(function()
+		local direction = Vector3.new(
+			parts.start.CFrame.LookVector.X,
+			-0.06,
+			parts.start.CFrame.LookVector.Z
+		).Unit
+		local horizontal = Vector3.new(direction.X, 0, direction.Z).Unit
+		local right = Vector3.new(-horizontal.Z, 0, horizontal.X)
+		local diameter = pumpkin.Size.X
+		while rideStates[player] == state and workspace:GetServerTimeNow() < startedAt + duration do
+			local elapsed = workspace:GetServerTimeNow() - startedAt
+			local progress = Ride.progress(elapsed, duration)
+			local position = parts.start.Position
+				+ direction * (result.distance * progress)
+				+ right * (state.lane * Config.RideLaneStuds)
+				+ Vector3.new(0, diameter * 0.5 + 1, 0)
+			pumpkin.CFrame = CFrame.lookAt(position, position + horizontal)
+			task.wait()
+		end
+
+		if rideStates[player] ~= state then
+			if pumpkin.Parent then
+				pumpkin:Destroy()
+			end
+			return
+		end
+		local finalWins = Ride.winsWithBonuses(result.wins, state.kinds)
+		local bonusWins = finalWins - result.wins
+		local current = Data.get(player)
+		if current and bonusWins > 0 then
+			current.Wins += bonusWins
+			current.TotalWins += bonusWins
+			Data.markDirty(player)
+		end
+		rollControl:FireClient(player, "Complete", token, finalWins)
+		rideStates[player] = nil
 		local character = player.Character
+		local humanoid = if character then character:FindFirstChildOfClass("Humanoid") else nil
+		if humanoid then
+			humanoid.Sit = false
+		end
 		local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
 		if root and root:IsA("BasePart") then
-			local direction = Vector3.new(
+			local returnDirection = Vector3.new(
 				parts.start.CFrame.LookVector.X,
 				0,
 				parts.start.CFrame.LookVector.Z
 			).Unit
-			local returnPosition = parts.start.Position + direction * 20 + Vector3.new(0, 4, 0)
-			root.CFrame = CFrame.lookAt(returnPosition, returnPosition + direction)
+			local returnPosition = parts.start.Position
+				+ returnDirection * 20
+				+ Vector3.new(0, 4, 0)
+			root.CFrame = CFrame.lookAt(returnPosition, returnPosition + returnDirection)
 		end
+		task.delay(1.5, function()
+			if pumpkin.Parent then
+				pumpkin:Destroy()
+			end
+		end)
 		player:SetAttribute("Rolling", false)
-		local current = Data.get(player)
 		if current then
 			syncPlayer(player, current)
 		end
@@ -302,6 +472,12 @@ Players.PlayerRemoving:Connect(function(player)
 	removeFriendships(player)
 	limiter:clear(player)
 	rolling[player] = nil
+	controlWindows[player] = nil
+	local ride = rideStates[player]
+	if ride and ride.pumpkin and ride.pumpkin.Parent then
+		ride.pumpkin:Destroy()
+	end
+	rideStates[player] = nil
 
 	local profile = Data.get(player)
 	if profile then
