@@ -5,6 +5,7 @@ local REMOTE_NAMES = {
 	"GrowRequest",
 	"GrowEffect",
 	"StatsChanged",
+	"EconomyState",
 }
 
 local Remotes = {}
@@ -23,6 +24,11 @@ function Remotes.build(): Folder
 			remote.Name = name
 			remote.Parent = folder
 		end
+	end
+	if not folder:FindFirstChild("EconomyRequest") then
+		local remote = Instance.new("RemoteFunction")
+		remote.Name = "EconomyRequest"
+		remote.Parent = folder
 	end
 	return folder :: Folder
 end

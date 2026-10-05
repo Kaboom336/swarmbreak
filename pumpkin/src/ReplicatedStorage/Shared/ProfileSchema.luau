@@ -19,8 +19,16 @@ export type Profile = {
 	EquippedPetIds: { string },
 	RedeemedCodes: { [string]: boolean },
 	Receipts: { [string]: boolean },
+	DailyStreak: number,
+	DailyLastClaimDay: number?,
+	LuckyUntil: number,
+	SkipWalls: number,
 	DoubleSize: boolean,
+	AutoClick: boolean,
+	DoubleWins: boolean,
+	ExtraPetEquip: boolean,
 	VIP: boolean,
+	FastTripleHatch: boolean,
 }
 
 local ProfileSchema = {}
@@ -37,8 +45,16 @@ function ProfileSchema.default(): Profile
 		EquippedPetIds = {},
 		RedeemedCodes = {},
 		Receipts = {},
+		DailyStreak = 0,
+		DailyLastClaimDay = nil,
+		LuckyUntil = 0,
+		SkipWalls = 0,
 		DoubleSize = false,
+		AutoClick = false,
+		DoubleWins = false,
+		ExtraPetEquip = false,
 		VIP = false,
+		FastTripleHatch = false,
 	}
 end
 
@@ -64,8 +80,18 @@ function ProfileSchema.fromStored(stored: any): Profile
 	profile.EquippedPetIds = copyMap(source.EquippedPetIds) :: any
 	profile.RedeemedCodes = copyMap(source.RedeemedCodes) :: any
 	profile.Receipts = copyMap(source.Receipts) :: any
+	profile.DailyStreak = math.clamp(math.floor(tonumber(source.DailyStreak) or 0), 0, 7)
+	profile.DailyLastClaimDay = if source.DailyLastClaimDay == nil
+		then nil
+		else math.floor(tonumber(source.DailyLastClaimDay) or 0)
+	profile.LuckyUntil = math.max(0, math.floor(tonumber(source.LuckyUntil) or 0))
+	profile.SkipWalls = math.max(0, math.floor(tonumber(source.SkipWalls) or 0))
 	profile.DoubleSize = source.DoubleSize == true
+	profile.AutoClick = source.AutoClick == true
+	profile.DoubleWins = source.DoubleWins == true
+	profile.ExtraPetEquip = source.ExtraPetEquip == true
 	profile.VIP = source.VIP == true
+	profile.FastTripleHatch = source.FastTripleHatch == true
 	return profile
 end
 

@@ -25,6 +25,16 @@ local Config = {
 	ExtraPetEquipSlots = 1,
 	BaseInventoryCap = 50,
 	StorageInventoryCap = 100,
+	AutoClickInterval = 0.5,
+	LuckyPotionSeconds = 10 * 60,
+	SizeBoostAmount = 10_000,
+	WinPackAmount = 5_000,
+
+	DailyRewards = { 100, 250, 500, 1_000, 2_000, 3_500, 5_000 },
+	Codes = {
+		SPOOKY = { Kind = "Wins", Amount = 500 },
+		RELEASE = { Kind = "LuckyPotion", Amount = 1 },
+	},
 
 	Zones = {
 		{
