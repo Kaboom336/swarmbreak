@@ -31,7 +31,7 @@ local Config = {
 		Passes = "rbxassetid://100122338049762",
 		Settings = "rbxassetid://117856754671192",
 		Star = "rbxassetid://107577320154261",
-		Size = "",
+		Size = "rbxassetid://99085262630635",
 		Wins = "rbxassetid://107577320154261",
 	},
 
