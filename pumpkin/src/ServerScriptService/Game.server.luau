@@ -148,6 +148,22 @@ local function setupCharacter(player: Player, character: Model)
 	if profile then
 		PumpkinVisual.attach(character, profile.Size)
 	end
+	-- Re-measure once the avatar's parts have loaded, so the pumpkin isn't sized from a half-built rig
+	if not player:HasAppearanceLoaded() then
+		local loaded = false
+		local connection = player.CharacterAppearanceLoaded:Connect(function()
+			loaded = true
+		end)
+		local deadline = os.clock() + 8
+		while not loaded and os.clock() < deadline and character.Parent do
+			task.wait(0.25)
+		end
+		connection:Disconnect()
+	end
+	local current = Data.get(player)
+	if current and player.Character == character then
+		PumpkinVisual.update(character, current.Size)
+	end
 end
 
 local function loadPlayer(player: Player)

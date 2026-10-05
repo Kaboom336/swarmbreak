@@ -1480,3 +1480,20 @@ task.spawn(function()
 		task.wait(0.05)
 	end
 end)
+
+-- VisualDiameter replicates after the pumpkin attaches; recompute the zoom whenever it changes
+local function watchPumpkinZoom(character: Model)
+	local pumpkin = character:WaitForChild("Pumpkin", 15)
+	if not pumpkin then
+		return
+	end
+	local function refresh()
+		updateCameraZoom((player:GetAttribute("Size") :: number?) or 0)
+	end
+	pumpkin:GetAttributeChangedSignal("VisualDiameter"):Connect(refresh)
+	refresh()
+end
+player.CharacterAdded:Connect(watchPumpkinZoom)
+if player.Character then
+	task.spawn(watchPumpkinZoom, player.Character)
+end
