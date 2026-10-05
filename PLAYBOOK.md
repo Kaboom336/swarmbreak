@@ -98,3 +98,79 @@ For each piece (a model group, a system, a screen):
 - UI: a UIGradient tints TextLabel text too. Put gradients only on frames and give text objects a flat fill. Every label is white with a dark stroke.
 - Money safety: credit guaranteed rewards in the same step that consumes the resource; settle only bonuses at the end.
 - Workflow: Codex builds, Claude reviews and merges (fixing P1/P2 itself), Play captures in Studio, then judge, then the next task. About 1 round per 30-40 minutes.
+
+## Roblox game-feel and quality checklist
+
+Use this before calling any Roblox feature or build “done.” These are production defaults, not universal laws: tune them with real-device playtests and record any deliberate exception. Roblox targets 60 FPS (16.67 ms/frame) and recommends choosing a real low-end baseline device; Studio emulation is useful for layout but not representative of device memory ([Roblox performance](https://create.roblox.com/docs/performance-optimization), [design for performance](https://create.roblox.com/docs/performance-optimization/design)).
+
+### Look
+
+- Pick one primary, one secondary, three semantic accents, and one near-black outline. Give every colour a role; do not accumulate near-duplicates.
+- Keep important text flat white/near-white or near-black with 2–3 px contrast stroke. Put gradients on frames/surfaces, never on text.
+- Test every gameplay silhouette at the real camera distance, in grayscale, and at low graphics. A target or obstacle must remain distinguishable for at least 1.2 s at maximum normal speed.
+- Compose the spawn camera around one dominant landmark and the first action. The player should not need to rotate the camera to find the core loop.
+- Enclose playable edges with intentional geometry. Use walls/cliffs at least 1.5× the player's jump height where escape is not gameplay, and reveal the sky deliberately at spectacle beats.
+
+### Play
+
+- State the loop as visible verbs: prepare → commit → make decisions → cash out → upgrade. Each stage needs a distinct world/UI state.
+- Get a new player to the first meaningful input in ≤5 s, the first skill decision in ≤15 s, and the first complete reward loop in ≤45 s. Instrument each timestamp rather than guessing.
+- For lane/obstacle games, guarantee at least one valid route per wave. At maximum speed, give 1.2–2.0 s from clear telegraph to required input.
+- Keep authoritative outcomes on the server, but predict/interpolate the local player's motion every frame. Reconciliation must not visibly jump during normal latency.
+- Prevent accidental exits from committed sequences. Save and restore movement, jump, camera, visibility, and input state on success, death, disconnect, and abort.
+
+### Feel
+
+- Every accepted primary action gets visual, motion, and audio acknowledgement within one rendered frame when locally predictable; rejected actions must not play success feedback.
+- Primary buttons depress 4–6 px in ≤60 ms and rebound in 140–200 ms. Use one shared hover/focus/pressed/disabled implementation.
+- For rolling objects, accumulate axle rotation as `distance / radius`, ground-snap with a raycast, and keep visual clearance ≤0.15 stud unless the art requires more.
+- Tie speed FOV, wind, particles, and audio to measured velocity, not elapsed progress. Smooth camera/FOV changes over roughly 0.15–0.35 s; use shorter impulses only for hits.
+- Bound camera shake and hit-stop: a routine hit-stop should be 0.03–0.06 s, never obscure the next decision, and have a reduced-effects mode.
+
+### Juice
+
+- Give important actions a three-beat response: anticipation (ready/telegraph), contact (flash/sound/impulse), result (number/reward/state change).
+- Pool repeated effects. Set hard per-client caps for popups, particles, debris, sounds, and lights; old tweens/connections must be cancelled when a pooled object is reused.
+- Use milestone effects for actionable thresholds—new upgrade, affordable egg, reachable wall—not arbitrary large numbers alone.
+- A combo event needs a unique positive pop, meter movement, pitch step, and clear reset. Displayed, calculated, and persisted reward values must match exactly.
+- On the baseline mobile device, profile the busiest intended scene and hold the 60 FPS target/16.67 ms frame budget; define a reduced-effects tier before shipping.
+
+### UI
+
+- Keep the action corridor clear. Use fixed slots for currencies, objective, combo, controls, and reward bursts; no two systems may borrow the same center-screen rectangle.
+- Make primary mobile actions at least 56×56 px and continuous steering controls at least 72×72 px. Critical play text should be at least 18 px equivalent; avoid 10–12 px copy during action.
+- Respect device safe insets and Roblox/CoreGui controls. Test at minimum 667×375, 1920×1080, one tall/notched phone, and one tablet profile.
+- Every modal needs a close button, outside/back behavior, gamepad selection graph, default selected object, disabled state, and scroll test.
+- Use plain benefit-led labels (`2× Size`, not `DoubleSize`). A purchase row states benefit, duration/permanence, price, ownership, and stacking rule before opening a platform prompt.
+
+### Onboarding
+
+- Teach one essential at a time with world highlights/arrows and as few words as possible. Delay shops, gifts, pets, and prestige until the core action has been performed once.
+- Use contextual hints first. Show a timed hint only after the measured median completion time—typically start an experiment at median +1 s—not immediately ([Roblox onboarding techniques](https://create.roblox.com/docs/production/game-design/onboarding-techniques)).
+- Never consume a scarce resource for a zero-reward tutorial attempt. Block the action with a specific requirement or preserve the resource.
+- End onboarding after the player sees the reward land, not when the server merely starts or computes the action. Finish with an authored celebration and the next reachable goal.
+- Track a funnel at minimum: joined → first input → first skill decision → first finish → first spend/upgrade. Review drop-off by device and control type.
+
+### Economy
+
+- Put every tuning number in one shared configuration source and test the exact award formula. Round currency once, at the final award step.
+- Show the next affordable goal and estimated runs/actions to reach it. Simulate the first 5, 15, and 30 minutes, then verify with playtest telemetry.
+- Define every multiplier's scope (gain, reward, luck, or all) and stacking rule (additive or multiplicative). Never apply a “Size” multiplier silently to Wins.
+- Credit guaranteed rewards in the same transaction that consumes the resource; settle optional bonuses later with idempotent receipts/ledgers.
+- Prestige/reset screens list what resets, what stays, the exact new multiplier, and require confirmation for destructive changes.
+
+### Monetization
+
+- Hide offers whose IDs are unset, and run a pre-publish validation that fails/report-lists missing IDs. Never show placeholder prices as live offers.
+- Let the player experience the core loop and first reward before spotlighting a purchase. Contextual offers must follow a demonstrated need, not interrupt onboarding.
+- Separate passes, consumables, and bundles or make their category explicit. Do not keep two HUD buttons that open the same undifferentiated store.
+- Purchase UI states the benefit, duration, ownership, stacking, and price; successful delivery is server-authoritative and idempotent.
+- Provide a useful free path and verify pacing without paid boosts. Monetization may accelerate a legible loop; it must not repair an unfun one.
+
+### Mobile and performance
+
+- Test controls on a real baseline phone throughout development. Studio's emulator validates aspect ratio and controls, not representative memory usage.
+- Keep simultaneous camera and action touches working. Use lane-snap or a visible analog intent/dead zone for precision steering; never rely on keyboard polling alone.
+- Consider instance streaming for larger worlds; prefetch committed ride paths and test that required collision/visual geometry is present ([Roblox streaming](https://create.roblox.com/docs/workspace/streaming)).
+- Prefer client-only cosmetic effects when the server needs only outcome/location. Reduce distant players' effects and disable unnecessary shadow casting on lights and props ([Roblox improve performance](https://create.roblox.com/docs/performance-optimization/improve)).
+- Run a 10-minute stress/soak pass. After effects settle, InstanceCount and LuaHeap should return to a stable band; investigate growing connections, tweens, sounds, or pooled objects.
