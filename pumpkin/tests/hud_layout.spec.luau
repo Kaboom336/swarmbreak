@@ -102,6 +102,17 @@ test("multiplier chips stay visible on a narrow portrait screen", function()
 	eq(HudLayout.overlaps(chips, layout.wallProgress), false, "chips clear of the wall bar")
 end)
 
+test("ride HUD has fixed speed, combo, and reward slots and hides secondary chrome", function()
+	for _, viewport in { { 667, 375 }, { 1920, 1080 } } do
+		local layout = HudLayout.compute(viewport[1], viewport[2], "ride")
+		eq(layout.secondaryVisible, false, "ride secondary chrome")
+		eq(HudLayout.overlaps(layout.distanceMeter, layout.combo), false, "speed and combo")
+		eq(HudLayout.overlaps(layout.distanceMeter, layout.reward), false, "speed and reward")
+		eq(HudLayout.overlaps(layout.combo, layout.reward), false, "combo and reward")
+		eq(layout.distanceMeter.height >= 54, true, "two-line ride meter")
+	end
+end)
+
 for _, viewport in
 	{
 		{ width = 667, height = 375, name = "mobile landscape" },

@@ -13,10 +13,13 @@ export type Layout = {
 	starterPack: Rect,
 	zone: Rect,
 	tutorial: Rect,
+	combo: Rect,
+	reward: Rect,
 	growArrow: Rect,
 	steerLeft: Rect,
 	steerRight: Rect,
 	mobile: boolean,
+	secondaryVisible: boolean,
 }
 
 local HudLayout = {}
@@ -55,8 +58,13 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number, varian
 	local statsHeight = if mobile then 56 else 66
 	local stats =
 		rect(math.floor((viewportWidth - statsWidth) / 2), margin, statsWidth, statsHeight)
-	local distanceWidth = if mobile then 180 else 240
-	local distanceHeight = if mobile then 48 else 56
+	local rideMode = variant == "ride"
+	local distanceWidth = if rideMode
+		then (if mobile then 210 else 270)
+		else (if mobile then 180 else 240)
+	local distanceHeight = if rideMode
+		then (if mobile then 54 else 64)
+		else (if mobile then 48 else 56)
 	local distanceMeter = rect(
 		math.floor((viewportWidth - distanceWidth) / 2),
 		stats.y + stats.height + 8,
@@ -115,6 +123,15 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number, varian
 		tutorialWidth,
 		if mobile then 36 else 40
 	)
+	local comboWidth = if mobile then 174 else 260
+	local combo =
+		rect(viewportWidth - margin - comboWidth, tutorial.y, comboWidth, if mobile then 54 else 64)
+	local reward = rect(
+		math.floor((viewportWidth - tutorialWidth) / 2),
+		tutorial.y + tutorial.height + 8,
+		tutorialWidth,
+		if mobile then 48 else 60
+	)
 	local growArrow = rect(math.floor((viewportWidth - 48) / 2), wallProgress.y - 44, 48, 40)
 	local steerSize = 72
 	local steerMargin = 16
@@ -141,10 +158,13 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number, varian
 		starterPack = starterPack,
 		zone = zone,
 		tutorial = tutorial,
+		combo = combo,
+		reward = reward,
 		growArrow = growArrow,
 		steerLeft = steerLeft,
 		steerRight = steerRight,
 		mobile = mobile,
+		secondaryVisible = not rideMode,
 	}
 end
 

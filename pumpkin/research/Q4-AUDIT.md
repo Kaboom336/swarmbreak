@@ -166,3 +166,18 @@ Completed in Q4-B. `tests/ride.spec.luau` covers the pure numeric/deterministic 
 | 41–43, 74 | Clean pickups/dodges—not walls—advance combo. `Ride.comboMultiplier` applies ×1.1 per step capped at ×3 inside the single final-floor reward calculation; the dedicated meter shows count, multiplier, fill, pop, and lost state. |
 | 44, 45 | Spawned and claimable pickup counts are both six. The server validates token, claim state, lane, time, and authoritative longitudinal overlap, and logs Studio-only rejection reasons. |
 | 64 | Touch buttons are 72×72 lane-snap controls with three-lane intent dots and a 0.20 analog dead zone; keyboard/gamepad retain continuous steering. |
+
+## Q4-C implementation evidence
+
+Completed in Q4-C. Pure style, layout, obstacle-placement, and source-regression contracts are covered by `tests/style.spec.luau`, `tests/hud_layout.spec.luau`, and `tests/ride.spec.luau`; runtime evidence is in the named client/map source files.
+
+| IDs | Evidence |
+|---|---|
+| 13, 14, 66 | `Style.Button` defines a 5 px/55 ms press and 170 ms rebound. HUD, modal, shop, pet, and inventory buttons share dark strokes, scale feedback, hover/focus treatment, and a clipped 420 ms diagonal shine. |
+| 17, 18 | Accepted grow feedback now combines squash/rebound, a pooled world-space dust burst, HUD-bound seed motion, and a size-scaled raycast contact shadow. Grow text stays flat white/semantic colour; 1K+ feedback puts orange-to-magenta gradient on a backing plate, never glyphs. |
+| 51 | Measured ride velocity drives the capped speed-line rate/length, with a reduced-effects rate ceiling and hit interruption. |
+| 52–56, 99 | `Style.Palette` centralizes the exact Q4 orange, purple, lime, cyan, magenta, yellow, and ink values. HUD, pets, ride targets, fallback track, ground, walls, gates, eggs, and tutorial guides use semantic roles; scenery/track bases use quieter derived colours. Project lighting retains saturation +0.25, contrast +0.1, subtle Bloom, and warm daylight. Text remains flat white/ink-stroked and gradients stay on frames. |
+| 57–61, 63 | `HudLayout` owns distinct stats, two-line `SPEED … studs/s`/`DISTANCE …`, combo, tutorial, reward, and 72 px steering slots. Ride mode hides menu, zone, grow, wall, multiplier, and offer chrome; critical mobile ride copy is 18 px or larger. |
+| 108 | The first-run route uses one animated orange language: bouncing chevrons, a pulsing target Highlight, seven-dot floor ribbon, short `ROLL HERE` verb, and live distance. It hides after the demonstrated action/TutorialDone state. |
+| 109 | Pickups use distinct candy/gold/boost silhouettes, tapered camera-facing beams, labels, and ground markers. Beam/marker pulse accelerates in the reaction window and targets hide after passing; obstacle lanes use magenta warnings and free lanes use lime world chevrons. |
+| 110, 111 | `Style.Text` defines hero/action/body minimum sizes and 2–4 px ink strokes. `Style.Pop` defines micro/reward/rare overshoot and settle tiers plus reduced-motion variants; counters, combo, milestones, ride rewards, and hatch reveals use the tiers without sharing the same route slot. |

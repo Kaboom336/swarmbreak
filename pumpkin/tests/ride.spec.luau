@@ -147,6 +147,40 @@ test("seeded obstacles are deterministic and always leave a free lane", function
 	eq(first[3].kind, "LowFence", "low fence included")
 end)
 
+test("obstacle positions stay fixed while event times use the pumpkin duration", function()
+	local smallDuration = Ride.physicalDuration(10)
+	local largeDuration = Ride.physicalDuration(1_000_000)
+	local small = Ride.obstacleLayout(8_001, smallDuration)
+	local large = Ride.obstacleLayout(8_001, largeDuration)
+	for index, wave in small do
+		eq(wave.distance, large[index].distance, "world obstacle distance " .. index)
+		eq(
+			math.abs(Ride.baseDistanceAtTime(wave.time, smallDuration) - wave.distance) < 0.001,
+			true,
+			"small pumpkin meets obstacle " .. index
+		)
+		eq(
+			math.abs(Ride.baseDistanceAtTime(large[index].time, largeDuration) - wave.distance)
+				< 0.001,
+			true,
+			"large pumpkin meets obstacle " .. index
+		)
+	end
+	eq(small[#small].time ~= large[#large].time, true, "duration changes event time")
+end)
+
+test("mounted map tracks always receive the generated Q4 chute", function()
+	local fs = require("@lune/fs")
+	local source = fs.readFile("src/ServerScriptService/MapFallback.luau")
+	eq(source:find("if createdTrack", 1, true), nil, "chute cannot depend on creating a track")
+	eq(source:find("buildChute(chute, start, rideSeed)", 1, true) ~= nil, true, "Q4 chute build")
+	eq(
+		source:find("baseDistanceAtTime(wave.time, Config.RidePhysicalSeconds)", 1, true),
+		nil,
+		"fixed obstacle duration"
+	)
+end)
+
 test("ride speed, hit penalty, and path meet Q4-B bounds", function()
 	local duration = Ride.physicalDuration(10)
 	eq(Ride.speedAtTime(0, duration), 60, "start speed")

@@ -26,12 +26,21 @@ local statsChanged = remotes:WaitForChild("StatsChanged") :: RemoteEvent
 local economyRequest = remotes:WaitForChild("EconomyRequest") :: RemoteFunction
 local economyState = remotes:WaitForChild("EconomyState") :: RemoteEvent
 
-local ORANGE = Color3.fromRGB(255, 116, 25)
-local PURPLE = Color3.fromRGB(151, 64, 255)
-local LIME = Color3.fromRGB(167, 255, 61)
-local TEAL = Color3.fromRGB(13, 53, 63)
-local SHADOW = Color3.fromRGB(21, 40, 105)
-local WHITE = Color3.fromRGB(255, 250, 218)
+local function paletteColor(role: string): Color3
+	local value = Style.Palette[role]
+	return Color3.fromRGB(value.r, value.g, value.b)
+end
+
+local ORANGE = paletteColor("orange")
+local PURPLE = paletteColor("purple")
+local LIME = paletteColor("lime")
+local CYAN = paletteColor("cyan")
+local MAGENTA = paletteColor("magenta")
+local YELLOW = paletteColor("yellow")
+local INK = paletteColor("ink")
+local TEAL = INK:Lerp(CYAN, 0.18)
+local SHADOW = Color3.fromRGB(31, 38, 92)
+local WHITE = paletteColor("white")
 local baseCameraMinZoomDistance = player.CameraMinZoomDistance
 
 local oldGui = playerGui:FindFirstChild("PumpkinHud")
@@ -47,6 +56,48 @@ screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 screenGui.IgnoreGuiInset = false
 screenGui.Parent = playerGui
+
+local buttonSound = Instance.new("Sound")
+buttonSound.Name = "ButtonPress"
+buttonSound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
+buttonSound.Volume = 0.24
+buttonSound.Parent = screenGui
+
+local contactShadow = Instance.new("Part")
+contactShadow.Name = "PumpkinContactShadow"
+contactShadow.Anchored = true
+contactShadow.CanCollide = false
+contactShadow.CanQuery = false
+contactShadow.CanTouch = false
+contactShadow.CastShadow = false
+contactShadow.Color = INK
+contactShadow.Material = Enum.Material.SmoothPlastic
+contactShadow.Shape = Enum.PartType.Cylinder
+contactShadow.Size = Vector3.new(0.08, 4, 4)
+contactShadow.Transparency = 1
+contactShadow.Parent = workspace
+
+local shadowRaycastParams = RaycastParams.new()
+shadowRaycastParams.FilterType = Enum.RaycastFilterType.Exclude
+RunService.RenderStepped:Connect(function()
+	local character = player.Character
+	local pumpkin = if character then character:FindFirstChild("Pumpkin") else nil
+	if player:GetAttribute("Rolling") == true or not pumpkin or not pumpkin:IsA("BasePart") then
+		contactShadow.Transparency = 1
+		return
+	end
+	shadowRaycastParams.FilterDescendantsInstances = { character :: Model }
+	local hit = workspace:Raycast(pumpkin.Position, Vector3.new(0, -100, 0), shadowRaycastParams)
+	if not hit then
+		contactShadow.Transparency = 1
+		return
+	end
+	local diameter = math.clamp(pumpkin.Size.X * 0.72, 3.2, 16)
+	contactShadow.Size = Vector3.new(0.08, diameter, diameter)
+	contactShadow.CFrame = CFrame.new(hit.Position + hit.Normal * 0.06)
+		* CFrame.Angles(0, 0, math.pi / 2)
+	contactShadow.Transparency = 0.56
+end)
 
 local function newLabel(className: string?): any
 	local label = Instance.new(className or "TextLabel") :: any
@@ -64,6 +115,33 @@ local function newLabel(className: string?): any
 	return label
 end
 
+local function applyTextToken(label: TextLabel | TextButton | TextBox, tokenName: string)
+	local token = Style.textToken(tokenName)
+	label.TextSize = math.max(label.TextSize, token.minimumSize)
+	local stroke = label:FindFirstChild("LabelStroke")
+	if stroke and stroke:IsA("UIStroke") then
+		stroke.Thickness = token.strokeThickness
+	end
+end
+
+local function playPop(scale: UIScale, tierName: string)
+	local tier = Style.popTier(tierName, player:GetAttribute("ReducedMotion") == true)
+	scale.Scale = tier.startScale
+	local contact = TweenService:Create(
+		scale,
+		TweenInfo.new(tier.contactSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{ Scale = tier.overshootScale }
+	)
+	contact:Play()
+	contact.Completed:Once(function()
+		TweenService:Create(
+			scale,
+			TweenInfo.new(tier.settleSeconds, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+			{ Scale = 1 }
+		):Play()
+	end)
+end
+
 local function decorate(guiObject: GuiObject, topColor: Color3, bottomColor: Color3)
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 12)
@@ -72,7 +150,7 @@ local function decorate(guiObject: GuiObject, topColor: Color3, bottomColor: Col
 	local stroke = Instance.new("UIStroke")
 	stroke.Name = "PanelStroke"
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	stroke.Color = TEAL
+	stroke.Color = INK
 	stroke.Thickness = 3
 	stroke.Parent = guiObject
 
@@ -112,6 +190,117 @@ local function addButtonShadow(button: GuiObject)
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 12)
 	corner.Parent = shadow
+end
+
+local function bindButtonFeedback(button: TextButton)
+	local scale = Instance.new("UIScale")
+	scale.Name = "ButtonFeedbackScale"
+	scale.Parent = button
+
+	local shineClip = Instance.new("Frame")
+	shineClip.Name = "ShineClip"
+	shineClip.BackgroundTransparency = 1
+	shineClip.ClipsDescendants = true
+	shineClip.Size = UDim2.fromScale(1, 1)
+	shineClip.ZIndex = button.ZIndex + 2
+	shineClip.Parent = button
+	local shine = Instance.new("Frame")
+	shine.Name = "Shine"
+	shine.AnchorPoint = Vector2.new(0.5, 0.5)
+	shine.BackgroundColor3 = WHITE
+	shine.BackgroundTransparency = 0.55
+	shine.BorderSizePixel = 0
+	shine.Position = UDim2.new(-0.25, 0, 0.5, 0)
+	shine.Rotation = 18
+	shine.Size = UDim2.new(0.22, 0, 1.8, 0)
+	shine.ZIndex = shineClip.ZIndex
+	shine.Parent = shineClip
+
+	local pressed = false
+	local pressOffsetApplied = false
+	local function refreshDisabled()
+		button.BackgroundTransparency = if button.Active then 0 else 0.35
+		if not button.Active then
+			scale.Scale = 0.96
+		end
+	end
+	local function sweep()
+		shine.Position = UDim2.new(-0.25, 0, 0.5, 0)
+		TweenService:Create(
+			shine,
+			TweenInfo.new(
+				Style.Button.shineSeconds,
+				Enum.EasingStyle.Quad,
+				Enum.EasingDirection.Out
+			),
+			{ Position = UDim2.new(1.25, 0, 0.5, 0) }
+		):Play()
+	end
+	button.MouseEnter:Connect(function()
+		if not pressed and button.Active then
+			TweenService:Create(scale, TweenInfo.new(0.1), { Scale = 1.03 }):Play()
+		end
+	end)
+	button.MouseLeave:Connect(function()
+		if not pressed then
+			TweenService:Create(scale, TweenInfo.new(0.1), { Scale = 1 }):Play()
+		end
+	end)
+	button.InputBegan:Connect(function(input)
+		if
+			button.Active
+			and (
+				input.UserInputType == Enum.UserInputType.MouseButton1
+				or input.UserInputType == Enum.UserInputType.Touch
+			)
+		then
+			pressed = true
+			button.Position += UDim2.fromOffset(0, Style.Button.pressPixels)
+			pressOffsetApplied = true
+			TweenService:Create(
+				scale,
+				TweenInfo.new(Style.Button.pressSeconds, Enum.EasingStyle.Quad),
+				{ Scale = 0.94 }
+			):Play()
+		end
+	end)
+	button.InputEnded:Connect(function(input)
+		if
+			pressed
+			and (
+				input.UserInputType == Enum.UserInputType.MouseButton1
+				or input.UserInputType == Enum.UserInputType.Touch
+			)
+		then
+			pressed = false
+			if pressOffsetApplied then
+				button.Position -= UDim2.fromOffset(0, Style.Button.pressPixels)
+				pressOffsetApplied = false
+			end
+			TweenService:Create(
+				scale,
+				TweenInfo.new(
+					Style.Button.reboundSeconds,
+					Enum.EasingStyle.Back,
+					Enum.EasingDirection.Out
+				),
+				{ Scale = 1 }
+			):Play()
+			sweep()
+			if player:GetAttribute("SFXEnabled") ~= false then
+				buttonSound:Play()
+			end
+		end
+	end)
+	button.SelectionGained:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.1), { Scale = 1.03 }):Play()
+		sweep()
+	end)
+	button.SelectionLost:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.1), { Scale = 1 }):Play()
+	end)
+	button:GetPropertyChangedSignal("Active"):Connect(refreshDisabled)
+	refreshDisabled()
 end
 
 local function makeDepthObject(
@@ -172,6 +361,7 @@ sizeLabel.Size = UDim2.new(0.5, -45, 1, -14)
 sizeLabel.TextSize = 26
 sizeLabel.ZIndex = 4
 sizeLabel.Parent = statsPanel
+applyTextToken(sizeLabel, "hero")
 local sizeScale = Instance.new("UIScale")
 sizeScale.Parent = sizeLabel
 
@@ -207,6 +397,7 @@ local winsLabel = sizeLabel:Clone()
 winsLabel.Name = "Wins"
 winsLabel.Position = UDim2.new(0.5, 40, 0, 8)
 winsLabel.Parent = statsPanel
+applyTextToken(winsLabel, "hero")
 local winsScale = Instance.new("UIScale")
 winsScale.Parent = winsLabel
 addStatIcon("Wins", Config.Icons.Wins, 0.5, LIME)
@@ -234,6 +425,8 @@ growButton.AutoButtonColor = false
 growButton.Font = Enum.Font.GothamBlack
 growButton.Text = "GROW  +1"
 growButton.TextSize = 32
+applyTextToken(growButton, "hero")
+bindButtonFeedback(growButton)
 
 local zonePanel = makeDepthObject(
 	"Frame",
@@ -420,20 +613,22 @@ local function makeMenuButton(name: string, text: string, color: Color3): TextBu
 	label.Position = UDim2.new(0.5, 0, 1, -3)
 	label.Size = UDim2.new(1, -4, 0, 18)
 	label.Text = text
-	label.TextSize = 10
+	label.TextSize = 14
 	label.ZIndex = 9
 	label.Parent = button
+	applyTextToken(label, "body")
+	bindButtonFeedback(button)
 	return button
 end
 
 local shopButton = makeMenuButton("Shop", "SHOP", ORANGE)
 local petsButton = makeMenuButton("Pets", "PETS", PURPLE)
 local rebirthButton = makeMenuButton("Rebirth", "REBIRTH", LIME)
-local codesButton = makeMenuButton("Codes", "CODES", Color3.fromRGB(55, 190, 214))
-local dailyButton = makeMenuButton("Daily", "DAILY", Color3.fromRGB(255, 81, 158))
+local codesButton = makeMenuButton("Codes", "CODES", CYAN)
+local dailyButton = makeMenuButton("Daily", "DAILY", MAGENTA)
 local passesButton = makeMenuButton("Passes", "PASSES", ORANGE)
-local settingsButton = makeMenuButton("Settings", "SETTINGS", Color3.fromRGB(55, 190, 214))
-local giftsButton = makeMenuButton("Gift", "GIFTS", Color3.fromRGB(255, 81, 158))
+local settingsButton = makeMenuButton("Settings", "SETTINGS", CYAN)
+local giftsButton = makeMenuButton("Gift", "GIFTS", MAGENTA)
 local dailyDot = Instance.new("Frame")
 dailyDot.Name = "Notification"
 dailyDot.AnchorPoint = Vector2.new(1, 0)
@@ -463,6 +658,8 @@ local starterPackChip = makeDepthObject(
 starterPackChip.AutoButtonColor = false
 starterPackChip.Font = Enum.Font.GothamBlack
 starterPackChip.TextSize = 16
+applyTextToken(starterPackChip, "action")
+bindButtonFeedback(starterPackChip)
 starterPackChip.Visible = false
 local starterPackShadow = screenGui:FindFirstChild("StarterPackShadow") :: Frame
 starterPackShadow.Visible = false
@@ -486,6 +683,7 @@ tutorialPanel.Font = Enum.Font.GothamBlack
 tutorialPanel.Text = "DOWN  Grow to 10 then roll!"
 tutorialPanel.TextSize = 20
 tutorialPanel.ZIndex = 8
+applyTextToken(tutorialPanel, "action")
 
 local growArrow = newLabel() :: TextLabel
 growArrow.Name = "GrowArrow"
@@ -514,6 +712,7 @@ milestoneShadow.Visible = false
 milestoneShadow.ZIndex = 29
 local milestoneScale = Instance.new("UIScale")
 milestoneScale.Parent = milestone
+applyTextToken(milestone, "hero")
 
 local clickSound = Instance.new("Sound")
 clickSound.Name = "GrowClick"
@@ -545,7 +744,11 @@ local function applyRect(object: GuiObject, bounds: any, shadowName: string?)
 end
 
 local function applyLayout(viewport: Vector2)
-	local layout = HudLayout.compute(viewport.X, viewport.Y)
+	local layout = HudLayout.compute(
+		viewport.X,
+		viewport.Y,
+		if player:GetAttribute("Rolling") == true then "ride" else nil
+	)
 	applyRect(statsPanel, layout.stats, "StatsShadow")
 	applyRect(growButton, layout.grow, "GrowShadow")
 	applyRect(wallPanel, layout.wallProgress, "WallProgressShadow")
@@ -582,9 +785,9 @@ local function applyLayout(viewport: Vector2)
 	multiplierLayout.Padding = UDim.new(0, if layout.mobile then 2 else 4)
 	for _, chip in multiplierChips do
 		chip.Size = UDim2.new(1, 0, 0, if layout.mobile then 20 else 24)
-		chip.TextSize = if layout.mobile then 10 else 12
+		chip.TextSize = 14
 	end
-	tutorialPanel.TextSize = if layout.mobile then 15 else 17
+	tutorialPanel.TextSize = if layout.mobile then 18 else 20
 end
 
 local viewportConnection: RBXScriptConnection? = nil
@@ -655,7 +858,9 @@ closeButton.TextSize = 25
 closeButton.ZIndex = 6
 closeButton.Parent = modal
 addButtonShadow(closeButton)
-decorate(closeButton, Color3.fromRGB(255, 91, 93), Color3.fromRGB(189, 40, 70))
+decorate(closeButton, MAGENTA, MAGENTA:Lerp(INK, 0.35))
+applyTextToken(closeButton, "action")
+bindButtonFeedback(closeButton)
 
 local modalContent = Instance.new("Frame")
 modalContent.Name = "Content"
@@ -711,6 +916,8 @@ local function actionButton(
 	button.Parent = parent
 	addButtonShadow(button)
 	decorate(button, color, color:Lerp(TEAL, 0.3))
+	applyTextToken(button, "action")
+	bindButtonFeedback(button)
 	return button
 end
 
@@ -929,12 +1136,7 @@ local function showDaily()
 		addButtonShadow(cell)
 		decorate(cell, cell.BackgroundColor3, cell.BackgroundColor3:Lerp(TEAL, 0.25))
 	end
-	local claim = actionButton(
-		modalContent,
-		"CLAIM TODAY",
-		UDim2.new(0, 0, 0, 142),
-		Color3.fromRGB(255, 81, 158)
-	)
+	local claim = actionButton(modalContent, "CLAIM TODAY", UDim2.new(0, 0, 0, 142), MAGENTA)
 	if currentEconomyState and not currentEconomyState.DailyClaimable then
 		claim.Text = "COME BACK TOMORROW"
 	end
@@ -1007,7 +1209,10 @@ task.spawn(function()
 		local endsAt = (player:GetAttribute("StarterPackOfferEndsAt") :: number?) or 0
 		local purchased = player:GetAttribute("StarterPackPurchased") == true
 		local remaining = math.max(0, endsAt - os.time())
-		local visible = offer.Id > 0 and not purchased and remaining > 0
+		local visible = offer.Id > 0
+			and not purchased
+			and remaining > 0
+			and player:GetAttribute("Rolling") ~= true
 		starterPackChip.Visible = visible
 		starterPackShadow.Visible = visible
 		if visible then
@@ -1031,7 +1236,7 @@ TextChatService.OnIncomingMessage = function(message: TextChatMessage): TextChat
 		return nil
 	end
 	local properties = Instance.new("TextChatMessageProperties")
-	properties.PrefixText = '<font color="#A7FF3D">[VIP]</font> ' .. message.PrefixText
+	properties.PrefixText = '<font color="#B7FF1A">[VIP]</font> ' .. message.PrefixText
 	return properties
 end
 
@@ -1047,18 +1252,61 @@ local startArrowText = newLabel() :: TextLabel
 startArrowText.BackgroundTransparency = 1
 startArrowText.Font = Enum.Font.GothamBlack
 startArrowText.Size = UDim2.fromScale(1, 1)
-startArrowText.Text = "START HERE\n" .. utf8.char(0x2193)
+startArrowText.Text = "ROLL HERE\n" .. utf8.char(0x25BC)
 startArrowText.TextSize = 25
 startArrowText.Parent = startArrow
+applyTextToken(startArrowText, "action")
+
+local startHalo = Instance.new("Highlight")
+startHalo.Name = "TutorialTargetHalo"
+startHalo.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+startHalo.FillColor = ORANGE
+startHalo.FillTransparency = 0.72
+startHalo.OutlineColor = YELLOW
+startHalo.OutlineTransparency = 0
+startHalo.Enabled = false
+startHalo.Parent = workspace
+
+local guideRibbon = Instance.new("Folder")
+guideRibbon.Name = "TutorialGuideRibbon"
+guideRibbon.Parent = workspace
+local guideDots = {}
+for index = 1, 7 do
+	local dot = Instance.new("Part")
+	dot.Name = "GuideDot" .. index
+	dot.Anchored = true
+	dot.CanCollide = false
+	dot.CanQuery = false
+	dot.CanTouch = false
+	dot.Color = ORANGE
+	dot.Material = Enum.Material.Neon
+	dot.Shape = Enum.PartType.Ball
+	dot.Size = Vector3.new(0.75, 0.22, 0.75)
+	dot.Transparency = 1
+	dot.Parent = guideRibbon
+	table.insert(guideDots, dot)
+end
 
 local function updateTutorial(size: number)
 	local rolling = player:GetAttribute("Rolling") == true
+	if rolling then
+		modal.Visible = false
+		modalShadow.Visible = false
+	end
+	menu.Visible = not rolling
+	zonePanel.Visible = not rolling
+	local zoneShadow = screenGui:FindFirstChild("ZoneShadow")
+	if zoneShadow and zoneShadow:IsA("GuiObject") then
+		zoneShadow.Visible = not rolling
+	end
 	growButton.Visible = not rolling
 	local growShadow = screenGui:FindFirstChild("GrowShadow")
 	if growShadow and growShadow:IsA("GuiObject") then
 		growShadow.Visible = not rolling
 	end
 	multiplierPanel.Visible = not rolling
+	starterPackChip.Visible = starterPackChip.Visible and not rolling
+	starterPackShadow.Visible = starterPackShadow.Visible and not rolling
 	wallPanel.Visible = not rolling
 	local wallShadow = screenGui:FindFirstChild("WallProgressShadow")
 	if wallShadow and wallShadow:IsA("GuiObject") then
@@ -1072,7 +1320,12 @@ local function updateTutorial(size: number)
 			shadow.Visible = false
 		end
 		startArrow.Enabled = false
+		startHalo.Enabled = false
+		for _, dot in guideDots do
+			dot.Transparency = 1
+		end
 		growArrow.Visible = false
+		applyLayout(screenGui.AbsoluteSize)
 		return
 	end
 	tutorialPanel.Visible = true
@@ -1083,11 +1336,17 @@ local function updateTutorial(size: number)
 	end
 	if size >= Config.TutorialRollSize then
 		startArrow.Enabled = startArrow.Adornee ~= nil
+		startHalo.Enabled = startHalo.Adornee ~= nil
 		growArrow.Visible = false
 	else
 		startArrow.Enabled = false
+		startHalo.Enabled = false
+		for _, dot in guideDots do
+			dot.Transparency = 1
+		end
 		growArrow.Visible = true
 	end
+	applyLayout(screenGui.AbsoluteSize)
 end
 
 task.spawn(function()
@@ -1095,10 +1354,38 @@ task.spawn(function()
 		local candidate = workspace:FindFirstChild("ZoneStart_" .. Config.Zones[1].Name, true)
 		if candidate and candidate:IsA("BasePart") then
 			startArrow.Adornee = candidate
+			startHalo.Adornee = candidate
 			updateTutorial((player:GetAttribute("Size") :: number?) or 0)
 			return
 		end
 		task.wait(0.5)
+	end
+end)
+
+local guideClock = 0
+RunService.RenderStepped:Connect(function(deltaTime)
+	guideClock += deltaTime
+	local bounce = math.sin(guideClock * math.pi * 3)
+	startArrow.StudsOffsetWorldSpace = Vector3.new(0, 7.2 + bounce * 0.55, 0)
+	if growArrow.Visible then
+		growArrow.Rotation = bounce * 6
+	end
+	if not startArrow.Enabled then
+		return
+	end
+	local target = startArrow.Adornee
+	local character = player.Character
+	local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+	if not target or not target:IsA("BasePart") or not root or not root:IsA("BasePart") then
+		return
+	end
+	local distance = (target.Position - root.Position).Magnitude
+	startArrowText.Text = string.format("ROLL HERE  %d STUDS\n%s", distance, utf8.char(0x25BC))
+	for index, dot in guideDots do
+		local alpha = index / (#guideDots + 1)
+		local position = root.Position:Lerp(target.Position, alpha)
+		dot.Position = Vector3.new(position.X, math.max(0.15, position.Y - 2.8), position.Z)
+		dot.Transparency = 0.18 + 0.22 * math.sin(guideClock * 5 - index * 0.7) ^ 2
 	end
 end)
 
@@ -1120,12 +1407,7 @@ local function showMilestone(amount: number, newSize: number)
 	milestone.Text = "SIZE " .. string.upper(Format.abbrev(crossed)) .. "!"
 	milestone.Visible = true
 	milestoneShadow.Visible = true
-	milestoneScale.Scale = 0.55
-	TweenService:Create(
-		milestoneScale,
-		TweenInfo.new(0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-		{ Scale = 1 }
-	):Play()
+	playPop(milestoneScale, "rare")
 	task.delay(1.4, function()
 		if milestoneGeneration == generation then
 			milestone.Visible = false
@@ -1137,8 +1419,7 @@ end
 local displayedSize: number? = nil
 local displayedWins: number? = nil
 local function popNumber(scale: UIScale)
-	scale.Scale = 1.28
-	TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+	playPop(scale, "micro")
 end
 
 local cameraZoomGeneration = 0
@@ -1349,6 +1630,24 @@ for index = 1, 10 do
 	popup.Size = UDim2.fromOffset(300, 108)
 	popup.StudsOffsetWorldSpace = Vector3.new(0, 3, 0)
 	popup.Parent = playerGui
+	local burst = Instance.new("Frame")
+	burst.Name = "RewardPlate"
+	burst.AnchorPoint = Vector2.new(0.5, 0.5)
+	burst.BackgroundColor3 = ORANGE
+	burst.BorderSizePixel = 0
+	burst.Position = UDim2.fromScale(0.5, 0.5)
+	burst.Rotation = 8
+	burst.Size = UDim2.fromScale(0.72, 0.7)
+	burst.Visible = false
+	burst.ZIndex = 1
+	burst.Parent = popup
+	local burstCorner = Instance.new("UICorner")
+	burstCorner.CornerRadius = UDim.new(0, 18)
+	burstCorner.Parent = burst
+	local burstGradient = Instance.new("UIGradient")
+	burstGradient.Color = ColorSequence.new(ORANGE, MAGENTA)
+	burstGradient.Rotation = 22
+	burstGradient.Parent = burst
 
 	local label = newLabel() :: TextLabel
 	label.Name = "Amount"
@@ -1358,7 +1657,9 @@ for index = 1, 10 do
 	label.Position = UDim2.fromScale(0.5, 0.5)
 	label.Size = UDim2.fromScale(1, 1)
 	label.TextSize = 68
+	label.ZIndex = 2
 	label.Parent = popup
+	applyTextToken(label, "hero")
 
 	local scale = Instance.new("UIScale")
 	scale.Name = "PopScale"
@@ -1406,6 +1707,38 @@ local function burstSeeds()
 	end
 end
 
+local function burstGrowDust(pumpkin: BasePart)
+	local attachment = pumpkin:FindFirstChild("GrowDustAttachment")
+	if not attachment or not attachment:IsA("Attachment") then
+		attachment = Instance.new("Attachment")
+		attachment.Name = "GrowDustAttachment"
+		attachment.Position = Vector3.new(0, -pumpkin.Size.Y * 0.5, 0)
+		attachment.Parent = pumpkin
+		local dust = Instance.new("ParticleEmitter")
+		dust.Name = "Dust"
+		dust.Color = ColorSequence.new(YELLOW, ORANGE)
+		dust.Drag = 5
+		dust.EmissionDirection = Enum.NormalId.Top
+		dust.Lifetime = NumberRange.new(0.24, 0.42)
+		dust.LightEmission = 0.25
+		dust.Rate = 0
+		dust.Rotation = NumberRange.new(0, 360)
+		dust.RotSpeed = NumberRange.new(-80, 80)
+		dust.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.7),
+			NumberSequenceKeypoint.new(1, 0),
+		})
+		dust.Speed = NumberRange.new(4, 8)
+		dust.SpreadAngle = Vector2.new(65, 65)
+		dust.Texture = "rbxasset://textures/particles/smoke_main.dds"
+		dust.Parent = attachment
+	end
+	local dust = attachment:FindFirstChild("Dust")
+	if dust and dust:IsA("ParticleEmitter") then
+		dust:Emit(if player:GetAttribute("ReducedEffects") == true then 3 else 7)
+	end
+end
+
 local popupCursor = 0
 local function showPopup(amount: number)
 	local character = player.Character
@@ -1424,38 +1757,23 @@ local function showPopup(amount: number)
 		Vector3.new(math.random(-24, 24) / 10, 2.8, math.random(-12, 12) / 10)
 
 	local label = popup:FindFirstChild("Amount") :: TextLabel
+	local rewardPlate = popup:FindFirstChild("RewardPlate") :: Frame
 	local scale = label:FindFirstChild("PopScale") :: UIScale
 	label.Text = "+" .. Format.abbrev(amount)
-	local rainbow = label:FindFirstChild("Rainbow") :: UIGradient?
+	rewardPlate.Visible = amount >= 1_000
 	if amount >= 1_000 then
-		label.TextColor3 = Color3.new(1, 1, 1)
-		if not rainbow then
-			rainbow = Instance.new("UIGradient")
-			rainbow.Name = "Rainbow"
-			rainbow.Color = ColorSequence.new({
-				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 70, 130)),
-				ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 220, 55)),
-				ColorSequenceKeypoint.new(1, Color3.fromRGB(90, 220, 255)),
-			})
-			rainbow.Parent = label
-		end
-		rainbow.Enabled = true
+		label.TextColor3 = WHITE
 	else
-		if rainbow then
-			rainbow.Enabled = false
-		end
 		label.TextColor3 = if amount >= 100
-			then Color3.fromRGB(255, 81, 158)
+			then MAGENTA
 			elseif amount >= 25 then ORANGE
-			elseif amount >= 5 then Color3.fromRGB(255, 224, 73)
+			elseif amount >= 5 then YELLOW
 			else WHITE
 	end
 	label.TextTransparency = 0
 	local labelStroke = label:FindFirstChild("LabelStroke") :: UIStroke
 	labelStroke.Transparency = 0
-	scale.Scale = 0.55
-
-	TweenService:Create(scale, TweenInfo.new(0.16, Enum.EasingStyle.Back), { Scale = 1.15 }):Play()
+	playPop(scale, if amount >= 1_000 then "rare" else "reward")
 	TweenService:Create(
 		popup,
 		TweenInfo.new(0.65, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
@@ -1509,6 +1827,11 @@ growEffect.OnClientEvent:Connect(function(amount: number, newSize: number)
 	updateCameraZoom(newSize)
 	showMilestone(amount, newSize)
 	burstSeeds()
+	local character = player.Character
+	local pumpkin = if character then character:FindFirstChild("Pumpkin") else nil
+	if pumpkin and pumpkin:IsA("BasePart") then
+		burstGrowDust(pumpkin)
+	end
 end)
 
 local lastRequest = -math.huge

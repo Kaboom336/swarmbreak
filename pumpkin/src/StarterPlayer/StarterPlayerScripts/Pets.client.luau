@@ -16,18 +16,26 @@ local petState = remotes:WaitForChild("PetState") :: RemoteEvent
 local hatchReveal = remotes:WaitForChild("HatchReveal") :: RemoteEvent
 local followerRoot = workspace:WaitForChild("PetFollowers")
 
-local ORANGE = Color3.fromRGB(255, 116, 25)
-local PURPLE = Color3.fromRGB(151, 64, 255)
-local LIME = Color3.fromRGB(167, 255, 61)
-local TEAL = Color3.fromRGB(13, 53, 63)
-local SHADOW = Color3.fromRGB(21, 40, 105)
-local WHITE = Color3.fromRGB(255, 250, 218)
+local function paletteColor(role: string): Color3
+	local value = Style.Palette[role]
+	return Color3.fromRGB(value.r, value.g, value.b)
+end
+
+local ORANGE = paletteColor("orange")
+local PURPLE = paletteColor("purple")
+local LIME = paletteColor("lime")
+local CYAN = paletteColor("cyan")
+local YELLOW = paletteColor("yellow")
+local INK = paletteColor("ink")
+local TEAL = INK:Lerp(CYAN, 0.18)
+local SHADOW = Color3.fromRGB(31, 38, 92)
+local WHITE = paletteColor("white")
 local RARITY_COLORS = {
-	Common = Color3.fromRGB(255, 151, 55),
-	Uncommon = Color3.fromRGB(153, 255, 74),
-	Rare = Color3.fromRGB(69, 176, 255),
-	Epic = Color3.fromRGB(182, 82, 255),
-	Legendary = Color3.fromRGB(255, 226, 64),
+	Common = ORANGE,
+	Uncommon = LIME,
+	Rare = CYAN,
+	Epic = PURPLE,
+	Legendary = YELLOW,
 }
 
 local function newLabel(className: string?): any
@@ -57,6 +65,12 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Global -- child shadows sit at ZIndex -
 gui.ResetOnSpawn = false
 gui.Parent = playerGui
 
+local buttonSound = Instance.new("Sound")
+buttonSound.Name = "ButtonPress"
+buttonSound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
+buttonSound.Volume = 0.24
+buttonSound.Parent = gui
+
 local function decorate(object: GuiObject, topColor: Color3, bottomColor: Color3)
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 12)
@@ -64,7 +78,7 @@ local function decorate(object: GuiObject, topColor: Color3, bottomColor: Color3
 	local stroke = Instance.new("UIStroke")
 	stroke.Name = "PanelStroke"
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	stroke.Color = TEAL
+	stroke.Color = INK
 	stroke.Thickness = 3
 	stroke.Parent = object
 	if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
@@ -104,6 +118,127 @@ local function addInnerShadow(object: GuiObject)
 	corner.Parent = shadow
 end
 
+local function bindButtonFeedback(button: TextButton)
+	button.AutoButtonColor = false
+	local scale = Instance.new("UIScale")
+	scale.Name = "ButtonFeedbackScale"
+	scale.Parent = button
+	local clip = Instance.new("Frame")
+	clip.Name = "ShineClip"
+	clip.BackgroundTransparency = 1
+	clip.ClipsDescendants = true
+	clip.Size = UDim2.fromScale(1, 1)
+	clip.ZIndex = button.ZIndex + 2
+	clip.Parent = button
+	local shine = Instance.new("Frame")
+	shine.Name = "Shine"
+	shine.AnchorPoint = Vector2.new(0.5, 0.5)
+	shine.BackgroundColor3 = WHITE
+	shine.BackgroundTransparency = 0.55
+	shine.BorderSizePixel = 0
+	shine.Position = UDim2.new(-0.25, 0, 0.5, 0)
+	shine.Rotation = 18
+	shine.Size = UDim2.new(0.22, 0, 1.8, 0)
+	shine.ZIndex = clip.ZIndex
+	shine.Parent = clip
+	local pressed = false
+	local function refreshDisabled()
+		button.BackgroundTransparency = if button.Active then 0 else 0.35
+		if not button.Active then
+			scale.Scale = 0.96
+		end
+	end
+	local function sweep()
+		shine.Position = UDim2.new(-0.25, 0, 0.5, 0)
+		TweenService:Create(
+			shine,
+			TweenInfo.new(
+				Style.Button.shineSeconds,
+				Enum.EasingStyle.Quad,
+				Enum.EasingDirection.Out
+			),
+			{ Position = UDim2.new(1.25, 0, 0.5, 0) }
+		):Play()
+	end
+	button.MouseEnter:Connect(function()
+		if not pressed and button.Active then
+			TweenService:Create(scale, TweenInfo.new(0.1), { Scale = 1.03 }):Play()
+		end
+	end)
+	button.MouseLeave:Connect(function()
+		if not pressed then
+			TweenService:Create(scale, TweenInfo.new(0.1), { Scale = 1 }):Play()
+		end
+	end)
+	button.InputBegan:Connect(function(input)
+		if
+			input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch
+		then
+			pressed = true
+			button.Position += UDim2.fromOffset(0, Style.Button.pressPixels)
+			TweenService:Create(
+				scale,
+				TweenInfo.new(Style.Button.pressSeconds, Enum.EasingStyle.Quad),
+				{ Scale = 0.94 }
+			):Play()
+		end
+	end)
+	button.InputEnded:Connect(function(input)
+		if
+			pressed
+			and (
+				input.UserInputType == Enum.UserInputType.MouseButton1
+				or input.UserInputType == Enum.UserInputType.Touch
+			)
+		then
+			pressed = false
+			button.Position -= UDim2.fromOffset(0, Style.Button.pressPixels)
+			TweenService:Create(
+				scale,
+				TweenInfo.new(
+					Style.Button.reboundSeconds,
+					Enum.EasingStyle.Back,
+					Enum.EasingDirection.Out
+				),
+				{ Scale = 1 }
+			):Play()
+			sweep()
+			if player:GetAttribute("SFXEnabled") ~= false then
+				buttonSound:Play()
+			end
+		end
+	end)
+	button.SelectionGained:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.1), { Scale = 1.03 }):Play()
+		sweep()
+	end)
+	button.SelectionLost:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.1), { Scale = 1 }):Play()
+	end)
+	button:GetPropertyChangedSignal("Active"):Connect(refreshDisabled)
+	refreshDisabled()
+end
+
+local function playPop(scale: UIScale, tierName: string)
+	local tier = Style.popTier(tierName, player:GetAttribute("ReducedMotion") == true)
+	scale.Scale = tier.startScale
+	local contact = TweenService:Create(
+		scale,
+		TweenInfo.new(tier.contactSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{ Scale = tier.overshootScale }
+	)
+	contact:Play()
+	contact.Completed:Wait()
+	local settle = TweenService:Create(
+		scale,
+		TweenInfo.new(tier.settleSeconds, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+		{ Scale = 1 }
+	)
+	settle:Play()
+	settle.Completed:Wait()
+end
+
 local panelShadow = Instance.new("Frame")
 panelShadow.Name = "InventoryShadow"
 panelShadow.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -128,7 +263,7 @@ panel.Size = UDim2.new(0.82, 0, 0.76, 0)
 panel.Visible = false
 panel.ZIndex = 11
 panel.Parent = gui
-decorate(panel, PURPLE, Color3.fromRGB(63, 34, 130))
+decorate(panel, PURPLE, PURPLE:Lerp(INK, 0.55))
 
 local title = newLabel() :: TextLabel
 title.BackgroundTransparency = 1
@@ -156,7 +291,8 @@ close.TextSize = 34
 close.ZIndex = 13
 close.Parent = panel
 addInnerShadow(close)
-decorate(close, ORANGE, Color3.fromRGB(200, 54, 27))
+decorate(close, ORANGE, ORANGE:Lerp(INK, 0.35))
+bindButtonFeedback(close)
 
 local listShadow = Instance.new("Frame")
 listShadow.Name = "PetListShadow"
@@ -182,7 +318,7 @@ list.ScrollBarThickness = 8
 list.Size = UDim2.new(1, -32, 1, -154)
 list.ZIndex = 12
 list.Parent = panel
-decorate(list, Color3.fromRGB(25, 74, 88), TEAL)
+decorate(list, TEAL:Lerp(CYAN, 0.08), TEAL)
 -- The grid layout would turn the depth-stack highlight into a grey pet cell
 local listHighlight = list:FindFirstChild("TopHighlight")
 if listHighlight then
@@ -229,7 +365,8 @@ equipBest.TextSize = 22
 equipBest.ZIndex = 13
 equipBest.Parent = panel
 addInnerShadow(equipBest)
-decorate(equipBest, LIME, Color3.fromRGB(83, 190, 50))
+decorate(equipBest, LIME, LIME:Lerp(INK, 0.38))
+bindButtonFeedback(equipBest)
 
 local indexButton = newLabel("TextButton") :: TextButton
 indexButton.Name = "Index"
@@ -247,7 +384,8 @@ indexButton.TextSize = 19
 indexButton.ZIndex = 13
 indexButton.Parent = panel
 addInnerShadow(indexButton)
-decorate(indexButton, ORANGE, Color3.fromRGB(200, 54, 27))
+decorate(indexButton, ORANGE, ORANGE:Lerp(INK, 0.35))
+bindButtonFeedback(indexButton)
 
 local toast = newLabel() :: TextLabel
 toast.Name = "Toast"
@@ -263,7 +401,7 @@ toast.Visible = false
 toast.ZIndex = 100
 toast.Parent = gui
 addInnerShadow(toast)
-decorate(toast, ORANGE, Color3.fromRGB(195, 52, 27))
+decorate(toast, ORANGE, ORANGE:Lerp(INK, 0.35))
 
 local function applyToastLayout()
 	local layout = HudLayout.compute(gui.AbsoluteSize.X, gui.AbsoluteSize.Y)
@@ -278,7 +416,7 @@ gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(applyToastLayout)
 
 local reveal = Instance.new("Frame")
 reveal.Name = "HatchReveal"
-reveal.BackgroundColor3 = Color3.fromRGB(4, 25, 31)
+reveal.BackgroundColor3 = INK
 reveal.BackgroundTransparency = 0.18
 reveal.BorderSizePixel = 0
 reveal.Size = UDim2.fromScale(1, 1)
@@ -367,6 +505,7 @@ local function renderState(state: any)
 		card.Parent = list
 		addInnerShadow(card)
 		decorate(card, card.BackgroundColor3, card.BackgroundColor3:Lerp(TEAL, 0.4))
+		bindButtonFeedback(card)
 		card.Activated:Connect(function()
 			if selectedId == pet.id then
 				petAction:FireServer("Delete", pet.id)
@@ -407,9 +546,7 @@ local function renderIndex()
 			local card = newLabel("TextButton") :: TextButton
 			card.Name = "Index_" .. pet.Name
 			card.AutoButtonColor = false
-			card.BackgroundColor3 = if known
-				then RARITY_COLORS[rarity] or ORANGE
-				else Color3.fromRGB(29, 39, 55)
+			card.BackgroundColor3 = if known then RARITY_COLORS[rarity] or ORANGE else INK
 			card.BorderSizePixel = 0
 			card.Font = Enum.Font.GothamBold
 			card.Text = string.format(
@@ -426,6 +563,7 @@ local function renderIndex()
 			card.Parent = list
 			addInnerShadow(card)
 			decorate(card, card.BackgroundColor3, card.BackgroundColor3:Lerp(TEAL, 0.35))
+			bindButtonFeedback(card)
 		end
 	end
 	title.Text = string.format("PET INDEX  %d/%d  -  +10%% SIZE PER EGG", found, total)
@@ -436,6 +574,12 @@ player:GetAttributeChangedSignal("PetsPanelRequest"):Connect(function()
 	panelShadow.Visible = panel.Visible
 	if panel.Visible and lastState then
 		renderState(lastState)
+	end
+end)
+player:GetAttributeChangedSignal("Rolling"):Connect(function()
+	if player:GetAttribute("Rolling") == true then
+		panel.Visible = false
+		panelShadow.Visible = false
 	end
 end)
 close.Activated:Connect(function()
@@ -491,14 +635,14 @@ local function playRevealQueue()
 		eggLabel.TextColor3 = RARITY_COLORS[pet.rarity] or WHITE
 		eggLabel.Text =
 			string.format("✨ %s ✨\n%s  •  ×%.1f", pet.name, pet.rarity, pet.multiplier)
-		revealScale.Scale = 0.55
-		local pop = TweenService:Create(
+		playPop(
 			revealScale,
-			TweenInfo.new(0.28, Enum.EasingStyle.Back),
-			{ Scale = 1 }
+			if pet.rarity == "Rare"
+					or pet.rarity == "Epic"
+					or pet.rarity == "Legendary"
+				then "rare"
+				else "reward"
 		)
-		pop:Play()
-		pop.Completed:Wait()
 		task.wait(
 			if pet.rarity == "Rare"
 					or pet.rarity == "Epic"

@@ -16,13 +16,43 @@ local Grow = require(Shared:WaitForChild("Grow"))
 local HudLayout = require(Shared:WaitForChild("HudLayout"))
 local Ride = require(Shared:WaitForChild("Ride"))
 local RideSurface = require(Shared:WaitForChild("RideSurface"))
+local Style = require(Shared:WaitForChild("Style"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local rollPlayback = remotes:WaitForChild("RollPlayback") :: RemoteEvent
 local rollControl = remotes:WaitForChild("RollControl") :: RemoteEvent
 
-local ORANGE = Color3.fromRGB(255, 116, 25)
-local TEAL = Color3.fromRGB(13, 53, 63)
-local LIME = Color3.fromRGB(167, 255, 61)
+local function paletteColor(role: string): Color3
+	local value = Style.Palette[role]
+	return Color3.fromRGB(value.r, value.g, value.b)
+end
+
+local ORANGE = paletteColor("orange")
+local PURPLE = paletteColor("purple")
+local LIME = paletteColor("lime")
+local CYAN = paletteColor("cyan")
+local MAGENTA = paletteColor("magenta")
+local YELLOW = paletteColor("yellow")
+local INK = paletteColor("ink")
+local WHITE = paletteColor("white")
+local TEAL = INK:Lerp(CYAN, 0.18)
+
+local function playPop(scale: UIScale, tierName: string)
+	local tier = Style.popTier(tierName, player:GetAttribute("ReducedMotion") == true)
+	scale.Scale = tier.startScale
+	local contact = TweenService:Create(
+		scale,
+		TweenInfo.new(tier.contactSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{ Scale = tier.overshootScale }
+	)
+	contact:Play()
+	contact.Completed:Once(function()
+		TweenService:Create(
+			scale,
+			TweenInfo.new(tier.settleSeconds, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+			{ Scale = 1 }
+		):Play()
+	end)
+end
 
 local effectGui = Instance.new("ScreenGui")
 effectGui.Name = "RollEffects"
@@ -49,6 +79,25 @@ winBurst.Parent = effectGui
 local winScale = Instance.new("UIScale")
 winScale.Parent = winBurst
 
+local rideMeterPlate = Instance.new("Frame")
+rideMeterPlate.Name = "RideMeterPlate"
+rideMeterPlate.BackgroundColor3 = PURPLE
+rideMeterPlate.BorderSizePixel = 0
+rideMeterPlate.Visible = false
+rideMeterPlate.ZIndex = 98
+rideMeterPlate.Parent = effectGui
+local rideMeterCorner = Instance.new("UICorner")
+rideMeterCorner.CornerRadius = UDim.new(0, 12)
+rideMeterCorner.Parent = rideMeterPlate
+local rideMeterStroke = Instance.new("UIStroke")
+rideMeterStroke.Color = INK
+rideMeterStroke.Thickness = 3
+rideMeterStroke.Parent = rideMeterPlate
+local rideMeterGradient = Instance.new("UIGradient")
+rideMeterGradient.Color = ColorSequence.new(PURPLE, CYAN)
+rideMeterGradient.Rotation = 12
+rideMeterGradient.Parent = rideMeterPlate
+
 local distanceMeter = Instance.new("TextLabel")
 distanceMeter.Name = "DistanceMeter"
 distanceMeter.AnchorPoint = Vector2.new(0.5, 0)
@@ -56,10 +105,10 @@ distanceMeter.BackgroundTransparency = 1
 distanceMeter.Font = Enum.Font.GothamBlack
 distanceMeter.Position = UDim2.new(0.5, 0, 0, 86)
 distanceMeter.Size = UDim2.fromOffset(360, 80)
-distanceMeter.Text = "0 m"
+distanceMeter.Text = "SPEED  60 studs/s\nDISTANCE  0"
 distanceMeter.TextColor3 = Color3.new(1, 1, 1)
-distanceMeter.TextSize = 54
-distanceMeter.TextStrokeColor3 = TEAL
+distanceMeter.TextSize = 28
+distanceMeter.TextStrokeColor3 = INK
 distanceMeter.TextStrokeTransparency = 0
 distanceMeter.Visible = false
 distanceMeter.ZIndex = 100
@@ -125,7 +174,7 @@ comboFillCorner.Parent = comboFill
 
 local hitFlash = Instance.new("Frame")
 hitFlash.Name = "HitFlash"
-hitFlash.BackgroundColor3 = Color3.fromRGB(255, 45, 149)
+hitFlash.BackgroundColor3 = MAGENTA
 hitFlash.BackgroundTransparency = 1
 hitFlash.BorderSizePixel = 0
 hitFlash.Size = UDim2.fromScale(1, 1)
@@ -148,13 +197,15 @@ steerHint.ZIndex = 100
 steerHint.Parent = effectGui
 
 local function applyDistanceMeterLayout()
-	local layout = HudLayout.compute(effectGui.AbsoluteSize.X, effectGui.AbsoluteSize.Y)
+	local layout = HudLayout.compute(effectGui.AbsoluteSize.X, effectGui.AbsoluteSize.Y, "ride")
 	local bounds = layout.distanceMeter
+	rideMeterPlate.Position = UDim2.fromOffset(bounds.x, bounds.y)
+	rideMeterPlate.Size = UDim2.fromOffset(bounds.width, bounds.height)
 	distanceMeter.AnchorPoint = Vector2.zero
 	distanceMeter.Position = UDim2.fromOffset(bounds.x, bounds.y)
 	distanceMeter.Size = UDim2.fromOffset(bounds.width, bounds.height)
-	distanceMeter.TextSize = if layout.mobile then 38 else 48
-	local toastBounds = layout.tutorial
+	distanceMeter.TextSize = if layout.mobile then 21 else 26
+	local toastBounds = layout.reward
 	winBurst.AnchorPoint = Vector2.zero
 	winBurst.Position = UDim2.fromOffset(toastBounds.x, toastBounds.y)
 	winBurst.Size = UDim2.fromOffset(toastBounds.width, toastBounds.height)
@@ -163,14 +214,16 @@ local function applyDistanceMeterLayout()
 	bonusCounter.Position = UDim2.fromOffset(toastBounds.x, toastBounds.y + toastBounds.height)
 	bonusCounter.Size = UDim2.fromOffset(toastBounds.width, toastBounds.height)
 	bonusCounter.TextSize = if layout.mobile then 26 else 34
-	comboCounter.Position = UDim2.fromOffset(toastBounds.x, toastBounds.y + toastBounds.height)
-	comboCounter.Size = UDim2.fromOffset(toastBounds.width, toastBounds.height)
+	local comboBounds = layout.combo
+	comboCounter.AnchorPoint = Vector2.zero
+	comboCounter.Position = UDim2.fromOffset(comboBounds.x, comboBounds.y)
+	comboCounter.Size = UDim2.fromOffset(comboBounds.width, comboBounds.height)
 	comboCounter.TextSize = if layout.mobile then 28 else 38
 	comboBar.Position = UDim2.fromOffset(
-		toastBounds.x + toastBounds.width * 0.5,
-		toastBounds.y + toastBounds.height * 2
+		comboBounds.x + comboBounds.width * 0.5,
+		comboBounds.y + comboBounds.height
 	)
-	comboBar.Size = UDim2.fromOffset(math.min(320, toastBounds.width), 14)
+	comboBar.Size = UDim2.fromOffset(math.min(320, comboBounds.width), 14)
 end
 
 applyDistanceMeterLayout()
@@ -426,9 +479,7 @@ local function showWins(wins: number)
 	winBurst.Text = "+" .. wins .. " WINS!"
 	winBurst.TextTransparency = 0
 	winBurst.TextStrokeTransparency = 0
-	winScale.Scale = 0.55
-	TweenService:Create(winScale, TweenInfo.new(0.22, Enum.EasingStyle.Back), { Scale = 1.15 })
-		:Play()
+	playPop(winScale, "reward")
 	TweenService:Create(
 		winBurst,
 		TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 1.2),
@@ -445,12 +496,7 @@ local function showCombo(combo: number, eventText: string?)
 		math.clamp((Ride.comboMultiplier(combo) - 1) / (Config.RideComboCap - 1), 0, 1),
 		1
 	)
-	comboScale.Scale = 0.6
-	TweenService:Create(
-		comboScale,
-		TweenInfo.new(0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-		{ Scale = 1 }
-	):Play()
+	playPop(comboScale, "micro")
 	if eventText then
 		comboCounter.Text = eventText .. "\n" .. (text or "")
 	end
@@ -458,7 +504,7 @@ end
 
 local function showComboLost()
 	comboCounter.Text = "COMBO LOST"
-	comboCounter.TextColor3 = Color3.fromRGB(255, 45, 149)
+	comboCounter.TextColor3 = MAGENTA
 	comboCounter.Visible = true
 	comboBar.Visible = true
 	comboFill.Size = UDim2.fromScale(0, 1)
@@ -511,7 +557,7 @@ local function setTargetVisible(part: BasePart, visible: boolean)
 			descendant.Transparency = if visible
 				then (descendant:GetAttribute("VisibleTransparency") :: number?) or 0
 				else 1
-		elseif descendant:IsA("BillboardGui") then
+		elseif descendant:IsA("BillboardGui") or descendant:IsA("Beam") then
 			descendant.Enabled = visible
 		end
 	end
@@ -544,11 +590,11 @@ local function createBonusTargets(
 		if target.kind == "Candy" then
 			part.Shape = Enum.PartType.Ball
 			part.Size = Vector3.new(3.5, 3.5, 3.5)
-			part.Color = Color3.fromRGB(255, 95, 185)
+			part.Color = MAGENTA
 		elseif target.kind == "GoldPumpkin" then
 			part.Shape = Enum.PartType.Ball
 			part.Size = Vector3.new(5, 4.1, 5)
-			part.Color = Color3.fromRGB(255, 205, 45)
+			part.Color = YELLOW
 			part.Material = Enum.Material.Neon
 		else
 			part.Size = Vector3.new(8, 0.6, 7)
@@ -558,17 +604,25 @@ local function createBonusTargets(
 		part.Parent = folder
 		parts[target.id] = part
 
-		local beacon = Instance.new("Part")
-		beacon.Name = "Beacon"
-		beacon.Anchored = true
-		beacon.CanCollide = false
-		beacon.CanQuery = false
-		beacon.CanTouch = false
-		beacon.Color = part.Color
-		beacon.Material = Enum.Material.Neon
-		beacon.Size = Vector3.new(0.45, 14, 0.45)
-		beacon.CFrame = part.CFrame + Vector3.new(0, 8, 0)
-		beacon.Transparency = 0.2
+		local beaconBottom = Instance.new("Attachment")
+		beaconBottom.Name = "BeaconBottom"
+		beaconBottom.Position = Vector3.new(0, 1, 0)
+		beaconBottom.Parent = part
+		local beaconTop = Instance.new("Attachment")
+		beaconTop.Name = "BeaconTop"
+		beaconTop.Position = Vector3.new(0, 16, 0)
+		beaconTop.Parent = part
+		local beacon = Instance.new("Beam")
+		beacon.Name = "TaperedBeacon"
+		beacon.Attachment0 = beaconBottom
+		beacon.Attachment1 = beaconTop
+		beacon.Brightness = 2
+		beacon.Color = ColorSequence.new(part.Color, WHITE)
+		beacon.FaceCamera = true
+		beacon.LightEmission = 0.85
+		beacon.Transparency = NumberSequence.new(0.18, 0.7)
+		beacon.Width0 = if target.kind == "SpeedPad" then 5 else 2.8
+		beacon.Width1 = 0.25
 		beacon.Parent = part
 
 		local icon = Instance.new("BillboardGui")
@@ -578,12 +632,19 @@ local function createBonusTargets(
 		icon.Size = UDim2.fromOffset(54, 54)
 		icon.StudsOffsetWorldSpace = Vector3.new(0, 15, 0)
 		icon.Parent = part
-		local image = Instance.new("ImageLabel")
-		image.BackgroundTransparency = 1
-		image.Image = Config.Icons.Star
-		image.ImageColor3 = part.Color
-		image.Size = UDim2.fromScale(1, 1)
-		image.Parent = icon
+		local iconLabel = Instance.new("TextLabel")
+		iconLabel.BackgroundTransparency = 1
+		iconLabel.Font = Enum.Font.GothamBlack
+		iconLabel.Size = UDim2.fromScale(1, 1)
+		iconLabel.Text = if target.kind == "Candy"
+			then "CANDY"
+			elseif target.kind == "GoldPumpkin" then "GOLD"
+			else "BOOST"
+		iconLabel.TextColor3 = WHITE
+		iconLabel.TextSize = 18
+		iconLabel.TextStrokeColor3 = INK
+		iconLabel.TextStrokeTransparency = 0
+		iconLabel.Parent = icon
 
 		local laneMarker = Instance.new("Part")
 		laneMarker.Name = "LaneMarker"
@@ -593,7 +654,12 @@ local function createBonusTargets(
 		laneMarker.CanTouch = false
 		laneMarker.Color = part.Color
 		laneMarker.Material = Enum.Material.Neon
-		laneMarker.Size = Vector3.new(6, 0.12, 18)
+		laneMarker.Size = if target.kind == "SpeedPad"
+			then Vector3.new(8, 0.12, 18)
+			else Vector3.new(0.12, 7, 7)
+		laneMarker.Shape = if target.kind == "SpeedPad"
+			then Enum.PartType.Block
+			else Enum.PartType.Cylinder
 		local markerPosition = part.Position - Vector3.new(0, 2, 0)
 		local _, targetTangent = rideWorldSample(
 			start,
@@ -601,10 +667,10 @@ local function createBonusTargets(
 			target.lane
 		)
 		laneMarker.CFrame = CFrame.lookAt(markerPosition, markerPosition + targetTangent)
+			* (if target.kind == "SpeedPad" then CFrame.new() else CFrame.Angles(0, 0, math.pi / 2))
 		laneMarker.Transparency = 0.45
 		laneMarker.Parent = part
 		part:SetAttribute("VisibleTransparency", part.Transparency)
-		beacon:SetAttribute("VisibleTransparency", beacon.Transparency)
 		laneMarker:SetAttribute("VisibleTransparency", laneMarker.Transparency)
 		setTargetVisible(part, false)
 	end
@@ -793,6 +859,7 @@ local function playRoll(
 			targetParts = targetParts,
 			reported = {},
 			revealed = {},
+			passed = {},
 			speedBoostUntil = 0,
 			pickups = 0,
 			combo = 0,
@@ -862,11 +929,35 @@ local function playRoll(
 			local elapsed = workspace:GetServerTimeNow() - startedAt
 			for _, target in activeControl.targets do
 				local targetDistance = Ride.baseDistanceAtTime(target.time, physicalDuration)
+				local remaining = targetDistance - activeControl.traveled
 				if not activeControl.revealed[target.id] and elapsed >= target.time - 2 then
 					activeControl.revealed[target.id] = true
 					local part = activeControl.targetParts[target.id]
 					if part then
 						setTargetVisible(part, true)
+					end
+				end
+				local targetPart = activeControl.targetParts[target.id]
+				if
+					targetPart
+					and activeControl.revealed[target.id]
+					and not activeControl.passed[target.id]
+				then
+					local reactionAlpha = 1
+						- math.clamp(remaining / (Config.RideTopSpeed * 2), 0, 1)
+					local pulse = 0.5 + 0.5 * math.sin(os.clock() * (5 + reactionAlpha * 9))
+					local beacon = targetPart:FindFirstChild("TaperedBeacon")
+					if beacon and beacon:IsA("Beam") then
+						local baseWidth = if target.kind == "SpeedPad" then 5 else 2.8
+						beacon.Width0 = baseWidth * (1 + pulse * 0.18 * reactionAlpha)
+					end
+					local marker = targetPart:FindFirstChild("LaneMarker")
+					if marker and marker:IsA("BasePart") then
+						marker.Transparency = 0.5 - pulse * 0.22 * reactionAlpha
+					end
+					if remaining < -Config.RidePickupClientRadius then
+						activeControl.passed[target.id] = true
+						setTargetVisible(targetPart, false)
 					end
 				end
 				if
@@ -1008,13 +1099,15 @@ local function playRoll(
 			camera.FieldOfView = smoothedFov
 			if activeControl and activeControl.speedLines then
 				activeControl.speedLines.Enabled = os.clock() >= activeControl.speedLinesPauseUntil
-				activeControl.speedLines.Rate = math.floor(18 + speedAlpha * 62)
+				local maximumRate = if player:GetAttribute("ReducedEffects") == true then 34 else 80
+				activeControl.speedLines.Rate = math.floor(18 + speedAlpha * (maximumRate - 18))
 				activeControl.speedLines.Speed =
 					NumberRange.new(16 + speedAlpha * 18, 26 + speedAlpha * 24)
 			end
 		end)
 		TweenService:Create(camera, TweenInfo.new(0.3), { FieldOfView = previousFov + 8 }):Play()
 		distanceMeter.Visible = true
+		rideMeterPlate.Visible = true
 		steerHint.Text = if UserInputService.KeyboardEnabled
 			then "STEER  " .. utf8.char(0x25C0) .. "  " .. utf8.char(0x25B6) .. "\nA  /  D"
 			else "STEER  " .. utf8.char(0x25C0) .. "  " .. utf8.char(0x25B6)
@@ -1026,8 +1119,11 @@ local function playRoll(
 		end)
 		task.spawn(function()
 			while pumpkin.Parent and activeControl and activeControl.token == token do
-				distanceMeter.Text =
-					string.format("%d studs", math.floor(activeControl.traveled + 0.5))
+				distanceMeter.Text = string.format(
+					"SPEED  %d studs/s\nDISTANCE  %d",
+					math.floor(activeControl.measuredSpeed + 0.5),
+					math.floor(activeControl.traveled + 0.5)
+				)
 				if workspace:GetServerTimeNow() - startedAt >= _duration then
 					break
 				end
@@ -1098,12 +1194,7 @@ local function playRoll(
 			end
 			if isLocalRoll then
 				bonusCounter.Text = "BONUS +" .. bonusIndex
-				bonusScale.Scale = 0.72
-				TweenService:Create(
-					bonusScale,
-					TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-					{ Scale = 1 }
-				):Play()
+				playPop(bonusScale, "micro")
 				burstBonusParticle()
 			end
 		end
@@ -1149,6 +1240,7 @@ local function playRoll(
 			winsBefore
 		)
 		distanceMeter.Visible = false
+		rideMeterPlate.Visible = false
 		steerHint.Visible = false
 		comboCounter.Visible = false
 		comboBar.Visible = false

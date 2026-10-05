@@ -16,6 +16,7 @@ export type ObstacleWave = {
 	id: number,
 	kind: ObstacleKind,
 	time: number,
+	distance: number,
 	lanes: { number },
 	freeLane: number,
 }
@@ -189,10 +190,16 @@ function Ride.obstacleLayout(seed: number, duration: number?, count: number?): {
 	local random = makeRandom(seed + 91_337)
 	local kinds: { ObstacleKind } = { "RollingLog", "Tombstone", "LowFence" }
 	local waves = {}
-	local firstTime = math.max(Config.RideGentleStartSeconds + 0.8, rideDuration * 0.24)
-	local lastTime = rideDuration * 0.88
+	-- Obstacles are fixed world geometry. Choose their positions once, then derive the event
+	-- time from the current pumpkin's physical duration so large pumpkins meet the server
+	-- event at the same visible obstacle instead of up to half a second beyond it.
+	local baselineDuration = Config.RidePhysicalSeconds
+	local firstBaselineTime = math.max(Config.RideGentleStartSeconds + 0.8, baselineDuration * 0.22)
+	local lastBaselineTime = baselineDuration * 0.9
 	for index = 1, waveCount do
 		local alpha = if waveCount > 1 then (index - 1) / (waveCount - 1) else 0
+		local baselineTime = firstBaselineTime + (lastBaselineTime - firstBaselineTime) * alpha
+		local distance = Ride.baseDistanceAtTime(baselineTime, baselineDuration)
 		local freeLane = math.floor(random() * 3) - 1
 		local occupied = {}
 		for lane = -1, 1 do
@@ -203,7 +210,8 @@ function Ride.obstacleLayout(seed: number, duration: number?, count: number?): {
 		table.insert(waves, {
 			id = index,
 			kind = kinds[(index - 1) % #kinds + 1],
-			time = firstTime + (lastTime - firstTime) * alpha,
+			time = Ride.timeAtBaseDistance(distance, rideDuration),
+			distance = distance,
 			lanes = occupied,
 			freeLane = freeLane,
 		})
