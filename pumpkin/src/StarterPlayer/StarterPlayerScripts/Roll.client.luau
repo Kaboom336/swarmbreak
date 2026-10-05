@@ -155,7 +155,7 @@ local function abbreviate(value: number): string
 	return tostring(math.floor(value))
 end
 
-local function flyCoins(winsGained: number)
+local function flyCoins(winsGained: number, winsBefore: number)
 	local hud = playerGui:FindFirstChild("PumpkinHud")
 	local stats = if hud then hud:FindFirstChild("Stats") else nil
 	local winsLabel = if stats then stats:FindFirstChild("Wins") else nil
@@ -179,7 +179,8 @@ local function flyCoins(winsGained: number)
 		end)
 	end
 	if winsLabel and winsLabel:IsA("TextLabel") then
-		local before = (player:GetAttribute("Wins") :: number?) or 0
+		-- Count from the total captured at roll start: the server's stats sync can land before playback ends
+		local before = winsBefore
 		task.spawn(function()
 			for step = 1, 12 do
 				winsLabel.Text = "WINS\n" .. abbreviate(before + winsGained * step / 12)
@@ -254,6 +255,7 @@ local function playRoll(
 	wins: number,
 	duration: number
 )
+	local winsBefore = (player:GetAttribute("Wins") :: number?) or 0
 	local start = findPart("ZoneStart_" .. zoneName)
 	local track = workspace:FindFirstChild("Track_" .. zoneName, true)
 	if not start or not track then
@@ -357,7 +359,7 @@ local function playRoll(
 
 	if isLocalRoll then
 		showWins(wins)
-		flyCoins(wins)
+		flyCoins(wins, winsBefore)
 		distanceMeter.Visible = false
 		if camera then
 			if cameraConnection then
