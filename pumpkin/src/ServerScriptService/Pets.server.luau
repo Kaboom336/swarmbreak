@@ -27,6 +27,16 @@ local randomSource = function(): number
 	return math.random()
 end
 local promptConnections: { [ProximityPrompt]: RBXScriptConnection } = {}
+local lastPetAction: { [Player]: number } = {}
+
+local function zoneRequiredWins(zoneName: string): number
+	for _, zone in Config.Zones do
+		if zone.Name == zoneName then
+			return zone.RequiredWins
+		end
+	end
+	return math.huge -- unknown zone: never hatchable
+end
 
 local RARITY_COLORS = {
 	Common = Color3.fromRGB(255, 151, 55),
@@ -150,6 +160,10 @@ local function hatch(player: Player, eggName: string)
 	if not profile or not egg then
 		return
 	end
+	if (profile.TotalWins or 0) < zoneRequiredWins(egg.Zone) then
+		sendState(player, "Unlock this zone first!") -- T3 review: zone gate
+		return
+	end
 	local count = if profile.FastTripleHatch then 3 else 1
 	if not Pets.canAdd(profile.Pets, count, profile.ExpandedPetStorage) then
 		sendState(player, "Your pet inventory is full!")
@@ -188,6 +202,11 @@ petAction.OnServerEvent:Connect(function(player: Player, action: any, petId: any
 	if not profile or type(action) ~= "string" then
 		return
 	end
+	local now = os.clock()
+	if now - (lastPetAction[player] or 0) < 0.2 then
+		return -- T3 review: rate limit
+	end
+	lastPetAction[player] = now
 	if action == "Sync" then
 		sendState(player)
 		return
@@ -225,13 +244,14 @@ local function attachPrompt(instance: Instance)
 	if not eggName then
 		return
 	end
-	local stand: BasePart? = nil
-	if instance:IsA("BasePart") then
-		stand = instance
-	else
-		local eggRoot = instance:FindFirstAncestor("Egg_" .. eggName) or instance
-		stand = eggRoot:FindFirstChildWhichIsA("BasePart", true)
-	end
+	-- One prompt per egg stand: always resolve to the stand root's primary part (T3 review).
+	local eggRoot: Instance = if instance.Name == "Egg_" .. eggName
+		then instance
+		else instance:FindFirstAncestor("Egg_" .. eggName) or instance
+	local stand: BasePart? = if eggRoot:IsA("BasePart")
+		then eggRoot
+		elseif eggRoot:IsA("Model") and eggRoot.PrimaryPart then eggRoot.PrimaryPart
+		else eggRoot:FindFirstChildWhichIsA("BasePart", true)
 	if not stand then
 		return
 	end
@@ -278,7 +298,10 @@ end)
 for _, player in Players:GetPlayers() do
 	task.spawn(initializePlayer, player)
 end
-Players.PlayerRemoving:Connect(clearFollowers)
+Players.PlayerRemoving:Connect(function(player)
+	lastPetAction[player] = nil
+	clearFollowers(player)
+end)
 
 RunService.Heartbeat:Connect(function()
 	local now = os.clock()
