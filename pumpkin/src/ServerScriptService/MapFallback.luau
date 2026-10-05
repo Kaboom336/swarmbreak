@@ -228,8 +228,25 @@ local function ensureTrack(zone: any, zoneIndex: number): ZoneParts
 		gate.CanCollide = false
 		gate.Parent = workspace
 	end
+	gate.CanQuery = false
 
 	return { start = start, track = track, walls = walls, gate = gate }
+end
+
+local function disableGateCameraQueries()
+	for _, descendant in workspace:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			local name = string.lower(descendant.Name)
+			if
+				name == "gatesign"
+				or name == "gatearch"
+				or name == "gatepillar"
+				or name == "arch"
+			then
+				descendant.CanQuery = false
+			end
+		end
+	end
 end
 
 local function ensureEggStands()
@@ -255,6 +272,7 @@ function MapFallback.build(): { [string]: ZoneParts }
 	for zoneIndex, zone in Config.Zones do
 		result[zone.Name] = ensureTrack(zone, zoneIndex)
 	end
+	disableGateCameraQueries()
 	return result
 end
 

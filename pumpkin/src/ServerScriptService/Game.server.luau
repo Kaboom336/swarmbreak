@@ -217,14 +217,12 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	player:SetAttribute("CurrentZone", zone.Name)
 	local rolledSize = profile.Size
 	local result = Roll.simulate(rolledSize, zone, #parts.walls)
-	local duration = Roll.duration(result.distance, rolledSize)
+	local duration = Roll.duration(result.distance, rolledSize, result.bonusWalls)
 	-- Credit wins in the same step that consumes Size, so leaving mid-playback loses nothing (T2 review).
 	profile.Size = 0
 	profile.Wins += result.wins
 	profile.TotalWins += result.wins
-	if result.wins > 0 then
-		profile.TutorialDone = true
-	end
+	profile.TutorialDone = true
 	Data.markDirty(player)
 	PumpkinVisual.update(player.Character, 0)
 	player:SetAttribute("Size", 0) -- Wins show on the HUD when the playback ends
@@ -235,10 +233,23 @@ local function beginRoll(player: Player, zone: any, parts: any)
 		result.wallsBroken,
 		result.distance,
 		result.wins,
-		duration
+		duration,
+		#parts.walls,
+		result.bonusWalls
 	)
 
 	task.delay(duration, function()
+		local character = player.Character
+		local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+		if root and root:IsA("BasePart") then
+			local direction = Vector3.new(
+				parts.start.CFrame.LookVector.X,
+				0,
+				parts.start.CFrame.LookVector.Z
+			).Unit
+			local returnPosition = parts.start.Position + direction * 20 + Vector3.new(0, 4, 0)
+			root.CFrame = CFrame.lookAt(returnPosition, returnPosition + direction)
+		end
 		player:SetAttribute("Rolling", false)
 		local current = Data.get(player)
 		if current then

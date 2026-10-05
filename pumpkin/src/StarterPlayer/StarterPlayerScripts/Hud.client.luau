@@ -16,6 +16,7 @@ local Grow = require(Shared:WaitForChild("Grow"))
 local HudLayout = require(Shared:WaitForChild("HudLayout"))
 local Monetization = require(Shared:WaitForChild("Monetization"))
 local Style = require(Shared:WaitForChild("Style"))
+local Tutorial = require(Shared:WaitForChild("Tutorial"))
 local WallProgress = require(Shared:WaitForChild("WallProgress"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local growRequest = remotes:WaitForChild("GrowRequest") :: RemoteEvent
@@ -308,18 +309,47 @@ wallText.TextSize = 15
 wallText.ZIndex = 5
 wallText.Parent = wallPanel
 
-local multiplierPanel = makeDepthObject(
-	"TextLabel",
-	"Multipliers",
-	UDim2.fromOffset(310, 58),
-	UDim2.new(0, 18, 1, -18),
-	Vector2.new(0, 1),
-	PURPLE,
-	Color3.fromRGB(73, 33, 130)
-) :: TextLabel
-multiplierPanel.Font = Enum.Font.GothamBold
-multiplierPanel.TextSize = 14
-multiplierPanel.TextWrapped = true
+local multiplierPanel = Instance.new("Frame")
+multiplierPanel.Name = "Multipliers"
+multiplierPanel.BackgroundTransparency = 1
+multiplierPanel.ClipsDescendants = false
+multiplierPanel.ZIndex = 5
+multiplierPanel.Parent = screenGui
+local multiplierLayout = Instance.new("UIListLayout")
+multiplierLayout.FillDirection = Enum.FillDirection.Vertical
+multiplierLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+multiplierLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+multiplierLayout.Padding = UDim.new(0, 4)
+multiplierLayout.SortOrder = Enum.SortOrder.LayoutOrder
+multiplierLayout.Parent = multiplierPanel
+local multiplierChips: { TextLabel } = {}
+
+local function setMultiplierChips(texts: { string })
+	for index, text in texts do
+		local chip = multiplierChips[index]
+		if not chip then
+			chip = newLabel() :: TextLabel
+			chip.Name = "MultiplierChip" .. index
+			chip.BackgroundColor3 = PURPLE
+			chip.BorderSizePixel = 0
+			chip.Font = Enum.Font.GothamBlack
+			chip.TextSize = 12
+			chip.TextTruncate = Enum.TextTruncate.AtEnd
+			chip.Size = UDim2.new(1, 0, 0, if screenGui.AbsoluteSize.X <= 800 then 20 else 24)
+			chip.ZIndex = 6
+			chip.Parent = multiplierPanel
+			addButtonShadow(chip)
+			decorate(chip, PURPLE, Color3.fromRGB(73, 33, 130))
+			table.insert(multiplierChips, chip)
+		end
+		chip.LayoutOrder = #texts - index + 1
+		chip.Text = text
+		chip.Visible = true
+	end
+	for index = #texts + 1, #multiplierChips do
+		multiplierChips[index].Visible = false
+	end
+end
 
 local menu = Instance.new("Frame")
 menu.Name = "Menu"
@@ -513,7 +543,7 @@ local function applyLayout(viewport: Vector2)
 	applyRect(statsPanel, layout.stats, "StatsShadow")
 	applyRect(growButton, layout.grow, "GrowShadow")
 	applyRect(wallPanel, layout.wallProgress, "WallProgressShadow")
-	applyRect(multiplierPanel, layout.multipliers, "MultipliersShadow")
+	applyRect(multiplierPanel, layout.multipliers, nil)
 	applyRect(starterPackChip, layout.starterPack, "StarterPackShadow")
 	applyRect(zonePanel, layout.zone, "ZoneShadow")
 	applyRect(tutorialPanel, layout.tutorial, "TutorialShadow")
@@ -543,7 +573,11 @@ local function applyLayout(viewport: Vector2)
 	progressBack.Position = UDim2.fromOffset(14, if layout.mobile then 53 else 66)
 	progressBack.Size = UDim2.new(1, -28, 0, if layout.mobile then 20 else 24)
 	wallText.TextSize = if layout.mobile then 13 else 15
-	multiplierPanel.TextSize = if layout.mobile then 11 else 13
+	multiplierLayout.Padding = UDim.new(0, if layout.mobile then 2 else 4)
+	for _, chip in multiplierChips do
+		chip.Size = UDim2.new(1, 0, 0, if layout.mobile then 20 else 24)
+		chip.TextSize = if layout.mobile then 10 else 12
+	end
 	tutorialPanel.TextSize = if layout.mobile then 15 else 17
 end
 
@@ -1011,7 +1045,6 @@ startArrowText.Text = "START HERE\n" .. utf8.char(0x2193)
 startArrowText.TextSize = 25
 startArrowText.Parent = startArrow
 
-local tutorialReady = false
 local function updateTutorial(size: number)
 	local rolling = player:GetAttribute("Rolling") == true
 	wallPanel.Visible = not rolling
@@ -1019,7 +1052,8 @@ local function updateTutorial(size: number)
 	if wallShadow and wallShadow:IsA("GuiObject") then
 		wallShadow.Visible = not rolling
 	end
-	if rolling or player:GetAttribute("TutorialDone") == true then
+	local banner = Tutorial.banner(size, player:GetAttribute("TutorialDone") == true)
+	if rolling or not banner then
 		tutorialPanel.Visible = false
 		local shadow = screenGui:FindFirstChild("TutorialShadow")
 		if shadow and shadow:IsA("GuiObject") then
@@ -1029,20 +1063,16 @@ local function updateTutorial(size: number)
 		growArrow.Visible = false
 		return
 	end
-	if size >= Config.TutorialRollSize then
-		tutorialReady = true
-	end
 	tutorialPanel.Visible = true
+	tutorialPanel.Text = banner
 	local shadow = screenGui:FindFirstChild("TutorialShadow")
 	if shadow and shadow:IsA("GuiObject") then
 		shadow.Visible = true
 	end
-	if tutorialReady then
-		tutorialPanel.Text = "FOLLOW THE ARROW - STEP ON THE START PAD!"
+	if size >= Config.TutorialRollSize then
 		startArrow.Enabled = startArrow.Adornee ~= nil
 		growArrow.Visible = false
 	else
-		tutorialPanel.Text = "Grow to 10 then roll!"
 		startArrow.Enabled = false
 		growArrow.Visible = true
 	end
@@ -1173,13 +1203,16 @@ local function updateStats(size: number?, wins: number?)
 
 	local currentZoneName = (player:GetAttribute("CurrentZone") :: string?) or Config.Zones[1].Name
 	local currentDisplay = Config.Zones[1].DisplayName
-	for _, zone in Config.Zones do
+	local currentZoneIndex = 1
+	for index, zone in Config.Zones do
 		if zone.Name == currentZoneName then
 			currentDisplay = zone.DisplayName
+			currentZoneIndex = index
 			break
 		end
 	end
 	zoneLabel.Text = "ZONE\n" .. currentDisplay
+	local totalWins = (player:GetAttribute("TotalWins") :: number?) or 0
 	local wallState = WallProgress.compute(currentSize, currentZoneName, Config.FallbackWallCount)
 	wallFill.Size = UDim2.fromScale(wallState.progress, 1)
 	if wallState.nextWall then
@@ -1190,43 +1223,58 @@ local function updateStats(size: number?, wins: number?)
 			Format.abbrev(wallState.nextHealth or 0)
 		)
 	else
-		wallText.Text = string.format("%d WALLS  •  TRACK CLEARED", wallState.wallsBroken)
+		local followingZone = Config.Zones[currentZoneIndex + 1]
+		if followingZone and totalWins < followingZone.RequiredWins then
+			wallText.Text = string.format(
+				"TRACK CLEARED  •  NEXT ZONE: %s %s%d (%s WINS)",
+				followingZone.DisplayName,
+				utf8.char(0x00D7),
+				followingZone.WinMultiplier,
+				Format.abbrev(followingZone.RequiredWins)
+			)
+		elseif followingZone then
+			wallText.Text = string.format(
+				"TRY %s %s%d %s",
+				followingZone.DisplayName,
+				utf8.char(0x00D7),
+				followingZone.WinMultiplier,
+				utf8.char(0x2192)
+			)
+		else
+			wallText.Text = "TRACK CLEARED"
+		end
 	end
 	local petMultiplier = (player:GetAttribute("PetMultiplier") :: number?) or 1
 	local rebirths = (player:GetAttribute("Rebirths") :: number?) or 0
 	local rebirthMultiplier = 1 + rebirths * Config.RebirthSizeBonus
 	local friendPercent =
 		math.floor(((player:GetAttribute("FriendBoost") :: number?) or 0) * 100 + 0.5)
-	local passChips = {}
+	local chipLines = {}
+	if petMultiplier > 1 then
+		table.insert(chipLines, string.format("PETS %s%.1f", utf8.char(0x00D7), petMultiplier))
+	end
+	if rebirthMultiplier > 1 then
+		table.insert(
+			chipLines,
+			string.format("REBIRTH %s%.1f", utf8.char(0x00D7), rebirthMultiplier)
+		)
+	end
+	if friendPercent > 0 then
+		table.insert(chipLines, "FRIEND +" .. friendPercent .. "%")
+	end
 	local indexPercent =
 		math.floor((((player:GetAttribute("IndexMultiplier") :: number?) or 1) - 1) * 100 + 0.5)
 	if indexPercent > 0 then
-		table.insert(passChips, "INDEX +" .. indexPercent .. "%")
+		table.insert(chipLines, "INDEX +" .. indexPercent .. "%")
 	end
 	if player:GetAttribute("DoubleSize") == true then
-		table.insert(passChips, "2x SIZE")
+		table.insert(chipLines, "2" .. utf8.char(0x00D7) .. " SIZE")
 	end
 	if player:GetAttribute("DoubleWins") == true then
-		table.insert(passChips, "2x WINS")
+		table.insert(chipLines, "2" .. utf8.char(0x00D7) .. " WINS")
 	end
-	multiplierPanel.Text = string.format(
-		"PETS ×%.1f  •  REBIRTH ×%.1f\nFRIEND BOOST +%d%%%s",
-		petMultiplier,
-		rebirthMultiplier,
-		friendPercent,
-		if #passChips > 0 then "  •  " .. table.concat(passChips, "  ") else ""
-	)
-	local chipLines = {
-		string.format("PETS %s%.1f", utf8.char(0x00D7), petMultiplier),
-		string.format("REBIRTH %s%.1f", utf8.char(0x00D7), rebirthMultiplier),
-		string.format("FRIEND BOOST +%d%%", friendPercent),
-	}
-	for _, chip in passChips do
-		table.insert(chipLines, chip)
-	end
-	multiplierPanel.Text = table.concat(chipLines, "\n")
+	setMultiplierChips(chipLines)
 
-	local totalWins = (player:GetAttribute("TotalWins") :: number?) or 0
 	local nextZone = nil
 	for _, zone in Config.Zones do
 		if totalWins < zone.RequiredWins then
