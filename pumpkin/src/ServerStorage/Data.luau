@@ -133,10 +133,9 @@ function Data.save(player: Player, releaseLock: boolean?): boolean
 		dirty[player] = nil
 		return true
 	end
-	if not releaseLock and not dirty[player] then
-		return true
-	end
-
+	-- Always write: a clean autosave still refreshes the session lock (T1 review).
+	-- Clear dirty before the write so changes made while it is in flight are kept.
+	dirty[player] = nil
 	local shouldRelease = releaseLock == true
 	local ok, result = retry(function()
 		return store:UpdateAsync(keyFor(player), function(oldRecord: any)
@@ -148,9 +147,11 @@ function Data.save(player: Player, releaseLock: boolean?): boolean
 	end)
 	if not ok or result == nil then
 		warn("Profile save failed for", player.Name, result)
+		if profiles[player] then
+			dirty[player] = true
+		end
 		return false
 	end
-	dirty[player] = nil
 	return true
 end
 
