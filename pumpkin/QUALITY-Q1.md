@@ -74,3 +74,30 @@ Done when: the gate is green, there are new specs for HudLayout, Friend Boost an
 
 ## Re-judge
 After Q1-A and Q1-B land, put new screenshots next to the references for each aspect: thumbnail, map, HUD, juice, pets and the first 60 s. Each aspect must match or beat the references. Anything that doesn't goes into Q2.
+
+## Codex task Q2-A (retention layer; queue after Q1-A merges)
+Source: research/r8-sim-polish.md. Genre conventions only; the search tool returned no page text.
+
+testcmd: cd pumpkin && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
+
+1. **Free first egg and starter gift.**
+   - A new player's first hatch of the Candy Egg is free.
+   - Within the first 30 s, a one-tap "CLAIM" starter gift gives 50 Wins and a 5-minute Lucky Potion.
+   - Both are stored in the profile. Pure logic plus specs.
+2. **Playtime gifts.**
+   - 8 gifts at 1, 3, 5, 8, 12, 17, 23 and 30 minutes of session time. Rewards are Wins, Size boosts, a Lucky Potion and, last, a free Spooky Egg hatch.
+   - A HUD gift button shows a countdown to the next gift and a red dot when one is claimable. The panel shows all 8.
+   - Session time is tracked on the server and resets each server join, which is the genre norm.
+   - Pure schedule plus specs.
+3. **Pet Index.**
+   - A collection book with every pet per egg, discovered or not (a silhouette until found).
+   - Completing an egg's page gives +10% permanent Size.
+   - Pure completion logic plus a spec.
+4. **Two new passes, IDs 0 until Zion creates them:**
+   - Auto Hatch, 149: hatches the nearest egg every 3 s while you stand within 15 studs.
+   - 2x Luck, 199: stacks with the potion.
+
+   Also a **Starter Pack** dev product (99): 1,500 Wins, 3 Lucky Potions and a guaranteed Epic pet. It's offered once after the first hatch, with a 30-minute countdown chip, and hidden while its ID is 0.
+5. All new buttons follow the Q1 HUD grid and depth stack. Every new remote gets a rate limit.
+
+Done when: the gate is green, with specs for the gift schedule, the free first hatch (only once), Index completion, and the starter pack (one purchase only, idempotent).
