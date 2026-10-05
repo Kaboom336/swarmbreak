@@ -70,6 +70,11 @@ function Grow.pumpkinScale(size: number): number
 	)
 end
 
+function Grow.pumpkinVisualDiameter(size: number, characterHeight: number): number
+	local uncapped = Config.PumpkinBaseDiameter * Grow.pumpkinScale(size)
+	return math.min(uncapped, math.max(0, characterHeight) * Config.PumpkinMaxCharacterHeights)
+end
+
 function Grow.newRateLimiter(limit: number?, windowSeconds: number?): RateLimiter
 	local maximum = limit or Config.ClicksPerSecond
 	local window = windowSeconds or Config.ClickWindowSeconds

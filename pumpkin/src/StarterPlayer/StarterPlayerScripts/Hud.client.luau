@@ -27,6 +27,12 @@ local LIME = Color3.fromRGB(167, 255, 61)
 local TEAL = Color3.fromRGB(13, 53, 63)
 local SHADOW = Color3.fromRGB(21, 40, 105)
 local WHITE = Color3.fromRGB(255, 250, 218)
+local CHIP_TEXT = Color3.fromRGB(
+	HudLayout.CHIP_TEXT_COLOR.r,
+	HudLayout.CHIP_TEXT_COLOR.g,
+	HudLayout.CHIP_TEXT_COLOR.b
+)
+local baseCameraMinZoomDistance = player.CameraMinZoomDistance
 
 local oldGui = playerGui:FindFirstChild("PumpkinHud")
 if oldGui then
@@ -308,10 +314,10 @@ local multiplierPanel = makeDepthObject(
 	Color3.fromRGB(73, 33, 130)
 ) :: TextLabel
 multiplierPanel.Font = Enum.Font.GothamBold
-multiplierPanel.TextColor3 = WHITE
+multiplierPanel.TextColor3 = CHIP_TEXT
 multiplierPanel.TextSize = 14
 multiplierPanel.TextStrokeColor3 = TEAL
-multiplierPanel.TextStrokeTransparency = 0.2
+multiplierPanel.TextStrokeTransparency = 0
 multiplierPanel.TextWrapped = true
 
 local menu = Instance.new("Frame")
@@ -525,6 +531,7 @@ local function applyLayout(viewport: Vector2)
 	applyRect(growButton, layout.grow, "GrowShadow")
 	applyRect(wallPanel, layout.wallProgress, "WallProgressShadow")
 	applyRect(multiplierPanel, layout.multipliers, "MultipliersShadow")
+	applyRect(starterPackChip, layout.starterPack, "StarterPackShadow")
 	applyRect(zonePanel, layout.zone, "ZoneShadow")
 	applyRect(tutorialPanel, layout.tutorial, "TutorialShadow")
 	applyRect(growArrow, layout.growArrow, nil)
@@ -1136,6 +1143,20 @@ local function popNumber(scale: UIScale)
 	TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Back), { Scale = 1 }):Play()
 end
 
+local function updateCameraZoom(size: number)
+	local character = player.Character
+	local pumpkin = if character then character:FindFirstChild("Pumpkin") else nil
+	local diameter = if pumpkin and pumpkin:IsA("BasePart")
+		then pumpkin:GetAttribute("VisualDiameter") :: number?
+		else nil
+	local visualDiameter = diameter or Grow.pumpkinVisualDiameter(size, 5)
+	local scaledDefaultZoom = visualDiameter * Config.PumpkinCameraDistancePerDiameter
+	player.CameraMinZoomDistance = math.min(
+		player.CameraMaxZoomDistance,
+		math.max(baseCameraMinZoomDistance, scaledDefaultZoom)
+	)
+end
+
 local function updateStats(size: number?, wins: number?)
 	local currentSize = size or (player:GetAttribute("Size") :: number?) or 0
 	local currentWins = wins or (player:GetAttribute("Wins") :: number?) or 0
@@ -1147,6 +1168,7 @@ local function updateStats(size: number?, wins: number?)
 	end
 	displayedSize = currentSize
 	displayedWins = currentWins
+	updateCameraZoom(currentSize)
 	sizeLabel.Text = "SIZE\n" .. abbreviate(currentSize)
 	winsLabel.Text = "WINS\n" .. abbreviate(currentWins)
 
@@ -1386,9 +1408,9 @@ local function squashPumpkin(newSize: number)
 	if not mesh or not mesh:IsA("SpecialMesh") then
 		return
 	end
-	local diameter = Config.PumpkinBaseDiameter
-		* Grow.pumpkinScale(newSize)
-		* Config.PumpkinMeshScale
+	local visualDiameter = pumpkin:GetAttribute("VisualDiameter") :: number?
+		or Grow.pumpkinVisualDiameter(newSize, 5)
+	local diameter = visualDiameter * Config.PumpkinMeshScale
 	mesh.Scale = Vector3.new(diameter * 1.14, diameter * 0.66, diameter * 1.14)
 	TweenService:Create(
 		mesh,
@@ -1403,6 +1425,7 @@ growEffect.OnClientEvent:Connect(function(amount: number, newSize: number)
 	end
 	showPopup(amount)
 	squashPumpkin(newSize)
+	updateCameraZoom(newSize)
 	showMilestone(amount, newSize)
 	burstSeeds()
 end)

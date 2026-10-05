@@ -9,6 +9,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Grow = require(Shared:WaitForChild("Grow"))
+local HudLayout = require(Shared:WaitForChild("HudLayout"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local rollPlayback = remotes:WaitForChild("RollPlayback") :: RemoteEvent
 
@@ -19,7 +20,7 @@ local LIME = Color3.fromRGB(167, 255, 61)
 local effectGui = Instance.new("ScreenGui")
 effectGui.Name = "RollEffects"
 effectGui.DisplayOrder = 20
-effectGui.IgnoreGuiInset = true
+effectGui.IgnoreGuiInset = false
 effectGui.ResetOnSpawn = false
 effectGui.Parent = playerGui
 
@@ -55,6 +56,18 @@ distanceMeter.TextStrokeTransparency = 0
 distanceMeter.Visible = false
 distanceMeter.ZIndex = 30
 distanceMeter.Parent = effectGui
+
+local function applyDistanceMeterLayout()
+	local layout = HudLayout.compute(effectGui.AbsoluteSize.X, effectGui.AbsoluteSize.Y)
+	local bounds = layout.distanceMeter
+	distanceMeter.AnchorPoint = Vector2.zero
+	distanceMeter.Position = UDim2.fromOffset(bounds.x, bounds.y)
+	distanceMeter.Size = UDim2.fromOffset(bounds.width, bounds.height)
+	distanceMeter.TextSize = if layout.mobile then 38 else 48
+end
+
+applyDistanceMeterLayout()
+effectGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(applyDistanceMeterLayout)
 
 local coinPool = {}
 for index = 1, 8 do

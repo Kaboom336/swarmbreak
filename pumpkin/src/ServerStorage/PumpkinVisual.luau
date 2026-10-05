@@ -7,13 +7,30 @@ local Grow = require(Shared:WaitForChild("Grow"))
 
 local PumpkinVisual = {}
 
-local function applySize(pumpkin: BasePart, size: number)
+local function characterHeight(character: Model, pumpkin: BasePart): number
+	local bottom = math.huge
+	local top = -math.huge
+	for _, descendant in character:GetDescendants() do
+		if
+			descendant:IsA("BasePart")
+			and descendant ~= pumpkin
+			and descendant:FindFirstAncestorOfClass("Accessory") == nil
+		then
+			bottom = math.min(bottom, descendant.Position.Y - descendant.Size.Y * 0.5)
+			top = math.max(top, descendant.Position.Y + descendant.Size.Y * 0.5)
+		end
+	end
+	return if top > bottom then top - bottom else 5
+end
+
+local function applySize(character: Model, pumpkin: BasePart, size: number)
 	local mesh = pumpkin:FindFirstChild("PumpkinMesh") :: SpecialMesh?
 	local weld = pumpkin:FindFirstChild("PumpkinWeld") :: Weld?
 	if not mesh or not weld then
 		return
 	end
-	local diameter = Config.PumpkinBaseDiameter * Grow.pumpkinScale(size)
+	local diameter = Grow.pumpkinVisualDiameter(size, characterHeight(character, pumpkin))
+	pumpkin:SetAttribute("VisualDiameter", diameter)
 	mesh.Scale = Vector3.new(diameter, diameter * 0.82, diameter) * Config.PumpkinMeshScale
 	weld.C0 = CFrame.new(0, 1.25 + diameter * 0.42, 0)
 end
@@ -26,7 +43,7 @@ function PumpkinVisual.attach(character: Model, size: number): BasePart?
 
 	local existing = character:FindFirstChild("Pumpkin")
 	if existing and existing:IsA("BasePart") then
-		applySize(existing, size)
+		applySize(character, existing, size)
 		return existing
 	end
 
@@ -69,7 +86,7 @@ function PumpkinVisual.attach(character: Model, size: number): BasePart?
 	light.Range = 8
 	light.Parent = pumpkin
 
-	applySize(pumpkin, size)
+	applySize(character, pumpkin, size)
 	return pumpkin
 end
 
@@ -79,7 +96,7 @@ function PumpkinVisual.update(character: Model?, size: number)
 	end
 	local pumpkin = character:FindFirstChild("Pumpkin")
 	if pumpkin and pumpkin:IsA("BasePart") then
-		applySize(pumpkin, size)
+		applySize(character, pumpkin, size)
 	end
 end
 
