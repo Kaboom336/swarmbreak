@@ -5,6 +5,9 @@ local REMOTE_NAMES = {
 	"GrowRequest",
 	"GrowEffect",
 	"StatsChanged",
+	"PetAction",
+	"PetState",
+	"HatchReveal",
 }
 
 local Remotes = {}
