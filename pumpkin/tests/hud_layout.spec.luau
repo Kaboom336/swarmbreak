@@ -1,20 +1,20 @@
 --!strict
 local HudLayout = load("HudLayout")
 
-local function primaryRects(layout)
+local function namedRects(layout)
 	local result = {
-		layout.stats,
-		layout.distanceMeter,
-		layout.grow,
-		layout.wallProgress,
-		layout.multipliers,
-		layout.starterPack,
-		layout.zone,
-		layout.tutorial,
-		layout.growArrow,
+		{ name = "stats", rect = layout.stats },
+		{ name = "meter", rect = layout.distanceMeter },
+		{ name = "GROW", rect = layout.grow },
+		{ name = "wall progress", rect = layout.wallProgress },
+		{ name = "chips", rect = layout.multipliers },
+		{ name = "starter pack", rect = layout.starterPack },
+		{ name = "zone", rect = layout.zone },
+		{ name = "banner", rect = layout.tutorial },
+		{ name = "grow arrow", rect = layout.growArrow },
 	}
 	for _, button in layout.menuButtons do
-		table.insert(result, button)
+		table.insert(result, { name = "grid button", rect = button })
 	end
 	return result
 end
@@ -35,14 +35,14 @@ for _, viewport in
 do
 	test("HUD has no overlap at " .. viewport.name, function()
 		local layout = HudLayout.compute(viewport.width, viewport.height)
-		local rects = primaryRects(layout)
-		for index, current in rects do
-			assertInside(current, viewport.width, viewport.height, "item " .. index)
-			for otherIndex = index + 1, #rects do
+		local items = namedRects(layout)
+		for index, current in items do
+			assertInside(current.rect, viewport.width, viewport.height, current.name)
+			for otherIndex = index + 1, #items do
 				eq(
-					HudLayout.overlaps(current, rects[otherIndex]),
+					HudLayout.overlaps(current.rect, items[otherIndex].rect),
 					false,
-					string.format("items %d and %d overlap", index, otherIndex)
+					string.format("%s and %s overlap", current.name, items[otherIndex].name)
 				)
 			end
 		end

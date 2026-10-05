@@ -178,6 +178,7 @@ local function loadPlayer(player: Player)
 	end
 
 	makeLeaderstats(player, profile)
+	player:SetAttribute("Rolling", false)
 	refreshFriendships(player)
 	syncPlayer(player, profile)
 	EconomyService.playerLoaded(player)
@@ -212,6 +213,7 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	end
 
 	rolling[player] = true
+	player:SetAttribute("Rolling", true)
 	player:SetAttribute("CurrentZone", zone.Name)
 	local rolledSize = profile.Size
 	local result = Roll.simulate(rolledSize, zone, #parts.walls)
@@ -237,6 +239,7 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	)
 
 	task.delay(duration, function()
+		player:SetAttribute("Rolling", false)
 		local current = Data.get(player)
 		if current then
 			syncPlayer(player, current)

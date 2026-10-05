@@ -8,6 +8,7 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local Format = require(Shared:WaitForChild("Format"))
 local Grow = require(Shared:WaitForChild("Grow"))
 local HudLayout = require(Shared:WaitForChild("HudLayout"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -159,15 +160,6 @@ local function showWallWins(wall: BasePart, wins: number)
 	end)
 end
 
-local function abbreviate(value: number): string
-	if value >= 1e6 then
-		return string.format("%.1fM", value / 1e6)
-	elseif value >= 1e3 then
-		return string.format("%.1fK", value / 1e3)
-	end
-	return tostring(math.floor(value))
-end
-
 local function flyCoins(winsGained: number, winsBefore: number)
 	local hud = playerGui:FindFirstChild("PumpkinHud")
 	local stats = if hud then hud:FindFirstChild("Stats") else nil
@@ -196,7 +188,7 @@ local function flyCoins(winsGained: number, winsBefore: number)
 		local before = winsBefore
 		task.spawn(function()
 			for step = 1, 12 do
-				winsLabel.Text = "WINS\n" .. abbreviate(before + winsGained * step / 12)
+				winsLabel.Text = "WINS\n" .. Format.abbrev(before + winsGained * step / 12)
 				task.wait(0.025)
 			end
 		end)

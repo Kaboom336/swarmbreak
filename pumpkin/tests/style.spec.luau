@@ -1,0 +1,20 @@
+--!strict
+local fs = require("@lune/fs")
+local Style = load("Style")
+
+test("label style has readable text and the required dark stroke", function()
+	local style = Style.label()
+	eq(Style.isNearWhite(style.textColor), true, "near-white text")
+	eq(style.strokeColor.r, 42, "stroke red")
+	eq(style.strokeColor.g, 14, "stroke green")
+	eq(style.strokeColor.b, 61, "stroke blue")
+	eq(style.strokeThickness >= 2 and style.strokeThickness <= 3, true, "stroke thickness")
+end)
+
+test("HUD builder routes every created text object through the label helper", function()
+	local source = fs.readFile("src/StarterPlayer/StarterPlayerScripts/Hud.client.luau")
+	eq(source:find('Instance.new("TextLabel")', 1, true), nil, "raw TextLabel constructor")
+	eq(source:find('Instance.new("TextButton")', 1, true), nil, "raw TextButton constructor")
+	eq(source:find('Instance.new("TextBox")', 1, true), nil, "raw TextBox constructor")
+	eq(source:find("Style.label()", 1, true) ~= nil, true, "shared label helper")
+end)

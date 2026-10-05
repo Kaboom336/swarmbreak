@@ -2,6 +2,7 @@
 local Players = game:GetService("Players")
 local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local TextChatService = game:GetService("TextChatService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -10,9 +11,11 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local Format = require(Shared:WaitForChild("Format"))
 local Grow = require(Shared:WaitForChild("Grow"))
 local HudLayout = require(Shared:WaitForChild("HudLayout"))
 local Monetization = require(Shared:WaitForChild("Monetization"))
+local Style = require(Shared:WaitForChild("Style"))
 local WallProgress = require(Shared:WaitForChild("WallProgress"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local growRequest = remotes:WaitForChild("GrowRequest") :: RemoteEvent
@@ -27,11 +30,6 @@ local LIME = Color3.fromRGB(167, 255, 61)
 local TEAL = Color3.fromRGB(13, 53, 63)
 local SHADOW = Color3.fromRGB(21, 40, 105)
 local WHITE = Color3.fromRGB(255, 250, 218)
-local CHIP_TEXT = Color3.fromRGB(
-	HudLayout.CHIP_TEXT_COLOR.r,
-	HudLayout.CHIP_TEXT_COLOR.g,
-	HudLayout.CHIP_TEXT_COLOR.b
-)
 local baseCameraMinZoomDistance = player.CameraMinZoomDistance
 
 local oldGui = playerGui:FindFirstChild("PumpkinHud")
@@ -48,12 +46,30 @@ screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 screenGui.IgnoreGuiInset = false
 screenGui.Parent = playerGui
 
+local function newLabel(className: string?): any
+	local label = Instance.new(className or "TextLabel") :: any
+	local labelStyle = Style.label()
+	label.TextColor3 =
+		Color3.fromRGB(labelStyle.textColor.r, labelStyle.textColor.g, labelStyle.textColor.b)
+	label.TextStrokeTransparency = 1
+	local stroke = Instance.new("UIStroke")
+	stroke.Name = "LabelStroke"
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+	stroke.Color =
+		Color3.fromRGB(labelStyle.strokeColor.r, labelStyle.strokeColor.g, labelStyle.strokeColor.b)
+	stroke.Thickness = labelStyle.strokeThickness
+	stroke.Parent = label
+	return label
+end
+
 local function decorate(guiObject: GuiObject, topColor: Color3, bottomColor: Color3)
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 12)
 	corner.Parent = guiObject
 
 	local stroke = Instance.new("UIStroke")
+	stroke.Name = "PanelStroke"
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Color = TEAL
 	stroke.Thickness = 3
 	stroke.Parent = guiObject
@@ -113,7 +129,11 @@ local function makeDepthObject(
 	shadowCorner.CornerRadius = UDim.new(0, 12)
 	shadowCorner.Parent = shadow
 
-	local face = Instance.new(className) :: GuiObject
+	local face = if className == "TextLabel"
+			or className == "TextButton"
+			or className == "TextBox"
+		then newLabel(className) :: GuiObject
+		else Instance.new(className) :: GuiObject
 	face.Name = name
 	face.AnchorPoint = anchorPoint
 	face.BackgroundColor3 = topColor
@@ -136,16 +156,13 @@ local statsPanel = makeDepthObject(
 	TEAL
 )
 
-local sizeLabel = Instance.new("TextLabel")
+local sizeLabel = newLabel() :: TextLabel
 sizeLabel.Name = "Size"
 sizeLabel.BackgroundTransparency = 1
 sizeLabel.Font = Enum.Font.GothamBlack
 sizeLabel.Position = UDim2.fromOffset(40, 8)
 sizeLabel.Size = UDim2.new(0.5, -45, 1, -14)
-sizeLabel.TextColor3 = ORANGE
 sizeLabel.TextSize = 26
-sizeLabel.TextStrokeColor3 = TEAL
-sizeLabel.TextStrokeTransparency = 0
 sizeLabel.ZIndex = 4
 sizeLabel.Parent = statsPanel
 local sizeScale = Instance.new("UIScale")
@@ -182,7 +199,6 @@ addStatIcon("Size", Config.Icons.Size, 0, ORANGE)
 local winsLabel = sizeLabel:Clone()
 winsLabel.Name = "Wins"
 winsLabel.Position = UDim2.new(0.5, 40, 0, 8)
-winsLabel.TextColor3 = LIME
 winsLabel.Parent = statsPanel
 local winsScale = Instance.new("UIScale")
 winsScale.Parent = winsLabel
@@ -210,10 +226,7 @@ local growButton = makeDepthObject(
 growButton.AutoButtonColor = false
 growButton.Font = Enum.Font.GothamBlack
 growButton.Text = "GROW  +1"
-growButton.TextColor3 = WHITE
 growButton.TextSize = 32
-growButton.TextStrokeColor3 = TEAL
-growButton.TextStrokeTransparency = 0
 
 local zonePanel = makeDepthObject(
 	"Frame",
@@ -225,16 +238,13 @@ local zonePanel = makeDepthObject(
 	Color3.fromRGB(73, 33, 130)
 )
 
-local zoneLabel = Instance.new("TextLabel")
+local zoneLabel = newLabel() :: TextLabel
 zoneLabel.Name = "ZoneName"
 zoneLabel.BackgroundTransparency = 1
 zoneLabel.Font = Enum.Font.GothamBlack
 zoneLabel.Position = UDim2.fromOffset(12, 9)
 zoneLabel.Size = UDim2.new(1, -24, 0, 48)
-zoneLabel.TextColor3 = WHITE
 zoneLabel.TextSize = 19
-zoneLabel.TextStrokeColor3 = TEAL
-zoneLabel.TextStrokeTransparency = 0
 zoneLabel.ZIndex = 4
 zoneLabel.Parent = zonePanel
 
@@ -261,15 +271,12 @@ progressFill.Parent = progressBack
 local fillCorner = progressCorner:Clone()
 fillCorner.Parent = progressFill
 
-local progressText = Instance.new("TextLabel")
+local progressText = newLabel() :: TextLabel
 progressText.Name = "NextUnlock"
 progressText.BackgroundTransparency = 1
 progressText.Font = Enum.Font.GothamBold
 progressText.Size = UDim2.fromScale(1, 1)
-progressText.TextColor3 = WHITE
 progressText.TextSize = 14
-progressText.TextStrokeColor3 = TEAL
-progressText.TextStrokeTransparency = 0
 progressText.ZIndex = 6
 progressText.Parent = progressBack
 
@@ -292,15 +299,12 @@ wallFill.Parent = wallPanel
 local wallCorner = Instance.new("UICorner")
 wallCorner.CornerRadius = UDim.new(0, 12)
 wallCorner.Parent = wallFill
-local wallText = Instance.new("TextLabel")
+local wallText = newLabel() :: TextLabel
 wallText.Name = "Label"
 wallText.BackgroundTransparency = 1
 wallText.Font = Enum.Font.GothamBlack
 wallText.Size = UDim2.fromScale(1, 1)
-wallText.TextColor3 = WHITE
 wallText.TextSize = 15
-wallText.TextStrokeColor3 = TEAL
-wallText.TextStrokeTransparency = 0
 wallText.ZIndex = 5
 wallText.Parent = wallPanel
 
@@ -314,10 +318,7 @@ local multiplierPanel = makeDepthObject(
 	Color3.fromRGB(73, 33, 130)
 ) :: TextLabel
 multiplierPanel.Font = Enum.Font.GothamBold
-multiplierPanel.TextColor3 = CHIP_TEXT
 multiplierPanel.TextSize = 14
-multiplierPanel.TextStrokeColor3 = TEAL
-multiplierPanel.TextStrokeTransparency = 0
 multiplierPanel.TextWrapped = true
 
 local menu = Instance.new("Frame")
@@ -330,17 +331,14 @@ menu.ZIndex = 5
 menu.Parent = screenGui
 
 local function makeMenuButton(name: string, text: string, color: Color3): TextButton
-	local button = Instance.new("TextButton")
+	local button = newLabel("TextButton") :: TextButton
 	button.Name = name
 	button.AutoButtonColor = false
 	button.BackgroundColor3 = color
 	button.BorderSizePixel = 0
 	button.Size = UDim2.fromOffset(64, 64)
 	button.Text = ""
-	button.TextColor3 = WHITE
 	button.TextSize = 20
-	button.TextStrokeColor3 = TEAL
-	button.TextStrokeTransparency = 0
 	button.ZIndex = 6
 	button.Parent = menu
 	addButtonShadow(button)
@@ -378,7 +376,7 @@ local function makeMenuButton(name: string, text: string, color: Color3): TextBu
 		cutout.ZIndex = 9
 		cutout.Parent = glyph
 	end
-	local label = Instance.new("TextLabel")
+	local label = newLabel() :: TextLabel
 	label.Name = "Label"
 	label.AnchorPoint = Vector2.new(0.5, 1)
 	label.BackgroundTransparency = 1
@@ -386,10 +384,7 @@ local function makeMenuButton(name: string, text: string, color: Color3): TextBu
 	label.Position = UDim2.new(0.5, 0, 1, -3)
 	label.Size = UDim2.new(1, -4, 0, 18)
 	label.Text = text
-	label.TextColor3 = WHITE
 	label.TextSize = 10
-	label.TextStrokeColor3 = TEAL
-	label.TextStrokeTransparency = 0
 	label.ZIndex = 9
 	label.Parent = button
 	return button
@@ -431,10 +426,7 @@ local starterPackChip = makeDepthObject(
 ) :: TextButton
 starterPackChip.AutoButtonColor = false
 starterPackChip.Font = Enum.Font.GothamBlack
-starterPackChip.TextColor3 = WHITE
 starterPackChip.TextSize = 16
-starterPackChip.TextStrokeColor3 = TEAL
-starterPackChip.TextStrokeTransparency = 0
 starterPackChip.Visible = false
 local starterPackShadow = screenGui:FindFirstChild("StarterPackShadow") :: Frame
 starterPackShadow.Visible = false
@@ -456,21 +448,15 @@ local tutorialPanel = makeDepthObject(
 ) :: TextLabel
 tutorialPanel.Font = Enum.Font.GothamBlack
 tutorialPanel.Text = "DOWN  Grow to 10 then roll!"
-tutorialPanel.TextColor3 = WHITE
 tutorialPanel.TextSize = 20
-tutorialPanel.TextStrokeColor3 = TEAL
-tutorialPanel.TextStrokeTransparency = 0
 tutorialPanel.ZIndex = 8
 
-local growArrow = Instance.new("TextLabel")
+local growArrow = newLabel() :: TextLabel
 growArrow.Name = "GrowArrow"
 growArrow.BackgroundTransparency = 1
 growArrow.Font = Enum.Font.GothamBlack
 growArrow.Text = utf8.char(0x2193)
-growArrow.TextColor3 = LIME
 growArrow.TextSize = 48
-growArrow.TextStrokeColor3 = TEAL
-growArrow.TextStrokeTransparency = 0
 growArrow.ZIndex = 8
 growArrow.Parent = screenGui
 
@@ -484,10 +470,7 @@ local milestone = makeDepthObject(
 	Color3.fromRGB(201, 55, 28)
 ) :: TextLabel
 milestone.Font = Enum.Font.GothamBlack
-milestone.TextColor3 = WHITE
 milestone.TextSize = 34
-milestone.TextStrokeColor3 = TEAL
-milestone.TextStrokeTransparency = 0
 milestone.Visible = false
 milestone.ZIndex = 30
 local milestoneShadow = screenGui:FindFirstChild("MilestoneShadow") :: Frame
@@ -560,7 +543,8 @@ local function applyLayout(viewport: Vector2)
 	progressBack.Position = UDim2.fromOffset(14, if layout.mobile then 53 else 66)
 	progressBack.Size = UDim2.new(1, -28, 0, if layout.mobile then 20 else 24)
 	wallText.TextSize = if layout.mobile then 13 else 15
-	multiplierPanel.TextSize = if layout.mobile then 11 else 14
+	multiplierPanel.TextSize = if layout.mobile then 11 else 13
+	tutorialPanel.TextSize = if layout.mobile then 15 else 17
 end
 
 local viewportConnection: RBXScriptConnection? = nil
@@ -606,21 +590,18 @@ for _, item in { modal, modalShadow } do
 	constraint.Parent = item
 end
 
-local modalTitle = Instance.new("TextLabel")
+local modalTitle = newLabel() :: TextLabel
 modalTitle.Name = "Title"
 modalTitle.BackgroundTransparency = 1
 modalTitle.Font = Enum.Font.GothamBlack
 modalTitle.Position = UDim2.fromOffset(24, 16)
 modalTitle.Size = UDim2.new(1, -80, 0, 50)
-modalTitle.TextColor3 = ORANGE
 modalTitle.TextSize = 30
 modalTitle.TextXAlignment = Enum.TextXAlignment.Left
-modalTitle.TextStrokeColor3 = TEAL
-modalTitle.TextStrokeTransparency = 0
 modalTitle.ZIndex = 5
 modalTitle.Parent = modal
 
-local closeButton = Instance.new("TextButton")
+local closeButton = newLabel("TextButton") :: TextButton
 closeButton.Name = "Close"
 closeButton.AnchorPoint = Vector2.new(1, 0)
 closeButton.AutoButtonColor = false
@@ -630,7 +611,6 @@ closeButton.Font = Enum.Font.GothamBlack
 closeButton.Position = UDim2.new(1, -14, 0, 12)
 closeButton.Size = UDim2.fromOffset(56, 56)
 closeButton.Text = "X"
-closeButton.TextColor3 = WHITE
 closeButton.TextSize = 25
 closeButton.ZIndex = 6
 closeButton.Parent = modal
@@ -645,7 +625,7 @@ modalContent.Size = UDim2.new(1, -44, 1, -104)
 modalContent.ZIndex = 5
 modalContent.Parent = modal
 
-local notice = Instance.new("TextLabel")
+local notice = newLabel() :: TextLabel
 notice.Name = "Notice"
 notice.AnchorPoint = Vector2.new(0.5, 1)
 notice.BackgroundTransparency = 1
@@ -653,7 +633,6 @@ notice.Font = Enum.Font.GothamBold
 notice.Position = UDim2.new(0.5, 0, 1, -8)
 notice.Size = UDim2.new(1, -30, 0, 38)
 notice.Text = ""
-notice.TextColor3 = WHITE
 notice.TextSize = 17
 notice.TextWrapped = true
 notice.ZIndex = 8
@@ -679,7 +658,7 @@ local function actionButton(
 	position: UDim2,
 	color: Color3
 ): TextButton
-	local button = Instance.new("TextButton")
+	local button = newLabel("TextButton") :: TextButton
 	button.AutoButtonColor = false
 	button.BackgroundColor3 = color
 	button.BorderSizePixel = 0
@@ -687,10 +666,7 @@ local function actionButton(
 	button.Position = position
 	button.Size = UDim2.new(1, 0, 0, 62)
 	button.Text = text
-	button.TextColor3 = WHITE
 	button.TextSize = 21
-	button.TextStrokeColor3 = TEAL
-	button.TextStrokeTransparency = 0
 	button.ZIndex = 7
 	button.Parent = parent
 	addButtonShadow(button)
@@ -827,12 +803,11 @@ local function showShop()
 		end
 	end
 	if offerCount == 0 then
-		local empty = Instance.new("TextLabel")
+		local empty = newLabel() :: TextLabel
 		empty.BackgroundTransparency = 1
 		empty.Font = Enum.Font.GothamBlack
 		empty.Size = UDim2.new(1, 0, 0, 120)
 		empty.Text = "NEW TREATS\nCOMING SOON!"
-		empty.TextColor3 = LIME
 		empty.TextSize = 28
 		empty.ZIndex = 7
 		empty.Parent = scroll
@@ -846,7 +821,7 @@ local function showRebirth()
 	showPanel("REBIRTH")
 	requestEconomy("GetState")
 	local cost = if currentEconomyState then currentEconomyState.RebirthCost else 0
-	local description = Instance.new("TextLabel")
+	local description = newLabel() :: TextLabel
 	description.BackgroundTransparency = 1
 	description.Font = Enum.Font.GothamBold
 	description.Size = UDim2.new(1, 0, 0, 130)
@@ -854,7 +829,6 @@ local function showRebirth()
 		"Reset Size, Wins, and zones\nfor a permanent +0.5x Size boost.\n\nCost: %d Wins",
 		cost
 	)
-	description.TextColor3 = WHITE
 	description.TextSize = 21
 	description.TextWrapped = true
 	description.ZIndex = 6
@@ -870,7 +844,7 @@ end
 
 local function showCodes()
 	showPanel("REDEEM A CODE")
-	local box = Instance.new("TextBox")
+	local box = newLabel("TextBox") :: TextBox
 	box.Name = "Code"
 	box.BackgroundColor3 = Color3.fromRGB(25, 74, 88)
 	box.BorderSizePixel = 0
@@ -880,7 +854,6 @@ local function showCodes()
 	box.Position = UDim2.fromOffset(0, 40)
 	box.Size = UDim2.new(1, 0, 0, 64)
 	box.Text = ""
-	box.TextColor3 = WHITE
 	box.TextSize = 24
 	box.ZIndex = 6
 	box.Parent = modalContent
@@ -905,12 +878,11 @@ local function showDaily()
 	layout.CellSize = UDim2.new(1 / 4, -6, 0, 50)
 	layout.Parent = calendar
 	for day = 1, 7 do
-		local cell = Instance.new("TextLabel")
+		local cell = newLabel() :: TextLabel
 		cell.BackgroundColor3 = if day <= streak then LIME else PURPLE
 		cell.BorderSizePixel = 0
 		cell.Font = Enum.Font.GothamBlack
 		cell.Text = string.format("DAY %d\n%d WINS", day, Config.DailyRewards[day])
-		cell.TextColor3 = if day <= streak then TEAL else WHITE
 		cell.TextSize = 15
 		cell.ZIndex = 6
 		cell.Parent = calendar
@@ -1023,25 +995,6 @@ TextChatService.OnIncomingMessage = function(message: TextChatMessage): TextChat
 	return properties
 end
 
-local function abbreviate(value: number): string
-	local absolute = math.abs(value)
-	local suffixes = {
-		{ 1e12, "T" },
-		{ 1e9, "B" },
-		{ 1e6, "M" },
-		{ 1e3, "K" },
-	}
-	for _, pair in suffixes do
-		if absolute >= pair[1] then
-			return string.format("%.1f%s", value / pair[1], pair[2])
-		end
-	end
-	if value % 1 == 0 then
-		return tostring(math.floor(value))
-	end
-	return string.format("%.1f", value)
-end
-
 local startArrow = Instance.new("BillboardGui")
 startArrow.Name = "TutorialStartArrow"
 startArrow.AlwaysOnTop = true
@@ -1050,20 +1003,23 @@ startArrow.LightInfluence = 0
 startArrow.Size = UDim2.fromOffset(190, 100)
 startArrow.StudsOffsetWorldSpace = Vector3.new(0, 7, 0)
 startArrow.Parent = playerGui
-local startArrowText = Instance.new("TextLabel")
+local startArrowText = newLabel() :: TextLabel
 startArrowText.BackgroundTransparency = 1
 startArrowText.Font = Enum.Font.GothamBlack
 startArrowText.Size = UDim2.fromScale(1, 1)
 startArrowText.Text = "START HERE\n" .. utf8.char(0x2193)
-startArrowText.TextColor3 = LIME
 startArrowText.TextSize = 25
-startArrowText.TextStrokeColor3 = TEAL
-startArrowText.TextStrokeTransparency = 0
 startArrowText.Parent = startArrow
 
 local tutorialReady = false
 local function updateTutorial(size: number)
-	if player:GetAttribute("TutorialDone") == true then
+	local rolling = player:GetAttribute("Rolling") == true
+	wallPanel.Visible = not rolling
+	local wallShadow = screenGui:FindFirstChild("WallProgressShadow")
+	if wallShadow and wallShadow:IsA("GuiObject") then
+		wallShadow.Visible = not rolling
+	end
+	if rolling or player:GetAttribute("TutorialDone") == true then
 		tutorialPanel.Visible = false
 		local shadow = screenGui:FindFirstChild("TutorialShadow")
 		if shadow and shadow:IsA("GuiObject") then
@@ -1119,7 +1075,7 @@ local function showMilestone(amount: number, newSize: number)
 	end
 	milestoneGeneration += 1
 	local generation = milestoneGeneration
-	milestone.Text = "SIZE " .. string.upper(abbreviate(crossed)) .. "!"
+	milestone.Text = "SIZE " .. string.upper(Format.abbrev(crossed)) .. "!"
 	milestone.Visible = true
 	milestoneShadow.Visible = true
 	milestoneScale.Scale = 0.55
@@ -1143,6 +1099,9 @@ local function popNumber(scale: UIScale)
 	TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Back), { Scale = 1 }):Play()
 end
 
+local cameraZoomGeneration = 0
+-- Only move the camera when the zoom target really changes, so stat updates keep the player's own zoom
+local lastZoomTarget: number? = nil
 local function updateCameraZoom(size: number)
 	local character = player.Character
 	local pumpkin = if character then character:FindFirstChild("Pumpkin") else nil
@@ -1150,11 +1109,51 @@ local function updateCameraZoom(size: number)
 		then pumpkin:GetAttribute("VisualDiameter") :: number?
 		else nil
 	local visualDiameter = diameter or Grow.pumpkinVisualDiameter(size, 5)
-	local scaledDefaultZoom = visualDiameter * Config.PumpkinCameraDistancePerDiameter
-	player.CameraMinZoomDistance = math.min(
+	local persistentMinZoom = math.min(
 		player.CameraMaxZoomDistance,
-		math.max(baseCameraMinZoomDistance, scaledDefaultZoom)
+		math.max(baseCameraMinZoomDistance, visualDiameter * Config.PumpkinMinZoomPerDiameter)
 	)
+	local startingDistance = math.min(
+		player.CameraMaxZoomDistance,
+		math.max(
+			Config.PumpkinCameraMinDistance,
+			visualDiameter * Config.PumpkinCameraDistancePerDiameter
+				+ Config.PumpkinCameraBaseDistance
+		)
+	)
+	if lastZoomTarget and math.abs(startingDistance - lastZoomTarget) < 0.5 then
+		return
+	end
+	lastZoomTarget = startingDistance
+	cameraZoomGeneration += 1
+	local generation = cameraZoomGeneration
+	player.CameraMinZoomDistance = startingDistance
+	task.spawn(function()
+		RunService.RenderStepped:Wait()
+		if generation ~= cameraZoomGeneration then
+			return
+		end
+		if player:GetAttribute("Rolling") ~= true then
+			local camera = workspace.CurrentCamera
+			local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+			if camera and root and root:IsA("BasePart") then
+				local look = Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z)
+				if look.Magnitude < 0.01 then
+					look = Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z)
+				end
+				look = look.Unit
+				local cameraHeight = math.max(5, visualDiameter * 0.55)
+				local position = root.Position
+					- look * startingDistance
+					+ Vector3.new(0, cameraHeight, 0)
+				camera.CFrame = CFrame.lookAt(position, root.Position + Vector3.new(0, 2, 0))
+			end
+		end
+		RunService.RenderStepped:Wait()
+		if generation == cameraZoomGeneration then
+			player.CameraMinZoomDistance = persistentMinZoom
+		end
+	end)
 end
 
 local function updateStats(size: number?, wins: number?)
@@ -1169,8 +1168,8 @@ local function updateStats(size: number?, wins: number?)
 	displayedSize = currentSize
 	displayedWins = currentWins
 	updateCameraZoom(currentSize)
-	sizeLabel.Text = "SIZE\n" .. abbreviate(currentSize)
-	winsLabel.Text = "WINS\n" .. abbreviate(currentWins)
+	sizeLabel.Text = "SIZE\n" .. Format.abbrev(currentSize)
+	winsLabel.Text = "WINS\n" .. Format.abbrev(currentWins)
 
 	local currentZoneName = (player:GetAttribute("CurrentZone") :: string?) or Config.Zones[1].Name
 	local currentDisplay = Config.Zones[1].DisplayName
@@ -1187,8 +1186,8 @@ local function updateStats(size: number?, wins: number?)
 		wallText.Text = string.format(
 			"%d WALLS  •  %s / %s TO NEXT",
 			wallState.wallsBroken,
-			abbreviate(currentSize),
-			abbreviate(wallState.nextHealth or 0)
+			Format.abbrev(currentSize),
+			Format.abbrev(wallState.nextHealth or 0)
 		)
 	else
 		wallText.Text = string.format("%d WALLS  •  TRACK CLEARED", wallState.wallsBroken)
@@ -1217,6 +1216,15 @@ local function updateStats(size: number?, wins: number?)
 		friendPercent,
 		if #passChips > 0 then "  •  " .. table.concat(passChips, "  ") else ""
 	)
+	local chipLines = {
+		string.format("PETS %s%.1f", utf8.char(0x00D7), petMultiplier),
+		string.format("REBIRTH %s%.1f", utf8.char(0x00D7), rebirthMultiplier),
+		string.format("FRIEND BOOST +%d%%", friendPercent),
+	}
+	for _, chip in passChips do
+		table.insert(chipLines, chip)
+	end
+	multiplierPanel.Text = table.concat(chipLines, "\n")
 
 	local totalWins = (player:GetAttribute("TotalWins") :: number?) or 0
 	local nextZone = nil
@@ -1228,7 +1236,9 @@ local function updateStats(size: number?, wins: number?)
 	end
 	if nextZone then
 		progressFill.Size = UDim2.fromScale(math.clamp(totalWins / nextZone.RequiredWins, 0, 1), 1)
-		progressText.Text = abbreviate(totalWins) .. " / " .. abbreviate(nextZone.RequiredWins)
+		progressText.Text = Format.abbrev(totalWins)
+			.. " / "
+			.. Format.abbrev(nextZone.RequiredWins)
 	else
 		progressFill.Size = UDim2.fromScale(1, 1)
 		progressText.Text = "ALL ZONES UNLOCKED"
@@ -1253,6 +1263,9 @@ end)
 player:GetAttributeChangedSignal("TutorialDone"):Connect(function()
 	updateStats(nil, nil)
 end)
+player:GetAttributeChangedSignal("Rolling"):Connect(function()
+	updateStats(nil, nil)
+end)
 for _, attribute in
 	{ "PetMultiplier", "Rebirths", "FriendBoost", "IndexMultiplier", "DoubleSize", "DoubleWins" }
 do
@@ -1272,17 +1285,14 @@ for index = 1, 10 do
 	popup.StudsOffsetWorldSpace = Vector3.new(0, 3, 0)
 	popup.Parent = playerGui
 
-	local label = Instance.new("TextLabel")
+	local label = newLabel() :: TextLabel
 	label.Name = "Amount"
 	label.AnchorPoint = Vector2.new(0.5, 0.5)
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.GothamBlack
 	label.Position = UDim2.fromScale(0.5, 0.5)
 	label.Size = UDim2.fromScale(1, 1)
-	label.TextColor3 = ORANGE
 	label.TextSize = 68
-	label.TextStrokeColor3 = TEAL
-	label.TextStrokeTransparency = 0
 	label.Parent = popup
 
 	local scale = Instance.new("UIScale")
@@ -1350,7 +1360,7 @@ local function showPopup(amount: number)
 
 	local label = popup:FindFirstChild("Amount") :: TextLabel
 	local scale = label:FindFirstChild("PopScale") :: UIScale
-	label.Text = "+" .. abbreviate(amount)
+	label.Text = "+" .. Format.abbrev(amount)
 	local rainbow = label:FindFirstChild("Rainbow") :: UIGradient?
 	if amount >= 1_000 then
 		label.TextColor3 = Color3.new(1, 1, 1)
@@ -1376,7 +1386,8 @@ local function showPopup(amount: number)
 			else WHITE
 	end
 	label.TextTransparency = 0
-	label.TextStrokeTransparency = 0
+	local labelStroke = label:FindFirstChild("LabelStroke") :: UIStroke
+	labelStroke.Transparency = 0
 	scale.Scale = 0.55
 
 	TweenService:Create(scale, TweenInfo.new(0.16, Enum.EasingStyle.Back), { Scale = 1.15 }):Play()
@@ -1388,8 +1399,13 @@ local function showPopup(amount: number)
 	local fade = TweenService:Create(
 		label,
 		TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.4),
-		{ TextTransparency = 1, TextStrokeTransparency = 1 }
+		{ TextTransparency = 1 }
 	)
+	TweenService:Create(
+		labelStroke,
+		TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.4),
+		{ Transparency = 1 }
+	):Play()
 	fade:Play()
 	fade.Completed:Connect(function()
 		if popup:GetAttribute("Generation") == generation then
@@ -1487,6 +1503,7 @@ local function watchPumpkinZoom(character: Model)
 	if not pumpkin then
 		return
 	end
+	lastZoomTarget = nil
 	local function refresh()
 		updateCameraZoom((player:GetAttribute("Size") :: number?) or 0)
 	end
