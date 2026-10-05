@@ -644,6 +644,7 @@ local function playRoll(
 	local shakeMagnitude = 0
 	local hitStopUntil = 0
 	local heldCamera: CFrame? = nil
+	local heldPumpkinPosition = Vector3.zero
 	if isLocalRoll and camera then
 		local folder, targetParts =
 			createBonusTargets(start, physicalDistance, physicalDuration, seed)
@@ -745,7 +746,8 @@ local function playRoll(
 				pumpkin.CFrame = CFrame.lookAt(position, position + rideHorizontal)
 			end
 			if os.clock() < hitStopUntil and heldCamera then
-				camera.CFrame = heldCamera
+				-- Hold the framing, but keep following the moving pumpkin so a fast smash never pops the distance
+				camera.CFrame = heldCamera + (pumpkin.Position - heldPumpkinPosition)
 				return
 			end
 			smoothDistance, distanceVelocity = CameraFraming.springStep(
@@ -767,6 +769,7 @@ local function playRoll(
 				pumpkin.Position + Vector3.new(0, 2, 0)
 			)
 			heldCamera = camera.CFrame
+			heldPumpkinPosition = pumpkin.Position
 			-- Fade anything (gate banners, signs) between the camera and the pumpkin
 			local blockers: { [BasePart]: boolean } = {}
 			local ignore: { Instance } = { pumpkin }

@@ -1325,6 +1325,10 @@ player:GetAttributeChangedSignal("TutorialDone"):Connect(function()
 	updateStats(nil, nil)
 end)
 player:GetAttributeChangedSignal("Rolling"):Connect(function()
+	if player:GetAttribute("Rolling") ~= true then
+		-- The ride camera was scripted, so reframe the normal camera once the ride ends
+		lastZoomTarget = nil
+	end
 	updateStats(nil, nil)
 end)
 for _, attribute in

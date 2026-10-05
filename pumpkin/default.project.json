@@ -22,6 +22,9 @@
     "StarterPlayer": {
       "StarterPlayerScripts": {
         "$path": "src/StarterPlayer/StarterPlayerScripts"
+      },
+      "$properties": {
+        "DevCameraOcclusionMode": "Invisicam"
       }
     },
     "StarterGui": {
