@@ -398,17 +398,14 @@ local function bindViewport()
 		viewportConnection:Disconnect()
 		viewportConnection = nil
 	end
-	local camera = workspace.CurrentCamera
-	if camera then
-		applyLayout(camera.ViewportSize)
-		viewportConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
-			applyLayout(camera.ViewportSize)
-		end)
-	end
+	-- AbsoluteSize excludes the top-bar inset (IgnoreGuiInset is false), so 667x375 fits
+	applyLayout(screenGui.AbsoluteSize)
+	viewportConnection = screenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+		applyLayout(screenGui.AbsoluteSize)
+	end)
 end
 
 bindViewport()
-workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(bindViewport)
 
 local modal = makeDepthObject(
 	"Frame",
@@ -750,20 +747,9 @@ startArrowText.TextStrokeColor3 = TEAL
 startArrowText.TextStrokeTransparency = 0
 startArrowText.Parent = startArrow
 
-task.spawn(function()
-	for _ = 1, 100 do
-		local candidate = workspace:FindFirstChild("ZoneStart_" .. Config.Zones[1].Name, true)
-		if candidate and candidate:IsA("BasePart") then
-			startArrow.Adornee = candidate
-			return
-		end
-		task.wait(0.1)
-	end
-end)
-
 local tutorialReady = false
-local function updateTutorial(size: number, wins: number)
-	if wins > 0 then
+local function updateTutorial(size: number)
+	if player:GetAttribute("TutorialDone") == true then
 		tutorialPanel.Visible = false
 		local shadow = screenGui:FindFirstChild("TutorialShadow")
 		if shadow and shadow:IsA("GuiObject") then
@@ -792,16 +778,28 @@ local function updateTutorial(size: number, wins: number)
 	end
 end
 
+task.spawn(function()
+	while true do
+		local candidate = workspace:FindFirstChild("ZoneStart_" .. Config.Zones[1].Name, true)
+		if candidate and candidate:IsA("BasePart") then
+			startArrow.Adornee = candidate
+			updateTutorial((player:GetAttribute("Size") :: number?) or 0)
+			return
+		end
+		task.wait(0.5)
+	end
+end)
+
 local milestoneGeneration = 0
-local lastMilestoneSize = (player:GetAttribute("Size") :: number?) or 0
-local function showMilestone(newSize: number)
+local function showMilestone(amount: number, newSize: number)
+	-- Compare against the size before this grow, so a returning player's saved size never fires a banner
+	local before = newSize - amount
 	local crossed = nil
 	for _, target in { 10, 100, 1_000, 10_000, 100_000, 1_000_000 } do
-		if lastMilestoneSize < target and newSize >= target then
+		if before < target and newSize >= target then
 			crossed = target
 		end
 	end
-	lastMilestoneSize = newSize
 	if not crossed then
 		return
 	end
@@ -827,9 +825,6 @@ end
 local function updateStats(size: number?, wins: number?)
 	local currentSize = size or (player:GetAttribute("Size") :: number?) or 0
 	local currentWins = wins or (player:GetAttribute("Wins") :: number?) or 0
-	if currentSize < lastMilestoneSize then
-		lastMilestoneSize = currentSize
-	end
 	sizeLabel.Text = "🎃 SIZE\n" .. abbreviate(currentSize)
 	winsLabel.Text = "★ WINS\n" .. abbreviate(currentWins)
 
@@ -858,7 +853,7 @@ local function updateStats(size: number?, wins: number?)
 		progressFill.Size = UDim2.fromScale(1, 1)
 		progressText.Text = "ALL ZONES UNLOCKED"
 	end
-	updateTutorial(currentSize, currentWins)
+	updateTutorial(currentSize)
 end
 
 updateStats(nil, nil)
@@ -873,6 +868,9 @@ player:GetAttributeChangedSignal("TotalWins"):Connect(function()
 	updateStats(nil, nil)
 end)
 player:GetAttributeChangedSignal("CurrentZone"):Connect(function()
+	updateStats(nil, nil)
+end)
+player:GetAttributeChangedSignal("TutorialDone"):Connect(function()
 	updateStats(nil, nil)
 end)
 
@@ -973,7 +971,7 @@ growEffect.OnClientEvent:Connect(function(amount: number, newSize: number)
 	end
 	showPopup(amount)
 	squashPumpkin(newSize)
-	showMilestone(newSize)
+	showMilestone(amount, newSize)
 end)
 
 local lastRequest = -math.huge

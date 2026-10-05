@@ -41,6 +41,7 @@ local function syncPlayer(player: Player, profile: any)
 	player:SetAttribute("Size", profile.Size)
 	player:SetAttribute("Wins", profile.Wins)
 	player:SetAttribute("TotalWins", profile.TotalWins)
+	player:SetAttribute("TutorialDone", profile.TutorialDone)
 
 	local leaderstats = player:FindFirstChild("leaderstats")
 	if leaderstats then
@@ -156,6 +157,9 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	profile.Size = 0
 	profile.Wins += result.wins
 	profile.TotalWins += result.wins
+	if result.wins > 0 then
+		profile.TutorialDone = true
+	end
 	Data.markDirty(player)
 	PumpkinVisual.update(player.Character, 0)
 	player:SetAttribute("Size", 0) -- Wins show on the HUD when the playback ends
