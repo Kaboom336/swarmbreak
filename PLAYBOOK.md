@@ -83,3 +83,18 @@ For each piece (a model group, a system, a screen):
 - Zion 10/2: take each aspect from the game that does it best (research/BEST-OF.md); judge each part against that game.
 - Zion 10/2: keep Swarm Break's unique parts (elements, evolutions, melee weapons, co-op, bosses); borrow from every genre, never replace what is ours.
 - Zion 10/2: still planning; nothing is locked. Change any part when there is a good, written reason.
+- Zion 10/2 03:19: BEAT, not match. Every part must be better than the reference game at that aspect, plus one thing the reference lacks. Judges score beats/matches/worse.
+- 10/2 16:20 wave 13 Play broke at load: game scripts wrote Lighting.Technology and called settings() (plugin-only). The lune tests and selene can't catch this. Rule: set engine properties in default.project.json; never use plugin or command-bar APIs in game/src; L1 lint enforces it.
+- 10/2 16:28 wave 13 playtest: the HUD never loaded because Hud.client required script.Parent.UiKit without WaitForChild, which also meant "no upgrade". Rule: client siblings always load via WaitForChild. Imported enemy meshes were welded statues (no Motor6Ds), so nothing animated. Fit-in-box scaling shrank wide meshes; size enemies by height.
+- 10/2 17:30 mouse stayed locked after death (Play Again unclickable): a stats push re-applied LockCenter after the camera unbound. Rule: one per-frame owner of MouseBehavior (MouseMode), free it for any modal, death, or Left Alt.
+
+## Pumpkin game lessons (10/5, reusable for every simulator)
+- Start from a proven, small genre (+1 per click → spend size on a roll). Judge every round against named front-page games, with a screenshot shot list per build.
+- The cash-in must be active, not passive. Ride and smash (steer into bonuses, smash walls, combo text) made the loop fun; the plain roll did not.
+- Payout must keep scaling with power: walls past the track (log curve), plus wins × size^0.25, plus a pure Economy.simulate pacing spec (Forest 2-4 min, rebirth 8-15, Graveyard 20-40).
+- Ride feel: 7-10 s ride at every size, a gentle first 1.5 s, targets 0.7 s apart with beacons 2 s ahead, and the client predicts its own pumpkin each frame (server steps look jumpy).
+- Steering: poll IsKeyDown inside the loop as well as using ContextActionService; a sunk action silently killed steering once.
+- Camera: one shared framing function (2.2 × diameter + 8), a damped spring with a capped change per frame, hit-stop that keeps following the moving object, and a raycast that fades blockers. Invisicam stops jamming at huge sizes but hides the avatar.
+- UI: a UIGradient tints TextLabel text too. Put gradients only on frames and give text objects a flat fill. Every label is white with a dark stroke.
+- Money safety: credit guaranteed rewards in the same step that consumes the resource; settle only bonuses at the end.
+- Workflow: Codex builds, Claude reviews and merges (fixing P1/P2 itself), Play captures in Studio, then judge, then the next task. About 1 round per 30-40 minutes.
