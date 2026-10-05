@@ -55,6 +55,13 @@ function PumpkinVisual.attach(character: Model, size: number): BasePart?
 	weld.Part1 = pumpkin
 	weld.Parent = pumpkin
 
+	-- Avatar loading swaps in a new Head after CharacterAdded, which would leave the pumpkin unwelded to fall away.
+	character.ChildAdded:Connect(function(child)
+		if child.Name == "Head" and child:IsA("BasePart") then
+			weld.Part0 = child
+		end
+	end)
+
 	local light = Instance.new("PointLight")
 	light.Name = "PumpkinGlow"
 	light.Color = Color3.fromRGB(255, 113, 22)

@@ -19,7 +19,8 @@ local Config = {
 	-- Pumpkin mesh picked by Play (mesh asset only, no scripts). MeshScale converts mesh units to studs.
 	PumpkinMeshId = "rbxassetid://139105509213577",
 	PumpkinTextureId = "rbxassetid://78839540616611",
-	PumpkinMeshScale = 1,
+	-- The mesh is about 5.3 x 5 x 5.3 studs natively, so 0.19 makes its width match the diameter.
+	PumpkinMeshScale = 0.19,
 
 	WallSpacing = 50,
 	WallBaseHealth = 10,
