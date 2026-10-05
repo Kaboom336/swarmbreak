@@ -376,7 +376,13 @@ local function beginRoll(player: Player, zone: any, parts: any)
 		right = right,
 	}
 	rideStates[player] = state
+	-- Credit the guaranteed wins in the same step that consumes Size, so leaving or a shutdown mid-ride
+	-- loses nothing; only the ride pickups are settled when the ride completes.
+	local guaranteedWins = Ride.finalWins(result.wins, {}, winMultipliers)
+	state.guaranteedWins = guaranteedWins
 	profile.Size = 0
+	profile.Wins += guaranteedWins
+	profile.TotalWins += guaranteedWins
 	-- Only a paying roll finishes onboarding, so a too-early roll keeps the tutorial
 	if result.wins > 0 and not profile.TutorialDone then
 		profile.TutorialDone = true
@@ -437,9 +443,10 @@ local function beginRoll(player: Player, zone: any, parts: any)
 		end
 		local finalWins = Ride.finalWins(result.wins, state.kinds, state.winMultipliers)
 		local current = Data.get(player)
-		if current then
-			current.Wins += finalWins
-			current.TotalWins += finalWins
+		local pickupWins = math.max(0, finalWins - state.guaranteedWins)
+		if current and pickupWins > 0 then
+			current.Wins += pickupWins
+			current.TotalWins += pickupWins
 			Data.markDirty(player)
 		end
 		rideStates[player] = nil
