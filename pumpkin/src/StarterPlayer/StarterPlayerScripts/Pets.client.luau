@@ -1,14 +1,18 @@
 --!strict
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local petAction = remotes:WaitForChild("PetAction") :: RemoteEvent
 local petState = remotes:WaitForChild("PetState") :: RemoteEvent
 local hatchReveal = remotes:WaitForChild("HatchReveal") :: RemoteEvent
+local followerRoot = workspace:WaitForChild("PetFollowers")
 
 local ORANGE = Color3.fromRGB(255, 116, 25)
 local PURPLE = Color3.fromRGB(151, 64, 255)
@@ -190,8 +194,8 @@ equipBest.AnchorPoint = Vector2.new(0.5, 1)
 equipBest.BackgroundColor3 = LIME
 equipBest.BorderSizePixel = 0
 equipBest.Font = Enum.Font.GothamBlack
-equipBest.Position = UDim2.new(0.5, 0, 1, -12)
-equipBest.Size = UDim2.fromOffset(220, 58)
+equipBest.Position = UDim2.new(0.34, 0, 1, -12)
+equipBest.Size = UDim2.fromOffset(180, 58)
 equipBest.Text = "EQUIP BEST"
 equipBest.TextColor3 = Color3.new(1, 1, 1)
 equipBest.TextStrokeColor3 = TEAL
@@ -201,6 +205,24 @@ equipBest.ZIndex = 13
 equipBest.Parent = panel
 addInnerShadow(equipBest)
 decorate(equipBest, LIME, Color3.fromRGB(83, 190, 50))
+
+local indexButton = Instance.new("TextButton")
+indexButton.Name = "Index"
+indexButton.AnchorPoint = Vector2.new(0.5, 1)
+indexButton.BackgroundColor3 = ORANGE
+indexButton.BorderSizePixel = 0
+indexButton.Font = Enum.Font.GothamBlack
+indexButton.Position = UDim2.new(0.7, 0, 1, -12)
+indexButton.Size = UDim2.fromOffset(150, 58)
+indexButton.Text = "PET INDEX"
+indexButton.TextColor3 = WHITE
+indexButton.TextStrokeColor3 = TEAL
+indexButton.TextStrokeTransparency = 0.2
+indexButton.TextSize = 19
+indexButton.ZIndex = 13
+indexButton.Parent = panel
+addInnerShadow(indexButton)
+decorate(indexButton, ORANGE, Color3.fromRGB(200, 54, 27))
 
 local toast = Instance.new("TextLabel")
 toast.Name = "Toast"
@@ -252,6 +274,7 @@ flash.Parent = reveal
 
 local selectedId: string? = nil
 local lastState: any = nil
+local showingIndex = false
 
 local function showToast(message: string)
 	toast.Text = message
@@ -267,6 +290,8 @@ end
 
 local function renderState(state: any)
 	lastState = state
+	showingIndex = false
+	indexButton.Text = "PET INDEX"
 	local equipped = {}
 	for _, petId in state.equippedPetIds or {} do
 		equipped[petId] = true
@@ -321,6 +346,55 @@ local function renderState(state: any)
 	end
 end
 
+local function renderIndex()
+	if not lastState then
+		return
+	end
+	showingIndex = true
+	indexButton.Text = "MY PETS"
+	emptyLabel.Visible = false
+	for _, child in list:GetChildren() do
+		if child:IsA("GuiButton") then
+			child:Destroy()
+		end
+	end
+	local discovered = lastState.discoveredPets or {}
+	local found = 0
+	local total = 0
+	for _, egg in Config.Eggs do
+		for rarity, pet in egg.Pets do
+			total += 1
+			local known = discovered[pet.Name] == true
+			if known then
+				found += 1
+			end
+			local card = Instance.new("TextButton")
+			card.Name = "Index_" .. pet.Name
+			card.AutoButtonColor = false
+			card.BackgroundColor3 = if known
+				then RARITY_COLORS[rarity] or ORANGE
+				else Color3.fromRGB(29, 39, 55)
+			card.BorderSizePixel = 0
+			card.Font = Enum.Font.GothamBold
+			card.Text = string.format(
+				"%s\n%s\n%s",
+				egg.DisplayName,
+				if known then pet.Name else "SILHOUETTE",
+				rarity
+			)
+			card.TextColor3 = if known then WHITE else Color3.fromRGB(95, 107, 125)
+			card.TextSize = 14
+			card.TextStrokeColor3 = TEAL
+			card.TextStrokeTransparency = 0
+			card.ZIndex = 13
+			card.Parent = list
+			addInnerShadow(card)
+			decorate(card, card.BackgroundColor3, card.BackgroundColor3:Lerp(TEAL, 0.35))
+		end
+	end
+	title.Text = string.format("PET INDEX  %d/%d  -  +10%% SIZE PER EGG", found, total)
+end
+
 player:GetAttributeChangedSignal("PetsPanelRequest"):Connect(function()
 	panel.Visible = not panel.Visible
 	panelShadow.Visible = panel.Visible
@@ -335,8 +409,20 @@ end)
 equipBest.Activated:Connect(function()
 	petAction:FireServer("EquipBest")
 end)
+indexButton.Activated:Connect(function()
+	if showingIndex then
+		renderState(lastState)
+	else
+		renderIndex()
+	end
+end)
 petState.OnClientEvent:Connect(renderState)
 petAction:FireServer("Sync")
+player:GetAttributeChangedSignal("StarterPackPurchased"):Connect(function()
+	if player:GetAttribute("StarterPackPurchased") == true then
+		petAction:FireServer("Sync")
+	end
+end)
 
 local revealQueue = {}
 local revealing = false
@@ -395,3 +481,59 @@ hatchReveal.OnClientEvent:Connect(function(eggName: string, pets: { any })
 	end
 	task.spawn(playRevealQueue)
 end)
+
+RunService.RenderStepped:Connect(function(deltaTime)
+	local alpha = 1 - math.exp(-12 * deltaTime)
+	local now = os.clock()
+	for _, owner in Players:GetPlayers() do
+		local character = owner.Character
+		local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+		local folder = followerRoot:FindFirstChild(tostring(owner.UserId))
+		if root and root:IsA("BasePart") and folder then
+			for _, follower in folder:GetChildren() do
+				local slot = (follower:GetAttribute("Slot") :: number?) or 1
+				local side = if slot % 2 == 0 then 1 else -1
+				local row = math.ceil(slot / 2)
+				local bob = math.sin(now * 3 + slot) * 0.3
+				local target = root.CFrame * CFrame.new(side * (2 + row), 1.5 + bob, 2.5 + row)
+				if follower:IsA("Model") then
+					follower:PivotTo(follower:GetPivot():Lerp(target, alpha))
+				elseif follower:IsA("BasePart") then
+					follower.CFrame = follower.CFrame:Lerp(target, alpha)
+				end
+			end
+		end
+	end
+end)
+
+-- Egg prompts are shared server objects; show this player's free hatches by editing the local copy
+local function refreshHatchPrompt(prompt: ProximityPrompt)
+	local eggName = prompt:GetAttribute("EggName")
+	local cost = prompt:GetAttribute("Cost")
+	if type(eggName) ~= "string" or type(cost) ~= "number" then
+		return
+	end
+	local free = (eggName == "CandyEgg" and player:GetAttribute("FreeCandyHatch") == true)
+		or (
+			eggName == "SpookyEgg"
+			and ((player:GetAttribute("FreeSpookyHatches") :: number?) or 0) > 0
+		)
+	prompt.ActionText = if free then "Hatch - FREE!" else string.format("Hatch - %d Wins", cost)
+end
+
+local function refreshHatchPrompts()
+	for _, descendant in workspace:GetDescendants() do
+		if descendant:IsA("ProximityPrompt") and descendant.Name == "HatchPrompt" then
+			refreshHatchPrompt(descendant)
+		end
+	end
+end
+
+workspace.DescendantAdded:Connect(function(descendant)
+	if descendant:IsA("ProximityPrompt") and descendant.Name == "HatchPrompt" then
+		task.defer(refreshHatchPrompt, descendant)
+	end
+end)
+player:GetAttributeChangedSignal("FreeCandyHatch"):Connect(refreshHatchPrompts)
+player:GetAttributeChangedSignal("FreeSpookyHatches"):Connect(refreshHatchPrompts)
+refreshHatchPrompts()

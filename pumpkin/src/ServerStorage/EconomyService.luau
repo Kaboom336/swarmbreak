@@ -2,14 +2,18 @@
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Codes = require(Shared:WaitForChild("Codes"))
 local Config = require(Shared:WaitForChild("Config"))
 local Daily = require(Shared:WaitForChild("Daily"))
+local GiftSchedule = require(Shared:WaitForChild("GiftSchedule"))
 local Monetization = require(Shared:WaitForChild("Monetization"))
+local Pets = require(Shared:WaitForChild("Pets"))
 local Rebirth = require(Shared:WaitForChild("Rebirth"))
 local ReceiptLedger = require(Shared:WaitForChild("ReceiptLedger"))
+local StarterPack = require(Shared:WaitForChild("StarterPack"))
 local Data = require(script.Parent.Data)
 local PumpkinVisual = require(script.Parent.PumpkinVisual)
 
@@ -20,6 +24,8 @@ local PASS_FIELDS = {
 	ExtraPetEquip = "ExtraPetEquip",
 	VIP = "VIP",
 	FastTripleHatch = "FastTripleHatch",
+	AutoHatch = "AutoHatch",
+	DoubleLuck = "DoubleLuck",
 }
 
 local passNameById: { [number]: string } = {}
@@ -39,9 +45,14 @@ local EconomyService = {}
 local economyState: RemoteEvent? = nil
 local syncStats: ((Player, any) -> ())? = nil
 local autoGrow: ((Player) -> ())? = nil
+local sessionJoinedAt: { [Player]: number } = {}
 
-local function stateFor(profile: any): any
+local function stateFor(player: Player, profile: any): any
 	local nextDaily = Daily.nextStreak(profile.DailyLastClaimDay, profile.DailyStreak, os.time())
+	local joinedAt = sessionJoinedAt[player] or os.time()
+	local sessionSeconds = GiftSchedule.sessionSeconds(joinedAt, os.time())
+	local nextGiftIndex, nextGiftSeconds =
+		GiftSchedule.nextGift(sessionSeconds, profile.PlaytimeGiftClaims)
 	return {
 		Rebirths = profile.Rebirths,
 		RebirthCost = Rebirth.cost(profile.Rebirths),
@@ -49,10 +60,23 @@ local function stateFor(profile: any): any
 		DailyClaimable = nextDaily.claimable,
 		RedeemedCodes = profile.RedeemedCodes,
 		LuckyUntil = profile.LuckyUntil,
+		StarterGiftClaimed = profile.StarterGiftClaimed,
+		PlaytimeGiftClaims = profile.PlaytimeGiftClaims,
+		SessionSeconds = sessionSeconds,
+		NextGiftIndex = nextGiftIndex,
+		NextGiftSeconds = nextGiftSeconds,
+		GiftClaimable = #GiftSchedule.claimableIndices(
+				sessionSeconds,
+				profile.PlaytimeGiftClaims
+			) > 0,
+		StarterPackPurchased = profile.StarterPackPurchased,
+		StarterPackOfferEndsAt = profile.StarterPackOfferEndsAt,
 	}
 end
 
 local function publish(player: Player, profile: any)
+	player:SetAttribute("FreeCandyHatch", not profile.FreeCandyHatchUsed)
+	player:SetAttribute("FreeSpookyHatches", profile.FreeSpookyHatches)
 	player:SetAttribute("DoubleSize", profile.DoubleSize)
 	player:SetAttribute("AutoClick", profile.AutoClick)
 	player:SetAttribute("DoubleWins", profile.DoubleWins)
@@ -60,8 +84,12 @@ local function publish(player: Player, profile: any)
 	player:SetAttribute("FastTripleHatch", profile.FastTripleHatch)
 	player:SetAttribute("LuckyUntil", profile.LuckyUntil)
 	player:SetAttribute("VIP", profile.VIP)
+	player:SetAttribute("AutoHatch", profile.AutoHatch)
+	player:SetAttribute("DoubleLuck", profile.DoubleLuck)
+	player:SetAttribute("StarterPackOfferEndsAt", profile.StarterPackOfferEndsAt)
+	player:SetAttribute("StarterPackPurchased", profile.StarterPackPurchased)
 	if economyState then
-		economyState:FireClient(player, stateFor(profile))
+		economyState:FireClient(player, stateFor(player, profile))
 	end
 	if syncStats then
 		syncStats(player, profile)
@@ -73,6 +101,44 @@ end
 local function addWins(profile: any, amount: number)
 	profile.Wins += amount
 	profile.TotalWins += amount
+end
+
+local function grantGift(profile: any, gift: any)
+	if gift.Kind == "Wins" then
+		addWins(profile, gift.Amount)
+	elseif gift.Kind == "Size" then
+		profile.Size += gift.Amount
+		profile.BiggestPumpkin = math.max(profile.BiggestPumpkin, profile.Size)
+	elseif gift.Kind == "LuckyPotion" then
+		profile.LuckyUntil = math.max(os.time(), profile.LuckyUntil)
+			+ Config.LuckyPotionSeconds * gift.Amount
+	elseif gift.Kind == "SpookyHatch" then
+		profile.FreeSpookyHatches += gift.Amount
+	end
+end
+
+local function grantStarterPack(profile: any): boolean
+	local pet = Pets.roll("CandyEgg", function()
+		return 0
+	end)
+	-- Paid: always grant, even past the inventory cap, or the receipt stays pending forever
+	if not pet then
+		addWins(profile, Config.StarterPackWins)
+		profile.LuckyUntil = math.max(os.time(), profile.LuckyUntil)
+			+ Config.LuckyPotionSeconds * Config.StarterPackLuckyPotions
+		return true
+	end
+	local epic = Pets.findEgg("CandyEgg").Pets.Epic
+	pet.id = HttpService:GenerateGUID(false)
+	pet.name = epic.Name
+	pet.rarity = "Epic"
+	pet.multiplier = epic.Multiplier
+	table.insert(profile.Pets, pet)
+	profile.DiscoveredPets[pet.name] = true
+	addWins(profile, Config.StarterPackWins)
+	profile.LuckyUntil = math.max(os.time(), profile.LuckyUntil)
+		+ Config.LuckyPotionSeconds * Config.StarterPackLuckyPotions
+	return true
 end
 
 local function grantProduct(profile: any, productName: string): boolean
@@ -111,6 +177,7 @@ function EconomyService.playerLoaded(player: Player)
 	if not profile then
 		return
 	end
+	sessionJoinedAt[player] = os.time()
 	publish(player, profile)
 	for passName, offer in Monetization.GamePasses do
 		if offer.Id > 0 then
@@ -144,7 +211,7 @@ function EconomyService.init(remotes: Folder, statsSync: (Player, any) -> (), gr
 		local ok = false
 		local message = "Unknown request."
 		if action == "GetState" then
-			return { Ok = true, State = stateFor(profile) }
+			return { Ok = true, State = stateFor(player, profile) }
 		elseif action == "Rebirth" then
 			if Rebirth.canAfford(profile.Wins, profile.Rebirths) then
 				profile.Wins = 0
@@ -186,13 +253,36 @@ function EconomyService.init(remotes: Folder, statsSync: (Player, any) -> (), gr
 			else
 				message = "That code is not valid."
 			end
+		elseif action == "ClaimStarterGift" then
+			if not profile.StarterGiftClaimed then
+				profile.StarterGiftClaimed = true
+				addWins(profile, Config.StarterGiftWins)
+				profile.LuckyUntil = math.max(os.time(), profile.LuckyUntil)
+					+ Config.StarterLuckyPotionSeconds
+				ok = true
+				message = "Starter gift claimed: +50 Wins and Lucky Potion!"
+			else
+				message = "Your starter gift is already claimed."
+			end
+		elseif action == "ClaimPlaytimeGift" and type(value) == "number" then
+			local sessionSeconds =
+				GiftSchedule.sessionSeconds(sessionJoinedAt[player] or os.time(), os.time())
+			local claimed, gift =
+				GiftSchedule.claim(math.floor(value), sessionSeconds, profile.PlaytimeGiftClaims)
+			if claimed and gift then
+				grantGift(profile, gift)
+				ok = true
+				message = "Playtime gift claimed!"
+			else
+				message = "That gift is not ready yet."
+			end
 		end
 
 		if ok then
 			Data.markDirty(player)
 			publish(player, profile)
 		end
-		return { Ok = ok, Message = message, State = stateFor(profile) }
+		return { Ok = ok, Message = message, State = stateFor(player, profile) }
 	end
 
 	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, passId, purchased)
@@ -221,6 +311,18 @@ function EconomyService.init(remotes: Folder, statsSync: (Player, any) -> (), gr
 			profile.Receipts,
 			tostring(receiptInfo.PurchaseId),
 			function()
+				if productName == "StarterPack" then
+					local processed, granted = StarterPack.purchase(
+						profile.StarterPackPurchased,
+						function()
+							return grantStarterPack(profile)
+						end
+					)
+					if granted then
+						profile.StarterPackPurchased = true
+					end
+					return processed
+				end
 				return grantProduct(profile, productName)
 			end
 		)
@@ -234,6 +336,10 @@ function EconomyService.init(remotes: Folder, statsSync: (Player, any) -> (), gr
 		end
 		return Enum.ProductPurchaseDecision.PurchaseGranted
 	end
+end
+
+function EconomyService.playerRemoving(player: Player)
+	sessionJoinedAt[player] = nil
 end
 
 return EconomyService

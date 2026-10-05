@@ -396,6 +396,7 @@ local codesButton = makeMenuButton("Codes", "CODES", Color3.fromRGB(55, 190, 214
 local dailyButton = makeMenuButton("Daily", "DAILY", Color3.fromRGB(255, 81, 158))
 local passesButton = makeMenuButton("Passes", "PASSES", ORANGE)
 local settingsButton = makeMenuButton("Settings", "SETTINGS", Color3.fromRGB(55, 190, 214))
+local giftsButton = makeMenuButton("Gift", "GIFTS", Color3.fromRGB(255, 81, 158))
 local dailyDot = Instance.new("Frame")
 dailyDot.Name = "Notification"
 dailyDot.AnchorPoint = Vector2.new(1, 0)
@@ -409,6 +410,34 @@ dailyDot.Parent = dailyButton
 local dailyDotCorner = Instance.new("UICorner")
 dailyDotCorner.CornerRadius = UDim.new(1, 0)
 dailyDotCorner.Parent = dailyDot
+local giftsDot = dailyDot:Clone()
+giftsDot.Name = "Notification"
+giftsDot.Parent = giftsButton
+
+local starterPackChip = makeDepthObject(
+	"TextButton",
+	"StarterPack",
+	UDim2.fromOffset(190, 58),
+	UDim2.new(1, -18, 1, -92),
+	Vector2.new(1, 1),
+	ORANGE,
+	Color3.fromRGB(201, 55, 28)
+) :: TextButton
+starterPackChip.AutoButtonColor = false
+starterPackChip.Font = Enum.Font.GothamBlack
+starterPackChip.TextColor3 = WHITE
+starterPackChip.TextSize = 16
+starterPackChip.TextStrokeColor3 = TEAL
+starterPackChip.TextStrokeTransparency = 0
+starterPackChip.Visible = false
+local starterPackShadow = screenGui:FindFirstChild("StarterPackShadow") :: Frame
+starterPackShadow.Visible = false
+starterPackChip.Activated:Connect(function()
+	local offer = Monetization.DeveloperProducts.StarterPack
+	if offer.Id > 0 then
+		MarketplaceService:PromptProductPurchase(player, offer.Id)
+	end
+end)
 
 local tutorialPanel = makeDepthObject(
 	"TextLabel",
@@ -511,6 +540,7 @@ local function applyLayout(viewport: Vector2)
 			dailyButton,
 			passesButton,
 			settingsButton,
+			giftsButton,
 		}
 	do
 		local bounds = layout.menuButtons[index]
@@ -662,6 +692,12 @@ local function actionButton(
 end
 
 local currentEconomyState: any = nil
+local economyStateReceivedAt = os.clock()
+local function acceptEconomyState(state: any)
+	currentEconomyState = state
+	economyStateReceivedAt = os.clock()
+	dailyDot.Visible = state.DailyClaimable == true
+end
 local function requestEconomy(action: string, value: any?): any
 	local ok, response = pcall(function()
 		return economyRequest:InvokeServer(action, value)
@@ -671,11 +707,80 @@ local function requestEconomy(action: string, value: any?): any
 		return nil
 	end
 	if response.State then
-		currentEconomyState = response.State
-		dailyDot.Visible = response.State.DailyClaimable == true
+		acceptEconomyState(response.State)
 	end
 	notice.Text = response.Message or ""
 	return response
+end
+
+local function giftDescription(gift: any): string
+	if gift.Kind == "Wins" then
+		return "+" .. gift.Amount .. " WINS"
+	elseif gift.Kind == "Size" then
+		return "+" .. gift.Amount .. " SIZE"
+	elseif gift.Kind == "LuckyPotion" then
+		return "LUCKY POTION"
+	end
+	return "FREE SPOOKY EGG"
+end
+
+local function showGifts()
+	showPanel("PLAYTIME GIFTS")
+	requestEconomy("GetState")
+	local scroll = Instance.new("ScrollingFrame")
+	scroll.Name = "GiftList"
+	scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	scroll.BackgroundTransparency = 1
+	scroll.BorderSizePixel = 0
+	scroll.CanvasSize = UDim2.new()
+	scroll.ScrollBarThickness = 8
+	scroll.Size = UDim2.new(1, 0, 1, -30)
+	scroll.ZIndex = 6
+	scroll.Parent = modalContent
+	local grid = Instance.new("UIGridLayout")
+	grid.CellPadding = UDim2.fromOffset(8, 8)
+	grid.CellSize = UDim2.new(0.5, -8, 0, 64)
+	grid.Parent = scroll
+
+	local starterClaimed = currentEconomyState and currentEconomyState.StarterGiftClaimed
+	local starter = actionButton(
+		scroll,
+		if starterClaimed then "STARTER CLAIMED" else "CLAIM STARTER\n50 WINS + 5M LUCK",
+		UDim2.new(),
+		LIME
+	)
+	starter.Activated:Connect(function()
+		local response = requestEconomy("ClaimStarterGift")
+		if response and response.Ok then
+			showGifts()
+		end
+	end)
+
+	local sessionSeconds = if currentEconomyState then currentEconomyState.SessionSeconds else 0
+	local claims = if currentEconomyState then currentEconomyState.PlaytimeGiftClaims else {}
+	for index, gift in Config.PlaytimeGifts do
+		local ready = sessionSeconds >= gift.Minutes * 60 and claims[tostring(index)] ~= true
+		local claimed = claims[tostring(index)] == true
+		local button = actionButton(
+			scroll,
+			string.format(
+				"%d MIN  %s\n%s",
+				gift.Minutes,
+				giftDescription(gift),
+				if claimed then "CLAIMED" elseif ready then "CLAIM!" else "LOCKED"
+			),
+			UDim2.new(),
+			if ready then ORANGE elseif claimed then LIME else PURPLE
+		)
+		button.Activated:Connect(function()
+			if ready then
+				local response = requestEconomy("ClaimPlaytimeGift", index)
+				if response and response.Ok then
+					showGifts()
+				end
+			end
+		end)
+	end
 end
 
 local function showShop()
@@ -835,14 +940,65 @@ rebirthButton.Activated:Connect(showRebirth)
 codesButton.Activated:Connect(showCodes)
 dailyButton.Activated:Connect(showDaily)
 passesButton.Activated:Connect(showShop)
+giftsButton.Activated:Connect(function()
+	if currentEconomyState and not currentEconomyState.StarterGiftClaimed then
+		requestEconomy("ClaimStarterGift")
+	end
+	showGifts()
+end)
 economyState.OnClientEvent:Connect(function(state)
-	currentEconomyState = state
-	dailyDot.Visible = state.DailyClaimable == true
+	acceptEconomyState(state)
 end)
 task.spawn(function()
 	local response = requestEconomy("GetState")
 	if response and response.State then
 		dailyDot.Visible = response.State.DailyClaimable == true
+	end
+end)
+
+task.spawn(function()
+	while true do
+		task.wait(1)
+		local state = currentEconomyState
+		if state then
+			local sessionSeconds = state.SessionSeconds
+				+ math.max(0, math.floor(os.clock() - economyStateReceivedAt))
+			local claims = state.PlaytimeGiftClaims or {}
+			local nextSeconds = 0
+			local claimable = not state.StarterGiftClaimed
+			for index, gift in Config.PlaytimeGifts do
+				if claims[tostring(index)] ~= true then
+					local remaining = math.max(0, gift.Minutes * 60 - sessionSeconds)
+					if remaining == 0 then
+						claimable = true
+					end
+					if nextSeconds == 0 or remaining < nextSeconds then
+						nextSeconds = remaining
+					end
+				end
+			end
+			local label = giftsButton:FindFirstChild("Label") :: TextLabel
+			label.Text = if claimable
+				then "CLAIM"
+				else string.format("%d:%02d", math.floor(nextSeconds / 60), nextSeconds % 60)
+			giftsDot.Visible = claimable
+		end
+
+		local offer = Monetization.DeveloperProducts.StarterPack
+		local endsAt = (player:GetAttribute("StarterPackOfferEndsAt") :: number?) or 0
+		local purchased = player:GetAttribute("StarterPackPurchased") == true
+		local remaining = math.max(0, endsAt - os.time())
+		local visible = offer.Id > 0 and not purchased and remaining > 0
+		starterPackChip.Visible = visible
+		starterPackShadow.Visible = visible
+		if visible then
+			starterPackChip.Text = string.format(
+				"STARTER PACK  %d R$\n%d:%02d",
+				offer.Price,
+				math.floor(remaining / 60),
+				remaining % 60
+			)
+		end
 	end
 end)
 
@@ -1021,6 +1177,11 @@ local function updateStats(size: number?, wins: number?)
 	local friendPercent =
 		math.floor(((player:GetAttribute("FriendBoost") :: number?) or 0) * 100 + 0.5)
 	local passChips = {}
+	local indexPercent =
+		math.floor((((player:GetAttribute("IndexMultiplier") :: number?) or 1) - 1) * 100 + 0.5)
+	if indexPercent > 0 then
+		table.insert(passChips, "INDEX +" .. indexPercent .. "%")
+	end
 	if player:GetAttribute("DoubleSize") == true then
 		table.insert(passChips, "2x SIZE")
 	end
@@ -1070,7 +1231,9 @@ end)
 player:GetAttributeChangedSignal("TutorialDone"):Connect(function()
 	updateStats(nil, nil)
 end)
-for _, attribute in { "PetMultiplier", "Rebirths", "FriendBoost", "DoubleSize", "DoubleWins" } do
+for _, attribute in
+	{ "PetMultiplier", "Rebirths", "FriendBoost", "IndexMultiplier", "DoubleSize", "DoubleWins" }
+do
 	player:GetAttributeChangedSignal(attribute):Connect(function()
 		updateStats(nil, nil)
 	end)

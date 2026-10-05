@@ -30,9 +30,10 @@ test("multiplier stacking combines additive bonuses before pass multipliers", fu
 		petMultipliers = { 1.2, 2 },
 		doubleSize = true,
 		vip = true,
+		indexBonus = 0.1,
 	})
-	-- Base 1 + rebirth bonus 1 + pet contribution (3.2 - 1), then x2 and x1.5.
-	near(multiplier, 12.6, 1e-9, "stacked multiplier")
+	-- Base 1 + rebirth 1 + index 0.1 + pet contribution (3.2 - 1), then x2 and x1.5.
+	near(multiplier, 12.9, 1e-9, "stacked multiplier")
 	eq(Grow.multiplier({ petMultipliers = {} }), 1, "no equipped pets")
 end)
 

@@ -7,6 +7,7 @@ export type Modifiers = {
 	doubleSize: boolean?,
 	vip: boolean?,
 	friendBoost: number?,
+	indexBonus: number?,
 }
 
 export type RateLimiter = {
@@ -36,6 +37,7 @@ function Grow.multiplier(modifiers: Modifiers?): number
 	local additive = {
 		math.max(0, values.rebirths or 0) * Config.RebirthSizeBonus,
 		math.clamp(values.friendBoost or 0, 0, 0.5),
+		math.max(0, values.indexBonus or 0),
 	}
 	local petTotal = 0
 	for _, petMultiplier in values.petMultipliers or {} do
