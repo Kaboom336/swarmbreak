@@ -3,6 +3,8 @@ local Roll = require(script.Parent.Roll)
 
 export type Progress = {
 	wallsBroken: number,
+	totalWallsBroken: number,
+	wins: number,
 	nextWall: number?,
 	nextHealth: number?,
 	progress: number,
@@ -19,6 +21,8 @@ function WallProgress.compute(size: number, zone: string | Roll.Zone, wallCount:
 	if not nextWall then
 		return {
 			wallsBroken = result.physicalWallsBroken,
+			totalWallsBroken = result.wallsBroken,
+			wins = result.wins,
 			nextWall = nil,
 			nextHealth = nil,
 			progress = 1,
@@ -30,6 +34,8 @@ function WallProgress.compute(size: number, zone: string | Roll.Zone, wallCount:
 		math.clamp((math.max(0, size) - previousHealth) / (nextHealth - previousHealth), 0, 1)
 	return {
 		wallsBroken = result.physicalWallsBroken,
+		totalWallsBroken = result.wallsBroken,
+		wins = result.wins,
 		nextWall = nextWall,
 		nextHealth = nextHealth,
 		progress = progress,

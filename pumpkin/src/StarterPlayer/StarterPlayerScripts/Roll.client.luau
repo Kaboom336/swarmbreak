@@ -7,6 +7,7 @@ local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local CameraFraming = require(Shared:WaitForChild("CameraFraming"))
 local Config = require(Shared:WaitForChild("Config"))
 local Format = require(Shared:WaitForChild("Format"))
 local Grow = require(Shared:WaitForChild("Grow"))
@@ -20,7 +21,7 @@ local LIME = Color3.fromRGB(167, 255, 61)
 
 local effectGui = Instance.new("ScreenGui")
 effectGui.Name = "RollEffects"
-effectGui.DisplayOrder = 20
+effectGui.DisplayOrder = 100
 effectGui.IgnoreGuiInset = false
 effectGui.ResetOnSpawn = false
 effectGui.Parent = playerGui
@@ -37,6 +38,7 @@ winBurst.TextSize = 50
 winBurst.TextStrokeColor3 = TEAL
 winBurst.TextStrokeTransparency = 0
 winBurst.TextTransparency = 1
+winBurst.ZIndex = 100
 winBurst.Parent = effectGui
 
 local winScale = Instance.new("UIScale")
@@ -55,7 +57,7 @@ distanceMeter.TextSize = 54
 distanceMeter.TextStrokeColor3 = TEAL
 distanceMeter.TextStrokeTransparency = 0
 distanceMeter.Visible = false
-distanceMeter.ZIndex = 30
+distanceMeter.ZIndex = 100
 distanceMeter.Parent = effectGui
 
 local bonusCounter = Instance.new("TextLabel")
@@ -69,7 +71,7 @@ bonusCounter.TextSize = 34
 bonusCounter.TextStrokeColor3 = TEAL
 bonusCounter.TextStrokeTransparency = 0
 bonusCounter.Visible = false
-bonusCounter.ZIndex = 30
+bonusCounter.ZIndex = 100
 bonusCounter.Parent = effectGui
 local bonusScale = Instance.new("UIScale")
 bonusScale.Parent = bonusCounter
@@ -87,7 +89,7 @@ local function applyDistanceMeterLayout()
 	winBurst.Size = UDim2.fromOffset(toastBounds.width, toastBounds.height)
 	winBurst.TextSize = if layout.mobile then 28 else 36
 	bonusCounter.AnchorPoint = Vector2.zero
-	bonusCounter.Position = UDim2.fromOffset(toastBounds.x, toastBounds.y)
+	bonusCounter.Position = UDim2.fromOffset(toastBounds.x, toastBounds.y + toastBounds.height)
 	bonusCounter.Size = UDim2.fromOffset(toastBounds.width, toastBounds.height)
 	bonusCounter.TextSize = if layout.mobile then 26 else 34
 end
@@ -129,6 +131,7 @@ for index = 1, 8 do
 	table.insert(bonusParticlePool, particle)
 end
 local bonusParticleCursor = 0
+local bonusSummaryGeneration = 0
 
 local function burstBonusParticle()
 	bonusParticleCursor = bonusParticleCursor % #bonusParticlePool + 1
@@ -315,7 +318,7 @@ local function showWins(wins: number)
 		:Play()
 	TweenService:Create(
 		winBurst,
-		TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.7),
+		TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 1.2),
 		{ TextTransparency = 1, TextStrokeTransparency = 1 }
 	):Play()
 end
@@ -371,15 +374,23 @@ local function playRoll(
 	smashSound.Parent = pumpkin
 
 	local isLocalRoll = userId == player.UserId
+	if isLocalRoll then
+		player:SetAttribute(
+			"LastRollSummary",
+			string.format("walls=%d bonus=%d wins=%d", wallsBroken, bonusWalls, wins)
+		)
+	end
 	local camera = workspace.CurrentCamera
 	local previousSubject = if camera then camera.CameraSubject else nil
 	local previousType = if camera then camera.CameraType else Enum.CameraType.Custom
 	local previousFov = if camera then camera.FieldOfView else 70
 	local cameraConnection: RBXScriptConnection? = nil
 	if isLocalRoll and camera then
+		local framing = CameraFraming.compute(diameter, true)
 		camera.CameraType = Enum.CameraType.Scriptable
 		cameraConnection = RunService.RenderStepped:Connect(function()
-			local behind = -start.CFrame.LookVector * 20 + Vector3.new(0, 11, 0)
+			local behind = -start.CFrame.LookVector * framing.distance
+				+ Vector3.new(0, framing.height, 0)
 			camera.CFrame =
 				CFrame.lookAt(pumpkin.Position + behind, pumpkin.Position + Vector3.new(0, 2, 0))
 		end)
@@ -459,7 +470,10 @@ local function playRoll(
 	end
 
 	if bonusWalls > 0 then
-		bonusCounter.Visible = isLocalRoll
+		if isLocalRoll then
+			bonusSummaryGeneration += 1
+			bonusCounter.Visible = true
+		end
 		local bonusSegmentDuration = bonusDuration / bonusWalls
 		local direction =
 			Vector3.new(start.CFrame.LookVector.X, -0.06, start.CFrame.LookVector.Z).Unit
@@ -491,7 +505,16 @@ local function playRoll(
 	if isLocalRoll then
 		showWins(wins)
 		distanceMeter.Visible = false
-		bonusCounter.Visible = false
+		if bonusWalls > 0 then
+			local summaryGeneration = bonusSummaryGeneration
+			task.delay(1.2, function()
+				if bonusSummaryGeneration == summaryGeneration then
+					bonusCounter.Visible = false
+				end
+			end)
+		else
+			bonusCounter.Visible = false
+		end
 		if camera then
 			if cameraConnection then
 				cameraConnection:Disconnect()
@@ -509,14 +532,9 @@ local function playRoll(
 					Vector3.new(start.CFrame.LookVector.X, 0, start.CFrame.LookVector.Z).Unit
 				local returnDiameter =
 					Grow.pumpkinVisualDiameter((player:GetAttribute("Size") :: number?) or 0, 5)
-				local cameraDistance = math.max(
-					Config.PumpkinCameraMinDistance,
-					returnDiameter * Config.PumpkinCameraDistancePerDiameter
-						+ Config.PumpkinCameraBaseDistance
-				)
-				local cameraHeight = math.max(5, returnDiameter * 0.55)
+				local framing = CameraFraming.compute(returnDiameter, false)
 				camera.CFrame = CFrame.lookAt(
-					root.Position - direction * cameraDistance + Vector3.new(0, cameraHeight, 0),
+					root.Position - direction * framing.distance + Vector3.new(0, framing.height, 0),
 					root.Position + Vector3.new(0, 2, 0)
 				)
 			end)

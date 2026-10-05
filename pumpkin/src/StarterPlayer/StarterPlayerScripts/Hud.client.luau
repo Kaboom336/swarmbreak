@@ -10,6 +10,7 @@ local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local CameraFraming = require(Shared:WaitForChild("CameraFraming"))
 local Config = require(Shared:WaitForChild("Config"))
 local Format = require(Shared:WaitForChild("Format"))
 local Grow = require(Shared:WaitForChild("Grow"))
@@ -1148,14 +1149,8 @@ local function updateCameraZoom(size: number)
 		player.CameraMaxZoomDistance,
 		math.max(baseCameraMinZoomDistance, visualDiameter * Config.PumpkinMinZoomPerDiameter)
 	)
-	local startingDistance = math.min(
-		player.CameraMaxZoomDistance,
-		math.max(
-			Config.PumpkinCameraMinDistance,
-			visualDiameter * Config.PumpkinCameraDistancePerDiameter
-				+ Config.PumpkinCameraBaseDistance
-		)
-	)
+	local framing = CameraFraming.compute(visualDiameter, false)
+	local startingDistance = math.min(player.CameraMaxZoomDistance, framing.distance)
 	if lastZoomTarget and math.abs(startingDistance - lastZoomTarget) < 0.5 then
 		return
 	end
@@ -1177,10 +1172,9 @@ local function updateCameraZoom(size: number)
 					look = Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z)
 				end
 				look = look.Unit
-				local cameraHeight = math.max(5, visualDiameter * 0.55)
 				local position = root.Position
 					- look * startingDistance
-					+ Vector3.new(0, cameraHeight, 0)
+					+ Vector3.new(0, framing.height, 0)
 				camera.CFrame = CFrame.lookAt(position, root.Position + Vector3.new(0, 2, 0))
 			end
 		end
@@ -1222,31 +1216,39 @@ local function updateStats(size: number?, wins: number?)
 	wallFill.Size = UDim2.fromScale(wallState.progress, 1)
 	if wallState.nextWall then
 		wallText.Text = string.format(
-			"%d WALLS  •  %s / %s TO NEXT",
+			"%d WALLS  •  %s / %s  •  +%s WINS",
 			wallState.wallsBroken,
 			Format.abbrev(currentSize),
-			Format.abbrev(wallState.nextHealth or 0)
+			Format.abbrev(wallState.nextHealth or 0),
+			Format.abbrev(wallState.wins)
 		)
 	else
 		local followingZone = Config.Zones[currentZoneIndex + 1]
 		if followingZone and totalWins < followingZone.RequiredWins then
 			wallText.Text = string.format(
-				"TRACK CLEARED  •  NEXT ZONE: %s %s%d (%s WINS)",
+				"%d WALLS  •  +%s WINS  •  NEXT: %s %s%d",
+				wallState.totalWallsBroken,
+				Format.abbrev(wallState.wins),
 				followingZone.DisplayName,
 				utf8.char(0x00D7),
-				followingZone.WinMultiplier,
-				Format.abbrev(followingZone.RequiredWins)
+				followingZone.WinMultiplier
 			)
 		elseif followingZone then
 			wallText.Text = string.format(
-				"TRY %s %s%d %s",
+				"%d WALLS  •  +%s WINS  •  TRY %s %s%d %s",
+				wallState.totalWallsBroken,
+				Format.abbrev(wallState.wins),
 				followingZone.DisplayName,
 				utf8.char(0x00D7),
 				followingZone.WinMultiplier,
 				utf8.char(0x2192)
 			)
 		else
-			wallText.Text = "TRACK CLEARED"
+			wallText.Text = string.format(
+				"%d WALLS  •  +%s WINS",
+				wallState.totalWallsBroken,
+				Format.abbrev(wallState.wins)
+			)
 		end
 	end
 	local petMultiplier = (player:GetAttribute("PetMultiplier") :: number?) or 1
