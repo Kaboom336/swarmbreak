@@ -51,8 +51,14 @@ local function spreadDir(dir: Vector3, degrees: number): Vector3
 end
 
 -- Damage an enemy model (plus Evolution effects); returns true if it counted.
-local function damageEnemy(plr: Player, model: Model, damage: number, hitPos: Vector3): boolean
-	local landed = CombatEffects.hit(plr, model, damage, hitPos)
+local function damageEnemy(
+	plr: Player,
+	model: Model,
+	damage: number,
+	hitPos: Vector3,
+	scytheHit: boolean?
+): boolean
+	local landed = CombatEffects.hit(plr, model, damage, hitPos, scytheHit)
 	if landed then
 		PlayerData.recordHit(plr)
 	end
@@ -139,7 +145,7 @@ local function doMelee(
 		local ok = weapon.Slam
 			or to.Magnitude < 3
 			or (Vector3.new(to.X, 0, to.Z).Unit:Dot(flatDir) >= cosLimit)
-		if ok and damageEnemy(plr, model, damage, eroot.Position) then
+		if ok and damageEnemy(plr, model, damage, eroot.Position, weapon.Id == "Reaper") then
 			table.insert(hits, eroot.Position)
 			damageDealt += damage
 		end
@@ -156,6 +162,7 @@ local function doMelee(
 		Hits = hits,
 		Color = Theme.Rarity[weapon.Rarity],
 		Sound = Sounds.ForWeapon[weapon.Id] or "Swing",
+		Scythe = weapon.Id == "Reaper",
 	}, plr)
 end
 
@@ -173,7 +180,7 @@ local function doScytheAbility(plr: Player, abilityId: string, root: BasePart, d
 	local hits = {}
 	for _, model in enemiesNear(root.Position, radius) do
 		local enemyRoot = model.PrimaryPart
-		if enemyRoot and damageEnemy(plr, model, damage * multiplier, enemyRoot.Position) then
+		if enemyRoot and damageEnemy(plr, model, damage * multiplier, enemyRoot.Position, true) then
 			table.insert(hits, enemyRoot.Position)
 			if abilityId == "CrescentPull" and not enemyRoot.Anchored then
 				local toward = root.Position - enemyRoot.Position
@@ -193,6 +200,7 @@ local function doScytheAbility(plr: Player, abilityId: string, root: BasePart, d
 		Hits = hits,
 		Color = Theme.Rarity.Legendary,
 		Sound = Sounds.ForWeapon.Reaper or "Swing",
+		Scythe = true,
 	}, plr)
 end
 

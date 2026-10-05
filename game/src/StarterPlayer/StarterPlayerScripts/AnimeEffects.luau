@@ -16,6 +16,17 @@ gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
 gui.Parent = playerGui
 
+local impactFrame = Instance.new("Frame")
+impactFrame.Name = "KillImpactFrame"
+impactFrame.Size = UDim2.fromScale(1, 1)
+impactFrame.BackgroundColor3 = Color3.new(1, 1, 1)
+impactFrame.BorderSizePixel = 0
+impactFrame.Visible = false
+impactFrame.ZIndex = 100
+impactFrame.Parent = gui
+local impactToken = 0
+local impactTween: Tween? = nil
+
 local function color(values: { number }): Color3
 	return Color3.fromRGB(values[1], values[2], values[3])
 end
@@ -69,6 +80,27 @@ function AnimeEffects.hitMarker(critical: boolean?)
 	task.delay(Rules.HitMarkerSeconds, function()
 		if markerToken == token then
 			marker.Visible = false
+		end
+	end)
+end
+
+function AnimeEffects.impactFrame(accent: Color3, duration: number)
+	impactToken += 1
+	local token = impactToken
+	if impactTween then
+		impactTween:Cancel()
+	end
+	impactFrame.BackgroundColor3 = Color3.new(1, 1, 1)
+	impactFrame.BackgroundTransparency = 0
+	impactFrame.Visible = true
+	impactTween = TweenService:Create(impactFrame, TweenInfo.new(duration), {
+		BackgroundColor3 = accent,
+		BackgroundTransparency = 1,
+	})
+	impactTween:Play()
+	task.delay(duration, function()
+		if impactToken == token then
+			impactFrame.Visible = false
 		end
 	end)
 end

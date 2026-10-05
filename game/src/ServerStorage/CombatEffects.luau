@@ -45,7 +45,8 @@ local function rawHit(
 	plr: Player,
 	model: Model,
 	damage: number,
-	hitPos: Vector3
+	hitPos: Vector3,
+	scytheHit: boolean?
 ): (boolean, boolean)
 	local ehum = model:FindFirstChildOfClass("Humanoid")
 	if not ehum or ehum.Health <= 0 or model.Parent ~= enemiesFolder then
@@ -85,7 +86,8 @@ local function rawHit(
 		model,
 		false,
 		elite,
-		hitNormal
+		hitNormal,
+		scytheHit == true
 	)
 	return true, killed
 end
@@ -95,9 +97,10 @@ function CombatEffects.hit(
 	plr: Player,
 	model: Model,
 	damage: number,
-	hitPos: Vector3
+	hitPos: Vector3,
+	scytheHit: boolean?
 ): (boolean, boolean)
-	local landed, killed = rawHit(plr, model, damage, hitPos)
+	local landed, killed = rawHit(plr, model, damage, hitPos, scytheHit)
 	if not landed then
 		return false, false
 	end

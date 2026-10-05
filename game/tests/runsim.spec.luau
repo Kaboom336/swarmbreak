@@ -99,10 +99,15 @@ test("contact hits use a half-second i-frame", function()
 	eq(RunSim.IFrameSeconds, 0.5, "i-frame seconds")
 end)
 
-test("waves one through ten clear in 35 to 70 seconds", function()
+test("waves one through ten clear in 35 to 70 seconds (boss waves up to 80)", function()
 	for wave = 1, 10 do
 		local seconds = result.Waves[wave].TimeToClear
-		assert(seconds >= 35 and seconds <= 70, string.format("wave %d clear %.1fs", wave, seconds))
+		-- R2 review: the sim now spawns the boss at once, as runtime does, so boss waves run longer.
+		local limit = if wave == 5 or wave == 10 then 80 else 70
+		assert(
+			seconds >= 35 and seconds <= limit,
+			string.format("wave %d clear %.1fs", wave, seconds)
+		)
 	end
 end)
 

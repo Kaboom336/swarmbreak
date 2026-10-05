@@ -36,6 +36,7 @@ EnemyFamilies.RigHeights = {
 	Shooter = 6.5,
 	Tank = 10,
 	Flyer = 6,
+	Elite = 18,
 	Boss = 16,
 } :: { [string]: number }
 

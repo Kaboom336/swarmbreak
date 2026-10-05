@@ -18,6 +18,7 @@ export type Options = {
 	Stage: number?,
 	Difficulty: Difficulty.TierName?,
 	Weapon: string?,
+	Profile: string?,
 }
 
 export type WaveResult = {
@@ -28,6 +29,7 @@ export type WaveResult = {
 	DamagePerSecond: number,
 	TimeToDeath: number?,
 	BossKillSeconds: number?,
+	AverageFps: number,
 }
 
 export type Result = {
@@ -52,6 +54,11 @@ type SimEnemy = {
 
 local RunSim = {}
 
+RunSim.Profiles = {
+	Starter = { Weapon = "Starter" },
+	ReaperStarter = { Weapon = "Reaper" },
+} :: { [string]: { Weapon: string } }
+
 RunSim.StepSeconds = 0.05
 RunSim.SpawnDistanceMin = 38
 RunSim.SpawnDistanceMax = 46
@@ -61,6 +68,8 @@ RunSim.IFrameSeconds = 0.5
 RunSim.AutoFireEfficiency = 0.16
 RunSim.BossFireEfficiency = 0.35
 RunSim.DpsPerPick = 0.08
+RunSim.FrameBaseMs = 14.5
+RunSim.FrameEnemyMs = 0.055
 
 local function seededRandom(seed: number): () -> number
 	local state = math.max(1, math.floor(math.abs(seed))) % 2147483647
@@ -83,6 +92,16 @@ local function aliveCount(enemies: { SimEnemy }): number
 	local count = 0
 	for _, enemy in enemies do
 		if enemy.Health > 0 then
+			count += 1
+		end
+	end
+	return count
+end
+
+local function activeAliveCount(enemies: { SimEnemy }, now: number): number
+	local count = 0
+	for _, enemy in enemies do
+		if enemy.Health > 0 and enemy.SpawnAt <= now then
 			count += 1
 		end
 	end
@@ -139,7 +158,9 @@ function RunSim.simulate(options: Options?): Result
 	local waveLimit =
 		math.clamp(settings.Waves or if stage then stage.Waves else 15, 1, #WaveTable.Compositions)
 	local difficultyId = settings.Difficulty or Difficulty.Default
-	local weapon = Weapons.Defs[settings.Weapon or "Starter"]
+	local profile = RunSim.Profiles[settings.Profile or "Starter"]
+	assert(profile, "unknown simulation profile")
+	local weapon = Weapons.Defs[settings.Weapon or profile.Weapon]
 	assert(weapon, "unknown simulation weapon")
 
 	local level = 0
@@ -171,9 +192,10 @@ function RunSim.simulate(options: Options?): Result
 				map.Family,
 				map.BossKey
 			)
+		local finalWave = wave == waveLimit
 		for packIndex, pack in WaveTable.packs(composition) do
 			if packIndex > 1 then
-				spawnAt += Config.SpawnGapMin + (Config.SpawnGapMax - Config.SpawnGapMin) * random()
+				spawnAt += WaveTable.pulseGap(finalWave)
 			end
 			for _, name in sortedNames(pack.Composition) do
 				for _ = 1, pack.Composition[name] do
@@ -182,7 +204,7 @@ function RunSim.simulate(options: Options?): Result
 						makeEnemy(
 							name,
 							wave,
-							spawnAt,
+							if Enemies.Defs[name].Boss then 0 else spawnAt, -- runtime spawns the boss at once
 							scaled.Health :: number,
 							scaled.Damage :: number,
 							random
@@ -200,8 +222,14 @@ function RunSim.simulate(options: Options?): Result
 		local peakAttackers = 0
 		local waveLevelUps = {}
 		local bossKillSeconds: number? = nil
+		local fpsTotal = 0
+		local fpsSamples = 0
 
 		while aliveCount(enemies) > 0 and now < 600 do
+			local activeEnemies = activeAliveCount(enemies, now)
+			local frameMs = RunSim.FrameBaseMs + activeEnemies * RunSim.FrameEnemyMs
+			fpsTotal += math.min(60, 1000 / frameMs)
+			fpsSamples += 1
 			local contact = 0
 			for _, enemy in enemies do
 				if enemy.Health <= 0 or enemy.SpawnAt > now then
@@ -288,6 +316,7 @@ function RunSim.simulate(options: Options?): Result
 			DamagePerSecond = damageTaken / math.max(now, RunSim.StepSeconds),
 			TimeToDeath = timeToDeath,
 			BossKillSeconds = bossKillSeconds,
+			AverageFps = fpsTotal / math.max(1, fpsSamples),
 		})
 		runTime += now
 	end

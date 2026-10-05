@@ -453,16 +453,18 @@ end
 function ClientFX.hitSpark(at: Vector3, color: Color3, normal: Vector3)
 	local direction = if normal.Magnitude > 0.001 then normal.Unit else Vector3.new(0, 0, 1)
 	local plane = CFrame.lookAt(at, at + direction)
-	local diagonalA = (plane.RightVector + plane.UpVector).Unit * 0.55
-	local diagonalB = (plane.RightVector - plane.UpVector).Unit * 0.55
-	tracerLayer(at - diagonalA, at + diagonalA, color, 0.12, VfxDefs.HitSeconds)
-	tracerLayer(at - diagonalB, at + diagonalB, color, 0.12, VfxDefs.HitSeconds)
+	local streakCount = VfxDefs.particleCount(VfxDefs.HitStreakCount, lowQuality)
+	for index = 1, streakCount do
+		local angle = (index - 1) / streakCount * math.pi * 2
+		local radial = plane.RightVector * math.cos(angle) + plane.UpVector * math.sin(angle)
+		tracerLayer(at + radial * 0.2, at + radial * 1.4, color, 0.24, VfxDefs.HitSeconds)
+	end
 
 	local entry = claimEmitter(customPool, VfxDefs.HitSeconds)
 	entry.Holder.CFrame = plane
 	local emitter = entry.Emitter
 	emitter.Color = ColorSequence.new(color)
-	emitter.Size = NumberSequence.new(0.18, 0)
+	emitter.Size = NumberSequence.new(0.36, 0)
 	emitter.Lifetime = NumberRange.new(0.08, VfxDefs.HitSeconds)
 	emitter.Speed = NumberRange.new(16, 24)
 	emitter.SpreadAngle = Vector2.new(8, 8)
@@ -806,6 +808,7 @@ function ClientFX.ring(at: Vector3, color: Color3, radius: number, life: number)
 	entry.Token += 1
 	local token = entry.Token
 	local ring = entry.Part
+	ring.Material = Enum.Material.SmoothPlastic
 	ring.Color = color
 	ring.Size = Vector3.new(0.2, 1, 1)
 	ring.CFrame = CFrame.new(at) * CFrame.Angles(0, 0, math.rad(90))
@@ -819,6 +822,28 @@ function ClientFX.ring(at: Vector3, color: Color3, radius: number, life: number)
 	end, function()
 		if entry.Token == token then
 			ring.Transparency = 1
+			PoolSize.release(ringPool, entry)
+		end
+	end)
+end
+
+function ClientFX.flashDisc(at: Vector3, color: Color3, radius: number, life: number)
+	local entry = PoolSize.acquire(ringPool)
+	entry.Token += 1
+	local token = entry.Token
+	local disc = entry.Part
+	disc.Material = Enum.Material.Neon
+	disc.Color = color
+	disc.Size = Vector3.new(0.12, radius * 2, radius * 2)
+	disc.CFrame = CFrame.new(at) * CFrame.Angles(0, 0, math.rad(90))
+	disc.Transparency = 0.08
+	animate(life, function(_, progress)
+		if entry.Token == token then
+			disc.Transparency = 0.08 + 0.92 * EffectCurves.quadOut(progress)
+		end
+	end, function()
+		if entry.Token == token then
+			disc.Transparency = 1
 			PoolSize.release(ringPool, entry)
 		end
 	end)
@@ -908,9 +933,9 @@ function ClientFX.deathGhost(model: Model, color: Color3)
 	end)
 end
 
-function ClientFX.hitstop(target: Model, elite: boolean)
-	local duration = (if elite then Feel.Events.EliteKill.FreezeMs else Feel.Events.Kill.FreezeMs)
-		/ 1000
+function ClientFX.hitstop(target: Model, elite: boolean, overrideSeconds: number?)
+	local duration = overrideSeconds
+		or (if elite then Feel.Events.EliteKill.FreezeMs else Feel.Events.Kill.FreezeMs) / 1000
 	local untilTime = os.clock() + duration
 	target:SetAttribute("ClientHitstopUntil", untilTime)
 	localPlayer:SetAttribute("WeaponHitstopUntil", untilTime)

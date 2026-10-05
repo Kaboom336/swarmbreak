@@ -19,13 +19,14 @@ test("early waves build to a swarm", function()
 	assert(total(WaveTable.Compositions[5]) >= 28, "wave 5 has fewer than 28 enemies")
 end)
 
-test("packs sum to each composition and use at most two portals", function()
+test("two to four pulses sum to each composition and use two different portals", function()
 	for wave, composition in WaveTable.Compositions do
 		local packed = {}
 		local packs = WaveTable.packs(composition)
+		assert(#packs >= 2 and #packs <= 4, "pulse count out of range")
 		for _, pack in packs do
-			assert(pack.Size >= 3 and pack.Size <= 6, "pack size out of range")
-			assert(pack.PortalCount >= 1 and pack.PortalCount <= 2, "portal count out of range")
+			assert(pack.Size >= 1, "empty pulse")
+			eq(pack.PortalCount, 2, "portal count")
 			for enemyName, amount in pack.Composition do
 				packed[enemyName] = (packed[enemyName] or 0) + amount
 			end

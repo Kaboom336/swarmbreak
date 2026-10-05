@@ -99,13 +99,23 @@ handlers.swing = function(d)
 			ClientFX.shake(3)
 		end
 	else
-		-- arc: a fan of short tracers sweeping in front
+		-- The Reaper gets a broad two-tone Beam-style crescent instead of thin single-colour streaks.
 		local dir = d.Dir :: Vector3
 		local base = d.Origin + Vector3.new(0, 0.5, 0)
-		for i = -2, 2 do
+		local arcRange = if d.Scythe then VfxDefs.ScytheArcStuds else d.Range * 0.9
+		for i = -3, 3 do
 			local a = CFrame.Angles(0, math.rad(i * 18), 0)
-			local p = base + (a * dir) * d.Range * 0.9
-			ClientFX.tracer(base + (a * dir) * 1.5, p, color, 0.25, 0.14)
+			local p = base + (a * dir) * arcRange
+			local arcColor = if d.Scythe
+				then c3(if i % 2 == 0 then Theme.Loot else Theme.Chitin)
+				else color
+			ClientFX.tracer(
+				base + (a * dir) * 1.5,
+				p,
+				arcColor,
+				if d.Scythe then 0.65 else 0.25,
+				if d.Scythe then VfxDefs.ScytheSlashSeconds else 0.14
+			)
 		end
 		if d.Shooter == player then
 			ClientFX.shake(1)
@@ -160,15 +170,16 @@ end
 
 handlers.death = function(d)
 	local color = c3(Feel.deathBurstColor(d.EnemyType, d.Color))
+	local ringRadius = VfxDefs.deathRingRadius(d.EnemyType, d.Size)
+	local deathAt = d.Position - Vector3.new(0, d.Height * 0.5, 0)
 	ClientFX.burst(d.Position, color, VfxDefs.DeathShardCount, 0.45, 24, 0.25, true)
 	ClientFX.burst(d.Position, c3(Theme.Goo), 8, 0.7, 14, VfxDefs.DeathBurstSeconds, false)
 	ClientFX.flash(d.Position, color, if d.Boss then 24 else 12, 0.18)
-	ClientFX.ring(
-		d.Position - Vector3.new(0, d.Size * 0.4, 0),
-		color,
-		VfxDefs.DeathRing.EndRadius,
-		VfxDefs.DeathRing.Seconds
-	)
+	ClientFX.flashDisc(deathAt, color, ringRadius * 0.65, VfxDefs.DeathFlashDiscSeconds)
+	ClientFX.ring(deathAt, color, ringRadius, VfxDefs.DeathRing.Seconds)
+	if d.Elite then
+		AnimeEffects.impactFrame(color, VfxDefs.KillImpactFrameSeconds)
+	end
 	if d.Boss then
 		ClientFX.sound("Explosion", d.Position)
 	end

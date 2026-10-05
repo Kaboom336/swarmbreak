@@ -470,12 +470,15 @@ function EnemyAI.spawn(
 		EnemyIndex.remove(model)
 		onDeath(e.LastHitBy, root.Position)
 		local accent = (Theme.Enemy[typeName] or Theme.Enemy.Walker).Accent
+		local deathBounds = model:GetExtentsSize()
 		FxRouter.emit("death", root.Position, {
 			Position = root.Position,
-			Size = size.Magnitude,
+			Size = deathBounds.Magnitude,
+			Height = deathBounds.Y,
 			Color = accent,
 			EnemyType = typeName,
 			Boss = def.Boss == true,
+			Elite = def.Boss == true or typeName == "Tank" or typeName == "Brute",
 		}, e.LastHitBy)
 		-- Clients render the pooled squash/ghost; keep the server rig inert (no ragdoll).
 		for _, p in model:GetDescendants() do
@@ -517,8 +520,17 @@ function EnemyAI.refillPool(composition: { [string]: number }, familyId: string)
 end
 
 -- Watchdog: drop, kill or move enemies that can't be fought, so a wave never stalls on them.
-local watch: { [Model]: { Last: Vector3, Stuck: number, Air: number, Progress: EnemyWatchdog.Progress } } =
-	{}
+type WatchState = {
+	Last: Vector3,
+	Stuck: number,
+	Air: number,
+	Respawns: number,
+	Progress: EnemyWatchdog.Progress,
+	BossOffFloor: number,
+	BossNoDamage: number,
+	Health: number,
+}
+local watch: { [Model]: WatchState } = {}
 task.spawn(function()
 	while true do
 		task.wait(EnemyWatchdog.CheckSeconds)
@@ -537,6 +549,9 @@ task.spawn(function()
 					Air = 0,
 					Respawns = 0,
 					Progress = { Best = math.huge, Seconds = 0 },
+					BossOffFloor = 0,
+					BossNoDamage = 0,
+					Health = e.Humanoid.Health,
 				}
 				watch[model] = w
 			end
@@ -558,19 +573,40 @@ task.spawn(function()
 				e.Humanoid.FloorMaterial == Enum.Material.Air,
 				e.Def.Flying == true
 			)
-			local verdict = EnemyWatchdog.capRespawns(
-				EnemyWatchdog.verdict(
-					model.Parent ~= nil,
-					hasRoot,
-					pos.X,
-					pos.Y,
-					pos.Z,
-					w.Stuck,
-					w.Air,
-					w.Progress.Seconds
-				),
-				w.Respawns
+			local playersInBossRange = target ~= nil and dist <= EnemyWatchdog.BossPlayerRange
+			local tookDamage = e.Humanoid.Health < w.Health
+			w.Health = e.Humanoid.Health
+			w.BossOffFloor = EnemyWatchdog.nextBossOffFloor(
+				w.BossOffFloor,
+				ArenaLayout.onFloor({ x = pos.X, z = pos.Z }),
+				pos.Y - ArenaLayout.FloorTopY
 			)
+			w.BossNoDamage =
+				EnemyWatchdog.nextBossNoDamage(w.BossNoDamage, tookDamage, playersInBossRange)
+			local verdict = EnemyWatchdog.verdict(
+				model.Parent ~= nil,
+				hasRoot,
+				pos.X,
+				pos.Y,
+				pos.Z,
+				w.Stuck,
+				w.Air,
+				w.Progress.Seconds
+			)
+			if e.Def.Boss and verdict ~= "Forget" then
+				if
+					verdict ~= "Ok"
+					or EnemyWatchdog.shouldRepositionBoss(
+						w.BossOffFloor,
+						w.BossNoDamage,
+						playersInBossRange
+					)
+				then
+					verdict = "Respawn"
+				end
+			else
+				verdict = EnemyWatchdog.capRespawns(verdict, w.Respawns)
+			end
 			if verdict == "Forget" then
 				releaseAttackSlot(e)
 				live[model] = nil
@@ -583,6 +619,9 @@ task.spawn(function()
 				w.Stuck = 0
 				w.Air = 0
 				w.Progress = { Best = math.huge, Seconds = 0 }
+				w.BossOffFloor = 0
+				w.BossNoDamage = 0
+				w.Health = e.Humanoid.Health
 				local spawns = workspace:FindFirstChild("Arena")
 					and (workspace :: any).Arena:FindFirstChild("EnemySpawns")
 				local waveValue = ReplicatedStorage:FindFirstChild("State")
@@ -603,6 +642,12 @@ task.spawn(function()
 					end
 				end
 				local playerZones = ArenaLayout.playerZones(playerPositions)
+				if e.Def.Boss then
+					local spot = ArenaLayout.bossSpawnForWave(wave)
+					local rigHeight = model:GetExtentsSize().Y
+					model:PivotTo(CFrame.new(spot.x, ArenaLayout.bossSpawnY(rigHeight), spot.z))
+					continue
+				end
 				-- Come back at the open gate nearest the player it was chasing, not a random far one.
 				local best: BasePart? = nil
 				local bestDistance = math.huge

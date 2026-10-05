@@ -11,6 +11,7 @@ local Campaign = require(ReplicatedStorage.Shared.Campaign)
 local CoreStages = require(ReplicatedStorage.Shared.CoreStages)
 local Difficulty = require(ReplicatedStorage.Shared.Difficulty)
 local Enemies = require(ReplicatedStorage.Shared.Enemies)
+local EnemyFamilies = require(ReplicatedStorage.Shared.EnemyFamilies)
 local WaveTable = require(ReplicatedStorage.Shared.WaveTable)
 local Economy = require(ReplicatedStorage.Shared.Economy)
 local Evolutions = require(ReplicatedStorage.Shared.Evolutions)
@@ -39,7 +40,6 @@ local Theme = require(ReplicatedStorage.Shared.Theme)
 
 local arena = workspace:WaitForChild("Arena")
 local spawns = arena:WaitForChild("EnemySpawns")
-local bossSpawn = arena:WaitForChild("BossSpawn") :: BasePart
 local rng = Random.new()
 
 local dropsFolder = Instance.new("Folder")
@@ -622,7 +622,11 @@ local function runWave(wave: number): boolean
 
 	if bossName then
 		local spot = ArenaLayout.bossSpawnForWave(currentLayoutWave)
-		local bossAt = CFrame.new(spot.x, bossSpawn.Position.Y + 6, spot.z)
+		local bossHeight = assert(
+			EnemyFamilies.rigHeight(currentStage.Family, bossName),
+			bossName .. " has no authored rig height"
+		)
+		local bossAt = CFrame.new(spot.x, ArenaLayout.bossSpawnY(bossHeight), spot.z)
 		composition[bossName] = math.max(0, (composition[bossName] or 1) - 1)
 		if composition[bossName] == 0 then
 			composition[bossName] = nil
@@ -645,7 +649,8 @@ local function runWave(wave: number): boolean
 		end
 	end
 
-	for packIndex, pack in WaveTable.packs(composition) do
+	local wavePacks = WaveTable.packs(composition)
+	for packIndex, pack in wavePacks do
 		while not WaveTable.packFits(EnemyAI.aliveCount(), pack.Size, Config.MaxAlive) do
 			if not anyPlayersAlive() then
 				return false
@@ -662,7 +667,13 @@ local function runWave(wave: number): boolean
 		for enemyName, amount in pack.Composition do
 			for _ = 1, amount do
 				local at = if Enemies.Defs[enemyName].Boss
-					then bossSpawn.CFrame + Vector3.new(0, 6, 0)
+					then CFrame.new(
+						ArenaLayout.bossSpawnForWave(currentLayoutWave).x,
+						ArenaLayout.bossSpawnY(
+							assert(EnemyFamilies.rigHeight(currentStage.Family, enemyName))
+						),
+						ArenaLayout.bossSpawnForWave(currentLayoutWave).z
+					)
 					else if onboardingPack
 						then firstPackSpawnCFrame() or portals[1]
 						else portals[portalIndex] * CFrame.new(
@@ -684,8 +695,11 @@ local function runWave(wave: number): boolean
 		while pendingSpawns > 0 do
 			RunService.Heartbeat:Wait()
 		end
+		if packIndex == #wavePacks then
+			break -- no pulse gap after the last pack (R2 review)
+		end
 		local spawnDelay = Difficulty.apply(
-			{ SpawnDelay = rng:NextNumber(Config.SpawnGapMin, Config.SpawnGapMax) },
+			{ SpawnDelay = WaveTable.pulseGap(wave == currentStage.Waves) },
 			currentDifficultyId
 		).SpawnDelay :: number
 		task.wait(spawnDelay)

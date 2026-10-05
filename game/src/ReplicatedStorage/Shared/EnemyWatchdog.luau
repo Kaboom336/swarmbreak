@@ -12,6 +12,10 @@ local EnemyWatchdog = {
 	ProgressMinDistance = 35, -- slot-waiting circlers stay well inside this
 	AirborneSeconds = 4, -- f96b4f8: a Walker sat in Freefall on top of the boss gate
 	MaxRespawns = 3, -- e38b458: a Tank looped Hive gate -> stuck -> Hive gate for 8 minutes
+	BossOffFloorSeconds = 2,
+	BossMaxHeightAboveFloor = 15,
+	BossNoDamageSeconds = 10,
+	BossPlayerRange = 80,
 }
 
 export type Verdict = "Ok" | "Forget" | "Kill" | "Respawn"
@@ -64,6 +68,38 @@ function EnemyWatchdog.nextAirborne(previous: number, airborne: boolean, flying:
 		return 0
 	end
 	return previous + EnemyWatchdog.CheckSeconds
+end
+
+-- Boss recovery is intentionally pure: runtime code only samples geometry, health and range.
+function EnemyWatchdog.nextBossOffFloor(
+	previous: number,
+	onFloor: boolean,
+	heightAboveFloor: number
+): number
+	if onFloor and heightAboveFloor <= EnemyWatchdog.BossMaxHeightAboveFloor then
+		return 0
+	end
+	return previous + EnemyWatchdog.CheckSeconds
+end
+
+function EnemyWatchdog.nextBossNoDamage(
+	previous: number,
+	tookDamage: boolean,
+	playersInRange: boolean
+): number
+	if tookDamage or not playersInRange then
+		return 0
+	end
+	return previous + EnemyWatchdog.CheckSeconds
+end
+
+function EnemyWatchdog.shouldRepositionBoss(
+	offFloorSeconds: number,
+	noDamageSeconds: number,
+	playersInRange: boolean
+): boolean
+	return offFloorSeconds >= EnemyWatchdog.BossOffFloorSeconds
+		or (playersInRange and noDamageSeconds >= EnemyWatchdog.BossNoDamageSeconds)
 end
 
 export type Progress = { Best: number, Seconds: number }

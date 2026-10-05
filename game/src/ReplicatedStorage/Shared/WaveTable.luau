@@ -12,6 +12,8 @@ export type Pack = {
 
 local WaveTable = {
 	FinaleCountMultiplier = 1.6,
+	PulseGapSeconds = 3.4,
+	FinalePulseGapSeconds = 7,
 	Compositions = {
 		{ Swarmer = 16 },
 		{ Swarmer = 16, Runner = 2 },
@@ -113,8 +115,8 @@ function WaveTable.resolveStageComposition(
 	return resolved
 end
 
--- Split a composition into balanced bursts. A target size of four gives wave 1
--- exactly four packs while the bounds keep every burst between three and six.
+-- Split each wave into two to four balanced pulses. The previous size-based splitter made
+-- late waves arrive as ten or more tiny dumps, so a Reaper erased each dump immediately.
 WaveTable.BossNames = { Brute = true, Queen = true, Warden = true, Elite = true, Boss = true }
 
 function WaveTable.packs(composition: Composition): { Pack }
@@ -150,10 +152,7 @@ function WaveTable.packs(composition: Composition): { Pack }
 	if total == 0 then
 		return {}
 	end
-	local minimumPacks = math.ceil(total / 6)
-	local maximumPacks = math.max(1, math.floor(total / 3))
-	local targetPacks = math.floor(total / 4 + 0.5)
-	local packCount = math.clamp(targetPacks, minimumPacks, maximumPacks)
+	local packCount = if total == 1 then 1 else math.clamp(total, 2, 4)
 	local baseSize = math.floor(total / packCount)
 	local largerPacks = total % packCount
 	local packs: { Pack } = {}
@@ -175,6 +174,10 @@ function WaveTable.packs(composition: Composition): { Pack }
 	end
 
 	return packs
+end
+
+function WaveTable.pulseGap(finalWave: boolean): number
+	return if finalWave then WaveTable.FinalePulseGapSeconds else WaveTable.PulseGapSeconds
 end
 
 function WaveTable.packFits(alive: number, packSize: number, maxAlive: number): boolean
@@ -228,7 +231,7 @@ function WaveTable.bossHealthBonus(name: string, wave: number): number
 	if name ~= "Brute" then
 		return 1
 	end
-	return if wave >= 10 then 1.35 else 1.08
+	return if wave >= 10 then 1.35 else 1.06
 end
 
 return WaveTable

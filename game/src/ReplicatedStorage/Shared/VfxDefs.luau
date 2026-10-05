@@ -31,10 +31,14 @@ VfxDefs.EmitBudgetPerSecond = 600 -- placeholder mobile budget
 VfxDefs.MaxLiveParts = 60
 VfxDefs.LowQualityParticleMultiplier = 0.5
 VfxDefs.DeathBurstSeconds = 0.3
-VfxDefs.DeathRing = { StartRadius = 0.5, EndRadius = 6, Seconds = 0.18 }
-VfxDefs.DeathShardCount = 10
-VfxDefs.HitStreakCount = 4
+VfxDefs.DeathRing = { StartRadius = 0.5, EndRadius = 8, Seconds = 0.18 }
+VfxDefs.DeathFlashDiscSeconds = 0.08
+VfxDefs.KillImpactFrameSeconds = 0.05
+VfxDefs.DeathShardCount = 20
+VfxDefs.HitStreakCount = 8
 VfxDefs.HitSeconds = 0.1
+VfxDefs.ScytheSlashSeconds = 0.12
+VfxDefs.ScytheArcStuds = 10
 VfxDefs.MuzzleFlashSeconds = 0.06
 VfxDefs.TrailSeconds = 0.15
 VfxDefs.UltimateBurstSeconds = 0.3
@@ -52,7 +56,7 @@ local Definitions: { [string]: Definition } = {
 			{ Time = 0.08, Value = 0 },
 			{ Time = 1, Value = 1 },
 		},
-		Size = { { Time = 0, Value = 0.35 }, { Time = 1, Value = 0 } },
+		Size = { { Time = 0, Value = 0.7 }, { Time = 1, Value = 0 } },
 		Lifetime = { 0.08, 0.1 },
 		Speed = { 16, 24 },
 		Spread = { 8, 8 },
@@ -60,7 +64,7 @@ local Definitions: { [string]: Definition } = {
 		Drag = 4,
 		LightEmission = 1,
 		Rate = 0,
-		EmitCount = 4,
+		EmitCount = 8,
 		MaxTriggersPerSecond = 20,
 		PoolSize = 16,
 	},
@@ -100,7 +104,7 @@ local Definitions: { [string]: Definition } = {
 		Drag = 2,
 		LightEmission = 1,
 		Rate = 0,
-		EmitCount = 10,
+		EmitCount = 20,
 		MaxTriggersPerSecond = 3,
 		PoolSize = 6,
 	},
@@ -210,6 +214,15 @@ function VfxDefs.particleCount(count: number, lowQuality: boolean): number
 		1,
 		math.floor(count * (if lowQuality then VfxDefs.LowQualityParticleMultiplier else 1))
 	)
+end
+
+function VfxDefs.deathRingRadius(enemyType: string?, enemySize: number): number
+	local large = enemyType == "Tank"
+		or enemyType == "Brute"
+		or enemyType == "Queen"
+		or enemyType == "Warden"
+	local minimum = if large then 16 else VfxDefs.DeathRing.EndRadius
+	return math.max(minimum, enemySize * 0.65)
 end
 
 return VfxDefs
