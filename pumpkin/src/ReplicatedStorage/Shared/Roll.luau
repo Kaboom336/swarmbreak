@@ -41,10 +41,16 @@ function Roll.isZoneUnlocked(totalWins: number, zone: string | Zone): boolean
 	return resolved ~= nil and math.max(0, totalWins) >= resolved.RequiredWins
 end
 
-function Roll.winsFor(wallsBroken: number, zone: string | Zone): number
+function Roll.sizeFactor(size: number): number
+	return math.max(1, math.max(0, size) ^ Config.WinSizeExponent)
+end
+
+function Roll.winsFor(wallsBroken: number, zone: string | Zone, size: number?): number
 	local resolved = Roll.getZone(zone)
 	assert(resolved, "unknown zone")
-	return math.max(0, math.floor(wallsBroken)) * resolved.WinMultiplier
+	return math.floor(
+		math.max(0, math.floor(wallsBroken)) * resolved.WinMultiplier * Roll.sizeFactor(size or 0)
+	)
 end
 
 function Roll.simulate(size: number, zone: string | Zone, physicalCount: number?): Result
@@ -73,7 +79,7 @@ function Roll.simulate(size: number, zone: string | Zone, physicalCount: number?
 		physicalWallsBroken = physicalWallsBroken,
 		bonusWalls = bonusWalls,
 		distance = wallsReached * Config.WallSpacing,
-		wins = Roll.winsFor(broken, resolved),
+		wins = Roll.winsFor(broken, resolved, size),
 		stoppedAtWall = stoppedAtWall,
 	}
 end

@@ -45,8 +45,19 @@ end)
 test("simulated wins include physical and bonus walls for every zone", function()
 	for _, zone in Config.Zones do
 		local result = Roll.simulate(1_200_000, zone, 10)
-		eq(result.wins, 25 * zone.WinMultiplier, zone.Name .. " wins")
+		eq(
+			result.wins,
+			math.floor(25 * zone.WinMultiplier * 1_200_000 ^ Config.WinSizeExponent),
+			zone.Name .. " wins"
+		)
 	end
+end)
+
+test("wins scale with the rolled size", function()
+	eq(Roll.simulate(10, "PumpkinPatch", 10).wins, 1, "size 10 wins")
+	eq(Roll.simulate(1_000, "PumpkinPatch", 10).wins, 56, "size 1K wins")
+	eq(Roll.simulate(1_200_000, "PumpkinPatch", 10).wins, 827, "size 1.2M wins")
+	eq(Roll.simulate(25, "PumpkinPatch", 10).wins, 4, "size 25 wins")
 end)
 
 test("wall health follows the configured exponential curve", function()
@@ -59,7 +70,7 @@ test("wall health follows the configured exponential curve", function()
 	)
 end)
 
-test("wins use walls broken times the zone multiplier", function()
+test("base wins use walls broken times the zone multiplier", function()
 	eq(Roll.winsFor(4, "PumpkinPatch"), 4, "patch wins")
 	eq(Roll.winsFor(4, "HauntedForest"), 12, "forest wins")
 	eq(Roll.winsFor(4, "Graveyard"), 40, "graveyard wins")
