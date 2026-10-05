@@ -176,3 +176,19 @@ Done when: the gate is green, with specs for the contrast scan, Format.abbrev an
 5. **Tutorial banner.** Show it only until the first completed roll. The server sets TutorialDone on the first roll, and the banner, arrow and grow arrow hide when TutorialDone is true, whatever the Size. Spec the state function: (size, tutorialDone) → banner text or nil.
 
 Done when: the gate is green with the new specs (bonus walls, chip layout margin, tutorial state). testcmd: cd pumpkin && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
+
+## Re-judge at 21459cf (Play, 12:01Z)
+- **Pass:** the tutorial clears after the first paying roll; chips are hidden at ×1.0 and sit as small pills; the camera returns behind the player; the free egg prompt works.
+- **Fixed directly in 2f26c46:** chip text was still purple. The cause was the UIGradient in `decorate()`, which tints text as well as the fill, so decorated text objects now get a flat fill.
+- **Open:** a 1.2M roll pays only +25 Wins; the roll camera is too close at big sizes.
+
+## Codex task Q2-E: payout that scales with size, and the roll camera (queue next)
+1. **Payout curve.**
+   - Wins = floor(wallsBroken × zone WinMultiplier × sizeFactor), with sizeFactor = max(1, size ^ Config.WinSizeExponent) and a starting exponent of 0.25. That gives about 4 Wins at size 25, about 84 at 1K and about 800 at 1.2M in the Patch.
+   - Add a pure `Economy.simulate(minutes, clicksPerSecond)` that plays the loop (click, grow, roll at the best size, move zone when unlocked, rebirth when affordable), using Config's real numbers with no pets and no passes.
+   - Tune WinSizeExponent and zone RequiredWins so that at 5 clicks per second, Forest unlocks in 2-4 minutes, the first rebirth comes in 8-15 minutes and Graveyard in 20-40 minutes. Spec these ranges.
+   - The roll preview and the wall bar show the new wins value. Specs: wins at sizes 10, 1K and 1.2M; the pacing ranges.
+2. **Roll camera scales with the pumpkin.** During a roll, the follow offset is behind = 2.2 × VisualDiameter + 8 (minimum 20) and height = 0.55 × VisualDiameter + 6, using the same framing helper as Q2-C, which should become one shared pure function with a spec. The pumpkin must fill no more than about 40% of the screen height at 1.2M.
+3. **The bonus run is visible on the HUD.** The "BONUS +N" counter and the "+N WINS!" end toast sit at the top centre, above every other HUD element (ZIndex), and stay up for at least 1.2 s after the roll ends. Play could not capture them, so add a client debug attribute "LastRollSummary" ("walls=25 bonus=15 wins=825") that Play can read.
+
+Done when: the gate is green. testcmd: cd pumpkin && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
