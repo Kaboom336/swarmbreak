@@ -20,3 +20,18 @@
 - **Lighting:** night sky with a moon, teal/purple atmosphere, saturation +0.3. Set in `default.project.json` under Lighting.
 - **Pumpkin on the head:** it's still a sphere SpecialMesh. To use the real pumpkin mesh, set `MeshType = FileMesh`, `MeshId = rbxassetid://139105509213577` and `TextureId = rbxassetid://78839540616611`. Same IDs for the roll pumpkin in Roll.client.
 - **Art:** `art/thumbnail-1920x1080.png`, `art/icon-512.png`. Screenshots are `art/map-*.jpg` and `art/play-*.jpg`.
+
+## Q1-B daylight pass (2026-10-05)
+- **Walls** are themed MeshParts, keeping the `Wall_n` names, Health attributes and SurfaceGui labels:
+  - Patch alternates hay bales and pumpkin stacks;
+  - Forest is log piles, Graveyard is tombstone walls, Castle is candy-brick walls.
+  - Each wall is a single BasePart, 34 × 11 × 6 studs, so `LocalTransparencyModifier` still hides it in Roll.client.
+- **Ground:** `Valley` is now `Ground`, a 4000 × 4000 grass plate, so MapFallback skips its own.
+- **Scenery:** `BackHills` holds 46 grass domes ringing the map. `Trees` holds about 490 generated autumn trees along the tracks, around the edge and down the lobby.
+- **Gates:** gate pillars and finish posts are wood.
+- **Pets:** `assets/PetModels.rbxm` maps to `ServerStorage.PetModels`.
+  - There are 15 Models named as in Config.Eggs. Each has one MeshPart `Body` (about 3 studs, unanchored, massless) as its PrimaryPart.
+  - The front faces −Z.
+  - Preview: `art/pets-15.jpg`.
+- **Icons:** `art/icons/*.png` are uploaded, and their IDs are in `Config.Icons`.
+- **Not done:** the track slope is still 0.12. Steepening it would mean re-placing every track prop.

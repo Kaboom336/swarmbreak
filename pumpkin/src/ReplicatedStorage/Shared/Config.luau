@@ -21,6 +21,17 @@ local Config = {
 	PumpkinTextureId = "rbxassetid://78839540616611",
 	-- The mesh is about 5.3 x 5 x 5.3 studs natively, so 0.19 makes its width match the diameter.
 	PumpkinMeshScale = 0.19,
+	-- HUD button icons (flat cartoon PNGs in art/icons, uploaded by Play).
+	Icons = {
+		Shop = "rbxassetid://95567883668955",
+		Pets = "rbxassetid://72975444452134",
+		Rebirth = "rbxassetid://110280334578570",
+		Codes = "rbxassetid://71276381554111",
+		Daily = "rbxassetid://71983253915063",
+		Passes = "rbxassetid://100122338049762",
+		Settings = "rbxassetid://117856754671192",
+		Star = "rbxassetid://107577320154261",
+	},
 
 	WallSpacing = 50,
 	WallBaseHealth = 10,
