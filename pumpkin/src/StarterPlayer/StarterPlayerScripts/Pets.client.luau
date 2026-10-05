@@ -505,3 +505,35 @@ RunService.RenderStepped:Connect(function(deltaTime)
 		end
 	end
 end)
+
+-- Egg prompts are shared server objects; show this player's free hatches by editing the local copy
+local function refreshHatchPrompt(prompt: ProximityPrompt)
+	local eggName = prompt:GetAttribute("EggName")
+	local cost = prompt:GetAttribute("Cost")
+	if type(eggName) ~= "string" or type(cost) ~= "number" then
+		return
+	end
+	local free = (eggName == "CandyEgg" and player:GetAttribute("FreeCandyHatch") == true)
+		or (
+			eggName == "SpookyEgg"
+			and ((player:GetAttribute("FreeSpookyHatches") :: number?) or 0) > 0
+		)
+	prompt.ActionText = if free then "Hatch - FREE!" else string.format("Hatch - %d Wins", cost)
+end
+
+local function refreshHatchPrompts()
+	for _, descendant in workspace:GetDescendants() do
+		if descendant:IsA("ProximityPrompt") and descendant.Name == "HatchPrompt" then
+			refreshHatchPrompt(descendant)
+		end
+	end
+end
+
+workspace.DescendantAdded:Connect(function(descendant)
+	if descendant:IsA("ProximityPrompt") and descendant.Name == "HatchPrompt" then
+		task.defer(refreshHatchPrompt, descendant)
+	end
+end)
+player:GetAttributeChangedSignal("FreeCandyHatch"):Connect(refreshHatchPrompts)
+player:GetAttributeChangedSignal("FreeSpookyHatches"):Connect(refreshHatchPrompts)
+refreshHatchPrompts()

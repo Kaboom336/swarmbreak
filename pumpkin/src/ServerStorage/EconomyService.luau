@@ -75,6 +75,8 @@ local function stateFor(player: Player, profile: any): any
 end
 
 local function publish(player: Player, profile: any)
+	player:SetAttribute("FreeCandyHatch", not profile.FreeCandyHatchUsed)
+	player:SetAttribute("FreeSpookyHatches", profile.FreeSpookyHatches)
 	player:SetAttribute("DoubleSize", profile.DoubleSize)
 	player:SetAttribute("AutoClick", profile.AutoClick)
 	player:SetAttribute("DoubleWins", profile.DoubleWins)
@@ -119,8 +121,12 @@ local function grantStarterPack(profile: any): boolean
 	local pet = Pets.roll("CandyEgg", function()
 		return 0
 	end)
-	if not pet or not Pets.canAdd(profile.Pets, 1, profile.ExpandedPetStorage) then
-		return false
+	-- Paid: always grant, even past the inventory cap, or the receipt stays pending forever
+	if not pet then
+		addWins(profile, Config.StarterPackWins)
+		profile.LuckyUntil = math.max(os.time(), profile.LuckyUntil)
+			+ Config.LuckyPotionSeconds * Config.StarterPackLuckyPotions
+		return true
 	end
 	local epic = Pets.findEgg("CandyEgg").Pets.Epic
 	pet.id = HttpService:GenerateGUID(false)

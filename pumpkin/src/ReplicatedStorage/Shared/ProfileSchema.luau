@@ -121,7 +121,8 @@ function ProfileSchema.fromStored(stored: any): Profile
 	profile.ExpandedPetStorage = source.ExpandedPetStorage == true
 	profile.FreeCandyHatchUsed = source.FreeCandyHatchUsed == true
 	profile.StarterGiftClaimed = source.StarterGiftClaimed == true
-	profile.PlaytimeGiftClaims = copyMap(source.PlaytimeGiftClaims) :: any
+	-- Playtime gifts follow session time, so claims reset every join
+	profile.PlaytimeGiftClaims = {}
 	profile.DiscoveredPets = copyMap(source.DiscoveredPets) :: any
 	for _, pet in profile.Pets do
 		if type(pet) == "table" and type(pet.name) == "string" then

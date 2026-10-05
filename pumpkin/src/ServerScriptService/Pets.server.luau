@@ -58,6 +58,8 @@ local function sendState(player: Player, message: string?)
 	end
 	player:SetAttribute("PetMultiplier", Pets.multiplierSum(profile.Pets, profile.EquippedPetIds))
 	player:SetAttribute("IndexMultiplier", PetIndex.sizeMultiplier(profile.DiscoveredPets))
+	player:SetAttribute("FreeCandyHatch", not profile.FreeCandyHatchUsed)
+	player:SetAttribute("FreeSpookyHatches", profile.FreeSpookyHatches)
 	petState:FireClient(player, {
 		pets = profile.Pets,
 		equippedPetIds = profile.EquippedPetIds,
@@ -320,6 +322,8 @@ local function attachPrompt(instance: Instance)
 	local egg = Pets.findEgg(eggName)
 	prompt.ActionText = string.format("Hatch - %d Wins", egg.Cost)
 	prompt.ObjectText = egg.DisplayName
+	prompt:SetAttribute("EggName", eggName)
+	prompt:SetAttribute("Cost", egg.Cost)
 	promptConnections[prompt] = prompt.Triggered:Connect(function(player)
 		hatch(player, eggName)
 	end)
