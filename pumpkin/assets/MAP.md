@@ -35,3 +35,8 @@
   - Preview: `art/pets-15.jpg`.
 - **Icons:** `art/icons/*.png` are uploaded, and their IDs are in `Config.Icons`.
 - **Not done:** the track slope is still 0.12. Steepening it would mean re-placing every track prop.
+- **Slope pass:** tracks now drop 0.25 (it was 0.12), pivoting at x = 277.
+  - The lobby, gates and start pads sit 36 studs higher. `Ground` and `BackHills` sit 26 studs lower.
+  - `Skirts` holds a grass wedge that fills under the hills, stepped side slopes and lobby slopes, so no slab edge or void shows.
+  - Track floors and stripes were lifted 0.7, so the road sits above the hill top.
+- **Thumbnail v2:** `art/thumbnail-v2-1920x1080.png`. It's an illustrated Studio scene: a generated cheering avatar, the giant glowing pumpkin smashing a hay wall, and "+1 → +1M / GROW & SMASH!". The icon is `art/icon-v2-512.png`.
