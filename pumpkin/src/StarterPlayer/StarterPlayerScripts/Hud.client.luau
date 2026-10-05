@@ -75,10 +75,15 @@ local function decorate(guiObject: GuiObject, topColor: Color3, bottomColor: Col
 	stroke.Thickness = 3
 	stroke.Parent = guiObject
 
-	local gradient = Instance.new("UIGradient")
-	gradient.Color = ColorSequence.new(topColor, bottomColor)
-	gradient.Rotation = 90
-	gradient.Parent = guiObject
+	if guiObject:IsA("TextLabel") or guiObject:IsA("TextButton") or guiObject:IsA("TextBox") then
+		-- A UIGradient tints the text too (white text turns purple), so text objects get a flat fill
+		guiObject.BackgroundColor3 = topColor:Lerp(bottomColor, 0.4)
+	else
+		local gradient = Instance.new("UIGradient")
+		gradient.Color = ColorSequence.new(topColor, bottomColor)
+		gradient.Rotation = 90
+		gradient.Parent = guiObject
+	end
 
 	local highlight = Instance.new("Frame")
 	highlight.Name = "TopHighlight"
