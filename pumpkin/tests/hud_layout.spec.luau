@@ -101,3 +101,23 @@ test("multiplier chips stay visible on a narrow portrait screen", function()
 	eq(HudLayout.overlaps(chips, layout.menu), false, "chips clear of the menu")
 	eq(HudLayout.overlaps(chips, layout.wallProgress), false, "chips clear of the wall bar")
 end)
+
+for _, viewport in
+	{
+		{ width = 667, height = 375, name = "mobile landscape" },
+		{ width = 1399, height = 1080, name = "Studio desktop" },
+	}
+do
+	test("ride controls stay clear at " .. viewport.name, function()
+		local layout = HudLayout.compute(viewport.width, viewport.height, "ride")
+		for name, control in { left = layout.steerLeft, right = layout.steerRight } do
+			assertInside(control, viewport.width, viewport.height, "steer " .. name)
+			eq(control.width, 72, "steer width")
+			eq(control.height, 72, "steer height")
+			eq(HudLayout.overlaps(control, layout.stats), false, "steer clears stats")
+			eq(HudLayout.overlaps(control, layout.distanceMeter), false, "steer clears meter")
+			eq(HudLayout.overlaps(control, layout.zone), false, "steer clears zone")
+		end
+		eq(HudLayout.overlaps(layout.steerLeft, layout.steerRight), false, "steer buttons")
+	end)
+end

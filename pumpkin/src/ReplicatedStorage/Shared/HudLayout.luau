@@ -14,6 +14,8 @@ export type Layout = {
 	zone: Rect,
 	tutorial: Rect,
 	growArrow: Rect,
+	steerLeft: Rect,
+	steerRight: Rect,
 	mobile: boolean,
 }
 
@@ -29,7 +31,7 @@ local function rect(x: number, y: number, width: number, height: number): Rect
 	return { x = x, y = y, width = width, height = height }
 end
 
-function HudLayout.compute(viewportWidth: number, viewportHeight: number): Layout
+function HudLayout.compute(viewportWidth: number, viewportHeight: number, variant: string?): Layout
 	assert(viewportWidth > 0 and viewportHeight > 0, "viewport must be positive")
 	local mobile = viewportWidth <= 800 or viewportHeight <= 500
 	local margin = if mobile then 8 else 18
@@ -114,6 +116,19 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number): Layou
 		if mobile then 36 else 40
 	)
 	local growArrow = rect(math.floor((viewportWidth - 48) / 2), wallProgress.y - 44, 48, 40)
+	local steerSize = 72
+	local steerMargin = 16
+	local steerLeft =
+		rect(steerMargin, viewportHeight - steerMargin - steerSize, steerSize, steerSize)
+	local steerRight = rect(
+		viewportWidth - steerMargin - steerSize,
+		viewportHeight - steerMargin - steerSize,
+		steerSize,
+		steerSize
+	)
+	if variant ~= nil then
+		assert(variant == "ride", "unknown HUD variant")
+	end
 
 	return {
 		stats = stats,
@@ -127,6 +142,8 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number): Layou
 		zone = zone,
 		tutorial = tutorial,
 		growArrow = growArrow,
+		steerLeft = steerLeft,
+		steerRight = steerRight,
 		mobile = mobile,
 	}
 end

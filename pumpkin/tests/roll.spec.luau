@@ -90,13 +90,12 @@ test("zone unlocks use the exact configured total-wins thresholds", function()
 	end
 end)
 
-test("roll duration uses size-based speed within playback bounds", function()
+test("roll duration uses the playable ride curve", function()
 	local slow = Roll.duration(500, 10, 0)
 	local fast = Roll.duration(1_250, 1_200_000, 15)
-	eq(slow <= Config.RollMaxDuration, true, "maximum duration")
-	eq(fast >= Config.RollMinDuration, true, "minimum duration")
-	eq(fast < slow, true, "larger pumpkin rolls faster")
-	eq(fast <= Config.RollMaxDuration + Config.BonusZoneMaxSeconds, true, "bonus duration bound")
+	eq(slow >= 7 and slow <= 10, true, "physical duration bound")
+	eq(fast > slow, true, "larger pumpkin gets a longer playable ride")
+	eq(fast <= 10 + Config.BonusZoneMaxSeconds, true, "bonus duration bound")
 end)
 
 test("a roll past the track ends at its last bonus wall", function()

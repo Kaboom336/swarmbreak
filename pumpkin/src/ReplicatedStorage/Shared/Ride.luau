@@ -30,29 +30,56 @@ local function makeRandom(seed: number): () -> number
 	end
 end
 
-function Ride.layout(seed: number, count: number?): { BonusTarget }
+function Ride.physicalDuration(size: number): number
+	return math.clamp(7 + 0.5 * math.log10(math.max(0, size) + 1), 7, 10)
+end
+
+function Ride.bonusDuration(bonusWalls: number): number
+	local count = math.clamp(math.floor(bonusWalls), 0, Config.MaxBonusWalls)
+	return Config.BonusZoneMaxSeconds * count / Config.MaxBonusWalls
+end
+
+function Ride.duration(size: number, bonusWalls: number): number
+	return Ride.physicalDuration(size) + Ride.bonusDuration(bonusWalls)
+end
+
+function Ride.layout(seed: number, duration: number?, count: number?): { BonusTarget }
 	local targetCount = count or Config.RideBonusTargetCount
 	assert(targetCount >= 0 and targetCount % 1 == 0, "target count must be a non-negative integer")
+	local rideDuration = duration or 8
+	assert(rideDuration > 0, "duration must be positive")
 	local random = makeRandom(seed)
+	local kinds: { BonusKind } = { "SpeedPad" }
+	local goldCount = 0
+	for _ = 2, targetCount do
+		local roll = random()
+		local kind: BonusKind
+		if roll < 0.22 and goldCount < 2 then
+			kind = "GoldPumpkin"
+			goldCount += 1
+		else
+			kind = "Candy"
+		end
+		table.insert(kinds, kind)
+	end
+	for index = #kinds, 2, -1 do
+		local swapIndex = math.floor(random() * index) + 1
+		kinds[index], kinds[swapIndex] = kinds[swapIndex], kinds[index]
+	end
+
 	local targets = {}
 	for index = 1, targetCount do
 		local lane = math.floor(random() * 3) - 1
-		local kindRoll = random()
-		local kind: BonusKind
-		if kindRoll < 0.5 then
-			kind = "Candy"
-		elseif kindRoll < 0.72 then
-			kind = "GoldPumpkin"
-		else
-			kind = "SpeedPad"
-		end
-		local spacing = 0.68 / math.max(1, targetCount)
-		local time = 0.16 + (index - 0.5) * spacing + (random() - 0.5) * spacing * 0.35
+		local startTime = rideDuration * 0.15
+		local endTime = rideDuration * 0.85
+		local spacing = if targetCount > 1 then (endTime - startTime) / (targetCount - 1) else 0
+		local jitter = if index == 1 or index == targetCount then 0 else (random() - 0.5) * 0.1
+		local time = startTime + (index - 1) * spacing + jitter
 		table.insert(targets, {
 			id = index,
-			kind = kind,
+			kind = kinds[index],
 			lane = lane,
-			time = math.clamp(time, 0.12, 0.88),
+			time = time,
 		})
 	end
 	return targets
@@ -70,10 +97,27 @@ function Ride.elapsedForProgress(progress: number, duration: number): number
 	return math.clamp(progress, 0, 1) ^ (1 / Config.RideSlopeAcceleration) * math.max(0, duration)
 end
 
+function Ride.distanceAtTime(
+	elapsed: number,
+	physicalDuration: number,
+	physicalDistance: number,
+	bonusDuration: number,
+	bonusDistance: number
+): number
+	if elapsed <= physicalDuration then
+		return physicalDistance * Ride.progress(elapsed, physicalDuration)
+	end
+	if bonusDuration <= 0 then
+		return physicalDistance
+	end
+	local bonusAlpha = math.clamp((elapsed - physicalDuration) / bonusDuration, 0, 1)
+	return physicalDistance + bonusDistance * bonusAlpha
+end
+
 function Ride.validatePickup(
 	target: BonusTarget?,
 	elapsed: number,
-	duration: number,
+	_duration: number,
 	lane: number,
 	claimed: { [number]: boolean },
 	claimedCount: number
@@ -90,14 +134,14 @@ function Ride.validatePickup(
 	if math.abs(lane - target.lane) > Config.RidePickupLaneTolerance then
 		return false, "lane"
 	end
-	local expected = Ride.elapsedForProgress(target.time, duration)
+	local expected = target.time
 	if math.abs(elapsed - expected) > Config.RidePickupTimeTolerance then
 		return false, "time"
 	end
 	return true, nil
 end
 
-function Ride.winsWithBonuses(baseWins: number, kinds: { BonusKind }): number
+local function bonusMultiplier(kinds: { BonusKind }): number
 	local candy = 0
 	local gold = 0
 	for _, kind in kinds do
@@ -108,10 +152,19 @@ function Ride.winsWithBonuses(baseWins: number, kinds: { BonusKind }): number
 		end
 	end
 	-- Bonuses add up instead of compounding, so 6 golds give x7, not x64
-	local multiplier = 1
-		+ candy * Config.RideCandyWinBonus
-		+ gold * (Config.RideGoldWinMultiplier - 1)
-	return math.floor(math.max(0, baseWins) * multiplier)
+	return 1 + candy * Config.RideCandyWinBonus + gold * (Config.RideGoldWinMultiplier - 1)
+end
+
+function Ride.winsWithBonuses(baseWins: number, kinds: { BonusKind }): number
+	return math.floor(math.max(0, baseWins) * bonusMultiplier(kinds))
+end
+
+function Ride.finalWins(baseWins: number, kinds: { BonusKind }, multipliers: { number }): number
+	local wins = math.max(0, baseWins) * bonusMultiplier(kinds)
+	for _, multiplier in multipliers do
+		wins *= math.max(0, multiplier)
+	end
+	return math.floor(wins)
 end
 
 function Ride.comboText(wallsBroken: number): string?

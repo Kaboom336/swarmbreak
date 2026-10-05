@@ -1053,6 +1053,12 @@ startArrowText.Parent = startArrow
 
 local function updateTutorial(size: number)
 	local rolling = player:GetAttribute("Rolling") == true
+	growButton.Visible = not rolling
+	local growShadow = screenGui:FindFirstChild("GrowShadow")
+	if growShadow and growShadow:IsA("GuiObject") then
+		growShadow.Visible = not rolling
+	end
+	multiplierPanel.Visible = not rolling
 	wallPanel.Visible = not rolling
 	local wallShadow = screenGui:FindFirstChild("WallProgressShadow")
 	if wallShadow and wallShadow:IsA("GuiObject") then

@@ -97,6 +97,21 @@ comboCounter.Parent = effectGui
 local comboScale = Instance.new("UIScale")
 comboScale.Parent = comboCounter
 
+local steerHint = Instance.new("TextLabel")
+steerHint.Name = "SteerHint"
+steerHint.AnchorPoint = Vector2.new(0.5, 0.5)
+steerHint.BackgroundTransparency = 1
+steerHint.Font = Enum.Font.GothamBlack
+steerHint.Position = UDim2.fromScale(0.5, 0.72)
+steerHint.Size = UDim2.fromOffset(360, 80)
+steerHint.TextColor3 = Color3.new(1, 1, 1)
+steerHint.TextSize = 30
+steerHint.TextStrokeColor3 = TEAL
+steerHint.TextStrokeTransparency = 0
+steerHint.Visible = false
+steerHint.ZIndex = 100
+steerHint.Parent = effectGui
+
 local function applyDistanceMeterLayout()
 	local layout = HudLayout.compute(effectGui.AbsoluteSize.X, effectGui.AbsoluteSize.Y)
 	local bounds = layout.distanceMeter
@@ -397,11 +412,27 @@ local function findPart(name: string): BasePart?
 end
 
 local activeControl: any = nil
-local completedWins: { [number]: number } = {}
+local completedResults: { [number]: { wins: number, pickups: number } } = {}
+
+local function setTargetVisible(part: BasePart, visible: boolean)
+	part.Transparency = if visible
+		then (part:GetAttribute("VisibleTransparency") :: number?) or 0
+		else 1
+	for _, descendant in part:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			descendant.Transparency = if visible
+				then (descendant:GetAttribute("VisibleTransparency") :: number?) or 0
+				else 1
+		elseif descendant:IsA("BillboardGui") then
+			descendant.Enabled = visible
+		end
+	end
+end
 
 local function createBonusTargets(
 	start: BasePart,
-	distance: number,
+	physicalDistance: number,
+	physicalDuration: number,
 	seed: number
 ): (Folder, { [number]: BasePart })
 	local folder = Instance.new("Folder")
@@ -411,7 +442,7 @@ local function createBonusTargets(
 	local direction = Vector3.new(start.CFrame.LookVector.X, -0.06, start.CFrame.LookVector.Z).Unit
 	local horizontal = Vector3.new(direction.X, 0, direction.Z).Unit
 	local right = Vector3.new(-horizontal.Z, 0, horizontal.X)
-	for _, target in Ride.layout(seed) do
+	for _, target in Ride.layout(seed, physicalDuration) do
 		local part = Instance.new("Part")
 		part.Name = target.kind .. "_" .. target.id
 		part.Anchored = true
@@ -420,7 +451,7 @@ local function createBonusTargets(
 		part.CanTouch = false
 		part.Material = Enum.Material.SmoothPlastic
 		part.Position = start.Position
-			+ direction * (distance * target.time)
+			+ direction * (physicalDistance * Ride.progress(target.time, physicalDuration))
 			+ right * (target.lane * Config.RideLaneStuds)
 			+ Vector3.new(0, 2, 0)
 		if target.kind == "Candy" then
@@ -439,6 +470,51 @@ local function createBonusTargets(
 		end
 		part.Parent = folder
 		parts[target.id] = part
+
+		local beacon = Instance.new("Part")
+		beacon.Name = "Beacon"
+		beacon.Anchored = true
+		beacon.CanCollide = false
+		beacon.CanQuery = false
+		beacon.CanTouch = false
+		beacon.Color = part.Color
+		beacon.Material = Enum.Material.Neon
+		beacon.Size = Vector3.new(0.45, 14, 0.45)
+		beacon.CFrame = part.CFrame + Vector3.new(0, 8, 0)
+		beacon.Transparency = 0.2
+		beacon.Parent = part
+
+		local icon = Instance.new("BillboardGui")
+		icon.Name = "TargetIcon"
+		icon.AlwaysOnTop = true
+		icon.LightInfluence = 0
+		icon.Size = UDim2.fromOffset(54, 54)
+		icon.StudsOffsetWorldSpace = Vector3.new(0, 15, 0)
+		icon.Parent = part
+		local image = Instance.new("ImageLabel")
+		image.BackgroundTransparency = 1
+		image.Image = Config.Icons.Star
+		image.ImageColor3 = part.Color
+		image.Size = UDim2.fromScale(1, 1)
+		image.Parent = icon
+
+		local laneMarker = Instance.new("Part")
+		laneMarker.Name = "LaneMarker"
+		laneMarker.Anchored = true
+		laneMarker.CanCollide = false
+		laneMarker.CanQuery = false
+		laneMarker.CanTouch = false
+		laneMarker.Color = part.Color
+		laneMarker.Material = Enum.Material.Neon
+		laneMarker.Size = Vector3.new(6, 0.12, 18)
+		local markerPosition = part.Position - Vector3.new(0, 2, 0)
+		laneMarker.CFrame = CFrame.lookAt(markerPosition, markerPosition + horizontal)
+		laneMarker.Transparency = 0.45
+		laneMarker.Parent = part
+		part:SetAttribute("VisibleTransparency", part.Transparency)
+		beacon:SetAttribute("VisibleTransparency", beacon.Transparency)
+		laneMarker:SetAttribute("VisibleTransparency", laneMarker.Transparency)
+		setTargetVisible(part, false)
 	end
 	return folder, parts
 end
@@ -478,8 +554,14 @@ local function bindSteering()
 	)
 	ContextActionService:SetTitle("PumpkinSteerLeft", "<")
 	ContextActionService:SetTitle("PumpkinSteerRight", ">")
-	ContextActionService:SetPosition("PumpkinSteerLeft", UDim2.new(0, 32, 1, -150))
-	ContextActionService:SetPosition("PumpkinSteerRight", UDim2.new(0, 122, 1, -150))
+	ContextActionService:SetPosition("PumpkinSteerLeft", UDim2.new(0, 16, 1, -88))
+	ContextActionService:SetPosition("PumpkinSteerRight", UDim2.new(1, -88, 1, -88))
+	for _, actionName in { "PumpkinSteerLeft", "PumpkinSteerRight" } do
+		local button = ContextActionService:GetButton(actionName)
+		if button then
+			button.Size = UDim2.fromOffset(72, 72)
+		end
+	end
 end
 
 local function unbindSteering()
@@ -494,17 +576,20 @@ UserInputService.InputChanged:Connect(function(input: InputObject)
 end)
 
 rollControl.OnClientEvent:Connect(
-	function(action: string, token: number, value: number, kind: string?)
+	function(action: string, token: number, value: number, detail: any)
 		if action == "Complete" then
-			completedWins[token] = value
+			completedResults[token] = { wins = value, pickups = tonumber(detail) or 0 }
 		elseif action == "PickupAccepted" and activeControl and activeControl.token == token then
 			local part = activeControl.targetParts[value]
 			if part then
-				part.Transparency = 1
+				setTargetVisible(part, false)
 			end
-			if kind == "SpeedPad" then
-				activeControl.speedBoostUntil = os.clock() + 1.1
+			if detail == "SpeedPad" then
+				activeControl.speedBoostUntil = os.clock() + Config.RideSpeedPadSeconds
+				activeControl.combo += 1
+				showCombo(activeControl.combo)
 			end
+			activeControl.pickups += 1
 		end
 	end
 )
@@ -516,7 +601,7 @@ local function playRoll(
 	wallsBroken: number,
 	distance: number,
 	wins: number,
-	duration: number,
+	_duration: number,
 	physicalCount: number,
 	bonusWalls: number,
 	token: number,
@@ -531,6 +616,10 @@ local function playRoll(
 	end
 
 	local diameter = Config.PumpkinBaseDiameter * Grow.pumpkinScale(size)
+	local physicalDuration = Ride.physicalDuration(size)
+	local bonusDuration = Ride.bonusDuration(bonusWalls)
+	local bonusDistance = bonusWalls * Config.WallSpacing
+	local physicalDistance = math.max(0, distance - bonusDistance)
 	local pumpkin = workspace:WaitForChild("RollingPumpkin_" .. userId, 3)
 	if not pumpkin or not pumpkin:IsA("BasePart") then
 		return
@@ -543,12 +632,6 @@ local function playRoll(
 	smashSound.Parent = pumpkin
 
 	local isLocalRoll = userId == player.UserId
-	if isLocalRoll then
-		player:SetAttribute(
-			"LastRollSummary",
-			string.format("walls=%d bonus=%d wins=%d", wallsBroken, bonusWalls, wins)
-		)
-	end
 	local camera = workspace.CurrentCamera
 	local previousSubject = if camera then camera.CameraSubject else nil
 	local previousType = if camera then camera.CameraType else Enum.CameraType.Custom
@@ -561,7 +644,8 @@ local function playRoll(
 	local hitStopUntil = 0
 	local heldCamera: CFrame? = nil
 	if isLocalRoll and camera then
-		local folder, targetParts = createBonusTargets(start, distance, seed)
+		local folder, targetParts =
+			createBonusTargets(start, physicalDistance, physicalDuration, seed)
 		targetFolder = folder
 		activeControl = {
 			token = token,
@@ -569,13 +653,20 @@ local function playRoll(
 			left = false,
 			right = false,
 			thumbstick = 0,
-			targets = Ride.layout(seed),
+			targets = Ride.layout(seed, physicalDuration),
 			targetParts = targetParts,
 			reported = {},
+			revealed = {},
 			speedBoostUntil = 0,
+			pickups = 0,
+			combo = 0,
 		}
 		bindSteering()
 		local framing = CameraFraming.compute(diameter, true)
+		local smoothDistance = framing.distance
+		local smoothHeight = framing.height
+		local distanceVelocity = 0
+		local heightVelocity = 0
 		camera.CameraType = Enum.CameraType.Scriptable
 		local lastControlUpdate = os.clock()
 		local lastSend = 0
@@ -599,11 +690,17 @@ local function playRoll(
 				rollControl:FireServer("Steer", token, activeControl.lane)
 			end
 			local elapsed = workspace:GetServerTimeNow() - startedAt
-			local progress = Ride.progress(elapsed, duration)
 			for _, target in activeControl.targets do
+				if not activeControl.revealed[target.id] and elapsed >= target.time - 2 then
+					activeControl.revealed[target.id] = true
+					local part = activeControl.targetParts[target.id]
+					if part then
+						setTargetVisible(part, true)
+					end
+				end
 				if
 					not activeControl.reported[target.id]
-					and math.abs(progress - target.time) <= 0.025
+					and math.abs(elapsed - target.time) <= Config.RidePickupTimeTolerance
 					and math.abs(activeControl.lane - target.lane)
 						<= Config.RidePickupLaneTolerance
 				then
@@ -612,13 +709,21 @@ local function playRoll(
 				end
 			end
 		end)
-		cameraConnection = RunService.RenderStepped:Connect(function()
+		cameraConnection = RunService.RenderStepped:Connect(function(deltaTime)
 			if os.clock() < hitStopUntil and heldCamera then
 				camera.CFrame = heldCamera
 				return
 			end
-			local behind = -start.CFrame.LookVector * framing.distance
-				+ Vector3.new(0, framing.height, 0)
+			smoothDistance, distanceVelocity = CameraFraming.springStep(
+				smoothDistance,
+				distanceVelocity,
+				framing.distance,
+				deltaTime
+			)
+			smoothHeight, heightVelocity =
+				CameraFraming.springStep(smoothHeight, heightVelocity, framing.height, deltaTime)
+			local behind = -start.CFrame.LookVector * smoothDistance
+				+ Vector3.new(0, smoothHeight, 0)
 			local shake = Vector3.zero
 			if os.clock() < shakeUntil then
 				shake = Vector3.new(math.random() - 0.5, math.random() - 0.5, 0) * shakeMagnitude
@@ -628,7 +733,8 @@ local function playRoll(
 				pumpkin.Position + Vector3.new(0, 2, 0)
 			)
 			heldCamera = camera.CFrame
-			local rideProgress = Ride.progress(workspace:GetServerTimeNow() - startedAt, duration)
+			local rideProgress =
+				Ride.progress(workspace:GetServerTimeNow() - startedAt, physicalDuration)
 			local speedFov = 8 + rideProgress * 10
 			if activeControl and os.clock() < activeControl.speedBoostUntil then
 				speedFov += 8
@@ -637,11 +743,27 @@ local function playRoll(
 		end)
 		TweenService:Create(camera, TweenInfo.new(0.3), { FieldOfView = previousFov + 8 }):Play()
 		distanceMeter.Visible = true
+		steerHint.Text = if UserInputService.KeyboardEnabled
+			then "STEER  " .. utf8.char(0x25C0) .. "  " .. utf8.char(0x25B6) .. "\nA  /  D"
+			else "STEER  " .. utf8.char(0x25C0) .. "  " .. utf8.char(0x25B6)
+		steerHint.Visible = true
+		task.delay(Config.RideGentleStartSeconds, function()
+			if activeControl and activeControl.token == token then
+				steerHint.Visible = false
+			end
+		end)
 		task.spawn(function()
 			while pumpkin.Parent do
-				local progress = Ride.progress(workspace:GetServerTimeNow() - startedAt, duration)
-				distanceMeter.Text = string.format("%d m", math.floor(distance * progress + 0.5))
-				if progress >= 1 then
+				local elapsed = workspace:GetServerTimeNow() - startedAt
+				local traveled = Ride.distanceAtTime(
+					elapsed,
+					physicalDuration,
+					physicalDistance,
+					bonusDuration,
+					bonusDistance
+				)
+				distanceMeter.Text = string.format("%d m", math.floor(traveled + 0.5))
+				if traveled >= distance then
 					break
 				end
 				RunService.RenderStepped:Wait()
@@ -659,8 +781,8 @@ local function playRoll(
 			break
 		end
 		local wallProgress =
-			math.clamp(wallIndex * Config.WallSpacing / math.max(1, distance), 0, 1)
-		local wallTime = startedAt + Ride.elapsedForProgress(wallProgress, duration)
+			math.clamp(wallIndex * Config.WallSpacing / math.max(1, physicalDistance), 0, 1)
+		local wallTime = startedAt + Ride.elapsedForProgress(wallProgress, physicalDuration)
 		while pumpkin.Parent and workspace:GetServerTimeNow() < wallTime do
 			RunService.RenderStepped:Wait()
 		end
@@ -674,8 +796,13 @@ local function playRoll(
 			if isLocalRoll then
 				hitStopUntil = os.clock() + 0.05
 				shakeUntil = os.clock() + 0.18
-				shakeMagnitude = math.min(2.4, 0.3 + wallIndex * 0.16)
-				showCombo(wallIndex)
+				shakeMagnitude = math.min(0.6, 0.2 + wallIndex * 0.04)
+				if activeControl and activeControl.token == token then
+					activeControl.combo += 1
+					showCombo(activeControl.combo)
+				else
+					showCombo(wallIndex)
+				end
 				showWallWins(wall, winsPerWall)
 				local projected = if camera
 					then camera:WorldToViewportPoint(wall.Position)
@@ -690,12 +817,6 @@ local function playRoll(
 					winsBefore + displayedWallWins
 				)
 				displayedWallWins += winsPerWall
-				if camera then
-					camera.FieldOfView = previousFov + 14
-					TweenService
-						:Create(camera, TweenInfo.new(0.2), { FieldOfView = previousFov + 8 })
-						:Play()
-				end
 			end
 			task.delay(0.8, function()
 				if wall.Parent then
@@ -711,12 +832,9 @@ local function playRoll(
 			bonusCounter.Visible = true
 		end
 		for bonusIndex = 1, bonusWalls do
-			local bonusProgress = math.clamp(
-				(physicalCount + bonusIndex) * Config.WallSpacing / math.max(1, distance),
-				0,
-				1
-			)
-			local bonusTime = startedAt + Ride.elapsedForProgress(bonusProgress, duration)
+			local bonusTime = startedAt
+				+ physicalDuration
+				+ bonusDuration * bonusIndex / math.max(1, bonusWalls)
 			while pumpkin.Parent and workspace:GetServerTimeNow() < bonusTime do
 				RunService.RenderStepped:Wait()
 			end
@@ -735,11 +853,22 @@ local function playRoll(
 
 	if isLocalRoll then
 		local resultDeadline = os.clock() + 0.75
-		while completedWins[token] == nil and os.clock() < resultDeadline do
+		while completedResults[token] == nil and os.clock() < resultDeadline do
 			task.wait()
 		end
-		local finalWins = completedWins[token] or wins
-		completedWins[token] = nil
+		local completion = completedResults[token] or { wins = wins, pickups = 0 }
+		local finalWins = completion.wins
+		completedResults[token] = nil
+		player:SetAttribute(
+			"LastRollSummary",
+			string.format(
+				"walls=%d bonus=%d pickups=%d wins=%d",
+				wallsBroken,
+				bonusWalls,
+				completion.pickups,
+				finalWins
+			)
+		)
 		showWins(finalWins)
 		-- Hide the pad's 3D signs while the end toast is up, so the two don't stack
 		local hiddenSigns: { BillboardGui } = {}
@@ -762,6 +891,7 @@ local function playRoll(
 			winsBefore
 		)
 		distanceMeter.Visible = false
+		steerHint.Visible = false
 		comboCounter.Visible = false
 		if bonusWalls > 0 then
 			local summaryGeneration = bonusSummaryGeneration
