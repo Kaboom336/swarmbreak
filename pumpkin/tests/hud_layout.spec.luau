@@ -64,3 +64,40 @@ end)
 test("multiplier chip text is near-white", function()
 	eq(HudLayout.isNearWhite(HudLayout.CHIP_TEXT_COLOR), true, "chip text contrast")
 end)
+
+for _, viewport in
+	{
+		{ width = 667, height = 375, name = "mobile landscape" },
+		{ width = 1399, height = 1080, name = "Studio desktop" },
+		{ width = 1920, height = 1080, name = "desktop" },
+	}
+do
+	test("multiplier chips keep an 8 pixel margin at " .. viewport.name, function()
+		local layout = HudLayout.compute(viewport.width, viewport.height)
+		local settings = layout.menuButtons[7]
+		local claim = layout.menuButtons[8]
+		for _, neighbor in
+			{
+				{ name = "GROW", rect = layout.grow },
+				{ name = "Settings", rect = settings },
+				{ name = "Claim", rect = claim },
+				{ name = "Starter Pack", rect = layout.starterPack },
+			}
+		do
+			eq(
+				HudLayout.hasMargin(layout.multipliers, neighbor.rect, 8),
+				true,
+				"chips need margin from " .. neighbor.name
+			)
+		end
+	end)
+end
+
+test("multiplier chips stay visible on a narrow portrait screen", function()
+	local layout = HudLayout.compute(375, 667)
+	local chips = layout.multipliers
+	eq(chips.width >= 100, true, "chip width")
+	eq(chips.x >= 0 and chips.x + chips.width <= 375, true, "chips inside width")
+	eq(HudLayout.overlaps(chips, layout.menu), false, "chips clear of the menu")
+	eq(HudLayout.overlaps(chips, layout.wallProgress), false, "chips clear of the wall bar")
+end)

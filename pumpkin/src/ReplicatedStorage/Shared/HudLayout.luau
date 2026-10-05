@@ -72,12 +72,8 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number): Layou
 	)
 	local wallWidth = if mobile then 260 else 360
 	local wallHeight = if mobile then 36 else 42
-	local wallProgress = rect(
-		math.floor((viewportWidth - wallWidth) / 2),
-		grow.y - wallHeight - 8,
-		wallWidth,
-		wallHeight
-	)
+	local wallX = math.floor((viewportWidth - wallWidth) / 2) + if mobile then 40 else 0
+	local wallProgress = rect(wallX, grow.y - wallHeight - 8, wallWidth, wallHeight)
 	local zoneWidth = if mobile then 130 else 220
 	local zoneHeight = if mobile then 76 else 92
 	local zone = rect(
@@ -86,10 +82,22 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number): Layou
 		zoneWidth,
 		zoneHeight
 	)
-	local multiplierWidth = if mobile then 174 else 180
-	local multiplierHeight = if mobile then 104 else 132
-	local multipliers =
-		rect(margin, viewportHeight - margin - multiplierHeight, multiplierWidth, multiplierHeight)
+	local multiplierHeight = if mobile then 84 else 152
+	local multipliers
+	if not mobile then
+		multipliers =
+			rect(margin, viewportHeight - margin - multiplierHeight, 150, multiplierHeight)
+	elseif wallProgress.x - (menu.x + menu.width) - 16 >= 100 then
+		multipliers = rect(
+			menu.x + menu.width + 8,
+			wallProgress.y - 8 - multiplierHeight,
+			wallProgress.x - (menu.x + menu.width) - 16,
+			multiplierHeight
+		)
+	else
+		-- Narrow (portrait) screens: no room beside the wall bar, so stack the chips under the menu grid
+		multipliers = rect(menu.x, menu.y + menu.height + 8, menu.width, multiplierHeight)
+	end
 	local starterPackWidth = 190
 	local starterPackHeight = 58
 	local starterPack = rect(
@@ -128,6 +136,17 @@ function HudLayout.overlaps(first: Rect, second: Rect): boolean
 		and second.x < first.x + first.width
 		and first.y < second.y + second.height
 		and second.y < first.y + first.height
+end
+
+function HudLayout.hasMargin(first: Rect, second: Rect, margin: number): boolean
+	assert(margin >= 0, "margin must be non-negative")
+	local expanded = rect(
+		first.x - margin,
+		first.y - margin,
+		first.width + margin * 2,
+		first.height + margin * 2
+	)
+	return not HudLayout.overlaps(expanded, second)
 end
 
 return HudLayout

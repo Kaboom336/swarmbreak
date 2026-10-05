@@ -58,6 +58,22 @@ distanceMeter.Visible = false
 distanceMeter.ZIndex = 30
 distanceMeter.Parent = effectGui
 
+local bonusCounter = Instance.new("TextLabel")
+bonusCounter.Name = "BonusCounter"
+bonusCounter.AnchorPoint = Vector2.new(0.5, 0)
+bonusCounter.BackgroundTransparency = 1
+bonusCounter.Font = Enum.Font.GothamBlack
+bonusCounter.Text = "BONUS +0"
+bonusCounter.TextColor3 = ORANGE
+bonusCounter.TextSize = 34
+bonusCounter.TextStrokeColor3 = TEAL
+bonusCounter.TextStrokeTransparency = 0
+bonusCounter.Visible = false
+bonusCounter.ZIndex = 30
+bonusCounter.Parent = effectGui
+local bonusScale = Instance.new("UIScale")
+bonusScale.Parent = bonusCounter
+
 local function applyDistanceMeterLayout()
 	local layout = HudLayout.compute(effectGui.AbsoluteSize.X, effectGui.AbsoluteSize.Y)
 	local bounds = layout.distanceMeter
@@ -65,6 +81,15 @@ local function applyDistanceMeterLayout()
 	distanceMeter.Position = UDim2.fromOffset(bounds.x, bounds.y)
 	distanceMeter.Size = UDim2.fromOffset(bounds.width, bounds.height)
 	distanceMeter.TextSize = if layout.mobile then 38 else 48
+	local toastBounds = layout.tutorial
+	winBurst.AnchorPoint = Vector2.zero
+	winBurst.Position = UDim2.fromOffset(toastBounds.x, toastBounds.y)
+	winBurst.Size = UDim2.fromOffset(toastBounds.width, toastBounds.height)
+	winBurst.TextSize = if layout.mobile then 28 else 36
+	bonusCounter.AnchorPoint = Vector2.zero
+	bonusCounter.Position = UDim2.fromOffset(toastBounds.x, toastBounds.y)
+	bonusCounter.Size = UDim2.fromOffset(toastBounds.width, toastBounds.height)
+	bonusCounter.TextSize = if layout.mobile then 26 else 34
 end
 
 applyDistanceMeterLayout()
@@ -85,6 +110,46 @@ for index = 1, 8 do
 	corner.CornerRadius = UDim.new(1, 0)
 	corner.Parent = coin
 	table.insert(coinPool, coin)
+end
+
+local bonusParticlePool = {}
+for index = 1, 8 do
+	local particle = Instance.new("Frame")
+	particle.Name = "BonusParticle" .. index
+	particle.AnchorPoint = Vector2.new(0.5, 0.5)
+	particle.BackgroundColor3 = ORANGE
+	particle.BorderSizePixel = 0
+	particle.Size = UDim2.fromOffset(9, 9)
+	particle.Visible = false
+	particle.ZIndex = 29
+	particle.Parent = effectGui
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(1, 0)
+	corner.Parent = particle
+	table.insert(bonusParticlePool, particle)
+end
+local bonusParticleCursor = 0
+
+local function burstBonusParticle()
+	bonusParticleCursor = bonusParticleCursor % #bonusParticlePool + 1
+	local particle = bonusParticlePool[bonusParticleCursor]
+	local generation = (particle:GetAttribute("Generation") :: number? or 0) + 1
+	particle:SetAttribute("Generation", generation)
+	local center = bonusCounter.AbsolutePosition + bonusCounter.AbsoluteSize * 0.5
+	particle.Position = UDim2.fromOffset(center.X + math.random(-45, 45), center.Y + 12)
+	particle.BackgroundTransparency = 0
+	particle.Visible = true
+	TweenService
+		:Create(particle, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = particle.Position - UDim2.fromOffset(0, 35),
+			BackgroundTransparency = 1,
+		})
+		:Play()
+	task.delay(0.36, function()
+		if particle:GetAttribute("Generation") == generation then
+			particle.Visible = false
+		end
+	end)
 end
 
 local debrisFolder = Instance.new("Folder")
@@ -160,17 +225,19 @@ local function showWallWins(wall: BasePart, wins: number)
 	end)
 end
 
-local function flyCoins(winsGained: number, winsBefore: number)
+local winsTickGeneration = 0
+local function flyCoins(origin: Vector2, winsGained: number, winsBefore: number)
 	local hud = playerGui:FindFirstChild("PumpkinHud")
 	local stats = if hud then hud:FindFirstChild("Stats") else nil
 	local winsLabel = if stats then stats:FindFirstChild("Wins") else nil
 	local target = if winsLabel and winsLabel:IsA("GuiObject")
 		then winsLabel.AbsolutePosition + winsLabel.AbsoluteSize * 0.5
 		else Vector2.new(effectGui.AbsoluteSize.X * 0.62, 50)
-	local center = effectGui.AbsoluteSize * 0.5
 	for index, coin in coinPool do
+		local generation = (coin:GetAttribute("Generation") :: number? or 0) + 1
+		coin:SetAttribute("Generation", generation)
 		coin.Position =
-			UDim2.fromOffset(center.X + (index - 4.5) * 12, center.Y + math.random(-24, 24))
+			UDim2.fromOffset(origin.X + (index - 4.5) * 8, origin.Y + math.random(-18, 18))
 		coin.Visible = true
 		local tween = TweenService:Create(
 			coin,
@@ -179,15 +246,22 @@ local function flyCoins(winsGained: number, winsBefore: number)
 		)
 		tween:Play()
 		tween.Completed:Connect(function()
-			coin.Visible = false
-			coin.Size = UDim2.fromOffset(22, 22)
+			if coin:GetAttribute("Generation") == generation then
+				coin.Visible = false
+				coin.Size = UDim2.fromOffset(22, 22)
+			end
 		end)
 	end
 	if winsLabel and winsLabel:IsA("TextLabel") then
 		-- Count from the total captured at roll start: the server's stats sync can land before playback ends
 		local before = winsBefore
+		winsTickGeneration += 1
+		local generation = winsTickGeneration
 		task.spawn(function()
 			for step = 1, 12 do
+				if winsTickGeneration ~= generation then
+					return
+				end
 				winsLabel.Text = "WINS\n" .. Format.abbrev(before + winsGained * step / 12)
 				task.wait(0.025)
 			end
@@ -233,7 +307,7 @@ local function showWins(wins: number)
 	if wins <= 0 then
 		return
 	end
-	winBurst.Text = "+" .. wins .. " WINS"
+	winBurst.Text = "+" .. wins .. " WINS!"
 	winBurst.TextTransparency = 0
 	winBurst.TextStrokeTransparency = 0
 	winScale.Scale = 0.55
@@ -258,7 +332,9 @@ local function playRoll(
 	wallsBroken: number,
 	distance: number,
 	wins: number,
-	duration: number
+	duration: number,
+	physicalCount: number,
+	bonusWalls: number
 )
 	local winsBefore = (player:GetAttribute("Wins") :: number?) or 0
 	local start = findPart("ZoneStart_" .. zoneName)
@@ -323,8 +399,15 @@ local function playRoll(
 	end
 
 	local reachedWalls = math.max(1, math.floor(distance / Config.WallSpacing + 0.5))
-	local segmentDuration = duration / reachedWalls
-	for wallIndex = 1, reachedWalls do
+	local physicalReached = math.min(reachedWalls, physicalCount)
+	local bonusDuration = Config.BonusZoneMaxSeconds
+		* math.clamp(bonusWalls, 0, Config.MaxBonusWalls)
+		/ Config.MaxBonusWalls
+	local physicalDuration = math.max(0, duration - bonusDuration)
+	local segmentDuration = physicalDuration / math.max(1, physicalReached)
+	local winsPerWall = math.floor(wins / math.max(1, wallsBroken))
+	local displayedWallWins = 0
+	for wallIndex = 1, physicalReached do
 		local wall = track:FindFirstChild("Wall_" .. wallIndex, true)
 		if not wall or not wall:IsA("BasePart") then
 			break
@@ -346,7 +429,20 @@ local function playRoll(
 			end
 			if isLocalRoll then
 				shakeCamera()
-				showWallWins(wall, math.floor(wins / math.max(1, wallsBroken)))
+				showWallWins(wall, winsPerWall)
+				local projected = if camera
+					then camera:WorldToViewportPoint(wall.Position)
+					else Vector3.new(
+						effectGui.AbsoluteSize.X * 0.5,
+						effectGui.AbsoluteSize.Y * 0.5,
+						0
+					)
+				flyCoins(
+					Vector2.new(projected.X, projected.Y),
+					winsPerWall,
+					winsBefore + displayedWallWins
+				)
+				displayedWallWins += winsPerWall
 				if camera then
 					camera.FieldOfView = previousFov + 14
 					TweenService
@@ -362,10 +458,40 @@ local function playRoll(
 		end
 	end
 
+	if bonusWalls > 0 then
+		bonusCounter.Visible = isLocalRoll
+		local bonusSegmentDuration = bonusDuration / bonusWalls
+		local direction =
+			Vector3.new(start.CFrame.LookVector.X, -0.06, start.CFrame.LookVector.Z).Unit
+		for bonusIndex = 1, bonusWalls do
+			local target = pumpkin.Position + direction * Config.WallSpacing
+			local tween = TweenService:Create(
+				pumpkin,
+				TweenInfo.new(bonusSegmentDuration, Enum.EasingStyle.Linear),
+				{
+					CFrame = CFrame.new(target)
+						* CFrame.Angles(0, 0, -math.pi * (physicalCount + bonusIndex)),
+				}
+			)
+			tween:Play()
+			tween.Completed:Wait()
+			if isLocalRoll then
+				bonusCounter.Text = "BONUS +" .. bonusIndex
+				bonusScale.Scale = 0.72
+				TweenService:Create(
+					bonusScale,
+					TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+					{ Scale = 1 }
+				):Play()
+				burstBonusParticle()
+			end
+		end
+	end
+
 	if isLocalRoll then
 		showWins(wins)
-		flyCoins(wins, winsBefore)
 		distanceMeter.Visible = false
+		bonusCounter.Visible = false
 		if camera then
 			if cameraConnection then
 				cameraConnection:Disconnect()
@@ -373,6 +499,27 @@ local function playRoll(
 			camera.CameraType = previousType
 			camera.CameraSubject = previousSubject
 			TweenService:Create(camera, TweenInfo.new(0.3), { FieldOfView = previousFov }):Play()
+			task.delay(0.1, function()
+				local character = player.Character
+				local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+				if not root or not root:IsA("BasePart") then
+					return
+				end
+				local direction =
+					Vector3.new(start.CFrame.LookVector.X, 0, start.CFrame.LookVector.Z).Unit
+				local returnDiameter =
+					Grow.pumpkinVisualDiameter((player:GetAttribute("Size") :: number?) or 0, 5)
+				local cameraDistance = math.max(
+					Config.PumpkinCameraMinDistance,
+					returnDiameter * Config.PumpkinCameraDistancePerDiameter
+						+ Config.PumpkinCameraBaseDistance
+				)
+				local cameraHeight = math.max(5, returnDiameter * 0.55)
+				camera.CFrame = CFrame.lookAt(
+					root.Position - direction * cameraDistance + Vector3.new(0, cameraHeight, 0),
+					root.Position + Vector3.new(0, 2, 0)
+				)
+			end)
 		end
 	end
 	pumpkin:Destroy()

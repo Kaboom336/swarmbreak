@@ -10,6 +10,8 @@ export type Zone = {
 
 export type Result = {
 	wallsBroken: number,
+	physicalWallsBroken: number,
+	bonusWalls: number,
 	distance: number,
 	wins: number,
 	stoppedAtWall: number?,
@@ -45,34 +47,45 @@ function Roll.winsFor(wallsBroken: number, zone: string | Zone): number
 	return math.max(0, math.floor(wallsBroken)) * resolved.WinMultiplier
 end
 
-function Roll.simulate(size: number, zone: string | Zone, wallCount: number?): Result
+function Roll.simulate(size: number, zone: string | Zone, physicalCount: number?): Result
 	local resolved = Roll.getZone(zone)
 	assert(resolved, "unknown zone")
-	local count = wallCount or Config.FallbackWallCount
-	assert(count >= 0 and count % 1 == 0, "wall count must be a non-negative integer")
+	local count = physicalCount or Config.FallbackWallCount
+	assert(count >= 0 and count % 1 == 0, "physical count must be a non-negative integer")
+	local maximumCount = count + Config.MaxBonusWalls
 
 	local power = math.max(0, size)
 	local broken = 0
-	for wallIndex = 1, count do
+	for wallIndex = 1, maximumCount do
 		if power < Roll.wallHealth(wallIndex) then
 			break
 		end
 		broken = wallIndex
 	end
 
-	local stoppedAtWall = if broken < count then broken + 1 else nil
-	local wallsReached = if stoppedAtWall then stoppedAtWall else broken
+	local stoppedAtWall = if broken < maximumCount then broken + 1 else nil
+	-- Bonus walls are virtual, so a roll past the physical track ends at its last bonus wall
+	local wallsReached = if stoppedAtWall and broken < count then stoppedAtWall else broken
+	local physicalWallsBroken = math.min(broken, count)
+	local bonusWalls = math.max(0, broken - count)
 	return {
 		wallsBroken = broken,
+		physicalWallsBroken = physicalWallsBroken,
+		bonusWalls = bonusWalls,
 		distance = wallsReached * Config.WallSpacing,
 		wins = Roll.winsFor(broken, resolved),
 		stoppedAtWall = stoppedAtWall,
 	}
 end
 
-function Roll.duration(distance: number, size: number): number
+function Roll.duration(distance: number, size: number, bonusWalls: number?): number
 	local speed = Config.RollBaseSpeed + math.sqrt(math.max(0, size)) * Config.RollSizeSpeedFactor
-	return math.clamp(math.max(0, distance) / speed, Config.RollMinDuration, Config.RollMaxDuration)
+	local bonusCount = math.clamp(math.floor(bonusWalls or 0), 0, Config.MaxBonusWalls)
+	local physicalDistance = math.max(0, distance - bonusCount * Config.WallSpacing)
+	local physicalDuration =
+		math.clamp(physicalDistance / speed, Config.RollMinDuration, Config.RollMaxDuration)
+	local bonusDuration = Config.BonusZoneMaxSeconds * bonusCount / Config.MaxBonusWalls
+	return physicalDuration + bonusDuration
 end
 
 return Roll
