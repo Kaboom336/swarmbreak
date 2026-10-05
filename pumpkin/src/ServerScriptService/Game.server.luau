@@ -141,10 +141,13 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	local rolledSize = profile.Size
 	local result = Roll.simulate(rolledSize, zone, #parts.walls)
 	local duration = Roll.duration(result.distance, rolledSize)
+	-- Credit wins in the same step that consumes Size, so leaving mid-playback loses nothing (T2 review).
 	profile.Size = 0
+	profile.Wins += result.wins
+	profile.TotalWins += result.wins
 	Data.markDirty(player)
 	PumpkinVisual.update(player.Character, 0)
-	syncPlayer(player, profile)
+	player:SetAttribute("Size", 0) -- Wins show on the HUD when the playback ends
 	rollPlayback:FireAllClients(
 		player.UserId,
 		zone.Name,
@@ -158,9 +161,6 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	task.delay(duration, function()
 		local current = Data.get(player)
 		if current then
-			current.Wins += result.wins
-			current.TotalWins += result.wins
-			Data.markDirty(player)
 			syncPlayer(player, current)
 		end
 		task.delay(Config.RollCooldownSeconds, function()
