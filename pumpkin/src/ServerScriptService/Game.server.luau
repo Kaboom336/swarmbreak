@@ -1,6 +1,7 @@
 --!strict
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 local TweenService = game:GetService("TweenService")
 
@@ -10,6 +11,7 @@ local FriendBoost = require(Shared:WaitForChild("FriendBoost"))
 local Grow = require(Shared:WaitForChild("Grow"))
 local PetIndex = require(Shared:WaitForChild("PetIndex"))
 local Ride = require(Shared:WaitForChild("Ride"))
+local RideSurface = require(Shared:WaitForChild("RideSurface"))
 local Roll = require(Shared:WaitForChild("Roll"))
 local Data = require(ServerStorage:WaitForChild("Data"))
 local EconomyService = require(ServerStorage:WaitForChild("EconomyService"))
@@ -45,7 +47,7 @@ local function allowRideControl(player: Player, now: number): boolean
 	return true
 end
 
-local function createRidePumpkin(player: Player, size: number, start: BasePart): (Part, Seat?)
+local function createRidePumpkin(player: Player, size: number, start: BasePart): (Part, Seat?, any)
 	local diameter = Config.PumpkinBaseDiameter * Grow.pumpkinScale(size)
 	local pumpkin = Instance.new("Part")
 	pumpkin.Name = "RollingPumpkin_" .. player.UserId
@@ -56,6 +58,7 @@ local function createRidePumpkin(player: Player, size: number, start: BasePart):
 	pumpkin.CanTouch = false
 	pumpkin.Color = Color3.fromRGB(255, 116, 25)
 	pumpkin.Material = Enum.Material.SmoothPlastic
+	pumpkin.Transparency = 0.28
 	pumpkin.Size = Vector3.new(diameter, diameter * 0.82, diameter)
 	pumpkin.CFrame = CFrame.new(start.Position + Vector3.new(0, diameter * 0.5 + 1, 0))
 
@@ -70,7 +73,30 @@ local function createRidePumpkin(player: Player, size: number, start: BasePart):
 	local character = player.Character
 	local humanoid = if character then character:FindFirstChildOfClass("Humanoid") else nil
 	if not humanoid then
-		return pumpkin, nil
+		return pumpkin, nil, nil
+	end
+	local rider = {
+		humanoid = humanoid,
+		jumpPower = humanoid.JumpPower,
+		jumpHeight = humanoid.JumpHeight,
+		autoRotate = humanoid.AutoRotate,
+		jumpingEnabled = humanoid:GetStateEnabled(Enum.HumanoidStateType.Jumping),
+		transparencies = {},
+		restored = false,
+	}
+	humanoid.Jump = false
+	humanoid.JumpPower = 0
+	humanoid.JumpHeight = 0
+	humanoid.AutoRotate = false
+	humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+	for _, descendant in character:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			rider.transparencies[descendant] = descendant.Transparency
+			local readable = descendant.Name == "Head"
+				or descendant.Name == "UpperTorso"
+				or descendant.Name == "Torso"
+			descendant.Transparency = if readable then descendant.Transparency else 1
+		end
 	end
 	local seat = Instance.new("Seat")
 	seat.Name = "RideSeat"
@@ -81,14 +107,34 @@ local function createRidePumpkin(player: Player, size: number, start: BasePart):
 	seat.Massless = true
 	seat.Transparency = 1
 	seat.Size = Vector3.new(2, 1, 2)
-	seat.CFrame = pumpkin.CFrame + Vector3.new(0, diameter * 0.5 + 1.5, 0)
+	seat.CFrame = pumpkin.CFrame - Vector3.new(0, math.min(0.6, diameter * 0.08), 0)
 	seat.Parent = pumpkin
 	local weld = Instance.new("WeldConstraint")
 	weld.Part0 = pumpkin
 	weld.Part1 = seat
 	weld.Parent = seat
 	seat:Sit(humanoid)
-	return pumpkin, seat
+	return pumpkin, seat, rider
+end
+
+local function restoreRider(rider: any)
+	if not rider or rider.restored then
+		return
+	end
+	rider.restored = true
+	local humanoid = rider.humanoid
+	if humanoid and humanoid.Parent then
+		humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, rider.jumpingEnabled)
+		humanoid.JumpPower = rider.jumpPower
+		humanoid.JumpHeight = rider.jumpHeight
+		humanoid.AutoRotate = rider.autoRotate
+		humanoid.Sit = false
+	end
+	for part, transparency in rider.transparencies do
+		if part.Parent then
+			part.Transparency = transparency
+		end
+	end
 end
 
 local function updateFriendBoost(player: Player)
@@ -332,10 +378,9 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	nextRideToken += 1
 	local token = nextRideToken
 	local seed = player.UserId * 1_009 + token * 7_919
-	local startedAt = workspace:GetServerTimeNow() + 0.15
-	local pumpkin, seat = createRidePumpkin(player, rolledSize, parts.start)
-	local direction =
-		Vector3.new(parts.start.CFrame.LookVector.X, -0.06, parts.start.CFrame.LookVector.Z).Unit
+	local startedAt = workspace:GetServerTimeNow() + Config.RideLatchSeconds
+	local pumpkin, seat, rider = createRidePumpkin(player, rolledSize, parts.start)
+	local direction = parts.start.CFrame.LookVector.Unit
 	local horizontal = Vector3.new(direction.X, 0, direction.Z).Unit
 	local right = Vector3.new(-horizontal.Z, 0, horizontal.X)
 	local petMultipliers = equippedPetMultipliers(profile)
@@ -366,6 +411,7 @@ local function beginRoll(player: Player, zone: any, parts: any)
 		kinds = {},
 		pumpkin = pumpkin,
 		seat = seat,
+		rider = rider,
 		baseWins = result.wins,
 		winMultipliers = winMultipliers,
 		speedBoostUntil = 0,
@@ -374,8 +420,18 @@ local function beginRoll(player: Player, zone: any, parts: any)
 		direction = direction,
 		horizontal = horizontal,
 		right = right,
+		surfaces = RideSurface.collect(parts.track),
 	}
 	rideStates[player] = state
+	if rider then
+		state.deathConnection = rider.humanoid.Died:Connect(function()
+			if rideStates[player] == state then
+				rideStates[player] = nil
+				rolling[player] = nil
+				player:SetAttribute("Rolling", false)
+			end
+		end)
+	end
 	-- Credit the guaranteed wins in the same step that consumes Size, so leaving or a shutdown mid-ride
 	-- loses nothing; only the ride pickups are settled when the ride completes.
 	local guaranteedWins = Ride.finalWins(result.wins, {}, winMultipliers)
@@ -407,7 +463,7 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	)
 
 	task.spawn(function()
-		local diameter = pumpkin.Size.X
+		local radius = pumpkin.Size.X * 0.5
 		local lastUpdate = workspace:GetServerTimeNow()
 		while rideStates[player] == state do
 			local now = workspace:GetServerTimeNow()
@@ -424,18 +480,27 @@ local function beginRoll(player: Player, zone: any, parts: any)
 				bonusDuration,
 				bonusDistance
 			)
-			local position = parts.start.Position
+			local nominalPosition = parts.start.Position
 				+ direction * traveled
 				+ right * (state.lane * Config.RideLaneStuds)
-				+ Vector3.new(0, diameter * 0.5 + 1, 0)
-			pumpkin.CFrame = CFrame.lookAt(position, position + horizontal)
+			local position, normal, tangent =
+				RideSurface.sample(state.surfaces, nominalPosition, radius, direction)
+			pumpkin.CFrame = CFrame.lookAt(position, position + tangent, normal)
+				* CFrame.Angles(Ride.axleRotation(traveled, radius), 0, 0)
+			if seat and rider and seat.Occupant ~= rider.humanoid and rider.humanoid.Health > 0 then
+				seat:Sit(rider.humanoid)
+			end
 			if traveled >= result.distance then
 				break
 			end
-			task.wait()
+			RunService.Heartbeat:Wait()
 		end
 
 		if rideStates[player] ~= state then
+			restoreRider(state.rider)
+			if state.deathConnection then
+				state.deathConnection:Disconnect()
+			end
 			if pumpkin.Parent then
 				pumpkin:Destroy()
 			end
@@ -450,11 +515,14 @@ local function beginRoll(player: Player, zone: any, parts: any)
 			Data.markDirty(player)
 		end
 		rideStates[player] = nil
-		local character = player.Character
-		local humanoid = if character then character:FindFirstChildOfClass("Humanoid") else nil
-		if humanoid then
-			humanoid.Sit = false
+		if state.deathConnection then
+			state.deathConnection:Disconnect()
 		end
+		restoreRider(state.rider)
+		if seat then
+			seat:Destroy()
+		end
+		local character = player.Character
 		local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
 		if root and root:IsA("BasePart") then
 			local returnDirection = Vector3.new(
@@ -524,6 +592,12 @@ Players.PlayerRemoving:Connect(function(player)
 	rolling[player] = nil
 	controlWindows[player] = nil
 	local ride = rideStates[player]
+	if ride then
+		restoreRider(ride.rider)
+		if ride.deathConnection then
+			ride.deathConnection:Disconnect()
+		end
+	end
 	if ride and ride.pumpkin and ride.pumpkin.Parent then
 		ride.pumpkin:Destroy()
 	end

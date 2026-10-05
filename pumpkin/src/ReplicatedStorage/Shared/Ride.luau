@@ -17,6 +17,13 @@ local REMAINDER = 3_399
 
 local Ride = {}
 
+function Ride.axleRotation(distance: number, radius: number): number
+	if radius <= 0 then
+		return 0
+	end
+	return -distance / radius
+end
+
 local function makeRandom(seed: number): () -> number
 	local state = math.floor(math.abs(seed)) % (MODULUS - 1) + 1
 	return function()
