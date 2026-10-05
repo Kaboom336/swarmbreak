@@ -101,3 +101,4 @@ testcmd: cd pumpkin && stylua --check src tests && selene src && lune run tests/
 5. All new buttons follow the Q1 HUD grid and depth stack. Every new remote gets a rate limit.
 
 Done when: the gate is green, with specs for the gift schedule, the free first hatch (only once), Index completion, and the starter pack (one purchase only, idempotent).
+6. **Smooth pet follow:** move the follow loop from the server Heartbeat to the client (RenderStepped), for all players' pets. The server only parents the models; the client sets their CFrames.
