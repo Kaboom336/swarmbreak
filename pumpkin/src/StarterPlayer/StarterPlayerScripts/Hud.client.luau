@@ -16,6 +16,7 @@ local CameraFraming = require(Shared:WaitForChild("CameraFraming"))
 local Config = require(Shared:WaitForChild("Config"))
 local ExperienceRules = require(Shared:WaitForChild("ExperienceRules"))
 local Format = require(Shared:WaitForChild("Format"))
+local FreeDoubleWins = require(Shared:WaitForChild("FreeDoubleWins"))
 local Grow = require(Shared:WaitForChild("Grow"))
 local HudLayout = require(Shared:WaitForChild("HudLayout"))
 local Monetization = require(Shared:WaitForChild("Monetization"))
@@ -1632,8 +1633,66 @@ end)
 local displayedSize: number? = nil
 local displayedWins: number? = nil
 local displayedTotalWins: number? = nil
+local freeWinsTimerRunning = false
 local function popNumber(scale: UIScale)
 	playPop(scale, "micro")
+end
+
+local function renderMultiplierChips(): (boolean, number)
+	local petMultiplier = (player:GetAttribute("PetMultiplier") :: number?) or 1
+	local rebirths = (player:GetAttribute("Rebirths") :: number?) or 0
+	local rebirthMultiplier = 1 + rebirths * Config.RebirthSizeBonus
+	local friendPercent =
+		math.floor(((player:GetAttribute("FriendBoost") :: number?) or 0) * 100 + 0.5)
+	local chipLines = {}
+	if petMultiplier > 1 then
+		table.insert(chipLines, string.format("PETS %s%.1f SIZE", utf8.char(0x00D7), petMultiplier))
+	end
+	if rebirthMultiplier > 1 then
+		table.insert(
+			chipLines,
+			string.format("REBIRTH %s%.1f SIZE", utf8.char(0x00D7), rebirthMultiplier)
+		)
+	end
+	if friendPercent > 0 then
+		table.insert(chipLines, "FRIEND +" .. friendPercent .. "%")
+	end
+	local indexPercent =
+		math.floor((((player:GetAttribute("IndexMultiplier") :: number?) or 1) - 1) * 100 + 0.5)
+	if indexPercent > 0 then
+		table.insert(chipLines, "INDEX +" .. indexPercent .. "%")
+	end
+	if player:GetAttribute("DoubleSize") == true then
+		table.insert(chipLines, "2" .. utf8.char(0x00D7) .. " SIZE")
+	end
+	local freeWins =
+		FreeDoubleWins.compute(player:GetAttribute("FreeDoubleWinsUntil") :: number?, os.time())
+	local hasPermanentDoubleWins = player:GetAttribute("DoubleWins") == true
+	if hasPermanentDoubleWins then
+		table.insert(chipLines, "2" .. utf8.char(0x00D7) .. " WINS")
+	elseif freeWins.active then
+		table.insert(
+			chipLines,
+			string.format("FREE 2%s WINS  %dm", utf8.char(0x00D7), freeWins.remainingMinutes)
+		)
+	end
+	setMultiplierChips(chipLines)
+	return freeWins.active and not hasPermanentDoubleWins, freeWins.remainingSeconds
+end
+
+local function refreshMultiplierChips()
+	local active, remainingSeconds = renderMultiplierChips()
+	if not active or freeWinsTimerRunning then
+		return
+	end
+	freeWinsTimerRunning = true
+	task.spawn(function()
+		while active do
+			task.wait(math.min(1, remainingSeconds))
+			active, remainingSeconds = renderMultiplierChips()
+		end
+		freeWinsTimerRunning = false
+	end)
 end
 
 local cameraZoomGeneration = 0
@@ -1760,46 +1819,7 @@ local function updateStats(size: number?, wins: number?)
 			)
 		end
 	end
-	local petMultiplier = (player:GetAttribute("PetMultiplier") :: number?) or 1
-	local rebirths = (player:GetAttribute("Rebirths") :: number?) or 0
-	local rebirthMultiplier = 1 + rebirths * Config.RebirthSizeBonus
-	local friendPercent =
-		math.floor(((player:GetAttribute("FriendBoost") :: number?) or 0) * 100 + 0.5)
-	local chipLines = {}
-	if petMultiplier > 1 then
-		table.insert(chipLines, string.format("PETS %s%.1f SIZE", utf8.char(0x00D7), petMultiplier))
-	end
-	if rebirthMultiplier > 1 then
-		table.insert(
-			chipLines,
-			string.format("REBIRTH %s%.1f SIZE", utf8.char(0x00D7), rebirthMultiplier)
-		)
-	end
-	if friendPercent > 0 then
-		table.insert(chipLines, "FRIEND +" .. friendPercent .. "%")
-	end
-	local indexPercent =
-		math.floor((((player:GetAttribute("IndexMultiplier") :: number?) or 1) - 1) * 100 + 0.5)
-	if indexPercent > 0 then
-		table.insert(chipLines, "INDEX +" .. indexPercent .. "%")
-	end
-	if player:GetAttribute("DoubleSize") == true then
-		table.insert(chipLines, "2" .. utf8.char(0x00D7) .. " SIZE")
-	end
-	local freeWinsUntil = (player:GetAttribute("FreeDoubleWinsUntil") :: number?) or 0
-	if player:GetAttribute("DoubleWins") == true then
-		table.insert(chipLines, "2" .. utf8.char(0x00D7) .. " WINS")
-	elseif freeWinsUntil > os.time() then
-		table.insert(
-			chipLines,
-			string.format(
-				"FREE 2%s WINS  %dm",
-				utf8.char(0x00D7),
-				math.ceil((freeWinsUntil - os.time()) / 60)
-			)
-		)
-	end
-	setMultiplierChips(chipLines)
+	refreshMultiplierChips()
 
 	local nextZone = nil
 	for _, zone in Config.Zones do
@@ -1850,6 +1870,7 @@ end)
 player:GetAttributeChangedSignal("FirstEggEngaged"):Connect(function()
 	updateStats(nil, nil)
 end)
+player:GetAttributeChangedSignal("FreeDoubleWinsUntil"):Connect(refreshMultiplierChips)
 player:GetAttributeChangedSignal("Rolling"):Connect(function()
 	if player:GetAttribute("Rolling") ~= true then
 		-- The ride camera was scripted, so reframe the normal camera once the ride ends

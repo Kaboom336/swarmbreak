@@ -1,0 +1,30 @@
+--!strict
+local FreeDoubleWins = load("FreeDoubleWins")
+
+test("free 2x Wins countdown is active with rounded-up minutes", function()
+	local countdown = FreeDoubleWins.compute(1_121, 1_000)
+	eq(countdown.active, true, "active")
+	eq(countdown.remainingSeconds, 121, "remaining seconds")
+	eq(countdown.remainingMinutes, 3, "display minutes")
+end)
+
+test("free 2x Wins countdown stays visible just before expiry", function()
+	local countdown = FreeDoubleWins.compute(1_001, 1_000)
+	eq(countdown.active, true, "active with one second left")
+	eq(countdown.remainingSeconds, 1, "last second")
+	eq(countdown.remainingMinutes, 1, "last displayed minute")
+end)
+
+test("free 2x Wins countdown expires at its deadline", function()
+	local countdown = FreeDoubleWins.compute(1_000, 1_000)
+	eq(countdown.active, false, "expired")
+	eq(countdown.remainingSeconds, 0, "no seconds left")
+	eq(countdown.remainingMinutes, 0, "no minutes left")
+end)
+
+test("free 2x Wins countdown is inactive when the attribute is cleared", function()
+	local countdown = FreeDoubleWins.compute(nil, 1_000)
+	eq(countdown.active, false, "cleared")
+	eq(countdown.remainingSeconds, 0, "no seconds left")
+	eq(countdown.remainingMinutes, 0, "no minutes left")
+end)
