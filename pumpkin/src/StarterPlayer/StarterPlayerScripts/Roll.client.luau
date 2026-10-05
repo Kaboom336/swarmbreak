@@ -3,6 +3,7 @@ local Players = game:GetService("Players")
 local ContextActionService = game:GetService("ContextActionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
@@ -20,6 +21,19 @@ local Style = require(Shared:WaitForChild("Style"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local rollPlayback = remotes:WaitForChild("RollPlayback") :: RemoteEvent
 local rollControl = remotes:WaitForChild("RollControl") :: RemoteEvent
+local sfxGroup = SoundService:FindFirstChild("PumpkinSFX") :: SoundGroup?
+if not sfxGroup then
+	sfxGroup = Instance.new("SoundGroup")
+	sfxGroup.Name = "PumpkinSFX"
+	sfxGroup.Parent = SoundService
+end
+local traversalSound = Instance.new("Sound")
+traversalSound.Name = "TraversalPop"
+traversalSound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
+traversalSound.Volume = 0.4
+traversalSound.PlaybackSpeed = 0.78
+traversalSound.SoundGroup = sfxGroup
+traversalSound.Parent = playerGui
 
 local function paletteColor(role: string): Color3
 	local value = Style.Palette[role]
@@ -58,6 +72,8 @@ local effectGui = Instance.new("ScreenGui")
 effectGui.Name = "RollEffects"
 effectGui.DisplayOrder = 100
 effectGui.IgnoreGuiInset = false
+effectGui.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
+effectGui.ClipToDeviceSafeArea = true
 effectGui.ResetOnSpawn = false
 effectGui.Parent = playerGui
 
@@ -751,43 +767,94 @@ UserInputService.InputChanged:Connect(function(input: InputObject)
 	end
 end)
 
-rollControl.OnClientEvent:Connect(
-	function(action: string, token: number, value: number, detail: any)
-		if action == "Complete" then
-			completedResults[token] = { wins = value, pickups = tonumber(detail) or 0 }
-		elseif action == "PickupAccepted" and activeControl and activeControl.token == token then
-			local part = activeControl.targetParts[value]
-			if part then
-				setTargetVisible(part, false)
+rollControl.OnClientEvent:Connect(function(action: string, token: number, value: any, detail: any)
+	if action == "Complete" then
+		completedResults[token] = { wins = tonumber(value) or 0, pickups = tonumber(detail) or 0 }
+	elseif action == "Rejected" then
+		bonusCounter.Text = tostring(value)
+		bonusCounter.TextColor3 = MAGENTA
+		bonusCounter.Visible = true
+		playPop(bonusScale, "reward")
+		task.delay(1.2, function()
+			if not activeControl then
+				bonusCounter.Visible = false
 			end
-			if detail == "SpeedPad" then
-				activeControl.speedBoostUntil = os.clock() + Config.RideSpeedPadSeconds
-			end
-			activeControl.pickups += 1
-		elseif action == "Combo" and activeControl and activeControl.token == token then
-			activeControl.combo = value
-			showCombo(value, if type(detail) == "string" then detail else nil)
-			if activeControl.comboSound and player:GetAttribute("SFXEnabled") ~= false then
-				activeControl.comboSound.PlaybackSpeed = math.min(1.45, 0.92 + value * 0.05)
-				activeControl.comboSound:Play()
-			end
-		elseif action == "Dodge" and activeControl and activeControl.token == token then
-			activeControl.combo = tonumber(detail) or activeControl.combo
-			for _ = 1, 4 do
-				burstBonusParticle(LIME)
-			end
-		elseif action == "ObstacleHit" and activeControl and activeControl.token == token then
-			activeControl.combo = 0
-			activeControl.lastHitAt = os.clock()
-			activeControl.bumpUntil = os.clock() + 0.22
-			activeControl.speedLinesPauseUntil = os.clock() + 0.18
-			if activeControl.hitSound and player:GetAttribute("SFXEnabled") ~= false then
-				activeControl.hitSound:Play()
-			end
-			showComboLost()
+		end)
+	elseif action == "Bounce" then
+		bonusCounter.Text = "BOING!"
+		bonusCounter.TextColor3 = LIME
+		bonusCounter.Visible = true
+		playPop(bonusScale, "micro")
+		for _ = 1, 5 do
+			burstBonusParticle(LIME)
 		end
+		local bouncePad = workspace:FindFirstChild("PlazaBouncePad", true)
+		local puff = if bouncePad then bouncePad:FindFirstChild("LandingPuff", true) else nil
+		if puff and puff:IsA("ParticleEmitter") then
+			puff:Emit(if player:GetAttribute("ReducedEffects") == true then 5 else 12)
+		end
+		if player:GetAttribute("SFXEnabled") ~= false then
+			traversalSound:Play()
+		end
+		task.delay(0.6, function()
+			if not activeControl then
+				bonusCounter.Visible = false
+			end
+		end)
+	elseif action == "BankPending" then
+		bonusCounter.Text = "PENDING  +" .. tostring(value) .. " WINS"
+		bonusCounter.TextColor3 = YELLOW
+		bonusCounter.Visible = true
+		playPop(bonusScale, "reward")
+	elseif action == "FinishBeat" and activeControl and activeControl.token == token then
+		bonusCounter.Text = "CASH OUT!"
+		bonusCounter.TextColor3 = LIME
+		bonusCounter.Visible = true
+		playPop(bonusScale, "rare")
+		for _ = 1, 6 do
+			burstBonusParticle(LIME)
+		end
+	elseif action == "PendingUpdate" and activeControl and activeControl.token == token then
+		bonusCounter.Text = "BANK  " .. tostring(value) .. " WINS"
+		bonusCounter.TextColor3 = YELLOW
+		bonusCounter.Visible = true
+		playPop(bonusScale, "micro")
+	elseif action == "PickupAccepted" and activeControl and activeControl.token == token then
+		local part = activeControl.targetParts[value]
+		if part then
+			setTargetVisible(part, false)
+		end
+		if detail == "SpeedPad" then
+			activeControl.speedBoostUntil = os.clock() + Config.RideSpeedPadSeconds
+		end
+		activeControl.pickups += 1
+		bonusCounter.Text = "PICKUP  •  BANK AT FINISH"
+		bonusCounter.TextColor3 = YELLOW
+		bonusCounter.Visible = true
+		playPop(bonusScale, "micro")
+	elseif action == "Combo" and activeControl and activeControl.token == token then
+		activeControl.combo = value
+		showCombo(value, if type(detail) == "string" then detail else nil)
+		if activeControl.comboSound and player:GetAttribute("SFXEnabled") ~= false then
+			activeControl.comboSound.PlaybackSpeed = math.min(1.45, 0.92 + value * 0.05)
+			activeControl.comboSound:Play()
+		end
+	elseif action == "Dodge" and activeControl and activeControl.token == token then
+		activeControl.combo = tonumber(detail) or activeControl.combo
+		for _ = 1, 4 do
+			burstBonusParticle(LIME)
+		end
+	elseif action == "ObstacleHit" and activeControl and activeControl.token == token then
+		activeControl.combo = 0
+		activeControl.lastHitAt = os.clock()
+		activeControl.bumpUntil = os.clock() + 0.22
+		activeControl.speedLinesPauseUntil = os.clock() + 0.18
+		if activeControl.hitSound and player:GetAttribute("SFXEnabled") ~= false then
+			activeControl.hitSound:Play()
+		end
+		showComboLost()
 	end
-)
+end)
 
 local function playRoll(
 	userId: number,
@@ -809,6 +876,11 @@ local function playRoll(
 	if not start or not track then
 		return
 	end
+	task.spawn(function()
+		pcall(player.RequestStreamAroundAsync, player, start.Position, 2)
+		local finishPosition = rideWorldSample(start, Config.RideTrackLength, 0)
+		pcall(player.RequestStreamAroundAsync, player, finishPosition, 2)
+	end)
 
 	local diameter = Config.PumpkinBaseDiameter * Grow.pumpkinScale(size)
 	local physicalDuration = Ride.physicalDuration(size)
@@ -820,22 +892,60 @@ local function playRoll(
 	if not pumpkin or not pumpkin:IsA("BasePart") then
 		return
 	end
+	local pumpkinMesh = pumpkin:FindFirstChildWhichIsA("SpecialMesh")
+	local stemWeld = pumpkin:FindFirstChild("RideStemWeld", true)
+	local stemLean = 0
 
 	local smashSound = Instance.new("Sound")
 	smashSound.Name = "Smash"
 	smashSound.SoundId = "rbxasset://sounds/collide.wav"
 	smashSound.Volume = 0.75
+	smashSound.RollOffMaxDistance = 90
+	smashSound.RollOffMinDistance = 8
+	smashSound.SoundGroup = sfxGroup
 	smashSound.Parent = pumpkin
 	local hitSound = Instance.new("Sound")
 	hitSound.Name = "ObstacleThud"
 	hitSound.SoundId = "rbxasset://sounds/impact_water.mp3"
 	hitSound.Volume = 0.7
+	hitSound.RollOffMaxDistance = 70
+	hitSound.RollOffMinDistance = 8
+	hitSound.SoundGroup = sfxGroup
 	hitSound.Parent = pumpkin
 	local comboSound = Instance.new("Sound")
 	comboSound.Name = "ComboRise"
 	comboSound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
 	comboSound.Volume = 0.45
+	comboSound.SoundGroup = sfxGroup
 	comboSound.Parent = pumpkin
+	local rollBed = Instance.new("Sound")
+	rollBed.Name = "RollingBed"
+	rollBed.SoundId = "rbxasset://sounds/impact_water.mp3"
+	rollBed.Looped = true
+	rollBed.Volume = 0.08
+	rollBed.PlaybackSpeed = 0.72
+	rollBed.RollOffMaxDistance = 90
+	rollBed.SoundGroup = sfxGroup
+	rollBed.Parent = pumpkin
+	local windBed = Instance.new("Sound")
+	windBed.Name = "WindBed"
+	windBed.SoundId = "rbxasset://sounds/action_footsteps_plastic.mp3"
+	windBed.Looped = true
+	windBed.Volume = 0
+	windBed.PlaybackSpeed = 0.55
+	windBed.RollOffMaxDistance = 110
+	windBed.SoundGroup = sfxGroup
+	windBed.Parent = pumpkin
+	local tunnelFilter = Instance.new("EqualizerSoundEffect")
+	tunnelFilter.Name = "TunnelFilter"
+	tunnelFilter.HighGain = 0
+	tunnelFilter.MidGain = 0
+	tunnelFilter.LowGain = 0
+	tunnelFilter.Parent = rollBed
+	if player:GetAttribute("SFXEnabled") ~= false then
+		rollBed:Play()
+		windBed:Play()
+	end
 
 	local isLocalRoll = userId == player.UserId
 	local camera = workspace.CurrentCamera
@@ -1012,8 +1122,35 @@ local function playRoll(
 				local radius = pumpkin.Size.X * 0.5
 				local position, normal, tangent =
 					RideSurface.sample(surfaces, nominalPosition, radius, pathTangent)
-				pumpkin.CFrame = CFrame.lookAt(position, position + tangent, normal)
-					* CFrame.Angles(Ride.axleRotation(activeControl.traveled, radius), 0, 0)
+				local hopStart = physicalDuration * 0.54
+				local hopAlpha = math.clamp((elapsed - hopStart) / 0.65, 0, 1)
+				local hop = if hopAlpha > 0 and hopAlpha < 1
+					then math.sin(hopAlpha * math.pi) * 1.1
+					else 0
+				pumpkin.CFrame = CFrame.lookAt(
+					position + normal * hop,
+					position + normal * hop + tangent,
+					normal
+				) * CFrame.Angles(
+					Ride.axleRotation(activeControl.traveled, radius),
+					0,
+					math.rad(-activeControl.lane * 8)
+				)
+				stemLean += (activeControl.lane - stemLean) * (1 - math.exp(-7 * deltaTime))
+				if stemWeld and stemWeld:IsA("Weld") then
+					stemWeld.C0 = CFrame.new(0, diameter * 0.48, 0)
+						* CFrame.Angles(0, 0, math.rad(stemLean * 12))
+				end
+				if pumpkinMesh then
+					local boostStretch = if now < activeControl.speedBoostUntil then 0.08 else 0
+					local landingSquash = if hopAlpha >= 0.86 and hopAlpha < 1 then 0.09 else 0
+					local base = diameter * Config.PumpkinMeshScale
+					pumpkinMesh.Scale = Vector3.new(
+						base * (1 + landingSquash),
+						base * 0.82 * (1 - landingSquash - boostStretch * 0.35),
+						base * (1 + boostStretch)
+					)
+				end
 			end
 			if os.clock() < hitStopUntil and heldCamera then
 				-- Hold the framing, but keep following the moving pumpkin so a fast smash never pops the distance
@@ -1109,6 +1246,15 @@ local function playRoll(
 			local targetFov = previousFov + 8 + speedAlpha * 10
 			smoothedFov += (targetFov - smoothedFov) * (1 - math.exp(-5 * deltaTime))
 			camera.FieldOfView = smoothedFov
+			rollBed.PlaybackSpeed = 0.72 + speedAlpha * 0.48
+			rollBed.Volume = 0.08 + speedAlpha * 0.12
+			windBed.PlaybackSpeed = 0.55 + speedAlpha * 0.65
+			windBed.Volume = speedAlpha * 0.16
+			local inTunnel = activeControl
+				and activeControl.traveled >= 850
+				and activeControl.traveled <= 1_075
+			tunnelFilter.HighGain = if inTunnel then -9 else 0
+			tunnelFilter.MidGain = if inTunnel then -3 else 0
 			if activeControl and activeControl.speedLines then
 				activeControl.speedLines.Enabled = os.clock() >= activeControl.speedLinesPauseUntil
 				local maximumRate = if player:GetAttribute("ReducedEffects") == true then 34 else 80
@@ -1162,7 +1308,16 @@ local function playRoll(
 			wall.LocalTransparencyModifier = 1
 			burstDebris(wall.Position, wallIndex)
 			if player:GetAttribute("SFXEnabled") ~= false then
-				smashSound.PlaybackSpeed = math.min(1.55, 0.82 + wallIndex * 0.08)
+				local speedAccent = if activeControl
+					then math.clamp(activeControl.measuredSpeed / Config.RideTopSpeed, 0, 1) * 0.18
+					else 0
+				smashSound.PlaybackSpeed = math.min(
+					1.55,
+					0.82
+						+ wallIndex * 0.05
+						+ speedAccent
+						+ (if activeControl then activeControl.combo else 0) * 0.015
+				)
 				smashSound:Play()
 			end
 			if isLocalRoll then
@@ -1231,6 +1386,12 @@ local function playRoll(
 			)
 		)
 		showWins(finalWins)
+		rollBed:Stop()
+		windBed:Stop()
+		if player:GetAttribute("SFXEnabled") ~= false then
+			comboSound.PlaybackSpeed = 1.35
+			comboSound:Play()
+		end
 		-- Hide the pad's 3D signs while the end toast is up, so the two don't stack
 		local hiddenSigns: { BillboardGui } = {}
 		if start then

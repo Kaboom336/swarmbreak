@@ -6,6 +6,9 @@
       "Shared": {
         "$path": "src/ReplicatedStorage/Shared"
       },
+      "PetModels": {
+        "$path": "assets/PetModels.rbxm"
+      },
       "Remotes": {
         "$className": "Folder"
       }
@@ -32,6 +35,11 @@
     },
     "Workspace": {
       "$className": "Workspace",
+      "$properties": {
+        "StreamingEnabled": true,
+        "StreamingMinRadius": 256,
+        "StreamingTargetRadius": 768
+      },
       "PumpkinMap": {
         "$path": "assets/PumpkinMap.rbxm"
       }

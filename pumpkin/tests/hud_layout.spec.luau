@@ -29,6 +29,8 @@ end
 for _, viewport in
 	{
 		{ width = 667, height = 375, name = "mobile landscape" },
+		{ width = 375, height = 812, name = "tall phone" },
+		{ width = 1024, height = 768, name = "tablet" },
 		{ width = 1399, height = 1080, name = "Studio desktop" },
 		{ width = 1920, height = 1080, name = "desktop" },
 	}

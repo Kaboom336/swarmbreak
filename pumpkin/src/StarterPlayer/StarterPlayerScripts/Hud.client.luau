@@ -1,8 +1,10 @@
 --!strict
 local Players = game:GetService("Players")
+local GuiService = game:GetService("GuiService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 local TextChatService = game:GetService("TextChatService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -12,12 +14,12 @@ local playerGui = player:WaitForChild("PlayerGui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CameraFraming = require(Shared:WaitForChild("CameraFraming"))
 local Config = require(Shared:WaitForChild("Config"))
+local ExperienceRules = require(Shared:WaitForChild("ExperienceRules"))
 local Format = require(Shared:WaitForChild("Format"))
 local Grow = require(Shared:WaitForChild("Grow"))
 local HudLayout = require(Shared:WaitForChild("HudLayout"))
 local Monetization = require(Shared:WaitForChild("Monetization"))
 local Style = require(Shared:WaitForChild("Style"))
-local Tutorial = require(Shared:WaitForChild("Tutorial"))
 local VisualRules = require(Shared:WaitForChild("VisualRules"))
 local WallProgress = require(Shared:WaitForChild("WallProgress"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -56,12 +58,39 @@ screenGui.ResetOnSpawn = false
 -- Global: the depth stack puts shadows at ZIndex - 1 as children, which Sibling would draw over the button text
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 screenGui.IgnoreGuiInset = false
+screenGui.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
+screenGui.ClipToDeviceSafeArea = true
 screenGui.Parent = playerGui
+
+local sfxGroup = SoundService:FindFirstChild("PumpkinSFX") :: SoundGroup?
+if not sfxGroup then
+	sfxGroup = Instance.new("SoundGroup")
+	sfxGroup.Name = "PumpkinSFX"
+	sfxGroup.Parent = SoundService
+end
+local musicGroup = SoundService:FindFirstChild("PumpkinMusic") :: SoundGroup?
+if not musicGroup then
+	musicGroup = Instance.new("SoundGroup")
+	musicGroup.Name = "PumpkinMusic"
+	musicGroup.Parent = SoundService
+end
+local ambience = SoundService:FindFirstChild("PumpkinAmbience") :: Sound?
+if not ambience then
+	ambience = Instance.new("Sound")
+	ambience.Name = "PumpkinAmbience"
+	ambience.SoundId = "rbxasset://sounds/action_falling.mp3"
+	ambience.Looped = true
+	ambience.Volume = 0.08
+	ambience.SoundGroup = musicGroup
+	ambience.Parent = SoundService
+	ambience:Play()
+end
 
 local buttonSound = Instance.new("Sound")
 buttonSound.Name = "ButtonPress"
 buttonSound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
 buttonSound.Volume = 0.24
+buttonSound.SoundGroup = sfxGroup
 buttonSound.Parent = screenGui
 
 local contactShadow = Instance.new("Part")
@@ -631,6 +660,28 @@ local dailyButton = makeMenuButton("Daily", "DAILY", MAGENTA)
 local passesButton = makeMenuButton("Passes", "PASSES", ORANGE)
 local settingsButton = makeMenuButton("Settings", "SETTINGS", CYAN)
 local giftsButton = makeMenuButton("Gift", "GIFTS", MAGENTA)
+local menuButtons = {
+	shopButton,
+	petsButton,
+	rebirthButton,
+	codesButton,
+	dailyButton,
+	passesButton,
+	settingsButton,
+	giftsButton,
+}
+for index, button in menuButtons do
+	button.NextSelectionUp = menuButtons[if index <= 2 then #menuButtons - 2 + index else index - 2]
+	button.NextSelectionDown =
+		menuButtons[if index > #menuButtons - 2 then index - #menuButtons + 2 else index + 2]
+	button.NextSelectionLeft =
+		menuButtons[if index % 2 == 0 then index - 1 else math.min(#menuButtons, index + 1)]
+	button.NextSelectionRight =
+		menuButtons[if index % 2 == 1 then math.min(#menuButtons, index + 1) else index - 1]
+end
+local hasLiveOffers = Monetization.liveOfferCount() > 0
+shopButton.Visible = hasLiveOffers
+passesButton.Visible = hasLiveOffers
 local dailyDot = Instance.new("Frame")
 dailyDot.Name = "Notification"
 dailyDot.AnchorPoint = Vector2.new(1, 0)
@@ -720,16 +771,8 @@ local clickSound = Instance.new("Sound")
 clickSound.Name = "GrowClick"
 clickSound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
 clickSound.Volume = 0.45
+clickSound.SoundGroup = sfxGroup
 clickSound.Parent = screenGui
-
-local sfxEnabled = true
-player:SetAttribute("SFXEnabled", true)
-settingsButton.Activated:Connect(function()
-	sfxEnabled = not sfxEnabled
-	player:SetAttribute("SFXEnabled", sfxEnabled)
-	local label = settingsButton:FindFirstChild("Label") :: TextLabel
-	label.Text = if sfxEnabled then "SFX ON" else "SFX OFF"
-end)
 
 local function applyRect(object: GuiObject, bounds: any, shadowName: string?)
 	object.AnchorPoint = Vector2.zero
@@ -897,6 +940,9 @@ local function showPanel(title: string)
 	modalTitle.Text = title
 	modal.Visible = true
 	modalShadow.Visible = true
+	task.defer(function()
+		GuiService.SelectedObject = closeButton
+	end)
 end
 
 local function actionButton(
@@ -907,6 +953,7 @@ local function actionButton(
 ): TextButton
 	local button = newLabel("TextButton") :: TextButton
 	button.AutoButtonColor = false
+	button.Selectable = true
 	button.BackgroundColor3 = color
 	button.BorderSizePixel = 0
 	button.Font = Enum.Font.GothamBlack
@@ -916,6 +963,9 @@ local function actionButton(
 	button.TextSize = 21
 	button.ZIndex = 7
 	button.Parent = parent
+	button.NextSelectionUp = closeButton
+	button.NextSelectionDown = closeButton
+	closeButton.NextSelectionDown = button
 	addButtonShadow(button)
 	decorate(button, color, color:Lerp(TEAL, 0.3))
 	applyTextToken(button, "action")
@@ -929,6 +979,10 @@ local function acceptEconomyState(state: any)
 	currentEconomyState = state
 	economyStateReceivedAt = os.clock()
 	dailyDot.Visible = state.DailyClaimable == true
+	sfxGroup.Volume = math.clamp(tonumber(state.SFXVolume) or 1, 0, 1)
+	musicGroup.Volume = math.clamp(tonumber(state.MusicVolume) or 0.7, 0, 1)
+	player:SetAttribute("SFXEnabled", sfxGroup.Volume > 0)
+	player:SetAttribute("ReducedEffects", state.ReducedEffects == true)
 end
 local function requestEconomy(action: string, value: any?): any
 	local ok, response = pcall(function()
@@ -1015,8 +1069,28 @@ local function showGifts()
 	end
 end
 
-local function showShop()
-	showPanel("HALLOWEEN SHOP")
+local function livePrice(offer: any, infoType: Enum.InfoType): string
+	local ok, info =
+		pcall(MarketplaceService.GetProductInfo, MarketplaceService, offer.Id, infoType)
+	if ok and type(info) == "table" and type(info.PriceInRobux) == "number" then
+		return tostring(info.PriceInRobux) .. " R$"
+	end
+	return "CHECK PRICE"
+end
+
+local function offerText(offer: any, infoType: Enum.InfoType): string
+	return string.format(
+		"%s  •  %s\n%s • %s • %s",
+		offer.DisplayName,
+		livePrice(offer, infoType),
+		offer.Benefit,
+		offer.Duration,
+		offer.Stacking
+	)
+end
+
+local function showShop(category: string)
+	showPanel(if category == "passes" then "PASSES" else "BOOSTS")
 	local scroll = Instance.new("ScrollingFrame")
 	scroll.Name = "Offers"
 	scroll.BackgroundTransparency = 1
@@ -1031,21 +1105,21 @@ local function showShop()
 	layout.Parent = scroll
 
 	local offerCount = 0
-	for name, offer in Monetization.GamePasses do
-		if offer.Id > 0 then
+	for _, offer in Monetization.GamePasses do
+		if category == "passes" and offer.Id > 0 then
 			offerCount += 1
 			local button =
-				actionButton(scroll, name .. "  •  " .. offer.Price .. " R$", UDim2.new(), PURPLE)
+				actionButton(scroll, offerText(offer, Enum.InfoType.GamePass), UDim2.new(), PURPLE)
 			button.Activated:Connect(function()
 				MarketplaceService:PromptGamePassPurchase(player, offer.Id)
 			end)
 		end
 	end
-	for name, offer in Monetization.DeveloperProducts do
-		if offer.Id > 0 then
+	for _, offer in Monetization.DeveloperProducts do
+		if category == "boosts" and offer.Id > 0 then
 			offerCount += 1
 			local button =
-				actionButton(scroll, name .. "  •  " .. offer.Price .. " R$", UDim2.new(), ORANGE)
+				actionButton(scroll, offerText(offer, Enum.InfoType.Product), UDim2.new(), ORANGE)
 			button.Activated:Connect(function()
 				MarketplaceService:PromptProductPurchase(player, offer.Id)
 			end)
@@ -1056,7 +1130,7 @@ local function showShop()
 		empty.BackgroundTransparency = 1
 		empty.Font = Enum.Font.GothamBlack
 		empty.Size = UDim2.new(1, 0, 0, 120)
-		empty.Text = "NEW TREATS\nCOMING SOON!"
+		empty.Text = "NO LIVE OFFERS"
 		empty.TextSize = 28
 		empty.ZIndex = 7
 		empty.Parent = scroll
@@ -1082,13 +1156,65 @@ local function showRebirth()
 	description.TextWrapped = true
 	description.ZIndex = 6
 	description.Parent = modalContent
-	local confirm = actionButton(modalContent, "REBIRTH NOW", UDim2.new(0, 0, 0, 150), LIME)
+	local confirm = actionButton(modalContent, "REVIEW RESET", UDim2.new(0, 0, 0, 150), LIME)
+	local armed = false
 	confirm.Activated:Connect(function()
+		if not armed then
+			armed = true
+			description.Text = string.format(
+				"RESET: Size, Wins, zones\nKEEP: pets, passes, index\nNEW SIZE MULTIPLIER: x%.1f\n\nTap again to confirm",
+				1
+					+ (((currentEconomyState and currentEconomyState.Rebirths) or 0) + 1)
+						* Config.RebirthSizeBonus
+			)
+			confirm.Text = "CONFIRM REBIRTH"
+			return
+		end
 		local response = requestEconomy("Rebirth")
 		if response and response.Ok then
 			confirm.Text = "REBIRTHED!"
 		end
 	end)
+end
+
+local function showSettings()
+	showPanel("SETTINGS")
+	requestEconomy("GetState")
+	local state = currentEconomyState or {}
+	local sfx = tonumber(state.SFXVolume) or 1
+	local music = tonumber(state.MusicVolume) or 0.7
+	local reduced = state.ReducedEffects == true
+	local function save()
+		requestEconomy("SetSettings", {
+			SFXVolume = sfx,
+			MusicVolume = music,
+			ReducedEffects = reduced,
+		})
+	end
+	local sfxButton = actionButton(modalContent, "", UDim2.new(0, 0, 0, 8), CYAN)
+	local musicButton = actionButton(modalContent, "", UDim2.new(0, 0, 0, 82), PURPLE)
+	local effectsButton = actionButton(modalContent, "", UDim2.new(0, 0, 0, 156), ORANGE)
+	local function refresh()
+		sfxButton.Text = "SFX  " .. math.floor(sfx * 100 + 0.5) .. "%"
+		musicButton.Text = "MUSIC  " .. math.floor(music * 100 + 0.5) .. "%"
+		effectsButton.Text = if reduced then "EFFECTS  REDUCED" else "EFFECTS  HIGH"
+	end
+	sfxButton.Activated:Connect(function()
+		sfx = if sfx > 0.75 then 0.5 elseif sfx > 0.25 then 0 else 1
+		refresh()
+		save()
+	end)
+	musicButton.Activated:Connect(function()
+		music = if music > 0.75 then 0.5 elseif music > 0.25 then 0 else 1
+		refresh()
+		save()
+	end)
+	effectsButton.Activated:Connect(function()
+		reduced = not reduced
+		refresh()
+		save()
+	end)
+	refresh()
 end
 
 local function showCodes()
@@ -1138,6 +1264,25 @@ local function showDaily()
 		addButtonShadow(cell)
 		decorate(cell, cell.BackgroundColor3, cell.BackgroundColor3:Lerp(TEAL, 0.25))
 	end
+	if currentEconomyState and currentEconomyState.DailyChallenge then
+		local challenge = currentEconomyState.DailyChallenge
+		local challengeText = newLabel() :: TextLabel
+		challengeText.BackgroundTransparency = 1
+		challengeText.Font = Enum.Font.GothamBlack
+		challengeText.Position = UDim2.new(0, 0, 0, 210)
+		challengeText.Size = UDim2.new(1, 0, 0, 58)
+		challengeText.Text = string.format(
+			"DAILY: %s  %d/%d  •  +%d WINS",
+			challenge.label,
+			currentEconomyState.DailyChallengeProgress or 0,
+			challenge.target,
+			challenge.rewardWins
+		)
+		challengeText.TextSize = 16
+		challengeText.TextWrapped = true
+		challengeText.ZIndex = 7
+		challengeText.Parent = modalContent
+	end
 	local claim = actionButton(modalContent, "CLAIM TODAY", UDim2.new(0, 0, 0, 142), MAGENTA)
 	if currentEconomyState and not currentEconomyState.DailyClaimable then
 		claim.Text = "COME BACK TOMORROW"
@@ -1150,11 +1295,15 @@ local function showDaily()
 	end)
 end
 
-closeButton.Activated:Connect(function()
+local function closeModal()
 	modal.Visible = false
 	modalShadow.Visible = false
+	GuiService.SelectedObject = nil
+end
+closeButton.Activated:Connect(closeModal)
+shopButton.Activated:Connect(function()
+	showShop("boosts")
 end)
-shopButton.Activated:Connect(showShop)
 petsButton.Activated:Connect(function()
 	local request = (player:GetAttribute("PetsPanelRequest") :: number?) or 0
 	player:SetAttribute("PetsPanelRequest", request + 1)
@@ -1162,12 +1311,39 @@ end)
 rebirthButton.Activated:Connect(showRebirth)
 codesButton.Activated:Connect(showCodes)
 dailyButton.Activated:Connect(showDaily)
-passesButton.Activated:Connect(showShop)
+passesButton.Activated:Connect(function()
+	showShop("passes")
+end)
+settingsButton.Activated:Connect(showSettings)
 giftsButton.Activated:Connect(function()
-	if currentEconomyState and not currentEconomyState.StarterGiftClaimed then
-		requestEconomy("ClaimStarterGift")
-	end
 	showGifts()
+end)
+
+UserInputService.InputBegan:Connect(function(input, _gameProcessed)
+	if
+		modal.Visible
+		and (input.KeyCode == Enum.KeyCode.ButtonB or input.KeyCode == Enum.KeyCode.Escape)
+	then
+		closeModal()
+	elseif
+		modal.Visible
+		and (
+			input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch
+		)
+	then
+		local point = Vector2.new(input.Position.X, input.Position.Y)
+		local topLeft = modal.AbsolutePosition
+		local bottomRight = topLeft + modal.AbsoluteSize
+		if
+			point.X < topLeft.X
+			or point.X > bottomRight.X
+			or point.Y < topLeft.Y
+			or point.Y > bottomRight.Y
+		then
+			closeModal()
+		end
+	end
 end)
 economyState.OnClientEvent:Connect(function(state)
 	acceptEconomyState(state)
@@ -1188,7 +1364,8 @@ task.spawn(function()
 				+ math.max(0, math.floor(os.clock() - economyStateReceivedAt))
 			local claims = state.PlaytimeGiftClaims or {}
 			local nextSeconds = 0
-			local claimable = not state.StarterGiftClaimed
+			local onboardingDone = player:GetAttribute("TutorialDone") == true
+			local claimable = onboardingDone and not state.StarterGiftClaimed
 			for index, gift in Config.PlaytimeGifts do
 				if claims[tostring(index)] ~= true then
 					local remaining = math.max(0, gift.Minutes * 60 - sessionSeconds)
@@ -1204,26 +1381,16 @@ task.spawn(function()
 			label.Text = if claimable
 				then "CLAIM"
 				else string.format("%d:%02d", math.floor(nextSeconds / 60), nextSeconds % 60)
-			giftsDot.Visible = claimable
+			giftsDot.Visible = onboardingDone and claimable
 		end
 
 		local offer = Monetization.DeveloperProducts.StarterPack
-		local endsAt = (player:GetAttribute("StarterPackOfferEndsAt") :: number?) or 0
 		local purchased = player:GetAttribute("StarterPackPurchased") == true
-		local remaining = math.max(0, endsAt - os.time())
-		local visible = offer.Id > 0
-			and not purchased
-			and remaining > 0
-			and player:GetAttribute("Rolling") ~= true
+		local visible = offer.Id > 0 and not purchased and player:GetAttribute("Rolling") ~= true
 		starterPackChip.Visible = visible
 		starterPackShadow.Visible = visible
 		if visible then
-			starterPackChip.Text = string.format(
-				"STARTER PACK  %d R$\n%d:%02d",
-				offer.Price,
-				math.floor(remaining / 60),
-				remaining % 60
-			)
+			starterPackChip.Text = "PUMPKIN STARTER PACK\nSEE LIVE PRICE"
 		end
 	end
 end)
@@ -1291,11 +1458,13 @@ end
 
 local function updateTutorial(size: number)
 	local rolling = player:GetAttribute("Rolling") == true
+	local tutorialDone = player:GetAttribute("TutorialDone") == true
+	local firstEggEngaged = player:GetAttribute("FirstEggEngaged") == true
 	if rolling then
 		modal.Visible = false
 		modalShadow.Visible = false
 	end
-	menu.Visible = not rolling
+	menu.Visible = not rolling and tutorialDone
 	zonePanel.Visible = not rolling
 	local zoneShadow = screenGui:FindFirstChild("ZoneShadow")
 	if zoneShadow and zoneShadow:IsA("GuiObject") then
@@ -1314,8 +1483,8 @@ local function updateTutorial(size: number)
 	if wallShadow and wallShadow:IsA("GuiObject") then
 		wallShadow.Visible = not rolling
 	end
-	local banner = Tutorial.banner(size, player:GetAttribute("TutorialDone") == true)
-	if rolling or not banner then
+	local banner = ExperienceRules.tutorialStep(size, tutorialDone, rolling, firstEggEngaged)
+	if not banner then
 		tutorialPanel.Visible = false
 		local shadow = screenGui:FindFirstChild("TutorialShadow")
 		if shadow and shadow:IsA("GuiObject") then
@@ -1336,7 +1505,22 @@ local function updateTutorial(size: number)
 	if shadow and shadow:IsA("GuiObject") then
 		shadow.Visible = true
 	end
-	if size >= Config.TutorialRollSize then
+	if tutorialDone and not firstEggEngaged then
+		local egg = workspace:FindFirstChild("Egg_CandyEgg", true)
+		local target = if egg and egg:IsA("Model") then egg.PrimaryPart else egg
+		if target and target:IsA("BasePart") then
+			startArrow.Adornee = target
+			startHalo.Adornee = target
+			startArrowText.Text = "FIRST HATCH FREE\n" .. utf8.char(0x25BC)
+		end
+		startArrow.Enabled = startArrow.Adornee ~= nil
+		startHalo.Enabled = startHalo.Adornee ~= nil
+		growArrow.Visible = false
+	elseif rolling then
+		startArrow.Enabled = false
+		startHalo.Enabled = false
+		growArrow.Visible = false
+	elseif size >= Config.TutorialRollSize then
 		startArrow.Enabled = startArrow.Adornee ~= nil
 		startHalo.Enabled = startHalo.Adornee ~= nil
 		growArrow.Visible = false
@@ -1384,7 +1568,13 @@ RunService.RenderStepped:Connect(function(deltaTime)
 		return
 	end
 	local distance = (target.Position - root.Position).Magnitude
-	startArrowText.Text = string.format("ROLL HERE  %d STUDS\n%s", distance, utf8.char(0x25BC))
+	startArrowText.Text = string.format(
+		if player:GetAttribute("TutorialDone") == true
+			then "FIRST HATCH FREE  %d STUDS\n%s"
+			else "ROLL HERE  %d STUDS\n%s",
+		distance,
+		utf8.char(0x25BC)
+	)
 	guideRaycastParams.FilterDescendantsInstances = { character :: Model }
 	for index, dot in guideDots do
 		local alpha = index / (#guideDots + 1)
@@ -1404,21 +1594,10 @@ RunService.RenderStepped:Connect(function(deltaTime)
 end)
 
 local milestoneGeneration = 0
-local function showMilestone(amount: number, newSize: number)
-	-- Compare against the size before this grow, so a returning player's saved size never fires a banner
-	local before = newSize - amount
-	local crossed = nil
-	for _, target in { 10, 100, 1_000, 10_000, 100_000, 1_000_000 } do
-		if before < target and newSize >= target then
-			crossed = target
-		end
-	end
-	if not crossed then
-		return
-	end
+local function showRareBanner(message: string)
 	milestoneGeneration += 1
 	local generation = milestoneGeneration
-	milestone.Text = "SIZE " .. string.upper(Format.abbrev(crossed)) .. "!"
+	milestone.Text = message
 	milestone.Visible = true
 	milestoneShadow.Visible = true
 	playPop(milestoneScale, "rare")
@@ -1430,8 +1609,29 @@ local function showMilestone(amount: number, newSize: number)
 	end)
 end
 
+local function showMilestone(amount: number, newSize: number)
+	-- Compare against the size before this grow, so a returning player's saved size never fires a banner
+	local before = newSize - amount
+	local message = ExperienceRules.actionableMilestone(before, newSize)
+	if message then
+		showRareBanner(message)
+	end
+end
+
+player:GetAttributeChangedSignal("LastChallengeReward"):Connect(function()
+	local reward = (player:GetAttribute("LastChallengeReward") :: number?) or 0
+	if reward > 0 then
+		showRareBanner("CHALLENGE COMPLETE  +" .. reward .. " WINS")
+	end
+end)
+player:GetAttributeChangedSignal("LastShopDeliveryAt"):Connect(function()
+	local name = (player:GetAttribute("LastShopDelivery") :: string?) or "PURCHASE"
+	showRareBanner(string.upper(name) .. " DELIVERED!")
+end)
+
 local displayedSize: number? = nil
 local displayedWins: number? = nil
+local displayedTotalWins: number? = nil
 local function popNumber(scale: UIScale)
 	playPop(scale, "micro")
 end
@@ -1513,6 +1713,14 @@ local function updateStats(size: number?, wins: number?)
 	end
 	zoneLabel.Text = "ZONE\n" .. currentDisplay
 	local totalWins = (player:GetAttribute("TotalWins") :: number?) or 0
+	if displayedTotalWins ~= nil then
+		for _, zone in Config.Zones do
+			if displayedTotalWins < zone.RequiredWins and totalWins >= zone.RequiredWins then
+				showRareBanner(string.upper(zone.DisplayName) .. " UNLOCKED!")
+			end
+		end
+	end
+	displayedTotalWins = totalWins
 	local wallState = WallProgress.compute(currentSize, currentZoneName, Config.FallbackWallCount)
 	wallFill.Size = UDim2.fromScale(wallState.progress, 1)
 	if wallState.nextWall then
@@ -1559,12 +1767,12 @@ local function updateStats(size: number?, wins: number?)
 		math.floor(((player:GetAttribute("FriendBoost") :: number?) or 0) * 100 + 0.5)
 	local chipLines = {}
 	if petMultiplier > 1 then
-		table.insert(chipLines, string.format("PETS %s%.1f", utf8.char(0x00D7), petMultiplier))
+		table.insert(chipLines, string.format("PETS %s%.1f SIZE", utf8.char(0x00D7), petMultiplier))
 	end
 	if rebirthMultiplier > 1 then
 		table.insert(
 			chipLines,
-			string.format("REBIRTH %s%.1f", utf8.char(0x00D7), rebirthMultiplier)
+			string.format("REBIRTH %s%.1f SIZE", utf8.char(0x00D7), rebirthMultiplier)
 		)
 	end
 	if friendPercent > 0 then
@@ -1578,8 +1786,18 @@ local function updateStats(size: number?, wins: number?)
 	if player:GetAttribute("DoubleSize") == true then
 		table.insert(chipLines, "2" .. utf8.char(0x00D7) .. " SIZE")
 	end
+	local freeWinsUntil = (player:GetAttribute("FreeDoubleWinsUntil") :: number?) or 0
 	if player:GetAttribute("DoubleWins") == true then
 		table.insert(chipLines, "2" .. utf8.char(0x00D7) .. " WINS")
+	elseif freeWinsUntil > os.time() then
+		table.insert(
+			chipLines,
+			string.format(
+				"FREE 2%s WINS  %dm",
+				utf8.char(0x00D7),
+				math.ceil((freeWinsUntil - os.time()) / 60)
+			)
+		)
 	end
 	setMultiplierChips(chipLines)
 
@@ -1590,7 +1808,17 @@ local function updateStats(size: number?, wins: number?)
 			break
 		end
 	end
-	if nextZone then
+	if
+		player:GetAttribute("TutorialDone") == true
+		and player:GetAttribute("FirstEggEngaged") ~= true
+	then
+		progressFill.Size = UDim2.fromScale(1, 1)
+		progressText.Text = "FIRST CANDY EGG FREE"
+	elseif player:GetAttribute("TutorialDone") == true and currentWins < Config.Eggs[1].Cost then
+		local runs = ExperienceRules.runsToGoal(currentWins, Config.Eggs[1].Cost, wallState.wins)
+		progressFill.Size = UDim2.fromScale(math.clamp(currentWins / Config.Eggs[1].Cost, 0, 1), 1)
+		progressText.Text = string.format("CANDY EGG  •  %d RUNS", runs)
+	elseif nextZone then
 		progressFill.Size = UDim2.fromScale(math.clamp(totalWins / nextZone.RequiredWins, 0, 1), 1)
 		progressText.Text = Format.abbrev(totalWins)
 			.. " / "
@@ -1617,6 +1845,9 @@ player:GetAttributeChangedSignal("CurrentZone"):Connect(function()
 	updateStats(nil, nil)
 end)
 player:GetAttributeChangedSignal("TutorialDone"):Connect(function()
+	updateStats(nil, nil)
+end)
+player:GetAttributeChangedSignal("FirstEggEngaged"):Connect(function()
 	updateStats(nil, nil)
 end)
 player:GetAttributeChangedSignal("Rolling"):Connect(function()
@@ -1755,6 +1986,7 @@ local function burstGrowDust(pumpkin: BasePart)
 end
 
 local popupCursor = 0
+local popupTweens: { [BillboardGui]: { Tween } } = {}
 local function showPopup(amount: number)
 	local character = player.Character
 	local pumpkin = if character then character:FindFirstChild("Pumpkin") else nil
@@ -1764,6 +1996,9 @@ local function showPopup(amount: number)
 
 	popupCursor = popupCursor % #popupPool + 1
 	local popup = popupPool[popupCursor]
+	for _, tween in popupTweens[popup] or {} do
+		tween:Cancel()
+	end
 	local generation = (popup:GetAttribute("Generation") :: number? or 0) + 1
 	popup:SetAttribute("Generation", generation)
 	popup.Adornee = pumpkin
@@ -1789,22 +2024,25 @@ local function showPopup(amount: number)
 	local labelStroke = label:FindFirstChild("LabelStroke") :: UIStroke
 	labelStroke.Transparency = 0
 	playPop(scale, if amount >= 1_000 then "rare" else "reward")
-	TweenService:Create(
+	local rise = TweenService:Create(
 		popup,
 		TweenInfo.new(0.65, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 		{ StudsOffsetWorldSpace = Vector3.new(0, 5.7, 0) }
-	):Play()
+	)
+	rise:Play()
 	local fade = TweenService:Create(
 		label,
 		TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.4),
 		{ TextTransparency = 1 }
 	)
-	TweenService:Create(
+	local strokeFade = TweenService:Create(
 		labelStroke,
 		TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.4),
 		{ Transparency = 1 }
-	):Play()
+	)
+	strokeFade:Play()
 	fade:Play()
+	popupTweens[popup] = { rise, fade, strokeFade }
 	fade.Completed:Connect(function()
 		if popup:GetAttribute("Generation") == generation then
 			popup.Enabled = false
@@ -1834,7 +2072,8 @@ local function squashPumpkin(newSize: number)
 end
 
 growEffect.OnClientEvent:Connect(function(amount: number, newSize: number)
-	if sfxEnabled then
+	if player:GetAttribute("SFXEnabled") ~= false then
+		clickSound.PlaybackSpeed = 0.96 + (math.floor(newSize) % 5) * 0.025
 		clickSound:Play()
 	end
 	showPopup(amount)
@@ -1851,8 +2090,11 @@ end)
 
 local lastRequest = -math.huge
 local function requestGrow()
+	if player:GetAttribute("Rolling") == true or modal.Visible then
+		return
+	end
 	local now = os.clock()
-	if now - lastRequest < 0.075 then
+	if now - lastRequest < ExperienceRules.HOLD_SECONDS then
 		return
 	end
 	lastRequest = now
@@ -1884,9 +2126,20 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		return
 	end
 	if
+		modal.Visible
+		or player:GetAttribute("Rolling") == true
+		or UserInputService:GetFocusedTextBox()
+	then
+		return
+	end
+	if
 		input.UserInputType == Enum.UserInputType.MouseButton1
 		or input.UserInputType == Enum.UserInputType.Touch
 	then
+		local position = input.Position
+		if #playerGui:GetGuiObjectsAtPosition(position.X, position.Y) > 0 then
+			return
+		end
 		requestGrow()
 	end
 end)
@@ -1896,7 +2149,7 @@ task.spawn(function()
 		if holdingGrow then
 			requestGrow()
 		end
-		task.wait(0.05)
+		task.wait(ExperienceRules.HOLD_SECONDS)
 	end
 end)
 

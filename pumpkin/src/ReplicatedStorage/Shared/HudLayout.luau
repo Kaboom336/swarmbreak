@@ -42,7 +42,10 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number, varian
 	local gap = if mobile then 6 else 8
 	local menuWidth = cell * 2 + gap
 	local menuHeight = cell * 4 + gap * 3
-	local menuY = if mobile then margin else math.floor((viewportHeight - menuHeight) / 2)
+	local portrait = viewportHeight > viewportWidth
+	local menuY = if mobile
+		then (if portrait then margin + 164 else margin)
+		else math.floor((viewportHeight - menuHeight) / 2)
 	local menu = rect(margin, menuY, menuWidth, menuHeight)
 	local menuButtons = {}
 	for index = 1, 8 do
@@ -111,8 +114,12 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number, varian
 	local starterPackWidth = 190
 	local starterPackHeight = 58
 	local starterPack = rect(
-		viewportWidth - margin - starterPackWidth,
-		viewportHeight - margin - starterPackHeight,
+		if portrait
+			then math.floor((viewportWidth - starterPackWidth) / 2)
+			else viewportWidth - margin - starterPackWidth,
+		if portrait
+			then wallProgress.y - 44 - 8 - starterPackHeight
+			else viewportHeight - margin - starterPackHeight,
 		starterPackWidth,
 		starterPackHeight
 	)

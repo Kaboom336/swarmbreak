@@ -1,12 +1,16 @@
 --!strict
 local Players = game:GetService("Players")
+local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local petModels = ReplicatedStorage:WaitForChild("PetModels")
 local Config = require(Shared:WaitForChild("Config"))
 local HudLayout = require(Shared:WaitForChild("HudLayout"))
 local Style = require(Shared:WaitForChild("Style"))
@@ -15,6 +19,49 @@ local petAction = remotes:WaitForChild("PetAction") :: RemoteEvent
 local petState = remotes:WaitForChild("PetState") :: RemoteEvent
 local hatchReveal = remotes:WaitForChild("HatchReveal") :: RemoteEvent
 local followerRoot = workspace:WaitForChild("PetFollowers")
+local sfxGroup = SoundService:FindFirstChild("PumpkinSFX") :: SoundGroup?
+if not sfxGroup then
+	sfxGroup = Instance.new("SoundGroup")
+	sfxGroup.Name = "PumpkinSFX"
+	sfxGroup.Parent = SoundService
+end
+
+local function populateViewport(viewport: ViewportFrame, source: Instance?)
+	viewport:ClearAllChildren()
+	if not source then
+		return
+	end
+	local camera = Instance.new("Camera")
+	camera.Name = "PreviewCamera"
+	camera.FieldOfView = 35
+	camera.Parent = viewport
+	viewport.CurrentCamera = camera
+	local world = Instance.new("WorldModel")
+	world.Name = "PreviewWorld"
+	world.Parent = viewport
+	local clone = source:Clone()
+	clone.Parent = world
+	local model: Model
+	if clone:IsA("Model") then
+		model = clone
+	else
+		model = Instance.new("Model")
+		model.Name = "PreviewModel"
+		clone.Parent = model
+		model.Parent = world
+	end
+	for _, descendant in model:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			descendant.Anchored = true
+			descendant.CanCollide = false
+		end
+	end
+	local boundsCFrame, boundsSize = model:GetBoundingBox()
+	model:PivotTo(CFrame.new(-boundsCFrame.Position) * model:GetPivot())
+	local extent = math.max(boundsSize.X, boundsSize.Y, boundsSize.Z, 1)
+	camera.CFrame =
+		CFrame.lookAt(Vector3.new(extent * 1.7, extent * 0.35, extent * 2.2), Vector3.zero)
+end
 
 local function paletteColor(role: string): Color3
 	local value = Style.Palette[role]
@@ -63,13 +110,22 @@ gui.Name = "PumpkinPets"
 gui.DisplayOrder = 20
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global -- child shadows sit at ZIndex - 1
 gui.ResetOnSpawn = false
+gui.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
+gui.ClipToDeviceSafeArea = true
 gui.Parent = playerGui
 
 local buttonSound = Instance.new("Sound")
 buttonSound.Name = "ButtonPress"
 buttonSound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
 buttonSound.Volume = 0.24
+buttonSound.SoundGroup = sfxGroup
 buttonSound.Parent = gui
+local hatchSound = Instance.new("Sound")
+hatchSound.Name = "HatchPop"
+hatchSound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
+hatchSound.Volume = 0.55
+hatchSound.SoundGroup = sfxGroup
+hatchSound.Parent = gui
 
 local function decorate(object: GuiObject, topColor: Color3, bottomColor: Color3)
 	local corner = Instance.new("UICorner")
@@ -429,13 +485,21 @@ eggLabel.BackgroundTransparency = 1
 eggLabel.Font = Enum.Font.GothamBlack
 eggLabel.Position = UDim2.fromScale(0.5, 0.46)
 eggLabel.Size = UDim2.fromOffset(440, 250)
-eggLabel.Text = "🥚"
+eggLabel.Text = "HATCHING..."
 eggLabel.TextColor3 = ORANGE
 eggLabel.TextScaled = true
 eggLabel.TextStrokeColor3 = TEAL
 eggLabel.TextStrokeTransparency = 0
 eggLabel.ZIndex = 51
 eggLabel.Parent = reveal
+local revealViewport = Instance.new("ViewportFrame")
+revealViewport.Name = "ModelReveal"
+revealViewport.AnchorPoint = Vector2.new(0.5, 0.5)
+revealViewport.BackgroundTransparency = 1
+revealViewport.Position = UDim2.fromScale(0.5, 0.42)
+revealViewport.Size = UDim2.fromOffset(320, 240)
+revealViewport.ZIndex = 52
+revealViewport.Parent = reveal
 local revealScale = Instance.new("UIScale")
 revealScale.Parent = eggLabel
 local flash = Instance.new("Frame")
@@ -447,6 +511,7 @@ flash.ZIndex = 52
 flash.Parent = reveal
 
 local selectedId: string? = nil
+local deleteArmedId: string? = nil
 local lastState: any = nil
 local showingIndex = false
 
@@ -503,16 +568,29 @@ local function renderState(state: any)
 		card.TextStrokeTransparency = 0
 		card.ZIndex = 13
 		card.Parent = list
+		local preview = Instance.new("ViewportFrame")
+		preview.Name = "PetPreview"
+		preview.BackgroundTransparency = 1
+		preview.Position = UDim2.fromOffset(4, 4)
+		preview.Size = UDim2.new(0.42, -4, 1, -8)
+		preview.ZIndex = 15
+		preview.Parent = card
+		populateViewport(preview, petModels:FindFirstChild(pet.name))
 		addInnerShadow(card)
 		decorate(card, card.BackgroundColor3, card.BackgroundColor3:Lerp(TEAL, 0.4))
 		bindButtonFeedback(card)
 		card.Activated:Connect(function()
-			if selectedId == pet.id then
+			if deleteArmedId == pet.id then
 				petAction:FireServer("Delete", pet.id)
 				selectedId = nil
+				deleteArmedId = nil
+			elseif selectedId == pet.id then
+				deleteArmedId = pet.id
+				showToast("CONFIRM DELETE " .. pet.name .. " — tap again; another card cancels")
 			else
 				selectedId = pet.id
-				showToast("Tap " .. pet.name .. " again to delete")
+				deleteArmedId = nil
+				showToast("Selected " .. pet.name .. " — tap again to review delete")
 			end
 		end)
 	end
@@ -561,6 +639,16 @@ local function renderIndex()
 			card.TextStrokeTransparency = 0
 			card.ZIndex = 13
 			card.Parent = list
+			if known then
+				local preview = Instance.new("ViewportFrame")
+				preview.Name = "PetPreview"
+				preview.BackgroundTransparency = 1
+				preview.Position = UDim2.fromOffset(4, 4)
+				preview.Size = UDim2.new(0.42, -4, 1, -8)
+				preview.ZIndex = 15
+				preview.Parent = card
+				populateViewport(preview, petModels:FindFirstChild(pet.Name))
+			end
 			addInnerShadow(card)
 			decorate(card, card.BackgroundColor3, card.BackgroundColor3:Lerp(TEAL, 0.35))
 			bindButtonFeedback(card)
@@ -574,6 +662,7 @@ player:GetAttributeChangedSignal("PetsPanelRequest"):Connect(function()
 	panelShadow.Visible = panel.Visible
 	if panel.Visible and lastState then
 		renderState(lastState)
+		GuiService.SelectedObject = close
 	end
 end)
 player:GetAttributeChangedSignal("Rolling"):Connect(function()
@@ -585,6 +674,17 @@ end)
 close.Activated:Connect(function()
 	panel.Visible = false
 	panelShadow.Visible = false
+	GuiService.SelectedObject = nil
+end)
+UserInputService.InputBegan:Connect(function(input)
+	if
+		panel.Visible
+		and (input.KeyCode == Enum.KeyCode.ButtonB or input.KeyCode == Enum.KeyCode.Escape)
+	then
+		panel.Visible = false
+		panelShadow.Visible = false
+		GuiService.SelectedObject = nil
+	end
 end)
 equipBest.Activated:Connect(function()
 	petAction:FireServer("EquipBest")
@@ -615,7 +715,16 @@ local function playRevealQueue()
 		local item = table.remove(revealQueue, 1)
 		local pet = item.pet
 		reveal.Visible = true
-		eggLabel.Text = "🥚\n" .. item.eggName
+		local eggSource: Instance? = nil
+		for _, egg in Config.Eggs do
+			if egg.DisplayName == item.eggName then
+				local eggStand = workspace:FindFirstChild("Egg_" .. egg.Name, true)
+				eggSource = if eggStand then eggStand:FindFirstChild("EggModel", true) else nil
+				break
+			end
+		end
+		populateViewport(revealViewport, eggSource)
+		eggLabel.Text = item.eggName
 		eggLabel.TextColor3 = ORANGE
 		revealScale.Scale = 0.82
 		for direction = -1, 1, 2 do
@@ -624,17 +733,21 @@ local function playRevealQueue()
 			tween:Play()
 			tween.Completed:Wait()
 		end
-		eggLabel.Text = "💥 CRACK!"
+		eggLabel.Text = "CRACK!"
 		TweenService
 			:Create(revealScale, TweenInfo.new(0.18, Enum.EasingStyle.Back), { Scale = 1.25 })
 			:Play()
 		flash.BackgroundTransparency = 0
+		if player:GetAttribute("SFXEnabled") ~= false then
+			hatchSound.PlaybackSpeed = if pet.rarity == "Legendary" then 1.35 else 1.05
+			hatchSound:Play()
+		end
 		TweenService:Create(flash, TweenInfo.new(0.25), { BackgroundTransparency = 1 }):Play()
 		task.wait(0.22)
 		eggLabel.Rotation = 0
+		populateViewport(revealViewport, petModels:FindFirstChild(pet.name))
 		eggLabel.TextColor3 = RARITY_COLORS[pet.rarity] or WHITE
-		eggLabel.Text =
-			string.format("✨ %s ✨\n%s  •  ×%.1f", pet.name, pet.rarity, pet.multiplier)
+		eggLabel.Text = string.format("%s\n%s  •  ×%.1f", pet.name, pet.rarity, pet.multiplier)
 		playPop(
 			revealScale,
 			if pet.rarity == "Rare"
@@ -656,6 +769,34 @@ local function playRevealQueue()
 end
 
 hatchReveal.OnClientEvent:Connect(function(eggName: string, pets: { any })
+	for _, egg in Config.Eggs do
+		if egg.DisplayName == eggName then
+			local stand = workspace:FindFirstChild("Egg_" .. egg.Name, true)
+			if stand and stand:IsA("BasePart") then
+				local attachment = stand:FindFirstChild("HatchConfetti") :: Attachment?
+				if not attachment then
+					attachment = Instance.new("Attachment")
+					attachment.Name = "HatchConfetti"
+					attachment.Position = Vector3.new(0, 4, 0)
+					attachment.Parent = stand
+					local emitter = Instance.new("ParticleEmitter")
+					emitter.Name = "CandyStars"
+					emitter.Color = ColorSequence.new(ORANGE, YELLOW)
+					emitter.Lifetime = NumberRange.new(0.4, 0.7)
+					emitter.Rate = 0
+					emitter.Speed = NumberRange.new(5, 10)
+					emitter.SpreadAngle = Vector2.new(55, 55)
+					emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+					emitter.Parent = attachment
+				end
+				local emitter = attachment:FindFirstChild("CandyStars")
+				if emitter and emitter:IsA("ParticleEmitter") then
+					emitter:Emit(if player:GetAttribute("ReducedEffects") == true then 8 else 18)
+				end
+			end
+			break
+		end
+	end
 	for _, pet in pets do
 		table.insert(revealQueue, { eggName = eggName, pet = pet })
 	end

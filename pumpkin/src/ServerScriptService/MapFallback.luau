@@ -428,6 +428,54 @@ local function ensureLobby()
 			board.Parent = folder
 		end
 	end
+	local challengeBoard = makePart(
+		"DailyChallengeBoard",
+		Vector3.new(18, 11, 1),
+		CFrame.new(plazaCenter + Vector3.new(-18, 5.5, -34)),
+		PURPLE:Lerp(INK, 0.25)
+	)
+	challengeBoard.Parent = folder
+	challengeBoard:SetAttribute("ReturnGoal", "Daily ride + weekly candy hunt")
+	local boardGui = Instance.new("SurfaceGui")
+	boardGui.Name = "ChallengeSurface"
+	boardGui.Face = Enum.NormalId.Front
+	boardGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	boardGui.PixelsPerStud = 28
+	boardGui.Parent = challengeBoard
+	local boardText = Instance.new("TextLabel")
+	boardText.BackgroundTransparency = 1
+	boardText.Font = Enum.Font.GothamBlack
+	boardText.Size = UDim2.fromScale(1, 1)
+	boardText.Text = "DAILY RIDE\nCHALLENGE\n\nWEEKLY CANDY HUNT"
+	boardText.TextColor3 = Color3.new(1, 1, 1)
+	boardText.TextScaled = true
+	boardText.TextStrokeColor3 = INK
+	boardText.TextStrokeTransparency = 0
+	boardText.Parent = boardGui
+	local weeklyPumpkin =
+		buildJackOLantern(art, CFrame.new(plazaCenter + Vector3.new(-18, 0, -28)), 1.35)
+	weeklyPumpkin.Name = "WeeklyCollectibleLandmark"
+	local bouncePad = makePart(
+		"PlazaBouncePad",
+		Vector3.new(12, 0.8, 12),
+		CFrame.new(plazaCenter + Vector3.new(19, 0, 0)),
+		LIME
+	)
+	bouncePad.Material = Enum.Material.Neon
+	bouncePad:SetAttribute("ExpressiveTraversal", true)
+	bouncePad.Parent = folder
+	local bounceAttachment = Instance.new("Attachment")
+	bounceAttachment.Name = "BounceEffects"
+	bounceAttachment.Parent = bouncePad
+	local landingPuff = Instance.new("ParticleEmitter")
+	landingPuff.Name = "LandingPuff"
+	landingPuff.Color = ColorSequence.new(LIME, YELLOW)
+	landingPuff.Lifetime = NumberRange.new(0.3, 0.55)
+	landingPuff.Rate = 0
+	landingPuff.Speed = NumberRange.new(5, 9)
+	landingPuff.SpreadAngle = Vector2.new(70, 70)
+	landingPuff.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	landingPuff.Parent = bounceAttachment
 end
 
 local function pathWorld(start: BasePart, distance: number): (Vector3, Vector3, Vector3, number)

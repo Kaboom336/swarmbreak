@@ -7,6 +7,7 @@ local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local ExperienceRules = require(Shared:WaitForChild("ExperienceRules"))
 local FriendBoost = require(Shared:WaitForChild("FriendBoost"))
 local Grow = require(Shared:WaitForChild("Grow"))
 local PetIndex = require(Shared:WaitForChild("PetIndex"))
@@ -34,6 +35,7 @@ local friendsByPlayer: { [Player]: { [Player]: boolean } } = {}
 local rideStates: { [Player]: any } = {}
 local controlWindows: { [Player]: { startedAt: number, count: number } } = {}
 local nextRideToken = 0
+local lastBounceAt: { [Player]: number } = {}
 
 local function rideWorldSample(start: BasePart, distance: number, lane: number): (Vector3, Vector3)
 	local sample = Ride.pathSample(distance)
@@ -92,6 +94,28 @@ local function createRidePumpkin(player: Player, size: number, start: BasePart):
 	mesh.TextureId = Config.PumpkinTextureId
 	mesh.Scale = Vector3.new(diameter, diameter * 0.82, diameter) * Config.PumpkinMeshScale
 	mesh.Parent = pumpkin
+	local stem = Instance.new("Part")
+	stem.Name = "RideStem"
+	stem.Anchored = false
+	stem.CanCollide = false
+	stem.CanQuery = false
+	stem.CanTouch = false
+	stem.Massless = true
+	stem.Color = Color3.fromRGB(72, 104, 42)
+	stem.Material = Enum.Material.Wood
+	stem.Size = Vector3.new(
+		math.max(0.3, diameter * 0.12),
+		math.max(0.7, diameter * 0.24),
+		math.max(0.3, diameter * 0.12)
+	)
+	stem.CFrame = pumpkin.CFrame * CFrame.new(0, diameter * 0.48, 0)
+	stem.Parent = pumpkin
+	local stemWeld = Instance.new("Weld")
+	stemWeld.Name = "RideStemWeld"
+	stemWeld.Part0 = pumpkin
+	stemWeld.Part1 = stem
+	stemWeld.C0 = CFrame.new(0, diameter * 0.48, 0)
+	stemWeld.Parent = stem
 	local glow = Instance.new("PointLight")
 	glow.Name = "RidePumpkinGlow"
 	glow.Color = Color3.fromRGB(255, 126, 25)
@@ -250,6 +274,7 @@ local function syncPlayer(player: Player, profile: any)
 	player:SetAttribute("Wins", profile.Wins)
 	player:SetAttribute("TotalWins", profile.TotalWins)
 	player:SetAttribute("TutorialDone", profile.TutorialDone)
+	player:SetAttribute("FirstEggEngaged", profile.FirstEggEngaged)
 	player:SetAttribute("Rebirths", profile.Rebirths)
 	player:SetAttribute("IndexMultiplier", PetIndex.sizeMultiplier(profile.DiscoveredPets))
 	local equippedMultipliers = equippedPetMultipliers(profile)
@@ -288,6 +313,10 @@ local function growPlayer(player: Player)
 		indexBonus = PetIndex.sizeMultiplier(profile.DiscoveredPets) - 1,
 	})
 	profile.Size += amount
+	if profile.TutorialFirstGrowAt == 0 then
+		profile.TutorialFirstGrowAt = workspace:GetServerTimeNow()
+		player:SetAttribute("TutorialFirstGrowAt", profile.TutorialFirstGrowAt)
+	end
 	profile.BiggestPumpkin = math.max(profile.BiggestPumpkin, profile.Size)
 	Data.markDirty(player)
 	PumpkinVisual.update(player.Character, profile.Size)
@@ -430,12 +459,32 @@ rollControl.OnServerEvent:Connect(function(player: Player, action: any, token: a
 		player:SetAttribute("RideCombo", state.combo)
 		rollControl:FireClient(player, "PickupAccepted", token, value, target.kind)
 		rollControl:FireClient(player, "Combo", token, state.combo, "PICKUP +1")
+		rollControl:FireClient(
+			player,
+			"PendingUpdate",
+			token,
+			Ride.finalWins(state.baseWins, state.kinds, state.winMultipliers, state.combo)
+		)
+		EconomyService.recordChallenge(player, "Pickup", 1)
+		if target.kind == "Candy" then
+			EconomyService.recordChallenge(player, "Candy", 1)
+		end
 	end
 end)
 
 local function beginRoll(player: Player, zone: any, parts: any)
 	local profile = Data.get(player)
-	if rolling[player] or not profile or profile.Size <= 0 then
+	if rolling[player] or not profile then
+		return
+	end
+	if profile.TutorialFirstPadAt == 0 then
+		profile.TutorialFirstPadAt = workspace:GetServerTimeNow()
+		player:SetAttribute("TutorialFirstPadAt", profile.TutorialFirstPadAt)
+		Data.markDirty(player)
+	end
+	local canLaunch, missingSize = ExperienceRules.canLaunch(profile.Size)
+	if not canLaunch then
+		rollControl:FireClient(player, "Rejected", 0, "NEED " .. missingSize .. " SIZE")
 		return
 	end
 	if not Roll.isZoneUnlocked(profile.TotalWins, zone) then
@@ -458,16 +507,14 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	local token = nextRideToken
 	local seed = (parts.start:GetAttribute("RideSeed") :: number?) or 4_001
 	local startedAt = workspace:GetServerTimeNow() + Config.RideLatchSeconds
-	local pumpkin, seat, rider = createRidePumpkin(player, rolledSize, parts.start)
-	local petMultipliers = equippedPetMultipliers(profile)
-	local petMultiplier = if #petMultipliers > 0 then 0 else 1
-	for _, multiplier in petMultipliers do
-		petMultiplier += multiplier
+	if profile.TutorialFirstLaunchAt == 0 then
+		profile.TutorialFirstLaunchAt = startedAt
+		player:SetAttribute("TutorialFirstLaunchAt", startedAt)
 	end
+	local pumpkin, seat, rider = createRidePumpkin(player, rolledSize, parts.start)
+	local hasDoubleWins = profile.DoubleWins or profile.FreeDoubleWinsUntil > os.time()
 	local winMultipliers = {
-		petMultiplier,
-		1 + profile.Rebirths * Config.RebirthSizeBonus,
-		if profile.DoubleWins then 2 else 1,
+		if hasDoubleWins then 2 else 1,
 		if profile.VIP then 1.5 else 1,
 	}
 	local state = {
@@ -521,28 +568,33 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	profile.Size = 0
 	profile.Wins += guaranteedWins
 	profile.TotalWins += guaranteedWins
-	-- Only a paying roll finishes onboarding, so a too-early roll keeps the tutorial
-	if result.wins > 0 and not profile.TutorialDone then
-		profile.TutorialDone = true
-		player:SetAttribute("TutorialDone", true)
-	end
 	Data.markDirty(player)
 	PumpkinVisual.update(player.Character, 0)
-	player:SetAttribute("Size", 0) -- Wins show on the HUD when the playback ends
-	rollPlayback:FireAllClients(
-		player.UserId,
-		zone.Name,
-		rolledSize,
-		result.wallsBroken,
-		result.distance,
-		result.wins,
-		duration,
-		#parts.walls,
-		result.bonusWalls,
-		token,
-		seed,
-		startedAt
-	)
+	player:SetAttribute("Size", 0)
+	rollControl:FireClient(player, "BankPending", token, guaranteedWins)
+	for _, viewer in Players:GetPlayers() do
+		local viewerRoot = viewer.Character and viewer.Character:FindFirstChild("HumanoidRootPart")
+		local distance = if viewerRoot and viewerRoot:IsA("BasePart")
+			then (viewerRoot.Position - parts.start.Position).Magnitude
+			else math.huge
+		if ExperienceRules.remoteRideRelevant(distance, viewer == player) then
+			rollPlayback:FireClient(
+				viewer,
+				player.UserId,
+				zone.Name,
+				rolledSize,
+				result.wallsBroken,
+				result.distance,
+				result.wins,
+				duration,
+				#parts.walls,
+				result.bonusWalls,
+				token,
+				seed,
+				startedAt
+			)
+		end
+	end
 
 	task.spawn(function()
 		local radius = pumpkin.Size.X * 0.5
@@ -600,6 +652,12 @@ local function beginRoll(player: Player, zone: any, parts: any)
 							wave.id,
 							state.currentSpeed
 						)
+						rollControl:FireClient(
+							player,
+							"PendingUpdate",
+							token,
+							Ride.finalWins(state.baseWins, state.kinds, state.winMultipliers, 0)
+						)
 					else
 						state.combo += 1
 						state.glowUntil = now + 0.2
@@ -607,6 +665,18 @@ local function beginRoll(player: Player, zone: any, parts: any)
 						player:SetAttribute("RideCombo", state.combo)
 						rollControl:FireClient(player, "Dodge", token, wave.id, state.combo)
 						rollControl:FireClient(player, "Combo", token, state.combo, "DODGE +1")
+						rollControl:FireClient(
+							player,
+							"PendingUpdate",
+							token,
+							Ride.finalWins(
+								state.baseWins,
+								state.kinds,
+								state.winMultipliers,
+								state.combo
+							)
+						)
+						EconomyService.recordChallenge(player, "Dodge", 1)
 					end
 				end
 			end
@@ -644,10 +714,23 @@ local function beginRoll(player: Player, zone: any, parts: any)
 			current.TotalWins += pickupWins
 			Data.markDirty(player)
 		end
+		if current then
+			if not current.TutorialDone then
+				current.TutorialDone = true
+				current.TutorialFirstFinishAt = workspace:GetServerTimeNow()
+				current.FreeDoubleWinsUntil = os.time() + ExperienceRules.FREE_DOUBLE_WINS_SECONDS
+				player:SetAttribute("TutorialDone", true)
+				player:SetAttribute("TutorialFirstFinishAt", current.TutorialFirstFinishAt)
+				player:SetAttribute("FreeDoubleWinsUntil", current.FreeDoubleWinsUntil)
+			end
+			Data.markDirty(player)
+		end
 		rideStates[player] = nil
 		if state.deathConnection then
 			state.deathConnection:Disconnect()
 		end
+		rollControl:FireClient(player, "FinishBeat", token, finalWins)
+		task.wait(0.35)
 		restoreRider(state.rider)
 		if seat then
 			seat:Destroy()
@@ -661,11 +744,12 @@ local function beginRoll(player: Player, zone: any, parts: any)
 				parts.start.CFrame.LookVector.Z
 			).Unit
 			local returnPosition = parts.start.Position
-				+ returnDirection * 20
+				- returnDirection * 35
 				+ Vector3.new(0, 4, 0)
 			root.CFrame = CFrame.lookAt(returnPosition, returnPosition + returnDirection)
 		end
 		rollControl:FireClient(player, "Complete", token, finalWins, state.claimedCount)
+		EconomyService.recordChallenge(player, "Finish", 1)
 		local fade = TweenService:Create(pumpkin, TweenInfo.new(0.3), { Transparency = 1 })
 		fade:Play()
 		fade.Completed:Connect(function()
@@ -708,6 +792,23 @@ for _, zone in Config.Zones do
 	end
 end
 
+local bouncePad = workspace:FindFirstChild("PlazaBouncePad", true)
+if bouncePad and bouncePad:IsA("BasePart") then
+	bouncePad.Touched:Connect(function(hit)
+		local player = playerFromHit(hit)
+		local now = os.clock()
+		if not player or rolling[player] or now - (lastBounceAt[player] or 0) < 1 then
+			return
+		end
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if root and root:IsA("BasePart") then
+			lastBounceAt[player] = now
+			root.AssemblyLinearVelocity = bouncePad.CFrame.LookVector * 30 + Vector3.yAxis * 42
+			rollControl:FireClient(player, "Bounce", 0, bouncePad.Position)
+		end
+	end)
+end
+
 EconomyService.init(remotes, syncPlayer, growPlayer)
 
 Players.PlayerAdded:Connect(function(player)
@@ -723,6 +824,7 @@ Players.PlayerRemoving:Connect(function(player)
 	limiter:clear(player)
 	rolling[player] = nil
 	controlWindows[player] = nil
+	lastBounceAt[player] = nil
 	local ride = rideStates[player]
 	if ride then
 		restoreRider(ride.rider)

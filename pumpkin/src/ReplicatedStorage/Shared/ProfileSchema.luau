@@ -40,6 +40,21 @@ export type Profile = {
 	DoubleLuck: boolean,
 	StarterPackPurchased: boolean,
 	StarterPackOfferEndsAt: number,
+	FreeDoubleWinsUntil: number,
+	SFXVolume: number,
+	MusicVolume: number,
+	ReducedEffects: boolean,
+	TutorialFirstGrowAt: number,
+	TutorialFirstPadAt: number,
+	TutorialFirstLaunchAt: number,
+	TutorialFirstFinishAt: number,
+	FirstEggEngaged: boolean,
+	DailyChallengeId: string,
+	DailyChallengeProgress: number,
+	DailyChallengeClaimed: boolean,
+	WeeklyChallengeId: string,
+	WeeklyChallengeProgress: number,
+	WeeklyChallengeClaimed: boolean,
 }
 
 local ProfileSchema = {}
@@ -77,6 +92,21 @@ function ProfileSchema.default(): Profile
 		DoubleLuck = false,
 		StarterPackPurchased = false,
 		StarterPackOfferEndsAt = 0,
+		FreeDoubleWinsUntil = 0,
+		SFXVolume = 1,
+		MusicVolume = 0.7,
+		ReducedEffects = false,
+		TutorialFirstGrowAt = 0,
+		TutorialFirstPadAt = 0,
+		TutorialFirstLaunchAt = 0,
+		TutorialFirstFinishAt = 0,
+		FirstEggEngaged = false,
+		DailyChallengeId = "",
+		DailyChallengeProgress = 0,
+		DailyChallengeClaimed = false,
+		WeeklyChallengeId = "",
+		WeeklyChallengeProgress = 0,
+		WeeklyChallengeClaimed = false,
 	}
 end
 
@@ -135,6 +165,27 @@ function ProfileSchema.fromStored(stored: any): Profile
 	profile.StarterPackPurchased = source.StarterPackPurchased == true
 	profile.StarterPackOfferEndsAt =
 		math.max(0, math.floor(tonumber(source.StarterPackOfferEndsAt) or 0))
+	profile.FreeDoubleWinsUntil = math.max(0, math.floor(tonumber(source.FreeDoubleWinsUntil) or 0))
+	profile.SFXVolume = math.clamp(tonumber(source.SFXVolume) or 1, 0, 1)
+	profile.MusicVolume = math.clamp(tonumber(source.MusicVolume) or 0.7, 0, 1)
+	profile.ReducedEffects = source.ReducedEffects == true
+	profile.TutorialFirstGrowAt = math.max(0, tonumber(source.TutorialFirstGrowAt) or 0)
+	profile.TutorialFirstPadAt = math.max(0, tonumber(source.TutorialFirstPadAt) or 0)
+	profile.TutorialFirstLaunchAt = math.max(0, tonumber(source.TutorialFirstLaunchAt) or 0)
+	profile.TutorialFirstFinishAt = math.max(0, tonumber(source.TutorialFirstFinishAt) or 0)
+	profile.FirstEggEngaged = source.FirstEggEngaged == true
+	profile.DailyChallengeId = if type(source.DailyChallengeId) == "string"
+		then source.DailyChallengeId
+		else ""
+	profile.DailyChallengeProgress =
+		math.max(0, math.floor(tonumber(source.DailyChallengeProgress) or 0))
+	profile.DailyChallengeClaimed = source.DailyChallengeClaimed == true
+	profile.WeeklyChallengeId = if type(source.WeeklyChallengeId) == "string"
+		then source.WeeklyChallengeId
+		else ""
+	profile.WeeklyChallengeProgress =
+		math.max(0, math.floor(tonumber(source.WeeklyChallengeProgress) or 0))
+	profile.WeeklyChallengeClaimed = source.WeeklyChallengeClaimed == true
 	return profile
 end
 

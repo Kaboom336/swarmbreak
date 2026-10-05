@@ -270,10 +270,8 @@ local function hatch(player: Player, eggName: string)
 	profile.Wins -= totalCost
 	profile.FreeCandyHatchUsed = entitlementState.freeCandyUsed
 	profile.FreeSpookyHatches = entitlementState.freeSpookyHatches
-	if profile.StarterPackOfferEndsAt == 0 then
-		profile.StarterPackOfferEndsAt = os.time() + Config.StarterPackOfferSeconds
-		player:SetAttribute("StarterPackOfferEndsAt", profile.StarterPackOfferEndsAt)
-	end
+	profile.FirstEggEngaged = true
+	player:SetAttribute("FirstEggEngaged", true)
 	Data.markDirty(player)
 	syncWins(player, profile)
 	sendState(player)
@@ -295,6 +293,7 @@ petAction.OnServerEvent:Connect(function(player: Player, action: any, petId: any
 		return
 	elseif action == "EquipBest" then
 		profile.EquippedPetIds = Pets.equipBest(profile.Pets, equipSlots(profile))
+		player:SetAttribute("LastPetReaction", "Equip")
 	elseif action == "Delete" and type(petId) == "string" then
 		local pets, equipped, deleted = Pets.delete(profile.Pets, profile.EquippedPetIds, petId)
 		if not deleted then
@@ -307,7 +306,7 @@ petAction.OnServerEvent:Connect(function(player: Player, action: any, petId: any
 	end
 	Data.markDirty(player)
 	syncFollowers(player)
-	sendState(player)
+	sendState(player, if action == "EquipBest" then "Best pets equipped!" else "Pet deleted.")
 end)
 
 local function eggNameFrom(instance: Instance): string?

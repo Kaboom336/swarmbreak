@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Challenges = require(Shared:WaitForChild("Challenges"))
 local Codes = require(Shared:WaitForChild("Codes"))
 local Config = require(Shared:WaitForChild("Config"))
 local Daily = require(Shared:WaitForChild("Daily"))
@@ -47,7 +48,24 @@ local syncStats: ((Player, any) -> ())? = nil
 local autoGrow: ((Player) -> ())? = nil
 local sessionJoinedAt: { [Player]: number } = {}
 
+local function refreshChallenges(profile: any, now: number)
+	local daily = Challenges.daily(now)
+	if profile.DailyChallengeId ~= daily.id then
+		profile.DailyChallengeId = daily.id
+		profile.DailyChallengeProgress = 0
+		profile.DailyChallengeClaimed = false
+	end
+	local weekly = Challenges.weekly(now)
+	if profile.WeeklyChallengeId ~= weekly.id then
+		profile.WeeklyChallengeId = weekly.id
+		profile.WeeklyChallengeProgress = 0
+		profile.WeeklyChallengeClaimed = false
+	end
+	return daily, weekly
+end
+
 local function stateFor(player: Player, profile: any): any
+	local dailyChallenge, weeklyChallenge = refreshChallenges(profile, os.time())
 	local nextDaily = Daily.nextStreak(profile.DailyLastClaimDay, profile.DailyStreak, os.time())
 	local joinedAt = sessionJoinedAt[player] or os.time()
 	local sessionSeconds = GiftSchedule.sessionSeconds(joinedAt, os.time())
@@ -71,6 +89,16 @@ local function stateFor(player: Player, profile: any): any
 			) > 0,
 		StarterPackPurchased = profile.StarterPackPurchased,
 		StarterPackOfferEndsAt = profile.StarterPackOfferEndsAt,
+		SFXVolume = profile.SFXVolume,
+		MusicVolume = profile.MusicVolume,
+		ReducedEffects = profile.ReducedEffects,
+		FreeDoubleWinsUntil = profile.FreeDoubleWinsUntil,
+		DailyChallenge = dailyChallenge,
+		DailyChallengeProgress = profile.DailyChallengeProgress,
+		DailyChallengeClaimed = profile.DailyChallengeClaimed,
+		WeeklyChallenge = weeklyChallenge,
+		WeeklyChallengeProgress = profile.WeeklyChallengeProgress,
+		WeeklyChallengeClaimed = profile.WeeklyChallengeClaimed,
 	}
 end
 
@@ -88,6 +116,11 @@ local function publish(player: Player, profile: any)
 	player:SetAttribute("DoubleLuck", profile.DoubleLuck)
 	player:SetAttribute("StarterPackOfferEndsAt", profile.StarterPackOfferEndsAt)
 	player:SetAttribute("StarterPackPurchased", profile.StarterPackPurchased)
+	player:SetAttribute("SFXVolume", profile.SFXVolume)
+	player:SetAttribute("MusicVolume", profile.MusicVolume)
+	player:SetAttribute("SFXEnabled", profile.SFXVolume > 0)
+	player:SetAttribute("ReducedEffects", profile.ReducedEffects)
+	player:SetAttribute("FreeDoubleWinsUntil", profile.FreeDoubleWinsUntil)
 	if economyState then
 		economyState:FireClient(player, stateFor(player, profile))
 	end
@@ -196,7 +229,45 @@ function EconomyService.playerLoaded(player: Player)
 	end)
 end
 
+function EconomyService.recordChallenge(player: Player, kind: string, amount: number?)
+	local profile = Data.get(player)
+	if not profile then
+		return
+	end
+	local daily, weekly = refreshChallenges(profile, os.time())
+	local changed = false
+	local dailyProgress, dailyComplete =
+		Challenges.advance(daily, profile.DailyChallengeProgress, kind, amount)
+	if dailyProgress ~= profile.DailyChallengeProgress then
+		profile.DailyChallengeProgress = dailyProgress
+		changed = true
+	end
+	if dailyComplete and not profile.DailyChallengeClaimed then
+		profile.DailyChallengeClaimed = true
+		addWins(profile, daily.rewardWins)
+		player:SetAttribute("LastChallengeReward", daily.rewardWins)
+		changed = true
+	end
+	local weeklyProgress, weeklyComplete =
+		Challenges.advance(weekly, profile.WeeklyChallengeProgress, kind, amount)
+	if weeklyProgress ~= profile.WeeklyChallengeProgress then
+		profile.WeeklyChallengeProgress = weeklyProgress
+		changed = true
+	end
+	if weeklyComplete and not profile.WeeklyChallengeClaimed then
+		profile.WeeklyChallengeClaimed = true
+		addWins(profile, weekly.rewardWins)
+		player:SetAttribute("LastChallengeReward", weekly.rewardWins)
+		changed = true
+	end
+	if changed then
+		Data.markDirty(player)
+		publish(player, profile)
+	end
+end
+
 function EconomyService.init(remotes: Folder, statsSync: (Player, any) -> (), grow: (Player) -> ())
+	ReplicatedStorage:SetAttribute("UnconfiguredOfferCount", #Monetization.validationErrors())
 	economyState = remotes:FindFirstChild("EconomyState") :: RemoteEvent
 	syncStats = statsSync
 	autoGrow = grow
@@ -276,6 +347,13 @@ function EconomyService.init(remotes: Folder, statsSync: (Player, any) -> (), gr
 			else
 				message = "That gift is not ready yet."
 			end
+		elseif action == "SetSettings" and type(value) == "table" then
+			profile.SFXVolume = math.clamp(tonumber(value.SFXVolume) or profile.SFXVolume, 0, 1)
+			profile.MusicVolume =
+				math.clamp(tonumber(value.MusicVolume) or profile.MusicVolume, 0, 1)
+			profile.ReducedEffects = value.ReducedEffects == true
+			ok = true
+			message = "Settings saved."
 		end
 
 		if ok then
@@ -331,6 +409,8 @@ function EconomyService.init(remotes: Folder, statsSync: (Player, any) -> (), gr
 		end
 		Data.markDirty(player)
 		publish(player, profile)
+		player:SetAttribute("LastShopDelivery", productName)
+		player:SetAttribute("LastShopDeliveryAt", os.time())
 		if not Data.save(player, false) then
 			return Enum.ProductPurchaseDecision.NotProcessedYet
 		end
