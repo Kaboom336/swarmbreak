@@ -8,6 +8,8 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local HudLayout = require(Shared:WaitForChild("HudLayout"))
+local Style = require(Shared:WaitForChild("Style"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local petAction = remotes:WaitForChild("PetAction") :: RemoteEvent
 local petState = remotes:WaitForChild("PetState") :: RemoteEvent
@@ -28,6 +30,22 @@ local RARITY_COLORS = {
 	Legendary = Color3.fromRGB(255, 226, 64),
 }
 
+local function newLabel(className: string?): any
+	local label = Instance.new(className or "TextLabel") :: any
+	local labelStyle = Style.label()
+	label.TextColor3 =
+		Color3.fromRGB(labelStyle.textColor.r, labelStyle.textColor.g, labelStyle.textColor.b)
+	label.TextStrokeTransparency = 1
+	local stroke = Instance.new("UIStroke")
+	stroke.Name = "LabelStroke"
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+	stroke.Color =
+		Color3.fromRGB(labelStyle.strokeColor.r, labelStyle.strokeColor.g, labelStyle.strokeColor.b)
+	stroke.Thickness = labelStyle.strokeThickness
+	stroke.Parent = label
+	return label
+end
+
 local oldGui = playerGui:FindFirstChild("PumpkinPets")
 if oldGui then
 	oldGui:Destroy()
@@ -44,6 +62,8 @@ local function decorate(object: GuiObject, topColor: Color3, bottomColor: Color3
 	corner.CornerRadius = UDim.new(0, 12)
 	corner.Parent = object
 	local stroke = Instance.new("UIStroke")
+	stroke.Name = "PanelStroke"
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Color = TEAL
 	stroke.Thickness = 3
 	stroke.Parent = object
@@ -105,7 +125,7 @@ panel.ZIndex = 11
 panel.Parent = gui
 decorate(panel, PURPLE, Color3.fromRGB(63, 34, 130))
 
-local title = Instance.new("TextLabel")
+local title = newLabel() :: TextLabel
 title.BackgroundTransparency = 1
 title.Font = Enum.Font.GothamBlack
 title.Position = UDim2.fromOffset(18, 10)
@@ -117,7 +137,7 @@ title.TextXAlignment = Enum.TextXAlignment.Left
 title.ZIndex = 13
 title.Parent = panel
 
-local close = Instance.new("TextButton")
+local close = newLabel("TextButton") :: TextButton
 close.Name = "Close"
 close.AnchorPoint = Vector2.new(1, 0)
 close.BackgroundColor3 = ORANGE
@@ -163,7 +183,7 @@ local listHighlight = list:FindFirstChild("TopHighlight")
 if listHighlight then
 	listHighlight:Destroy()
 end
-local emptyLabel = Instance.new("TextLabel")
+local emptyLabel = newLabel() :: TextLabel
 emptyLabel.Name = "EmptyPets"
 emptyLabel.BackgroundTransparency = 1
 emptyLabel.Font = Enum.Font.GothamBlack
@@ -188,7 +208,7 @@ listPadding.PaddingTop = UDim.new(0, 10)
 listPadding.PaddingBottom = UDim.new(0, 10)
 listPadding.Parent = list
 
-local equipBest = Instance.new("TextButton")
+local equipBest = newLabel("TextButton") :: TextButton
 equipBest.Name = "EquipBest"
 equipBest.AnchorPoint = Vector2.new(0.5, 1)
 equipBest.BackgroundColor3 = LIME
@@ -206,7 +226,7 @@ equipBest.Parent = panel
 addInnerShadow(equipBest)
 decorate(equipBest, LIME, Color3.fromRGB(83, 190, 50))
 
-local indexButton = Instance.new("TextButton")
+local indexButton = newLabel("TextButton") :: TextButton
 indexButton.Name = "Index"
 indexButton.AnchorPoint = Vector2.new(0.5, 1)
 indexButton.BackgroundColor3 = ORANGE
@@ -224,7 +244,7 @@ indexButton.Parent = panel
 addInnerShadow(indexButton)
 decorate(indexButton, ORANGE, Color3.fromRGB(200, 54, 27))
 
-local toast = Instance.new("TextLabel")
+local toast = newLabel() :: TextLabel
 toast.Name = "Toast"
 toast.AnchorPoint = Vector2.new(0.5, 0)
 toast.BackgroundColor3 = ORANGE
@@ -235,10 +255,21 @@ toast.Size = UDim2.fromOffset(360, 58)
 toast.TextColor3 = WHITE
 toast.TextSize = 20
 toast.Visible = false
-toast.ZIndex = 40
+toast.ZIndex = 100
 toast.Parent = gui
 addInnerShadow(toast)
 decorate(toast, ORANGE, Color3.fromRGB(195, 52, 27))
+
+local function applyToastLayout()
+	local layout = HudLayout.compute(gui.AbsoluteSize.X, gui.AbsoluteSize.Y)
+	local width = math.min(360, gui.AbsoluteSize.X - 16)
+	toast.Position =
+		UDim2.fromOffset(math.floor((gui.AbsoluteSize.X - width) / 2), layout.distanceMeter.y)
+	toast.Size = UDim2.fromOffset(width, if layout.mobile then 48 else 58)
+end
+toast.AnchorPoint = Vector2.zero
+applyToastLayout()
+gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(applyToastLayout)
 
 local reveal = Instance.new("Frame")
 reveal.Name = "HatchReveal"
@@ -249,7 +280,7 @@ reveal.Size = UDim2.fromScale(1, 1)
 reveal.Visible = false
 reveal.ZIndex = 50
 reveal.Parent = gui
-local eggLabel = Instance.new("TextLabel")
+local eggLabel = newLabel() :: TextLabel
 eggLabel.AnchorPoint = Vector2.new(0.5, 0.5)
 eggLabel.BackgroundTransparency = 1
 eggLabel.Font = Enum.Font.GothamBlack
@@ -309,7 +340,7 @@ local function renderState(state: any)
 		#(state.equippedPetIds or {})
 	)
 	for index, pet in state.pets or {} do
-		local card = Instance.new("TextButton")
+		local card = newLabel("TextButton") :: TextButton
 		card.Name = pet.id
 		card.AutoButtonColor = false
 		card.BackgroundColor3 = RARITY_COLORS[pet.rarity] or ORANGE
@@ -368,7 +399,7 @@ local function renderIndex()
 			if known then
 				found += 1
 			end
-			local card = Instance.new("TextButton")
+			local card = newLabel("TextButton") :: TextButton
 			card.Name = "Index_" .. pet.Name
 			card.AutoButtonColor = false
 			card.BackgroundColor3 = if known
@@ -382,7 +413,7 @@ local function renderIndex()
 				if known then pet.Name else "SILHOUETTE",
 				rarity
 			)
-			card.TextColor3 = if known then WHITE else Color3.fromRGB(95, 107, 125)
+			card.TextColor3 = WHITE
 			card.TextSize = 14
 			card.TextStrokeColor3 = TEAL
 			card.TextStrokeTransparency = 0

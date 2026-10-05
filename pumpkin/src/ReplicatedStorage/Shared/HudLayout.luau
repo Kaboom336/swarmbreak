@@ -37,7 +37,8 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number): Layou
 	local gap = if mobile then 6 else 8
 	local menuWidth = cell * 2 + gap
 	local menuHeight = cell * 4 + gap * 3
-	local menu = rect(margin, math.floor((viewportHeight - menuHeight) / 2), menuWidth, menuHeight)
+	local menuY = if mobile then margin else math.floor((viewportHeight - menuHeight) / 2)
+	local menu = rect(margin, menuY, menuWidth, menuHeight)
 	local menuButtons = {}
 	for index = 1, 8 do
 		local column = (index - 1) % 2
@@ -85,8 +86,8 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number): Layou
 		zoneWidth,
 		zoneHeight
 	)
-	local multiplierWidth = if mobile then 190 else 310
-	local multiplierHeight = if mobile then 51 else 58
+	local multiplierWidth = if mobile then 174 else 180
+	local multiplierHeight = if mobile then 104 else 132
 	local multipliers =
 		rect(margin, viewportHeight - margin - multiplierHeight, multiplierWidth, multiplierHeight)
 	local starterPackWidth = 190
@@ -102,7 +103,7 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number): Layou
 		math.floor((viewportWidth - tutorialWidth) / 2),
 		distanceMeter.y + distanceMeter.height + 8,
 		tutorialWidth,
-		if mobile then 44 else 52
+		if mobile then 36 else 40
 	)
 	local growArrow = rect(math.floor((viewportWidth - 48) / 2), wallProgress.y - 44, 48, 40)
 

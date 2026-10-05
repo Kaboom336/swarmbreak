@@ -17,7 +17,10 @@ local Config = {
 	PumpkinMaxScale = 12,
 	PumpkinBaseDiameter = 2.5,
 	PumpkinMaxCharacterHeights = 3,
-	PumpkinCameraDistancePerDiameter = 1.25,
+	PumpkinMinZoomPerDiameter = 1.25,
+	PumpkinCameraDistancePerDiameter = 2.2,
+	PumpkinCameraBaseDistance = 8,
+	PumpkinCameraMinDistance = 14,
 	-- Pumpkin mesh picked by Play (mesh asset only, no scripts). MeshScale converts mesh units to studs.
 	PumpkinMeshId = "rbxassetid://139105509213577",
 	PumpkinTextureId = "rbxassetid://78839540616611",
