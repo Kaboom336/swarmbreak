@@ -192,3 +192,34 @@ Done when: the gate is green with the new specs (bonus walls, chip layout margin
 3. **The bonus run is visible on the HUD.** The "BONUS +N" counter and the "+N WINS!" end toast sit at the top centre, above every other HUD element (ZIndex), and stay up for at least 1.2 s after the roll ends. Play could not capture them, so add a client debug attribute "LastRollSummary" ("walls=25 bonus=15 wins=825") that Play can read.
 
 Done when: the gate is green. testcmd: cd pumpkin && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
+
+## Ride re-judge at f543e77 (Play, 13:26Z)
+- **Verdict:** better than the old roll, but too fast to play. A size-100 ride covers 300 m in 3.9 s; a 1.2M ride covers about 1,175 studs in 3.1 s. Play steered on 2 rides and made no pickups.
+- **Also open:** the camera pops from 71 to 95 studs on smashes; LastRollSummary disagrees with the toast; the ride pumpkin lingers about 1.5 s with the player standing on it; the mobile steer buttons likely overlap the chips.
+
+## Codex task Q3-B: make the ride playable (queue next)
+1. **Ride length and speed.**
+   - The physical-track part of the ride lasts 7-10 s at every size: duration = clamp(7 + 0.5 × log10(size + 1), 7, 10). The bonus run stays at most 2.5 s.
+   - Speed comes from distance ÷ duration, with Ride.progress keeping the downhill ease-in.
+   - The first 1.5 s is a gentle start: speed ramps from 0, the "STEER ◀ ▶" hint shows, and the "A / D" hint shows on desktop.
+   - Specs: duration at sizes 10, 100, 1K and 1.2M lies in [7, 10] plus the bonus.
+2. **Bonus targets you can actually hit.**
+   - Place targets only on the physical track, between 15% and 85% of the ride time, at least 0.7 s apart.
+   - Each layout guarantees at least 1 speed pad and at most 2 gold pumpkins, with 7 targets total.
+   - A speed pad gives +25% speed for 1 s and +1 combo; the wins math stays unchanged.
+   - Each target has a tall glowing beacon (Neon, a BillboardGui icon) visible 2 s ahead, and its lane is marked on the ground.
+   - Pickup checks use world distance: the pumpkin centre is within 0.45 lanes of the target and within a ±0.5 s window. The server validates against the same timing.
+   - Specs: the layout bounds and spacing, guaranteed kinds, and pickup accept/reject.
+3. **Camera stability.**
+   - Ride camera distance and height come from CameraFraming with the diameter fixed for the whole ride. Smoothing uses a critically damped spring, with at most 10% distance change per frame.
+   - Hit-stop holds the CFrame but never changes distance. Shake is a small additive offset, at most 0.6 studs × the wall index factor, capped.
+   - Pre-create the chunk pool at load, not on the first smash, to fix the 1-frame hitch.
+4. **One wins number.** Compute the final wins (base × ride bonuses × pet, rebirth and pass multipliers, exactly what is credited) once, on the server. Send that number in "Complete", and use it for the toast, LastRollSummary (walls, bonus, pickups, wins) and the coin fly. Spec the helper.
+5. **Ride end.** On Complete, the server unseats the player and teleports them before the pumpkin fades out over 0.3 s, then destroys it. The player never stands on the leftover pumpkin.
+6. **Mobile layout during a ride.**
+   - Hide GROW, the chips and the wall bar while Rolling is true.
+   - Steer buttons are 72×72 px, at the bottom left and bottom right with a 16 px margin.
+   - Add them to HudLayout as `steerLeft` and `steerRight`, and add a "ride" variant to the overlap spec at 667×375 and 1399×1080.
+7. **Pacing note.** Play inferred Forest at about 8 minutes. Rerun Economy.simulate with Ride bonuses at 1 average pickup per ride, and keep the Q2-E targets: Forest in 2-4 minutes, first rebirth in 8-15 minutes, Graveyard in 20-40 minutes.
+
+Done when: the gate is green with the new specs. testcmd: cd pumpkin && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
