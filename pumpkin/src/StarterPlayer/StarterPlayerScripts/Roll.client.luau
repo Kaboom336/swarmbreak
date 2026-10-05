@@ -1,8 +1,10 @@
 --!strict
 local Players = game:GetService("Players")
+local ContextActionService = game:GetService("ContextActionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -12,8 +14,10 @@ local Config = require(Shared:WaitForChild("Config"))
 local Format = require(Shared:WaitForChild("Format"))
 local Grow = require(Shared:WaitForChild("Grow"))
 local HudLayout = require(Shared:WaitForChild("HudLayout"))
+local Ride = require(Shared:WaitForChild("Ride"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local rollPlayback = remotes:WaitForChild("RollPlayback") :: RemoteEvent
+local rollControl = remotes:WaitForChild("RollControl") :: RemoteEvent
 
 local ORANGE = Color3.fromRGB(255, 116, 25)
 local TEAL = Color3.fromRGB(13, 53, 63)
@@ -76,6 +80,23 @@ bonusCounter.Parent = effectGui
 local bonusScale = Instance.new("UIScale")
 bonusScale.Parent = bonusCounter
 
+local comboCounter = Instance.new("TextLabel")
+comboCounter.Name = "ComboCounter"
+comboCounter.AnchorPoint = Vector2.new(0.5, 0.5)
+comboCounter.BackgroundTransparency = 1
+comboCounter.Font = Enum.Font.GothamBlack
+comboCounter.Position = UDim2.fromScale(0.5, 0.28)
+comboCounter.Size = UDim2.fromOffset(360, 64)
+comboCounter.TextColor3 = LIME
+comboCounter.TextSize = 38
+comboCounter.TextStrokeColor3 = TEAL
+comboCounter.TextStrokeTransparency = 0
+comboCounter.Visible = false
+comboCounter.ZIndex = 100
+comboCounter.Parent = effectGui
+local comboScale = Instance.new("UIScale")
+comboScale.Parent = comboCounter
+
 local function applyDistanceMeterLayout()
 	local layout = HudLayout.compute(effectGui.AbsoluteSize.X, effectGui.AbsoluteSize.Y)
 	local bounds = layout.distanceMeter
@@ -92,6 +113,9 @@ local function applyDistanceMeterLayout()
 	bonusCounter.Position = UDim2.fromOffset(toastBounds.x, toastBounds.y + toastBounds.height)
 	bonusCounter.Size = UDim2.fromOffset(toastBounds.width, toastBounds.height)
 	bonusCounter.TextSize = if layout.mobile then 26 else 34
+	comboCounter.Position = UDim2.fromOffset(toastBounds.x, toastBounds.y + toastBounds.height)
+	comboCounter.Size = UDim2.fromOffset(toastBounds.width, toastBounds.height)
+	comboCounter.TextSize = if layout.mobile then 28 else 38
 end
 
 applyDistanceMeterLayout()
@@ -159,7 +183,7 @@ local debrisFolder = Instance.new("Folder")
 debrisFolder.Name = "PumpkinDebrisPool"
 debrisFolder.Parent = workspace
 local debrisPool = {}
-for index = 1, 16 do
+for index = 1, 20 do
 	local debris = Instance.new("Part")
 	debris.Name = "Debris" .. index
 	debris.Anchored = true
@@ -167,12 +191,30 @@ for index = 1, 16 do
 	debris.CanQuery = false
 	debris.CanTouch = false
 	debris.Color = ORANGE
-	debris.Material = Enum.Material.Neon
+	debris.Material = Enum.Material.SmoothPlastic
 	debris.Size = Vector3.new(0.8, 0.8, 0.8)
 	debris.Transparency = 1
 	debris.Parent = debrisFolder
 	table.insert(debrisPool, debris)
 end
+
+local shockwavePool = {}
+for index = 1, 3 do
+	local shockwave = Instance.new("Part")
+	shockwave.Name = "Shockwave" .. index
+	shockwave.Shape = Enum.PartType.Cylinder
+	shockwave.Anchored = true
+	shockwave.CanCollide = false
+	shockwave.CanQuery = false
+	shockwave.CanTouch = false
+	shockwave.Color = LIME
+	shockwave.Material = Enum.Material.Neon
+	shockwave.Size = Vector3.new(0.15, 2, 2)
+	shockwave.Transparency = 1
+	shockwave.Parent = debrisFolder
+	table.insert(shockwavePool, shockwave)
+end
+local shockwaveCursor = 0
 
 local wallPopupPool = {}
 for index = 1, 8 do
@@ -273,37 +315,51 @@ local function flyCoins(origin: Vector2, winsGained: number, winsBefore: number)
 end
 
 local debrisCursor = 0
-local function burstDebris(position: Vector3)
-	for _ = 1, 8 do
+local function burstDebris(position: Vector3, wallIndex: number)
+	local chunkCount = 12 + (wallIndex - 1) % 9
+	for chunkIndex = 1, chunkCount do
 		debrisCursor = debrisCursor % #debrisPool + 1
 		local debris = debrisPool[debrisCursor]
+		local generation = (debris:GetAttribute("Generation") :: number? or 0) + 1
+		debris:SetAttribute("Generation", generation)
 		local direction =
 			Vector3.new(math.random() - 0.5, math.random() * 0.8 + 0.25, math.random() - 0.5).Unit
 		debris.Position = position
 		debris.Transparency = 0
-		TweenService:Create(
+		local apex = position + direction * math.random(3, 6) + Vector3.new(0, math.random(3, 6), 0)
+		local rise = TweenService:Create(
 			debris,
-			TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{ Position = position + direction * math.random(5, 10), Transparency = 1 }
-		):Play()
+			TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{ Position = apex, Orientation = Vector3.new(chunkIndex * 31, chunkIndex * 47, 0) }
+		)
+		rise:Play()
+		rise.Completed:Connect(function()
+			if debris:GetAttribute("Generation") ~= generation then
+				return
+			end
+			TweenService
+				:Create(
+					debris,
+					TweenInfo.new(0.36, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+					{
+						Position = apex + direction * math.random(3, 7) - Vector3.new(0, 5, 0),
+						Transparency = 1,
+					}
+				)
+				:Play()
+		end)
 	end
-end
 
-local function shakeCamera()
-	local character = player.Character
-	local humanoid = if character then character:FindFirstChildOfClass("Humanoid") else nil
-	if not humanoid then
-		return
-	end
-	task.spawn(function()
-		local started = os.clock()
-		while os.clock() - started < 0.18 do
-			humanoid.CameraOffset =
-				Vector3.new(math.random(-10, 10) / 25, math.random(-10, 10) / 25, 0)
-			RunService.RenderStepped:Wait()
-		end
-		humanoid.CameraOffset = Vector3.zero
-	end)
+	shockwaveCursor = shockwaveCursor % #shockwavePool + 1
+	local shockwave = shockwavePool[shockwaveCursor]
+	shockwave.CFrame = CFrame.new(position) * CFrame.Angles(0, 0, math.pi / 2)
+	shockwave.Size = Vector3.new(0.15, 2, 2)
+	shockwave.Transparency = 0.15
+	TweenService:Create(
+		shockwave,
+		TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{ Size = Vector3.new(0.15, 22, 22), Transparency = 1 }
+	):Play()
 end
 
 local function showWins(wins: number)
@@ -323,10 +379,135 @@ local function showWins(wins: number)
 	):Play()
 end
 
+local function showCombo(wallsBroken: number)
+	local text = Ride.comboText(wallsBroken)
+	comboCounter.Text = text or ""
+	comboCounter.Visible = text ~= nil
+	comboScale.Scale = 0.6
+	TweenService:Create(
+		comboScale,
+		TweenInfo.new(0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+		{ Scale = 1 }
+	):Play()
+end
+
 local function findPart(name: string): BasePart?
 	local found = workspace:FindFirstChild(name, true)
 	return if found and found:IsA("BasePart") then found else nil
 end
+
+local activeControl: any = nil
+local completedWins: { [number]: number } = {}
+
+local function createBonusTargets(
+	start: BasePart,
+	distance: number,
+	seed: number
+): (Folder, { [number]: BasePart })
+	local folder = Instance.new("Folder")
+	folder.Name = "RideBonusTargets"
+	folder.Parent = workspace
+	local parts = {}
+	local direction = Vector3.new(start.CFrame.LookVector.X, -0.06, start.CFrame.LookVector.Z).Unit
+	local horizontal = Vector3.new(direction.X, 0, direction.Z).Unit
+	local right = Vector3.new(-horizontal.Z, 0, horizontal.X)
+	for _, target in Ride.layout(seed) do
+		local part = Instance.new("Part")
+		part.Name = target.kind .. "_" .. target.id
+		part.Anchored = true
+		part.CanCollide = false
+		part.CanQuery = false
+		part.CanTouch = false
+		part.Material = Enum.Material.SmoothPlastic
+		part.Position = start.Position
+			+ direction * (distance * target.time)
+			+ right * (target.lane * Config.RideLaneStuds)
+			+ Vector3.new(0, 2, 0)
+		if target.kind == "Candy" then
+			part.Shape = Enum.PartType.Ball
+			part.Size = Vector3.new(3.5, 3.5, 3.5)
+			part.Color = Color3.fromRGB(255, 95, 185)
+		elseif target.kind == "GoldPumpkin" then
+			part.Shape = Enum.PartType.Ball
+			part.Size = Vector3.new(5, 4.1, 5)
+			part.Color = Color3.fromRGB(255, 205, 45)
+			part.Material = Enum.Material.Neon
+		else
+			part.Size = Vector3.new(8, 0.6, 7)
+			part.Color = LIME
+			part.Material = Enum.Material.Neon
+		end
+		part.Parent = folder
+		parts[target.id] = part
+	end
+	return folder, parts
+end
+
+local function steerAction(
+	actionName: string,
+	inputState: Enum.UserInputState
+): Enum.ContextActionResult
+	if not activeControl then
+		return Enum.ContextActionResult.Pass
+	end
+	local down = inputState == Enum.UserInputState.Begin or inputState == Enum.UserInputState.Change
+	if actionName == "PumpkinSteerLeft" then
+		activeControl.left = down
+	else
+		activeControl.right = down
+	end
+	return Enum.ContextActionResult.Sink
+end
+
+local function bindSteering()
+	ContextActionService:BindAction(
+		"PumpkinSteerLeft",
+		steerAction,
+		true,
+		Enum.KeyCode.A,
+		Enum.KeyCode.Left,
+		Enum.KeyCode.DPadLeft
+	)
+	ContextActionService:BindAction(
+		"PumpkinSteerRight",
+		steerAction,
+		true,
+		Enum.KeyCode.D,
+		Enum.KeyCode.Right,
+		Enum.KeyCode.DPadRight
+	)
+	ContextActionService:SetTitle("PumpkinSteerLeft", "<")
+	ContextActionService:SetTitle("PumpkinSteerRight", ">")
+	ContextActionService:SetPosition("PumpkinSteerLeft", UDim2.new(0, 32, 1, -150))
+	ContextActionService:SetPosition("PumpkinSteerRight", UDim2.new(0, 122, 1, -150))
+end
+
+local function unbindSteering()
+	ContextActionService:UnbindAction("PumpkinSteerLeft")
+	ContextActionService:UnbindAction("PumpkinSteerRight")
+end
+
+UserInputService.InputChanged:Connect(function(input: InputObject)
+	if activeControl and input.KeyCode == Enum.KeyCode.Thumbstick1 then
+		activeControl.thumbstick = input.Position.X
+	end
+end)
+
+rollControl.OnClientEvent:Connect(
+	function(action: string, token: number, value: number, kind: string?)
+		if action == "Complete" then
+			completedWins[token] = value
+		elseif action == "PickupAccepted" and activeControl and activeControl.token == token then
+			local part = activeControl.targetParts[value]
+			if part then
+				part.Transparency = 1
+			end
+			if kind == "SpeedPad" then
+				activeControl.speedBoostUntil = os.clock() + 1.1
+			end
+		end
+	end
+)
 
 local function playRoll(
 	userId: number,
@@ -337,7 +518,10 @@ local function playRoll(
 	wins: number,
 	duration: number,
 	physicalCount: number,
-	bonusWalls: number
+	bonusWalls: number,
+	token: number,
+	seed: number,
+	startedAt: number
 )
 	local winsBefore = (player:GetAttribute("Wins") :: number?) or 0
 	local start = findPart("ZoneStart_" .. zoneName)
@@ -347,25 +531,10 @@ local function playRoll(
 	end
 
 	local diameter = Config.PumpkinBaseDiameter * Grow.pumpkinScale(size)
-	local pumpkin = Instance.new("Part")
-	pumpkin.Name = "RollingPumpkin_" .. userId
-	pumpkin.Shape = Enum.PartType.Ball
-	pumpkin.Anchored = true
-	pumpkin.CanCollide = false
-	pumpkin.CanQuery = false
-	pumpkin.CanTouch = false
-	pumpkin.Color = ORANGE
-	pumpkin.Material = Enum.Material.SmoothPlastic
-	pumpkin.Size = Vector3.new(diameter, diameter * 0.82, diameter)
-	pumpkin.CFrame = CFrame.new(start.Position + Vector3.new(0, diameter * 0.5 + 1, 0))
-	pumpkin.Transparency = 0
-	local rollMesh = Instance.new("SpecialMesh")
-	rollMesh.MeshType = Enum.MeshType.FileMesh
-	rollMesh.MeshId = Config.PumpkinMeshId
-	rollMesh.TextureId = Config.PumpkinTextureId
-	rollMesh.Scale = Vector3.new(diameter, diameter * 0.82, diameter) * Config.PumpkinMeshScale
-	rollMesh.Parent = pumpkin
-	pumpkin.Parent = workspace
+	local pumpkin = workspace:WaitForChild("RollingPumpkin_" .. userId, 3)
+	if not pumpkin or not pumpkin:IsA("BasePart") then
+		return
+	end
 
 	local smashSound = Instance.new("Sound")
 	smashSound.Name = "Smash"
@@ -385,23 +554,94 @@ local function playRoll(
 	local previousType = if camera then camera.CameraType else Enum.CameraType.Custom
 	local previousFov = if camera then camera.FieldOfView else 70
 	local cameraConnection: RBXScriptConnection? = nil
+	local targetFolder: Folder? = nil
+	local controlConnection: RBXScriptConnection? = nil
+	local shakeUntil = 0
+	local shakeMagnitude = 0
+	local hitStopUntil = 0
+	local heldCamera: CFrame? = nil
 	if isLocalRoll and camera then
+		local folder, targetParts = createBonusTargets(start, distance, seed)
+		targetFolder = folder
+		activeControl = {
+			token = token,
+			lane = 0,
+			left = false,
+			right = false,
+			thumbstick = 0,
+			targets = Ride.layout(seed),
+			targetParts = targetParts,
+			reported = {},
+			speedBoostUntil = 0,
+		}
+		bindSteering()
 		local framing = CameraFraming.compute(diameter, true)
 		camera.CameraType = Enum.CameraType.Scriptable
+		local lastControlUpdate = os.clock()
+		local lastSend = 0
+		controlConnection = RunService.RenderStepped:Connect(function(deltaTime)
+			if not activeControl or activeControl.token ~= token then
+				return
+			end
+			local keyAxis = (if activeControl.right then 1 else 0)
+				- (if activeControl.left then 1 else 0)
+			local axis = if math.abs(activeControl.thumbstick) > 0.12
+				then activeControl.thumbstick
+				else keyAxis
+			activeControl.lane =
+				math.clamp(activeControl.lane + axis * Config.RideSteerSpeed * deltaTime, -1, 1)
+			local now = os.clock()
+			if
+				now - lastSend >= 0.08 and (math.abs(axis) > 0 or now - lastControlUpdate >= 0.25)
+			then
+				lastSend = now
+				lastControlUpdate = now
+				rollControl:FireServer("Steer", token, activeControl.lane)
+			end
+			local elapsed = workspace:GetServerTimeNow() - startedAt
+			local progress = Ride.progress(elapsed, duration)
+			for _, target in activeControl.targets do
+				if
+					not activeControl.reported[target.id]
+					and math.abs(progress - target.time) <= 0.025
+					and math.abs(activeControl.lane - target.lane)
+						<= Config.RidePickupLaneTolerance
+				then
+					activeControl.reported[target.id] = true
+					rollControl:FireServer("Pickup", token, target.id)
+				end
+			end
+		end)
 		cameraConnection = RunService.RenderStepped:Connect(function()
+			if os.clock() < hitStopUntil and heldCamera then
+				camera.CFrame = heldCamera
+				return
+			end
 			local behind = -start.CFrame.LookVector * framing.distance
 				+ Vector3.new(0, framing.height, 0)
-			camera.CFrame =
-				CFrame.lookAt(pumpkin.Position + behind, pumpkin.Position + Vector3.new(0, 2, 0))
+			local shake = Vector3.zero
+			if os.clock() < shakeUntil then
+				shake = Vector3.new(math.random() - 0.5, math.random() - 0.5, 0) * shakeMagnitude
+			end
+			camera.CFrame = CFrame.lookAt(
+				pumpkin.Position + behind + shake,
+				pumpkin.Position + Vector3.new(0, 2, 0)
+			)
+			heldCamera = camera.CFrame
+			local rideProgress = Ride.progress(workspace:GetServerTimeNow() - startedAt, duration)
+			local speedFov = 8 + rideProgress * 10
+			if activeControl and os.clock() < activeControl.speedBoostUntil then
+				speedFov += 8
+			end
+			camera.FieldOfView = previousFov + speedFov
 		end)
 		TweenService:Create(camera, TweenInfo.new(0.3), { FieldOfView = previousFov + 8 }):Play()
 		distanceMeter.Visible = true
 		task.spawn(function()
-			local began = os.clock()
 			while pumpkin.Parent do
-				local elapsed = math.min(1, (os.clock() - began) / duration)
-				distanceMeter.Text = string.format("%d m", math.floor(distance * elapsed + 0.5))
-				if elapsed >= 1 then
+				local progress = Ride.progress(workspace:GetServerTimeNow() - startedAt, duration)
+				distanceMeter.Text = string.format("%d m", math.floor(distance * progress + 0.5))
+				if progress >= 1 then
 					break
 				end
 				RunService.RenderStepped:Wait()
@@ -411,11 +651,6 @@ local function playRoll(
 
 	local reachedWalls = math.max(1, math.floor(distance / Config.WallSpacing + 0.5))
 	local physicalReached = math.min(reachedWalls, physicalCount)
-	local bonusDuration = Config.BonusZoneMaxSeconds
-		* math.clamp(bonusWalls, 0, Config.MaxBonusWalls)
-		/ Config.MaxBonusWalls
-	local physicalDuration = math.max(0, duration - bonusDuration)
-	local segmentDuration = physicalDuration / math.max(1, physicalReached)
 	local winsPerWall = math.floor(wins / math.max(1, wallsBroken))
 	local displayedWallWins = 0
 	for wallIndex = 1, physicalReached do
@@ -423,23 +658,24 @@ local function playRoll(
 		if not wall or not wall:IsA("BasePart") then
 			break
 		end
-		local target = wall.Position - start.CFrame.LookVector * (diameter * 0.4)
-		target =
-			Vector3.new(target.X, wall.Position.Y - wall.Size.Y * 0.5 + diameter * 0.41, target.Z)
-		local tween =
-			TweenService:Create(pumpkin, TweenInfo.new(segmentDuration, Enum.EasingStyle.Linear), {
-				CFrame = CFrame.new(target) * CFrame.Angles(0, 0, -math.pi * wallIndex),
-			})
-		tween:Play()
-		tween.Completed:Wait()
+		local wallProgress =
+			math.clamp(wallIndex * Config.WallSpacing / math.max(1, distance), 0, 1)
+		local wallTime = startedAt + Ride.elapsedForProgress(wallProgress, duration)
+		while pumpkin.Parent and workspace:GetServerTimeNow() < wallTime do
+			RunService.RenderStepped:Wait()
+		end
 		if wallIndex <= wallsBroken then
 			wall.LocalTransparencyModifier = 1
-			burstDebris(wall.Position)
+			burstDebris(wall.Position, wallIndex)
 			if player:GetAttribute("SFXEnabled") ~= false then
+				smashSound.PlaybackSpeed = math.min(1.55, 0.82 + wallIndex * 0.08)
 				smashSound:Play()
 			end
 			if isLocalRoll then
-				shakeCamera()
+				hitStopUntil = os.clock() + 0.05
+				shakeUntil = os.clock() + 0.18
+				shakeMagnitude = math.min(2.4, 0.3 + wallIndex * 0.16)
+				showCombo(wallIndex)
 				showWallWins(wall, winsPerWall)
 				local projected = if camera
 					then camera:WorldToViewportPoint(wall.Position)
@@ -474,21 +710,16 @@ local function playRoll(
 			bonusSummaryGeneration += 1
 			bonusCounter.Visible = true
 		end
-		local bonusSegmentDuration = bonusDuration / bonusWalls
-		local direction =
-			Vector3.new(start.CFrame.LookVector.X, -0.06, start.CFrame.LookVector.Z).Unit
 		for bonusIndex = 1, bonusWalls do
-			local target = pumpkin.Position + direction * Config.WallSpacing
-			local tween = TweenService:Create(
-				pumpkin,
-				TweenInfo.new(bonusSegmentDuration, Enum.EasingStyle.Linear),
-				{
-					CFrame = CFrame.new(target)
-						* CFrame.Angles(0, 0, -math.pi * (physicalCount + bonusIndex)),
-				}
+			local bonusProgress = math.clamp(
+				(physicalCount + bonusIndex) * Config.WallSpacing / math.max(1, distance),
+				0,
+				1
 			)
-			tween:Play()
-			tween.Completed:Wait()
+			local bonusTime = startedAt + Ride.elapsedForProgress(bonusProgress, duration)
+			while pumpkin.Parent and workspace:GetServerTimeNow() < bonusTime do
+				RunService.RenderStepped:Wait()
+			end
 			if isLocalRoll then
 				bonusCounter.Text = "BONUS +" .. bonusIndex
 				bonusScale.Scale = 0.72
@@ -503,8 +734,35 @@ local function playRoll(
 	end
 
 	if isLocalRoll then
-		showWins(wins)
+		local resultDeadline = os.clock() + 0.75
+		while completedWins[token] == nil and os.clock() < resultDeadline do
+			task.wait()
+		end
+		local finalWins = completedWins[token] or wins
+		completedWins[token] = nil
+		showWins(finalWins)
+		-- Hide the pad's 3D signs while the end toast is up, so the two don't stack
+		local hiddenSigns: { BillboardGui } = {}
+		if start then
+			for _, descendant in start:GetDescendants() do
+				if descendant:IsA("BillboardGui") and descendant.Enabled then
+					descendant.Enabled = false
+					table.insert(hiddenSigns, descendant)
+				end
+			end
+		end
+		task.delay(1.6, function()
+			for _, sign in hiddenSigns do
+				sign.Enabled = true
+			end
+		end)
+		flyCoins(
+			Vector2.new(effectGui.AbsoluteSize.X * 0.5, effectGui.AbsoluteSize.Y * 0.5),
+			finalWins,
+			winsBefore
+		)
 		distanceMeter.Visible = false
+		comboCounter.Visible = false
 		if bonusWalls > 0 then
 			local summaryGeneration = bonusSummaryGeneration
 			task.delay(1.2, function()
@@ -518,6 +776,16 @@ local function playRoll(
 		if camera then
 			if cameraConnection then
 				cameraConnection:Disconnect()
+			end
+			if controlConnection then
+				controlConnection:Disconnect()
+			end
+			unbindSteering()
+			if activeControl and activeControl.token == token then
+				activeControl = nil
+			end
+			if targetFolder then
+				targetFolder:Destroy()
 			end
 			camera.CameraType = previousType
 			camera.CameraSubject = previousSubject
@@ -540,7 +808,6 @@ local function playRoll(
 			end)
 		end
 	end
-	pumpkin:Destroy()
 end
 
 rollPlayback.OnClientEvent:Connect(function(...)
