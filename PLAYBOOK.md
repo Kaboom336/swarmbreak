@@ -105,6 +105,10 @@ Use this before calling any Roblox feature or build “done.” These are produc
 
 ### Look
 
+- Give hero models a deliberate value stack - lit face, base colour, darker underside/creases - plus one accent; flat single-colour SmoothPlastic is a blockout, not a finished collectible.
+- Reserve maximum saturation, neon, emissive cores, rim light, and rarity auras for interactive or valuable states. Colourful scenery must remain quieter than the next action.
+- Use a consistent 3D separation language for hero objects: dark form outline or controlled rim for silhouette, coloured rim only for state/rarity, and a mobile distance/performance cutoff.
+- Make glow communicate state, not merely decorate it. Verify emissive detail and bounded local light in bright sun, shadow/tunnel, and reduced-effects mode without washing out the model.
 - Pick one primary, one secondary, three semantic accents, and one near-black outline. Give every colour a role; do not accumulate near-duplicates.
 - Keep important text flat white/near-white or near-black with 2–3 px contrast stroke. Put gradients on frames/surfaces, never on text.
 - Test every gameplay silhouette at the real camera distance, in grayscale, and at low graphics. A target or obstacle must remain distinguishable for at least 1.2 s at maximum normal speed.
@@ -121,6 +125,8 @@ Use this before calling any Roblox feature or build “done.” These are produc
 
 ### Feel
 
+- Make movement playful before rewards: author lean, squash/stretch, secondary lag, bump, airtime, and landing reactions while keeping hitboxes and control timing deterministic.
+- Measure dead travel between cash-out and the next ramp, upgrade, and collection destination; compact the loop or add expressive fast traversal when any core return trip exceeds 6 seconds.
 - Every accepted primary action gets visual, motion, and audio acknowledgement within one rendered frame when locally predictable; rejected actions must not play success feedback.
 - Primary buttons depress 4–6 px in ≤60 ms and rebound in 140–200 ms. Use one shared hover/focus/pressed/disabled implementation.
 - For rolling objects, accumulate axle rotation as `distance / radius`, ground-snap with a raycast, and keep visual clearance ≤0.15 stud unless the art requires more.
@@ -129,6 +135,9 @@ Use this before calling any Roblox feature or build “done.” These are produc
 
 ### Juice
 
+- Maintain an action-feedback matrix covering every core verb. Each accepted action needs at least two immediate channels (motion, VFX, sound, or UI) and one unambiguous result state.
+- Build a themed particle vocabulary with specified motif, direction, lifetime, and colour; every physical contact needs a world-space response, not only floating text.
+- Give recurring characters, vehicles, pets, eggs, hazards, and rewards distinct idle and reaction silhouettes; tweening scale alone is not a complete animation set.
 - Give important actions a three-beat response: anticipation (ready/telegraph), contact (flash/sound/impulse), result (number/reward/state change).
 - Pool repeated effects. Set hard per-client caps for popups, particles, debris, sounds, and lights; old tweens/connections must be cancelled when a pooled object is reused.
 - Use milestone effects for actionable thresholds—new upgrade, affordable egg, reachable wall—not arbitrary large numbers alone.
@@ -137,6 +146,10 @@ Use this before calling any Roblox feature or build “done.” These are produc
 
 ### UI
 
+- Define hero-number, action-label, and body-copy tokens. Use thick type, flat glyph fill, 2-4 px ink stroke, and short lines; place gradients/shine on backing plates or depth faces, never directly on text.
+- Use shared micro/reward/rare pop tiers with bounded overshoot, settle, stroke flash, shine, number tick, and reduced-motion variants; do not let simultaneous celebrations hide gameplay.
+- World guidance uses one animated language - chevron or ribbon, target halo, short verb, and optional distance - and disappears permanently once the player proves the action.
+- At speed, use tapered beacons plus ground markers and distinct pickup/danger silhouettes; pulse inside the reaction window and remove cues immediately after they pass the player.
 - Keep the action corridor clear. Use fixed slots for currencies, objective, combo, controls, and reward bursts; no two systems may borrow the same center-screen rectangle.
 - Make primary mobile actions at least 56×56 px and continuous steering controls at least 72×72 px. Critical play text should be at least 18 px equivalent; avoid 10–12 px copy during action.
 - Respect device safe insets and Roblox/CoreGui controls. Test at minimum 667×375, 1920×1080, one tall/notched phone, and one tablet profile.
@@ -161,11 +174,22 @@ Use this before calling any Roblox feature or build “done.” These are produc
 
 ### Monetization
 
+- Query and display the purchaser's current localized/platform price; never treat a configured or research-snapshot Robux price as authoritative when regional, personalized, or subscription pricing can differ.
+- A starter pack previews every item and its permanence, includes a named cosmetic/collectible plus useful non-required progression, states honest component value, and can only be purchased once.
+- A permanent 2x currency pass and any repeatable timed sample state exact scope, duration, stacking cap, and free-path pacing; grant an earned free sample before selling acceleration where practical.
+- Escalating-price tracks must be finite and fully previewed, with every step price, cumulative spend, reset rule, stop point, duplicate protection, and hard cap visible before purchase; do not use hidden future rewards or endless escalation for children.
+- A limited-time offer needs a genuine content/eligibility end, absolute end time plus countdown, no auto-open, no fake evergreen urgency, and a clean archived state after expiry.
 - Hide offers whose IDs are unset, and run a pre-publish validation that fails/report-lists missing IDs. Never show placeholder prices as live offers.
 - Let the player experience the core loop and first reward before spotlighting a purchase. Contextual offers must follow a demonstrated need, not interrupt onboarding.
 - Separate passes, consumables, and bundles or make their category explicit. Do not keep two HUD buttons that open the same undifferentiated store.
 - Purchase UI states the benefit, duration, ownership, stacking, and price; successful delivery is server-authoritative and idempotent.
 - Provide a useful free path and verify pacing without paid boosts. Monetization may accelerate a legible loop; it must not repair an unfun one.
+
+### Retention
+
+- Keep two horizons visible after the first loop: one reachable next goal this session and one concrete return goal such as a rotating challenge, collection set, or authored event.
+- Let return content visibly change the world - plaza dressing, route modifier, landmark, collectible, or reward track - instead of adding another timer badge to the HUD.
+- Preserve the stable core route while rotating bounded novelty. Track D1/D7 return, challenge participation, and completion by device; do not infer retention from reward claims alone.
 
 ### Mobile and performance
 
