@@ -98,6 +98,40 @@ comboCounter.Parent = effectGui
 local comboScale = Instance.new("UIScale")
 comboScale.Parent = comboCounter
 
+local comboBar = Instance.new("Frame")
+comboBar.Name = "ComboBar"
+comboBar.AnchorPoint = Vector2.new(0.5, 0.5)
+comboBar.BackgroundColor3 = TEAL
+comboBar.BackgroundTransparency = 0.15
+comboBar.BorderSizePixel = 0
+comboBar.Position = UDim2.fromScale(0.5, 0.34)
+comboBar.Size = UDim2.fromOffset(320, 14)
+comboBar.Visible = false
+comboBar.ZIndex = 98
+comboBar.Parent = effectGui
+local comboBarCorner = Instance.new("UICorner")
+comboBarCorner.CornerRadius = UDim.new(1, 0)
+comboBarCorner.Parent = comboBar
+local comboFill = Instance.new("Frame")
+comboFill.Name = "Fill"
+comboFill.BackgroundColor3 = LIME
+comboFill.BorderSizePixel = 0
+comboFill.Size = UDim2.fromScale(0, 1)
+comboFill.ZIndex = 99
+comboFill.Parent = comboBar
+local comboFillCorner = Instance.new("UICorner")
+comboFillCorner.CornerRadius = UDim.new(1, 0)
+comboFillCorner.Parent = comboFill
+
+local hitFlash = Instance.new("Frame")
+hitFlash.Name = "HitFlash"
+hitFlash.BackgroundColor3 = Color3.fromRGB(255, 45, 149)
+hitFlash.BackgroundTransparency = 1
+hitFlash.BorderSizePixel = 0
+hitFlash.Size = UDim2.fromScale(1, 1)
+hitFlash.ZIndex = 90
+hitFlash.Parent = effectGui
+
 local steerHint = Instance.new("TextLabel")
 steerHint.Name = "SteerHint"
 steerHint.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -132,6 +166,11 @@ local function applyDistanceMeterLayout()
 	comboCounter.Position = UDim2.fromOffset(toastBounds.x, toastBounds.y + toastBounds.height)
 	comboCounter.Size = UDim2.fromOffset(toastBounds.width, toastBounds.height)
 	comboCounter.TextSize = if layout.mobile then 28 else 38
+	comboBar.Position = UDim2.fromOffset(
+		toastBounds.x + toastBounds.width * 0.5,
+		toastBounds.y + toastBounds.height * 2
+	)
+	comboBar.Size = UDim2.fromOffset(math.min(320, toastBounds.width), 14)
 end
 
 applyDistanceMeterLayout()
@@ -173,11 +212,12 @@ end
 local bonusParticleCursor = 0
 local bonusSummaryGeneration = 0
 
-local function burstBonusParticle()
+local function burstBonusParticle(color: Color3?)
 	bonusParticleCursor = bonusParticleCursor % #bonusParticlePool + 1
 	local particle = bonusParticlePool[bonusParticleCursor]
 	local generation = (particle:GetAttribute("Generation") :: number? or 0) + 1
 	particle:SetAttribute("Generation", generation)
+	particle.BackgroundColor3 = color or ORANGE
 	local center = bonusCounter.AbsolutePosition + bonusCounter.AbsoluteSize * 0.5
 	particle.Position = UDim2.fromOffset(center.X + math.random(-45, 45), center.Y + 12)
 	particle.BackgroundTransparency = 0
@@ -287,6 +327,7 @@ local function showWallWins(wall: BasePart, wins: number)
 end
 
 local winsTickGeneration = 0
+local activeControl: any = nil
 local function flyCoins(origin: Vector2, winsGained: number, winsBefore: number)
 	local hud = playerGui:FindFirstChild("PumpkinHud")
 	local stats = if hud then hud:FindFirstChild("Stats") else nil
@@ -395,16 +436,41 @@ local function showWins(wins: number)
 	):Play()
 end
 
-local function showCombo(wallsBroken: number)
-	local text = Ride.comboText(wallsBroken)
+local function showCombo(combo: number, eventText: string?)
+	local text = Ride.comboText(combo)
 	comboCounter.Text = text or ""
 	comboCounter.Visible = text ~= nil
+	comboBar.Visible = text ~= nil
+	comboFill.Size = UDim2.fromScale(
+		math.clamp((Ride.comboMultiplier(combo) - 1) / (Config.RideComboCap - 1), 0, 1),
+		1
+	)
 	comboScale.Scale = 0.6
 	TweenService:Create(
 		comboScale,
 		TweenInfo.new(0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
 		{ Scale = 1 }
 	):Play()
+	if eventText then
+		comboCounter.Text = eventText .. "\n" .. (text or "")
+	end
+end
+
+local function showComboLost()
+	comboCounter.Text = "COMBO LOST"
+	comboCounter.TextColor3 = Color3.fromRGB(255, 45, 149)
+	comboCounter.Visible = true
+	comboBar.Visible = true
+	comboFill.Size = UDim2.fromScale(0, 1)
+	hitFlash.BackgroundTransparency = 0.68
+	TweenService:Create(hitFlash, TweenInfo.new(0.24), { BackgroundTransparency = 1 }):Play()
+	task.delay(0.7, function()
+		comboCounter.TextColor3 = LIME
+		if activeControl and activeControl.combo == 0 then
+			comboCounter.Visible = false
+			comboBar.Visible = false
+		end
+	end)
 end
 
 local function findPart(name: string): BasePart?
@@ -412,7 +478,28 @@ local function findPart(name: string): BasePart?
 	return if found and found:IsA("BasePart") then found else nil
 end
 
-local activeControl: any = nil
+local function rideWorldSample(start: BasePart, distance: number, lane: number): (Vector3, Vector3)
+	local sample = Ride.pathSample(distance)
+	local horizontal = Vector3.new(start.CFrame.LookVector.X, 0, start.CFrame.LookVector.Z).Unit
+	local originalRight = Vector3.new(-horizontal.Z, 0, horizontal.X)
+	local center = start.Position
+		+ horizontal * sample.forward
+		+ Vector3.yAxis * sample.height
+		+ originalRight * sample.lateral
+	local tangent = (
+		horizontal * sample.forwardTangent
+		+ Vector3.yAxis * sample.heightTangent
+		+ originalRight * sample.lateralTangent
+	).Unit
+	local right = tangent:Cross(Vector3.yAxis)
+	if right.Magnitude < 1e-4 then
+		right = originalRight
+	else
+		right = right.Unit
+	end
+	return center + right * (lane * Config.RideLaneStuds), tangent
+end
+
 local completedResults: { [number]: { wins: number, pickups: number } } = {}
 
 local function setTargetVisible(part: BasePart, visible: boolean)
@@ -432,7 +519,7 @@ end
 
 local function createBonusTargets(
 	start: BasePart,
-	physicalDistance: number,
+	_physicalDistance: number,
 	physicalDuration: number,
 	seed: number
 ): (Folder, { [number]: BasePart })
@@ -440,9 +527,6 @@ local function createBonusTargets(
 	folder.Name = "RideBonusTargets"
 	folder.Parent = workspace
 	local parts = {}
-	local direction = start.CFrame.LookVector.Unit
-	local horizontal = Vector3.new(direction.X, 0, direction.Z).Unit
-	local right = Vector3.new(-horizontal.Z, 0, horizontal.X)
 	for _, target in Ride.layout(seed, physicalDuration) do
 		local part = Instance.new("Part")
 		part.Name = target.kind .. "_" .. target.id
@@ -451,10 +535,12 @@ local function createBonusTargets(
 		part.CanQuery = false
 		part.CanTouch = false
 		part.Material = Enum.Material.SmoothPlastic
-		part.Position = start.Position
-			+ direction * (physicalDistance * Ride.progress(target.time, physicalDuration))
-			+ right * (target.lane * Config.RideLaneStuds)
-			+ Vector3.new(0, 2, 0)
+		local targetPosition = rideWorldSample(
+			start,
+			Ride.baseDistanceAtTime(target.time, physicalDuration),
+			target.lane
+		)
+		part.Position = targetPosition + Vector3.new(0, 2, 0)
 		if target.kind == "Candy" then
 			part.Shape = Enum.PartType.Ball
 			part.Size = Vector3.new(3.5, 3.5, 3.5)
@@ -509,7 +595,12 @@ local function createBonusTargets(
 		laneMarker.Material = Enum.Material.Neon
 		laneMarker.Size = Vector3.new(6, 0.12, 18)
 		local markerPosition = part.Position - Vector3.new(0, 2, 0)
-		laneMarker.CFrame = CFrame.lookAt(markerPosition, markerPosition + horizontal)
+		local _, targetTangent = rideWorldSample(
+			start,
+			Ride.baseDistanceAtTime(target.time, physicalDuration),
+			target.lane
+		)
+		laneMarker.CFrame = CFrame.lookAt(markerPosition, markerPosition + targetTangent)
 		laneMarker.Transparency = 0.45
 		laneMarker.Parent = part
 		part:SetAttribute("VisibleTransparency", part.Transparency)
@@ -528,6 +619,12 @@ local function steerAction(
 		return Enum.ContextActionResult.Pass
 	end
 	local down = inputState == Enum.UserInputState.Begin or inputState == Enum.UserInputState.Change
+	if UserInputService.TouchEnabled and inputState == Enum.UserInputState.Begin then
+		local direction = if actionName == "PumpkinSteerLeft" then -1 else 1
+		activeControl.lane = Ride.snapLane(activeControl.lane, direction)
+		rollControl:FireServer("Steer", activeControl.token, activeControl.lane)
+		return Enum.ContextActionResult.Sink
+	end
 	if actionName == "PumpkinSteerLeft" then
 		activeControl.left = down
 	else
@@ -587,10 +684,29 @@ rollControl.OnClientEvent:Connect(
 			end
 			if detail == "SpeedPad" then
 				activeControl.speedBoostUntil = os.clock() + Config.RideSpeedPadSeconds
-				activeControl.combo += 1
-				showCombo(activeControl.combo)
 			end
 			activeControl.pickups += 1
+		elseif action == "Combo" and activeControl and activeControl.token == token then
+			activeControl.combo = value
+			showCombo(value, if type(detail) == "string" then detail else nil)
+			if activeControl.comboSound and player:GetAttribute("SFXEnabled") ~= false then
+				activeControl.comboSound.PlaybackSpeed = math.min(1.45, 0.92 + value * 0.05)
+				activeControl.comboSound:Play()
+			end
+		elseif action == "Dodge" and activeControl and activeControl.token == token then
+			activeControl.combo = tonumber(detail) or activeControl.combo
+			for _ = 1, 4 do
+				burstBonusParticle(LIME)
+			end
+		elseif action == "ObstacleHit" and activeControl and activeControl.token == token then
+			activeControl.combo = 0
+			activeControl.lastHitAt = os.clock()
+			activeControl.bumpUntil = os.clock() + 0.22
+			activeControl.speedLinesPauseUntil = os.clock() + 0.18
+			if activeControl.hitSound and player:GetAttribute("SFXEnabled") ~= false then
+				activeControl.hitSound:Play()
+			end
+			showComboLost()
 		end
 	end
 )
@@ -632,6 +748,16 @@ local function playRoll(
 	smashSound.SoundId = "rbxasset://sounds/collide.wav"
 	smashSound.Volume = 0.75
 	smashSound.Parent = pumpkin
+	local hitSound = Instance.new("Sound")
+	hitSound.Name = "ObstacleThud"
+	hitSound.SoundId = "rbxasset://sounds/impact_water.mp3"
+	hitSound.Volume = 0.7
+	hitSound.Parent = pumpkin
+	local comboSound = Instance.new("Sound")
+	comboSound.Name = "ComboRise"
+	comboSound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
+	comboSound.Volume = 0.45
+	comboSound.Parent = pumpkin
 
 	local isLocalRoll = userId == player.UserId
 	local camera = workspace.CurrentCamera
@@ -670,7 +796,28 @@ local function playRoll(
 			speedBoostUntil = 0,
 			pickups = 0,
 			combo = 0,
+			lastHitAt = -math.huge,
+			traveled = 0,
+			measuredSpeed = Config.RideStartSpeed,
+			bumpUntil = 0,
+			speedLinesPauseUntil = 0,
+			hitSound = hitSound,
+			comboSound = comboSound,
 		}
+		local speedAttachment = Instance.new("Attachment")
+		speedAttachment.Name = "SpeedLinesAttachment"
+		speedAttachment.Parent = pumpkin
+		local speedLines = Instance.new("ParticleEmitter")
+		speedLines.Name = "SpeedLines"
+		speedLines.Color = ColorSequence.new(Color3.new(1, 1, 1), LIME)
+		speedLines.LightEmission = 0.8
+		speedLines.Lifetime = NumberRange.new(0.12, 0.2)
+		speedLines.Rate = 18
+		speedLines.Speed = NumberRange.new(16, 26)
+		speedLines.SpreadAngle = Vector2.new(12, 12)
+		speedLines.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		speedLines.Parent = speedAttachment
+		activeControl.speedLines = speedLines
 		bindSteering()
 		local framing = CameraFraming.compute(diameter, true)
 		local smoothDistance = framing.distance
@@ -692,11 +839,17 @@ local function playRoll(
 				or UserInputService:IsKeyDown(Enum.KeyCode.A)
 				or UserInputService:IsKeyDown(Enum.KeyCode.Left)
 			local keyAxis = (if steerRight then 1 else 0) - (if steerLeft then 1 else 0)
-			local axis = if math.abs(activeControl.thumbstick) > 0.12
+			local axis = if math.abs(activeControl.thumbstick) > 0.2
 				then activeControl.thumbstick
 				else keyAxis
-			activeControl.lane =
-				math.clamp(activeControl.lane + axis * Config.RideSteerSpeed * deltaTime, -1, 1)
+			if not UserInputService.TouchEnabled or math.abs(axis) > 0 then
+				activeControl.lane =
+					math.clamp(activeControl.lane + axis * Config.RideSteerSpeed * deltaTime, -1, 1)
+			end
+			local laneIndex = math.clamp(math.floor(activeControl.lane + 1.5), 1, 3)
+			local dots = { "○", "○", "○" }
+			dots[laneIndex] = "●"
+			steerHint.Text = "LANE  " .. table.concat(dots, "  ")
 			local now = os.clock()
 			if
 				now - lastSend >= 0.08 and (math.abs(axis) > 0 or now - lastControlUpdate >= 0.25)
@@ -708,6 +861,7 @@ local function playRoll(
 			end
 			local elapsed = workspace:GetServerTimeNow() - startedAt
 			for _, target in activeControl.targets do
+				local targetDistance = Ride.baseDistanceAtTime(target.time, physicalDuration)
 				if not activeControl.revealed[target.id] and elapsed >= target.time - 2 then
 					activeControl.revealed[target.id] = true
 					local part = activeControl.targetParts[target.id]
@@ -717,7 +871,7 @@ local function playRoll(
 				end
 				if
 					not activeControl.reported[target.id]
-					and math.abs(elapsed - target.time) <= Config.RidePickupTimeTolerance
+					and math.abs(activeControl.traveled - targetDistance) <= Config.RidePickupClientRadius
 					and math.abs(activeControl.lane - target.lane)
 						<= Config.RidePickupLaneTolerance
 				then
@@ -726,36 +880,37 @@ local function playRoll(
 				end
 			end
 		end)
-		local rideDirection = start.CFrame.LookVector.Unit
-		local rideHorizontal = Vector3.new(rideDirection.X, 0, rideDirection.Z).Unit
-		local rideRight = Vector3.new(-rideHorizontal.Z, 0, rideHorizontal.X)
-		local cameraForward = rideHorizontal
+		local initialDirection = start.CFrame.LookVector.Unit
+		local cameraForward = Vector3.new(initialDirection.X, 0, initialDirection.Z).Unit
 		local previousPumpkinPosition = pumpkin.Position
-		local speedBonusElapsed = 0
+		local smoothedFov = previousFov + 8
 		local occlusionParams = RaycastParams.new()
 		occlusionParams.FilterType = Enum.RaycastFilterType.Exclude
 		cameraConnection = RunService.RenderStepped:Connect(function(deltaTime)
 			-- Predict the pumpkin locally from the shared ride curve, so the rider sees smooth motion
 			-- and their own steering at once instead of the server's replicated steps
 			if activeControl and activeControl.token == token then
-				if os.clock() < activeControl.speedBoostUntil then
-					speedBonusElapsed += deltaTime * (Config.RideSpeedPadMultiplier - 1)
+				local now = os.clock()
+				local elapsed = math.max(0, workspace:GetServerTimeNow() - startedAt)
+				local speedScale = Ride.speedScaleAfterHit(now - activeControl.lastHitAt)
+				local boostScale = if now < activeControl.speedBoostUntil
+					then Config.RideSpeedPadMultiplier
+					else 1
+				local predictedSpeed =
+					Ride.speedAtTime(elapsed, physicalDuration, speedScale, boostScale)
+				if workspace:GetServerTimeNow() >= startedAt then
+					activeControl.traveled = math.min(
+						Config.RideTrackLength,
+						activeControl.traveled + predictedSpeed * deltaTime
+					)
 				end
-				local traveled = Ride.distanceAtTime(
-					workspace:GetServerTimeNow() - startedAt + speedBonusElapsed,
-					physicalDuration,
-					physicalDistance,
-					bonusDuration,
-					bonusDistance
-				)
-				local nominalPosition = start.Position
-					+ rideDirection * math.min(traveled, distance)
-					+ rideRight * (activeControl.lane * Config.RideLaneStuds)
+				local nominalPosition, pathTangent =
+					rideWorldSample(start, activeControl.traveled, activeControl.lane)
 				local radius = pumpkin.Size.X * 0.5
 				local position, normal, tangent =
-					RideSurface.sample(surfaces, nominalPosition, radius, rideDirection)
+					RideSurface.sample(surfaces, nominalPosition, radius, pathTangent)
 				pumpkin.CFrame = CFrame.lookAt(position, position + tangent, normal)
-					* CFrame.Angles(Ride.axleRotation(traveled, radius), 0, 0)
+					* CFrame.Angles(Ride.axleRotation(activeControl.traveled, radius), 0, 0)
 			end
 			if os.clock() < hitStopUntil and heldCamera then
 				-- Hold the framing, but keep following the moving pumpkin so a fast smash never pops the distance
@@ -772,6 +927,12 @@ local function playRoll(
 				CameraFraming.springStep(smoothHeight, heightVelocity, framing.height, deltaTime)
 			local motion = pumpkin.Position - previousPumpkinPosition
 			previousPumpkinPosition = pumpkin.Position
+			local measuredSpeed = motion.Magnitude / math.max(deltaTime, 1 / 240)
+			if activeControl then
+				activeControl.measuredSpeed += (measuredSpeed - activeControl.measuredSpeed) * (1 - math.exp(
+					-10 * deltaTime
+				))
+			end
 			local heading = CameraFraming.horizontalHeading(
 				motion.X,
 				motion.Z,
@@ -785,6 +946,9 @@ local function playRoll(
 			local shake = Vector3.zero
 			if os.clock() < shakeUntil then
 				shake = Vector3.new(math.random() - 0.5, math.random() - 0.5, 0) * shakeMagnitude
+			end
+			if activeControl and os.clock() < activeControl.bumpUntil then
+				shake += Vector3.new(0, 0.5, 0)
 			end
 			camera.CFrame = CFrame.lookAt(
 				pumpkin.Position + behind + shake,
@@ -830,13 +994,24 @@ local function playRoll(
 					occluded[part] = nil
 				end
 			end
-			local rideProgress =
-				Ride.progress(workspace:GetServerTimeNow() - startedAt, physicalDuration)
-			local speedFov = 8 + rideProgress * 10
-			if activeControl and os.clock() < activeControl.speedBoostUntil then
-				speedFov += 8
+			local currentSpeed = if activeControl
+				then activeControl.measuredSpeed
+				else Config.RideStartSpeed
+			local speedAlpha = math.clamp(
+				(currentSpeed - Config.RideStartSpeed)
+					/ (Config.RideTopSpeed - Config.RideStartSpeed),
+				0,
+				1
+			)
+			local targetFov = previousFov + 8 + speedAlpha * 10
+			smoothedFov += (targetFov - smoothedFov) * (1 - math.exp(-5 * deltaTime))
+			camera.FieldOfView = smoothedFov
+			if activeControl and activeControl.speedLines then
+				activeControl.speedLines.Enabled = os.clock() >= activeControl.speedLinesPauseUntil
+				activeControl.speedLines.Rate = math.floor(18 + speedAlpha * 62)
+				activeControl.speedLines.Speed =
+					NumberRange.new(16 + speedAlpha * 18, 26 + speedAlpha * 24)
 			end
-			camera.FieldOfView = previousFov + speedFov
 		end)
 		TweenService:Create(camera, TweenInfo.new(0.3), { FieldOfView = previousFov + 8 }):Play()
 		distanceMeter.Visible = true
@@ -850,17 +1025,10 @@ local function playRoll(
 			end
 		end)
 		task.spawn(function()
-			while pumpkin.Parent do
-				local elapsed = workspace:GetServerTimeNow() - startedAt
-				local traveled = Ride.distanceAtTime(
-					elapsed,
-					physicalDuration,
-					physicalDistance,
-					bonusDuration,
-					bonusDistance
-				)
-				distanceMeter.Text = string.format("%d m", math.floor(traveled + 0.5))
-				if traveled >= distance then
+			while pumpkin.Parent and activeControl and activeControl.token == token do
+				distanceMeter.Text =
+					string.format("%d studs", math.floor(activeControl.traveled + 0.5))
+				if workspace:GetServerTimeNow() - startedAt >= _duration then
 					break
 				end
 				RunService.RenderStepped:Wait()
@@ -877,9 +1045,8 @@ local function playRoll(
 		if not wall or not wall:IsA("BasePart") then
 			break
 		end
-		local wallProgress =
-			math.clamp(wallIndex * Config.WallSpacing / math.max(1, physicalDistance), 0, 1)
-		local wallTime = startedAt + Ride.elapsedForProgress(wallProgress, physicalDuration)
+		local wallTime = startedAt
+			+ Ride.timeAtBaseDistance(wallIndex * Config.WallSpacing, physicalDuration)
 		while pumpkin.Parent and workspace:GetServerTimeNow() < wallTime do
 			RunService.RenderStepped:Wait()
 		end
@@ -894,12 +1061,6 @@ local function playRoll(
 				hitStopUntil = os.clock() + 0.05
 				shakeUntil = os.clock() + 0.18
 				shakeMagnitude = math.min(0.6, 0.2 + wallIndex * 0.04)
-				if activeControl and activeControl.token == token then
-					activeControl.combo += 1
-					showCombo(activeControl.combo)
-				else
-					showCombo(wallIndex)
-				end
 				showWallWins(wall, winsPerWall)
 				local projected = if camera
 					then camera:WorldToViewportPoint(wall.Position)
@@ -990,6 +1151,7 @@ local function playRoll(
 		distanceMeter.Visible = false
 		steerHint.Visible = false
 		comboCounter.Visible = false
+		comboBar.Visible = false
 		if bonusWalls > 0 then
 			local summaryGeneration = bonusSummaryGeneration
 			task.delay(1.2, function()

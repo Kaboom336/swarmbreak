@@ -34,14 +34,15 @@ local function bestRoll(zone: Roll.Zone, growthPerSecond: number): (number, Roll
 	local bestResult = Roll.simulate(bestSize, zone, Config.FallbackWallCount)
 	local bestDuration = bestSize / growthPerSecond
 		+ Roll.duration(bestResult.distance, bestSize, bestResult.bonusWalls)
-	local bestRate = Ride.finalWins(bestResult.wins, { "Candy" }, {}) / bestDuration
+	-- The pacing model already assumes one Candy pickup, so include that pickup's guaranteed combo step.
+	local bestRate = Ride.finalWins(bestResult.wins, { "Candy" }, {}, 1) / bestDuration
 
 	for wallIndex = 2, Config.FallbackWallCount + Config.MaxBonusWalls do
 		local size = Roll.wallHealth(wallIndex)
 		local result = Roll.simulate(size, zone, Config.FallbackWallCount)
 		local duration = size / growthPerSecond
 			+ Roll.duration(result.distance, size, result.bonusWalls)
-		local rate = Ride.finalWins(result.wins, { "Candy" }, {}) / duration
+		local rate = Ride.finalWins(result.wins, { "Candy" }, {}, 1) / duration
 		if rate > bestRate then
 			bestSize = size
 			bestResult = result
@@ -74,7 +75,7 @@ function Economy.simulate(minutes: number, clicksPerSecond: number): Simulation
 		end
 
 		elapsedSeconds += cycleSeconds
-		local payout = Ride.finalWins(result.wins, { "Candy" }, {})
+		local payout = Ride.finalWins(result.wins, { "Candy" }, {}, 1)
 		wins += payout
 		totalWins += payout
 		local elapsedMinutes = elapsedSeconds / 60

@@ -49,9 +49,10 @@ end
 function Roll.winsFor(wallsBroken: number, zone: string | Zone, size: number?): number
 	local resolved = Roll.getZone(zone)
 	assert(resolved, "unknown zone")
-	return math.floor(
-		math.max(0, math.floor(wallsBroken)) * resolved.WinMultiplier * Roll.sizeFactor(size or 0)
-	)
+	-- Keep the base reward precise. Ride.finalWins applies every bonus and floors once at settlement.
+	return math.max(0, math.floor(wallsBroken))
+		* resolved.WinMultiplier
+		* Roll.sizeFactor(size or 0)
 end
 
 function Roll.simulate(size: number, zone: string | Zone, physicalCount: number?): Result

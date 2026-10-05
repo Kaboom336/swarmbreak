@@ -4,9 +4,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local Ride = require(Shared:WaitForChild("Ride"))
 
 local TRACK_WIDTH = 34
-local TRACK_SLOPE = 0.06
+local TRACK_START_Y = 620
+local TRACK_SEGMENT_LENGTH = 50
+local TRACK_WALL_HEIGHT = 14
 local ZONE_GAP = 110
 
 export type ZoneParts = {
@@ -110,7 +113,7 @@ local function ensureLobby()
 		local floor = makePart(
 			"PumpkinLobbyFloor",
 			Vector3.new(80, 2, #Config.Zones * ZONE_GAP),
-			CFrame.new(-35, 36.5, (#Config.Zones - 1) * ZONE_GAP * 0.5),
+			CFrame.new(-35, TRACK_START_Y - 1.5, (#Config.Zones - 1) * ZONE_GAP * 0.5),
 			Color3.fromRGB(22, 70, 74)
 		)
 		floor.Material = Enum.Material.Slate
@@ -121,7 +124,7 @@ local function ensureLobby()
 		spawn.Anchored = true
 		spawn.Neutral = true
 		spawn.Size = Vector3.new(16, 1, 16)
-		spawn.Position = Vector3.new(-55, 38, 0)
+		spawn.Position = Vector3.new(-55, TRACK_START_Y, 0)
 		spawn.Color = Color3.fromRGB(167, 255, 61)
 		spawn.Parent = folder
 	end
@@ -130,10 +133,145 @@ local function ensureLobby()
 			local board = makePart(
 				name,
 				Vector3.new(16, 10, 1),
-				CFrame.new(-45, 43, (index - 1.5) * 22),
+				CFrame.new(-45, TRACK_START_Y + 5, (index - 1.5) * 22),
 				Color3.fromRGB(83, 42, 145)
 			)
 			board.Parent = folder
+		end
+	end
+end
+
+local function pathWorld(start: BasePart, distance: number): (Vector3, Vector3, Vector3, number)
+	local sample = Ride.pathSample(distance)
+	local horizontal = Vector3.new(start.CFrame.LookVector.X, 0, start.CFrame.LookVector.Z).Unit
+	local right = Vector3.new(-horizontal.Z, 0, horizontal.X)
+	local position = start.Position
+		+ horizontal * sample.forward
+		+ Vector3.yAxis * sample.height
+		+ right * sample.lateral
+	local tangent = (
+		horizontal * sample.forwardTangent
+		+ Vector3.yAxis * sample.heightTangent
+		+ right * sample.lateralTangent
+	).Unit
+	local pathRight = tangent:Cross(Vector3.yAxis)
+	if pathRight.Magnitude < 1e-4 then
+		pathRight = right
+	else
+		pathRight = pathRight.Unit
+	end
+	return position, tangent, pathRight, sample.bank
+end
+
+local function buildObstacle(track: Model, start: BasePart, wave: any, lane: number)
+	local distance = Ride.baseDistanceAtTime(wave.time, Config.RidePhysicalSeconds)
+	local center, tangent, right, bank = pathWorld(start, distance)
+	local position = center + right * (lane * Config.RideLaneStuds) + Vector3.new(0, 2.1, 0)
+	local obstacle: Part
+	if wave.kind == "RollingLog" then
+		obstacle = makePart(
+			string.format("Obstacle_%d_RollingLog_%d", wave.id, lane),
+			Vector3.new(2.8, 8, 2.8),
+			CFrame.lookAt(position, position + tangent, Vector3.yAxis)
+				* CFrame.Angles(0, 0, math.pi / 2),
+			Color3.fromRGB(111, 59, 34)
+		)
+		obstacle.Shape = Enum.PartType.Cylinder
+		obstacle.Material = Enum.Material.Wood
+	elseif wave.kind == "Tombstone" then
+		obstacle = makePart(
+			string.format("Obstacle_%d_Tombstone_%d", wave.id, lane),
+			Vector3.new(5, 7, 2),
+			CFrame.lookAt(position + Vector3.new(0, 1.2, 0), position + tangent, Vector3.yAxis),
+			Color3.fromRGB(91, 91, 116)
+		)
+		obstacle.Material = Enum.Material.Slate
+	else
+		obstacle = makePart(
+			string.format("Obstacle_%d_LowFence_%d", wave.id, lane),
+			Vector3.new(8, 3.5, 1.4),
+			CFrame.lookAt(position, position + tangent, Vector3.yAxis),
+			Color3.fromRGB(246, 142, 49)
+		)
+		obstacle.Material = Enum.Material.WoodPlanks
+	end
+	obstacle.CanCollide = false
+	obstacle.CanTouch = false
+	obstacle:SetAttribute("WaveId", wave.id)
+	obstacle:SetAttribute("Lane", lane)
+	obstacle:SetAttribute("Bank", bank)
+	obstacle.Parent = track
+
+	local warning = makePart(
+		string.format("ObstacleWarning_%d_%d", wave.id, lane),
+		Vector3.new(7, 0.16, Config.RideTopSpeed * Config.RideObstacleReactionSeconds),
+		CFrame.lookAt(
+			position
+				- tangent * (Config.RideTopSpeed * Config.RideObstacleReactionSeconds * 0.5)
+				- Vector3.new(0, 2, 0),
+			position,
+			Vector3.yAxis
+		),
+		Color3.fromRGB(255, 45, 149)
+	)
+	warning.Material = Enum.Material.Neon
+	warning.Transparency = 0.35
+	warning.CanCollide = false
+	warning.CanTouch = false
+	warning.CanQuery = false
+	warning.Parent = track
+end
+
+local function buildChute(track: Model, start: BasePart, rideSeed: number)
+	local segmentCount = math.ceil(Config.RideTrackLength / TRACK_SEGMENT_LENGTH)
+	for segmentIndex = 1, segmentCount do
+		local fromDistance = (segmentIndex - 1) * TRACK_SEGMENT_LENGTH
+		local toDistance = math.min(Config.RideTrackLength, segmentIndex * TRACK_SEGMENT_LENGTH)
+		local from = pathWorld(start, fromDistance)
+		local to = pathWorld(start, toDistance)
+		local midpoint, tangent, right, bank = pathWorld(start, (fromDistance + toDistance) * 0.5)
+		local length = (to - from).Magnitude + 0.5
+		local frame = CFrame.lookAt(midpoint, midpoint + tangent, Vector3.yAxis)
+			* CFrame.Angles(0, 0, bank)
+		local floor = makePart(
+			"ChuteFloor_" .. segmentIndex,
+			Vector3.new(TRACK_WIDTH, 2, length),
+			frame,
+			Color3.fromRGB(27, 91, 89)
+		)
+		floor.Material = Enum.Material.Slate
+		floor.Parent = track
+
+		local canyon = segmentIndex >= 9 and segmentIndex <= 15
+		local wallHeight = if canyon then 24 else TRACK_WALL_HEIGHT
+		for _, side in { -1, 1 } do
+			local wall = makePart(
+				string.format("ChuteWall_%d_%d", segmentIndex, side),
+				Vector3.new(2.5, wallHeight, length),
+				frame
+					+ right * (side * (TRACK_WIDTH * 0.5 + 1.25))
+					+ Vector3.new(0, wallHeight * 0.5, 0),
+				if canyon then Color3.fromRGB(72, 43, 82) else Color3.fromRGB(62, 35, 73)
+			)
+			wall.Material = if canyon then Enum.Material.Rock else Enum.Material.Slate
+			wall.Parent = track
+		end
+
+		if segmentIndex >= 18 and segmentIndex <= 21 then
+			local roof = makePart(
+				"TunnelRoof_" .. segmentIndex,
+				Vector3.new(TRACK_WIDTH + 5, 2.5, length),
+				frame + Vector3.new(0, 13, 0),
+				Color3.fromRGB(48, 30, 61)
+			)
+			roof.Material = Enum.Material.Rock
+			roof.Parent = track
+		end
+	end
+
+	for _, wave in Ride.obstacleLayout(rideSeed, Config.RidePhysicalSeconds) do
+		for _, lane in wave.lanes do
+			buildObstacle(track, start, wave, lane)
 		end
 	end
 end
@@ -146,12 +284,14 @@ local function ensureTrack(zone: any, zoneIndex: number): ZoneParts
 		start = makePart(
 			startName,
 			Vector3.new(20, 1, 20),
-			CFrame.lookAt(Vector3.new(0, 38, z), Vector3.new(1, 38 - TRACK_SLOPE, z)),
+			CFrame.lookAt(Vector3.new(0, TRACK_START_Y, z), Vector3.new(1, TRACK_START_Y, z)),
 			Color3.fromRGB(255, 116, 25)
 		)
 		start.Material = Enum.Material.Neon
 		start.Parent = workspace
 	end
+	local rideSeed = 4_001 + zoneIndex * 997
+	start:SetAttribute("RideSeed", rideSeed)
 
 	local trackName = "Track_" .. zone.Name
 	local foundTrack = findModel(trackName)
@@ -166,19 +306,8 @@ local function ensureTrack(zone: any, zoneIndex: number): ZoneParts
 		createdTrack = true
 	end
 
-	local direction =
-		Vector3.new(start.CFrame.LookVector.X, -TRACK_SLOPE, start.CFrame.LookVector.Z).Unit
-	local length = (Config.FallbackWallCount + 1) * Config.WallSpacing
 	if createdTrack then
-		local midpoint = start.Position + direction * (length * 0.5)
-		local floor = makePart(
-			"FallbackFloor",
-			Vector3.new(TRACK_WIDTH, 2, length),
-			CFrame.lookAt(midpoint, midpoint + direction),
-			Color3.fromRGB(27, 91, 89)
-		)
-		floor.Material = Enum.Material.Slate
-		floor.Parent = track
+		buildChute(track, start, rideSeed)
 	end
 
 	local walls = {}
@@ -187,11 +316,11 @@ local function ensureTrack(zone: any, zoneIndex: number): ZoneParts
 		local existing = track:FindFirstChild(wallName, true)
 		local wall = if existing and existing:IsA("BasePart") then existing else nil
 		if not wall then
-			local position = start.Position + direction * (wallIndex * Config.WallSpacing)
+			local position, tangent = pathWorld(start, wallIndex * Config.WallSpacing)
 			wall = makePart(
 				wallName,
 				Vector3.new(TRACK_WIDTH, 15, 3),
-				CFrame.lookAt(position + Vector3.new(0, 7, 0), position + direction),
+				CFrame.lookAt(position + Vector3.new(0, 7, 0), position + tangent),
 				if wallIndex % 2 == 0
 					then Color3.fromRGB(151, 64, 255)
 					else Color3.fromRGB(255, 116, 25)
@@ -256,7 +385,7 @@ local function ensureEggStands()
 			local stand = makePart(
 				name,
 				Vector3.new(8, 2, 8),
-				CFrame.new(-24, 39, (index - 1) * ZONE_GAP),
+				CFrame.new(-24, TRACK_START_Y + 1, (index - 1) * ZONE_GAP),
 				Color3.fromRGB(151, 64, 255)
 			)
 			stand.Parent = workspace

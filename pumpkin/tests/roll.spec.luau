@@ -45,19 +45,25 @@ end)
 test("simulated wins include physical and bonus walls for every zone", function()
 	for _, zone in Config.Zones do
 		local result = Roll.simulate(1_200_000, zone, 10)
-		eq(
+		near(
 			result.wins,
-			math.floor(25 * zone.WinMultiplier * 1_200_000 ^ Config.WinSizeExponent),
+			25 * zone.WinMultiplier * 1_200_000 ^ Config.WinSizeExponent,
+			1e-9,
 			zone.Name .. " wins"
 		)
 	end
 end)
 
 test("wins scale with the rolled size", function()
-	eq(Roll.simulate(10, "PumpkinPatch", 10).wins, 1, "size 10 wins")
-	eq(Roll.simulate(1_000, "PumpkinPatch", 10).wins, 56, "size 1K wins")
-	eq(Roll.simulate(1_200_000, "PumpkinPatch", 10).wins, 827, "size 1.2M wins")
-	eq(Roll.simulate(25, "PumpkinPatch", 10).wins, 4, "size 25 wins")
+	near(Roll.simulate(10, "PumpkinPatch", 10).wins, 10 ^ 0.25, 1e-9, "size 10 wins")
+	near(Roll.simulate(1_000, "PumpkinPatch", 10).wins, 10 * 1_000 ^ 0.25, 1e-9, "size 1K wins")
+	near(
+		Roll.simulate(1_200_000, "PumpkinPatch", 10).wins,
+		25 * 1_200_000 ^ 0.25,
+		1e-9,
+		"size 1.2M wins"
+	)
+	near(Roll.simulate(25, "PumpkinPatch", 10).wins, 2 * 25 ^ 0.25, 1e-9, "size 25 wins")
 end)
 
 test("wall health follows the configured exponential curve", function()
@@ -93,9 +99,9 @@ end)
 test("roll duration uses the playable ride curve", function()
 	local slow = Roll.duration(500, 10, 0)
 	local fast = Roll.duration(1_250, 1_200_000, 15)
-	eq(slow >= 7 and slow <= 10, true, "physical duration bound")
+	eq(slow >= 10 and slow <= 14, true, "physical duration bound")
 	eq(fast > slow, true, "larger pumpkin gets a longer playable ride")
-	eq(fast <= 10 + Config.BonusZoneMaxSeconds, true, "bonus duration bound")
+	eq(fast <= 14, true, "bonus duration bound")
 end)
 
 test("a roll past the track ends at its last bonus wall", function()

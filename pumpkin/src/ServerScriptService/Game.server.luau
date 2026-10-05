@@ -34,6 +34,28 @@ local rideStates: { [Player]: any } = {}
 local controlWindows: { [Player]: { startedAt: number, count: number } } = {}
 local nextRideToken = 0
 
+local function rideWorldSample(start: BasePart, distance: number, lane: number): (Vector3, Vector3)
+	local sample = Ride.pathSample(distance)
+	local horizontal = Vector3.new(start.CFrame.LookVector.X, 0, start.CFrame.LookVector.Z).Unit
+	local originalRight = Vector3.new(-horizontal.Z, 0, horizontal.X)
+	local center = start.Position
+		+ horizontal * sample.forward
+		+ Vector3.yAxis * sample.height
+		+ originalRight * sample.lateral
+	local tangent = (
+		horizontal * sample.forwardTangent
+		+ Vector3.yAxis * sample.heightTangent
+		+ originalRight * sample.lateralTangent
+	).Unit
+	local right = tangent:Cross(Vector3.yAxis)
+	if right.Magnitude < 1e-4 then
+		right = originalRight
+	else
+		right = right.Unit
+	end
+	return center + right * (lane * Config.RideLaneStuds), tangent
+end
+
 local function allowRideControl(player: Player, now: number): boolean
 	local window = controlWindows[player]
 	if not window or now - window.startedAt >= 1 then
@@ -333,17 +355,28 @@ rollControl.OnServerEvent:Connect(function(player: Player, action: any, token: a
 			return
 		end
 		local target = state.layout[value]
-		local relative = state.pumpkin.Position - state.startPosition
-		local worldLane = relative:Dot(state.right) / Config.RideLaneStuds
-		local accepted = Ride.validatePickup(
+		local expectedDistance = if target
+			then Ride.baseDistanceAtTime(target.time, state.physicalDuration)
+			else 0
+		local accepted, reason = Ride.validatePickupSpatial(
 			target,
 			now - state.startedAt,
 			state.physicalDuration,
-			worldLane,
+			state.lane,
+			state.traveled - expectedDistance,
 			state.claimed,
 			state.claimedCount
 		)
 		if not accepted then
+			if RunService:IsStudio() then
+				warn(
+					string.format(
+						"Ride pickup rejected for %s: %s",
+						player.Name,
+						reason or "unknown"
+					)
+				)
+			end
 			return
 		end
 		state.claimed[value] = true
@@ -352,7 +385,10 @@ rollControl.OnServerEvent:Connect(function(player: Player, action: any, token: a
 		if target.kind == "SpeedPad" then
 			state.speedBoostUntil = now + Config.RideSpeedPadSeconds
 		end
+		state.combo += 1
+		player:SetAttribute("RideCombo", state.combo)
 		rollControl:FireClient(player, "PickupAccepted", token, value, target.kind)
+		rollControl:FireClient(player, "Combo", token, state.combo, "PICKUP +1")
 	end
 end)
 
@@ -367,6 +403,8 @@ local function beginRoll(player: Player, zone: any, parts: any)
 
 	rolling[player] = true
 	player:SetAttribute("Rolling", true)
+	player:SetAttribute("RideSpeed", 0)
+	player:SetAttribute("RideCombo", 0)
 	player:SetAttribute("CurrentZone", zone.Name)
 	local rolledSize = profile.Size
 	local result = Roll.simulate(rolledSize, zone, #parts.walls)
@@ -377,12 +415,9 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	local physicalDistance = math.max(0, result.distance - bonusDistance)
 	nextRideToken += 1
 	local token = nextRideToken
-	local seed = player.UserId * 1_009 + token * 7_919
+	local seed = (parts.start:GetAttribute("RideSeed") :: number?) or 4_001
 	local startedAt = workspace:GetServerTimeNow() + Config.RideLatchSeconds
 	local pumpkin, seat, rider = createRidePumpkin(player, rolledSize, parts.start)
-	local direction = parts.start.CFrame.LookVector.Unit
-	local horizontal = Vector3.new(direction.X, 0, direction.Z).Unit
-	local right = Vector3.new(-horizontal.Z, 0, horizontal.X)
 	local petMultipliers = equippedPetMultipliers(profile)
 	local petMultiplier = if #petMultipliers > 0 then 0 else 1
 	for _, multiplier in petMultipliers do
@@ -406,20 +441,22 @@ local function beginRoll(player: Player, zone: any, parts: any)
 		distance = result.distance,
 		lane = 0,
 		layout = Ride.layout(seed, physicalDuration),
+		obstacles = Ride.obstacleLayout(seed, physicalDuration),
+		resolvedObstacles = {},
 		claimed = {},
 		claimedCount = 0,
 		kinds = {},
+		combo = 0,
 		pumpkin = pumpkin,
 		seat = seat,
 		rider = rider,
 		baseWins = result.wins,
 		winMultipliers = winMultipliers,
 		speedBoostUntil = 0,
-		speedBonusElapsed = 0,
-		startPosition = parts.start.Position,
-		direction = direction,
-		horizontal = horizontal,
-		right = right,
+		lastHitAt = -math.huge,
+		currentSpeed = Config.RideStartSpeed,
+		traveled = 0,
+		nextTelemetryAt = 0,
 		surfaces = RideSurface.collect(parts.track),
 	}
 	rideStates[player] = state
@@ -429,6 +466,8 @@ local function beginRoll(player: Player, zone: any, parts: any)
 				rideStates[player] = nil
 				rolling[player] = nil
 				player:SetAttribute("Rolling", false)
+				player:SetAttribute("RideSpeed", 0)
+				player:SetAttribute("RideCombo", 0)
 			end
 		end)
 	end
@@ -469,28 +508,54 @@ local function beginRoll(player: Player, zone: any, parts: any)
 			local now = workspace:GetServerTimeNow()
 			local deltaTime = math.max(0, now - lastUpdate)
 			lastUpdate = now
-			if now < state.speedBoostUntil then
-				state.speedBonusElapsed += deltaTime * (Config.RideSpeedPadMultiplier - 1)
+			if now < startedAt then
+				RunService.Heartbeat:Wait()
+				continue
 			end
-			local elapsed = now - startedAt + state.speedBonusElapsed
-			local traveled = Ride.distanceAtTime(
-				elapsed,
-				physicalDuration,
-				physicalDistance,
-				bonusDuration,
-				bonusDistance
-			)
-			local nominalPosition = parts.start.Position
-				+ direction * traveled
-				+ right * (state.lane * Config.RideLaneStuds)
+			local elapsed = math.max(0, now - startedAt)
+			local speedScale = Ride.speedScaleAfterHit(now - state.lastHitAt)
+			local boostScale = if now < state.speedBoostUntil
+				then Config.RideSpeedPadMultiplier
+				else 1
+			state.currentSpeed = Ride.speedAtTime(elapsed, physicalDuration, speedScale, boostScale)
+			state.traveled =
+				math.min(Config.RideTrackLength, state.traveled + state.currentSpeed * deltaTime)
+			if now >= state.nextTelemetryAt then
+				state.nextTelemetryAt = now + 0.1
+				player:SetAttribute("RideSpeed", math.floor(state.currentSpeed * 10 + 0.5) / 10)
+			end
+			for _, wave in state.obstacles do
+				if not state.resolvedObstacles[wave.id] and elapsed >= wave.time then
+					state.resolvedObstacles[wave.id] = true
+					if Ride.waveHitsLane(wave, state.lane) then
+						state.combo = 0
+						player:SetAttribute("RideCombo", 0)
+						state.lastHitAt = now
+						rollControl:FireClient(
+							player,
+							"ObstacleHit",
+							token,
+							wave.id,
+							state.currentSpeed
+						)
+					else
+						state.combo += 1
+						player:SetAttribute("RideCombo", state.combo)
+						rollControl:FireClient(player, "Dodge", token, wave.id, state.combo)
+						rollControl:FireClient(player, "Combo", token, state.combo, "DODGE +1")
+					end
+				end
+			end
+			local nominalPosition, pathTangent =
+				rideWorldSample(parts.start, state.traveled, state.lane)
 			local position, normal, tangent =
-				RideSurface.sample(state.surfaces, nominalPosition, radius, direction)
+				RideSurface.sample(state.surfaces, nominalPosition, radius, pathTangent)
 			pumpkin.CFrame = CFrame.lookAt(position, position + tangent, normal)
-				* CFrame.Angles(Ride.axleRotation(traveled, radius), 0, 0)
+				* CFrame.Angles(Ride.axleRotation(state.traveled, radius), 0, 0)
 			if seat and rider and seat.Occupant ~= rider.humanoid and rider.humanoid.Health > 0 then
 				seat:Sit(rider.humanoid)
 			end
-			if traveled >= result.distance then
+			if elapsed >= duration then
 				break
 			end
 			RunService.Heartbeat:Wait()
@@ -506,7 +571,8 @@ local function beginRoll(player: Player, zone: any, parts: any)
 			end
 			return
 		end
-		local finalWins = Ride.finalWins(result.wins, state.kinds, state.winMultipliers)
+		local finalWins =
+			Ride.finalWins(result.wins, state.kinds, state.winMultipliers, state.combo)
 		local current = Data.get(player)
 		local pickupWins = math.max(0, finalWins - state.guaranteedWins)
 		if current and pickupWins > 0 then
@@ -544,6 +610,8 @@ local function beginRoll(player: Player, zone: any, parts: any)
 			end
 		end)
 		player:SetAttribute("Rolling", false)
+		player:SetAttribute("RideSpeed", 0)
+		player:SetAttribute("RideCombo", 0)
 		if current then
 			syncPlayer(player, current)
 		end
