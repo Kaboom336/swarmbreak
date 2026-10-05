@@ -1,12 +1,20 @@
 # Q4: Zion's playtest says "mid". Codex-only rebuild (Claude is paused until Wed 10/7)
 Zion's notes: the loop is boring; the hill needs to be steeper and faster; dodge obstacles with a combo; the UI is bland; colours look dead; the models are boring; the map should be enclosed with better models; the pumpkin floats instead of rolling; you can jump off it; the player should be inside or holding on.
 
-Run these in order. Each task merges only when the gate is green. testcmd for every task: cd pumpkin && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
+Run these in order: Q4-R, Q4-AUDIT, Q4-A, Q4-B, Q4-C, Q4-D, Q4-E. Each task merges only when the gate is green. testcmd for every task: cd pumpkin && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
 
 ## Q4-R: research first (writes pumpkin/research/Q4-REFERENCES.md, no code)
 - Pick 5 top Roblox roll, slide or downhill games and +1 simulators on the charts now: for example +1 Stone Skipping, Break and Steal an Egg, slide/roll "obby race" downhill games, and Mega Marble or ball-rolling games.
 - For each: how the player rides (inside a ball, holding on, or seated); camera; speed (studs/s); obstacle and dodge design; combo rules; UI palette (hex values); map enclosure (walls, canyons, tunnels); particle and sound juice.
 - End with a table, "we do / they do / change", and a palette of 6 saturated colours.
+
+## Q4-AUDIT: review every detail (runs after Q4-R, before Q4-A)
+- Audit every system, screen, parameter, model, colour, sound, camera, animation, text label and timing in pumpkin/ against the Q4-R references.
+- Log each issue in pumpkin/research/Q4-AUDIT.md as one row: area, what's wrong, what the reference does, the fix, severity (P1/P2/P3), and which Q4 task fixes it.
+  - Cover: the first 60 s for a new player, the click feel, growth visuals, the ride, rewards, pets and eggs, the shop and passes, the HUD on desktop and mobile, sounds, the map, performance and mobile controls.
+  - Aim for 60+ rows.
+- Write a reusable "Roblox game-feel and quality checklist" section into PLAYBOOK.md at the repo root. It covers look, play, feel, juice, UI, onboarding, economy, monetization and mobile, with concrete numbers.
+- Q4-A through Q4-D must each fix every audit row assigned to them. Unassigned P1/P2 rows become Q4-E: fixes.
 
 ## Q4-A: real rolling and the rider
 - The pumpkin is a physics-looking ball that rotates around its axle by distance ÷ radius every frame, on both client and server. No floating: it is ground-snapped to the track surface with a raycast.
