@@ -92,3 +92,12 @@ do
 		end
 	end)
 end
+
+test("multiplier chips stay visible on a narrow portrait screen", function()
+	local layout = HudLayout.compute(375, 667)
+	local chips = layout.multipliers
+	eq(chips.width >= 100, true, "chip width")
+	eq(chips.x >= 0 and chips.x + chips.width <= 375, true, "chips inside width")
+	eq(HudLayout.overlaps(chips, layout.menu), false, "chips clear of the menu")
+	eq(HudLayout.overlaps(chips, layout.wallProgress), false, "chips clear of the wall bar")
+end)

@@ -82,13 +82,22 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number): Layou
 		zoneWidth,
 		zoneHeight
 	)
-	local multiplierWidth = if mobile then wallProgress.x - (menu.x + menu.width) - 8 else 150
 	local multiplierHeight = if mobile then 84 else 152
-	local multiplierX = if mobile then menu.x + menu.width + 8 else margin
-	local multiplierY = if mobile
-		then wallProgress.y - 8 - multiplierHeight
-		else viewportHeight - margin - multiplierHeight
-	local multipliers = rect(multiplierX, multiplierY, multiplierWidth, multiplierHeight)
+	local multipliers
+	if not mobile then
+		multipliers =
+			rect(margin, viewportHeight - margin - multiplierHeight, 150, multiplierHeight)
+	elseif wallProgress.x - (menu.x + menu.width) - 16 >= 100 then
+		multipliers = rect(
+			menu.x + menu.width + 8,
+			wallProgress.y - 8 - multiplierHeight,
+			wallProgress.x - (menu.x + menu.width) - 16,
+			multiplierHeight
+		)
+	else
+		-- Narrow (portrait) screens: no room beside the wall bar, so stack the chips under the menu grid
+		multipliers = rect(menu.x, menu.y + menu.height + 8, menu.width, multiplierHeight)
+	end
 	local starterPackWidth = 190
 	local starterPackHeight = 58
 	local starterPack = rect(

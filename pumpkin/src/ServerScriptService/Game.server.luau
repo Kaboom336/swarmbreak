@@ -222,7 +222,11 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	profile.Size = 0
 	profile.Wins += result.wins
 	profile.TotalWins += result.wins
-	profile.TutorialDone = true
+	-- Only a paying roll finishes onboarding, so a too-early roll keeps the tutorial
+	if result.wins > 0 and not profile.TutorialDone then
+		profile.TutorialDone = true
+		player:SetAttribute("TutorialDone", true)
+	end
 	Data.markDirty(player)
 	PumpkinVisual.update(player.Character, 0)
 	player:SetAttribute("Size", 0) -- Wins show on the HUD when the playback ends

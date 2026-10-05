@@ -87,3 +87,18 @@ test("roll duration uses size-based speed within playback bounds", function()
 	eq(fast < slow, true, "larger pumpkin rolls faster")
 	eq(fast <= Config.RollMaxDuration + Config.BonusZoneMaxSeconds, true, "bonus duration bound")
 end)
+
+test("a roll past the track ends at its last bonus wall", function()
+	local result = Roll.simulate(1_200_000, "PumpkinPatch", 10)
+	eq(
+		result.distance,
+		result.wallsBroken * Config.WallSpacing,
+		"distance matches walls played back"
+	)
+	local short = Roll.simulate(15, "PumpkinPatch", 10)
+	eq(
+		short.distance,
+		short.stoppedAtWall * Config.WallSpacing,
+		"short roll reaches its stopping wall"
+	)
+end)

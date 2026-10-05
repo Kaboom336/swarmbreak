@@ -64,7 +64,8 @@ function Roll.simulate(size: number, zone: string | Zone, physicalCount: number?
 	end
 
 	local stoppedAtWall = if broken < maximumCount then broken + 1 else nil
-	local wallsReached = if stoppedAtWall then stoppedAtWall else broken
+	-- Bonus walls are virtual, so a roll past the physical track ends at its last bonus wall
+	local wallsReached = if stoppedAtWall and broken < count then stoppedAtWall else broken
 	local physicalWallsBroken = math.min(broken, count)
 	local bonusWalls = math.max(0, broken - count)
 	return {
