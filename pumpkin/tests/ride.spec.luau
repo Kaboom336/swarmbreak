@@ -48,7 +48,12 @@ test("ride duration stays playable at every tested size", function()
 	for _, size in { 10, 100, 1_000, 1_200_000 } do
 		local physical = Ride.physicalDuration(size)
 		eq(physical >= 7 and physical <= 10, true, "physical duration at " .. size)
-		eq(Ride.duration(size, 40) <= 12.5, true, "physical plus bonus duration at " .. size)
+		eq(
+			Ride.duration(size, 40) <= 10 + Config.BonusZoneMaxSeconds,
+			true,
+			"physical plus bonus duration at " .. size
+		)
+		eq(Ride.bonusDuration(15) >= 2, true, "15 bonus walls take at least 2 s")
 	end
 end)
 

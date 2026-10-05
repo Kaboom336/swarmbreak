@@ -36,7 +36,8 @@ end
 
 function Ride.bonusDuration(bonusWalls: number): number
 	local count = math.clamp(math.floor(bonusWalls), 0, Config.MaxBonusWalls)
-	return Config.BonusZoneMaxSeconds * count / Config.MaxBonusWalls
+	-- A steady pace per bonus wall (not a fixed squeeze), so 15 bonus walls take about 2.3 s, not 1 s
+	return math.min(Config.BonusZoneMaxSeconds, count * Config.BonusSecondsPerWall)
 end
 
 function Ride.duration(size: number, bonusWalls: number): number

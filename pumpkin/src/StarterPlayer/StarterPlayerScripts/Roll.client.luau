@@ -638,6 +638,7 @@ local function playRoll(
 	local previousFov = if camera then camera.FieldOfView else 70
 	local cameraConnection: RBXScriptConnection? = nil
 	local targetFolder: Folder? = nil
+	local occluded: { [BasePart]: boolean } = {}
 	local controlConnection: RBXScriptConnection? = nil
 	local shakeUntil = 0
 	local shakeMagnitude = 0
@@ -674,8 +675,14 @@ local function playRoll(
 			if not activeControl or activeControl.token ~= token then
 				return
 			end
-			local keyAxis = (if activeControl.right then 1 else 0)
-				- (if activeControl.left then 1 else 0)
+			-- Poll the keys too, so steering works even when another binding sinks the CAS action
+			local steerRight = activeControl.right
+				or UserInputService:IsKeyDown(Enum.KeyCode.D)
+				or UserInputService:IsKeyDown(Enum.KeyCode.Right)
+			local steerLeft = activeControl.left
+				or UserInputService:IsKeyDown(Enum.KeyCode.A)
+				or UserInputService:IsKeyDown(Enum.KeyCode.Left)
+			local keyAxis = (if steerRight then 1 else 0) - (if steerLeft then 1 else 0)
 			local axis = if math.abs(activeControl.thumbstick) > 0.12
 				then activeControl.thumbstick
 				else keyAxis
@@ -688,6 +695,7 @@ local function playRoll(
 				lastSend = now
 				lastControlUpdate = now
 				rollControl:FireServer("Steer", token, activeControl.lane)
+				player:SetAttribute("RideLane", math.floor(activeControl.lane * 100 + 0.5) / 100)
 			end
 			local elapsed = workspace:GetServerTimeNow() - startedAt
 			for _, target in activeControl.targets do
@@ -709,7 +717,33 @@ local function playRoll(
 				end
 			end
 		end)
+		local rideDirection =
+			Vector3.new(start.CFrame.LookVector.X, -0.06, start.CFrame.LookVector.Z).Unit
+		local rideHorizontal = Vector3.new(rideDirection.X, 0, rideDirection.Z).Unit
+		local rideRight = Vector3.new(-rideHorizontal.Z, 0, rideHorizontal.X)
+		local speedBonusElapsed = 0
+		local occlusionParams = RaycastParams.new()
+		occlusionParams.FilterType = Enum.RaycastFilterType.Exclude
 		cameraConnection = RunService.RenderStepped:Connect(function(deltaTime)
+			-- Predict the pumpkin locally from the shared ride curve, so the rider sees smooth motion
+			-- and their own steering at once instead of the server's replicated steps
+			if activeControl and activeControl.token == token then
+				if os.clock() < activeControl.speedBoostUntil then
+					speedBonusElapsed += deltaTime * (Config.RideSpeedPadMultiplier - 1)
+				end
+				local traveled = Ride.distanceAtTime(
+					workspace:GetServerTimeNow() - startedAt + speedBonusElapsed,
+					physicalDuration,
+					physicalDistance,
+					bonusDuration,
+					bonusDistance
+				)
+				local position = start.Position
+					+ rideDirection * math.min(traveled, distance)
+					+ rideRight * (activeControl.lane * Config.RideLaneStuds)
+					+ Vector3.new(0, pumpkin.Size.X * 0.5 + 1, 0)
+				pumpkin.CFrame = CFrame.lookAt(position, position + rideHorizontal)
+			end
 			if os.clock() < hitStopUntil and heldCamera then
 				camera.CFrame = heldCamera
 				return
@@ -733,6 +767,36 @@ local function playRoll(
 				pumpkin.Position + Vector3.new(0, 2, 0)
 			)
 			heldCamera = camera.CFrame
+			-- Fade anything (gate banners, signs) between the camera and the pumpkin
+			local blockers: { [BasePart]: boolean } = {}
+			local ignore: { Instance } = { pumpkin }
+			if player.Character then
+				table.insert(ignore, player.Character)
+			end
+			if targetFolder then
+				table.insert(ignore, targetFolder)
+			end
+			local origin = pumpkin.Position
+			local toCamera = camera.CFrame.Position - origin
+			for _ = 1, 4 do
+				occlusionParams.FilterDescendantsInstances = ignore
+				local hit = workspace:Raycast(origin, toCamera, occlusionParams)
+				if not hit then
+					break
+				end
+				local part = hit.Instance
+				if part:IsA("BasePart") then
+					blockers[part] = true
+					part.LocalTransparencyModifier = 0.85
+				end
+				table.insert(ignore, part)
+			end
+			for part in occluded do
+				if not blockers[part] then
+					part.LocalTransparencyModifier = 0
+				end
+			end
+			occluded = blockers
 			local rideProgress =
 				Ride.progress(workspace:GetServerTimeNow() - startedAt, physicalDuration)
 			local speedFov = 8 + rideProgress * 10
@@ -907,6 +971,10 @@ local function playRoll(
 			if cameraConnection then
 				cameraConnection:Disconnect()
 			end
+			for part in occluded do
+				part.LocalTransparencyModifier = 0
+			end
+			table.clear(occluded)
 			if controlConnection then
 				controlConnection:Disconnect()
 			end
