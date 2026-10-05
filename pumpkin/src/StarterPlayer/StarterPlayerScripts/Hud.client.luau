@@ -36,7 +36,8 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "PumpkinHud"
 screenGui.DisplayOrder = 10
 screenGui.ResetOnSpawn = false
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+-- Global: the depth stack puts shadows at ZIndex - 1 as children, which Sibling would draw over the button text
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 screenGui.IgnoreGuiInset = false
 screenGui.Parent = playerGui
 
@@ -417,10 +418,18 @@ local modal = makeDepthObject(
 	TEAL
 ) :: Frame
 modal.Visible = false
-modal.ZIndex = 20 -- above the menu (5) and its buttons (6)
 local modalShadow = screenGui:FindFirstChild("EconomyPanelShadow") :: Frame
 modalShadow.Visible = false
-modalShadow.ZIndex = 19
+-- The panel lives in its own ScreenGui so it always draws above the HUD menu
+local modalGui = Instance.new("ScreenGui")
+modalGui.Name = "PumpkinPanel"
+modalGui.DisplayOrder = screenGui.DisplayOrder + 1
+modalGui.ResetOnSpawn = false
+modalGui.IgnoreGuiInset = screenGui.IgnoreGuiInset
+modalGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+modalGui.Parent = screenGui.Parent
+modalShadow.Parent = modalGui
+modal.Parent = modalGui
 for _, item in { modal, modalShadow } do
 	local constraint = Instance.new("UISizeConstraint")
 	constraint.MaxSize = Vector2.new(500, 390)

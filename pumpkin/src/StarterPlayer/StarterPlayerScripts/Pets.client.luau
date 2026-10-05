@@ -31,6 +31,7 @@ end
 local gui = Instance.new("ScreenGui")
 gui.Name = "PumpkinPets"
 gui.DisplayOrder = 20
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Global -- child shadows sit at ZIndex - 1
 gui.ResetOnSpawn = false
 gui.Parent = playerGui
 

@@ -2,8 +2,15 @@
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
 
-local winsStore = DataStoreService:GetOrderedDataStore("Pumpkin_GlobalWins_v1")
-local sizeStore = DataStoreService:GetOrderedDataStore("Pumpkin_GlobalSize_v1")
+-- Unpublished places throw on store lookup; leaderboards then stay off so the game still runs
+local winsOk, winsStore =
+	pcall(DataStoreService.GetOrderedDataStore, DataStoreService, "Pumpkin_GlobalWins_v1")
+local sizeOk, sizeStore =
+	pcall(DataStoreService.GetOrderedDataStore, DataStoreService, "Pumpkin_GlobalSize_v1")
+local enabled = winsOk and sizeOk
+if not enabled then
+	warn("Leaderboards disabled: DataStores unavailable (publish the place to enable)")
+end
 
 local Leaderboards = {}
 
@@ -68,6 +75,9 @@ local function render(boardName: string, title: string, store: any)
 end
 
 function Leaderboards.record(player: Player, profile: any)
+	if not enabled then
+		return
+	end
 	task.spawn(function()
 		pcall(winsStore.SetAsync, winsStore, tostring(player.UserId), math.floor(profile.Wins))
 		pcall(
@@ -80,6 +90,9 @@ function Leaderboards.record(player: Player, profile: any)
 end
 
 function Leaderboards.refresh()
+	if not enabled then
+		return
+	end
 	render("Leaderboard_Wins", "★ GLOBAL WINS ★", winsStore)
 	render("Leaderboard_Size", "🎃 BIGGEST PUMPKIN 🎃", sizeStore)
 end
