@@ -35,6 +35,7 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "PumpkinHud"
 screenGui.DisplayOrder = 10
 screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.IgnoreGuiInset = false
 screenGui.Parent = playerGui
 
@@ -223,8 +224,10 @@ local modal = makeDepthObject(
 	TEAL
 ) :: Frame
 modal.Visible = false
+modal.ZIndex = 20 -- above the menu (5) and its buttons (6)
 local modalShadow = screenGui:FindFirstChild("EconomyPanelShadow") :: Frame
 modalShadow.Visible = false
+modalShadow.ZIndex = 19
 for _, item in { modal, modalShadow } do
 	local constraint = Instance.new("UISizeConstraint")
 	constraint.MaxSize = Vector2.new(500, 390)

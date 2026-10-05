@@ -11,6 +11,7 @@ local Monetization = require(Shared:WaitForChild("Monetization"))
 local Rebirth = require(Shared:WaitForChild("Rebirth"))
 local ReceiptLedger = require(Shared:WaitForChild("ReceiptLedger"))
 local Data = require(script.Parent.Data)
+local PumpkinVisual = require(script.Parent.PumpkinVisual)
 
 local PASS_FIELDS = {
 	DoubleSize = "DoubleSize",
@@ -65,6 +66,8 @@ local function publish(player: Player, profile: any)
 	if syncStats then
 		syncStats(player, profile)
 	end
+	-- Rebirth and Size Boost change Size outside the grow and roll paths
+	PumpkinVisual.update(player.Character, profile.Size)
 end
 
 local function addWins(profile: any, amount: number)
@@ -195,8 +198,13 @@ function EconomyService.init(remotes: Folder, statsSync: (Player, any) -> (), gr
 	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, passId, purchased)
 		if purchased then
 			local passName = passNameById[passId]
-			if passName then
-				refreshPass(player, passName, passId)
+			local profile = Data.get(player)
+			local field = PASS_FIELDS[passName or ""]
+			if profile and field then
+				-- Trust the purchase event; UserOwnsGamePassAsync can lag right after buying
+				profile[field] = true
+				Data.markDirty(player)
+				publish(player, profile)
 			end
 		end
 	end)
