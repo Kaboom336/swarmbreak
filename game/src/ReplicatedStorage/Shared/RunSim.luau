@@ -204,7 +204,7 @@ function RunSim.simulate(options: Options?): Result
 						makeEnemy(
 							name,
 							wave,
-							spawnAt,
+							if Enemies.Defs[name].Boss then 0 else spawnAt, -- runtime spawns the boss at once
 							scaled.Health :: number,
 							scaled.Damage :: number,
 							random

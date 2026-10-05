@@ -649,7 +649,8 @@ local function runWave(wave: number): boolean
 		end
 	end
 
-	for packIndex, pack in WaveTable.packs(composition) do
+	local wavePacks = WaveTable.packs(composition)
+	for packIndex, pack in wavePacks do
 		while not WaveTable.packFits(EnemyAI.aliveCount(), pack.Size, Config.MaxAlive) do
 			if not anyPlayersAlive() then
 				return false
@@ -693,6 +694,9 @@ local function runWave(wave: number): boolean
 		end
 		while pendingSpawns > 0 do
 			RunService.Heartbeat:Wait()
+		end
+		if packIndex == #wavePacks then
+			break -- no pulse gap after the last pack (R2 review)
 		end
 		local spawnDelay = Difficulty.apply(
 			{ SpawnDelay = WaveTable.pulseGap(wave == currentStage.Waves) },
