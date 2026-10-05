@@ -175,9 +175,7 @@ local function hatch(player: Player, eggName: string)
 		return
 	end
 
-	local luck = if profile.LuckyPotionExpiresAt > os.time()
-		then Config.LuckyPotionMultiplier
-		else 1
+	local luck = if profile.LuckyUntil > os.time() then Config.LuckyPotionMultiplier else 1
 	local results = {}
 	for _ = 1, count do
 		local pet = Pets.roll(eggName, randomSource, luck)

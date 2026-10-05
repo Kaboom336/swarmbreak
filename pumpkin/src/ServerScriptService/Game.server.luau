@@ -8,6 +8,8 @@ local Config = require(Shared:WaitForChild("Config"))
 local Grow = require(Shared:WaitForChild("Grow"))
 local Roll = require(Shared:WaitForChild("Roll"))
 local Data = require(ServerStorage:WaitForChild("Data"))
+local EconomyService = require(ServerStorage:WaitForChild("EconomyService"))
+local Leaderboards = require(ServerStorage:WaitForChild("Leaderboards"))
 local PumpkinVisual = require(ServerStorage:WaitForChild("PumpkinVisual"))
 local RemotesBuilder = require(ServerStorage:WaitForChild("Remotes"))
 local MapFallback = require(script.Parent:WaitForChild("MapFallback"))
@@ -54,6 +56,26 @@ local function syncPlayer(player: Player, profile: any)
 	statsChanged:FireClient(player, profile.Size, profile.Wins)
 end
 
+local function growPlayer(player: Player)
+	local profile = Data.get(player)
+	if not profile then
+		return
+	end
+
+	local amount = Grow.amount({
+		rebirths = profile.Rebirths,
+		petMultipliers = equippedPetMultipliers(profile),
+		doubleSize = profile.DoubleSize,
+		vip = profile.VIP,
+	})
+	profile.Size += amount
+	profile.BiggestPumpkin = math.max(profile.BiggestPumpkin, profile.Size)
+	Data.markDirty(player)
+	PumpkinVisual.update(player.Character, profile.Size)
+	syncPlayer(player, profile)
+	growEffect:FireClient(player, amount, profile.Size)
+end
+
 local function makeLeaderstats(player: Player, profile: any)
 	local old = player:FindFirstChild("leaderstats")
 	if old then
@@ -94,6 +116,7 @@ local function loadPlayer(player: Player)
 
 	makeLeaderstats(player, profile)
 	syncPlayer(player, profile)
+	EconomyService.playerLoaded(player)
 	player.CharacterAdded:Connect(function(character)
 		setupCharacter(player, character)
 	end)
@@ -107,19 +130,7 @@ growRequest.OnServerEvent:Connect(function(player: Player)
 	if rolling[player] or not profile or not limiter:allow(player, os.clock()) then
 		return
 	end
-
-	local amount = Grow.amount({
-		rebirths = profile.Rebirths,
-		petMultipliers = equippedPetMultipliers(profile),
-		doubleSize = profile.DoubleSize,
-		vip = profile.VIP,
-	})
-	profile.Size += amount
-	profile.BiggestPumpkin = math.max(profile.BiggestPumpkin, profile.Size)
-	Data.markDirty(player)
-	PumpkinVisual.update(player.Character, profile.Size)
-	syncPlayer(player, profile)
-	growEffect:FireClient(player, amount, profile.Size)
+	growPlayer(player)
 end)
 
 local function playerFromHit(hit: BasePart): Player?
@@ -192,6 +203,8 @@ for _, zone in Config.Zones do
 	end
 end
 
+EconomyService.init(remotes, syncPlayer, growPlayer)
+
 Players.PlayerAdded:Connect(function(player)
 	task.spawn(loadPlayer, player)
 end)
@@ -202,6 +215,11 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	limiter:clear(player)
 	rolling[player] = nil
+
+	local profile = Data.get(player)
+	if profile then
+		Leaderboards.record(player, profile)
+	end
 	Data.release(player)
 end)
 
@@ -212,6 +230,15 @@ end)
 task.spawn(function()
 	while true do
 		task.wait(Config.AutosaveSeconds)
+		for player in Players:GetPlayers() do
+			local profile = Data.get(player)
+			if profile then
+				Leaderboards.record(player, profile)
+			end
+		end
 		Data.saveAll(false)
+		Leaderboards.refresh()
 	end
 end)
+
+task.spawn(Leaderboards.refresh)

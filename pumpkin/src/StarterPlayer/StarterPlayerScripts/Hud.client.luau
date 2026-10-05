@@ -1,6 +1,8 @@
 --!strict
 local Players = game:GetService("Players")
+local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
@@ -9,10 +11,13 @@ local playerGui = player:WaitForChild("PlayerGui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Grow = require(Shared:WaitForChild("Grow"))
+local Monetization = require(Shared:WaitForChild("Monetization"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local growRequest = remotes:WaitForChild("GrowRequest") :: RemoteEvent
 local growEffect = remotes:WaitForChild("GrowEffect") :: RemoteEvent
 local statsChanged = remotes:WaitForChild("StatsChanged") :: RemoteEvent
+local economyRequest = remotes:WaitForChild("EconomyRequest") :: RemoteFunction
+local economyState = remotes:WaitForChild("EconomyState") :: RemoteEvent
 
 local ORANGE = Color3.fromRGB(255, 116, 25)
 local PURPLE = Color3.fromRGB(151, 64, 255)
@@ -30,6 +35,7 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "PumpkinHud"
 screenGui.DisplayOrder = 10
 screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.IgnoreGuiInset = false
 screenGui.Parent = playerGui
 
@@ -60,6 +66,20 @@ local function decorate(guiObject: GuiObject, topColor: Color3, bottomColor: Col
 	local highlightCorner = Instance.new("UICorner")
 	highlightCorner.CornerRadius = UDim.new(1, 0)
 	highlightCorner.Parent = highlight
+end
+
+local function addButtonShadow(button: GuiButton)
+	local shadow = Instance.new("Frame")
+	shadow.Name = "Shadow"
+	shadow.BackgroundColor3 = SHADOW
+	shadow.BorderSizePixel = 0
+	shadow.Position = UDim2.fromOffset(0, 7)
+	shadow.Size = UDim2.fromScale(1, 1)
+	shadow.ZIndex = button.ZIndex - 1
+	shadow.Parent = button
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = shadow
 end
 
 local function makeDepthObject(
@@ -209,6 +229,347 @@ progressText.TextStrokeColor3 = TEAL
 progressText.TextStrokeTransparency = 0
 progressText.ZIndex = 6
 progressText.Parent = progressBack
+
+local menu = Instance.new("Frame")
+menu.Name = "Menu"
+menu.AnchorPoint = Vector2.new(0, 0.5)
+menu.BackgroundTransparency = 1
+menu.Position = UDim2.new(0, 18, 0.5, 0)
+menu.Size = UDim2.fromOffset(150, 318)
+menu.ZIndex = 5
+menu.Parent = screenGui
+
+local menuLayout = Instance.new("UIListLayout")
+menuLayout.Padding = UDim.new(0, 7)
+menuLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+menuLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+menuLayout.Parent = menu
+
+local function makeMenuButton(name: string, text: string, color: Color3): TextButton
+	local button = Instance.new("TextButton")
+	button.Name = name
+	button.AutoButtonColor = false
+	button.BackgroundColor3 = color
+	button.BorderSizePixel = 0
+	button.Font = Enum.Font.GothamBlack
+	button.Size = UDim2.fromOffset(142, 58)
+	button.Text = text
+	button.TextColor3 = WHITE
+	button.TextSize = 20
+	button.TextStrokeColor3 = TEAL
+	button.TextStrokeTransparency = 0
+	button.ZIndex = 6
+	button.Parent = menu
+	addButtonShadow(button)
+	decorate(button, color, color:Lerp(TEAL, 0.3))
+	return button
+end
+
+local shopButton = makeMenuButton("Shop", "SHOP", ORANGE)
+local petsButton = makeMenuButton("Pets", "PETS", PURPLE)
+local rebirthButton = makeMenuButton("Rebirth", "REBIRTH", LIME)
+local codesButton = makeMenuButton("Codes", "CODES", Color3.fromRGB(55, 190, 214))
+local dailyButton = makeMenuButton("Daily", "DAILY", Color3.fromRGB(255, 81, 158))
+
+local modal = makeDepthObject(
+	"Frame",
+	"EconomyPanel",
+	UDim2.new(0.72, 0, 0.82, 0),
+	UDim2.fromScale(0.5, 0.52),
+	Vector2.new(0.5, 0.5),
+	Color3.fromRGB(64, 33, 102),
+	TEAL
+) :: Frame
+modal.Visible = false
+modal.ZIndex = 20 -- above the menu (5) and its buttons (6)
+local modalShadow = screenGui:FindFirstChild("EconomyPanelShadow") :: Frame
+modalShadow.Visible = false
+modalShadow.ZIndex = 19
+for _, item in { modal, modalShadow } do
+	local constraint = Instance.new("UISizeConstraint")
+	constraint.MaxSize = Vector2.new(500, 390)
+	constraint.Parent = item
+end
+
+local modalTitle = Instance.new("TextLabel")
+modalTitle.Name = "Title"
+modalTitle.BackgroundTransparency = 1
+modalTitle.Font = Enum.Font.GothamBlack
+modalTitle.Position = UDim2.fromOffset(24, 16)
+modalTitle.Size = UDim2.new(1, -80, 0, 50)
+modalTitle.TextColor3 = ORANGE
+modalTitle.TextSize = 30
+modalTitle.TextXAlignment = Enum.TextXAlignment.Left
+modalTitle.TextStrokeColor3 = TEAL
+modalTitle.TextStrokeTransparency = 0
+modalTitle.ZIndex = 5
+modalTitle.Parent = modal
+
+local closeButton = Instance.new("TextButton")
+closeButton.Name = "Close"
+closeButton.AnchorPoint = Vector2.new(1, 0)
+closeButton.AutoButtonColor = false
+closeButton.BackgroundColor3 = Color3.fromRGB(230, 62, 70)
+closeButton.BorderSizePixel = 0
+closeButton.Font = Enum.Font.GothamBlack
+closeButton.Position = UDim2.new(1, -14, 0, 12)
+closeButton.Size = UDim2.fromOffset(56, 56)
+closeButton.Text = "X"
+closeButton.TextColor3 = WHITE
+closeButton.TextSize = 25
+closeButton.ZIndex = 6
+closeButton.Parent = modal
+addButtonShadow(closeButton)
+decorate(closeButton, Color3.fromRGB(255, 91, 93), Color3.fromRGB(189, 40, 70))
+
+local modalContent = Instance.new("Frame")
+modalContent.Name = "Content"
+modalContent.BackgroundTransparency = 1
+modalContent.Position = UDim2.fromOffset(22, 82)
+modalContent.Size = UDim2.new(1, -44, 1, -104)
+modalContent.ZIndex = 5
+modalContent.Parent = modal
+
+local notice = Instance.new("TextLabel")
+notice.Name = "Notice"
+notice.AnchorPoint = Vector2.new(0.5, 1)
+notice.BackgroundTransparency = 1
+notice.Font = Enum.Font.GothamBold
+notice.Position = UDim2.new(0.5, 0, 1, -8)
+notice.Size = UDim2.new(1, -30, 0, 38)
+notice.Text = ""
+notice.TextColor3 = WHITE
+notice.TextSize = 17
+notice.TextWrapped = true
+notice.ZIndex = 8
+notice.Parent = modal
+
+local function clearContent()
+	for _, child in modalContent:GetChildren() do
+		child:Destroy()
+	end
+	notice.Text = ""
+end
+
+local function showPanel(title: string)
+	clearContent()
+	modalTitle.Text = title
+	modal.Visible = true
+	modalShadow.Visible = true
+end
+
+local function actionButton(
+	parent: Instance,
+	text: string,
+	position: UDim2,
+	color: Color3
+): TextButton
+	local button = Instance.new("TextButton")
+	button.AutoButtonColor = false
+	button.BackgroundColor3 = color
+	button.BorderSizePixel = 0
+	button.Font = Enum.Font.GothamBlack
+	button.Position = position
+	button.Size = UDim2.new(1, 0, 0, 62)
+	button.Text = text
+	button.TextColor3 = WHITE
+	button.TextSize = 21
+	button.TextStrokeColor3 = TEAL
+	button.TextStrokeTransparency = 0
+	button.ZIndex = 7
+	button.Parent = parent
+	addButtonShadow(button)
+	decorate(button, color, color:Lerp(TEAL, 0.3))
+	return button
+end
+
+local currentEconomyState: any = nil
+local function requestEconomy(action: string, value: any?): any
+	local ok, response = pcall(function()
+		return economyRequest:InvokeServer(action, value)
+	end)
+	if not ok then
+		notice.Text = "The server is busy. Try again."
+		return nil
+	end
+	if response.State then
+		currentEconomyState = response.State
+	end
+	notice.Text = response.Message or ""
+	return response
+end
+
+local function showShop()
+	showPanel("HALLOWEEN SHOP")
+	local scroll = Instance.new("ScrollingFrame")
+	scroll.Name = "Offers"
+	scroll.BackgroundTransparency = 1
+	scroll.BorderSizePixel = 0
+	scroll.CanvasSize = UDim2.fromOffset(0, 0)
+	scroll.ScrollBarThickness = 8
+	scroll.Size = UDim2.new(1, 0, 1, -40)
+	scroll.ZIndex = 6
+	scroll.Parent = modalContent
+	local layout = Instance.new("UIListLayout")
+	layout.Padding = UDim.new(0, 8)
+	layout.Parent = scroll
+
+	local offerCount = 0
+	for name, offer in Monetization.GamePasses do
+		if offer.Id > 0 then
+			offerCount += 1
+			local button =
+				actionButton(scroll, name .. "  •  " .. offer.Price .. " R$", UDim2.new(), PURPLE)
+			button.Activated:Connect(function()
+				MarketplaceService:PromptGamePassPurchase(player, offer.Id)
+			end)
+		end
+	end
+	for name, offer in Monetization.DeveloperProducts do
+		if offer.Id > 0 then
+			offerCount += 1
+			local button =
+				actionButton(scroll, name .. "  •  " .. offer.Price .. " R$", UDim2.new(), ORANGE)
+			button.Activated:Connect(function()
+				MarketplaceService:PromptProductPurchase(player, offer.Id)
+			end)
+		end
+	end
+	if offerCount == 0 then
+		local empty = Instance.new("TextLabel")
+		empty.BackgroundTransparency = 1
+		empty.Font = Enum.Font.GothamBlack
+		empty.Size = UDim2.new(1, 0, 0, 120)
+		empty.Text = "NEW TREATS\nCOMING SOON!"
+		empty.TextColor3 = LIME
+		empty.TextSize = 28
+		empty.ZIndex = 7
+		empty.Parent = scroll
+	end
+	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		scroll.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y)
+	end)
+end
+
+local function showRebirth()
+	showPanel("REBIRTH")
+	requestEconomy("GetState")
+	local cost = if currentEconomyState then currentEconomyState.RebirthCost else 0
+	local description = Instance.new("TextLabel")
+	description.BackgroundTransparency = 1
+	description.Font = Enum.Font.GothamBold
+	description.Size = UDim2.new(1, 0, 0, 130)
+	description.Text = string.format(
+		"Reset Size, Wins, and zones\nfor a permanent +0.5x Size boost.\n\nCost: %d Wins",
+		cost
+	)
+	description.TextColor3 = WHITE
+	description.TextSize = 21
+	description.TextWrapped = true
+	description.ZIndex = 6
+	description.Parent = modalContent
+	local confirm = actionButton(modalContent, "REBIRTH NOW", UDim2.new(0, 0, 0, 150), LIME)
+	confirm.Activated:Connect(function()
+		local response = requestEconomy("Rebirth")
+		if response and response.Ok then
+			confirm.Text = "REBIRTHED!"
+		end
+	end)
+end
+
+local function showCodes()
+	showPanel("REDEEM A CODE")
+	local box = Instance.new("TextBox")
+	box.Name = "Code"
+	box.BackgroundColor3 = Color3.fromRGB(25, 74, 88)
+	box.BorderSizePixel = 0
+	box.ClearTextOnFocus = false
+	box.Font = Enum.Font.GothamBlack
+	box.PlaceholderText = "ENTER CODE"
+	box.Position = UDim2.fromOffset(0, 40)
+	box.Size = UDim2.new(1, 0, 0, 64)
+	box.Text = ""
+	box.TextColor3 = WHITE
+	box.TextSize = 24
+	box.ZIndex = 6
+	box.Parent = modalContent
+	decorate(box, Color3.fromRGB(37, 106, 125), TEAL)
+	local redeem = actionButton(modalContent, "REDEEM", UDim2.new(0, 0, 0, 130), ORANGE)
+	redeem.Activated:Connect(function()
+		requestEconomy("RedeemCode", box.Text)
+	end)
+end
+
+local function showDaily()
+	showPanel("7-DAY REWARDS")
+	requestEconomy("GetState")
+	local streak = if currentEconomyState then currentEconomyState.DailyStreak else 0
+	local calendar = Instance.new("Frame")
+	calendar.BackgroundTransparency = 1
+	calendar.Size = UDim2.new(1, 0, 0, 112)
+	calendar.Parent = modalContent
+	local layout = Instance.new("UIGridLayout")
+	layout.CellPadding = UDim2.fromOffset(6, 6)
+	layout.CellSize = UDim2.new(1 / 4, -6, 0, 50)
+	layout.Parent = calendar
+	for day = 1, 7 do
+		local cell = Instance.new("TextLabel")
+		cell.BackgroundColor3 = if day <= streak then LIME else PURPLE
+		cell.BorderSizePixel = 0
+		cell.Font = Enum.Font.GothamBlack
+		cell.Text = string.format("DAY %d\n%d WINS", day, Config.DailyRewards[day])
+		cell.TextColor3 = if day <= streak then TEAL else WHITE
+		cell.TextSize = 15
+		cell.ZIndex = 6
+		cell.Parent = calendar
+		decorate(cell, cell.BackgroundColor3, cell.BackgroundColor3:Lerp(TEAL, 0.25))
+	end
+	local claim = actionButton(
+		modalContent,
+		"CLAIM TODAY",
+		UDim2.new(0, 0, 0, 142),
+		Color3.fromRGB(255, 81, 158)
+	)
+	if currentEconomyState and not currentEconomyState.DailyClaimable then
+		claim.Text = "COME BACK TOMORROW"
+	end
+	claim.Activated:Connect(function()
+		local response = requestEconomy("ClaimDaily")
+		if response and response.Ok then
+			claim.Text = "CLAIMED!"
+		end
+	end)
+end
+
+closeButton.Activated:Connect(function()
+	modal.Visible = false
+	modalShadow.Visible = false
+end)
+shopButton.Activated:Connect(showShop)
+petsButton.Activated:Connect(function()
+	showPanel("PETS")
+	notice.Text = "Find eggs in each zone to hatch pets!"
+end)
+rebirthButton.Activated:Connect(showRebirth)
+codesButton.Activated:Connect(showCodes)
+dailyButton.Activated:Connect(showDaily)
+economyState.OnClientEvent:Connect(function(state)
+	currentEconomyState = state
+end)
+
+TextChatService.OnIncomingMessage = function(message: TextChatMessage): TextChatMessageProperties?
+	local source = message.TextSource
+	if not source then
+		return nil
+	end
+	local speaker = Players:GetPlayerByUserId(source.UserId)
+	if not speaker or speaker:GetAttribute("VIP") ~= true then
+		return nil
+	end
+	local properties = Instance.new("TextChatMessageProperties")
+	properties.PrefixText = '<font color="#A7FF3D">[VIP]</font> ' .. message.PrefixText
+	return properties
+end
 
 local function abbreviate(value: number): string
 	local absolute = math.abs(value)
