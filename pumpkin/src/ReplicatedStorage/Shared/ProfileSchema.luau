@@ -31,6 +31,15 @@ export type Profile = {
 	TutorialDone: boolean,
 	FastTripleHatch: boolean,
 	ExpandedPetStorage: boolean,
+	FreeCandyHatchUsed: boolean,
+	StarterGiftClaimed: boolean,
+	PlaytimeGiftClaims: { [string]: boolean },
+	DiscoveredPets: { [string]: boolean },
+	FreeSpookyHatches: number,
+	AutoHatch: boolean,
+	DoubleLuck: boolean,
+	StarterPackPurchased: boolean,
+	StarterPackOfferEndsAt: number,
 }
 
 local ProfileSchema = {}
@@ -59,6 +68,15 @@ function ProfileSchema.default(): Profile
 		TutorialDone = false,
 		FastTripleHatch = false,
 		ExpandedPetStorage = false,
+		FreeCandyHatchUsed = false,
+		StarterGiftClaimed = false,
+		PlaytimeGiftClaims = {},
+		DiscoveredPets = {},
+		FreeSpookyHatches = 0,
+		AutoHatch = false,
+		DoubleLuck = false,
+		StarterPackPurchased = false,
+		StarterPackOfferEndsAt = 0,
 	}
 end
 
@@ -101,6 +119,21 @@ function ProfileSchema.fromStored(stored: any): Profile
 		or (tonumber(source.Rebirths) or 0) > 0
 	profile.FastTripleHatch = source.FastTripleHatch == true
 	profile.ExpandedPetStorage = source.ExpandedPetStorage == true
+	profile.FreeCandyHatchUsed = source.FreeCandyHatchUsed == true
+	profile.StarterGiftClaimed = source.StarterGiftClaimed == true
+	profile.PlaytimeGiftClaims = copyMap(source.PlaytimeGiftClaims) :: any
+	profile.DiscoveredPets = copyMap(source.DiscoveredPets) :: any
+	for _, pet in profile.Pets do
+		if type(pet) == "table" and type(pet.name) == "string" then
+			profile.DiscoveredPets[pet.name] = true
+		end
+	end
+	profile.FreeSpookyHatches = math.max(0, math.floor(tonumber(source.FreeSpookyHatches) or 0))
+	profile.AutoHatch = source.AutoHatch == true
+	profile.DoubleLuck = source.DoubleLuck == true
+	profile.StarterPackPurchased = source.StarterPackPurchased == true
+	profile.StarterPackOfferEndsAt =
+		math.max(0, math.floor(tonumber(source.StarterPackOfferEndsAt) or 0))
 	return profile
 end
 

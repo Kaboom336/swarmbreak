@@ -30,7 +30,7 @@ function HudLayout.compute(viewportWidth: number, viewportHeight: number): Layou
 	local menuHeight = cell * 4 + gap * 3
 	local menu = rect(margin, math.floor((viewportHeight - menuHeight) / 2), menuWidth, menuHeight)
 	local menuButtons = {}
-	for index = 1, 7 do
+	for index = 1, 8 do
 		local column = (index - 1) % 2
 		local row = math.floor((index - 1) / 2)
 		table.insert(

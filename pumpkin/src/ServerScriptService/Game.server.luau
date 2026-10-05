@@ -7,6 +7,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local FriendBoost = require(Shared:WaitForChild("FriendBoost"))
 local Grow = require(Shared:WaitForChild("Grow"))
+local PetIndex = require(Shared:WaitForChild("PetIndex"))
 local Roll = require(Shared:WaitForChild("Roll"))
 local Data = require(ServerStorage:WaitForChild("Data"))
 local EconomyService = require(ServerStorage:WaitForChild("EconomyService"))
@@ -78,6 +79,7 @@ local function syncPlayer(player: Player, profile: any)
 	player:SetAttribute("TotalWins", profile.TotalWins)
 	player:SetAttribute("TutorialDone", profile.TutorialDone)
 	player:SetAttribute("Rebirths", profile.Rebirths)
+	player:SetAttribute("IndexMultiplier", PetIndex.sizeMultiplier(profile.DiscoveredPets))
 	local equippedMultipliers = equippedPetMultipliers(profile)
 	local petMultiplier = if #equippedMultipliers > 0 then 0 else 1
 	for _, multiplier in equippedMultipliers do
@@ -111,6 +113,7 @@ local function growPlayer(player: Player)
 		doubleSize = profile.DoubleSize,
 		vip = profile.VIP,
 		friendBoost = (player:GetAttribute("FriendBoost") :: number?) or 0,
+		indexBonus = PetIndex.sizeMultiplier(profile.DiscoveredPets) - 1,
 	})
 	profile.Size += amount
 	profile.BiggestPumpkin = math.max(profile.BiggestPumpkin, profile.Size)
@@ -261,6 +264,7 @@ for _, player in Players:GetPlayers() do
 end
 
 Players.PlayerRemoving:Connect(function(player)
+	EconomyService.playerRemoving(player)
 	removeFriendships(player)
 	limiter:clear(player)
 	rolling[player] = nil

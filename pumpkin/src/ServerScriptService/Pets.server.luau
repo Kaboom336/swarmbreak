@@ -2,11 +2,12 @@
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local HatchEntitlements = require(Shared:WaitForChild("HatchEntitlements"))
+local PetIndex = require(Shared:WaitForChild("PetIndex"))
 local Pets = require(Shared:WaitForChild("Pets"))
 local Data = require(ServerStorage:WaitForChild("Data"))
 local RemotesBuilder = require(ServerStorage:WaitForChild("Remotes"))
@@ -56,11 +57,13 @@ local function sendState(player: Player, message: string?)
 		return
 	end
 	player:SetAttribute("PetMultiplier", Pets.multiplierSum(profile.Pets, profile.EquippedPetIds))
+	player:SetAttribute("IndexMultiplier", PetIndex.sizeMultiplier(profile.DiscoveredPets))
 	petState:FireClient(player, {
 		pets = profile.Pets,
 		equippedPetIds = profile.EquippedPetIds,
 		capacity = Pets.inventoryCap(profile.ExpandedPetStorage),
 		equipSlots = equipSlots(profile),
+		discoveredPets = profile.DiscoveredPets,
 		message = message,
 	})
 end
@@ -204,19 +207,26 @@ local function hatch(player: Player, eggName: string)
 		sendState(player, "Your pet inventory is full!")
 		return
 	end
-	local totalCost = egg.Cost * count
+	local totalCost, entitlementState = HatchEntitlements.cost(eggName, count, egg.Cost, {
+		freeCandyUsed = profile.FreeCandyHatchUsed,
+		freeSpookyHatches = profile.FreeSpookyHatches,
+	})
 	if profile.Wins < totalCost then
 		sendState(player, string.format("You need %d Wins!", totalCost))
 		return
 	end
 
 	local luck = if profile.LuckyUntil > os.time() then Config.LuckyPotionMultiplier else 1
+	if profile.DoubleLuck then
+		luck *= 2
+	end
 	local results = {}
 	for _ = 1, count do
 		local pet = Pets.roll(eggName, randomSource, luck)
 		if pet then
 			pet.id = HttpService:GenerateGUID(false)
 			table.insert(profile.Pets, pet)
+			profile.DiscoveredPets[pet.name] = true
 			table.insert(results, pet)
 		end
 	end
@@ -224,6 +234,12 @@ local function hatch(player: Player, eggName: string)
 		return
 	end
 	profile.Wins -= totalCost
+	profile.FreeCandyHatchUsed = entitlementState.freeCandyUsed
+	profile.FreeSpookyHatches = entitlementState.freeSpookyHatches
+	if profile.StarterPackOfferEndsAt == 0 then
+		profile.StarterPackOfferEndsAt = os.time() + Config.StarterPackOfferSeconds
+		player:SetAttribute("StarterPackOfferEndsAt", profile.StarterPackOfferEndsAt)
+	end
 	Data.markDirty(player)
 	syncWins(player, profile)
 	sendState(player)
@@ -322,6 +338,43 @@ local function initializePlayer(player: Player)
 	if Data.get(player) then
 		syncFollowers(player)
 		sendState(player)
+		task.spawn(function()
+			while player.Parent == Players do
+				task.wait(Config.AutoHatchInterval)
+				local profile = Data.get(player)
+				local character = player.Character
+				local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+				if profile and profile.AutoHatch and root and root:IsA("BasePart") then
+					local nearestName = nil
+					local nearestDistance = Config.AutoHatchDistance
+					for _, egg in Config.Eggs do
+						local eggRoot = workspace:FindFirstChild("Egg_" .. egg.Name, true)
+						local stand = if eggRoot and eggRoot:IsA("BasePart")
+							then eggRoot
+							elseif
+								eggRoot
+								and eggRoot:IsA("Model")
+								and eggRoot.PrimaryPart
+							then eggRoot.PrimaryPart
+							elseif eggRoot then eggRoot:FindFirstChildWhichIsA(
+								"BasePart",
+								true
+							)
+							else nil
+						if stand then
+							local distance = (stand.Position - root.Position).Magnitude
+							if distance <= nearestDistance then
+								nearestDistance = distance
+								nearestName = egg.Name
+							end
+						end
+					end
+					if nearestName then
+						hatch(player, nearestName)
+					end
+				end
+			end
+		end)
 	end
 end
 
@@ -334,27 +387,4 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	lastPetAction[player] = nil
 	clearFollowers(player)
-end)
-
-RunService.Heartbeat:Connect(function()
-	local now = os.clock()
-	for _, player in Players:GetPlayers() do
-		local character = player.Character
-		local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
-		local folder = followerRoot:FindFirstChild(tostring(player.UserId))
-		if root and root:IsA("BasePart") and folder then
-			for _, follower in folder:GetChildren() do
-				local slot = follower:GetAttribute("Slot") or 1
-				local side = if slot % 2 == 0 then 1 else -1
-				local row = math.ceil(slot / 2)
-				local bob = math.sin(now * 3 + slot) * 0.3
-				local target = root.CFrame * CFrame.new(side * (2 + row), 1.5 + bob, 2.5 + row)
-				if follower:IsA("Model") then
-					follower:PivotTo(follower:GetPivot():Lerp(target, 0.18))
-				elseif follower:IsA("BasePart") then
-					follower.CFrame = follower.CFrame:Lerp(target, 0.18)
-				end
-			end
-		end
-	end
 end)

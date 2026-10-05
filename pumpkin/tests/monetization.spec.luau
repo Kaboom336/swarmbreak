@@ -9,12 +9,15 @@ test("monetization IDs stay unpublished while brief prices are preserved", funct
 		ExtraPetEquip = 99,
 		VIP = 399,
 		FastTripleHatch = 149,
+		AutoHatch = 149,
+		DoubleLuck = 199,
 	}
 	local expectedProductPrices = {
 		LuckyPotion = 49,
 		SizeBoost = 25,
 		WinPack = 99,
 		SkipWall = 39,
+		StarterPack = 99,
 	}
 	for name, price in expectedPassPrices do
 		eq(Monetization.GamePasses[name].Id, 0, name .. " id")
