@@ -1,5 +1,6 @@
 --!strict
 local Config = require(script.Parent.Config)
+local Ride = require(script.Parent.Ride)
 
 export type Zone = {
 	Name: string,
@@ -84,14 +85,8 @@ function Roll.simulate(size: number, zone: string | Zone, physicalCount: number?
 	}
 end
 
-function Roll.duration(distance: number, size: number, bonusWalls: number?): number
-	local speed = Config.RollBaseSpeed + math.sqrt(math.max(0, size)) * Config.RollSizeSpeedFactor
-	local bonusCount = math.clamp(math.floor(bonusWalls or 0), 0, Config.MaxBonusWalls)
-	local physicalDistance = math.max(0, distance - bonusCount * Config.WallSpacing)
-	local physicalDuration =
-		math.clamp(physicalDistance / speed, Config.RollMinDuration, Config.RollMaxDuration)
-	local bonusDuration = Config.BonusZoneMaxSeconds * bonusCount / Config.MaxBonusWalls
-	return physicalDuration + bonusDuration
+function Roll.duration(_distance: number, size: number, bonusWalls: number?): number
+	return Ride.duration(size, bonusWalls or 0)
 end
 
 return Roll

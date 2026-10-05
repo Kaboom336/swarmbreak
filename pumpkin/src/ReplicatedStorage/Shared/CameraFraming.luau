@@ -24,4 +24,27 @@ function CameraFraming.compute(visualDiameter: number, rolling: boolean?): Frame
 	}
 end
 
+function CameraFraming.springStep(
+	current: number,
+	velocity: number,
+	target: number,
+	deltaTime: number,
+	frequency: number?
+): (number, number)
+	if deltaTime <= 0 then
+		return current, velocity
+	end
+	local angular = 2 * math.pi * (frequency or 4)
+	local offset = current - target
+	local decay = math.exp(-angular * deltaTime)
+	local nextValue = target + (offset + (velocity + angular * offset) * deltaTime) * decay
+	local nextVelocity = (velocity - angular * (velocity + angular * offset) * deltaTime) * decay
+	local maximumChange = math.max(0.01, math.abs(current) * 0.1)
+	local change = math.clamp(nextValue - current, -maximumChange, maximumChange)
+	if change ~= nextValue - current then
+		nextVelocity = change / deltaTime
+	end
+	return current + change, nextVelocity
+end
+
 return CameraFraming

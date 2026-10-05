@@ -21,3 +21,19 @@ test("camera framing scales with pumpkin diameter", function()
 	eq(rest.distance, 14, "rest minimum distance")
 	eq(rest.height, 5, "rest minimum height")
 end)
+
+test("camera spring is damped and caps per-frame distance changes", function()
+	local current = 20
+	local velocity = 0
+	local previousError = math.huge
+	for _ = 1, 30 do
+		local nextValue, nextVelocity = CameraFraming.springStep(current, velocity, 60, 1 / 60)
+		eq(nextValue - current <= current * 0.1 + 1e-9, true, "ten percent cap")
+		current = nextValue
+		velocity = nextVelocity
+		local error = math.abs(60 - current)
+		eq(error <= previousError + 1e-9, true, "converges without oscillation")
+		previousError = error
+	end
+	eq(current > 59, true, "approaches target")
+end)

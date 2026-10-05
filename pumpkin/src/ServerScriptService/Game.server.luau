@@ -2,6 +2,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
@@ -286,11 +287,13 @@ rollControl.OnServerEvent:Connect(function(player: Player, action: any, token: a
 			return
 		end
 		local target = state.layout[value]
+		local relative = state.pumpkin.Position - state.startPosition
+		local worldLane = relative:Dot(state.right) / Config.RideLaneStuds
 		local accepted = Ride.validatePickup(
 			target,
 			now - state.startedAt,
-			state.duration,
-			state.lane,
+			state.physicalDuration,
+			worldLane,
 			state.claimed,
 			state.claimedCount
 		)
@@ -300,6 +303,9 @@ rollControl.OnServerEvent:Connect(function(player: Player, action: any, token: a
 		state.claimed[value] = true
 		state.claimedCount += 1
 		table.insert(state.kinds, target.kind)
+		if target.kind == "SpeedPad" then
+			state.speedBoostUntil = now + Config.RideSpeedPadSeconds
+		end
 		rollControl:FireClient(player, "PickupAccepted", token, value, target.kind)
 	end
 end)
@@ -319,31 +325,58 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	local rolledSize = profile.Size
 	local result = Roll.simulate(rolledSize, zone, #parts.walls)
 	local duration = Roll.duration(result.distance, rolledSize, result.bonusWalls)
+	local physicalDuration = Ride.physicalDuration(rolledSize)
+	local bonusDuration = Ride.bonusDuration(result.bonusWalls)
+	local bonusDistance = result.bonusWalls * Config.WallSpacing
+	local physicalDistance = math.max(0, result.distance - bonusDistance)
 	nextRideToken += 1
 	local token = nextRideToken
 	local seed = player.UserId * 1_009 + token * 7_919
 	local startedAt = workspace:GetServerTimeNow() + 0.15
 	local pumpkin, seat = createRidePumpkin(player, rolledSize, parts.start)
+	local direction =
+		Vector3.new(parts.start.CFrame.LookVector.X, -0.06, parts.start.CFrame.LookVector.Z).Unit
+	local horizontal = Vector3.new(direction.X, 0, direction.Z).Unit
+	local right = Vector3.new(-horizontal.Z, 0, horizontal.X)
+	local petMultipliers = equippedPetMultipliers(profile)
+	local petMultiplier = if #petMultipliers > 0 then 0 else 1
+	for _, multiplier in petMultipliers do
+		petMultiplier += multiplier
+	end
+	local winMultipliers = {
+		petMultiplier,
+		1 + profile.Rebirths * Config.RebirthSizeBonus,
+		if profile.DoubleWins then 2 else 1,
+		if profile.VIP then 1.5 else 1,
+	}
 	local state = {
 		token = token,
 		seed = seed,
 		startedAt = startedAt,
 		duration = duration,
+		physicalDuration = physicalDuration,
+		bonusDuration = bonusDuration,
+		physicalDistance = physicalDistance,
+		bonusDistance = bonusDistance,
 		distance = result.distance,
 		lane = 0,
-		layout = Ride.layout(seed),
+		layout = Ride.layout(seed, physicalDuration),
 		claimed = {},
 		claimedCount = 0,
 		kinds = {},
 		pumpkin = pumpkin,
 		seat = seat,
 		baseWins = result.wins,
+		winMultipliers = winMultipliers,
+		speedBoostUntil = 0,
+		speedBonusElapsed = 0,
+		startPosition = parts.start.Position,
+		direction = direction,
+		horizontal = horizontal,
+		right = right,
 	}
 	rideStates[player] = state
-	-- Credit wins in the same step that consumes Size, so leaving mid-playback loses nothing (T2 review).
 	profile.Size = 0
-	profile.Wins += result.wins
-	profile.TotalWins += result.wins
 	-- Only a paying roll finishes onboarding, so a too-early roll keeps the tutorial
 	if result.wins > 0 and not profile.TutorialDone then
 		profile.TutorialDone = true
@@ -368,22 +401,31 @@ local function beginRoll(player: Player, zone: any, parts: any)
 	)
 
 	task.spawn(function()
-		local direction = Vector3.new(
-			parts.start.CFrame.LookVector.X,
-			-0.06,
-			parts.start.CFrame.LookVector.Z
-		).Unit
-		local horizontal = Vector3.new(direction.X, 0, direction.Z).Unit
-		local right = Vector3.new(-horizontal.Z, 0, horizontal.X)
 		local diameter = pumpkin.Size.X
-		while rideStates[player] == state and workspace:GetServerTimeNow() < startedAt + duration do
-			local elapsed = workspace:GetServerTimeNow() - startedAt
-			local progress = Ride.progress(elapsed, duration)
+		local lastUpdate = workspace:GetServerTimeNow()
+		while rideStates[player] == state do
+			local now = workspace:GetServerTimeNow()
+			local deltaTime = math.max(0, now - lastUpdate)
+			lastUpdate = now
+			if now < state.speedBoostUntil then
+				state.speedBonusElapsed += deltaTime * (Config.RideSpeedPadMultiplier - 1)
+			end
+			local elapsed = now - startedAt + state.speedBonusElapsed
+			local traveled = Ride.distanceAtTime(
+				elapsed,
+				physicalDuration,
+				physicalDistance,
+				bonusDuration,
+				bonusDistance
+			)
 			local position = parts.start.Position
-				+ direction * (result.distance * progress)
+				+ direction * traveled
 				+ right * (state.lane * Config.RideLaneStuds)
 				+ Vector3.new(0, diameter * 0.5 + 1, 0)
 			pumpkin.CFrame = CFrame.lookAt(position, position + horizontal)
+			if traveled >= result.distance then
+				break
+			end
 			task.wait()
 		end
 
@@ -393,15 +435,13 @@ local function beginRoll(player: Player, zone: any, parts: any)
 			end
 			return
 		end
-		local finalWins = Ride.winsWithBonuses(result.wins, state.kinds)
-		local bonusWins = finalWins - result.wins
+		local finalWins = Ride.finalWins(result.wins, state.kinds, state.winMultipliers)
 		local current = Data.get(player)
-		if current and bonusWins > 0 then
-			current.Wins += bonusWins
-			current.TotalWins += bonusWins
+		if current then
+			current.Wins += finalWins
+			current.TotalWins += finalWins
 			Data.markDirty(player)
 		end
-		rollControl:FireClient(player, "Complete", token, finalWins)
 		rideStates[player] = nil
 		local character = player.Character
 		local humanoid = if character then character:FindFirstChildOfClass("Humanoid") else nil
@@ -420,7 +460,10 @@ local function beginRoll(player: Player, zone: any, parts: any)
 				+ Vector3.new(0, 4, 0)
 			root.CFrame = CFrame.lookAt(returnPosition, returnPosition + returnDirection)
 		end
-		task.delay(1.5, function()
+		rollControl:FireClient(player, "Complete", token, finalWins, state.claimedCount)
+		local fade = TweenService:Create(pumpkin, TweenInfo.new(0.3), { Transparency = 1 })
+		fade:Play()
+		fade.Completed:Connect(function()
 			if pumpkin.Parent then
 				pumpkin:Destroy()
 			end
