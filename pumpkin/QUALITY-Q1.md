@@ -149,3 +149,30 @@ Why: the grow-then-cash-in loop is right, but the cash-in is passive. Make it th
 5. **Toasts** ("You need 100 Wins!") show at the top centre under the pills, above every panel, including the Pets panel.
 
 Done when: the gate is green, with specs for the contrast scan, Format.abbrev and the HudLayout overlap (chips, banner, meter, GROW, grid) at all 3 sizes.
+
+## Re-judge at 53d11ea (Play's 5 shots, 11:16Z)
+- **Fixed:** the white Size/Wins pills; the clear centre at rest; the big, dimmed hatch reveal; the zoom-out at Size 1.2M; the wall smash, coins and meter during a roll.
+- **Still open:** the tall multiplier box with purple-on-purple text that touches Settings and Claim; mid-roll text stacking in the centre; the camera ending behind the gate sign after a long roll; the "FOLLOW THE ARROW" banner at rest; a 1.2M roll paying only 10 walls.
+
+## Codex task Q2-D: roll payout past the track, and the last HUD fixes (queue next)
+1. **Bonus walls past the track (design).** A big pumpkin must keep earning more, as in +1 Stone Skipping, where distance keeps scaling.
+   - `Roll.simulate(size, zone, physicalCount)` keeps counting walls past the physical track, up to `Config.MaxBonusWalls` (40), on the same health curve (10 × 1.6^(n-1)). That gives about 25 walls at 1.2M, about 15 at 1K and about 6 at 100.
+   - Wins = every broken wall (physical and bonus) × the zone's WinMultiplier. Result gains `bonusWalls`.
+   - Add `Config.BonusZoneMaxSeconds = 2.5`. After the last physical wall the pumpkin rolls on into a short "BONUS" run. A top-centre counter "BONUS +N" ticks up, with a small pop and particle per bonus wall.
+   - Distance and roll duration stay within RollMaxDuration plus BonusZoneMaxSeconds.
+   - At rest, the wall bar shows "TRACK CLEARED • NEXT ZONE: Forest ×3 (100 WINS)" when the next zone is locked. When it is unlocked, it shows "TRY Forest ×3 →".
+   - Specs: wall counts at sizes 10, 100, 1K and 1.2M; the bonus cap; wins per zone; existing specs stay green.
+2. **Multiplier chips.**
+   - One small pill per active multiplier: "PETS ×1.5", "REBIRTH ×2", "2× WINS", and so on. Hide any multiplier at ×1.0.
+   - Each pill is at most 150×24 px (120×20 px on mobile), with white text and a dark stroke via Style.label. It must not inherit the panel's purple TextColor.
+   - The stack grows upward from the bottom left, with an 8 px gap from GROW, Settings and the Claim tiles.
+   - The HudLayout overlap spec enforces that gap as a margin at 667×375, 1399×1080 and 1920×1080.
+3. **Mid-roll centre stays empty.**
+   - "+N WINS" pops as a world-space BillboardGui over each broken wall, not as screen-centre text.
+   - Coins fly from that wall's screen position to the Wins pill.
+   - The distance meter sits in its HudLayout rect under the pills, never in the centre.
+   - The end-of-roll total ("+25 WINS!") is a top-centre toast.
+4. **Camera after a roll.** On the return teleport, face the character down the track (away from the gate) and frame the camera with the Q2-C framing function from the open side. The gate sign and arch get CanQuery = false, so the camera's occlusion check never pops in behind them. Play checks this in Studio.
+5. **Tutorial banner.** Show it only until the first completed roll. The server sets TutorialDone on the first roll, and the banner, arrow and grow arrow hide when TutorialDone is true, whatever the Size. Spec the state function: (size, tutorialDone) → banner text or nil.
+
+Done when: the gate is green with the new specs (bonus walls, chip layout margin, tutorial state). testcmd: cd pumpkin && stylua --check src tests && selene src && lune run tests/run.luau && rojo build default.project.json -o out.rbxl
