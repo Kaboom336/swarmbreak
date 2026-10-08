@@ -1325,8 +1325,8 @@ local function refreshHaunt()
 	local gain = haunts + 1
 	soulsLabel.Text = string.format("👻 %d Souls", souls)
 	hauntInfo.Text = string.format(
-		"Haunts: %d (sell and income x%.1f). Haunting resets candy, upgrades and your base "
-			.. "pumpkins. You keep your tools, Index, Kings, Souls, skills and titles.",
+		"Haunts: %d (sell and income x%.1f). Haunting resets candy, upgrades, unlocked zones and "
+			.. "your base pumpkins. You keep your tools, Index, Kings, Souls, skills and titles.",
 		haunts,
 		1 + Config.HauntSellBonus * haunts
 	)
@@ -2179,6 +2179,192 @@ remotes:WaitForChild("RainCollected").OnClientEvent:Connect(function(collector: 
 	end
 end)
 
+-- Zones: gate walls open locally for zones you unlocked, gate signs say UNLOCKED, and a banner
+-- names each zone you walk into. The server keeps every wall solid for everyone else. --------
+
+local ZoneView: { [string]: any } = {}
+do
+	local GREEN = Color3.fromRGB(150, 255, 110)
+	local folders: { [string]: Instance } = {}
+	-- X/Z box around each zone's Spawn parts: { minX, maxX, minZ, maxZ }.
+	local boxes: { [string]: { number } } = {}
+	local wallLook: { [BasePart]: number } = {}
+
+	local function ownedSet(): { [string]: boolean }
+		local owned = {}
+		for id in string.gmatch(player:GetAttribute("Zones") or "", "[^,]+") do
+			owned[id] = true
+		end
+		return owned
+	end
+
+	function ZoneView.has(zoneId: string, owned: { [string]: boolean }?): boolean
+		local def = Config.Zones[zoneId]
+		if def and (def.cost or 0) <= 0 then
+			return true
+		end
+		return (owned or ownedSet())[zoneId] == true
+	end
+
+	-- The first zone in unlock order you do not have yet.
+	function ZoneView.nextLocked(): string?
+		local owned = ownedSet()
+		for _, zoneId in Config.ZoneOrder do
+			if Config.Zones[zoneId] and not ZoneView.has(zoneId, owned) then
+				return zoneId
+			end
+		end
+		return nil
+	end
+
+	function ZoneView.gate(zoneId: string): Vector3?
+		local folder = folders[zoneId]
+		local wall = folder and folder:FindFirstChild("GateWall") :: BasePart?
+		return wall and wall.Position
+	end
+
+	local function refreshGates()
+		local owned = ownedSet()
+		for zoneId, folder in folders do
+			local def = Config.Zones[zoneId]
+			if not def or (def.cost or 0) <= 0 then
+				continue
+			end
+			local open = ZoneView.has(zoneId, owned)
+			local wall = folder:FindFirstChild("GateWall")
+			if wall and wall:IsA("BasePart") then
+				if wallLook[wall] == nil then
+					wallLook[wall] = wall.Transparency
+				end
+				local transparency = open and 1 or wallLook[wall]
+				if wall.CanCollide == open then
+					wall.CanCollide = not open
+				end
+				if wall.Transparency ~= transparency then
+					wall.Transparency = transparency
+				end
+				local prompt = wall:FindFirstChild("UnlockPrompt") :: ProximityPrompt?
+				if prompt and prompt.Enabled == open then
+					prompt.Enabled = not open
+				end
+			end
+			local sign = folder:FindFirstChild("GateSign")
+			local gateGui = sign and sign:FindFirstChild("GateGui")
+			local costLabel = gateGui and gateGui:FindFirstChild("Cost") :: TextLabel?
+			if costLabel then
+				local text = open and "✅ UNLOCKED" or ("🔒 " .. short(def.cost) .. " 🍬")
+				if costLabel.Text ~= text then
+					costLabel.Text = text
+					costLabel.TextColor3 = open and GREEN or Color3.fromRGB(255, 240, 220)
+				end
+			end
+		end
+	end
+
+	local function inBox(zoneId: string, pos: Vector3, margin: number): boolean
+		local box = boxes[zoneId]
+		return box ~= nil
+			and pos.X >= box[1] - margin
+			and pos.X <= box[2] + margin
+			and pos.Z >= box[3] - margin
+			and pos.Z <= box[4] + margin
+	end
+
+	local function zoneBanner(zoneId: string)
+		local def = Config.Zones[zoneId]
+		if not def then
+			return
+		end
+		local level = table.find(Config.ZoneOrder, zoneId) or 1
+		local sub = ZoneView.has(zoneId)
+				and string.format("Zone %d · smash the wild pumpkins!", level)
+			or string.format(
+				"🔒 Locked · unlock it at the gate for %s 🍬",
+				short(def.cost or 0)
+			)
+		banner(string.upper(def.title), sub, 2, Color3.fromRGB(255, 190, 90))
+	end
+
+	local known = ownedSet()
+	player:GetAttributeChangedSignal("Zones"):Connect(function()
+		local now = ownedSet()
+		if player:GetAttribute("Loaded") then
+			for _, zoneId in Config.ZoneOrder do
+				local def = Config.Zones[zoneId]
+				if def and now[zoneId] and not known[zoneId] and (def.cost or 0) > 0 then
+					banner(
+						string.upper(def.title) .. " UNLOCKED!",
+						"New pumpkins to smash inside!",
+						2.6,
+						GREEN
+					)
+					play(Config.Sounds.Coin, 0.8, 1)
+				end
+			end
+		end
+		known = now
+		refreshGates()
+	end)
+
+	task.spawn(function()
+		local zones = garden:WaitForChild("Zones", 15)
+		if not zones then
+			return
+		end
+		for _, zoneId in Config.ZoneOrder do
+			local folder = zones:WaitForChild(zoneId, 5)
+			if not folder then
+				continue
+			end
+			folders[zoneId] = folder
+			local box = nil
+			for _, d in folder:GetDescendants() do
+				if d:IsA("BasePart") and d.Name == "Spawn" then
+					local p = d.Position
+					if not box then
+						box = { p.X, p.X, p.Z, p.Z }
+					else
+						box[1] = math.min(box[1], p.X)
+						box[2] = math.max(box[2], p.X)
+						box[3] = math.min(box[3], p.Z)
+						box[4] = math.max(box[4], p.Z)
+					end
+				end
+			end
+			boxes[zoneId] = box
+		end
+		refreshGates()
+		-- Entering a zone (a little past its outer spawn spots) shows its banner; leaving needs
+		-- a wider margin so walking along the edge does not repeat it.
+		local inside: string? = nil
+		while true do
+			task.wait(0.5)
+			refreshGates()
+			local root = rootPart()
+			if not root or not player:GetAttribute("Loaded") then
+				continue
+			end
+			local here: string? = nil
+			if inside and inBox(inside, root.Position, 16) then
+				here = inside
+			else
+				for _, zoneId in Config.ZoneOrder do
+					if inBox(zoneId, root.Position, 8) then
+						here = zoneId
+						break
+					end
+				end
+			end
+			if here ~= inside then
+				inside = here
+				if here then
+					zoneBanner(here)
+				end
+			end
+		end
+	end)
+end
+
 -- Witch's Orders: a card with the current order and a glowing line to where it happens. -----
 
 local guideFrame = Instance.new("Frame")
@@ -2283,7 +2469,7 @@ local function stallPosition(name: string): Vector3?
 	return stall and (stall :: Model):GetPivot().Position
 end
 
--- The zone: the nearest wild pumpkin, else the nearest spawn spot of Zone1.
+-- The zone: the nearest wild pumpkin in a zone you unlocked, else the nearest spawn spot of Zone1.
 local function zoneTarget(from: Vector3): Vector3?
 	local best, bestDist = nil, math.huge
 	local wild = garden:FindFirstChild("Wild")
@@ -2291,7 +2477,8 @@ local function zoneTarget(from: Vector3): Vector3?
 	local zone = zones and zones:FindFirstChild("Zone1")
 	for _, list in { wild and wild:GetChildren() or {}, zone and zone:GetChildren() or {} } do
 		for _, part in list do
-			if part:IsA("BasePart") then
+			local zoneId = part:GetAttribute("Zone")
+			if part:IsA("BasePart") and (type(zoneId) ~= "string" or ZoneView.has(zoneId)) then
 				local d = (part.Position - from).Magnitude
 				if d < bestDist then
 					best, bestDist = part.Position, d
@@ -2343,6 +2530,9 @@ local function orderTarget(kind: string, root: BasePart, soil: BasePart): Vector
 	elseif kind == "king" then
 		return state:GetAttribute("Phase") == "BloodMoon" and kingFace.Position
 			or giantJack.Position
+	elseif kind == "gate" then
+		local nextZone = ZoneView.nextLocked()
+		return nextZone and ZoneView.gate(nextZone) or soil.Position
 	end
 	return soil.Position
 end
@@ -2376,6 +2566,18 @@ task.spawn(function()
 		local data = ordersData
 		if not data or not player:GetAttribute("Loaded") then
 			setGuide("Loading your farm...", "", nil)
+			continue
+		end
+		-- After the tutorial: when the next zone's gate is affordable, the beam points there.
+		local nextZone = not data.tutorial and ZoneView.nextLocked() or nil
+		local nextDef = nextZone and Config.Zones[nextZone]
+		local gatePos = nextZone and ZoneView.gate(nextZone)
+		if nextDef and gatePos and candyValue.Value >= (nextDef.cost or 0) then
+			setGuide(
+				"NEW ZONE: Unlock the " .. nextDef.title .. "!",
+				"Costs " .. short(nextDef.cost or 0) .. " 🍬 · follow the beam to its gate",
+				gatePos
+			)
 			continue
 		end
 		local current = nil

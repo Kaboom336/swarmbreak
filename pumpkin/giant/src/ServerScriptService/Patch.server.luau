@@ -188,6 +188,38 @@ local function publishTools(player: Player)
 	player:SetAttribute("Tool", bestTool(player).id)
 end
 
+-- Zones a player has unlocked (Zone1 is always open), mirrored to the "Zones" attribute as a
+-- comma list in Config.ZoneOrder order. Saved as "zones"; a Haunt resets it to Zone1.
+local zonesOf: { [Player]: { [string]: boolean } } = {}
+local function hasZone(player: Player, zoneId: string): boolean
+	local def = Config.Zones[zoneId]
+	if def and (def.cost or 0) <= 0 then
+		return true
+	end
+	local owned = zonesOf[player]
+	return owned ~= nil and owned[zoneId] == true
+end
+
+local function publishZones(player: Player)
+	local list = {}
+	for _, zoneId in Config.ZoneOrder do
+		if hasZone(player, zoneId) then
+			table.insert(list, zoneId)
+		end
+	end
+	player:SetAttribute("Zones", table.concat(list, ","))
+end
+
+-- The first zone in unlock order the player does not have yet (nil when all are open).
+local function nextLockedZone(player: Player): string?
+	for _, zoneId in Config.ZoneOrder do
+		if Config.Zones[zoneId] and not hasZone(player, zoneId) then
+			return zoneId
+		end
+	end
+	return nil
+end
+
 -- Swing damage on wild pumpkins and the King: tool damage x Sharp Blade x Heavy Swing.
 local function swingDamage(player: Player): number
 	local sharp = 1 + Config.SharpBonus * upgradeLevel(player, "Mallet")
@@ -345,6 +377,7 @@ local function nextOrders(player: Player)
 	for i, def in Config.RotatingOrders do
 		local impossible = (def.stat == "sellStackOf5" and carryCapacity(player) < 5)
 			or (def.stat == "newIndex" and indexFull)
+			or (def.stat == "unlockZone" and nextLockedZone(player) == nil)
 		if not impossible then
 			table.insert(pool, i)
 		end
@@ -649,6 +682,16 @@ do
 			end
 		end
 		publishTools(player)
+		local zones = zonesOf[player] or {}
+		zonesOf[player] = zones
+		if type(data.zones) == "table" then
+			for _, id in data.zones do
+				if type(id) == "string" and Config.Zones[id] then
+					zones[id] = true
+				end
+			end
+		end
+		publishZones(player)
 		if type(data.placed) == "table" then
 			Bases.restore(player, data.placed)
 		end
@@ -774,9 +817,14 @@ do
 		for id in unlocked[player] or {} do
 			table.insert(unlockedList, id)
 		end
-		local onboardList = {}
+		local onboardList, zoneList = {}, {}
 		for step in onboardOf[player] or {} do
 			table.insert(onboardList, step)
+		end
+		for _, zoneId in Config.ZoneOrder do
+			if hasZone(player, zoneId) then
+				table.insert(zoneList, zoneId)
+			end
 		end
 		local stats = player:FindFirstChild("leaderstats")
 		local kings = stats and stats:FindFirstChild("Kings") :: IntValue?
@@ -784,6 +832,7 @@ do
 			candy = candy.Value,
 			kings = kings and kings.Value or 0,
 			tools = tools,
+			zones = zoneList,
 			placed = Bases.collect(player),
 			upgrades = upgrades,
 			index = index,
@@ -1850,6 +1899,7 @@ do
 		size: Vector3,
 		sizeMult: number,
 		spawn: BasePart,
+		zone: string,
 		damage: { [Player]: number },
 		last: Player?,
 		tween: Tween?,
@@ -1858,11 +1908,11 @@ do
 	folder.Name = "Wild"
 	folder.Parent = garden
 	local alive: { [BasePart]: WildState } = {}
-	local count = 0
+	-- Wild pumpkins alive per zone.
+	local count: { [string]: number } = {}
 	local taken: { [BasePart]: boolean } = {}
-	-- Spawn parts of Zone1, found by the spawner task below (it waits for the zone).
-	local spawns: { BasePart } = {}
-	local zoneDef = Config.Zones.Zone1
+	-- Spawn parts per zone, found by the spawner task below (it waits for the zones).
+	local spawns: { [string]: { BasePart } } = {}
 
 	local function rollType(weights: { [string]: number }): string
 		local total = 0
@@ -1958,12 +2008,13 @@ do
 		w.part:SetAttribute("Hp", math.max(0, w.hp))
 	end
 
-	function Wild.spawnOne(): boolean
-		if count >= zoneDef.max then
+	function Wild.spawnOne(zoneId: string): boolean
+		local zoneDef = Config.Zones[zoneId]
+		if not zoneDef or (count[zoneId] or 0) >= zoneDef.max then
 			return false
 		end
 		local free = {}
-		for _, sp in spawns do
+		for _, sp in spawns[zoneId] or {} do
 			if not taken[sp] then
 				table.insert(free, sp)
 			end
@@ -1981,12 +2032,13 @@ do
 		part.CFrame = CFrame.new(sp.Position.X, groundY + part.Size.Y / 2, sp.Position.Z)
 			* CFrame.Angles(0, math.random() * math.pi * 2, 0)
 		part:SetAttribute("Wild", true)
+		part:SetAttribute("Zone", zoneId)
 		part:SetAttribute("Hp", seed.hp)
 		part:SetAttribute("MaxHp", seed.hp)
 		hpBar(part, seed)
 		part.Parent = folder
 		taken[sp] = true
-		count += 1
+		count[zoneId] = (count[zoneId] or 0) + 1
 		alive[part] = {
 			part = part,
 			hp = seed.hp,
@@ -1994,6 +2046,7 @@ do
 			size = part.Size,
 			sizeMult = sizeMult,
 			spawn = sp,
+			zone = zoneId,
 			damage = {},
 			last = nil,
 			tween = nil,
@@ -2001,11 +2054,13 @@ do
 		return true
 	end
 
-	-- Fills the zone up to its max right away; returns how many were added.
+	-- Fills every zone up to its max right away; returns how many were added.
 	function Wild.fill(): number
 		local n = 0
-		while Wild.spawnOne() do
-			n += 1
+		for _, zoneId in Config.ZoneOrder do
+			while Wild.spawnOne(zoneId) do
+				n += 1
+			end
 		end
 		return n
 	end
@@ -2014,7 +2069,7 @@ do
 	local function pop(w: WildState)
 		local part = w.part
 		alive[part] = nil
-		count -= 1
+		count[w.zone] = math.max(0, (count[w.zone] or 1) - 1)
 		taken[w.spawn] = nil
 		if w.tween then
 			w.tween:Cancel()
@@ -2090,17 +2145,33 @@ do
 	function Wild.hit(player: Player, root: BasePart): boolean
 		local look = root.CFrame.LookVector
 		local best, bestDist = nil, math.huge
+		-- A pumpkin in reach that sits in a zone this player has not unlocked (refused).
+		local lockedZone: string? = nil
 		for part, w in alive do
 			local offset = part.Position - root.Position
 			local flat = Vector3.new(offset.X, 0, offset.Z)
 			local dist = math.max(0, flat.Magnitude - part.Size.X / 2)
 			if math.abs(offset.Y) < 12 and dist <= Config.BonkRange and dist < bestDist then
 				if flat.Magnitude < 3 or flat.Unit:Dot(look) > -0.2 then
-					best, bestDist = w, dist
+					if hasZone(player, w.zone) then
+						best, bestDist = w, dist
+					else
+						lockedZone = w.zone
+					end
 				end
 			end
 		end
 		if not best then
+			if lockedZone then
+				local def = Config.Zones[lockedZone]
+				Remotes.hintEvent:FireClient(
+					player,
+					string.format(
+						"🔒 Unlock the %s at its gate first!",
+						def and def.title or "zone"
+					)
+				)
+			end
 			return false
 		end
 		local damage = swingDamage(player)
@@ -2136,22 +2207,191 @@ do
 
 	task.spawn(function()
 		local zones = garden:WaitForChild("Zones", 10)
-		local zone = zones and zones:FindFirstChild("Zone1")
-		if not zone then
-			warn("[Patch] workspace.Garden.Zones.Zone1 is missing: no wild pumpkins")
+		if not zones then
+			warn("[Patch] workspace.Garden.Zones is missing: no wild pumpkins")
 			return
 		end
-		for _, d in zone:GetDescendants() do
-			if d:IsA("BasePart") and d.Name == "Spawn" then
-				table.insert(spawns, d)
+		for _, zoneId in Config.ZoneOrder do
+			local zone = zones:FindFirstChild(zoneId)
+			local list = {}
+			for _, d in zone and zone:GetDescendants() or {} do
+				if d:IsA("BasePart") and d.Name == "Spawn" then
+					table.insert(list, d)
+				end
 			end
+			if #list == 0 then
+				warn("[Patch] No Spawn parts in workspace.Garden.Zones." .. zoneId)
+			end
+			spawns[zoneId] = list
 		end
 		Wild.fill()
+		-- One wild pumpkin per zone per respawn tick (while that zone is below its max).
 		while true do
 			task.wait(Config.WildRespawn)
-			Wild.spawnOne()
+			for _, zoneId in Config.ZoneOrder do
+				Wild.spawnOne(zoneId)
+			end
 		end
 	end)
+end
+
+-- Zone gates: Zone2-4 each have a GateWall (solid on the server; each client opens the walls of
+-- zones it has unlocked), an unlock prompt on the wall and a sign over it. ----------------------
+
+local guardZones -- defined in the block below
+do
+	local function unlockZone(player: Player, zoneId: string)
+		local def = Config.Zones[zoneId]
+		if not def then
+			return
+		end
+		if not isLoaded(player) then
+			Remotes.hintEvent:FireClient(player, "Loading your farm...")
+			return
+		end
+		if hasZone(player, zoneId) then
+			Remotes.hintEvent:FireClient(player, "The " .. def.title .. " is already open for you!")
+			return
+		end
+		local candy = candyValue(player)
+		local cost = def.cost or 0
+		if not candy or candy.Value < cost then
+			Remotes.hintEvent:FireClient(
+				player,
+				string.format(
+					"You need %s 🍬 to unlock the %s. Place pumpkins on your base to earn more!",
+					short(cost),
+					def.title
+				)
+			)
+			return
+		end
+		candy.Value -= cost
+		local owned = zonesOf[player] or {}
+		zonesOf[player] = owned
+		owned[zoneId] = true
+		publishZones(player)
+		Remotes.hintEvent:FireClient(player, "🔓 The " .. def.title .. " is open! Go smash!")
+		track(player, "unlockZone", 1)
+	end
+
+	local function gateSign(sign: BasePart, def)
+		local old = sign:FindFirstChild("GateGui")
+		if old then
+			old:Destroy()
+		end
+		local bb = Instance.new("BillboardGui")
+		bb.Name = "GateGui"
+		bb.Size = UDim2.fromOffset(280, 90)
+		bb.LightInfluence = 0
+		bb.MaxDistance = 220
+		for i, info in
+			{
+				{ name = "Title", text = def.title, color = Color3.fromRGB(255, 214, 80) },
+				{
+					name = "Cost",
+					text = "🔒 " .. short(def.cost or 0) .. " 🍬",
+					color = Color3.fromRGB(255, 240, 220),
+				},
+			}
+		do
+			local label = Instance.new("TextLabel")
+			label.Name = info.name
+			label.BackgroundTransparency = 1
+			label.Position = UDim2.fromScale(0, i == 1 and 0 or 0.55)
+			label.Size = UDim2.fromScale(1, i == 1 and 0.55 or 0.45)
+			label.Font = Enum.Font.FredokaOne
+			label.TextScaled = true
+			label.TextColor3 = info.color
+			label.Text = info.text
+			label.Parent = bb
+			local outline = Instance.new("UIStroke")
+			outline.Thickness = 2.5
+			outline.Color = Color3.fromRGB(30, 12, 40)
+			outline.Parent = label
+		end
+		bb.Parent = sign
+	end
+
+	task.spawn(function()
+		local zones = garden:WaitForChild("Zones", 10)
+		if not zones then
+			return
+		end
+		for _, zoneId in Config.ZoneOrder do
+			local def = Config.Zones[zoneId]
+			local zone = zones:FindFirstChild(zoneId)
+			if not def or (def.cost or 0) <= 0 or not zone then
+				continue
+			end
+			local wall = zone:FindFirstChild("GateWall")
+			if wall and wall:IsA("BasePart") then
+				wall.CanCollide = true
+				for _, child in wall:GetChildren() do
+					if child:IsA("ProximityPrompt") then
+						child:Destroy()
+					end
+				end
+				local prompt = Instance.new("ProximityPrompt")
+				prompt.Name = "UnlockPrompt"
+				prompt.ActionText = string.format("Unlock %s (%s 🍬)", def.title, short(def.cost))
+				prompt.ObjectText = "Zone gate"
+				prompt.HoldDuration = 0.4
+				prompt.MaxActivationDistance = 14
+				prompt.RequiresLineOfSight = false
+				prompt.Parent = wall
+				prompt.Triggered:Connect(function(player)
+					unlockZone(player, zoneId)
+				end)
+			end
+			local sign = zone:FindFirstChild("GateSign")
+			if sign and sign:IsA("BasePart") then
+				gateSign(sign, def)
+			end
+		end
+	end)
+
+	-- Where a player is sent back to from a locked zone: the market spawn.
+	local function marketSpawn(): CFrame
+		local spawn = garden:FindFirstChildOfClass("SpawnLocation")
+			or workspace:FindFirstChildOfClass("SpawnLocation")
+		if spawn then
+			return spawn.CFrame + Vector3.new(0, 4, 0)
+		end
+		local plaza = market:FindFirstChild("Plaza") :: BasePart?
+		return CFrame.new((plaza and plaza.Position or Vector3.zero) + Vector3.new(0, 6, 30))
+	end
+
+	-- Safety net (every second): a player inside a zone they have not unlocked (over or around
+	-- the wall) goes back to the market.
+	function guardZones()
+		local radius = Config.ZoneGuardRadius
+		for _, player in Players:GetPlayers() do
+			local character, root = aliveRoot(player)
+			if not character or not root or not isLoaded(player) then
+				continue
+			end
+			for zoneId, def in Config.Zones do
+				local center = def.center
+				if center and not hasZone(player, zoneId) then
+					local flat =
+						Vector3.new(root.Position.X - center.X, 0, root.Position.Z - center.Z)
+					if flat.Magnitude <= radius then
+						character:PivotTo(marketSpawn())
+						Remotes.hintEvent:FireClient(
+							player,
+							string.format(
+								"🔒 The %s is locked! Unlock it at its gate for %s 🍬.",
+								def.title,
+								short(def.cost or 0)
+							)
+						)
+						break
+					end
+				end
+			end
+		end
+	end
 end
 
 -- Cauldrons and the Witch ---------------------------------------------------------------------
@@ -2449,6 +2689,9 @@ do
 			end
 		end
 		unlocked[player] = startUnlocked()
+		-- Zones close again (only the free Pumpkin Meadow stays open).
+		zonesOf[player] = {}
+		publishZones(player)
 		for _, p in carrying[player] or {} do
 			p:Destroy()
 		end
@@ -3964,6 +4207,7 @@ local function cleanupPlayer(player: Player)
 	onboardOf[player] = nil
 	shopFunnelOf[player] = nil
 	toolsOf[player] = nil
+	zonesOf[player] = nil
 	Bases.left[player] = nil
 	Bases.incomeCarry[player] = nil
 end
@@ -4015,6 +4259,8 @@ local function onPlayerAdded(player: Player)
 	publishSkills(player)
 	toolsOf[player] = { [Config.StartTool] = true }
 	publishTools(player)
+	zonesOf[player] = {}
+	publishZones(player)
 
 	-- Patch and character hookup first: the load below yields.
 	if not claimPatch(player) then
@@ -4129,6 +4375,10 @@ task.spawn(function()
 		local ok, err = pcall(Bases.tick)
 		if not ok then
 			warn("[Patch] Base tick failed:", err)
+		end
+		local guarded, guardErr = pcall(guardZones)
+		if not guarded then
+			warn("[Patch] Zone guard failed:", guardErr)
 		end
 		if seconds % 5 == 0 then
 			for _, player in Players:GetPlayers() do

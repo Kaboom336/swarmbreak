@@ -13,7 +13,7 @@ return {
 			income = 1,
 			hp = 20,
 			template = "pumpkin_orange",
-			scale = 1.4,
+			scale = 1.15,
 		},
 		{
 			id = "Sunny",
@@ -21,7 +21,7 @@ return {
 			income = 4,
 			hp = 60,
 			template = "pumpkin_yellow",
-			scale = 1.8,
+			scale = 1.35,
 		},
 		{
 			id = "Ghost",
@@ -29,7 +29,7 @@ return {
 			income = 15,
 			hp = 200,
 			template = "pumpkin_orange",
-			scale = 2,
+			scale = 1.5,
 			color = Color3.fromRGB(232, 236, 246),
 		},
 		{
@@ -38,7 +38,7 @@ return {
 			income = 60,
 			hp = 700,
 			template = "pumpkin_orange",
-			scale = 2.2,
+			scale = 1.65,
 			color = Color3.fromRGB(90, 130, 255),
 		},
 		{
@@ -47,7 +47,7 @@ return {
 			income = 200,
 			hp = 2500,
 			template = "pumpkin_orange",
-			scale = 2.4,
+			scale = 1.8,
 			color = Color3.fromRGB(255, 120, 200),
 		},
 		{
@@ -56,7 +56,7 @@ return {
 			income = 700,
 			hp = 9000,
 			template = "pumpkin_orange",
-			scale = 2.7,
+			scale = 1.95,
 			color = Color3.fromRGB(255, 200, 60),
 		},
 		{
@@ -65,7 +65,7 @@ return {
 			income = 2500,
 			hp = 30000,
 			template = "pumpkin_orange",
-			scale = 2.85,
+			scale = 2.05,
 			color = Color3.fromRGB(80, 30, 120),
 		},
 		{
@@ -74,7 +74,7 @@ return {
 			income = 9000,
 			hp = 100000,
 			template = "pumpkin_orange",
-			scale = 3,
+			scale = 2.15,
 			color = Color3.fromRGB(90, 235, 255),
 		},
 		{
@@ -83,7 +83,7 @@ return {
 			income = 35000,
 			hp = 350000,
 			template = "pumpkin_orange",
-			scale = 3.1,
+			scale = 2.25,
 			color = Color3.fromRGB(255, 85, 30),
 		},
 		{
@@ -92,7 +92,7 @@ return {
 			income = 140000,
 			hp = 1200000,
 			template = "pumpkin_orange",
-			scale = 3.2,
+			scale = 2.35,
 			color = Color3.fromRGB(255, 244, 200),
 		},
 	},
@@ -103,14 +103,42 @@ return {
 	SizeMax = 1.4,
 
 	-- Zones of wild pumpkins (breakables). Each zone is a folder under workspace.Garden.Zones
-	-- holding invisible Parts named "Spawn". weights = chance per pumpkin type.
+	-- holding invisible Parts named "Spawn". weights = chance per pumpkin type; max = wild
+	-- pumpkins alive at once; cost = candy to open its gate (0 = open from the start);
+	-- center = X/Z middle of a gated zone (used by the server's locked-zone check).
 	Zones = {
 		Zone1 = {
 			title = "Pumpkin Meadow",
+			cost = 0,
 			max = 45,
 			weights = { Orange = 70, Sunny = 22, Ghost = 7, Moon = 1 },
 		},
+		Zone2 = {
+			title = "Graveyard",
+			cost = 1000,
+			max = 20,
+			center = Vector3.new(0, 0, -176),
+			weights = { Sunny = 50, Ghost = 35, Moon = 13, CandyCorn = 2 },
+		},
+		Zone3 = {
+			title = "Haunted Woods",
+			cost = 25000,
+			max = 20,
+			center = Vector3.new(176, 0, 0),
+			weights = { Ghost = 45, Moon = 35, CandyCorn = 17, Golden = 3 },
+		},
+		Zone4 = {
+			title = "Witch Swamp",
+			cost = 400000,
+			max = 20,
+			center = Vector3.new(-176, 0, 0),
+			weights = { Moon = 30, CandyCorn = 40, Golden = 25, Shadow = 5 },
+		},
 	},
+	-- Zones in unlock order (the "next zone" is the first one not unlocked yet).
+	ZoneOrder = { "Zone1", "Zone2", "Zone3", "Zone4" },
+	-- A player standing within this many studs (X/Z) of a locked zone's center is sent back.
+	ZoneGuardRadius = 40,
 	-- Seconds between respawns (one wild pumpkin each time, while below max).
 	WildRespawn = 1.5,
 	-- HP bars over wild pumpkins show within this many studs.
@@ -284,7 +312,7 @@ return {
 	RotatingCount = 3,
 	-- target tells the client where to point the beam: zone (nearest wild pumpkin), patch (your
 	-- base), place (your base while carrying, else the zone), steal (another base), cauldron,
-	-- witch, tools (the tool stall), upgrades, king.
+	-- witch, tools (the tool stall), upgrades, king, gate (the next locked zone's gate).
 	TutorialOrders = {
 		{
 			stat = "smash",
@@ -398,6 +426,9 @@ return {
 			target = "witch",
 			b = 8,
 		},
+		-- Kept last so saved order ids (R1, R2...) stay the same. Only dealt while the player
+		-- still has a locked zone.
+		{ stat = "unlockZone", need = 1, text = "Unlock the next zone", target = "gate", b = 3 },
 	},
 
 	-- Haunt (rebirth): cost grows x HauntGrowth per Haunt. Each Haunt adds HauntSellBonus to sell
