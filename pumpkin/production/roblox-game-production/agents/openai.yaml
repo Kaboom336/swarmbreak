@@ -1,0 +1,4 @@
+interface:
+  display_name: "Roblox Game Production"
+  short_description: "Build a Roblox idea into a polished playable game"
+  default_prompt: "Use $roblox-game-production to turn my game idea into a researched foundation and a playable first milestone."

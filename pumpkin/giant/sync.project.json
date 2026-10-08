@@ -1,0 +1,23 @@
+{
+  "name": "PumpkinPatchPanic",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "PatchConfig": {
+        "$path": "src/ReplicatedStorage/PatchConfig.luau"
+      }
+    },
+    "ServerScriptService": {
+      "Patch": {
+        "$path": "src/ServerScriptService/Patch.server.luau"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Patch": {
+          "$path": "src/StarterPlayerScripts/Patch.client.luau"
+        }
+      }
+    }
+  }
+}
