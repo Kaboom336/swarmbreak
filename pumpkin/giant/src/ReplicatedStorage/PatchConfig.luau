@@ -1,39 +1,33 @@
 -- Tuning for Pumpkin Patch Panic. All values are first guesses to judge on screen.
 return {
 	StartCandy = 30,
-	StartSeeds = { Orange = 9 },
-	-- Free seeds when a player has none and cannot afford the cheapest.
-	RescueSeeds = 3,
-	-- Seed shop buy buttons.
-	BuyAmounts = { 1, 10 },
 
-	-- Seeds in shop order. grow = seconds to ripen, sell = base candy before size and magic.
-	-- template is a KayKit pumpkin; color (if set) repaints it flat.
+	-- Pumpkin TYPES in rarity order (the table keeps its old name "Seeds" and the old ids so the
+	-- Index and saves still work). income = candy per second when placed on a base plot (before
+	-- size, brew and Haunt / pass multipliers); hp = health of a wild one in a zone.
+	-- template is a KayKit pumpkin; color (if set) repaints it flat; scale = look size.
 	Seeds = {
 		{
 			id = "Orange",
 			name = "Orange",
-			cost = 3,
-			grow = 15,
-			sell = 8,
+			income = 1,
+			hp = 20,
 			template = "pumpkin_orange",
 			scale = 1.4,
 		},
 		{
 			id = "Sunny",
 			name = "Sunny",
-			cost = 15,
-			grow = 25,
-			sell = 28,
+			income = 4,
+			hp = 60,
 			template = "pumpkin_yellow",
 			scale = 1.8,
 		},
 		{
 			id = "Ghost",
 			name = "Ghost",
-			cost = 150,
-			grow = 40,
-			sell = 90,
+			income = 15,
+			hp = 200,
 			template = "pumpkin_orange",
 			scale = 2,
 			color = Color3.fromRGB(232, 236, 246),
@@ -41,9 +35,8 @@ return {
 		{
 			id = "Moon",
 			name = "Moon",
-			cost = 500,
-			grow = 60,
-			sell = 260,
+			income = 60,
+			hp = 700,
 			template = "pumpkin_orange",
 			scale = 2.2,
 			color = Color3.fromRGB(90, 130, 255),
@@ -51,9 +44,8 @@ return {
 		{
 			id = "CandyCorn",
 			name = "Candy Corn",
-			cost = 1500,
-			grow = 80,
-			sell = 700,
+			income = 200,
+			hp = 2500,
 			template = "pumpkin_orange",
 			scale = 2.4,
 			color = Color3.fromRGB(255, 120, 200),
@@ -61,9 +53,8 @@ return {
 		{
 			id = "Golden",
 			name = "Golden",
-			cost = 5000,
-			grow = 120,
-			sell = 2200,
+			income = 700,
+			hp = 9000,
 			template = "pumpkin_orange",
 			scale = 2.7,
 			color = Color3.fromRGB(255, 200, 60),
@@ -71,9 +62,8 @@ return {
 		{
 			id = "Shadow",
 			name = "Shadow",
-			cost = 15000,
-			grow = 150,
-			sell = 9000,
+			income = 2500,
+			hp = 30000,
 			template = "pumpkin_orange",
 			scale = 2.85,
 			color = Color3.fromRGB(80, 30, 120),
@@ -81,9 +71,8 @@ return {
 		{
 			id = "Crystal",
 			name = "Crystal",
-			cost = 60000,
-			grow = 200,
-			sell = 35000,
+			income = 9000,
+			hp = 100000,
 			template = "pumpkin_orange",
 			scale = 3,
 			color = Color3.fromRGB(90, 235, 255),
@@ -91,9 +80,8 @@ return {
 		{
 			id = "Inferno",
 			name = "Inferno",
-			cost = 250000,
-			grow = 260,
-			sell = 140000,
+			income = 35000,
+			hp = 350000,
 			template = "pumpkin_orange",
 			scale = 3.1,
 			color = Color3.fromRGB(255, 85, 30),
@@ -101,17 +89,94 @@ return {
 		{
 			id = "KingSeed",
 			name = "King's Seed",
-			cost = 1000000,
-			grow = 360,
-			sell = 550000,
+			income = 140000,
+			hp = 1200000,
 			template = "pumpkin_orange",
 			scale = 3.2,
 			color = Color3.fromRGB(255, 244, 200),
 		},
 	},
-	-- Each pumpkin rolls a size; it multiplies the price and the look.
+	-- The Witch pays SellPerIncome seconds of a pumpkin's income for it.
+	SellPerIncome = 30,
+	-- Each pumpkin rolls a size; it multiplies income, sell value and the look.
 	SizeMin = 0.85,
 	SizeMax = 1.4,
+
+	-- Zones of wild pumpkins (breakables). Each zone is a folder under workspace.Garden.Zones
+	-- holding invisible Parts named "Spawn". weights = chance per pumpkin type.
+	Zones = {
+		Zone1 = {
+			title = "Pumpkin Meadow",
+			max = 45,
+			weights = { Orange = 70, Sunny = 22, Ghost = 7, Moon = 1 },
+		},
+	},
+	-- Seconds between respawns (one wild pumpkin each time, while below max).
+	WildRespawn = 1.5,
+	-- HP bars over wild pumpkins show within this many studs.
+	WildBarDistance = 40,
+	-- A popped pumpkin that does not fit on the winner's stack lies here this long.
+	LooseSeconds = 30,
+
+	-- Tools (scythes). Owning is saved; the best owned one is always the one you hold.
+	-- cost = nil means it is not sold (Pumpkin King Cleaver: Blood Moon MVP drop).
+	StartTool = "RustySickle",
+	Tools = {
+		{
+			id = "RustySickle",
+			name = "Rusty Sickle",
+			damage = 5,
+			cost = 0,
+			color = Color3.fromRGB(150, 96, 70),
+		},
+		{
+			id = "WoodenScythe",
+			name = "Wooden Scythe",
+			damage = 15,
+			cost = 250,
+			color = Color3.fromRGB(196, 150, 96),
+		},
+		{
+			id = "BoneScythe",
+			name = "Bone Scythe",
+			damage = 50,
+			cost = 2500,
+			color = Color3.fromRGB(240, 235, 215),
+		},
+		{
+			id = "CursedScythe",
+			name = "Cursed Scythe",
+			damage = 150,
+			cost = 25000,
+			color = Color3.fromRGB(170, 60, 255),
+		},
+		{
+			id = "MoonScythe",
+			name = "Moon Scythe",
+			damage = 500,
+			cost = 250000,
+			color = Color3.fromRGB(110, 170, 255),
+		},
+		{
+			id = "PumpkinKingCleaver",
+			name = "Pumpkin King Cleaver",
+			damage = 1500,
+			color = Color3.fromRGB(255, 190, 40),
+		},
+	},
+
+	-- Stealing and locks. Times are seconds.
+	StealHold = 1.5,
+	-- The robbed owner gets this share of the stolen pumpkin's sell value.
+	StealOwnerShare = 0.25,
+	-- Players newer than this (in this session) cannot be robbed.
+	NewPlayerShield = 600,
+	-- A victim cannot be robbed again for this long.
+	VictimCooldown = 120,
+	LockSeconds = 45,
+	LockCooldown = 90,
+	-- Blood Moon: every lock is off for this long before the Pumpkin King wakes.
+	LocksOffSeconds = 120,
 
 	-- Magic Cauldron: every un-brewed pumpkin you carry rolls one of these.
 	Mutations = {
@@ -139,7 +204,8 @@ return {
 	DayLength = 150,
 	MidnightLength = 45,
 
-	-- Ghosts come at midnight to steal pumpkins. Bonk them with the mallet.
+	-- Ghosts come at midnight to steal pumpkins from bases (locked bases are skipped).
+	-- Ghost HP counts swings; each swing does as many hits as the tool's tier (Rusty 1, Wooden 2...).
 	GhostBase = 3,
 	GhostPerPatch = 1.5,
 	GhostMax = 30,
@@ -160,8 +226,8 @@ return {
 	-- less than BonkTeleportWindow seconds ago (stops teleport farming).
 	BonkTeleportStuds = 60,
 	BonkTeleportWindow = 0.5,
-	-- Most King damage one player can deal per second.
-	KingDamagePerSecond = 120, -- generous: the bonk cooldown already limits swings; this only stops scripted spam
+	-- Most King damage one player can deal per second, in swings of their own damage.
+	KingSwingsPerSecond = 4,
 
 	-- Every sale fills the Giant Jack. When full, the Blood Moon rises and the Pumpkin King wakes.
 	JackGoal = 400,
@@ -173,8 +239,8 @@ return {
 	BloodMoonGap = 360,
 	KingBaseHp = 40,
 	KingHpPerPlayer = 100,
-	-- Extra King HP per point of Mallet power (1 + Mallet level) of everyone in the server.
-	KingHpPerMallet = 25,
+	-- Extra King HP per point of swing damage of everyone in the server.
+	KingHpPerDamage = 25,
 	KingSeconds = 150,
 	KingReach = 14,
 	-- Attacks: a red circle warns first; standing inside when it lands knocks you away, dizzy.
@@ -197,81 +263,110 @@ return {
 
 	-- Candy upgrades: cost of level n is base * n ^ CostPower.
 	CostPower = 2,
-	-- A finished Pumpkin Index row (all 5 finishes of a seed) sells that seed for 10% more.
+	-- A finished Pumpkin Index row (all 5 finishes of a type) sells that type for 10% more.
 	IndexRowBonus = 0.1,
 	Upgrades = {
 		Stack = { title = "Bigger Stack", text = "Carry 1 more pumpkin", base = 40, max = 10 },
-		Mallet = { title = "Big Mallet", text = "+1 bonk power", base = 50, max = 10 },
-		Growth = { title = "Green Thumb", text = "Pumpkins grow 10% faster", base = 60, max = 8 },
+		Mallet = { title = "Sharp Blade", text = "+10% swing damage", base = 50, max = 10 },
+		Lucky = {
+			title = "Lucky Swing",
+			text = "+5% chance of a rarer pumpkin",
+			base = 120,
+			max = 5,
+		},
 	},
+	SharpBonus = 0.1,
+	LuckyChance = 0.05,
 
-	-- Witch's Orders. B = base sell of the player's best owned or bought seed x OrderValueMult.
-	OrderValueMult = 3.5,
+	-- Witch's Orders. B = income of the player's best pumpkin type ever found x OrderIncomeSeconds.
+	OrderIncomeSeconds = 60,
 	OrderRefresh = 1200,
 	RotatingCount = 3,
-	-- target tells the client where to point the beam: patch, cauldron, witch, seeds, upgrades, king.
+	-- target tells the client where to point the beam: zone (nearest wild pumpkin), patch (your
+	-- base), place (your base while carrying, else the zone), steal (another base), cauldron,
+	-- witch, tools (the tool stall), upgrades, king.
 	TutorialOrders = {
 		{
-			stat = "plant",
+			stat = "smash",
 			need = 3,
-			text = "Plant 3 seeds",
-			target = "patch",
-			reward = { candy = 10 },
+			text = "Smash 3 pumpkins",
+			target = "zone",
+			reward = { candy = 25 },
 		},
 		{
-			stat = "harvest",
-			need = 2,
-			text = "Harvest 2 pumpkins",
-			target = "patch",
-			reward = { seeds = { Orange = 3 } },
+			stat = "place",
+			need = 1,
+			text = "Place a pumpkin on your base",
+			target = "place",
+			reward = { candy = 40 },
 		},
 		{
 			stat = "brew",
 			need = 1,
-			text = "Brew at a Magic Cauldron",
+			text = "Brew a pumpkin at a Magic Cauldron",
 			target = "cauldron",
-			reward = { candy = 15 },
+			reward = { candy = 40 },
 		},
 		{
 			stat = "sell",
 			need = 1,
-			text = "Sell to the Witch",
+			text = "Sell a pumpkin to the Witch",
 			target = "witch",
-			reward = { candy = 20 },
+			reward = { candy = 80 },
 		},
 		{
-			stat = "upgrade:Stack",
+			stat = "buyTool",
 			need = 1,
-			text = "Buy Bigger Stack",
-			target = "upgrades",
-			reward = { seeds = { Sunny = 5 } },
-		},
-		{
-			stat = "sellSeed:Sunny",
-			need = 1,
-			text = "Sell a Sunny pumpkin",
-			target = "witch",
-			reward = { candy = 60 },
+			text = "Buy the Wooden Scythe",
+			target = "tools",
+			reward = { candy = 120 },
 		},
 		{
 			stat = "bonkGhost",
 			need = 3,
 			text = "Bonk 3 ghosts",
 			target = "patch",
-			reward = { candy = 100 },
+			reward = { candy = 150 },
+		},
+		{
+			stat = "lock",
+			need = 1,
+			text = "Lock your base once",
+			target = "patch",
+			reward = { candy = 150 },
 		},
 		{
 			stat = "kingHit",
 			need = 1,
 			text = "Hit the Pumpkin King",
 			target = "king",
-			reward = { seeds = { Ghost = 3 }, title = "Patch Keeper" },
+			reward = { candy = 500, title = "Patch Keeper" },
 		},
 	},
-	-- b = reward in multiples of B.
+	-- b = reward in multiples of B. reach = need is a level to reach (not a count); its need is
+	-- at least ReachGrowth x the player's level when the order is dealt, and text gets it via %s.
+	ReachGrowth = 1.5,
 	RotatingOrders = {
+		{ stat = "smash", need = 25, text = "Smash 25 pumpkins", target = "zone", b = 3 },
+		{
+			stat = "income",
+			need = 5,
+			reach = true,
+			text = "Earn %s candy/s",
+			target = "patch",
+			b = 4,
+		},
+		{ stat = "steal", need = 1, text = "Steal a pumpkin", target = "steal", b = 3 },
+		{ stat = "stopThief", need = 1, text = "Stop a thief", target = "patch", b = 3 },
+		{
+			stat = "placeType:Ghost",
+			need = 1,
+			text = "Place a Ghost pumpkin",
+			target = "place",
+			b = 4,
+		},
+		{ stat = "sellBrewed", need = 1, text = "Sell a brewed pumpkin", target = "witch", b = 2 },
 		{ stat = "sell", need = 10, text = "Sell 10 pumpkins", target = "witch", b = 3 },
-		{ stat = "harvest", need = 20, text = "Harvest 20 pumpkins", target = "patch", b = 3 },
 		{
 			stat = "brewRare",
 			need = 1,
@@ -288,20 +383,13 @@ return {
 		},
 		{ stat = "bonkGhost", need = 8, text = "Bonk 8 ghosts", target = "patch", b = 2 },
 		{ stat = "rescue", need = 1, text = "Rescue a stolen pumpkin", target = "patch", b = 2 },
-		{ stat = "kingDamage", need = 50, text = "Deal 50 King damage", target = "king", b = 4 },
+		{ stat = "kingHit", need = 15, text = "Hit the King 15 times", target = "king", b = 4 },
 		{
 			stat = "newIndex",
 			need = 1,
 			text = "Find a new Index entry",
 			target = "cauldron",
 			b = 4,
-		},
-		{
-			stat = "sellMutation:Ghostly",
-			need = 3,
-			text = "Sell 3 Ghostly pumpkins",
-			target = "witch",
-			b = 3,
 		},
 		{
 			stat = "sellMutation:Cursed",
@@ -312,21 +400,22 @@ return {
 		},
 	},
 
-	-- Haunt (rebirth): cost grows x HauntGrowth per Haunt. Each Haunt adds HauntSellBonus to sell value.
-	-- Haunt number n gives n Souls (1st = 1, 2nd = 2, ...).
+	-- Haunt (rebirth): cost grows x HauntGrowth per Haunt. Each Haunt adds HauntSellBonus to sell
+	-- value and income. Haunt number n gives n Souls (1st = 1, 2nd = 2, ...).
 	HauntCost = 2500000,
 	HauntGrowth = 3,
 	HauntSellBonus = 0.5,
 
 	-- Soul skill tree: three branches of three tiers. Tier n needs tier n - 1 of the same branch.
+	-- Ids are kept from older saves (QuickRoots = Fast Hands, HeavyMallet = Heavy Swing).
 	SkillBranches = { "Farmer", "Witch", "Hunter" },
 	Skills = {
 		{
 			id = "QuickRoots",
 			branch = "Farmer",
 			tier = 1,
-			title = "Quick Roots",
-			text = "Grow 15% faster",
+			title = "Fast Hands",
+			text = "+15% swing speed",
 			cost = 1,
 		},
 		{
@@ -358,7 +447,7 @@ return {
 			branch = "Witch",
 			tier = 2,
 			title = "Auto-Brew",
-			text = "Brews on harvest",
+			text = "Brews smashed pumpkins",
 			cost = 2,
 		},
 		{
@@ -373,8 +462,8 @@ return {
 			id = "HeavyMallet",
 			branch = "Hunter",
 			tier = 1,
-			title = "Heavy Mallet",
-			text = "+2 bonk power",
+			title = "Heavy Swing",
+			text = "+50% swing damage",
 			cost = 1,
 		},
 		{
@@ -395,16 +484,15 @@ return {
 		},
 	},
 	-- Skill effect sizes.
-	SkillGrowBonus = 0.15,
+	SkillSwingBonus = 0.15,
 	SkillSizeBonus = 0.2,
 	SkillCursedBonus = 0.03,
-	SkillMalletBonus = 2,
+	SkillDamageMult = 1.5,
 	SkillGhostCandyMult = 2,
 	SkillKingDamageMult = 1.5,
 
-	-- Daily chest: streak day n gives DailySeeds x n best seeds and DailyCandy x n candy.
+	-- Daily chest: streak day n gives DailyCandy x n candy.
 	-- The streak runs 1..DailyMaxStreak and then starts over at 1; the last day adds a Cursed token.
-	DailySeeds = 3,
 	DailyCandy = 100,
 	DailyMaxStreak = 7,
 
@@ -412,21 +500,19 @@ return {
 	-- turns its effect off (all 0 hides the SHOP button). Prices are set in the dashboard; the
 	-- Robux in the comments are suggestions.
 	GamePasses = {
-		-- x2 candy from every sale to the Witch. Suggested 199 R$.
+		-- x2 candy from every sale to the Witch and from base income. Suggested 199 R$.
 		DoubleCandy = 0,
-		-- +20% sell value, a "VIP" tag over your head and a gold name. Suggested 249 R$.
+		-- +20% sell value and income, a "VIP" tag over your head and a gold name. Suggested 249 R$.
 		VIP = 0,
 		-- Carry 3 more pumpkins. Suggested 99 R$.
 		BigStack = 0,
 	},
-	-- B = the order value unit (best seed's sell x OrderValueMult), so packs grow with the farm.
+	-- B = the order value unit (best type's income x OrderIncomeSeconds), so packs grow with the farm.
 	Products = {
 		-- Candy Bag: CandySmallB x B candy. Suggested 25 R$.
 		CandySmall = 0,
 		-- Candy Chest: CandyBigB x B candy. Suggested 129 R$.
 		CandyBig = 0,
-		-- Instantly ripens every growing pumpkin in your patch. Suggested 15 R$.
-		InstantGrow = 0,
 	},
 	DoubleCandyMult = 2,
 	VipSellBonus = 0.2,
