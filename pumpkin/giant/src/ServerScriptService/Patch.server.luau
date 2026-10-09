@@ -72,6 +72,10 @@ do
 		wildHitEvent = remote("WildHit"),
 		wildPopEvent = remote("WildPopped"),
 		lockEvent = remote("Lock"),
+		-- Client -> server: drop the whole carried stack as loose pickups.
+		dropEvent = remote("Drop"),
+		-- Server -> client: "stole" (to the thief) / "robbed" (to the base owner).
+		stealAlarmEvent = remote("StealAlarm"),
 		buyToolFunction = remote("BuyTool", "RemoteFunction") :: RemoteFunction,
 		buyUpgradeFunction = remote("BuyUpgrade", "RemoteFunction") :: RemoteFunction,
 		hauntFunction = remote("Haunt", "RemoteFunction") :: RemoteFunction,
@@ -249,11 +253,15 @@ local function orderBase(player: Player): number
 	return bestUnlocked(player).income * Config.OrderIncomeSeconds
 end
 
+-- Short numbers: 950, 1.2k, 34.5k, 340k, 3.4M, 1.2B (rounded down so 999.96k never shows 1000k).
 local function short(n: number): string
-	if n >= 1e6 then
-		return (string.gsub(string.format("%.1fM", n / 1e6), "%.0M", "M"))
-	elseif n >= 1e4 then
-		return (string.gsub(string.format("%.1fk", n / 1e3), "%.0k", "k"))
+	for _, unit in { { 1e12, "T" }, { 1e9, "B" }, { 1e6, "M" }, { 1e3, "k" } } do
+		if n >= unit[1] then
+			local v = n / unit[1]
+			local text = v >= 100 and tostring(math.floor(v))
+				or (string.gsub(string.format("%.1f", math.floor(v * 10) / 10), "%.0$", ""))
+			return text .. unit[2]
+		end
 	end
 	return tostring(math.floor(n))
 end
@@ -401,6 +409,7 @@ local function publishOrders(player: Player)
 	for _, order in o.list do
 		table.insert(list, {
 			text = order.text,
+			stat = order.stat,
 			have = math.min(order.have, order.need),
 			need = order.need,
 			done = order.done,
@@ -1089,13 +1098,27 @@ local function refreshCarry(player: Player)
 		value += pumpkinValue(p)
 	end
 	player:SetAttribute("CarryValue", math.floor(value * sellMult(player) + 0.5))
-	local brewed = 0
+	local brewed, stolen = 0, 0
+	local from: { [number]: boolean } = {}
 	for _, p in stack do
 		if p:GetAttribute("Mutation") then
 			brewed += 1
 		end
+		local ownerId = p:GetAttribute("StolenFrom")
+		if type(ownerId) == "number" and ownerId ~= player.UserId then
+			stolen += 1
+			from[ownerId] = true
+		end
 	end
 	player:SetAttribute("CarryBrewed", brewed)
+	-- Stolen pumpkins carried (RUN!! / Drop on the thief's screen) and from whom: ",id1,id2,"
+	-- so each robbed owner's client can highlight the thief.
+	player:SetAttribute("CarryStolen", stolen)
+	local ids = {}
+	for id in from do
+		table.insert(ids, tostring(id))
+	end
+	player:SetAttribute("StealingFrom", #ids > 0 and ("," .. table.concat(ids, ",") .. ",") or nil)
 end
 
 -- The player's character and root, only while the humanoid is alive.
@@ -1200,6 +1223,10 @@ local function dropLoose(
 			Remotes.hintEvent:FireClient(player, "Your hands are full!")
 			return
 		end
+		-- A dropped stolen pumpkin picked up by its owner is just theirs again.
+		if pumpkin:GetAttribute("StolenFrom") == player.UserId then
+			pumpkin:SetAttribute("StolenFrom", nil)
+		end
 		-- stackPumpkin removes the prompt itself; on failure the prompt stays usable.
 		if stackPumpkin(player, pumpkin) then
 			Remotes.harvestedEvent:FireAllClients(player, pumpkin.Position)
@@ -1280,6 +1307,14 @@ do
 			if plot:GetAttribute("Protected") ~= (protected or nil) then
 				plot:SetAttribute("Protected", protected or nil)
 			end
+			-- "Rate" (candy per second with the owner's multipliers) drives the owner's green
+			-- "+X" income pops on the client.
+			if p then
+				local rate = math.floor(incomeOf(p) * mult * 10 + 0.5) / 10
+				if p:GetAttribute("Rate") ~= rate then
+					p:SetAttribute("Rate", rate)
+				end
+			end
 			local tag = p and p:FindFirstChild("IncomeTag")
 			local label = tag and tag:FindFirstChild("Label") :: TextLabel?
 			if p and label then
@@ -1302,11 +1337,12 @@ do
 
 	local function incomeTag(pumpkin: BasePart)
 		local bb = Instance.new("BillboardGui")
+		-- Kept small: the owner sees a green "+X" pop over each pumpkin every second instead.
 		bb.Name = "IncomeTag"
-		bb.Size = UDim2.fromOffset(130, 34)
-		bb.StudsOffsetWorldSpace = Vector3.new(0, pumpkin.Size.Y / 2 + 1.6, 0)
+		bb.Size = UDim2.fromOffset(84, 22)
+		bb.StudsOffsetWorldSpace = Vector3.new(0, pumpkin.Size.Y / 2 + 1.2, 0)
 		bb.LightInfluence = 0
-		bb.MaxDistance = 70
+		bb.MaxDistance = 45
 		local label = Instance.new("TextLabel")
 		label.Name = "Label"
 		label.BackgroundTransparency = 1
@@ -1574,16 +1610,10 @@ do
 			local name = seed and seed.name or "a"
 			local share = math.floor(pumpkinValue(p) * Config.StealOwnerShare + 0.5)
 			addCandy(owner, share)
-			hint(
-				owner,
-				string.format(
-					"🦝 %s stole your %s pumpkin! You got %s candy. Bonk them to get it back!",
-					thief.DisplayName,
-					name,
-					short(share)
-				)
-			)
-			hint(thief, "You stole a " .. name .. " pumpkin! Place it on your base to keep it.")
+			-- The owner's client shows the alarm (toast, red flash, highlighted thief); the thief's
+			-- shows "You stole a PUMPKIN!" plus RUN!!, the red vignette and the Drop button.
+			Remotes.stealAlarmEvent:FireClient(owner, "robbed", thief.DisplayName, name, share)
+			Remotes.stealAlarmEvent:FireClient(thief, "stole", name)
 			Remotes.harvestedEvent:FireAllClients(thief, plot.Position)
 			track(thief, "steal", 1)
 		end
@@ -1932,29 +1962,38 @@ do
 		return Config.Seeds[1].id
 	end
 
+	-- A small PS99-style bar (60x8 track, white number at its right). It starts hidden: each
+	-- client shows it only on its current target and on pumpkins it hit in the last few seconds.
+	-- Only rare types (Ghost or better) get a name over the bar, in the type's colour.
 	local function hpBar(part: BasePart, seed)
+		local rare = seed.order >= Config.RareNameOrder
 		local bb = Instance.new("BillboardGui")
 		bb.Name = "HpBar"
-		bb.Size = UDim2.fromOffset(120, 40)
-		bb.StudsOffsetWorldSpace = Vector3.new(0, part.Size.Y / 2 + 1.6, 0)
+		bb.Size = UDim2.fromOffset(96, rare and 32 or 14)
+		bb.StudsOffsetWorldSpace = Vector3.new(0, part.Size.Y / 2 + 1.4, 0)
 		bb.LightInfluence = 0
+		bb.AlwaysOnTop = true
 		bb.MaxDistance = Config.WildBarDistance
-		local name = Instance.new("TextLabel")
-		name.BackgroundTransparency = 1
-		name.Size = UDim2.fromScale(1, 0.48)
-		name.Font = Enum.Font.FredokaOne
-		name.TextScaled = true
-		name.TextColor3 = seed.color or Color3.fromRGB(255, 190, 90)
-		name.Text = seed.name
-		name.Parent = bb
-		local nameStroke = Instance.new("UIStroke")
-		nameStroke.Thickness = 2
-		nameStroke.Color = Color3.fromRGB(30, 12, 40)
-		nameStroke.Parent = name
+		bb.Enabled = false
+		if rare then
+			local name = Instance.new("TextLabel")
+			name.BackgroundTransparency = 1
+			name.Size = UDim2.new(1, 0, 0, 16)
+			name.Font = Enum.Font.FredokaOne
+			name.TextScaled = true
+			name.TextColor3 = seed.color or Color3.fromRGB(255, 190, 90)
+			name.Text = seed.name
+			name.Parent = bb
+			local nameStroke = Instance.new("UIStroke")
+			nameStroke.Thickness = 2
+			nameStroke.Color = Color3.fromRGB(30, 12, 40)
+			nameStroke.Parent = name
+		end
 		local back = Instance.new("Frame")
 		back.Name = "Back"
-		back.Position = UDim2.fromScale(0, 0.52)
-		back.Size = UDim2.fromScale(1, 0.46)
+		back.AnchorPoint = Vector2.new(0, 1)
+		back.Position = UDim2.new(0, 4, 1, -3)
+		back.Size = UDim2.fromOffset(60, 8)
 		back.BackgroundColor3 = Color3.fromRGB(34, 22, 48)
 		back.BorderSizePixel = 0
 		back.Parent = bb
@@ -1977,13 +2016,15 @@ do
 		local hp = Instance.new("TextLabel")
 		hp.Name = "Hp"
 		hp.BackgroundTransparency = 1
-		hp.Size = UDim2.fromScale(1, 1)
-		hp.ZIndex = 2
+		hp.AnchorPoint = Vector2.new(1, 1)
+		hp.Position = UDim2.fromScale(1, 1)
+		hp.Size = UDim2.fromOffset(28, 14)
 		hp.Font = Enum.Font.FredokaOne
 		hp.TextScaled = true
+		hp.TextXAlignment = Enum.TextXAlignment.Left
 		hp.TextColor3 = Color3.new(1, 1, 1)
 		hp.Text = short(seed.hp)
-		hp.Parent = back
+		hp.Parent = bb
 		local hpStroke = Instance.new("UIStroke")
 		hpStroke.Thickness = 1.5
 		hpStroke.Color = Color3.fromRGB(20, 10, 30)
@@ -1995,12 +2036,14 @@ do
 		local bb = w.part:FindFirstChild("HpBar")
 		local back = bb and bb:FindFirstChild("Back")
 		local fill = back and back:FindFirstChild("Fill") :: Frame?
-		local label = back and back:FindFirstChild("Hp") :: TextLabel?
+		local label = bb and bb:FindFirstChild("Hp") :: TextLabel?
 		local fraction = math.clamp(w.hp / w.maxHp, 0, 1)
 		if fill then
 			fill.Size = UDim2.fromScale(fraction, 1)
-			fill.BackgroundColor3 = Color3.fromRGB(255, 80, 60)
-				:Lerp(Color3.fromRGB(110, 230, 80), fraction)
+			-- Green to yellow while healthy, red under 30%.
+			fill.BackgroundColor3 = fraction < 0.3 and Color3.fromRGB(235, 40, 40)
+				or Color3.fromRGB(255, 210, 60)
+					:Lerp(Color3.fromRGB(110, 230, 80), (fraction - 0.3) / 0.7)
 		end
 		if label then
 			label.Text = short(math.max(0, w.hp))
@@ -2086,13 +2129,19 @@ do
 		end
 		local at = part.Position
 		local seedId = part:GetAttribute("Seed")
-		Remotes.wildPopEvent:FireAllClients(at, seedId, winner)
+		local seed = seedById[seedId]
+		-- The winner also gets a little candy (the burst that flies into their counter).
+		local candy = 0
+		if winner and seed then
+			candy = math.max(1, math.floor(seed.income * Config.PopCandySeconds + 0.5))
+			addCandy(winner, candy)
+		end
+		Remotes.wildPopEvent:FireAllClients(at, seedId, winner, candy)
 		part:Destroy()
 		if not winner then
 			return
 		end
 		-- Lucky Swing: a chance of one rarity higher.
-		local seed = seedById[seedId]
 		local luck = Config.LuckyChance * upgradeLevel(winner, "Lucky")
 		if seed and Config.Seeds[seed.order + 1] and math.random() < luck then
 			seedId = Config.Seeds[seed.order + 1].id
@@ -2125,20 +2174,6 @@ do
 				"Your hands are full! It's on the ground: place, brew or sell what you carry."
 			)
 		end
-	end
-
-	local function squash(w: WildState)
-		if w.tween then
-			w.tween:Cancel()
-		end
-		w.part.Size = w.size
-		local tween = TweenService:Create(
-			w.part,
-			TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, true),
-			{ Size = w.size * Vector3.new(1.12, 0.84, 1.12) }
-		)
-		w.tween = tween
-		tween:Play()
 	end
 
 	-- Swing at the nearest wild pumpkin in front of root (BonkRange from its side).
@@ -2178,12 +2213,13 @@ do
 		best.damage[player] = (best.damage[player] or 0) + math.min(damage, best.hp)
 		best.last = player
 		best.hp -= damage
-		Remotes.wildHitEvent:FireAllClients(player, best.part.Position, damage)
+		-- Clients do the juice (flash, squash, damage number, bar) on the part they are sent; the
+		-- server no longer tweens Size, so nothing replicated fights the local squash.
+		Remotes.wildHitEvent:FireAllClients(player, best.part.Position, damage, best.part)
 		if best.hp <= 0 then
 			pop(best)
 		else
 			setBar(best)
-			squash(best)
 		end
 		return true
 	end
@@ -2662,6 +2698,28 @@ end
 
 Remotes.lockEvent.OnServerEvent:Connect(function(player)
 	Bases.lock(player)
+end)
+
+-- Drop button: the whole stack lands around the player as loose pickups (stolen ones keep their
+-- owner, so the owner picking them up gets them back for free).
+Remotes.dropEvent.OnServerEvent:Connect(function(player)
+	local stack = carrying[player]
+	local character, root = aliveRoot(player)
+	if not stack or #stack == 0 or not character or not root then
+		return
+	end
+	carrying[player] = {}
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character, loose, ghostFolder }
+	params.RespectCanCollide = true
+	for i, p in stack do
+		local a = i / #stack * math.pi * 2
+		local at = root.Position + Vector3.new(math.cos(a) * 3.5, 0, math.sin(a) * 3.5)
+		local hit = workspace:Raycast(at + Vector3.new(0, 3, 0), Vector3.new(0, -40, 0), params)
+		dropLoose(p, at, Config.LooseSeconds, false, hit and hit.Position.Y or root.Position.Y - 3)
+	end
+	refreshCarry(player)
 end)
 
 -- Haunt (rebirth) and the Soul skill tree -----------------------------------------------------
@@ -3191,44 +3249,89 @@ do
 		tool.Name = "Scythe"
 		tool.ToolTip = def.name
 		tool.CanBeDropped = false
-		tool.Grip = CFrame.new(0, -1.8, 0)
+		-- Held upright beside the body, leaning a little forward, blade out to the right at the
+		-- top, so it reads from the chase camera. Grip maps the hand (R6 grip / R15
+		-- RightGripAttachment, both turned -90 on X) to the handle: handle = hand-in-arm-frame * H.
+		local h = Config.ScytheHold
+		local hold = CFrame.new(h.right, 0, -h.forward)
+			* CFrame.Angles(math.rad(-h.lean), 0, 0)
+			* CFrame.new(0, h.up, 0)
+		tool.Grip = (CFrame.Angles(math.rad(90), 0, 0) * hold):Inverse()
 		tool:SetAttribute("ToolId", def.id)
-		local k = 0.8 + 0.12 * (def.order - 1)
+		local k = 1.1 + 0.08 * (def.order - 1)
 		local handle = Instance.new("Part")
 		handle.Name = "Handle"
-		handle.Size = Vector3.new(0.35, 5, 0.35)
+		handle.Size = Vector3.new(0.34, 4.6, 0.34)
 		handle.Material = Enum.Material.Wood
 		handle.Color = def.order >= 4 and Color3.fromRGB(50, 34, 40) or Color3.fromRGB(110, 72, 44)
+		handle.Transparency = 0
 		handle.CanCollide = false
+		handle.CanQuery = false
+		handle.CanTouch = true
 		handle.Parent = tool
-		local top = handle.CFrame * CFrame.new(0, 2.4, 0)
+		local top = handle.CFrame * CFrame.new(0, 2.2, 0)
 		local collar = Instance.new("Part")
 		collar.Name = "Collar"
-		collar.Size = Vector3.new(0.6, 0.5, 0.6)
+		collar.Size = Vector3.new(0.62, 0.55, 0.62)
 		collar.Material = Enum.Material.Metal
 		collar.Color = Color3.fromRGB(70, 66, 80)
 		collar.CFrame = top
 		weldTo(handle, collar)
 		collar.Parent = tool
-		-- The blade: three flat pieces bending down into a hook.
+		local pommel = collar:Clone()
+		pommel.Name = "Pommel"
+		pommel.Size = Vector3.new(0.5, 0.4, 0.5)
+		pommel.CFrame = handle.CFrame * CFrame.new(0, -2.3, 0)
+		pommel:ClearAllChildren()
+		weldTo(handle, pommel)
+		pommel.Parent = tool
+		-- The blade: three flat pieces bending down into a hook (about 4 studs across).
 		local pieces = {
-			{ len = 2.4, x = 1.1, y = 0.15, angle = -8 },
-			{ len = 1.8, x = 2.85, y = -0.25, angle = -32 },
-			{ len = 1.1, x = 3.85, y = -0.95, angle = -62 },
+			{ len = 2.0, x = 1.0, y = 0.12, angle = -6 },
+			{ len = 1.6, x = 2.55, y = -0.22, angle = -30 },
+			{ len = 1.05, x = 3.45, y = -0.85, angle = -60 },
 		}
 		local glow = def.order >= 4
+		local tip = top
 		for i, piece in pieces do
 			local blade = Instance.new("Part")
 			blade.Name = "Head"
-			blade.Size = Vector3.new(piece.len * k, (0.55 - i * 0.08) * k, 0.16)
+			blade.Size = Vector3.new(piece.len * k, (0.62 - i * 0.1) * k, 0.18)
 			blade.Material = glow and Enum.Material.Neon or Enum.Material.Metal
 			blade.Color = def.color
+			blade.Transparency = 0
+			blade.CanQuery = false
 			blade.CFrame = top
 				* CFrame.new(piece.x * k, piece.y * k, 0)
 				* CFrame.Angles(0, 0, math.rad(piece.angle))
 			weldTo(handle, blade)
 			blade.Parent = tool
+			tip = blade.CFrame * CFrame.new(piece.len * k / 2, 0, 0)
 		end
+		-- Swing trail: a white ribbon from the blade root to its tip. Off until a client swings.
+		local a0 = Instance.new("Attachment")
+		a0.Name = "TrailRoot"
+		a0.CFrame = top * CFrame.new(0.4, 0, 0)
+		a0.Parent = handle
+		local a1 = Instance.new("Attachment")
+		a1.Name = "TrailTip"
+		a1.CFrame = handle.CFrame:ToObjectSpace(tip)
+		a1.Parent = handle
+		local trail = Instance.new("Trail")
+		trail.Name = "SwingTrail"
+		trail.Attachment0 = a0
+		trail.Attachment1 = a1
+		trail.Lifetime = 0.2
+		trail.MinLength = 0.05
+		trail.Color = ColorSequence.new(Color3.new(1, 1, 1))
+		trail.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.1),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+		trail.WidthScale = NumberSequence.new(1, 0.35)
+		trail.LightEmission = 0.7
+		trail.Enabled = false
+		trail.Parent = handle
 		return tool
 	end
 
@@ -3240,8 +3343,8 @@ do
 	end
 
 	-- Makes sure the player has exactly one Scythe, built for their best owned tool. A held tool
-	-- that gets replaced is re-equipped.
-	function giveTool(player: Player)
+	-- that gets replaced is re-equipped; equip = also put it in the hands (on spawn).
+	function giveTool(player: Player, equip: boolean?)
 		local def = bestTool(player)
 		player:SetAttribute("Tool", def.id)
 		local backpack = player:FindFirstChildOfClass("Backpack")
@@ -3261,12 +3364,21 @@ do
 				end
 			end
 		end
-		if keep or not backpack then
-			return
+		local tool = keep
+		if not tool then
+			if not backpack then
+				return
+			end
+			tool = buildScythe(def)
+			tool.Parent = backpack
 		end
-		local tool = buildScythe(def)
-		tool.Parent = backpack
-		if wasHeld and humanoid and humanoid.Health > 0 then
+		local holding = character and character:FindFirstChildOfClass("Tool")
+		if
+			(wasHeld or (equip and not holding))
+			and tool.Parent ~= character
+			and humanoid
+			and humanoid.Health > 0
+		then
 			humanoid:EquipTool(tool)
 		end
 	end
@@ -4228,7 +4340,7 @@ local function onCharacter(player: Player, character: Model)
 	-- The scythe: after the new Backpack exists (it is rebuilt on every spawn).
 	task.delay(0.3, function()
 		if player.Parent and player.Character == character then
-			giveTool(player)
+			giveTool(player, true)
 		end
 	end)
 	if character:WaitForChild("Head", 10) then
@@ -4312,7 +4424,7 @@ local function onPlayerAdded(player: Player)
 	end
 	publishOrders(player)
 	refreshCarry(player)
-	giveTool(player)
+	giveTool(player, true)
 	Bases.refresh(patchOf[player])
 	player:SetAttribute("Loaded", true)
 	onboard(player, 1)

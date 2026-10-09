@@ -141,8 +141,18 @@ return {
 	ZoneGuardRadius = 40,
 	-- Seconds between respawns (one wild pumpkin each time, while below max).
 	WildRespawn = 1.5,
-	-- HP bars over wild pumpkins show within this many studs.
+	-- HP bars over wild pumpkins show within this many studs, and only on your current target or
+	-- on a pumpkin you hit in the last HitBarSeconds. Types from RareNameOrder up (3 = Ghost) also
+	-- show their name over the bar.
 	WildBarDistance = 40,
+	HitBarSeconds = 3,
+	RareNameOrder = 3,
+	-- A popped wild pumpkin also pays its smasher this many seconds of the type's income in candy
+	-- (the candy burst that flies into the counter).
+	PopCandySeconds = 3,
+	-- How the scythe sits in the hand (studs / degrees): handle centre `up` along the shaft from
+	-- the hand, pushed `forward` and `right` of it, the top leaning `lean` degrees forward.
+	ScytheHold = { right = 0.1, forward = 0.35, lean = 14, up = 1.25 },
 	-- A popped pumpkin that does not fit on the winner's stack lies here this long.
 	LooseSeconds = 30,
 
@@ -310,7 +320,8 @@ return {
 	OrderIncomeSeconds = 60,
 	OrderRefresh = 1200,
 	RotatingCount = 3,
-	-- target tells the client where to point the beam: zone (nearest wild pumpkin), patch (your
+	-- target tells the client which verb to show in the top objective banner and where the red
+	-- ground arrows point: zone (nearest wild pumpkin), patch (your
 	-- base), place (your base while carrying, else the zone), steal (another base), cauldron,
 	-- witch, tools (the tool stall), upgrades, king, gate (the next locked zone's gate).
 	TutorialOrders = {

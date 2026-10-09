@@ -53,13 +53,25 @@ local function play(id: number, pitch: number?, volume: number?)
 	end)
 end
 
+-- Short numbers: 950, 1.2k, 34.5k, 340k, 3.4M, 1.2B (rounded down so 999.96k never shows 1000k).
 local function short(n: number): string
-	if n >= 1e6 then
-		return (string.gsub(string.format("%.1fM", n / 1e6), "%.0M", "M"))
-	elseif n >= 1e4 then
-		return (string.gsub(string.format("%.1fk", n / 1e3), "%.0k", "k"))
+	for _, unit in { { 1e12, "T" }, { 1e9, "B" }, { 1e6, "M" }, { 1e3, "k" } } do
+		if n >= unit[1] then
+			local v = n / unit[1]
+			local text = v >= 100 and tostring(math.floor(v))
+				or (string.gsub(string.format("%.1f", math.floor(v * 10) / 10), "%.0$", ""))
+			return text .. unit[2]
+		end
 	end
 	return tostring(math.floor(n))
+end
+
+-- Candy per second: one decimal below 10 ("0.5", "4.2"), short above.
+local function rateShort(n: number): string
+	if n < 10 then
+		return (string.gsub(string.format("%.1f", n), "%.0$", ""))
+	end
+	return short(n)
 end
 
 local function clockText(seconds: number): string
@@ -138,6 +150,58 @@ local function floatText(at: Vector3, text: string, color: Color3, big: boolean?
 	TweenService:Create(stroke, info, { Transparency = 1 }):Play()
 	task.delay(1.7, function()
 		anchor:Destroy()
+	end)
+end
+
+-- Damage numbers (Pet Sim 99 style): short format ("1.2k", "3.4M"), heavy white text with a
+-- 2 px black stroke, bigger and warmer for bigger hits; pops in, rises 40 px and fades in 0.6 s.
+-- The billboard lives in PlayerGui with an explicit Adornee (an Attachment in Terrain), which
+-- always renders; a billboard parented straight under an Attachment did not show on screen.
+local function damageText(at: Vector3, damage: number, color: Color3?)
+	local px = math.clamp(22 + 7 * math.log10(math.max(damage, 1)), 22, 60)
+	local holder = Instance.new("Attachment")
+	holder.WorldPosition = at
+	holder.Parent = workspace.Terrain
+	local bb = Instance.new("BillboardGui")
+	bb.Name = "DamageNumber"
+	bb.Adornee = holder
+	bb.Size = UDim2.fromOffset(px * 4, px + 44)
+	bb.AlwaysOnTop = true
+	bb.LightInfluence = 0
+	bb.MaxDistance = 140
+	bb.ResetOnSpawn = false
+	bb.Parent = player:WaitForChild("PlayerGui")
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.AnchorPoint = Vector2.new(0, 1)
+	label.Position = UDim2.fromScale(0, 1)
+	label.Size = UDim2.new(1, 0, 0, px)
+	label.Font = Enum.Font.FredokaOne
+	label.TextScaled = true
+	label.Text = short(damage)
+	label.TextColor3 = color
+		or (
+			damage >= 1e4 and Color3.fromRGB(255, 130, 50)
+			or damage >= 1e3 and Color3.fromRGB(255, 220, 70)
+			or Color3.new(1, 1, 1)
+		)
+	label.Parent = bb
+	local outline = Instance.new("UIStroke")
+	outline.Thickness = math.max(2, px / 11)
+	outline.Color = Color3.new(0, 0, 0)
+	outline.Parent = label
+	local pop = Instance.new("UIScale")
+	pop.Scale = 1.5
+	pop.Parent = label
+	TweenService:Create(pop, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+	local info = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	TweenService:Create(label, info, { Position = UDim2.new(0, 0, 1, -40) }):Play()
+	local fade = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.3)
+	TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
+	TweenService:Create(outline, fade, { Transparency = 1 }):Play()
+	task.delay(0.65, function()
+		bb:Destroy()
+		holder:Destroy()
 	end)
 end
 
@@ -388,252 +452,196 @@ function showBanner(text: string, sub: string?, seconds: number, color: Color3?)
 	end)
 end
 
-local hintLabel = textLabel(gui, "", Color3.fromRGB(255, 230, 200))
-hintLabel.AnchorPoint = Vector2.new(0.5, 1)
-hintLabel.Position = UDim2.new(0.5, 0, 1, -178)
-hintLabel.Size = UDim2.fromOffset(700, 32)
-hintLabel.Visible = false
-local hintToken = 0
-local function hint(text: string)
-	hintToken += 1
-	local token = hintToken
-	hintLabel.Text = text
-	hintLabel.Visible = true
-	task.delay(3.5, function()
-		if token == hintToken then
-			hintLabel.Visible = false
+-- Toasts (Steal an Egg style): small white stroked lines stacked at the bottom centre, newest at
+-- the bottom, at most 3, each gone after 3.5 s. Rich text, so a key word can be coloured.
+local hint
+do
+	local holder = Instance.new("Frame")
+	holder.Name = "Toasts"
+	holder.BackgroundTransparency = 1
+	holder.AnchorPoint = Vector2.new(0.5, 1)
+	holder.Position = UDim2.new(0.5, 0, 1, -152)
+	holder.Size = UDim2.fromOffset(620, 96)
+	holder.Parent = gui
+	local layout = Instance.new("UIListLayout")
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	layout.Padding = UDim.new(0, 2)
+	layout.Parent = holder
+	local count = 0
+	function hint(text: string)
+		count += 1
+		local label = textLabel(holder, text, Color3.fromRGB(255, 255, 255))
+		label.RichText = true
+		label.LayoutOrder = count
+		label.Size = UDim2.new(1, 0, 0, 28)
+		local outline = label:FindFirstChildOfClass("UIStroke") :: UIStroke
+		outline.Thickness = 2.5
+		local pop = Instance.new("UIScale")
+		pop.Scale = 0.6
+		pop.Parent = label
+		TweenService:Create(pop, TweenInfo.new(0.25, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+		local labels = {}
+		for _, child in holder:GetChildren() do
+			if child:IsA("TextLabel") then
+				table.insert(labels, child)
+			end
 		end
-	end)
+		table.sort(labels, function(a, b)
+			return a.LayoutOrder < b.LayoutOrder
+		end)
+		for i = 1, #labels - 3 do
+			labels[i]:Destroy()
+		end
+		task.delay(3.2, function()
+			if label.Parent then
+				local fade = TweenInfo.new(0.3)
+				TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
+				TweenService:Create(outline, fade, { Transparency = 1 }):Play()
+				task.delay(0.3, function()
+					label:Destroy()
+				end)
+			end
+		end)
+	end
 end
 remotes:WaitForChild("Hint").OnClientEvent:Connect(hint)
 
--- Top: Giant Jack meter and the phase clock.
-local meter = Instance.new("Frame")
-meter.AnchorPoint = Vector2.new(0.5, 0)
-meter.Position = UDim2.new(0.5, 0, 0, 46)
-meter.Size = UDim2.fromOffset(470, 44)
-meter.BackgroundColor3 = DARK
-meter.BackgroundTransparency = 0.1
-meter.Parent = gui
-corner(meter)
-stroke(meter, 3)
-local meterFill = Instance.new("Frame")
-meterFill.Size = UDim2.fromScale(0.04, 1)
-meterFill.BackgroundColor3 = Color3.new(1, 1, 1)
-meterFill.ClipsDescendants = true
-meterFill.Parent = meter
-corner(meterFill)
--- Fill colors come from this gradient (orange to yellow; red to orange in a Blood Moon).
-local JACK_FILL = ColorSequence.new(Color3.fromRGB(255, 120, 30), Color3.fromRGB(255, 215, 70))
+-- Top right: one small chip with the Giant Jack and the phase clock (the world MeterRing around
+-- the Jack fills too). The top centre belongs to the objective banner; the centre stays clear.
 local KING_FILL = ColorSequence.new(Color3.fromRGB(200, 25, 45), Color3.fromRGB(255, 120, 60))
-local meterGradient = Instance.new("UIGradient")
-meterGradient.Color = JACK_FILL
-meterGradient.Parent = meterFill
 do
-	-- A glossy top band and a shine stripe that sweeps across every few seconds.
-	local gloss = Instance.new("Frame")
-	gloss.BackgroundColor3 = Color3.new(1, 1, 1)
-	gloss.BackgroundTransparency = 0.7
-	gloss.BorderSizePixel = 0
-	gloss.Position = UDim2.new(0, 6, 0, 3)
-	gloss.Size = UDim2.new(1, -12, 0.3, 0)
-	gloss.Parent = meterFill
-	corner(gloss)
-	local shine = Instance.new("Frame")
-	shine.BackgroundColor3 = Color3.new(1, 1, 1)
-	shine.BackgroundTransparency = 0.55
-	shine.BorderSizePixel = 0
-	shine.AnchorPoint = Vector2.new(0.5, 0.5)
-	shine.Rotation = 20
-	shine.Size = UDim2.new(0, 14, 1.6, 0)
-	shine.Position = UDim2.new(0, -20, 0.5, 0)
-	shine.Parent = meterFill
+	local chip = Instance.new("Frame")
+	chip.Name = "PhaseChip"
+	chip.AnchorPoint = Vector2.new(1, 0)
+	chip.Position = UDim2.new(1, -12, 0, 12)
+	chip.Size = UDim2.fromOffset(210, 34)
+	chip.BackgroundColor3 = DARK
+	chip.BackgroundTransparency = 0.25
+	chip.Parent = gui
+	corner(chip)
+	stroke(chip, 2)
+	local fill = Instance.new("Frame")
+	fill.AnchorPoint = Vector2.new(0, 1)
+	fill.Position = UDim2.new(0, 12, 1, -3)
+	fill.Size = UDim2.new(0, 0, 0, 4)
+	fill.BorderSizePixel = 0
+	fill.Parent = chip
+	corner(fill)
+	local label = textLabel(chip, "", Color3.fromRGB(255, 255, 255))
+	label.Position = UDim2.fromOffset(10, 3)
+	label.Size = UDim2.new(1, -20, 1, -10)
+	local function refreshChip()
+		local now = workspace:GetServerTimeNow()
+		local phase = state:GetAttribute("Phase") or "Day"
+		local left = math.max(0, (state:GetAttribute("PhaseEnds") or 0) - now)
+		local candy = state:GetAttribute("JackCandy") or 0
+		local goal = math.max(state:GetAttribute("JackGoal") or 1, 1)
+		local jack = math.clamp(candy / goal, 0, 1)
+		local locksOff = state:GetAttribute("LocksOff")
+		local text, color, amount = "", Color3.fromRGB(255, 225, 170), jack
+		local barColor = Color3.fromRGB(255, 150, 40)
+		if phase == "BloodMoon" and locksOff then
+			text = "🔓 LOCKS OFF " .. clockText(locksOff - now)
+			color, amount, barColor = Color3.fromRGB(255, 140, 140), 1, Color3.fromRGB(220, 40, 50)
+		elseif phase == "BloodMoon" then
+			local hp = state:GetAttribute("KingHp") or 0
+			local maxHp = math.max(state:GetAttribute("KingMaxHp") or 1, 1)
+			local shield = state:GetAttribute("KingShield")
+			if shield then
+				text = string.format("🛡 Bonk %d lanterns", shield)
+			elseif state:GetAttribute("KingStunned") then
+				text = "💫 STUNNED! x2"
+			else
+				text = "👑 King " .. short(hp) .. " / " .. short(maxHp)
+			end
+			color, amount = Color3.fromRGB(255, 150, 140), hp / maxHp
+			barColor = Color3.fromRGB(230, 50, 50)
+		elseif phase == "Midnight" then
+			text = "👻 Midnight " .. clockText(left)
+			color = Color3.fromRGB(170, 230, 255)
+		elseif candy >= goal then
+			-- The Jack is full but the last Blood Moon was recent: the King waits.
+			local wake = (state:GetAttribute("KingWakesAt") or 0) - now
+			text = wake > 0 and ("👑 King wakes " .. clockText(wake)) or "👑 The King wakes!"
+			color, amount = Color3.fromRGB(255, 200, 120), 1
+		else
+			text = "🎃 " .. short(candy) .. "/" .. short(goal) .. "   🌙 " .. clockText(left)
+		end
+		if label.Text ~= text then
+			label.Text = text
+		end
+		label.TextColor3 = color
+		fill.BackgroundColor3 = barColor
+		local a = math.clamp(amount, 0, 1)
+		fill.Size = UDim2.new(a, -24 * a, 0, 4)
+		if phase ~= "BloodMoon" then
+			local ringColor = Color3.fromRGB(255, 140, 40):Lerp(Color3.fromRGB(255, 60, 40), jack)
+			if meterRing.Color ~= ringColor then
+				meterRing.Color = ringColor
+				meterRing.Transparency = 0.6 - 0.5 * jack
+			end
+		end
+	end
 	task.spawn(function()
-		while shine.Parent do
-			shine.Position = UDim2.new(0, -20, 0.5, 0)
-			local sweep = TweenService:Create(
-				shine,
-				TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-				{ Position = UDim2.new(1, 20, 0.5, 0) }
-			)
-			sweep:Play()
-			task.wait(2.8)
+		while chip.Parent do
+			refreshChip()
+			task.wait(0.25)
 		end
 	end)
 end
-local meterText = textLabel(meter, "", Color3.fromRGB(255, 255, 255))
-meterText.Size = UDim2.fromScale(1, 1)
-meterText.ZIndex = 2
-local meterPad = Instance.new("UIPadding")
-meterPad.PaddingTop = UDim.new(0, 7)
-meterPad.PaddingBottom = UDim.new(0, 7)
-meterPad.Parent = meterText
 
-local clock = Instance.new("Frame")
-clock.AnchorPoint = Vector2.new(0.5, 0)
-clock.Position = UDim2.new(0.5, 0, 0, 96)
-clock.Size = UDim2.fromOffset(360, 32)
-clock.BackgroundColor3 = DARK
-clock.BackgroundTransparency = 0.15
-clock.Parent = gui
-corner(clock)
-stroke(clock, 2.5)
-local clockLabel = textLabel(clock, "", Color3.fromRGB(200, 210, 255))
-clockLabel.Size = UDim2.fromScale(1, 1)
-local clockPad = Instance.new("UIPadding")
-clockPad.PaddingTop = UDim.new(0, 5)
-clockPad.PaddingBottom = UDim.new(0, 5)
-clockPad.Parent = clockLabel
-
--- When the Jack is full but the last Blood Moon was recent, the King waits.
-local function jackFull(): boolean
-	local candy = state:GetAttribute("JackCandy") or 0
-	local goal = math.max(state:GetAttribute("JackGoal") or 1, 1)
-	return state:GetAttribute("Phase") ~= "BloodMoon" and candy >= goal
-end
-local function wakeText(): string
-	local left = (state:GetAttribute("KingWakesAt") or 0) - workspace:GetServerTimeNow()
-	if left <= 0 then
-		return "👑 The King is waking!"
-	end
-	return "👑 The King wakes in " .. clockText(left)
-end
-
-local function refreshMeter()
-	local phase = state:GetAttribute("Phase")
-	if phase == "BloodMoon" and state:GetAttribute("KingHp") == nil then
-		-- The locks-off window before the King wakes.
-		meterGradient.Color = KING_FILL
-		meterText.Text = "🩸 BLOOD MOON · LOCKS OFF · STEAL!"
-		TweenService:Create(meterFill, TweenInfo.new(0.2), { Size = UDim2.fromScale(1, 1) }):Play()
-		return
-	elseif phase == "BloodMoon" then
-		local hp = state:GetAttribute("KingHp") or 0
-		local maxHp = math.max(state:GetAttribute("KingMaxHp") or 1, 1)
-		meterGradient.Color = KING_FILL
-		local shield = state:GetAttribute("KingShield")
-		local kingPhase = state:GetAttribute("KingPhase") or 1
-		local pips = string.rep("●", kingPhase) .. string.rep("○", 3 - kingPhase)
-		if shield then
-			meterText.Text = string.format("🛡 SHIELD! Bonk %d lantern ghosts", shield)
-		elseif state:GetAttribute("KingStunned") then
-			meterText.Text = string.format("💫 STUNNED! x2  %d / %d", hp, maxHp)
-		else
-			meterText.Text = string.format("👑 PUMPKIN KING %s  %d / %d", pips, hp, maxHp)
-		end
-		TweenService:Create(
-			meterFill,
-			TweenInfo.new(0.2),
-			{ Size = UDim2.fromScale(math.clamp(hp / maxHp, 0.03, 1), 1) }
-		):Play()
-		return
-	end
-	local candy = state:GetAttribute("JackCandy") or 0
-	local goal = math.max(state:GetAttribute("JackGoal") or 1, 1)
-	meterGradient.Color = JACK_FILL
-	meterText.Text = jackFull() and wakeText()
-		or string.format("🎃 Wake the Giant Jack  %s / %s", short(candy), short(goal))
-	TweenService:Create(
-		meterFill,
-		TweenInfo.new(0.35, Enum.EasingStyle.Quad),
-		{ Size = UDim2.fromScale(math.clamp(candy / goal, 0.04, 1), 1) }
-	):Play()
-	meterRing.Color = Color3.fromRGB(255, 140, 40):Lerp(Color3.fromRGB(255, 60, 40), candy / goal)
-	meterRing.Transparency = 0.6 - 0.5 * (candy / goal)
-end
-for _, attr in
-	{
-		"JackCandy",
-		"JackGoal",
-		"KingHp",
-		"KingMaxHp",
-		"Phase",
-		"KingShield",
-		"KingStunned",
-		"KingPhase",
-		"KingWakesAt",
-		"LocksOff",
-	}
-do
-	state:GetAttributeChangedSignal(attr):Connect(refreshMeter)
-end
-refreshMeter()
-
-RunService.Heartbeat:Connect(function()
-	local phase = state:GetAttribute("Phase") or "Day"
-	local left = math.max(0, (state:GetAttribute("PhaseEnds") or 0) - workspace:GetServerTimeNow())
-	local time = clockText(left)
-	if phase == "Day" then
-		clockLabel.Text = "🌙 Ghosts raid at midnight  " .. time
-		clockLabel.TextColor3 = Color3.fromRGB(200, 210, 255)
-	elseif phase == "Midnight" then
-		clockLabel.Text = "👻 MIDNIGHT! Bonk the ghosts  " .. time
-		clockLabel.TextColor3 = Color3.fromRGB(170, 230, 255)
-	elseif state:GetAttribute("LocksOff") then
-		local wake = (state:GetAttribute("LocksOff") or 0) - workspace:GetServerTimeNow()
-		clockLabel.Text = "🔓 LOCKS OFF! King wakes in " .. clockText(wake)
-		clockLabel.TextColor3 = Color3.fromRGB(255, 150, 150)
-	else
-		clockLabel.Text = "🩸 BLOOD MOON! Bonk the King  " .. time
-		clockLabel.TextColor3 = Color3.fromRGB(255, 120, 120)
-	end
-	if jackFull() then
-		meterText.Text = wakeText()
-	end
-end)
-
--- Left: candy and carried pumpkins.
-local column = Instance.new("Frame")
-column.BackgroundTransparency = 1
-column.Position = UDim2.new(0, 14, 0.34, 0)
-column.Size = UDim2.fromOffset(220, 150)
-column.Parent = gui
-local columnLayout = Instance.new("UIListLayout")
-columnLayout.Padding = UDim.new(0, 8)
-columnLayout.Parent = column
-local function statRow(icon: string, color: Color3): (TextLabel, TextLabel)
-	local row = Instance.new("Frame")
-	row.Size = UDim2.fromOffset(220, 64)
-	row.BackgroundColor3 = DARK
-	row.BackgroundTransparency = 0.2
-	row.Parent = column
-	corner(row, 14)
-	stroke(row, 2.5)
-	local iconLabel = Instance.new("TextLabel")
-	iconLabel.BackgroundTransparency = 1
-	iconLabel.Size = UDim2.fromOffset(60, 64)
-	iconLabel.TextScaled = true
-	iconLabel.Text = icon
-	iconLabel.Parent = row
-	local big = textLabel(row, "0", color)
-	big.Position = UDim2.fromOffset(62, 4)
-	big.Size = UDim2.new(1, -70, 0, 36)
-	big.TextXAlignment = Enum.TextXAlignment.Left
-	local small = textLabel(row, "", Color3.fromRGB(230, 230, 240))
-	small.Position = UDim2.fromOffset(62, 40)
-	small.Size = UDim2.new(1, -70, 0, 18)
-	small.TextXAlignment = Enum.TextXAlignment.Left
-	return big, small
-end
-local candyBig, candySmall = statRow("🍬", Color3.fromRGB(255, 150, 210))
-local carryBig, carrySmall = statRow("🎃", Color3.fromRGB(255, 160, 60))
+-- Bottom left: candy, the income per second under it and the carried stack, small (Steal an
+-- Egg's money line). On touch screens it sits top left, clear of the thumbstick.
 local candyValue = player:WaitForChild("leaderstats"):WaitForChild("Candy") :: IntValue
+local candyBig: TextLabel, incomeLabel: TextLabel, carryLabel: TextLabel
+do
+	local stats = Instance.new("Frame")
+	stats.Name = "Stats"
+	stats.BackgroundTransparency = 1
+	stats.AnchorPoint = Vector2.new(0, 1)
+	stats.Position = UDim2.new(0, 14, 1, -12)
+	stats.Size = UDim2.fromOffset(300, 92)
+	stats.Parent = gui
+	if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+		stats.AnchorPoint = Vector2.new(0, 0)
+		stats.Position = UDim2.new(0, 14, 0, 64)
+	end
+	local icon = Instance.new("TextLabel")
+	icon.Name = "CandyIcon"
+	icon.BackgroundTransparency = 1
+	icon.Size = UDim2.fromOffset(38, 38)
+	icon.TextScaled = true
+	icon.Text = "🍬"
+	icon.Parent = stats
+	local function line(y: number, height: number, color: Color3): TextLabel
+		local label = textLabel(stats, "", color)
+		label.Position = UDim2.fromOffset(44, y)
+		label.Size = UDim2.new(1, -44, 0, height)
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		return label
+	end
+	-- A 36 px line: the Fredoka digits come out about 28 px tall, white with a thick stroke.
+	candyBig = line(1, 36, Color3.fromRGB(255, 255, 255))
+	candyBig:FindFirstChildOfClass("UIStroke").Thickness = 3
+	incomeLabel = line(40, 22, Color3.fromRGB(90, 235, 90))
+	carryLabel = line(64, 22, Color3.fromRGB(255, 190, 110))
+end
 local function refreshCandy(pop: boolean)
 	candyBig.Text = short(candyValue.Value)
 	local income = player:GetAttribute("Income") or 0
-	candySmall.Text = income > 0
-			and ("+" .. (income < 10 and string.format("%.1f", income) or short(income)) .. " / sec")
-		or "Candy"
+	incomeLabel.Text = income > 0 and ("+" .. rateShort(income) .. "/s") or ""
 	if pop then
-		candyBig.TextColor3 = Color3.fromRGB(255, 255, 220)
+		candyBig.TextColor3 = Color3.fromRGB(255, 225, 90)
 		TweenService
-			:Create(candyBig, TweenInfo.new(0.4), { TextColor3 = Color3.fromRGB(255, 150, 210) })
+			:Create(candyBig, TweenInfo.new(0.4), { TextColor3 = Color3.fromRGB(255, 255, 255) })
 			:Play()
 	end
 end
 -- Sell juice: candies fly from the screen center into the candy counter, which punches 1 -> 1.2 -> 1.
 -- They live in their own unscaled ScreenGui so screen pixels line up with AbsolutePosition.
-local candyShower
+local candyShower, candyTick
 do
 	local punchScale = Instance.new("UIScale")
 	punchScale.Parent = candyBig
@@ -656,6 +664,37 @@ do
 				TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
 				{ Scale = 1 }
 			):Play()
+		end)
+	end
+	-- The counter punches and a yellow "+N" pops just right of the number, rises and fades.
+	function candyTick(amount: number)
+		punch()
+		if amount <= 0 then
+			return
+		end
+		local plus = textLabel(
+			candyBig.Parent :: Instance,
+			"+" .. short(amount),
+			Color3.fromRGB(255, 225, 90)
+		)
+		plus.Name = "CandyTick"
+		plus.TextXAlignment = Enum.TextXAlignment.Left
+		plus.Position = UDim2.fromOffset(44 + candyBig.TextBounds.X + 10, 4)
+		plus.Size = UDim2.fromOffset(110, 28)
+		local s = plus:FindFirstChildOfClass("UIStroke") :: UIStroke
+		local scale = Instance.new("UIScale")
+		scale.Scale = 0.4
+		scale.Parent = plus
+		TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+		local rise = TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		TweenService:Create(plus, rise, { Position = plus.Position - UDim2.fromOffset(0, 22) })
+			:Play()
+		local fade =
+			TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.55)
+		TweenService:Create(plus, fade, { TextTransparency = 1 }):Play()
+		TweenService:Create(s, fade, { Transparency = 1 }):Play()
+		task.delay(0.95, function()
+			plus:Destroy()
 		end)
 	end
 	function candyShower(count: number)
@@ -705,12 +744,11 @@ local function refreshCarry()
 	local cap = Config.BaseCarry
 		+ (player:GetAttribute("Up_Stack") or 0)
 		+ (player:GetAttribute("Pass_BigStack") and Config.BigStackCarry or 0)
-	carryBig.Text = string.format("%d / %d", n, cap)
-	if n == 0 then
-		carrySmall.Text = "Carrying"
-	else
-		carrySmall.Text = "Worth " .. short(player:GetAttribute("CarryValue") or 0) .. " 🍬"
+	local text = string.format("🎃 %d/%d Carrying", n, cap)
+	if n > 0 then
+		text ..= " · worth " .. short(player:GetAttribute("CarryValue") or 0) .. " 🍬"
 	end
+	carryLabel.Text = text
 end
 candyValue.Changed:Connect(function()
 	refreshCandy(true)
@@ -723,6 +761,41 @@ for _, attr in { "Carry", "CarryValue", "Up_Stack", "Pass_BigStack" } do
 end
 refreshCandy(false)
 refreshCarry()
+
+-- Left edge: small coloured pill buttons (icon + short label, dark outline), Steal an Egg / Pet
+-- Sim 99 style, stacked top to bottom by LayoutOrder.
+local leftBar = Instance.new("Frame")
+leftBar.Name = "LeftPills"
+leftBar.BackgroundTransparency = 1
+leftBar.AnchorPoint = Vector2.new(0, 0.5)
+leftBar.Position = UDim2.new(0, 12, 0.5, -10)
+leftBar.Size = UDim2.fromOffset(132, 330)
+leftBar.Parent = gui
+do
+	local layout = Instance.new("UIListLayout")
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Padding = UDim.new(0, 9)
+	layout.Parent = leftBar
+end
+local function pill(text: string, color: Color3, order: number): TextButton
+	local b = button(leftBar, text, color)
+	b.Size = UDim2.fromOffset(124, 44)
+	b.LayoutOrder = order
+	for _, d in b:GetDescendants() do
+		if d:IsA("UICorner") then
+			d.CornerRadius = UDim.new(1, 0)
+		elseif d:IsA("UIStroke") and d.Parent and d.Parent:IsA("Frame") then
+			d.Color = Color3.new(0, 0, 0)
+			d.Thickness = 2.5
+		elseif d:IsA("UIPadding") then
+			d.PaddingTop = UDim.new(0, 9)
+			d.PaddingBottom = UDim.new(0, 9)
+			d.PaddingLeft = UDim.new(0, 10)
+			d.PaddingRight = UDim.new(0, 10)
+		end
+	end
+	return b
+end
 
 local function seedColor(seed): Color3
 	if seed.color then
@@ -1023,33 +1096,39 @@ do
 	state:GetAttributeChangedSignal("Phase"):Connect(refreshMusic)
 	refreshMusic()
 
-	local muteButton = button(gui, "🔊", Color3.fromRGB(70, 60, 90))
-	muteButton.Position = UDim2.new(0, 172, 0.34, 152)
-	muteButton.Size = UDim2.fromOffset(56, 46)
-	muteButton.Activated:Connect(function()
+	-- One Sound pill turns music and sound effects on and off together.
+	local soundPill = pill("🔊 Sound", Color3.fromRGB(95, 95, 115), 6)
+	soundPill.Activated:Connect(function()
 		musicOn = not musicOn
-		muteButton.Text = musicOn and "🔊" or "🔇"
+		sfxOn = musicOn
+		soundPill.Text = musicOn and "🔊 Sound" or "🔇 Muted"
 		refreshMusic()
 	end)
 end
 
-local indexButton = button(gui, "📖 INDEX", Color3.fromRGB(120, 80, 170))
-indexButton.Position = UDim2.new(0, 14, 0.34, 152)
-indexButton.Size = UDim2.fromOffset(150, 46)
-local sfxButton = button(gui, "🔔", Color3.fromRGB(70, 60, 90))
-sfxButton.Position = UDim2.new(0, 236, 0.34, 152)
-sfxButton.Size = UDim2.fromOffset(56, 46)
-sfxButton.Activated:Connect(function()
-	sfxOn = not sfxOn
-	sfxButton.Text = sfxOn and "🔔" or "🔕"
-end)
+-- Red round count badge on the top-right corner of a pill (Pet Sim 99 / Steal an Egg style).
+local function pillBadge(b: GuiButton): TextLabel
+	local badge = textLabel(b, "", Color3.fromRGB(255, 255, 255))
+	badge.Name = "Badge"
+	badge.AnchorPoint = Vector2.new(0.5, 0.5)
+	badge.Position = UDim2.new(1, -4, 0, 2)
+	badge.Size = UDim2.fromOffset(24, 24)
+	badge.BackgroundColor3 = Color3.fromRGB(230, 40, 40)
+	badge.BackgroundTransparency = 0
+	badge.ZIndex = b.ZIndex + 5
+	badge.Visible = false
+	corner(badge)
+	return badge
+end
+
+local indexButton = pill("📖 Index", Color3.fromRGB(40, 190, 235), 2)
+-- Red badge: Index entries found since the Index was last opened.
+local indexBadge = pillBadge(indexButton)
 
 -- LOCK: locks your base for a while (no stealing, ghosts skip it), then recharges.
 do
 	local lockEvent = remotes:WaitForChild("Lock")
-	local lockButton = button(gui, "🔒 LOCK", Color3.fromRGB(140, 80, 220))
-	lockButton.Position = UDim2.new(0, 14, 0.34, 204)
-	lockButton.Size = UDim2.fromOffset(150, 46)
+	local lockButton = pill("🔒 Lock", Color3.fromRGB(140, 80, 220), 4)
 	lockButton.Activated:Connect(function()
 		lockEvent:FireServer()
 	end)
@@ -1070,14 +1149,14 @@ do
 			local ready = base and base:GetAttribute("LockCooldownUntil") or 0
 			local text, color
 			if (state:GetAttribute("LocksOff") or 0) > now then
-				text, color = "🩸 LOCKS OFF", Color3.fromRGB(200, 50, 60)
+				text, color = "🩸 Off", Color3.fromRGB(200, 50, 60)
 			elseif lockedUntil > now then
 				text = "🔒 " .. clockText(lockedUntil - now)
 				color = Color3.fromRGB(170, 90, 255)
 			elseif ready > now then
 				text, color = "⏳ " .. clockText(ready - now), Color3.fromRGB(90, 80, 100)
 			else
-				text, color = "🔒 LOCK", Color3.fromRGB(140, 80, 220)
+				text, color = "🔒 Lock", Color3.fromRGB(140, 80, 220)
 			end
 			if lockButton.Text ~= text then
 				lockButton.Text = text
@@ -1520,47 +1599,86 @@ for name in Config.GamePasses do
 	end)
 end
 
-local shopButton = button(gui, "🛒 SHOP", Color3.fromRGB(230, 150, 30))
-shopButton.Position = UDim2.new(0, 14, 0.34, 256)
-shopButton.Size = UDim2.fromOffset(150, 46)
-shopButton.Visible = #shopCards > 0
-shopButton.Activated:Connect(function()
-	shopPanel.Visible = not shopPanel.Visible
-	indexPanel.Visible = false
-	toolPanel.Visible = false
-	upgradePanel.Visible = false
-	hauntPanel.Visible = false
-	if shopPanel.Visible then
-		task.spawn(function()
-			local ok, quotes = pcall(shopRemote.InvokeServer, shopRemote, "open")
-			if ok and type(quotes) == "table" then
-				shopQuotes = quotes
-				refreshShop()
-			end
-		end)
+-- Left pills open one panel at a time (the same pill closes it again).
+do
+	local panels = { toolPanel, indexPanel, hauntPanel, shopPanel, upgradePanel }
+	local function toggle(which: Frame)
+		local open = not which.Visible
+		for _, p in panels do
+			p.Visible = false
+		end
+		which.Visible = open
 	end
-end)
 
-local hauntButton = button(gui, "👻 HAUNT", Color3.fromRGB(120, 70, 190))
-hauntButton.Position = UDim2.new(0, 172, 0.34, 204)
-hauntButton.Size = UDim2.fromOffset(120, 46)
-hauntButton.Activated:Connect(function()
-	hauntPanel.Visible = not hauntPanel.Visible
-	indexPanel.Visible = false
-	toolPanel.Visible = false
-	upgradePanel.Visible = false
-	shopPanel.Visible = false
-end)
+	local toolsButton = pill("⚒ Tools", Color3.fromRGB(60, 190, 70), 1)
+	toolsButton.Activated:Connect(function()
+		toggle(toolPanel)
+	end)
+	-- "!" badge while a better scythe than the one you hold is affordable.
+	local toolsBadge = pillBadge(toolsButton)
+	toolsBadge.Text = "!"
+	local function refreshToolsBadge()
+		local owned = {}
+		for id in string.gmatch(player:GetAttribute("Tools") or "", "[^,]+") do
+			owned[id] = true
+		end
+		local best = 0
+		for _, tool in Config.Tools do
+			if owned[tool.id] or tool.id == player:GetAttribute("Tool") then
+				best = math.max(best, tool.damage)
+			end
+		end
+		local affordable = false
+		for _, tool in Config.Tools do
+			if
+				tool.cost
+				and not owned[tool.id]
+				and tool.damage > best
+				and candyValue.Value >= tool.cost
+			then
+				affordable = true
+			end
+		end
+		toolsBadge.Visible = affordable
+	end
+	candyValue.Changed:Connect(refreshToolsBadge)
+	player:GetAttributeChangedSignal("Tools"):Connect(refreshToolsBadge)
+	player:GetAttributeChangedSignal("Tool"):Connect(refreshToolsBadge)
+	refreshToolsBadge()
 
-indexButton.Activated:Connect(function()
-	indexPanel.Visible = not indexPanel.Visible
-	toolPanel.Visible = false
-	upgradePanel.Visible = false
-	hauntPanel.Visible = false
-	shopPanel.Visible = false
-end)
+	local shopButton = pill("🛒 Shop", Color3.fromRGB(240, 170, 30), 5)
+	shopButton.Visible = #shopCards > 0
+	shopButton.Activated:Connect(function()
+		toggle(shopPanel)
+		if shopPanel.Visible then
+			task.spawn(function()
+				local ok, quotes = pcall(shopRemote.InvokeServer, shopRemote, "open")
+				if ok and type(quotes) == "table" then
+					shopQuotes = quotes
+					refreshShop()
+				end
+			end)
+		end
+	end)
+
+	local hauntButton = pill("👻 Haunt", Color3.fromRGB(95, 85, 235), 3)
+	hauntButton.Activated:Connect(function()
+		toggle(hauntPanel)
+	end)
+
+	indexButton.Activated:Connect(function()
+		toggle(indexPanel)
+		indexBadge.Visible = false
+		indexBadge.Text = ""
+	end)
+end
 
 remotes:WaitForChild("IndexNew").OnClientEvent:Connect(function(keys: { string })
+	if not indexPanel.Visible then
+		local n = (tonumber(indexBadge.Text) or 0) + #keys
+		indexBadge.Text = tostring(math.min(n, 99))
+		indexBadge.Visible = n > 0
+	end
 	for i, key in keys do
 		local seedId, finish = string.match(key, "([^:]+):(.+)")
 		local seed = seedById[seedId or ""]
@@ -1817,23 +1935,66 @@ end
 do
 	local bonkEvent = remotes:WaitForChild("Bonk")
 	local lastSwing = 0
+	-- The idle Grip of each tool (the server's value) and the swing currently playing on it.
+	local idleGrip: { [Tool]: CFrame } = setmetatable({}, { __mode = "k" }) :: any
+	local swingId: { [Tool]: number } = setmetatable({}, { __mode = "k" }) :: any
+	-- The hand frame is the arm frame turned -90 on X; poses rotate the idle hold around the hand
+	-- in the arm frame (pitch < 0 tips the top forward, roll > 0 tips it to the left).
+	local HAND = CFrame.Angles(math.rad(-90), 0, 0)
+	local function pose(base: CFrame, pitch: number, roll: number): CFrame
+		local rot = CFrame.Angles(math.rad(pitch), 0, math.rad(roll))
+		return base * HAND:Inverse() * rot:Inverse() * HAND
+	end
+	-- Wind up high and to the right, slash down and across to the left, settle back.
+	local KEYS = {
+		{ 0, 0, 0 },
+		{ 0.08, 38, -32 },
+		{ 0.18, -112, 34 },
+		{ 0.27, -88, 20 },
+		{ 0.42, 0, 0 },
+	}
 	local function swingTool(tool: Tool)
-		if tool:GetAttribute("Swinging") then
-			return
+		local base = idleGrip[tool]
+		if not base then
+			base = tool.Grip
+			idleGrip[tool] = base
 		end
-		tool:SetAttribute("Swinging", true)
-		local grip = tool.Grip
-		-- Wind up, whip down, return.
-		tool.Grip = grip * CFrame.Angles(math.rad(30), 0, 0)
-		task.delay(0.06, function()
-			tool.Grip = grip * CFrame.Angles(math.rad(-100), 0, 0)
-			task.delay(0.1, function()
-				tool.Grip = grip * CFrame.Angles(math.rad(-50), 0, 0)
-				task.delay(0.08, function()
-					tool.Grip = grip
-					tool:SetAttribute("Swinging", nil)
-				end)
-			end)
+		local id = (swingId[tool] or 0) + 1
+		swingId[tool] = id
+		local trail = tool:FindFirstChild("SwingTrail", true) :: Trail?
+		local started = os.clock()
+		local conn: RBXScriptConnection
+		conn = RunService.RenderStepped:Connect(function()
+			if swingId[tool] ~= id or not tool.Parent then
+				conn:Disconnect()
+				return
+			end
+			local t = os.clock() - started
+			local last = KEYS[#KEYS]
+			if t >= last[1] then
+				tool.Grip = base
+				if trail then
+					trail.Enabled = false
+				end
+				conn:Disconnect()
+				return
+			end
+			for k = 1, #KEYS - 1 do
+				local a, b = KEYS[k], KEYS[k + 1]
+				if t < b[1] then
+					local f = (t - a[1]) / (b[1] - a[1])
+					f = f * f * (3 - 2 * f)
+					tool.Grip = pose(base, a[2] + (b[2] - a[2]) * f, a[3] + (b[3] - a[3]) * f)
+					break
+				end
+			end
+			-- The white arc only during the slash itself.
+			if trail then
+				local on = t >= 0.07 and t <= 0.3
+				if trail.Enabled ~= on then
+					trail.Enabled = on
+				end
+			end
 		end)
 	end
 	-- Equipping re-parents the tool into the character (ChildAdded again): hook each tool once.
@@ -1843,6 +2004,9 @@ do
 			return
 		end
 		hookedTools[tool] = true
+		if not idleGrip[tool] then
+			idleGrip[tool] = tool.Grip
+		end
 		tool.Activated:Connect(function()
 			local now = os.clock()
 			-- Fast Hands (skill id QuickRoots) swings faster.
@@ -1921,7 +2085,7 @@ remotes
 		if who == player then
 			play(Config.Sounds.Pick, 0.8, 0.7)
 			if income > 0 then
-				local text = income < 10 and string.format("%.1f", income) or short(income)
+				local text = rateShort(income)
 				floatText(
 					at + Vector3.new(0, 4, 0),
 					"+" .. text .. " 🍬/s",
@@ -1931,36 +2095,184 @@ remotes
 		end
 	end)
 
--- Swing hits on wild pumpkins: a small burst for everyone, a damage number for the hitter.
-remotes
-	:WaitForChild("WildHit").OnClientEvent
-	:Connect(function(who: Player, at: Vector3, damage: number)
-		burst(at + Vector3.new(0, 1, 0), Color3.fromRGB(255, 160, 60), 6, 10, SPARKLE, 0.5)
-		if who == player then
-			local jitter = Vector3.new((math.random() - 0.5) * 2, 3, (math.random() - 0.5) * 2)
-			floatText(at + jitter, "-" .. short(damage), Color3.fromRGB(255, 235, 110))
-			play(Config.Sounds.Bonk, 1.1 + math.min(combo, 10) * 0.03, 0.55)
-			countHit(at)
-		end
-	end)
+-- Wild pumpkins (Pet Sim 99 farming feel). Each hit: a white flash (Highlight, 0.08 s), a
+-- squash to 90 % and back, sparkles and, for the hitter, a damage number. A pop bursts 8 candy
+-- pieces that magnet into the hitter in 0.4 s, then the candy counter punches with "+N".
+-- HP bars (made hidden by the server) show only on your target or on what you hit lately.
+do
+	local wildFolder = garden:WaitForChild("Wild", 10)
+	local hitAt: { [Instance]: number } = setmetatable({}, { __mode = "k" }) :: any
+	local rest: { [BasePart]: { size: Vector3, cf: CFrame } } = setmetatable({}, { __mode = "k" }) :: any
 
--- A wild pumpkin popped; the winner (most damage) got it.
-remotes
-	:WaitForChild("WildPopped").OnClientEvent
-	:Connect(function(at: Vector3, seedId: string, winner: Player?)
-		local seed = seedById[seedId or ""]
-		local color = seed and seedColor(seed) or Color3.fromRGB(255, 130, 40)
-		burst(at, color, 26, 24, SPARKLE, 1.1)
-		burst(at, color, 14, 10, nil, 2.2)
-		play(Config.Sounds.Pick, 1.3, 0.7)
-		if winner == player and seed then
-			floatText(at + Vector3.new(0, 4, 0), "+1 " .. seed.name .. "!", color, seed.order >= 3)
-			if seed.order >= 4 then
-				banner("RARE PUMPKIN!", seed.name .. " pumpkin", 2, color)
+	local function juice(part: BasePart)
+		local flash = Instance.new("Highlight")
+		flash.FillColor = Color3.new(1, 1, 1)
+		flash.FillTransparency = 0
+		flash.OutlineColor = Color3.new(1, 1, 1)
+		flash.OutlineTransparency = 0
+		flash.DepthMode = Enum.HighlightDepthMode.Occluded
+		flash.Parent = part
+		task.delay(0.08, function()
+			flash:Destroy()
+		end)
+		-- The server never resizes a wild pumpkin, so the local squash is safe.
+		local r = rest[part]
+		if not r then
+			r = { size = part.Size, cf = part.CFrame }
+			rest[part] = r
+		end
+		part.Size, part.CFrame = r.size, r.cf
+		local info = TweenInfo.new(0.07, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, true)
+		TweenService:Create(part, info, {
+			Size = r.size * Vector3.new(1.08, 0.9, 1.08),
+			CFrame = r.cf * CFrame.new(0, -r.size.Y * 0.05, 0),
+		}):Play()
+	end
+
+	remotes
+		:WaitForChild("WildHit").OnClientEvent
+		:Connect(function(who: Player, at: Vector3, damage: number, part: BasePart?)
+			burst(at + Vector3.new(0, 1, 0), Color3.fromRGB(255, 160, 60), 6, 10, SPARKLE, 0.5)
+			if part and part.Parent then
+				juice(part)
 			end
-			task.spawn(shake, 0.4, 5)
+			if who == player then
+				if part then
+					hitAt[part] = os.clock()
+				end
+				local top = part and part.Parent and part.Size.Y / 2 or 1.5
+				local jitter =
+					Vector3.new((math.random() - 0.5) * 2.5, top + 1, (math.random() - 0.5) * 2.5)
+				damageText(at + jitter, damage)
+				play(Config.Sounds.Bonk, 1.1 + math.min(combo, 10) * 0.03, 0.55)
+				countHit(at)
+			end
+		end)
+
+	local CANDY_COLORS = {
+		Color3.fromRGB(255, 90, 170),
+		Color3.fromRGB(255, 210, 60),
+		Color3.fromRGB(120, 230, 255),
+		Color3.fromRGB(150, 255, 110),
+		Color3.fromRGB(255, 140, 40),
+	}
+	-- Small neon candies jump out of the pumpkin, then home in on the player's chest.
+	local function candyBurst(at: Vector3, count: number, amount: number)
+		local landed = 0
+		for i = 1, count do
+			local candy = Instance.new("Part")
+			candy.Name = "CandyBit"
+			candy.Shape = i % 2 == 0 and Enum.PartType.Ball or Enum.PartType.Block
+			candy.Size = Vector3.one * (0.45 + math.random() * 0.2)
+			candy.Material = Enum.Material.Neon
+			candy.Color = CANDY_COLORS[(i - 1) % #CANDY_COLORS + 1]
+			candy.Anchored = true
+			candy.CanCollide = false
+			candy.CanQuery = false
+			candy.CanTouch = false
+			candy.CastShadow = false
+			candy.CFrame = CFrame.new(at)
+			candy.Parent = workspace
+			local a = (i / count) * math.pi * 2 + math.random() * 0.5
+			local out = at
+				+ Vector3.new(math.cos(a) * 3, 2.5 + math.random() * 1.5, math.sin(a) * 3)
+			local spin = CFrame.Angles(math.random() * 6, math.random() * 6, math.random() * 6)
+			local t0 = os.clock()
+			local conn: RBXScriptConnection
+			conn = RunService.RenderStepped:Connect(function()
+				local t = os.clock() - t0
+				local root = rootPart()
+				local goal = root and root.Position + Vector3.new(0, 1, 0) or at
+				local p: Vector3
+				if t < 0.15 then
+					-- Pop out (ease out).
+					local f = t / 0.15
+					p = at:Lerp(out, 1 - (1 - f) * (1 - f))
+				else
+					-- Magnet in over 0.4 s (ease in).
+					local f = math.min(1, (t - 0.15) / 0.4)
+					p = out:Lerp(goal, f * f)
+				end
+				candy.CFrame = CFrame.new(p) * spin * CFrame.Angles(t * 9, t * 7, 0)
+				if t >= 0.55 then
+					conn:Disconnect()
+					candy:Destroy()
+					landed += 1
+					if landed == 1 then
+						play(Config.Sounds.Coin, 1.3 + math.random() * 0.2, 0.45)
+					end
+					if landed == count then
+						candyTick(amount)
+					end
+				end
+			end)
+		end
+	end
+
+	remotes
+		:WaitForChild("WildPopped").OnClientEvent
+		:Connect(function(at: Vector3, seedId: string, winner: Player?, candy: number?)
+			local seed = seedById[seedId or ""]
+			local color = seed and seedColor(seed) or Color3.fromRGB(255, 130, 40)
+			burst(at, color, 26, 24, SPARKLE, 1.1)
+			burst(at, color, 14, 10, nil, 2.2)
+			play(Config.Sounds.Pick, 1.3, 0.7)
+			if winner == player and seed then
+				candyBurst(at + Vector3.new(0, 1, 0), math.random(6, 10), candy or 0)
+				floatText(
+					at + Vector3.new(0, 4, 0),
+					"+1 " .. seed.name .. "!",
+					color,
+					seed.order >= 3
+				)
+				if seed.order >= 4 then
+					banner("RARE PUMPKIN!", seed.name .. " pumpkin", 2, color)
+				end
+				task.spawn(shake, 0.4, 5)
+			end
+		end)
+
+	-- The pumpkin your next swing would hit: same reach and facing rule as the server.
+	local function currentTarget(root: BasePart): Instance?
+		local look = root.CFrame.LookVector
+		local best, bestDist = nil, math.huge
+		for _, part in wildFolder and wildFolder:GetChildren() or {} do
+			if part:IsA("BasePart") then
+				local offset = part.Position - root.Position
+				local flat = Vector3.new(offset.X, 0, offset.Z)
+				local dist = math.max(0, flat.Magnitude - part.Size.X / 2)
+				if
+					math.abs(offset.Y) < 12
+					and dist <= Config.BonkRange
+					and dist < bestDist
+					and (flat.Magnitude < 3 or flat.Unit:Dot(look) > -0.2)
+				then
+					best, bestDist = part, dist
+				end
+			end
+		end
+		return best
+	end
+
+	task.spawn(function()
+		while true do
+			task.wait(0.1)
+			local root = rootPart()
+			local target = root and currentTarget(root)
+			local now = os.clock()
+			for _, part in wildFolder and wildFolder:GetChildren() or {} do
+				local bar = part:FindFirstChild("HpBar")
+				if bar and bar:IsA("BillboardGui") then
+					local want = part == target
+						or now - (hitAt[part] or -math.huge) < Config.HitBarSeconds
+					if bar.Enabled ~= want then
+						bar.Enabled = want
+					end
+				end
+			end
 		end
 	end)
+end
 
 remotes:WaitForChild("Harvested").OnClientEvent:Connect(function(who: Player, at: Vector3)
 	burst(at + Vector3.new(0, 1.5, 0), Color3.fromRGB(255, 200, 90), 20, 14, SPARKLE, 0.8)
@@ -2063,12 +2375,7 @@ remotes
 			)
 		burst(at, Color3.fromRGB(255, 120, 60), stunned and 18 or 10, 14, SPARKLE, 0.9)
 		if who == player then
-			floatText(
-				at,
-				"-" .. power,
-				stunned and Color3.fromRGB(255, 150, 40) or Color3.fromRGB(255, 230, 90),
-				stunned
-			)
+			damageText(at, power, stunned and Color3.fromRGB(255, 150, 40) or nil)
 			play(Config.Sounds.Bonk, 0.9 + math.min(combo, 10) * 0.03, 0.8)
 			countHit(at)
 		end
@@ -2186,8 +2493,9 @@ local ZoneView: { [string]: any } = {}
 do
 	local GREEN = Color3.fromRGB(150, 255, 110)
 	local folders: { [string]: Instance } = {}
-	-- X/Z box around each zone's Spawn parts: { minX, maxX, minZ, maxZ }.
-	local boxes: { [string]: { number } } = {}
+	-- One X/Z box per Spawn part of each zone: { minX, maxX, minZ, maxZ }. A single box around all
+	-- of a zone's spawns would cover the market between Zone1's strips, so each spawn counts alone.
+	local boxes: { [string]: { { number } } } = {}
 	local wallLook: { [BasePart]: number } = {}
 
 	local function ownedSet(): { [string]: boolean }
@@ -2262,12 +2570,17 @@ do
 	end
 
 	local function inBox(zoneId: string, pos: Vector3, margin: number): boolean
-		local box = boxes[zoneId]
-		return box ~= nil
-			and pos.X >= box[1] - margin
-			and pos.X <= box[2] + margin
-			and pos.Z >= box[3] - margin
-			and pos.Z <= box[4] + margin
+		for _, box in boxes[zoneId] or {} do
+			if
+				pos.X >= box[1] - margin
+				and pos.X <= box[2] + margin
+				and pos.Z >= box[3] - margin
+				and pos.Z <= box[4] + margin
+			then
+				return true
+			end
+		end
+		return false
 	end
 
 	local function zoneBanner(zoneId: string)
@@ -2317,25 +2630,26 @@ do
 				continue
 			end
 			folders[zoneId] = folder
-			local box = nil
+			local list = {}
 			for _, d in folder:GetDescendants() do
 				if d:IsA("BasePart") and d.Name == "Spawn" then
+					-- The part's own footprint (rotation-safe), so big strip parts work too.
+					local cf, size = d.CFrame, d.Size / 2
+					local hx = math.abs(cf.RightVector.X) * size.X
+						+ math.abs(cf.UpVector.X) * size.Y
+						+ math.abs(cf.LookVector.X) * size.Z
+					local hz = math.abs(cf.RightVector.Z) * size.X
+						+ math.abs(cf.UpVector.Z) * size.Y
+						+ math.abs(cf.LookVector.Z) * size.Z
 					local p = d.Position
-					if not box then
-						box = { p.X, p.X, p.Z, p.Z }
-					else
-						box[1] = math.min(box[1], p.X)
-						box[2] = math.max(box[2], p.X)
-						box[3] = math.min(box[3], p.Z)
-						box[4] = math.max(box[4], p.Z)
-					end
+					table.insert(list, { p.X - hx, p.X + hx, p.Z - hz, p.Z + hz })
 				end
 			end
-			boxes[zoneId] = box
+			boxes[zoneId] = list
 		end
 		refreshGates()
-		-- Entering a zone (a little past its outer spawn spots) shows its banner; leaving needs
-		-- a wider margin so walking along the edge does not repeat it.
+		-- Entering a zone (within a few studs of one of its spawn spots) shows its banner; leaving
+		-- needs a wider margin so walking along the edge does not repeat it.
 		local inside: string? = nil
 		while true do
 			task.wait(0.5)
@@ -2345,11 +2659,11 @@ do
 				continue
 			end
 			local here: string? = nil
-			if inside and inBox(inside, root.Position, 16) then
+			if inside and inBox(inside, root.Position, 12) then
 				here = inside
 			else
 				for _, zoneId in Config.ZoneOrder do
-					if inBox(zoneId, root.Position, 8) then
+					if inBox(zoneId, root.Position, 6) then
 						here = zoneId
 						break
 					end
@@ -2365,220 +2679,308 @@ do
 	end)
 end
 
--- Witch's Orders: a card with the current order and a glowing line to where it happens. -----
+-- Objective (Steal an Egg style): ONE verb for the current Witch's Order in a top-centre banner
+-- ("Smash a Pumpkin!"), a tiny progress line under it, and a short trail of big red 3D arrows on
+-- the ground from you toward the target, recomputed every 0.3 s. --------------------------------
 
-local guideFrame = Instance.new("Frame")
-guideFrame.AnchorPoint = Vector2.new(0.5, 1)
-guideFrame.Position = UDim2.new(0.5, 0, 1, -14)
-guideFrame.Size = UDim2.fromOffset(600, 66)
-guideFrame.BackgroundColor3 = DARK
-guideFrame.BackgroundTransparency = 0.1
-guideFrame.Parent = gui
-corner(guideFrame, 18)
-stroke(guideFrame, 3)
-local guideText = textLabel(guideFrame, "", Color3.fromRGB(150, 255, 110))
-guideText.Position = UDim2.fromOffset(20, 6)
-guideText.Size = UDim2.new(1, -40, 0, 32)
-local guideReward = textLabel(guideFrame, "", Color3.fromRGB(255, 220, 120))
-guideReward.Position = UDim2.fromOffset(20, 40)
-guideReward.Size = UDim2.new(1, -40, 0, 20)
+do
+	local bar = Instance.new("Frame")
+	bar.Name = "Objective"
+	bar.AnchorPoint = Vector2.new(0.5, 0)
+	bar.Position = UDim2.new(0.5, 0, 0, 8)
+	bar.Size = UDim2.fromOffset(480, 58)
+	bar.BackgroundColor3 = Color3.new(0, 0, 0)
+	bar.BackgroundTransparency = 0.45
+	bar.BorderSizePixel = 0
+	bar.Parent = gui
+	-- The dark bar fades out at both ends.
+	local fade = Instance.new("UIGradient")
+	fade.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(0.22, 0),
+		NumberSequenceKeypoint.new(0.78, 0),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	fade.Parent = bar
+	local title = textLabel(bar, "", Color3.new(1, 1, 1))
+	title.Position = UDim2.fromOffset(0, 4)
+	title.Size = UDim2.new(1, 0, 0, 34)
+	local titleStroke = title:FindFirstChildOfClass("UIStroke") :: UIStroke
+	titleStroke.Thickness = 3
+	titleStroke.Color = Color3.fromRGB(15, 8, 20)
+	local progress = textLabel(bar, "", Color3.fromRGB(255, 225, 150))
+	progress.Position = UDim2.fromOffset(0, 39)
+	progress.Size = UDim2.new(1, 0, 0, 16)
+	local popScale = Instance.new("UIScale")
+	popScale.Parent = bar
 
-local beamEnd = Instance.new("Part")
-beamEnd.Name = "GuideTarget"
-beamEnd.Anchored = true
-beamEnd.CanCollide = false
-beamEnd.CanQuery = false
-beamEnd.Transparency = 1
-beamEnd.Size = Vector3.one
-beamEnd.Parent = workspace
-local endAttach = Instance.new("Attachment")
-endAttach.Parent = beamEnd
-local beam = Instance.new("Beam")
-beam.Attachment1 = endAttach
-beam.Width0 = 0.8
-beam.Width1 = 0.8
-beam.Color = ColorSequence.new(Color3.fromRGB(255, 179, 71))
-beam.LightEmission = 1
-beam.Transparency = NumberSequence.new(0.5)
-beam.FaceCamera = true
-beam.Segments = 1
-beam.Parent = beamEnd
-local arrow = Instance.new("BillboardGui")
-arrow.Size = UDim2.fromOffset(70, 70)
-arrow.StudsOffsetWorldSpace = Vector3.new(0, 6, 0)
-arrow.AlwaysOnTop = true
-arrow.LightInfluence = 0
-arrow.Parent = beamEnd
-textLabel(arrow, "⬇", Color3.fromRGB(255, 179, 71)).Size = UDim2.fromScale(1, 1)
+	local function setObjective(verb: string, sub: string)
+		if title.Text ~= verb then
+			title.Text = verb
+			popScale.Scale = 1.18
+			TweenService:Create(popScale, TweenInfo.new(0.3, Enum.EasingStyle.Back), { Scale = 1 })
+				:Play()
+		end
+		if progress.Text ~= sub then
+			progress.Text = sub
+		end
+	end
 
-local function nearestCauldron(from: Vector3): Vector3
-	local best, bestDist = Vector3.zero, math.huge
-	for _, c in cauldronFolder:GetChildren() do
-		local pot = c:FindFirstChild("Pot") :: BasePart?
-		if pot then
-			local d = (pot.Position - from).Magnitude
-			if d < bestDist then
-				best, bestDist = pot.Position, d
+	-- Red 3D chevrons (Steal an Egg style): each is two chunky neon bars in a "^" 1.5 studs wide,
+	-- lying on the ground 2 studs apart. The chain starts 4 studs in front of you (so it stays on
+	-- screen with the chase camera), runs toward the target and stops 8 studs short of it.
+	local RED = Color3.fromRGB(224, 24, 24)
+	local ARROWS, SPACING, FIRST, THICK, STOP = 14, 2, 4, 0.4, 8
+	local arrowFolder = Instance.new("Folder")
+	arrowFolder.Name = "GuideArrows"
+	arrowFolder.Parent = workspace
+	local arrowParts: { BasePart } = {}
+	local arrowOffsets: { CFrame } = {}
+	local arrowOf: { number } = {}
+	local function arrowPart(p: BasePart, size: Vector3, offset: CFrame, i: number)
+		p.Size = size
+		p.Anchored = true
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.CastShadow = false
+		p.Material = Enum.Material.Neon
+		p.Color = RED
+		p.Transparency = 1
+		p.Parent = arrowFolder
+		table.insert(arrowParts, p)
+		table.insert(arrowOffsets, offset)
+		table.insert(arrowOf, i)
+	end
+	for i = 1, ARROWS do
+		-- Forward is -Z: the tip sits at z = -0.4, the two arms run back to x = +-0.75.
+		for side = -1, 1, 2 do
+			arrowPart(
+				Instance.new("Part"),
+				Vector3.new(0.42, THICK, 1.1),
+				CFrame.new(side * 0.375, 0, -0.4 + 0.375) * CFrame.Angles(0, side * math.rad(45), 0),
+				i
+			)
+		end
+	end
+	-- A bobbing red marker over the target itself.
+	local marker = Instance.new("Part")
+	marker.Name = "GuideTarget"
+	marker.Anchored = true
+	marker.CanCollide = false
+	marker.CanQuery = false
+	marker.CanTouch = false
+	marker.Transparency = 1
+	marker.Size = Vector3.one
+	marker.Parent = arrowFolder
+	local markerGui = Instance.new("BillboardGui")
+	markerGui.Size = UDim2.fromOffset(64, 64)
+	markerGui.StudsOffsetWorldSpace = Vector3.new(0, 6, 0)
+	markerGui.AlwaysOnTop = true
+	markerGui.LightInfluence = 0
+	markerGui.Enabled = false
+	markerGui.Parent = marker
+	textLabel(markerGui, "⬇", RED).Size = UDim2.fromScale(1, 1)
+
+	-- Arrow index -> where it lies (missing = hidden).
+	local arrowBase: { [number]: CFrame } = {}
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Exclude
+	rayParams.RespectCanCollide = true
+	local function placeArrows(target: Vector3?)
+		table.clear(arrowBase)
+		local root = rootPart()
+		markerGui.Enabled = target ~= nil
+		if not target or not root then
+			return
+		end
+		marker.Position = target + Vector3.new(0, 2, 0)
+		local flat = Vector3.new(target.X - root.Position.X, 0, target.Z - root.Position.Z)
+		local dist = flat.Magnitude
+		if dist < STOP then
+			return
+		end
+		local dir = flat.Unit
+		local skip: { Instance } = { arrowFolder }
+		for _, name in { "Wild", "Loose", "Ghosts" } do
+			local f = garden:FindFirstChild(name)
+			if f then
+				table.insert(skip, f)
 			end
 		end
-	end
-	return best
-end
-
-local function setGuide(text: string, sub: string, target: Vector3?)
-	guideText.Text = text
-	guideReward.Text = sub
-	if target then
-		beamEnd.Position = target + Vector3.new(0, 2, 0)
-		local root = rootPart()
-		local a0 = root and root:FindFirstChild("GuideStart") :: Attachment?
-		if root and not a0 then
-			local a = Instance.new("Attachment")
-			a.Name = "GuideStart"
-			a.Position = Vector3.new(0, -2, 0)
-			a.Parent = root
-			a0 = a
+		if player.Character then
+			table.insert(skip, player.Character)
 		end
-		beam.Attachment0 = a0
-		beam.Enabled = true
-		arrow.Enabled = true
-	else
-		beam.Enabled = false
-		arrow.Enabled = false
+		rayParams.FilterDescendantsInstances = skip
+		for i = 1, ARROWS do
+			local d = FIRST + (i - 1) * SPACING
+			if d > dist - 3 then
+				break
+			end
+			local p = root.Position + dir * d
+			local hit =
+				workspace:Raycast(p + Vector3.new(0, 6, 0), Vector3.new(0, -40, 0), rayParams)
+			local y = hit and hit.Position.Y or root.Position.Y - 3
+			local at = Vector3.new(p.X, y + THICK / 2 + 0.08, p.Z)
+			arrowBase[i] = CFrame.lookAt(at, at + dir)
+		end
 	end
-end
 
--- The server publishes orders as JSON in the "Orders" attribute.
-local ordersData: { [string]: any }? = nil
-local function readOrders()
-	local raw = player:GetAttribute("Orders")
-	if type(raw) ~= "string" then
-		ordersData = nil
-		return
-	end
-	local ok, data = pcall(function()
-		return HttpService:JSONDecode(raw)
+	-- A pulse runs along the trail toward the target; the marker bobs.
+	RunService.RenderStepped:Connect(function()
+		local t = os.clock()
+		local moved: { BasePart } = {}
+		local frames: { CFrame } = {}
+		for k, p in arrowParts do
+			local i = arrowOf[k]
+			local base = arrowBase[i]
+			if base then
+				local wave = 0.5 + 0.5 * math.sin(t * 6 - i * 0.7)
+				p.Transparency = 0.25 * (1 - wave)
+				table.insert(moved, p)
+				table.insert(frames, base * CFrame.new(0, 0.35 * wave, 0) * arrowOffsets[k])
+			elseif p.Transparency ~= 1 then
+				p.Transparency = 1
+			end
+		end
+		if #moved > 0 then
+			workspace:BulkMoveTo(moved, frames, Enum.BulkMoveMode.FireCFrameChanged)
+		end
+		if markerGui.Enabled then
+			markerGui.StudsOffsetWorldSpace = Vector3.new(0, 6 + math.sin(t * 4) * 0.6, 0)
+		end
 	end)
-	ordersData = ok and type(data) == "table" and data or nil
-end
-player:GetAttributeChangedSignal("Orders"):Connect(readOrders)
-readOrders()
 
-local function stallPosition(name: string): Vector3?
-	local stall = market:FindFirstChild(name)
-	return stall and (stall :: Model):GetPivot().Position
-end
+	-- The server publishes orders as JSON in the "Orders" attribute.
+	local ordersData: { [string]: any }? = nil
+	local function readOrders()
+		local raw = player:GetAttribute("Orders")
+		if type(raw) ~= "string" then
+			ordersData = nil
+			return
+		end
+		local ok, data = pcall(function()
+			return HttpService:JSONDecode(raw)
+		end)
+		ordersData = ok and type(data) == "table" and data or nil
+	end
+	player:GetAttributeChangedSignal("Orders"):Connect(readOrders)
+	readOrders()
 
--- The zone: the nearest wild pumpkin in a zone you unlocked, else the nearest spawn spot of Zone1.
-local function zoneTarget(from: Vector3): Vector3?
-	local best, bestDist = nil, math.huge
-	local wild = garden:FindFirstChild("Wild")
-	local zones = garden:FindFirstChild("Zones")
-	local zone = zones and zones:FindFirstChild("Zone1")
-	for _, list in { wild and wild:GetChildren() or {}, zone and zone:GetChildren() or {} } do
-		for _, part in list do
-			local zoneId = part:GetAttribute("Zone")
-			if part:IsA("BasePart") and (type(zoneId) ~= "string" or ZoneView.has(zoneId)) then
-				local d = (part.Position - from).Magnitude
+	local function nearestCauldron(from: Vector3): Vector3?
+		local best, bestDist = nil, math.huge
+		for _, c in cauldronFolder:GetChildren() do
+			local pot = c:FindFirstChild("Pot") :: BasePart?
+			if pot then
+				local d = (pot.Position - from).Magnitude
 				if d < bestDist then
-					best, bestDist = part.Position, d
+					best, bestDist = pot.Position, d
 				end
 			end
 		end
-		if best then
-			return best
-		end
+		return best
 	end
-	return nil
-end
 
--- The nearest base of another player (for steal orders).
-local function otherBase(from: Vector3): Vector3?
-	local best, bestDist = nil, math.huge
-	for _, patch in patchFolder:GetChildren() do
-		local owner = patch:GetAttribute("Owner") or 0
-		local soil = patch:FindFirstChild("Soil") :: BasePart?
-		if soil and owner ~= 0 and owner ~= player.UserId then
-			local d = (soil.Position - from).Magnitude
-			if d < bestDist then
-				best, bestDist = soil.Position, d
+	local function stallPosition(name: string): Vector3?
+		local stall = market:FindFirstChild(name)
+		return stall and (stall :: Model):GetPivot().Position
+	end
+
+	-- The nearest wild pumpkin in a zone you unlocked, else the nearest spawn spot of Zone1.
+	local function zoneTarget(from: Vector3): Vector3?
+		local best, bestDist = nil, math.huge
+		local wild = garden:FindFirstChild("Wild")
+		local zones = garden:FindFirstChild("Zones")
+		local zone = zones and zones:FindFirstChild("Zone1")
+		for _, list in { wild and wild:GetChildren() or {}, zone and zone:GetChildren() or {} } do
+			for _, part in list do
+				local zoneId = part:GetAttribute("Zone")
+				if part:IsA("BasePart") and (type(zoneId) ~= "string" or ZoneView.has(zoneId)) then
+					local d = (part.Position - from).Magnitude
+					if d < bestDist then
+						best, bestDist = part.Position, d
+					end
+				end
+			end
+			if best then
+				return best
 			end
 		end
+		return nil
 	end
-	return best
-end
 
--- Where the beam points for an order, given what you carry right now. Without pumpkins the
--- way to the cauldron / Witch / your base starts in the zone.
-local function orderTarget(kind: string, root: BasePart, soil: BasePart): Vector3?
-	local carry = player:GetAttribute("Carry") or 0
-	local zone = zoneTarget(root.Position) or soil.Position
-	if kind == "zone" then
-		return zone
-	elseif kind == "place" then
-		return carry > 0 and soil.Position or zone
-	elseif kind == "steal" then
-		return carry > 0 and soil.Position or otherBase(root.Position) or soil.Position
-	elseif kind == "cauldron" then
-		return carry > 0 and nearestCauldron(root.Position) or zone
-	elseif kind == "witch" then
-		return carry > 0 and stallPosition("Sell") or zone
-	elseif kind == "tools" or kind == "seeds" then
-		return stallPosition("Seeds")
-	elseif kind == "upgrades" then
-		return stallPosition("Upgrades")
-	elseif kind == "king" then
-		return state:GetAttribute("Phase") == "BloodMoon" and kingFace.Position
-			or giantJack.Position
-	elseif kind == "gate" then
-		local nextZone = ZoneView.nextLocked()
-		return nextZone and ZoneView.gate(nextZone) or soil.Position
-	end
-	return soil.Position
-end
-
--- Keep the order card clear of the touch SWING / RUN buttons (about 260 px from the right edge,
--- not affected by uiScale).
-local function fitBottom()
-	local camera = workspace.CurrentCamera
-	if not camera or uiScale.Scale <= 0 then
-		return
-	end
-	local scale = uiScale.Scale
-	local w = camera.ViewportSize.X / scale
-	local side = UserInputService.TouchEnabled and 270 / scale or 20
-	local guideWidth = math.floor(math.min(600, math.max(300, w - 2 * side)))
-	if guideFrame.Size.X.Offset ~= guideWidth then
-		guideFrame.Size = UDim2.fromOffset(guideWidth, 66)
-	end
-end
-
-task.spawn(function()
-	while true do
-		task.wait(0.4)
-		fitBottom()
-		local root = rootPart()
-		local patch = myPatch()
-		if not root or not patch then
-			continue
+	-- The nearest base of another player (steal orders, Blood Moon).
+	local function otherBase(from: Vector3): Vector3?
+		local best, bestDist = nil, math.huge
+		for _, patch in patchFolder:GetChildren() do
+			local owner = patch:GetAttribute("Owner") or 0
+			local soil = patch:FindFirstChild("Soil") :: BasePart?
+			if soil and owner ~= 0 and owner ~= player.UserId then
+				local d = (soil.Position - from).Magnitude
+				if d < bestDist then
+					best, bestDist = soil.Position, d
+				end
+			end
 		end
-		local soil = patch:FindFirstChild("Soil") :: BasePart
-		local data = ordersData
-		if not data or not player:GetAttribute("Loaded") then
-			setGuide("Loading your farm...", "", nil)
-			continue
+		return best
+	end
+
+	local function nearestGhost(from: Vector3): Vector3?
+		local folder = garden:FindFirstChild("Ghosts")
+		local best, bestDist = nil, math.huge
+		for _, ghost in folder and folder:GetChildren() or {} do
+			local body = ghost:IsA("Model") and ghost.PrimaryPart
+			if body then
+				local d = (body.Position - from).Magnitude
+				if d < bestDist then
+					best, bestDist = body.Position, d
+				end
+			end
 		end
-		-- After the tutorial: when the next zone's gate is affordable, the beam points there.
-		local nextZone = not data.tutorial and ZoneView.nextLocked() or nil
-		local nextDef = nextZone and Config.Zones[nextZone]
-		local gatePos = nextZone and ZoneView.gate(nextZone)
-		if nextDef and gatePos and candyValue.Value >= (nextDef.cost or 0) then
-			setGuide(
-				"NEW ZONE: Unlock the " .. nextDef.title .. "!",
-				"Costs " .. short(nextDef.cost or 0) .. " 🍬 · follow the beam to its gate",
-				gatePos
-			)
-			continue
+		return best
+	end
+
+	-- Carrying toward your base: "Go to your Base!" until you stand on it.
+	local function goHome(root: BasePart, soil: BasePart): string
+		local d =
+			Vector3.new(root.Position.X - soil.Position.X, 0, root.Position.Z - soil.Position.Z)
+		local reach = math.max(soil.Size.X, soil.Size.Z) / 2 + 6
+		return d.Magnitude < reach and "Place your Pumpkin!" or "Go to your Base!"
+	end
+
+	-- One verb, a progress line and the target for what you should do right now.
+	local function objective(data, root: BasePart, soil: BasePart): (string, string, Vector3?)
+		local carry = player:GetAttribute("Carry") or 0
+		local unbrewed = carry - (player:GetAttribute("CarryBrewed") or 0)
+		local phase = state:GetAttribute("Phase")
+		local zone = zoneTarget(root.Position) or soil.Position
+		if (player:GetAttribute("CarryStolen") or 0) > 0 then
+			return goHome(root, soil), "Place it on your base to keep it!", soil.Position
+		end
+		if phase == "BloodMoon" and state:GetAttribute("KingHp") ~= nil then
+			return "Hit the King!", "Everyone bonk the Pumpkin King!", kingFace.Position
+		end
+		if phase == "BloodMoon" and state:GetAttribute("LocksOff") then
+			local other = otherBase(root.Position)
+			if other then
+				return "Steal a Pumpkin!", "Blood Moon: every lock is off!", other
+			end
+		end
+		if not data.tutorial then
+			-- After the tutorial: an affordable next zone comes first, then midnight ghosts.
+			local nextZone = ZoneView.nextLocked()
+			local def = nextZone and Config.Zones[nextZone]
+			local gate = nextZone and ZoneView.gate(nextZone)
+			if def and gate and candyValue.Value >= (def.cost or 0) then
+				return "Unlock the " .. def.title .. "!",
+					"Costs " .. short(def.cost or 0) .. " 🍬 at its gate",
+					gate
+			end
+			if phase == "Midnight" then
+				return "Bonk the Ghosts!",
+					"Ghosts are raiding the bases",
+					nearestGhost(root.Position) or soil.Position
+			end
 		end
 		local current = nil
 		for _, order in data.list or {} do
@@ -2589,17 +2991,304 @@ task.spawn(function()
 		end
 		if not current then
 			local left = (data.refreshAt or 0) - workspace:GetServerTimeNow()
-			setGuide("All orders done!", "New orders from the Witch in " .. clockText(left), nil)
-			continue
+			return "Smash a Pumpkin!", "New orders from the Witch in " .. clockText(left), zone
 		end
-		local text = string.format("ORDER: %s  %d/%d", current.text, current.have, current.need)
-		local sub = "Reward: " .. current.reward
+		local sub = string.format(
+			"%s  %s/%s",
+			current.text,
+			short(current.have or 0),
+			short(current.need or 1)
+		)
 		if data.tutorial then
 			sub = string.format("Step %d/%d · %s", data.step or 1, data.steps or 8, sub)
 		end
-		setGuide(text, sub, orderTarget(current.target, root, soil))
+		local kind, stat = current.target, current.stat or ""
+		if kind == "zone" then
+			return "Smash a Pumpkin!", sub, zone
+		elseif kind == "place" or (kind == "patch" and stat == "income") then
+			if carry > 0 then
+				return goHome(root, soil), sub, soil.Position
+			end
+			return "Smash a Pumpkin!", sub, zone
+		elseif kind == "steal" then
+			return "Steal a Pumpkin!", sub, otherBase(root.Position) or soil.Position
+		elseif kind == "cauldron" then
+			if unbrewed > 0 then
+				return "Brew it!", sub, nearestCauldron(root.Position)
+			end
+			return "Smash a Pumpkin!", sub, zone
+		elseif kind == "witch" or kind == "king" then
+			-- Sales fill the Giant Jack, which wakes the King.
+			if carry > 0 then
+				return "Sell to the Witch!", sub, stallPosition("Sell")
+			end
+			return "Smash a Pumpkin!", sub, zone
+		elseif kind == "tools" or kind == "seeds" then
+			return "Buy a Scythe!", sub, stallPosition("Seeds")
+		elseif kind == "upgrades" then
+			return "Buy an Upgrade!", sub, stallPosition("Upgrades")
+		elseif kind == "gate" then
+			local nextZone = ZoneView.nextLocked()
+			return "Unlock a Zone!", sub, nextZone and ZoneView.gate(nextZone) or soil.Position
+		elseif stat == "bonkGhost" then
+			local ghost = phase == "Midnight" and nearestGhost(root.Position) or nil
+			return "Bonk the Ghosts!", sub .. " · they come at midnight", ghost or soil.Position
+		elseif stat == "lock" then
+			return "Lock your Base!", sub, soil.Position
+		elseif stat == "stopThief" then
+			return "Guard your Base!", sub, soil.Position
+		elseif stat == "rescue" then
+			return "Save your Pumpkins!", sub, soil.Position
+		end
+		return "Go to your Base!", sub, soil.Position
 	end
-end)
+
+	task.spawn(function()
+		while true do
+			task.wait(0.3)
+			local root = rootPart()
+			local patch = myPatch()
+			local soil = patch and patch:FindFirstChild("Soil") :: BasePart?
+			local data = ordersData
+			if not root or not soil or not data or not player:GetAttribute("Loaded") then
+				setObjective("Loading your farm...", "")
+				placeArrows(nil)
+				continue
+			end
+			local verb, sub, target = objective(data, root, soil)
+			setObjective(verb, sub)
+			placeArrows(target)
+		end
+	end)
+end
+
+-- Steal drama: while you carry a stolen pumpkin a dark-red RUN!! pill, a pulsing red screen-edge
+-- vignette and a red Drop button show. A robbed owner gets a toast, a red flash and sees the
+-- thief glowing red. --------------------------------------------------------------------------
+
+do
+	local dropRemote = remotes:WaitForChild("Drop")
+	local run = Instance.new("Frame")
+	run.Name = "Run"
+	run.AnchorPoint = Vector2.new(0.5, 0)
+	run.Position = UDim2.new(0.5, 0, 0, 72)
+	run.Size = UDim2.fromOffset(150, 40)
+	run.BackgroundColor3 = Color3.fromRGB(139, 0, 0)
+	run.Visible = false
+	run.Parent = gui
+	corner(run, 12)
+	stroke(run, 2.5).Color = Color3.new(0, 0, 0)
+	local runLabel = textLabel(run, "RUN!!", Color3.new(1, 1, 1))
+	runLabel.Position = UDim2.fromOffset(8, 5)
+	runLabel.Size = UDim2.new(1, -16, 1, -10)
+	local runScale = Instance.new("UIScale")
+	runScale.Parent = run
+
+	local drop = pill("🗑 Drop", Color3.fromRGB(225, 40, 40), 0)
+	drop.Parent = gui
+	drop.AnchorPoint = Vector2.new(0.5, 1)
+	drop.Position = UDim2.new(0.5, 0, 1, -98)
+	drop.Size = UDim2.fromOffset(150, 46)
+	drop.Visible = false
+	drop.Activated:Connect(function()
+		dropRemote:FireServer()
+	end)
+
+	-- Vignette and flash live in their own unscaled ScreenGui so they always cover the screen.
+	local alarmGui = Instance.new("ScreenGui")
+	alarmGui.Name = "PatchAlarm"
+	alarmGui.ResetOnSpawn = false
+	alarmGui.IgnoreGuiInset = true
+	alarmGui.DisplayOrder = 3
+	alarmGui.Parent = player:WaitForChild("PlayerGui")
+	local vignette = Instance.new("Frame")
+	vignette.BackgroundTransparency = 1
+	vignette.Size = UDim2.fromScale(1, 1)
+	vignette.Visible = false
+	vignette.Parent = alarmGui
+	local edges: { Frame } = {}
+	for _, e in
+		{
+			{ Vector2.new(0, 0), UDim2.fromScale(0, 0), UDim2.fromScale(1, 0.18), 90 },
+			{ Vector2.new(0, 1), UDim2.fromScale(0, 1), UDim2.fromScale(1, 0.18), -90 },
+			{ Vector2.new(0, 0), UDim2.fromScale(0, 0), UDim2.fromScale(0.13, 1), 0 },
+			{ Vector2.new(1, 0), UDim2.fromScale(1, 0), UDim2.fromScale(0.13, 1), 180 },
+		}
+	do
+		local edge = Instance.new("Frame")
+		edge.AnchorPoint = e[1]
+		edge.Position = e[2]
+		edge.Size = e[3]
+		edge.BackgroundColor3 = Color3.fromRGB(230, 20, 30)
+		edge.BorderSizePixel = 0
+		edge.Parent = vignette
+		local gradient = Instance.new("UIGradient")
+		gradient.Rotation = e[4]
+		gradient.Transparency = NumberSequence.new(0, 1)
+		gradient.Parent = edge
+		table.insert(edges, edge)
+	end
+	local flash = Instance.new("Frame")
+	flash.BackgroundColor3 = Color3.fromRGB(255, 30, 30)
+	flash.BackgroundTransparency = 1
+	flash.BorderSizePixel = 0
+	flash.Size = UDim2.fromScale(1, 1)
+	flash.Parent = alarmGui
+
+	local function refresh()
+		local stolen = (player:GetAttribute("CarryStolen") or 0) > 0
+		run.Visible = stolen
+		drop.Visible = stolen
+		vignette.Visible = stolen
+	end
+	player:GetAttributeChangedSignal("CarryStolen"):Connect(refresh)
+	refresh()
+
+	RunService.RenderStepped:Connect(function()
+		if not vignette.Visible then
+			return
+		end
+		local wave = 0.5 + 0.5 * math.sin(os.clock() * 6)
+		for _, edge in edges do
+			edge.BackgroundTransparency = 0.1 + 0.4 * (1 - wave)
+		end
+		runScale.Scale = 1 + 0.07 * wave
+	end)
+
+	remotes:WaitForChild("StealAlarm").OnClientEvent:Connect(function(kind: string, a, b, c)
+		if kind == "stole" then
+			hint('You stole a <font color="#FF3B3B">PUMPKIN</font>!')
+			play(Config.Sounds.Coin, 1.4, 0.8)
+			task.spawn(shake, 0.5, 6)
+		elseif kind == "robbed" then
+			hint('⚠ Someone is <font color="#FF3B3B">stealing</font> from your base!')
+			hint(
+				string.format(
+					"%s took your %s pumpkin (+%s 🍬). Bonk them to get it back!",
+					tostring(a),
+					tostring(b),
+					short(tonumber(c) or 0)
+				)
+			)
+			play(Config.Sounds.Bonk, 0.5, 1)
+			for k = 0, 1 do
+				task.delay(k * 0.45, function()
+					flash.BackgroundTransparency = 0.45
+					TweenService:Create(flash, TweenInfo.new(0.4), { BackgroundTransparency = 1 })
+						:Play()
+				end)
+			end
+		end
+	end)
+
+	-- Thieves carrying your pumpkins glow red (StealingFrom = ",ownerId,...").
+	local glows: { [Player]: Highlight } = {}
+	task.spawn(function()
+		while true do
+			task.wait(0.3)
+			local mine = "," .. player.UserId .. ","
+			for _, who in Players:GetPlayers() do
+				local from = who:GetAttribute("StealingFrom")
+				local character = who.Character
+				local want = who ~= player
+					and character ~= nil
+					and type(from) == "string"
+					and string.find(from, mine, 1, true) ~= nil
+				local glow = glows[who]
+				if want and (not glow or glow.Parent ~= character) then
+					if glow then
+						glow:Destroy()
+					end
+					glow = Instance.new("Highlight")
+					glow.FillColor = Color3.fromRGB(255, 30, 30)
+					glow.FillTransparency = 0.45
+					glow.OutlineColor = Color3.fromRGB(255, 90, 90)
+					glow.OutlineTransparency = 0
+					glow.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+					glow.Parent = character
+					glows[who] = glow
+				elseif not want and glow then
+					glow:Destroy()
+					glows[who] = nil
+				end
+			end
+			for who, glow in glows do
+				if not who.Parent then
+					glow:Destroy()
+					glows[who] = nil
+				end
+			end
+		end
+	end)
+end
+
+-- Income pops: every second each pumpkin on YOUR base pops a green "+X" (its candy per second,
+-- from the server's "Rate" attribute). ----------------------------------------------------------
+
+do
+	local playerGui = player:WaitForChild("PlayerGui")
+	local function incomePop(p: BasePart, rate: number)
+		if not p.Parent then
+			return
+		end
+		local y = p.Size.Y / 2 + 2.4
+		local bb = Instance.new("BillboardGui")
+		bb.Adornee = p
+		bb.Size = UDim2.fromOffset(110, 32)
+		bb.StudsOffsetWorldSpace = Vector3.new(0, y, 0)
+		bb.AlwaysOnTop = true
+		bb.LightInfluence = 0
+		bb.MaxDistance = 90
+		local label = Instance.new("TextLabel")
+		label.BackgroundTransparency = 1
+		label.Size = UDim2.fromScale(1, 1)
+		label.Font = Enum.Font.FredokaOne
+		label.TextScaled = true
+		label.TextColor3 = Color3.fromRGB(80, 255, 80)
+		label.Text = "+" .. rateShort(rate)
+		label.Parent = bb
+		local outline = Instance.new("UIStroke")
+		outline.Thickness = 2.5
+		outline.Color = Color3.fromRGB(10, 40, 10)
+		outline.Parent = label
+		bb.Parent = playerGui
+		TweenService:Create(
+			bb,
+			TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{ StudsOffsetWorldSpace = Vector3.new(0, y + 2.4, 0) }
+		):Play()
+		local fade =
+			TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.45)
+		TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
+		TweenService:Create(outline, fade, { Transparency = 1 }):Play()
+		task.delay(0.95, function()
+			bb:Destroy()
+		end)
+	end
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			local patch = myPatch()
+			local root = rootPart()
+			if not patch or not root then
+				continue
+			end
+			for _, plot in patch:GetChildren() do
+				local p = plot.Name == "Plot" and plot:FindFirstChild("Pumpkin")
+				if p and p:IsA("BasePart") then
+					local rate = p:GetAttribute("Rate")
+					if
+						type(rate) == "number"
+						and rate > 0
+						and (p.Position - root.Position).Magnitude < 90
+					then
+						task.delay(math.random() * 0.25, incomePop, p, rate)
+					end
+				end
+			end
+		end
+	end)
+end
 
 remotes:WaitForChild("OrderDone").OnClientEvent:Connect(function(text: string, reward: string)
 	banner("ORDER DONE!", text .. " · " .. reward, 2.6, Color3.fromRGB(150, 255, 110))
@@ -2607,17 +3296,276 @@ remotes:WaitForChild("OrderDone").OnClientEvent:Connect(function(text: string, r
 	play(Config.Sounds.Brew, 1.6, 0.5)
 end)
 
-remotes
-	:WaitForChild("Daily").OnClientEvent
-	:Connect(function(streak: number, candy: number, token: boolean)
-		banner(
-			string.format("DAILY CHEST · DAY %d", streak),
-			string.format("+%s candy", short(candy)) .. (token and " · next brew is CURSED!" or ""),
-			3.5,
-			Color3.fromRGB(255, 214, 80)
+-- Daily reward (Pet Sim 99 panel style). The server grants the candy on join and fires Daily;
+-- this shows a centred white panel: tilted italic "DAILY REWARD!" on the top-left edge, a red X,
+-- a chest, a 7-day strip (past days ticked, today highlighted), the reward and a big green
+-- CLAIM! button that closes it with confetti and candies flying into the counter.
+do
+	local dailyGui = Instance.new("ScreenGui")
+	dailyGui.Name = "PatchDaily"
+	dailyGui.ResetOnSpawn = false
+	dailyGui.IgnoreGuiInset = true
+	dailyGui.DisplayOrder = 4
+	dailyGui.Parent = player:WaitForChild("PlayerGui")
+	local INK = Color3.fromRGB(26, 15, 46)
+	local open: Frame? = nil
+
+	local function confetti()
+		local colors = {
+			Color3.fromRGB(255, 80, 120),
+			Color3.fromRGB(255, 210, 60),
+			Color3.fromRGB(90, 220, 255),
+			Color3.fromRGB(120, 235, 90),
+			Color3.fromRGB(190, 120, 255),
+			Color3.fromRGB(255, 150, 50),
+		}
+		for i = 1, 30 do
+			local bit = Instance.new("Frame")
+			bit.Name = "Confetti"
+			bit.BorderSizePixel = 0
+			bit.AnchorPoint = Vector2.new(0.5, 0.5)
+			bit.BackgroundColor3 = colors[(i - 1) % #colors + 1]
+			bit.Size = UDim2.fromOffset(math.random(8, 14), math.random(14, 22))
+			local x = 0.15 + math.random() * 0.7
+			bit.Position = UDim2.fromScale(x, -0.05 - math.random() * 0.15)
+			bit.Rotation = math.random(0, 360)
+			bit.ZIndex = 50
+			bit.Parent = dailyGui
+			local fall = 1.3 + math.random() * 0.9
+			TweenService
+				:Create(bit, TweenInfo.new(fall, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+					Position = UDim2.fromScale(x + (math.random() - 0.5) * 0.25, 1.08),
+					Rotation = bit.Rotation + math.random(-540, 540),
+				})
+				:Play()
+			task.delay(fall + 0.05, function()
+				bit:Destroy()
+			end)
+		end
+	end
+
+	local function close(celebrate: boolean)
+		local frame = open
+		if not frame then
+			return
+		end
+		open = nil
+		if celebrate then
+			confetti()
+			candyShower(10)
+			play(Config.Sounds.Coin, 0.9, 1)
+			play(Config.Sounds.Brew, 1.6, 0.5)
+		end
+		local scale = frame:FindFirstChildOfClass("UIScale") :: UIScale
+		local shrink = TweenService:Create(
+			scale,
+			TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.In),
+			{ Scale = 0 }
 		)
-		play(Config.Sounds.Coin, 0.9, 1)
-	end)
+		shrink:Play()
+		shrink.Completed:Once(function()
+			frame:Destroy()
+		end)
+	end
+
+	local function chestIcon(parent: Instance, z: number): Frame
+		local holder = Instance.new("Frame")
+		holder.BackgroundTransparency = 1
+		holder.Size = UDim2.fromOffset(110, 86)
+		holder.ZIndex = z
+		holder.Parent = parent
+		local body = Instance.new("Frame")
+		body.Position = UDim2.fromOffset(6, 34)
+		body.Size = UDim2.fromOffset(98, 50)
+		body.BackgroundColor3 = Color3.fromRGB(170, 96, 44)
+		body.ZIndex = z
+		body.Parent = holder
+		corner(body, 8)
+		stroke(body, 3).Color = INK
+		local lid = Instance.new("Frame")
+		lid.Position = UDim2.fromOffset(2, 6)
+		lid.Size = UDim2.fromOffset(106, 34)
+		lid.BackgroundColor3 = Color3.fromRGB(200, 120, 56)
+		lid.ZIndex = z + 1
+		lid.Parent = holder
+		corner(lid, 14)
+		stroke(lid, 3).Color = INK
+		for _, x in { 18, 82 } do
+			local band = Instance.new("Frame")
+			band.Position = UDim2.fromOffset(x, 6)
+			band.Size = UDim2.fromOffset(10, 78)
+			band.BackgroundColor3 = Color3.fromRGB(255, 205, 60)
+			band.BorderSizePixel = 0
+			band.ZIndex = z + 2
+			band.Parent = holder
+		end
+		local lock = Instance.new("Frame")
+		lock.Position = UDim2.fromOffset(43, 30)
+		lock.Size = UDim2.fromOffset(24, 26)
+		lock.BackgroundColor3 = Color3.fromRGB(255, 220, 80)
+		lock.ZIndex = z + 3
+		lock.Parent = holder
+		corner(lock, 6)
+		stroke(lock, 2.5).Color = INK
+		return holder
+	end
+
+	local function showDaily(streak: number, candy: number, token: boolean)
+		close(false)
+		local frame = Instance.new("Frame")
+		frame.Name = "DailyReward"
+		frame.AnchorPoint = Vector2.new(0.5, 0.5)
+		frame.Position = UDim2.fromScale(0.5, 0.52)
+		frame.Size = UDim2.fromOffset(520, 400)
+		frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		frame.ZIndex = 10
+		frame.Parent = dailyGui
+		corner(frame, 16)
+		stroke(frame, 4).Color = INK
+		local scale = Instance.new("UIScale")
+		scale.Scale = 0
+		scale.Parent = frame
+		open = frame
+		TweenService:Create(
+			scale,
+			TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+			{ Scale = uiScale.Scale }
+		):Play()
+
+		-- Tilted italic title hanging over the top-left edge.
+		local title = textLabel(frame, "DAILY REWARD!", Color3.fromRGB(255, 200, 40))
+		title.FontFace = Font.new(
+			"rbxasset://fonts/families/GothamSSm.json",
+			Enum.FontWeight.Heavy,
+			Enum.FontStyle.Italic
+		)
+		title.AnchorPoint = Vector2.new(0, 0.5)
+		title.Position = UDim2.fromOffset(-14, 2)
+		title.Size = UDim2.fromOffset(300, 54)
+		title.Rotation = -6
+		title.ZIndex = 14
+		title.TextXAlignment = Enum.TextXAlignment.Left
+		local titleStroke = title:FindFirstChildOfClass("UIStroke") :: UIStroke
+		titleStroke.Thickness = 4
+		titleStroke.Color = INK
+
+		local x = button(frame, "X", Color3.fromRGB(225, 50, 50))
+		x.AnchorPoint = Vector2.new(1, 0)
+		x.Position = UDim2.new(1, 12, 0, -12)
+		x.Size = UDim2.fromOffset(48, 48)
+		x.ZIndex = 14
+		for _, d in x:GetDescendants() do
+			if d:IsA("GuiObject") then
+				d.ZIndex += 13
+			elseif d:IsA("UICorner") then
+				d.CornerRadius = UDim.new(0, 10)
+			end
+		end
+		x.Activated:Connect(function()
+			close(false)
+		end)
+
+		local chest = chestIcon(frame, 12)
+		chest.AnchorPoint = Vector2.new(0.5, 0)
+		chest.Position = UDim2.new(0.5, 0, 0, 42)
+		local chestScale = Instance.new("UIScale")
+		chestScale.Parent = chest
+		TweenService:Create(
+			chestScale,
+			TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+			{ Scale = 1.08 }
+		):Play()
+
+		-- 7-day strip.
+		local strip = Instance.new("Frame")
+		strip.BackgroundTransparency = 1
+		strip.AnchorPoint = Vector2.new(0.5, 0)
+		strip.Position = UDim2.new(0.5, 0, 0, 142)
+		strip.Size = UDim2.fromOffset(7 * 62 + 6 * 6, 78)
+		strip.ZIndex = 11
+		strip.Parent = frame
+		local layout = Instance.new("UIListLayout")
+		layout.FillDirection = Enum.FillDirection.Horizontal
+		layout.Padding = UDim.new(0, 6)
+		layout.VerticalAlignment = Enum.VerticalAlignment.Center
+		layout.SortOrder = Enum.SortOrder.LayoutOrder
+		layout.Parent = strip
+		for day = 1, Config.DailyMaxStreak do
+			local past, today = day < streak, day == streak
+			local cell = Instance.new("Frame")
+			cell.LayoutOrder = day
+			cell.Size = UDim2.fromOffset(62, today and 76 or 66)
+			cell.BackgroundColor3 = today and Color3.fromRGB(255, 170, 40)
+				or past and Color3.fromRGB(110, 210, 90)
+				or Color3.fromRGB(225, 222, 235)
+			cell.ZIndex = 11
+			cell.Parent = strip
+			corner(cell, 10)
+			local outline = stroke(cell, today and 4 or 2.5)
+			outline.Color = today and Color3.fromRGB(255, 255, 255) or INK
+			local dayLabel = textLabel(cell, "Day " .. day, Color3.fromRGB(255, 255, 255))
+			dayLabel.Position = UDim2.fromOffset(4, 4)
+			dayLabel.Size = UDim2.new(1, -8, 0, 18)
+			dayLabel.ZIndex = 12
+			local value = day == Config.DailyMaxStreak and "💀" or short(Config.DailyCandy * day)
+			local mid = textLabel(
+				cell,
+				past and "✓" or value,
+				past and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(255, 120, 200)
+			)
+			mid.Position = UDim2.new(0, 4, 0, 24)
+			mid.Size = UDim2.new(1, -8, 1, -30)
+			mid.ZIndex = 12
+			if not past and day ~= Config.DailyMaxStreak then
+				mid.Text = "🍬" .. value
+			end
+		end
+
+		local reward = textLabel(
+			frame,
+			string.format("Day %d: +%s 🍬", streak, short(candy)),
+			Color3.fromRGB(255, 255, 255)
+		)
+		reward.AnchorPoint = Vector2.new(0.5, 0)
+		reward.Position = UDim2.new(0.5, 0, 0, 230)
+		reward.Size = UDim2.fromOffset(400, 40)
+		reward.ZIndex = 12
+		reward:FindFirstChildOfClass("UIStroke").Thickness = 3.5
+		local sub = textLabel(
+			frame,
+			token and "Bonus: your next brew is CURSED x10!" or "Come back tomorrow for more!",
+			token and Color3.fromRGB(190, 110, 255) or Color3.fromRGB(110, 100, 130),
+			Enum.Font.GothamBold
+		)
+		sub:FindFirstChildOfClass("UIStroke"):Destroy()
+		sub.AnchorPoint = Vector2.new(0.5, 0)
+		sub.Position = UDim2.new(0.5, 0, 0, 272)
+		sub.Size = UDim2.fromOffset(400, 22)
+		sub.ZIndex = 12
+
+		local claim = button(frame, "CLAIM!", Color3.fromRGB(60, 200, 70))
+		claim.AnchorPoint = Vector2.new(0.5, 1)
+		claim.Position = UDim2.new(0.5, 0, 1, -22)
+		claim.Size = UDim2.fromOffset(240, 64)
+		claim.ZIndex = 12
+		for _, d in claim:GetDescendants() do
+			if d:IsA("GuiObject") then
+				d.ZIndex += 11
+			end
+		end
+		claim.Activated:Connect(function()
+			close(true)
+		end)
+		play(Config.Sounds.Brew, 1.4, 0.6)
+	end
+
+	remotes
+		:WaitForChild("Daily").OnClientEvent
+		:Connect(function(streak: number, candy: number, token: boolean)
+			-- Let the HUD settle after joining before the panel pops in.
+			task.delay(1.2, showDaily, streak, candy, token)
+		end)
+end
 
 -- Movement: faster by default, sprint on Shift or the RUN button, slower per carried pumpkin. --
 
