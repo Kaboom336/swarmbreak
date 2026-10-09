@@ -177,6 +177,47 @@ return {
 	-- A popped pumpkin that does not fit on the winner's stack lies here this long.
 	LooseSeconds = 30,
 
+	-- Hoards: one per zone, a straw nest of HoardCount big pumpkins of the zone's `type` guarded by a
+	-- sleeping blocky giant (`guardian`). Holding Steal (HoardHold s) on one wakes it: it chases the
+	-- thief at GuardianShare x the thief's speed (never under GuardianMinSpeed; GuardianFirstShare
+	-- for the Zone1 guardian on a player's first hoard steal ever) after GuardianWake s. It gives up
+	-- after GuardianChaseSeconds, when the thief reaches their own base or leaves the zone (Zone1:
+	-- HoardLeash studs from the nest; others: past their gate), then walks back and sleeps. Within
+	-- GuardianCatch studs of its body: BONKED! The Hoard pumpkins fly back to the nest after
+	-- HoardReturnDelay s (no candy lost). A nest refills 1 pumpkin every HoardRefill s. Hoard pumpkins
+	-- roll size HoardSize and earn (and sell) x HoardMult. Zone1's nest sits at the Spawn spot
+	-- farthest from the map centre, the others HoardOutward studs outward from the zone centre
+	-- (a Model or Part named "Hoard" in a zone folder overrides the spot).
+	Hoards = {
+		Zone1 = { type = "Ghost", guardian = "Scarecrow" },
+		Zone2 = { type = "Moon", guardian = "SkeletonKnight" },
+		Zone3 = { type = "Golden", guardian = "TreeEnt" },
+		Zone4 = { type = "Shadow", guardian = "SwampToad" },
+	},
+	HoardCount = 3,
+	HoardSize = 1.4,
+	HoardMult = 3,
+	HoardHold = 1.5,
+	HoardRefill = 30,
+	HoardReturnDelay = 3,
+	HoardOutward = 24,
+	HoardLeash = 110,
+	GuardianShare = 0.9,
+	GuardianFirstShare = 0.8,
+	GuardianMinSpeed = 14,
+	GuardianReturnSpeed = 12,
+	GuardianChaseSeconds = 14,
+	GuardianWake = 1.8, -- a head start: the thief should get a few steps before the chase
+	GuardianCatch = 3.5,
+	GuardianRoarPitch = 0.3,
+	-- Living Jacks: a pumpkin placed on a plot carves for CarveSeconds (types up to CarveFastOrder,
+	-- i.e. Orange: CarveFastSeconds), then comes alive with a face and legs and hops within JackHop
+	-- studs of its plot. It earns the whole time.
+	CarveSeconds = 20,
+	CarveFastSeconds = 8,
+	CarveFastOrder = 1,
+	JackHop = 3,
+
 	-- Tools (scythes). Owning is saved; the best owned one is always the one you hold.
 	-- cost = nil means it is not sold (Pumpkin King Cleaver: Blood Moon MVP drop).
 	StartTool = "RustySickle",
@@ -344,7 +385,9 @@ return {
 	-- target tells the client which verb to show in the top objective banner and where the red
 	-- ground arrows point: zone (nearest wild pumpkin), patch (your
 	-- base), place (your base while carrying, else the zone), steal (another base), cauldron,
-	-- witch, tools (the tool stall), upgrades, king, gate (the next locked zone's gate).
+	-- witch, tools (the tool stall), upgrades, king, gate (the next locked zone's gate), hoard (the
+	-- Zone1 Hoard nest). Saved progress counts steps; the server shifts saves from before the Hoard
+	-- step (orders save version 2).
 	TutorialOrders = {
 		{
 			stat = "smash",
@@ -352,6 +395,13 @@ return {
 			text = "Smash 3 pumpkins",
 			target = "zone",
 			reward = { candy = 25 },
+		},
+		{
+			stat = "hoardSteal",
+			need = 1,
+			text = "Steal a Golden Pumpkin!",
+			target = "hoard",
+			reward = { candy = 60 },
 		},
 		{
 			stat = "place",
@@ -598,6 +648,8 @@ return {
 		Brew = 99963459517796,
 		Coin = 1169806635,
 		Whoosh = 9120972321, -- Wood Whoosh (ProSoundEffects)
+		-- Guardian wake roar: the Bonk sound played at GuardianRoarPitch until a real roar is picked.
+		Roar = 9116488438,
 		-- Free licensed tracks (DistrokidOfficial): day, midnight, boss.
 		DayMusic = 115131430600747, -- CandyMenu
 		NightMusic = 140677698800750, -- Stasis Basis (loopable)

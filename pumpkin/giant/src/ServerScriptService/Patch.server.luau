@@ -78,6 +78,10 @@ do
 		stealAlarmEvent = remote("StealAlarm"),
 		-- Server -> client: reward reveal card (seedId, mutation?, isNew, candy per second).
 		revealEvent = remote("Reveal"),
+		-- Server -> one client: Hoard drama ("grab" / "bonk" / "safe" / "deliver", seedId).
+		hoardEvent = remote("Hoard"),
+		-- Server -> all clients: a placed pumpkin finished carving (pumpkin, ownerId).
+		carvedEvent = remote("Carved"),
 		buyToolFunction = remote("BuyTool", "RemoteFunction") :: RemoteFunction,
 		buyUpgradeFunction = remote("BuyUpgrade", "RemoteFunction") :: RemoteFunction,
 		hauntFunction = remote("Haunt", "RemoteFunction") :: RemoteFunction,
@@ -507,9 +511,16 @@ end
 local function loadOrders(player: Player, saved: any)
 	local o: Orders = { tut = 1, list = {}, refreshAt = 0, counters = {} }
 	orders[player] = o
+	-- Saves from before the Hoard step (orders version 1) count tutorial steps one lower from
+	-- step 2 on: shift them, and deal a fresh tutorial order when the shift lands inside it.
+	local shifted = false
 	if type(saved) == "table" then
 		if type(saved.tut) == "number" then
 			o.tut = math.clamp(math.floor(saved.tut), 1, TUTORIAL_COUNT + 1)
+			if saved.v ~= 2 and o.tut >= 2 then
+				o.tut = math.min(o.tut + 1, TUTORIAL_COUNT + 1)
+				shifted = o.tut <= TUTORIAL_COUNT
+			end
 		end
 		if type(saved.refreshAt) == "number" then
 			o.refreshAt = saved.refreshAt
@@ -521,7 +532,7 @@ local function loadOrders(player: Player, saved: any)
 				end
 			end
 		end
-		if type(saved.list) == "table" then
+		if type(saved.list) == "table" and not shifted then
 			for _, s in saved.list do
 				local order = type(s) == "table" and type(s.id) == "string" and makeOrder(s.id)
 				if order then
@@ -575,7 +586,7 @@ local function saveOrders(player: Player): any
 			reward = string.sub(order.id, 1, 1) == "R" and order.reward or nil,
 		})
 	end
-	return { tut = o.tut, refreshAt = o.refreshAt, counters = o.counters, list = list }
+	return { v = 2, tut = o.tut, refreshAt = o.refreshAt, counters = o.counters, list = list }
 end
 
 -- Saving -------------------------------------------------------------------------------------
@@ -604,7 +615,11 @@ local RECEIPTS_KEPT = 50
 
 -- Bases: placed pumpkins, income, stealing and locks. Its functions are filled in further down
 -- (the save code below calls Bases.collect and Bases.restore).
-local Bases: { [string]: any } = { left = {} }
+-- carvedOf[player] = pumpkin types that player has carved into a Jack (first carve reveals).
+local Bases: { [string]: any } = { left = {}, carvedOf = {} }
+-- Hoards and their guardians (one per zone). Filled in further down; Bases and the Drop / Haunt
+-- code call Hoards.giveBack and Hoards.look.
+local Hoards: { [string]: any } = {}
 
 local loadPlayer, applyData, savePlayer, releaseLock -- defined in the block below
 do
@@ -765,6 +780,18 @@ do
 		if type(data.title) == "string" then
 			player:SetAttribute("Title", data.title)
 		end
+		if data.firstHoard == true then
+			player:SetAttribute("FirstHoardDone", true)
+		end
+		local carved = Bases.carvedOf[player] or {}
+		Bases.carvedOf[player] = carved
+		if type(data.carved) == "table" then
+			for _, id in data.carved do
+				if type(id) == "string" and seedById[id] then
+					carved[id] = true
+				end
+			end
+		end
 		if
 			type(data.daily) == "table"
 			and type(data.daily.day) == "number"
@@ -801,7 +828,7 @@ do
 		-- Saves from before Witch's Orders skip the tutorial (a maxed Stack could never finish it).
 		local savedOrders = data.orders
 		if savedOrders == nil and type(data.candy) == "number" then
-			savedOrders = { tut = TUTORIAL_COUNT + 1 }
+			savedOrders = { v = 2, tut = TUTORIAL_COUNT + 1 }
 		end
 		loadOrders(player, savedOrders)
 	end
@@ -839,7 +866,13 @@ do
 		end
 		local stats = player:FindFirstChild("leaderstats")
 		local kings = stats and stats:FindFirstChild("Kings") :: IntValue?
+		local carvedList = {}
+		for id in Bases.carvedOf[player] or {} do
+			table.insert(carvedList, id)
+		end
 		return {
+			firstHoard = player:GetAttribute("FirstHoardDone") == true,
+			carved = carvedList,
 			candy = candy.Value,
 			kings = kings and kings.Value or 0,
 			tools = tools,
@@ -980,13 +1013,15 @@ local function makePumpkin(seedId: string, sizeMult: number): MeshPart
 	return pumpkin
 end
 
--- Candy per second of a placed pumpkin before the owner's Haunt / pass multipliers.
+-- Candy per second of a placed pumpkin before the owner's Haunt / pass multipliers. Hoard
+-- pumpkins (attribute Hoard) earn x Config.HoardMult.
 local function incomeOf(pumpkin: Instance): number
 	local seed = seedById[pumpkin:GetAttribute("Seed")]
 	local mutation = mutationById[pumpkin:GetAttribute("Mutation") or ""]
 	return (seed and seed.income or 1)
 		* (pumpkin:GetAttribute("SizeMult") or 1)
 		* (mutation and mutation.mult or 1)
+		* (pumpkin:GetAttribute("Hoard") == true and Config.HoardMult or 1)
 end
 
 -- What the Witch pays (before the seller's multipliers): SellPerIncome seconds of income.
@@ -1021,20 +1056,21 @@ do
 		return true
 	end
 
-	function Reveal.send(player: Player, pumpkin: Instance, isNew: boolean)
+	-- kind: "jack" (first carve of a type) or "hoard" (a Hoard pumpkin delivered) always shows.
+	function Reveal.send(player: Player, pumpkin: Instance, isNew: boolean, kind: string?)
 		local seed = seedById[pumpkin:GetAttribute("Seed") or ""]
 		if not seed or not player.Parent then
 			return
 		end
 		local mutation = pumpkin:GetAttribute("Mutation")
-		if not isNew and seed.order < Config.RevealOrder and mutation ~= "Cursed" then
+		if not kind and not isNew and seed.order < Config.RevealOrder and mutation ~= "Cursed" then
 			return
 		end
 		local seen = seenOf[player] or {}
 		seenOf[player] = seen
 		seen[seed.id] = true
 		local rate = math.floor(incomeOf(pumpkin) * sellMult(player) * 10 + 0.5) / 10
-		Remotes.revealEvent:FireClient(player, seed.id, mutation, isNew, rate)
+		Remotes.revealEvent:FireClient(player, seed.id, mutation, isNew, rate, kind)
 	end
 end
 
@@ -1144,11 +1180,15 @@ local function refreshCarry(player: Player)
 		value += pumpkinValue(p)
 	end
 	player:SetAttribute("CarryValue", math.floor(value * sellMult(player) + 0.5))
-	local brewed, stolen = 0, 0
+	local brewed, stolen, hoard = 0, 0, 0
 	local from: { [number]: boolean } = {}
 	for _, p in stack do
 		if p:GetAttribute("Mutation") then
 			brewed += 1
+		end
+		-- Fresh from a Hoard nest (not delivered yet): RUN!! and the guardian chase.
+		if p:GetAttribute("HoardZone") then
+			hoard += 1
 		end
 		local ownerId = p:GetAttribute("StolenFrom")
 		if type(ownerId) == "number" and ownerId ~= player.UserId then
@@ -1160,6 +1200,7 @@ local function refreshCarry(player: Player)
 	-- Stolen pumpkins carried (RUN!! / Drop on the thief's screen) and from whom: ",id1,id2,"
 	-- so each robbed owner's client can highlight the thief.
 	player:SetAttribute("CarryStolen", stolen)
+	player:SetAttribute("CarryHoard", hoard)
 	local ids = {}
 	for id in from do
 		table.insert(ids, tostring(id))
@@ -1191,6 +1232,86 @@ local function stripPumpkin(pumpkin: BasePart)
 	end
 end
 
+-- Living Jack look (blocky "lego" style): two black ball eyes and a V mouth of two wedges on the
+-- pumpkin's front (-Z), and two blocky legs with feet under it, all "JackPart"s welded to the
+-- pumpkin (their welds sit inside them, so stripPumpkin keeps them). Old JackParts are rebuilt
+-- (after a resize). lift = raise the pumpkin so the legs stand where its bottom was.
+local function dressJack(pumpkin: BasePart, lift: boolean?)
+	for _, child in pumpkin:GetChildren() do
+		if child.Name == "JackPart" then
+			child:Destroy()
+		end
+	end
+	local s = pumpkin.Size
+	local legH = s.Y * 0.3
+	if lift then
+		pumpkin.CFrame += Vector3.new(0, legH, 0)
+	end
+	local base = pumpkin.CFrame
+	local black = Color3.fromRGB(26, 16, 22)
+	local function jackPart(p: BasePart, size: Vector3, offset: CFrame, color: Color3)
+		p.Name = "JackPart"
+		p.Size = size
+		p.Material = Enum.Material.SmoothPlastic
+		p.Color = color
+		p.Anchored = false
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.Massless = true
+		p.CastShadow = false
+		p.CFrame = base * offset
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = pumpkin
+		weld.Part1 = p
+		weld.Parent = p
+		p.Parent = pumpkin
+	end
+	local eye = s.X * 0.2
+	for side = -1, 1, 2 do
+		local ball = Instance.new("Part")
+		ball.Shape = Enum.PartType.Ball
+		jackPart(
+			ball,
+			Vector3.one * eye,
+			CFrame.new(side * s.X * 0.19, s.Y * 0.12, -s.Z * 0.42),
+			black
+		)
+	end
+	-- Mouth: two right-triangle wedges meeting in a V. A wedge's triangle lies in its local Y/Z
+	-- plane with the right angle at (y -h/2, z +d/2); local X (thickness) points out of the face,
+	-- local Y points down and local Z points away from the centre line, so each right angle sits
+	-- at the top centre and the two hypotenuses form the V.
+	local w, h, t = s.X * 0.46, s.Y * 0.2, s.Z * 0.1
+	for side = -1, 1, 2 do
+		jackPart(
+			Instance.new("WedgePart"),
+			Vector3.new(t, h, w / 2),
+			CFrame.fromMatrix(
+				Vector3.new(side * w / 4, -s.Y * 0.1, -s.Z * 0.43),
+				Vector3.new(0, 0, -side),
+				Vector3.new(0, -1, 0)
+			),
+			black
+		)
+	end
+	local leg = Color3.fromRGB(70, 110, 45)
+	for side = -1, 1, 2 do
+		jackPart(
+			Instance.new("Part"),
+			Vector3.new(s.X * 0.2, legH + s.Y * 0.2, s.Z * 0.2),
+			CFrame.new(side * s.X * 0.2, -s.Y / 2 - legH / 2 + s.Y * 0.1, 0),
+			leg
+		)
+		jackPart(
+			Instance.new("Part"),
+			Vector3.new(s.X * 0.26, s.Y * 0.08, s.Z * 0.34),
+			CFrame.new(side * s.X * 0.2, -s.Y / 2 - legH + s.Y * 0.04, -s.Z * 0.06),
+			leg:Lerp(Color3.new(0, 0, 0), 0.3)
+		)
+	end
+end
+
 -- Puts a pumpkin on top of the player's head stack (no capacity check here).
 local function stackPumpkin(player: Player, pumpkin: BasePart): boolean
 	local character, root = aliveRoot(player)
@@ -1208,6 +1329,10 @@ local function stackPumpkin(player: Player, pumpkin: BasePart): boolean
 	end
 	if pumpkin.Size.X > 2.6 then
 		pumpkin.Size *= 2.6 / pumpkin.Size.X
+		-- A carried Jack keeps its face and legs, rebuilt for the smaller size.
+		if pumpkin:GetAttribute("Jack") == true then
+			dressJack(pumpkin)
+		end
 	end
 	stripPumpkin(pumpkin)
 	pumpkin:SetAttribute("Placed", nil)
@@ -1405,20 +1530,72 @@ do
 		bb.Parent = pumpkin
 	end
 
+	-- "Carving 0:20" over a placed pumpkin until it comes alive (Bases.tick updates the text).
+	local function carveTag(pumpkin: BasePart, seconds: number)
+		local bb = Instance.new("BillboardGui")
+		bb.Name = "CarveTag"
+		bb.Size = UDim2.fromOffset(150, 30)
+		bb.StudsOffsetWorldSpace = Vector3.new(0, pumpkin.Size.Y / 2 + 2.6, 0)
+		bb.LightInfluence = 0
+		bb.MaxDistance = 60
+		local label = Instance.new("TextLabel")
+		label.Name = "Label"
+		label.BackgroundTransparency = 1
+		label.Size = UDim2.fromScale(1, 1)
+		label.Font = Enum.Font.FredokaOne
+		label.TextScaled = true
+		label.TextColor3 = Color3.fromRGB(255, 200, 120)
+		label.Text = string.format("Carving %d:%02d", math.floor(seconds / 60), seconds % 60)
+		label.Parent = bb
+		local outline = Instance.new("UIStroke")
+		outline.Thickness = 2
+		outline.Color = Color3.fromRGB(30, 12, 40)
+		outline.Parent = label
+		bb.Parent = pumpkin
+	end
+
+	-- The pumpkin comes alive: white flash (clients), face and legs, the hop home (JackHome) and,
+	-- the first time its owner carves this type, a reveal card.
+	local function carve(pumpkin: BasePart)
+		pumpkin:SetAttribute("CarveAt", nil)
+		local tag = pumpkin:FindFirstChild("CarveTag")
+		if tag then
+			tag:Destroy()
+		end
+		dressJack(pumpkin, true)
+		pumpkin:SetAttribute("JackHome", pumpkin.CFrame)
+		pumpkin:SetAttribute("Jack", true)
+		local ownerId = pumpkin:GetAttribute("Owner") or 0
+		Remotes.carvedEvent:FireAllClients(pumpkin, ownerId)
+		local owner = Players:GetPlayerByUserId(ownerId)
+		local seedId = pumpkin:GetAttribute("Seed")
+		if owner and type(seedId) == "string" then
+			local carved = Bases.carvedOf[owner] or {}
+			Bases.carvedOf[owner] = carved
+			if not carved[seedId] then
+				carved[seedId] = true
+				Reveal.send(owner, pumpkin, true, "jack")
+			end
+		end
+	end
+
 	-- Puts a new pumpkin on an empty plot, sized to fit it. Returns it (nil when not possible).
+	-- extra.hoard = a Hoard pumpkin (x HoardMult); extra.jack = already a living Jack (no carving).
 	function Bases.put(
 		plot: BasePart,
 		seedId: string,
 		sizeMult: number,
 		mutation: string?,
-		ownerId: number
+		ownerId: number,
+		extra: { hoard: boolean?, jack: boolean? }?
 	): BasePart?
 		local s = plotState[plot]
 		if not s or s.pumpkin or not seedById[seedId] then
 			return nil
 		end
 		local pumpkin = makePumpkin(seedId, sizeMult)
-		local fit = math.min(plot.Size.X, plot.Size.Z) * 0.95
+		-- Plots are flat cylinders lying on their side: the thin axis is X, the disc is Y x Z.
+		local fit = math.min(plot.Size.Y, plot.Size.Z) * 0.95
 		if pumpkin.Size.X > fit then
 			pumpkin.Size *= fit / pumpkin.Size.X
 		end
@@ -1430,10 +1607,30 @@ do
 			pumpkin:SetAttribute("Mutation", mutation)
 			applyMutationLook(pumpkin, mutation)
 		end
+		if extra and extra.hoard then
+			pumpkin:SetAttribute("Hoard", true)
+			Hoards.look(pumpkin)
+		end
 		incomeTag(pumpkin)
+		if extra and extra.jack then
+			dressJack(pumpkin, true)
+			pumpkin:SetAttribute("JackHome", pumpkin.CFrame)
+			pumpkin:SetAttribute("Jack", true)
+		else
+			local seconds = seedById[seedId].order <= Config.CarveFastOrder
+					and Config.CarveFastSeconds
+				or Config.CarveSeconds
+			pumpkin:SetAttribute("CarveAt", now() + seconds)
+			carveTag(pumpkin, seconds)
+		end
 		pumpkin.Parent = plot
 		s.pumpkin = pumpkin
 		return pumpkin
+	end
+
+	-- What Bases.put needs to rebuild a pumpkin that is moving (hoard bonus, already a Jack).
+	function Bases.extraOf(p: Instance): { hoard: boolean?, jack: boolean? }
+		return { hoard = p:GetAttribute("Hoard") == true, jack = p:GetAttribute("Jack") == true }
 	end
 
 	-- Takes the pumpkin off a plot without destroying it (pick up, steal, ghost grab).
@@ -1445,9 +1642,14 @@ do
 		end
 		s.pumpkin = nil
 		p:SetAttribute("Placed", nil)
-		local tag = p:FindFirstChild("IncomeTag")
-		if tag then
-			tag:Destroy()
+		-- Off the plot: no more hopping (clients) or carving (a re-placed one carves again).
+		p:SetAttribute("JackHome", nil)
+		p:SetAttribute("CarveAt", nil)
+		for _, name in { "IncomeTag", "CarveTag" } do
+			local tag = p:FindFirstChild(name)
+			if tag then
+				tag:Destroy()
+			end
 		end
 		Bases.refresh(plot.Parent)
 		return p
@@ -1487,6 +1689,7 @@ do
 			weld.Parent = p
 		end
 	end
+	Bases.restack = restack
 
 	-- A stolen pumpkin goes home: the owner's first empty plot, else their stack, else the ground.
 	local function giveBack(owner: Player, p: BasePart, at: Vector3)
@@ -1499,7 +1702,8 @@ do
 				seedId,
 				p:GetAttribute("SizeMult") or 1,
 				p:GetAttribute("Mutation"),
-				owner.UserId
+				owner.UserId,
+				Bases.extraOf(p)
 			)
 			p:Destroy()
 			Bases.refresh(plot.Parent)
@@ -1524,6 +1728,7 @@ do
 					s = p:GetAttribute("Seed"),
 					z = p:GetAttribute("SizeMult") or 1,
 					m = p:GetAttribute("Mutation"),
+					h = p:GetAttribute("Hoard") == true or nil,
 				}
 			end
 		end
@@ -1546,7 +1751,15 @@ do
 			then
 				local size = math.clamp(tonumber(entry.z) or 1, 0.1, 5)
 				local mutation = if type(entry.m) == "string" then entry.m else nil
-				Bases.put(plot, entry.s, size, mutation, player.UserId)
+				-- Saved pumpkins were placed before: they come back as living Jacks.
+				Bases.put(
+					plot,
+					entry.s,
+					size,
+					mutation,
+					player.UserId,
+					{ hoard = entry.h == true, jack = true }
+				)
 			end
 		end
 		Bases.refresh(patch)
@@ -1574,12 +1787,15 @@ do
 		end
 		table.remove(stack)
 		local stolen = top:GetAttribute("StolenFrom")
+		-- Fresh from a Hoard nest: delivered! (confetti and a reveal card)
+		local fromHoard = top:GetAttribute("HoardZone") ~= nil
 		local placed = Bases.put(
 			plot,
 			seedId,
 			top:GetAttribute("SizeMult") or 1,
 			top:GetAttribute("Mutation"),
-			player.UserId
+			player.UserId,
+			Bases.extraOf(top)
 		)
 		top:Destroy()
 		refreshCarry(player)
@@ -1590,6 +1806,10 @@ do
 				plot.Position,
 				incomeOf(placed) * sellMult(player)
 			)
+			if fromHoard then
+				Remotes.hoardEvent:FireClient(player, "deliver", seedId)
+				Reveal.send(player, placed, false, "hoard")
+			end
 		end
 		track(player, "place", 1)
 		track(player, "placeType:" .. seedId, 1)
@@ -1703,11 +1923,14 @@ do
 		return got
 	end
 
-	-- A thief died: their stolen pumpkins go home (others are lost as before).
+	-- A thief died: their stolen pumpkins go home and Hoard pumpkins fly back to their nest (others
+	-- are lost as before).
 	function Bases.dropStolen(player: Player, at: Vector3)
 		for _, p in carrying[player] or {} do
 			local owner = Players:GetPlayerByUserId(p:GetAttribute("StolenFrom") or 0)
-			if owner and owner ~= player then
+			if p:GetAttribute("HoardZone") then
+				Hoards.giveBack(p, at)
+			elseif owner and owner ~= player then
 				giveBack(owner, p, at)
 			else
 				p:Destroy()
@@ -1835,6 +2058,27 @@ do
 				local label = timer and timer:FindFirstChild("Label") :: TextLabel?
 				if label then
 					label.Text = string.format("🔒 LOCKED %ds", math.ceil(untilAt - t))
+				end
+			end
+		end
+		-- Carving countdowns; a finished one comes alive.
+		for _, s in plotState do
+			local p = s.pumpkin
+			local carveAt = p and p:GetAttribute("CarveAt")
+			if p and type(carveAt) == "number" then
+				if t >= carveAt then
+					local ok, err = pcall(carve, p)
+					if not ok then
+						warn("[Patch] Carve failed:", err)
+					end
+				else
+					local tag = p:FindFirstChild("CarveTag")
+					local label = tag and tag:FindFirstChild("Label") :: TextLabel?
+					local left = math.ceil(carveAt - t)
+					if label then
+						label.Text =
+							string.format("Carving %d:%02d", math.floor(left / 60), left % 60)
+					end
 				end
 			end
 		end
@@ -2103,8 +2347,9 @@ do
 			return false
 		end
 		local free = {}
+		-- Spawn spots under a Hoard nest or its guardian (HoardNear) stay empty.
 		for _, sp in spawns[zoneId] or {} do
-			if not taken[sp] then
+			if not taken[sp] and not sp:GetAttribute("HoardNear") then
 				table.insert(free, sp)
 			end
 		end
@@ -2141,6 +2386,22 @@ do
 			tween = nil,
 		}
 		return true
+	end
+
+	-- Removes wild pumpkins within radius studs (X/Z) of pos (a Hoard was built there).
+	function Wild.clearNear(pos: Vector3, radius: number)
+		for part, w in alive do
+			local flat = Vector3.new(part.Position.X - pos.X, 0, part.Position.Z - pos.Z)
+			if flat.Magnitude <= radius then
+				alive[part] = nil
+				count[w.zone] = math.max(0, (count[w.zone] or 1) - 1)
+				taken[w.spawn] = nil
+				if w.tween then
+					w.tween:Cancel()
+				end
+				part:Destroy()
+			end
+		end
 	end
 
 	-- Fills every zone up to its max right away; returns how many were added.
@@ -2499,6 +2760,829 @@ do
 	end
 end
 
+-- Hoards and Guardians ------------------------------------------------------------------------
+-- Each zone (Config.Hoards) gets a straw nest of big Hoard pumpkins in its zone folder, guarded
+-- by a sleeping blocky giant built from studded parts welded to an invisible anchored root that
+-- the server moves every Heartbeat (no Humanoid). Stealing a pumpkin wakes it: red "!", a roar,
+-- then a chase. It bonks the thief within reach (their Hoard pumpkins fly back to the nest) or
+-- gives up at the thief's base, past the zone edge or after GuardianChaseSeconds, then walks
+-- home and sleeps again. Nests refill one pumpkin every HoardRefill seconds.
+
+do
+	type Guardian = {
+		zone: string,
+		model: Model,
+		root: BasePart,
+		eyes: { [BasePart]: Color3 },
+		sleepTag: BillboardGui,
+		alertTag: BillboardGui,
+		roar: Sound?,
+		reach: number,
+		home: Vector3,
+		homeLook: Vector3,
+		pos: Vector3,
+		look: Vector3,
+		state: string, -- "sleep" | "wake" | "chase" | "return"
+		target: Player?,
+		wokeAt: number,
+		chaseEnd: number,
+		share: number,
+		seen: number,
+		walk: number,
+	}
+	type Hoard = {
+		zone: string,
+		model: Model,
+		nest: Vector3,
+		top: number,
+		slots: { [number]: BasePart? },
+		pending: number,
+		nextRefill: number,
+		leashCenter: Vector3,
+		leashRadius: number,
+		guard: Guardian,
+	}
+	local hoards: { [string]: Hoard } = {}
+	local NEST_R, SLOT_R, SLOT_FIT = 4.8, 2.3, 3.2
+	local V, C = Vector3.new, Color3.fromRGB
+	local INK = C(26, 18, 24)
+
+	-- Blocky "lego" guardians, about 3x a player's height. Each part: { shape ("B" block, "S"
+	-- ball), size, centre (studs over the ground, -Z = front), colour, name ("Eye" lights up red
+	-- when awake), roll in radians }. reach = how far the body sticks out in front.
+	local GUARDIANS: { [string]: { height: number, reach: number, parts: { { any } } } } = {
+		Scarecrow = {
+			height = 17.5,
+			reach = 2.5,
+			parts = {
+				{ "B", V(1.6, 5, 1.6), V(-1.1, 2.5, 0), C(60, 100, 190) },
+				{ "B", V(1.6, 5, 1.6), V(1.1, 2.5, 0), C(60, 100, 190) },
+				{ "B", V(5, 5, 3), V(0, 7.5, 0), C(210, 40, 40) },
+				{ "B", V(5.1, 0.6, 3.1), V(0, 6.6, 0), C(90, 20, 25) },
+				{ "B", V(5.1, 0.6, 3.1), V(0, 8.4, 0), C(90, 20, 25) },
+				{ "B", V(0.6, 5.1, 3.1), V(0, 7.5, 0), C(90, 20, 25) },
+				{ "B", V(3.6, 1.5, 1.5), V(-4.3, 9.2, 0), C(210, 40, 40) },
+				{ "B", V(3.6, 1.5, 1.5), V(4.3, 9.2, 0), C(210, 40, 40) },
+				{ "B", V(1.2, 1.2, 1.2), V(-6.6, 9.2, 0), C(240, 200, 70) },
+				{ "B", V(1.2, 1.2, 1.2), V(6.6, 9.2, 0), C(240, 200, 70) },
+				{ "B", V(3, 0.8, 2.6), V(0, 10.4, 0), C(240, 200, 70) },
+				{ "S", V(4.6, 4.6, 4.6), V(0, 12.9, 0), C(255, 140, 30) },
+				{ "B", V(0.9, 0.9, 0.3), V(-0.9, 13.4, -2.2), INK, "Eye" },
+				{ "B", V(0.9, 0.9, 0.3), V(0.9, 13.4, -2.2), INK, "Eye" },
+				{ "B", V(2.2, 0.5, 0.3), V(0, 12.1, -2.15), INK },
+				{ "B", V(6, 0.4, 6), V(0, 15.1, 0), C(110, 70, 40) },
+				{ "B", V(3.2, 2.2, 3.2), V(0, 16.4, 0), C(110, 70, 40) },
+			},
+		},
+		SkeletonKnight = {
+			height = 17.4,
+			reach = 2,
+			parts = {
+				{ "B", V(1, 5, 1), V(-1, 2.8, 0), C(240, 236, 220) },
+				{ "B", V(1, 5, 1), V(1, 2.8, 0), C(240, 236, 220) },
+				{ "B", V(1.6, 0.6, 2.2), V(-1, 0.3, -0.3), C(150, 155, 170) },
+				{ "B", V(1.6, 0.6, 2.2), V(1, 0.3, -0.3), C(150, 155, 170) },
+				{ "B", V(3.6, 1.1, 2), V(0, 5.8, 0), C(240, 236, 220) },
+				{ "B", V(1, 4, 1), V(0, 8, 0.4), C(240, 236, 220) },
+				{ "B", V(4, 0.5, 2.4), V(0, 7.2, 0), C(240, 236, 220) },
+				{ "B", V(4.4, 0.5, 2.6), V(0, 8.3, 0), C(240, 236, 220) },
+				{ "B", V(4.6, 0.5, 2.7), V(0, 9.4, 0), C(240, 236, 220) },
+				{ "B", V(2.2, 1.2, 2.2), V(-2.9, 10.4, 0), C(150, 155, 170) },
+				{ "B", V(2.2, 1.2, 2.2), V(2.9, 10.4, 0), C(150, 155, 170) },
+				{ "B", V(0.9, 4.2, 0.9), V(-3, 7.8, 0), C(240, 236, 220) },
+				{ "B", V(0.9, 4.2, 0.9), V(3, 7.8, -0.4), C(240, 236, 220) },
+				{ "B", V(0.4, 7, 1), V(3, 9.5, -1.4), C(190, 195, 210) },
+				{ "B", V(3.4, 3.2, 3.2), V(0, 12.6, 0), C(240, 236, 220) },
+				{ "B", V(2.6, 0.9, 2.6), V(0, 10.6, -0.2), C(240, 236, 220) },
+				{ "B", V(0.8, 0.8, 0.2), V(-0.8, 12.8, -1.65), INK, "Eye" },
+				{ "B", V(0.8, 0.8, 0.2), V(0.8, 12.8, -1.65), INK, "Eye" },
+				{ "B", V(3.8, 1.4, 3.8), V(0, 14.7, 0), C(90, 95, 110) },
+				{ "B", V(0.6, 2, 2.6), V(0, 16.4, 0.3), C(200, 30, 40) },
+			},
+		},
+		TreeEnt = {
+			height = 18.9,
+			reach = 3,
+			parts = {
+				{ "B", V(2, 4, 2.2), V(-1.5, 2, 0), C(85, 55, 32) },
+				{ "B", V(2, 4, 2.2), V(1.5, 2, 0), C(85, 55, 32) },
+				{ "B", V(4.6, 8, 3.6), V(0, 8, 0), C(120, 78, 45) },
+				{ "B", V(4.2, 1.3, 1.3), V(-4, 10.5, 0), C(120, 78, 45), nil, -0.45 },
+				{ "B", V(4.2, 1.3, 1.3), V(4, 10.5, 0), C(120, 78, 45), nil, 0.45 },
+				{ "B", V(2.4, 2.4, 2.4), V(-6.2, 11.6, 0), C(70, 170, 60) },
+				{ "B", V(2.4, 2.4, 2.4), V(6.2, 11.6, 0), C(70, 170, 60) },
+				{ "B", V(1, 1, 0.3), V(-1, 10.6, -1.9), INK, "Eye" },
+				{ "B", V(1, 1, 0.3), V(1, 10.6, -1.9), INK, "Eye" },
+				{ "B", V(3.4, 0.5, 0.4), V(0, 11.5, -1.95), C(85, 55, 32) },
+				{ "B", V(2.2, 0.5, 0.3), V(0, 8.6, -1.9), INK },
+				{ "B", V(8, 4, 7), V(0, 14, 0), C(70, 170, 60) },
+				{ "B", V(5.5, 3, 5), V(0, 17.4, 0), C(110, 200, 80) },
+				{ "B", V(3, 3, 3), V(-4, 13.2, 1), C(110, 200, 80) },
+				{ "B", V(3, 3, 3), V(4, 13.2, 1), C(110, 200, 80) },
+			},
+		},
+		SwampToad = {
+			height = 13.2,
+			reach = 4.5,
+			parts = {
+				{ "B", V(9, 6, 8), V(0, 4.5, 0.5), C(80, 170, 60) },
+				{ "B", V(6.5, 4, 0.4), V(0, 4, -3.6), C(200, 220, 120) },
+				{ "B", V(8.5, 3, 7), V(0, 8.8, -0.6), C(80, 170, 60) },
+				{ "B", V(7, 0.4, 0.3), V(0, 7.7, -4.15), C(50, 120, 40) },
+				{ "B", V(2.6, 2.4, 2.6), V(-2.8, 11.3, -2.2), C(80, 170, 60) },
+				{ "B", V(2.6, 2.4, 2.6), V(2.8, 11.3, -2.2), C(80, 170, 60) },
+				{ "B", V(2, 2, 0.4), V(-2.8, 11.5, -3.6), C(255, 220, 40), "Eye" },
+				{ "B", V(2, 2, 0.4), V(2.8, 11.5, -3.6), C(255, 220, 40), "Eye" },
+				{ "B", V(0.6, 1.4, 0.3), V(-2.8, 11.5, -3.85), INK },
+				{ "B", V(0.6, 1.4, 0.3), V(2.8, 11.5, -3.85), INK },
+				{ "B", V(1.8, 3.6, 1.8), V(-3.6, 1.8, -3), C(50, 120, 40) },
+				{ "B", V(1.8, 3.6, 1.8), V(3.6, 1.8, -3), C(50, 120, 40) },
+				{ "B", V(3, 2.4, 4.4), V(-5, 1.2, 2), C(80, 170, 60) },
+				{ "B", V(3, 2.4, 4.4), V(5, 1.2, 2), C(80, 170, 60) },
+				{ "B", V(1.6, 0.3, 1.6), V(-2.2, 10.45, 1.8), C(50, 120, 40) },
+				{ "B", V(4, 0.3, 4), V(1.2, 10.45, 1), C(100, 50, 160) },
+				{ "B", V(2.2, 2.6, 2.2), V(1.2, 11.9, 1), C(100, 50, 160) },
+			},
+		},
+	}
+
+	-- Ground under the guardian: a short ray near its last height (players are skipped), so it
+	-- follows slopes but never climbs onto props more than 4 studs up or down.
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Exclude
+	rayParams.RespectCanCollide = true
+	local function refreshRayFilter()
+		local skip = {}
+		for _, p in Players:GetPlayers() do
+			if p.Character then
+				table.insert(skip, p.Character)
+			end
+		end
+		rayParams.FilterDescendantsInstances = skip
+	end
+	local function groundAt(x: number, z: number, nearY: number): number
+		local hit = workspace:Raycast(V(x, nearY + 6, z), V(0, -14, 0), rayParams)
+		if hit and math.abs(hit.Position.Y - nearY) <= 4 then
+			return hit.Position.Y
+		end
+		return nearY
+	end
+
+	local function tag(
+		root: BasePart,
+		name: string,
+		text: string,
+		color: Color3,
+		size: UDim2,
+		y: number
+	)
+		local bb = Instance.new("BillboardGui")
+		bb.Name = name
+		-- Scale sizes are studs, so the letters stay big in the world.
+		bb.Size = size
+		bb.StudsOffsetWorldSpace = V(0, y, 0)
+		bb.LightInfluence = 0
+		bb.MaxDistance = 220
+		local label = Instance.new("TextLabel")
+		label.BackgroundTransparency = 1
+		label.Size = UDim2.fromScale(1, 1)
+		label.Font = Enum.Font.FredokaOne
+		label.TextScaled = true
+		label.TextColor3 = color
+		label.Text = text
+		label.Parent = bb
+		local outline = Instance.new("UIStroke")
+		outline.Thickness = 4
+		outline.Color = C(15, 10, 30)
+		outline.Parent = label
+		bb.Parent = root
+		return bb
+	end
+
+	-- Builds a guardian standing at home (a ground-level CFrame facing the nest).
+	local function buildGuardian(zoneId: string, kind: string, home: CFrame): Guardian
+		local def = GUARDIANS[kind] or GUARDIANS.Scarecrow
+		local model = Instance.new("Model")
+		model.Name = "Guardian"
+		model:SetAttribute("Kind", kind)
+		local root = Instance.new("Part")
+		root.Name = "Root"
+		root.Size = Vector3.one
+		root.Transparency = 1
+		root.Anchored = true
+		root.CanCollide = false
+		root.CanQuery = false
+		root.CanTouch = false
+		root.CFrame = home * CFrame.new(0, 0.5, 0)
+		root.Parent = model
+		local eyes: { [BasePart]: Color3 } = {}
+		for _, d in def.parts do
+			local p = Instance.new("Part")
+			if d[1] == "S" then
+				p.Shape = Enum.PartType.Ball
+			end
+			p.Name = d[5] or "Block"
+			p.Size = d[2]
+			-- Classic plastic brick: studs on top, inlets under.
+			p.Material = Enum.Material.Plastic
+			p.TopSurface = Enum.SurfaceType.Studs
+			p.BottomSurface = Enum.SurfaceType.Inlet
+			p.Color = d[4]
+			p.Anchored = false
+			p.CanCollide = false
+			p.CanQuery = false
+			p.CanTouch = false
+			p.Massless = true
+			p.CFrame = home * CFrame.new(d[3]) * CFrame.Angles(0, 0, d[6] or 0)
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = root
+			weld.Part1 = p
+			weld.Parent = p
+			p.Parent = model
+			if d[5] == "Eye" then
+				eyes[p] = d[4]
+			end
+		end
+		-- Root is 0.5 over the ground, so the tags float about 2.5 studs over the head.
+		local sleepTag =
+			tag(root, "SleepTag", "Z z Z", C(80, 230, 255), UDim2.fromScale(9, 4.5), def.height + 2)
+		local alertTag =
+			tag(root, "AlertTag", "!", C(255, 45, 45), UDim2.fromScale(4, 6), def.height + 3)
+		alertTag.Enabled = false
+		local roar: Sound? = nil
+		if (Config.Sounds.Roar or 0) ~= 0 then
+			local s = Instance.new("Sound")
+			s.Name = "Roar"
+			s.SoundId = "rbxassetid://" .. Config.Sounds.Roar
+			s.PlaybackSpeed = Config.GuardianRoarPitch
+			s.Volume = 1
+			s.RollOffMaxDistance = 160
+			s.Parent = root
+			roar = s
+		end
+		model.PrimaryPart = root
+		local pos = home.Position
+		local look = home.LookVector
+		return {
+			zone = zoneId,
+			model = model,
+			root = root,
+			eyes = eyes,
+			sleepTag = sleepTag,
+			alertTag = alertTag,
+			roar = roar,
+			reach = def.reach,
+			home = pos,
+			homeLook = look,
+			pos = pos,
+			look = look,
+			state = "sleep",
+			target = nil,
+			wokeAt = 0,
+			chaseEnd = 0,
+			share = Config.GuardianShare,
+			seen = 0,
+			walk = 0,
+		}
+	end
+
+	-- Moves the root: asleep it slumps forward a little; walking it waddles and bobs.
+	local function pose(g: Guardian)
+		local cf = CFrame.lookAt(g.pos, g.pos + g.look)
+		if g.state == "sleep" then
+			cf *= CFrame.Angles(math.rad(-7), 0, 0)
+		else
+			cf *= CFrame.new(0, math.abs(math.sin(g.walk)) * 0.35, 0) * CFrame.Angles(
+				0,
+				0,
+				math.rad(5) * math.sin(g.walk)
+			)
+		end
+		g.root.CFrame = cf * CFrame.new(0, 0.5, 0)
+	end
+
+	local function setAwake(g: Guardian, on: boolean)
+		g.sleepTag.Enabled = not on
+		g.alertTag.Enabled = on
+		for eye, color in g.eyes do
+			eye.Material = on and Enum.Material.Neon or Enum.Material.Plastic
+			eye.Color = on and C(255, 40, 30) or color
+		end
+	end
+
+	local function step(g: Guardian, dir: Vector3, length: number, dt: number)
+		local p = g.pos + dir * length
+		g.pos = V(p.X, groundAt(p.X, p.Z, g.pos.Y), p.Z)
+		g.look = dir
+		g.walk += dt * 9
+		pose(g)
+	end
+
+	-- Does the player carry a Hoard pumpkin from this zone's nest?
+	local function carriesFrom(player: Player?, zoneId: string): boolean
+		for _, p in player and carrying[player] or {} do
+			if p:GetAttribute("HoardZone") == zoneId then
+				return true
+			end
+		end
+		return false
+	end
+
+	local function inOwnBase(player: Player, pos: Vector3): boolean
+		local patch = patchOf[player]
+		local soil = patch and patch:FindFirstChild("Soil") :: BasePart?
+		if not soil then
+			return false
+		end
+		local flat = V(pos.X - soil.Position.X, 0, pos.Z - soil.Position.Z)
+		return flat.Magnitude <= math.max(soil.Size.X, soil.Size.Z) / 2 + 4
+	end
+
+	local function wake(g: Guardian, player: Player)
+		local first = g.zone == "Zone1" and player:GetAttribute("FirstHoardDone") ~= true
+		player:SetAttribute("FirstHoardDone", true)
+		-- Already after this thief, or busy with another one who still has the loot.
+		if
+			(g.state == "wake" or g.state == "chase")
+			and (g.target == player or carriesFrom(g.target, g.zone))
+		then
+			return
+		end
+		g.share = first and Config.GuardianFirstShare or Config.GuardianShare
+		g.state = "wake"
+		g.target = player
+		g.wokeAt = os.clock()
+		g.chaseEnd = os.clock() + Config.GuardianChaseSeconds
+		g.seen = 0
+		setAwake(g, true)
+		if g.roar then
+			g.roar:Play()
+		end
+	end
+
+	-- escaped = the thief got away with the loot (base, zone edge or time).
+	local function giveUp(g: Guardian, escaped: boolean)
+		local thief = g.target
+		g.target = nil
+		g.state = "return"
+		g.alertTag.Enabled = false
+		if escaped and thief and thief.Parent and carriesFrom(thief, g.zone) then
+			Remotes.hoardEvent:FireClient(thief, "safe")
+		end
+	end
+
+	-- Hoard pumpkins sparkle gold (in the nest, carried and placed).
+	function Hoards.look(p: BasePart)
+		if p:FindFirstChild("HoardSparkle") then
+			return
+		end
+		local sparkle = Instance.new("ParticleEmitter")
+		sparkle.Name = "HoardSparkle"
+		sparkle.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		sparkle.Color = ColorSequence.new(C(255, 215, 80))
+		sparkle.LightEmission = 1
+		sparkle.Size = NumberSequence.new(0.6, 0)
+		sparkle.Lifetime = NumberRange.new(0.6, 1.2)
+		sparkle.Rate = 6
+		sparkle.Speed = NumberRange.new(0.5, 1.5)
+		sparkle.Parent = p
+	end
+
+	local function newPumpkin(h: Hoard): BasePart
+		local p = makePumpkin(Config.Hoards[h.zone].type, Config.HoardSize)
+		p.Name = "HoardPumpkin"
+		-- Smaller to fit the nest; income uses the SizeMult attribute, not the look.
+		if p.Size.X > SLOT_FIT then
+			p.Size *= SLOT_FIT / p.Size.X
+		end
+		p:SetAttribute("Hoard", true)
+		p:SetAttribute("HoardZone", h.zone)
+		Hoards.look(p)
+		return p
+	end
+
+	local function slotCFrame(h: Hoard, i: number, p: BasePart): CFrame
+		local a = (i - 1) / Config.HoardCount * math.pi * 2
+		return CFrame.new(
+			h.nest.X + math.cos(a) * SLOT_R,
+			h.top + p.Size.Y / 2 - 0.3,
+			h.nest.Z + math.sin(a) * SLOT_R
+		) * CFrame.Angles(0, a, 0)
+	end
+
+	local function freeSlot(h: Hoard): number?
+		for i = 1, Config.HoardCount do
+			if not h.slots[i] then
+				return i
+			end
+		end
+		return nil
+	end
+
+	local function bonk(g: Guardian, thief: Player, thiefRoot: BasePart)
+		-- Every fresh Hoard pumpkin the thief carries goes back (each to its own nest).
+		local stack = carrying[thief] or {}
+		for i = #stack, 1, -1 do
+			local p = stack[i]
+			if p:GetAttribute("HoardZone") then
+				table.remove(stack, i)
+				Hoards.giveBack(p, thiefRoot.Position)
+			end
+		end
+		Bases.restack(thief)
+		refreshCarry(thief)
+		local away = V(thiefRoot.Position.X - g.pos.X, 0, thiefRoot.Position.Z - g.pos.Z)
+		away = away.Magnitude > 0.1 and away.Unit or g.look
+		Remotes.knockEvent:FireClient(thief, away * 45 + V(0, 30, 0), 0.5)
+		Remotes.hoardEvent:FireClient(thief, "bonk")
+		Remotes.ghostPopEvent:FireAllClients(thiefRoot.Position, nil, 0)
+		giveUp(g, false)
+	end
+
+	local seat -- forward: grab and seat refer to each other through the prompt
+
+	local function grab(h: Hoard, p: BasePart, player: Player)
+		local i = nil
+		for k = 1, Config.HoardCount do
+			if h.slots[k] == p then
+				i = k
+			end
+		end
+		if not i or p.Parent ~= h.model then
+			return
+		end
+		if not isLoaded(player) then
+			Remotes.hintEvent:FireClient(player, "Loading your farm...")
+			return
+		end
+		if not hasZone(player, h.zone) or not aliveRoot(player) then
+			return
+		end
+		if #(carrying[player] or {}) >= carryCapacity(player) then
+			Remotes.hintEvent:FireClient(
+				player,
+				"Your hands are full! Place what you carry on your base first."
+			)
+			return
+		end
+		local at = p.Position
+		h.slots[i] = nil
+		if not stackPumpkin(player, p) then
+			h.slots[i] = p
+			return
+		end
+		Remotes.harvestedEvent:FireAllClients(player, at)
+		Remotes.hoardEvent:FireClient(player, "grab", p:GetAttribute("Seed"))
+		track(player, "hoardSteal", 1)
+		wake(h.guard, player)
+	end
+
+	function seat(h: Hoard, i: number, p: BasePart)
+		h.slots[i] = p
+		p.Anchored = true
+		p.CanCollide = false
+		p.CFrame = slotCFrame(h, i, p)
+		p.Parent = h.model
+		local seed = seedById[p:GetAttribute("Seed") or ""]
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.Name = "StealPrompt"
+		prompt.ActionText = "Steal"
+		prompt.ObjectText = (seed and seed.name or "") .. " pumpkin · Hoard"
+		prompt.HoldDuration = Config.HoardHold
+		prompt.MaxActivationDistance = 10
+		prompt.RequiresLineOfSight = false
+		prompt.Parent = p
+		prompt.Triggered:Connect(function(player)
+			grab(h, p, player)
+		end)
+	end
+
+	-- A Hoard pumpkin leaves a player (bonk, drop, death, Haunt): HoardReturnDelay seconds later a
+	-- new one arcs from there back into a free slot of its nest.
+	function Hoards.giveBack(p: BasePart, at: Vector3)
+		local h = hoards[p:GetAttribute("HoardZone") or ""]
+		p:Destroy()
+		if not h then
+			return
+		end
+		h.pending += 1
+		task.delay(Config.HoardReturnDelay, function()
+			h.pending -= 1
+			local i = freeSlot(h)
+			if not i then
+				return
+			end
+			local np = newPumpkin(h)
+			np.Anchored = true
+			np.CanCollide = false
+			local from = at + V(0, 2, 0)
+			np.CFrame = CFrame.new(from)
+			np.Parent = h.model
+			-- Reserved while it flies (no prompt yet, so nobody can take it mid-air).
+			h.slots[i] = np
+			local goal = slotCFrame(h, i, np)
+			local started = os.clock()
+			while np.Parent == h.model and os.clock() - started < 1.2 do
+				local f = (os.clock() - started) / 1.2
+				np.CFrame =
+					CFrame.new(from:Lerp(goal.Position, f) + V(0, math.sin(f * math.pi) * 14, 0))
+				task.wait()
+			end
+			if np.Parent == h.model and h.slots[i] == np then
+				seat(h, i, np)
+				Remotes.harvestedEvent:FireAllClients(nil, np.Position)
+			end
+		end)
+	end
+
+	-- Every second (main loop): one pumpkin back every HoardRefill seconds while a nest is short.
+	function Hoards.tick()
+		local t = os.clock()
+		for _, h in hoards do
+			local filled = 0
+			for i = 1, Config.HoardCount do
+				if h.slots[i] then
+					filled += 1
+				end
+			end
+			if filled + h.pending >= Config.HoardCount then
+				h.nextRefill = t + Config.HoardRefill
+			elseif t >= h.nextRefill then
+				local i = freeSlot(h)
+				if i then
+					local p = newPumpkin(h)
+					seat(h, i, p)
+					Remotes.harvestedEvent:FireAllClients(nil, p.Position)
+				end
+				h.nextRefill = t + Config.HoardRefill
+			end
+		end
+	end
+
+	RunService.Heartbeat:Connect(function(dt)
+		local busy = false
+		for _, h in hoards do
+			if h.guard.state ~= "sleep" then
+				busy = true
+				break
+			end
+		end
+		if not busy then
+			return
+		end
+		refreshRayFilter()
+		local now = os.clock()
+		for _, h in hoards do
+			local g = h.guard
+			if g.state == "wake" or g.state == "chase" then
+				local thief = g.target
+				local thiefRoot: BasePart? = nil
+				if thief and thief.Parent then
+					local _, r = aliveRoot(thief)
+					thiefRoot = r
+				end
+				if not thief or not thiefRoot or not carriesFrom(thief, h.zone) then
+					giveUp(g, false)
+				else
+					local at = thiefRoot.Position
+					local leash = V(at.X - h.leashCenter.X, 0, at.Z - h.leashCenter.Z)
+					if
+						now >= g.chaseEnd
+						or inOwnBase(thief, at)
+						or leash.Magnitude > h.leashRadius
+					then
+						giveUp(g, true)
+					else
+						local to = V(at.X - g.pos.X, 0, at.Z - g.pos.Z)
+						if to.Magnitude > 0.1 then
+							g.look = to.Unit
+						end
+						if g.state == "wake" then
+							-- A short grace while it gets up and roars.
+							if now - g.wokeAt >= Config.GuardianWake then
+								g.state = "chase"
+							end
+							pose(g)
+						elseif to.Magnitude <= Config.GuardianCatch + g.reach then
+							bonk(g, thief, thiefRoot)
+						else
+							-- Share of the thief's speed: their walk speed with the carry slow-down,
+							-- or what they really move at (sprinting) if that is more.
+							local carried = #(carrying[thief] or {})
+							local walk = math.max(
+								Config.MinCarrySpeed,
+								Config.WalkSpeed - carried * Config.SlowPerPumpkin
+							)
+							local v = thiefRoot.AssemblyLinearVelocity
+							local moving =
+								math.min(V(v.X, 0, v.Z).Magnitude, Config.SprintSpeed + 6)
+							g.seen += (moving - g.seen) * math.min(1, dt * 4)
+							local speed =
+								math.max(Config.GuardianMinSpeed, g.share * math.max(walk, g.seen))
+							step(g, to.Unit, math.min(speed * dt, to.Magnitude), dt)
+						end
+					end
+				end
+			end
+			if g.state == "return" then
+				local to = V(g.home.X - g.pos.X, 0, g.home.Z - g.pos.Z)
+				if to.Magnitude <= 0.6 then
+					g.pos = g.home
+					g.look = g.homeLook
+					g.state = "sleep"
+					setAwake(g, false)
+					pose(g)
+				else
+					step(g, to.Unit, math.min(Config.GuardianReturnSpeed * dt, to.Magnitude), dt)
+				end
+			end
+		end
+	end)
+
+	local function buildHoard(zoneId: string, zone: Instance, def: { [string]: any })
+		local spawns: { BasePart } = {}
+		for _, d in zone:GetDescendants() do
+			if d:IsA("BasePart") and d.Name == "Spawn" then
+				table.insert(spawns, d)
+			end
+		end
+		local zoneDef = Config.Zones[zoneId]
+		local center: Vector3? = zoneDef and zoneDef.center
+		local spot: Vector3? = nil
+		local marker = zone:FindFirstChild("Hoard")
+		if marker and (marker:IsA("Model") or marker:IsA("BasePart")) then
+			-- A Studio-placed marker picks the spot.
+			spot = (marker :: PVInstance):GetPivot().Position
+			marker:Destroy()
+		elseif center then
+			local flat = V(center.X, 0, center.Z)
+			local out = flat.Magnitude > 0.1 and flat.Unit or V(0, 0, 1)
+			spot = flat + out * Config.HoardOutward
+		else
+			-- The point of the Spawn parts' footprints farthest from the map centre, pulled up to
+			-- 6 studs back toward its part's middle so the nest stands on it.
+			local bestD = -1
+			for _, sp in spawns do
+				local half = sp.Size / 2
+				for sx = -1, 1, 2 do
+					for sz = -1, 1, 2 do
+						local corner = (sp.CFrame * CFrame.new(sx * half.X, 0, sz * half.Z)).Position
+						local d = V(corner.X, 0, corner.Z).Magnitude
+						if d > bestD then
+							bestD = d
+							local back = sp.Position - corner
+							local f = back.Magnitude > 0.01 and math.min(1, 6 / back.Magnitude) or 0
+							spot = corner + back * f
+						end
+					end
+				end
+			end
+		end
+		if not spot then
+			warn("[Patch] No spot for the Hoard in " .. zoneId)
+			return
+		end
+		-- Ground: the bottom of the nearest Spawn part (spawns sit on the zone floor), else a
+		-- long ray; then a short ray refines it.
+		refreshRayFilter()
+		local groundY: number? = nil
+		local nearest = math.huge
+		for _, sp in spawns do
+			local d = V(sp.Position.X - spot.X, 0, sp.Position.Z - spot.Z).Magnitude
+			if d < nearest then
+				nearest, groundY = d, sp.Position.Y - sp.Size.Y / 2
+			end
+		end
+		if not groundY then
+			local hit = workspace:Raycast(V(spot.X, 300, spot.Z), V(0, -600, 0), rayParams)
+			groundY = hit and hit.Position.Y or 0
+		end
+		local y = groundAt(spot.X, spot.Z, groundY :: number)
+		local nest = V(spot.X, y, spot.Z)
+
+		local model = Instance.new("Model")
+		model.Name = "Hoard"
+		model:SetAttribute("Zone", zoneId)
+		-- Straw nest: a dark woven ring, a lighter straw fill and chunky sticks on the rim.
+		local function disc(name: string, diameter: number, height: number, color: Color3): Part
+			local p = Instance.new("Part")
+			p.Name = name
+			p.Shape = Enum.PartType.Cylinder
+			p.Size = V(height, diameter, diameter)
+			p.CFrame = CFrame.new(nest + V(0, height / 2, 0)) * CFrame.Angles(0, 0, math.rad(90))
+			p.Material = Enum.Material.Plastic
+			p.Color = color
+			p.Anchored = true
+			p.CanCollide = false
+			p.CanQuery = false
+			p.CanTouch = false
+			p.Parent = model
+			return p
+		end
+		local base = disc("Nest", NEST_R * 2, 1.6, C(125, 82, 38))
+		disc("Straw", NEST_R * 2 - 2.2, 1.75, C(214, 172, 80))
+		for k = 1, 8 do
+			local a = k / 8 * math.pi * 2 + math.random() * 0.3
+			local stick = Instance.new("Part")
+			stick.Name = "Straw"
+			stick.Size = V(0.4, 0.4, 3.2)
+			stick.Material = Enum.Material.Plastic
+			stick.Color = k % 2 == 0 and C(190, 140, 60) or C(235, 195, 95)
+			stick.Anchored = true
+			stick.CanCollide = false
+			stick.CanQuery = false
+			stick.CanTouch = false
+			stick.CFrame = CFrame.new(
+				nest + V(math.cos(a) * (NEST_R - 0.6), 1.55, math.sin(a) * (NEST_R - 0.6))
+			) * CFrame.Angles(
+				0,
+				-a + (math.random() - 0.5) * 0.8,
+				math.rad(math.random(-15, 15))
+			)
+			stick.Parent = model
+		end
+		local light = Instance.new("PointLight")
+		light.Color = C(255, 200, 80)
+		light.Range = 14
+		light.Brightness = 1.5
+		light.Shadows = false
+		light.Parent = base
+		tag(base, "HoardSign", "⭐ HOARD ⭐", C(255, 214, 80), UDim2.fromScale(9, 2.2), 7)
+
+		-- The guardian sleeps 9 studs to the side of the nest, facing it.
+		local flat = V(nest.X, 0, nest.Z)
+		local out = flat.Magnitude > 0.1 and flat.Unit or V(0, 0, 1)
+		local side = nest + V(-out.Z, 0, out.X) * 9
+		local homePos = V(side.X, groundAt(side.X, side.Z, y), side.Z)
+		local toNest = V(nest.X - homePos.X, 0, nest.Z - homePos.Z).Unit
+		local guard = buildGuardian(zoneId, def.guardian, CFrame.lookAt(homePos, homePos + toNest))
+		guard.model.Parent = model
+
+		-- Leash: Zone1 HoardLeash studs around the nest; gated zones up to just past their gate.
+		local leashCenter, leashRadius = nest, Config.HoardLeash
+		if center then
+			leashCenter = V(center.X, 0, center.Z)
+			local wall = zone:FindFirstChild("GateWall")
+			local gate = Config.ZoneGuardRadius + 22
+			if wall and wall:IsA("BasePart") then
+				gate = V(wall.Position.X - center.X, 0, wall.Position.Z - center.Z).Magnitude
+			end
+			leashRadius = gate + 8
+		end
+
+		-- No wild pumpkins under the nest or the guardian.
+		for _, sp in spawns do
+			local p = sp.Position
+			if
+				V(p.X - nest.X, 0, p.Z - nest.Z).Magnitude <= 9
+				or V(p.X - homePos.X, 0, p.Z - homePos.Z).Magnitude <= 9
+			then
+				sp:SetAttribute("HoardNear", true)
+			end
+		end
+		Wild.clearNear(nest, 9)
+		Wild.clearNear(homePos, 9)
+
+		local h: Hoard = {
+			zone = zoneId,
+			model = model,
+			nest = nest,
+			top = y + 1.75,
+			slots = {},
+			pending = 0,
+			nextRefill = os.clock() + Config.HoardRefill,
+			leashCenter = leashCenter,
+			leashRadius = leashRadius,
+			guard = guard,
+		}
+		for i = 1, Config.HoardCount do
+			seat(h, i, newPumpkin(h))
+		end
+		model.Parent = zone
+		hoards[zoneId] = h
+		-- Slump into the sleeping pose only now: welds hold their build-time offsets once the
+		-- model is in the workspace.
+		pose(guard)
+	end
+
+	task.spawn(function()
+		local zones = garden:WaitForChild("Zones", 10)
+		if not zones then
+			return
+		end
+		for _, zoneId in Config.ZoneOrder do
+			local def = Config.Hoards and Config.Hoards[zoneId]
+			local zone = zones:FindFirstChild(zoneId)
+			if def and zone and seedById[def.type] then
+				local ok, err = pcall(buildHoard, zoneId, zone, def)
+				if not ok then
+					warn("[Patch] Could not build the Hoard in " .. zoneId .. ":", err)
+				end
+			end
+		end
+	end)
+end
+
 -- Cauldrons and the Witch ---------------------------------------------------------------------
 
 for _, cauldron in cauldronFolder:GetChildren() do
@@ -2810,8 +3894,19 @@ Remotes.dropEvent.OnServerEvent:Connect(function(player)
 	for i, p in stack do
 		local a = i / #stack * math.pi * 2
 		local at = root.Position + Vector3.new(math.cos(a) * 3.5, 0, math.sin(a) * 3.5)
-		local hit = workspace:Raycast(at + Vector3.new(0, 3, 0), Vector3.new(0, -40, 0), params)
-		dropLoose(p, at, Config.LooseSeconds, false, hit and hit.Position.Y or root.Position.Y - 3)
+		if p:GetAttribute("HoardZone") then
+			-- A dropped Hoard pumpkin flies back to its nest.
+			Hoards.giveBack(p, at)
+		else
+			local hit = workspace:Raycast(at + Vector3.new(0, 3, 0), Vector3.new(0, -40, 0), params)
+			dropLoose(
+				p,
+				at,
+				Config.LooseSeconds,
+				false,
+				hit and hit.Position.Y or root.Position.Y - 3
+			)
+		end
 	end
 	refreshCarry(player)
 end)
@@ -2845,7 +3940,11 @@ do
 		zonesOf[player] = {}
 		publishZones(player)
 		for _, p in carrying[player] or {} do
-			p:Destroy()
+			if p:GetAttribute("HoardZone") then
+				Hoards.giveBack(p, p.Position)
+			else
+				p:Destroy()
+			end
 		end
 		carrying[player] = {}
 		-- Tools are kept; base pumpkins are cleared.
@@ -2992,7 +4091,31 @@ local function buildMeshGhost(at: Vector3, lackey: boolean?): (Model?, BasePart?
 	body.CFrame = CFrame.new(at)
 	body.Parent = model
 	local orange = Color3.fromRGB(255, 150, 50)
+	-- Normal ghosts are tinted white (blocky style pass). A textured mesh ignores Color, so the
+	-- texture of bright parts is dropped too, but only when the eyes are their own dark parts (else
+	-- the eyes live in the texture and it is kept).
+	local white = Color3.fromRGB(245, 247, 255)
+	local darkParts = false
 	for _, d in mesh:GetDescendants() do
+		if d:IsA("BasePart") and d.Transparency < 1 then
+			local _, _, v = d.Color:ToHSV()
+			darkParts = darkParts or v <= 0.3
+		end
+	end
+	for _, d in mesh:GetDescendants() do
+		if d:IsA("BasePart") and not lackey then
+			local _, _, v = d.Color:ToHSV()
+			if v > 0.3 then
+				d.Color = white
+				if darkParts and d:IsA("MeshPart") then
+					d.TextureID = ""
+					local look = d:FindFirstChildOfClass("SurfaceAppearance")
+					if look then
+						look:Destroy()
+					end
+				end
+			end
+		end
 		if d:IsA("BasePart") then
 			d.Anchored = false
 			d.CanCollide = false
@@ -3039,15 +4162,20 @@ local function buildGhost(at: Vector3, lackey: boolean?): (Model, BasePart)
 	if meshModel and meshRoot then
 		return meshModel, meshRoot
 	end
+	-- Blocky "lego" ghost: a white block body with a stepped top, stubby arms, a ragged hem of
+	-- three blocks and black square eyes and mouth on the front (-Z). Lackeys are orange.
 	local model = Instance.new("Model")
 	model.Name = "Ghost"
+	local tint = lackey and Color3.fromRGB(255, 150, 50) or Color3.fromRGB(245, 247, 255)
+	local hemTint = lackey and Color3.fromRGB(255, 170, 80) or Color3.fromRGB(228, 234, 252)
+	local ink = Color3.fromRGB(20, 16, 30)
 	local body = Instance.new("Part")
 	body.Name = "Body"
-	body.Shape = Enum.PartType.Ball
-	body.Size = Vector3.new(4.4, 4.4, 4.4)
-	body.Material = Enum.Material.SmoothPlastic
-	body.Color = lackey and Color3.fromRGB(255, 150, 50) or Color3.fromRGB(240, 244, 255)
-	body.Transparency = 0.12
+	body.Size = Vector3.new(3.8, 4, 3.4)
+	body.Material = Enum.Material.Plastic
+	body.TopSurface = Enum.SurfaceType.Smooth
+	body.Color = tint
+	body.Transparency = 0.06
 	body.Anchored = true
 	body.CanCollide = false
 	body.CanTouch = false
@@ -3055,7 +4183,6 @@ local function buildGhost(at: Vector3, lackey: boolean?): (Model, BasePart)
 	body.Parent = model
 	local function attach(
 		name: string,
-		shape: Enum.PartType,
 		size: Vector3,
 		offset: CFrame,
 		color: Color3,
@@ -3063,9 +4190,10 @@ local function buildGhost(at: Vector3, lackey: boolean?): (Model, BasePart)
 	)
 		local p = Instance.new("Part")
 		p.Name = name
-		p.Shape = shape
 		p.Size = size
-		p.Material = Enum.Material.SmoothPlastic
+		p.Material = Enum.Material.Plastic
+		p.TopSurface = Enum.SurfaceType.Smooth
+		p.BottomSurface = Enum.SurfaceType.Smooth
 		p.Color = color
 		p.Transparency = transparency
 		p.CanCollide = false
@@ -3079,55 +4207,27 @@ local function buildGhost(at: Vector3, lackey: boolean?): (Model, BasePart)
 		weld.Parent = p
 		p.Parent = model
 	end
-	attach(
-		"Tail",
-		Enum.PartType.Ball,
-		Vector3.new(3.2, 3.6, 3.2),
-		CFrame.new(0, -2, 0.3),
-		Color3.fromRGB(230, 236, 255),
-		0.3
-	)
-	attach(
-		"TailTip",
-		Enum.PartType.Ball,
-		Vector3.new(1.8, 2.4, 1.8),
-		CFrame.new(0, -3.6, 0.8),
-		Color3.fromRGB(220, 230, 255),
-		0.5
-	)
-	attach(
-		"EyeL",
-		Enum.PartType.Ball,
-		Vector3.new(0.8, 1.1, 0.5),
-		CFrame.new(-0.75, 0.5, -2),
-		Color3.fromRGB(20, 16, 30),
-		0
-	)
-	attach(
-		"EyeR",
-		Enum.PartType.Ball,
-		Vector3.new(0.8, 1.1, 0.5),
-		CFrame.new(0.75, 0.5, -2),
-		Color3.fromRGB(20, 16, 30),
-		0
-	)
-	attach(
-		"Mouth",
-		Enum.PartType.Ball,
-		Vector3.new(0.9, 0.7, 0.4),
-		CFrame.new(0, -0.6, -2),
-		Color3.fromRGB(20, 16, 30),
-		0
-	)
-	for k = 0, 5 do
-		local a = k / 6 * math.pi * 2
+	-- Stepped top: reads as a rounded head from a distance.
+	attach("Top", Vector3.new(3.2, 0.8, 2.8), CFrame.new(0, 2.4, 0), tint, 0.06)
+	attach("Cap", Vector3.new(2.2, 0.6, 1.8), CFrame.new(0, 3.1, 0), tint, 0.06)
+	for side = -1, 1, 2 do
 		attach(
-			"Skirt",
-			Enum.PartType.Ball,
-			Vector3.new(1.5, 1.8, 1.5),
-			CFrame.new(math.cos(a) * 1.3, -3.2, math.sin(a) * 1.3 + 0.3),
-			lackey and Color3.fromRGB(255, 170, 80) or Color3.fromRGB(225, 232, 255),
-			0.35
+			"Arm",
+			Vector3.new(1, 1.7, 1),
+			CFrame.new(side * 2.3, 0.3, -0.2) * CFrame.Angles(0, 0, math.rad(side * 28)),
+			tint,
+			0.06
+		)
+		attach("Eye", Vector3.new(0.8, 0.9, 0.2), CFrame.new(side * 0.8, 0.7, -1.72), ink, 0)
+	end
+	attach("Mouth", Vector3.new(1.1, 0.5, 0.2), CFrame.new(0, -0.4, -1.72), ink, 0)
+	for k = -1, 1 do
+		attach(
+			"Hem",
+			Vector3.new(1.2, k == 0 and 1.6 or 1.1, 3),
+			CFrame.new(k * 1.25, k == 0 and -2.6 or -2.35, 0.1),
+			hemTint,
+			0.2
 		)
 	end
 	dressGhost(body, lackey)
@@ -4462,6 +5562,7 @@ local function cleanupPlayer(player: Player)
 	zonesOf[player] = nil
 	Bases.left[player] = nil
 	Bases.incomeCarry[player] = nil
+	Bases.carvedOf[player] = nil
 end
 
 local function onCharacter(player: Player, character: Model)
@@ -4631,6 +5732,10 @@ task.spawn(function()
 		local guarded, guardErr = pcall(guardZones)
 		if not guarded then
 			warn("[Patch] Zone guard failed:", guardErr)
+		end
+		local refilled, hoardErr = pcall(Hoards.tick)
+		if not refilled then
+			warn("[Patch] Hoard refill failed:", hoardErr)
 		end
 		if seconds % 5 == 0 then
 			for _, player in Players:GetPlayers() do

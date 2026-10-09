@@ -2037,7 +2037,14 @@ do
 		return copy
 	end
 
-	local function showCard(seedId: string, mutation: string?, isNew: boolean, rate: number)
+	-- kind: "jack" (it just came alive as a living Jack) or "hoard" (a Hoard pumpkin delivered).
+	local function showCard(
+		seedId: string,
+		mutation: string?,
+		isNew: boolean,
+		rate: number,
+		kind: string?
+	)
 		local seed = seedById[seedId]
 		local rarity = rarityOf(seed.order)
 		local m = mutation and mutationById[mutation]
@@ -2151,7 +2158,13 @@ do
 		local rarityStroke = rarityLabel:FindFirstChildOfClass("UIStroke") :: UIStroke
 		rarityStroke.Thickness = 3.5
 		rarityStroke.Color = OUTLINE
-		local nameText = (mutation and (mutation .. " ") or "") .. seed.name
+		local nameText = (mutation and (mutation .. " ") or "")
+			.. seed.name
+			.. (
+				kind == "jack" and " Jack"
+				or kind == "hoard" and " · Hoard x" .. Config.HoardMult
+				or ""
+			)
 		local nameLabel = textLabel(cardFrame, nameText, m and m.color or Color3.new(1, 1, 1))
 		nameLabel.Position = UDim2.fromOffset(12, 292)
 		nameLabel.Size = UDim2.new(1, -24, 0, 46)
@@ -2231,13 +2244,12 @@ do
 		task.wait(0.2)
 	end
 
-	remotes
-		:WaitForChild("Reveal").OnClientEvent
-		:Connect(function(seedId: string, mutation: string?, isNew: boolean, rate: number)
+	remotes:WaitForChild("Reveal").OnClientEvent:Connect(
+		function(seedId: string, mutation: string?, isNew: boolean, rate: number, kind: string?)
 			if not seedById[seedId] or #queue >= MAX_QUEUE then
 				return
 			end
-			table.insert(queue, { seedId, mutation, isNew == true, tonumber(rate) or 0 })
+			table.insert(queue, { seedId, mutation, isNew == true, tonumber(rate) or 0, kind })
 			if busy then
 				return
 			end
@@ -2246,14 +2258,15 @@ do
 				while #queue > 0 do
 					local item = table.remove(queue, 1) :: { any }
 					-- pcall: one bad card must never jam the queue.
-					local ok, err = pcall(showCard, item[1], item[2], item[3], item[4])
+					local ok, err = pcall(showCard, item[1], item[2], item[3], item[4], item[5])
 					if not ok then
 						warn("[Patch] Reveal card failed:", err)
 					end
 				end
 				busy = false
 			end)
-		end)
+		end
+	)
 end
 
 local function myPatch(): Model?
@@ -3648,6 +3661,15 @@ do
 		return best
 	end
 
+	-- A zone's Hoard nest (the server builds it as Zones.<zone>.Hoard.Nest).
+	local function hoardSpot(zoneId: string): Vector3?
+		local zones = garden:FindFirstChild("Zones")
+		local zone = zones and zones:FindFirstChild(zoneId)
+		local hoard = zone and zone:FindFirstChild("Hoard")
+		local nest = hoard and hoard:FindFirstChild("Nest") :: BasePart?
+		return nest and nest.Position
+	end
+
 	-- Carrying toward your base: "Go to your Base!" until you stand on it.
 	local function goHome(root: BasePart, soil: BasePart): string
 		local d =
@@ -3662,6 +3684,9 @@ do
 		local unbrewed = carry - (player:GetAttribute("CarryBrewed") or 0)
 		local phase = state:GetAttribute("Phase")
 		local zone = zoneTarget(root.Position) or soil.Position
+		if (player:GetAttribute("CarryHoard") or 0) > 0 then
+			return goHome(root, soil), "RUN!! Get it home before you get BONKED!", soil.Position
+		end
 		if (player:GetAttribute("CarryStolen") or 0) > 0 then
 			return goHome(root, soil), "Place it on your base to keep it!", soil.Position
 		end
@@ -3699,6 +3724,15 @@ do
 						short(current.need or 1)
 					)
 				or ""
+			if kind == "hoard" then
+				-- Room for one more: go steal it; hands full: put these down first.
+				if carry < cap then
+					return "Steal a Golden Pumpkin!",
+						"Sneak in and grab one from the Hoard nest",
+						hoardSpot("Zone1") or zone
+				end
+				return goHome(root, soil), "Hands full: place these, then go steal!", soil.Position
+			end
 			if kind == "cauldron" and unbrewed > 0 then
 				return "Brew it!", orderSub, nearestCauldron(root.Position)
 			elseif kind == "witch" or kind == "king" then
@@ -3752,7 +3786,9 @@ do
 			sub = string.format("Step %d/%d · %s", data.step or 1, data.steps or 8, sub)
 		end
 		-- Empty hands from here on (carrying returned above).
-		if
+		if kind == "hoard" then
+			return "Steal a Golden Pumpkin!", sub, hoardSpot("Zone1") or zone
+		elseif
 			kind == "zone"
 			or kind == "place"
 			or (kind == "patch" and stat == "income")
@@ -3881,13 +3917,16 @@ do
 	flash.Size = UDim2.fromScale(1, 1)
 	flash.Parent = alarmGui
 
+	-- A Hoard pumpkin fresh from a nest (CarryHoard) gets the same drama: the guardian is coming.
 	local function refresh()
 		local stolen = (player:GetAttribute("CarryStolen") or 0) > 0
+			or (player:GetAttribute("CarryHoard") or 0) > 0
 		run.Visible = stolen
 		drop.Visible = stolen
 		vignette.Visible = stolen
 	end
 	player:GetAttributeChangedSignal("CarryStolen"):Connect(refresh)
+	player:GetAttributeChangedSignal("CarryHoard"):Connect(refresh)
 	refresh()
 
 	RunService.RenderStepped:Connect(function()
@@ -4046,6 +4085,7 @@ end)
 -- this shows a centred white panel: tilted italic "DAILY REWARD!" on the top-left edge, a red X,
 -- a chest, a 7-day strip (past days ticked, today highlighted), the reward and a big green
 -- CLAIM! button that closes it with confetti and candies flying into the counter.
+local confetti: () -> () -- defined in the block below (also used for Hoard deliveries)
 do
 	local dailyGui = Instance.new("ScreenGui")
 	dailyGui.Name = "PatchDaily"
@@ -4060,7 +4100,7 @@ do
 
 	-- Confetti bursts out of the middle of the screen (where the panel was) on screen at once,
 	-- flies up and out, then tumbles down past the bottom edge.
-	local function confetti()
+	function confetti()
 		local colors = {
 			Color3.fromRGB(255, 80, 120),
 			Color3.fromRGB(255, 210, 60),
@@ -4846,3 +4886,212 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		shopPanel.Visible = false
 	end
 end)
+
+-- Hoards: the thief's side of a guardian chase. The server sends "grab" (you took a Hoard
+-- pumpkin: shake, RUN!!), "bonk" (the guardian caught you), "safe" (it gave up) and "deliver" (you
+-- placed it: confetti; the server also sends a reveal card). -----------------------------------
+
+remotes:WaitForChild("Hoard").OnClientEvent:Connect(function(kind: string, seedId: string?)
+	local seed = seedById[seedId or ""]
+	local name = seed and string.upper(seed.name) or "GOLDEN"
+	if kind == "grab" then
+		hint(
+			string.format(
+				'You grabbed a <font color="#FFD23C">%s PUMPKIN</font>! <font color="#FF3B3B">RUN!!</font>',
+				name
+			)
+		)
+		play(Config.Sounds.Coin, 1.4, 0.8)
+		task.spawn(shake, 1.1, 16)
+	elseif kind == "bonk" then
+		hint('<font color="#FF3B3B">BONKED!</font> The guardian took the Hoard pumpkin back.')
+		local root = rootPart()
+		if root then
+			floatText(
+				root.Position + Vector3.new(0, 5, 0),
+				"BONKED!",
+				Color3.fromRGB(255, 70, 60),
+				true
+			)
+		end
+		play(Config.Sounds.Bonk, 0.6, 1)
+		task.spawn(shake, 1.6, 12)
+	elseif kind == "safe" then
+		hint("You got away! The guardian gives up. Place it on your base!")
+	elseif kind == "deliver" then
+		hint(string.format('You stole a <font color="#FFD23C">%s PUMPKIN</font>!', name))
+		confetti()
+		play(Config.Sounds.Coin, 0.8, 1)
+		play(Config.Sounds.Brew, 1.6, 0.6)
+	end
+end)
+
+-- A placed pumpkin finished carving: a white flash and sparkles as it comes alive.
+remotes:WaitForChild("Carved").OnClientEvent:Connect(function(p: BasePart?, ownerId: number?)
+	local camera = workspace.CurrentCamera
+	if not p or not p.Parent or not camera then
+		return
+	end
+	if (p.Position - camera.CFrame.Position).Magnitude > 150 then
+		return
+	end
+	local flash = Instance.new("Highlight")
+	flash.FillColor = Color3.new(1, 1, 1)
+	flash.FillTransparency = 0
+	flash.OutlineColor = Color3.new(1, 1, 1)
+	flash.OutlineTransparency = 0
+	flash.DepthMode = Enum.HighlightDepthMode.Occluded
+	flash.Parent = p
+	TweenService:Create(
+		flash,
+		TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+		{ FillTransparency = 1, OutlineTransparency = 1 }
+	):Play()
+	task.delay(0.55, function()
+		flash:Destroy()
+	end)
+	burst(p.Position + Vector3.new(0, 1, 0), Color3.new(1, 1, 1), 24, 16, SPARKLE, 1)
+	if ownerId == player.UserId then
+		play(Config.Sounds.Brew, 1.5, 0.7)
+		floatText(p.Position + Vector3.new(0, 4, 0), "IT'S ALIVE!", Color3.fromRGB(255, 200, 90))
+	end
+end)
+
+-- Guardian tags: the cyan "Z z Z" bobs slowly while it sleeps, the red "!" jumps while it is awake
+-- (local only, so nothing replicates every frame).
+do
+	local tags: { [BillboardGui]: Vector3 } = setmetatable({}, { __mode = "k" }) :: any
+	local function watch(d: Instance)
+		if d:IsA("BillboardGui") and (d.Name == "SleepTag" or d.Name == "AlertTag") then
+			if not tags[d] then
+				tags[d] = d.StudsOffsetWorldSpace
+			end
+		end
+	end
+	task.spawn(function()
+		local zones = garden:WaitForChild("Zones", 15)
+		if not zones then
+			return
+		end
+		zones.DescendantAdded:Connect(watch)
+		for _, d in zones:GetDescendants() do
+			watch(d)
+		end
+	end)
+	RunService.RenderStepped:Connect(function()
+		local t = os.clock()
+		for bb, base in tags do
+			if bb.Enabled and bb.Parent then
+				local y = bb.Name == "SleepTag" and math.sin(t * 2) * 0.8
+					or math.abs(math.sin(t * 7)) * 0.7
+				bb.StudsOffsetWorldSpace = base + Vector3.new(0, y, 0)
+			end
+		end
+	end)
+end
+
+-- Living Jacks hop gently around their plots: a short arc to a random spot within Config.JackHop
+-- studs (and the plot) of their home every second or two, facing where they hop. Local only: the
+-- server keeps each Jack at JackHome on its plot, and a Jack that leaves its plot (picked up,
+-- stolen, grabbed by a ghost) is never touched again.
+do
+	type Hop = {
+		from: Vector3,
+		to: Vector3,
+		t0: number,
+		nextAt: number,
+		yaw: number,
+		fromYaw: number,
+	}
+	local HOP_TIME = 0.42
+	local hops: { [BasePart]: Hop } = {}
+	local jacks: { BasePart } = {}
+	local function onPlot(p: BasePart): boolean
+		local plot = p.Parent
+		return plot ~= nil
+			and plot.Name == "Plot"
+			and p:GetAttribute("Placed") == true
+			and p:GetAttribute("Jack") == true
+			and typeof(p:GetAttribute("JackHome")) == "CFrame"
+	end
+	task.spawn(function()
+		while true do
+			local list = {}
+			for _, patch in patchFolder:GetChildren() do
+				for _, plot in patch:GetChildren() do
+					local p = plot.Name == "Plot" and plot:FindFirstChild("Pumpkin")
+					if p and p:IsA("BasePart") and onPlot(p) then
+						table.insert(list, p)
+					end
+				end
+			end
+			jacks = list
+			for p in hops do
+				if not onPlot(p) then
+					hops[p] = nil
+				end
+			end
+			task.wait(0.5)
+		end
+	end)
+	RunService.Heartbeat:Connect(function()
+		local camera = workspace.CurrentCamera
+		if not camera then
+			return
+		end
+		local eye = camera.CFrame.Position
+		local t = os.clock()
+		for _, p in jacks do
+			if not onPlot(p) then
+				hops[p] = nil
+				continue
+			end
+			local home = p:GetAttribute("JackHome") :: CFrame
+			if (home.Position - eye).Magnitude > 140 then
+				continue
+			end
+			local plot = p.Parent :: BasePart
+			local radius =
+				math.min(Config.JackHop, math.max(0, math.min(plot.Size.Y, plot.Size.Z) / 2 - 0.3))
+			local hop = hops[p]
+			if not hop then
+				local _, yaw = home:ToOrientation()
+				hop = {
+					from = Vector3.zero,
+					to = Vector3.zero,
+					t0 = -1,
+					nextAt = t + math.random() * 1.5,
+					yaw = yaw,
+					fromYaw = yaw,
+				}
+				hops[p] = hop
+			end
+			if t >= hop.nextAt then
+				local a = math.random() * math.pi * 2
+				local r = math.sqrt(math.random()) * radius
+				local goal = Vector3.new(math.cos(a) * r, 0, math.sin(a) * r)
+				local dir = goal - hop.to
+				hop.from = hop.to
+				hop.to = goal
+				hop.t0 = t
+				hop.nextAt = t + HOP_TIME + 0.8 + math.random() * 1.6
+				hop.fromYaw = hop.yaw
+				if dir.Magnitude > 0.05 then
+					-- CFrame.Angles(0, yaw, 0) looks along (-sin yaw, 0, -cos yaw): toward dir.
+					hop.yaw = math.atan2(-dir.X, -dir.Z)
+				end
+			end
+			local f = hop.t0 >= 0 and math.clamp((t - hop.t0) / HOP_TIME, 0, 1) or 1
+			local turn = (hop.yaw - hop.fromYaw + math.pi) % (math.pi * 2) - math.pi
+			local yaw = hop.fromYaw + turn * math.min(1, f * 2)
+			local lift = math.sin(f * math.pi) * 0.9
+			if f >= 1 then
+				-- Idle: a tiny breathing bounce.
+				lift = math.abs(math.sin(t * 3)) * 0.06
+			end
+			p.CFrame = CFrame.new(
+				home.Position + hop.from:Lerp(hop.to, f) + Vector3.new(0, lift, 0)
+			) * CFrame.Angles(0, yaw, 0)
+		end
+	end)
+end
