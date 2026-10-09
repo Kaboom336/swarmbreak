@@ -76,6 +76,8 @@ do
 		dropEvent = remote("Drop"),
 		-- Server -> client: "stole" (to the thief) / "robbed" (to the base owner).
 		stealAlarmEvent = remote("StealAlarm"),
+		-- Server -> client: reward reveal card (seedId, mutation?, isNew, candy per second).
+		revealEvent = remote("Reveal"),
 		buyToolFunction = remote("BuyTool", "RemoteFunction") :: RemoteFunction,
 		buyUpgradeFunction = remote("BuyUpgrade", "RemoteFunction") :: RemoteFunction,
 		hauntFunction = remote("Haunt", "RemoteFunction") :: RemoteFunction,
@@ -990,6 +992,50 @@ end
 -- What the Witch pays (before the seller's multipliers): SellPerIncome seconds of income.
 local function pumpkinValue(pumpkin: Instance): number
 	return math.max(1, math.floor(incomeOf(pumpkin) * Config.SellPerIncome + 0.5))
+end
+
+-- Reward reveal: a white flash and a card on the gainer's screen for a pumpkin type they never had
+-- (no Index entry and not found before; checked before the gain), a rare type (Config.RevealOrder
+-- up) or a Cursed brew. Reveal.isNew must run before stackPumpkin marks the type found.
+local Reveal: { [string]: any } = {}
+do
+	-- Types already revealed as new this session (weak keys: gone with the Player).
+	local seenOf: { [Player]: { [string]: boolean } } = setmetatable({}, { __mode = "k" }) :: any
+
+	function Reveal.isNew(player: Player, seedId: string): boolean
+		local seen = seenOf[player]
+		if seen and seen[seedId] then
+			return false
+		end
+		-- Orange is in every fresh "found" set, so only the Index can say it was had before.
+		local found = unlocked[player]
+		if seedId ~= Config.Seeds[1].id and found and found[seedId] then
+			return false
+		end
+		local prefix = seedId .. ":"
+		for key in indexOf[player] or {} do
+			if string.sub(key, 1, #prefix) == prefix then
+				return false
+			end
+		end
+		return true
+	end
+
+	function Reveal.send(player: Player, pumpkin: Instance, isNew: boolean)
+		local seed = seedById[pumpkin:GetAttribute("Seed") or ""]
+		if not seed or not player.Parent then
+			return
+		end
+		local mutation = pumpkin:GetAttribute("Mutation")
+		if not isNew and seed.order < Config.RevealOrder and mutation ~= "Cursed" then
+			return
+		end
+		local seen = seenOf[player] or {}
+		seenOf[player] = seen
+		seen[seed.id] = true
+		local rate = math.floor(incomeOf(pumpkin) * sellMult(player) * 10 + 0.5) / 10
+		Remotes.revealEvent:FireClient(player, seed.id, mutation, isNew, rate)
+	end
 end
 
 local brewPumpkin, applyMutationLook
@@ -2149,6 +2195,7 @@ do
 		local sizeMult = w.sizeMult
 			* (hasSkill(winner, "BumperCrop") and 1 + Config.SkillSizeBonus or 1)
 		local pumpkin = makePumpkin(seedId, sizeMult)
+		local isNew = Reveal.isNew(winner, seedId)
 		track(winner, "smash", 1)
 		if #(carrying[winner] or {}) < carryCapacity(winner) and stackPumpkin(winner, pumpkin) then
 			if hasSkill(winner, "AutoBrew") then
@@ -2174,6 +2221,7 @@ do
 				"Your hands are full! It's on the ground: place, brew or sell what you carry."
 			)
 		end
+		Reveal.send(winner, pumpkin, isNew)
 	end
 
 	-- Swing at the nearest wild pumpkin in front of root (BonkRange from its side).
@@ -2311,41 +2359,62 @@ do
 		track(player, "unlockZone", 1)
 	end
 
+	-- Gate sign (Steal an Egg / Pet Sim 99 style): the zone name with its difficulty emoji in big
+	-- white stroked letters and a yellow price pill ("🍬 1k") under it. Each client turns the pill
+	-- green "UNLOCKED ✅" for zones it owns. Only readable up close (MaxDistance 80).
 	local function gateSign(sign: BasePart, def)
 		local old = sign:FindFirstChild("GateGui")
 		if old then
 			old:Destroy()
 		end
+		local ink = Color3.fromRGB(26, 15, 46)
 		local bb = Instance.new("BillboardGui")
 		bb.Name = "GateGui"
-		bb.Size = UDim2.fromOffset(280, 90)
+		bb.Size = UDim2.fromOffset(300, 120)
 		bb.LightInfluence = 0
-		bb.MaxDistance = 220
-		for i, info in
-			{
-				{ name = "Title", text = def.title, color = Color3.fromRGB(255, 214, 80) },
-				{
-					name = "Cost",
-					text = "🔒 " .. short(def.cost or 0) .. " 🍬",
-					color = Color3.fromRGB(255, 240, 220),
-				},
-			}
-		do
-			local label = Instance.new("TextLabel")
-			label.Name = info.name
-			label.BackgroundTransparency = 1
-			label.Position = UDim2.fromScale(0, i == 1 and 0 or 0.55)
-			label.Size = UDim2.fromScale(1, i == 1 and 0.55 or 0.45)
-			label.Font = Enum.Font.FredokaOne
-			label.TextScaled = true
-			label.TextColor3 = info.color
-			label.Text = info.text
-			label.Parent = bb
-			local outline = Instance.new("UIStroke")
-			outline.Thickness = 2.5
-			outline.Color = Color3.fromRGB(30, 12, 40)
-			outline.Parent = label
-		end
+		bb.MaxDistance = 80
+		local title = Instance.new("TextLabel")
+		title.Name = "Title"
+		title.BackgroundTransparency = 1
+		title.Size = UDim2.fromScale(1, 0.56)
+		title.Font = Enum.Font.FredokaOne
+		title.TextScaled = true
+		title.TextColor3 = Color3.new(1, 1, 1)
+		title.Text = def.title .. (def.emoji and (" " .. def.emoji) or "")
+		title.Parent = bb
+		local titleStroke = Instance.new("UIStroke")
+		titleStroke.Thickness = 4
+		titleStroke.Color = ink
+		titleStroke.Parent = title
+		local pill = Instance.new("Frame")
+		pill.Name = "Pill"
+		pill.AnchorPoint = Vector2.new(0.5, 1)
+		pill.Position = UDim2.new(0.5, 0, 1, -4)
+		pill.Size = UDim2.fromOffset(180, 42)
+		pill.BackgroundColor3 = Color3.fromRGB(255, 205, 40)
+		pill.Parent = bb
+		local pillCorner = Instance.new("UICorner")
+		pillCorner.CornerRadius = UDim.new(1, 0)
+		pillCorner.Parent = pill
+		local pillStroke = Instance.new("UIStroke")
+		pillStroke.Thickness = 3
+		pillStroke.Color = ink
+		pillStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		pillStroke.Parent = pill
+		local cost = Instance.new("TextLabel")
+		cost.Name = "Cost"
+		cost.BackgroundTransparency = 1
+		cost.Position = UDim2.fromOffset(10, 5)
+		cost.Size = UDim2.new(1, -20, 1, -10)
+		cost.Font = Enum.Font.FredokaOne
+		cost.TextScaled = true
+		cost.TextColor3 = Color3.new(1, 1, 1)
+		cost.Text = "🍬 " .. short(def.cost or 0)
+		cost.Parent = pill
+		local costStroke = Instance.new("UIStroke")
+		costStroke.Thickness = 2.5
+		costStroke.Color = ink
+		costStroke.Parent = cost
 		bb.Parent = sign
 	end
 
@@ -2449,6 +2518,9 @@ for _, cauldron in cauldronFolder:GetChildren() do
 			if not pumpkin:GetAttribute("Mutation") then
 				local id = brewPumpkin(player, pumpkin, true)
 				table.insert(results, { id = id, value = pumpkinValue(pumpkin) })
+				if id == "Cursed" then
+					Reveal.send(player, pumpkin, false)
+				end
 			end
 		end
 		if #stack == 0 then

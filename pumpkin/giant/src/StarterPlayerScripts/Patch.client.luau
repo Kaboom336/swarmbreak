@@ -286,8 +286,11 @@ end
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "PatchHud"
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
+-- Above the panel dim (PatchDim, order 0), so the HUD stays bright while a panel is open.
+gui.DisplayOrder = 1
 gui.Parent = player:WaitForChild("PlayerGui")
 
 -- Small screens: one UIScale shrinks the whole HUD so the 640-wide panels still fit.
@@ -878,70 +881,172 @@ local function seedColor(seed): Color3
 		or Color3.fromRGB(255, 130, 40)
 end
 
--- Panels: tool shop (the old seed stall) and upgrade stall.
-local function panel(title: string): (Frame, Frame)
+-- Panels (Pet Sim 99 style): a white rounded box, an italic heavy title ending in "!" tilted -4
+-- degrees over the top-left edge, a red square X over the top-right corner, a quick pop-in, and a
+-- dim over the world (its own ScreenGui under the HUD) while any panel is open. A click on the
+-- dim closes the open panel. grid = the items sit in a 3-column grid of cards (gridCard).
+local CARD_GREY = Color3.fromRGB(236, 238, 244)
+local panelFrames: { Frame } = {}
+local panelDim: TextButton
+do
+	local dimGui = Instance.new("ScreenGui")
+	dimGui.Name = "PatchDim"
+	dimGui.ResetOnSpawn = false
+	dimGui.IgnoreGuiInset = true
+	dimGui.DisplayOrder = 0
+	dimGui.Parent = player:WaitForChild("PlayerGui")
+	panelDim = Instance.new("TextButton")
+	panelDim.Name = "Dim"
+	panelDim.Text = ""
+	panelDim.AutoButtonColor = false
+	panelDim.BackgroundColor3 = Color3.new(0, 0, 0)
+	panelDim.BackgroundTransparency = 1
+	panelDim.BorderSizePixel = 0
+	panelDim.Size = UDim2.fromScale(1, 1)
+	panelDim.Visible = false
+	panelDim.Parent = dimGui
+	panelDim.Activated:Connect(function()
+		for _, f in panelFrames do
+			f.Visible = false
+		end
+	end)
+end
+local function anyPanelOpen(): boolean
+	for _, f in panelFrames do
+		if f.Visible then
+			return true
+		end
+	end
+	return false
+end
+local function refreshDim()
+	if anyPanelOpen() then
+		panelDim.Visible = true
+		TweenService:Create(panelDim, TweenInfo.new(0.2), { BackgroundTransparency = 0.5 }):Play()
+	elseif panelDim.Visible then
+		local fade =
+			TweenService:Create(panelDim, TweenInfo.new(0.2), { BackgroundTransparency = 1 })
+		fade:Play()
+		fade.Completed:Once(function()
+			panelDim.Visible = anyPanelOpen()
+		end)
+	end
+end
+
+local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	local frame = Instance.new("Frame")
 	frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	frame.Position = UDim2.fromScale(0.5, 0.55)
+	frame.Position = UDim2.fromScale(0.5, 0.54)
 	frame.Size = UDim2.fromOffset(640, 440)
-	frame.BackgroundColor3 = Color3.fromRGB(36, 24, 50)
+	frame.BackgroundColor3 = Color3.new(1, 1, 1)
 	frame.Visible = false
 	frame.ZIndex = 10
 	frame.Parent = gui
-	corner(frame, 18)
-	stroke(frame, 4)
-	local head = textLabel(frame, title, Color3.fromRGB(255, 255, 255))
-	head.Position = UDim2.fromOffset(20, 10)
-	head.Size = UDim2.new(1, -100, 0, 46)
+	corner(frame, 16)
+	stroke(frame, 4).Color = OUTLINE
+	local head = textLabel(frame, title, Color3.new(1, 1, 1))
+	head.FontFace = Font.new(
+		"rbxasset://fonts/families/GothamSSm.json",
+		Enum.FontWeight.Heavy,
+		Enum.FontStyle.Italic
+	)
+	head.AnchorPoint = Vector2.new(0, 0.5)
+	head.Position = UDim2.fromOffset(-16, 4)
+	head.Size = UDim2.fromOffset(360, 56)
+	head.Rotation = -4
+	head.ZIndex = 14
 	head.TextXAlignment = Enum.TextXAlignment.Left
-	local close = button(frame, "X", Color3.fromRGB(220, 60, 60))
+	local headStroke = head:FindFirstChildOfClass("UIStroke") :: UIStroke
+	headStroke.Thickness = 4.5
+	headStroke.Color = OUTLINE
+	local close = button(frame, "X", Color3.fromRGB(225, 50, 50))
 	close.AnchorPoint = Vector2.new(1, 0)
-	close.Position = UDim2.new(1, -12, 0, 12)
-	close.Size = UDim2.fromOffset(46, 46)
+	close.Position = UDim2.new(1, 12, 0, -12)
+	close.Size = UDim2.fromOffset(48, 48)
+	close.ZIndex = 14
+	for _, d in close:GetDescendants() do
+		if d:IsA("GuiObject") then
+			d.ZIndex += 13
+		elseif d:IsA("UICorner") then
+			d.CornerRadius = UDim.new(0, 10)
+		end
+	end
 	close.Activated:Connect(function()
 		frame.Visible = false
 	end)
 	local list = Instance.new("ScrollingFrame")
 	list.BackgroundTransparency = 1
 	list.BorderSizePixel = 0
-	list.Position = UDim2.fromOffset(16, 68)
-	list.Size = UDim2.new(1, -32, 1, -84)
+	list.Position = UDim2.fromOffset(16, 50)
+	list.Size = UDim2.new(1, -32, 1, -64)
 	list.ScrollBarThickness = 8
+	list.ScrollBarImageColor3 = Color3.fromRGB(170, 170, 190)
 	list.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	list.CanvasSize = UDim2.new()
 	list.Parent = frame
-	local layout = Instance.new("UIListLayout")
-	layout.Padding = UDim.new(0, 8)
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Parent = list
+	local pad = Instance.new("UIPadding")
+	pad.PaddingTop = UDim.new(0, 6)
+	pad.PaddingBottom = UDim.new(0, 8)
+	pad.PaddingLeft = UDim.new(0, 4)
+	pad.PaddingRight = UDim.new(0, 10)
+	pad.Parent = list
+	if grid then
+		local layout = Instance.new("UIGridLayout")
+		layout.CellSize = UDim2.new(1 / 3, -10, 0, 226)
+		layout.CellPadding = UDim2.fromOffset(12, 12)
+		layout.SortOrder = Enum.SortOrder.LayoutOrder
+		layout.Parent = list
+	else
+		local layout = Instance.new("UIListLayout")
+		layout.Padding = UDim.new(0, 8)
+		layout.SortOrder = Enum.SortOrder.LayoutOrder
+		layout.Parent = list
+	end
+	-- Pop in fast (about 0.15 s) each time it opens.
+	local pop = Instance.new("UIScale")
+	pop.Parent = frame
+	frame:GetPropertyChangedSignal("Visible"):Connect(function()
+		if frame.Visible then
+			pop.Scale = 0.85
+			TweenService:Create(
+				pop,
+				TweenInfo.new(0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+				{ Scale = 1 }
+			):Play()
+		end
+		refreshDim()
+	end)
+	table.insert(panelFrames, frame)
 	return frame, list
 end
+
+-- A full-width row card (Haunt panel): light grey with a coloured icon, name and a dark line.
 local function card(
-	list: Frame,
+	list: Instance,
 	order: number,
 	color: Color3,
 	title: string,
 	text: string
 ): (Frame, TextLabel)
 	local c = Instance.new("Frame")
-	c.Size = UDim2.new(1, -10, 0, 78)
+	c.Size = UDim2.new(1, -4, 0, 78)
 	c.LayoutOrder = order
-	c.BackgroundColor3 = Color3.fromRGB(226, 196, 150)
+	c.BackgroundColor3 = CARD_GREY
 	c.Parent = list
-	corner(c, 12)
-	stroke(c, 2.5)
+	corner(c, 14)
+	stroke(c, 2.5).Color = OUTLINE
 	local dot = Instance.new("Frame")
 	dot.Position = UDim2.fromOffset(12, 14)
 	dot.Size = UDim2.fromOffset(50, 50)
 	dot.BackgroundColor3 = color
 	dot.Parent = c
 	corner(dot)
-	stroke(dot, 2)
+	stroke(dot, 2.5).Color = OUTLINE
 	local name = textLabel(c, title, Color3.fromRGB(255, 255, 255))
 	name.Position = UDim2.fromOffset(74, 6)
 	name.Size = UDim2.new(1, -330, 0, 32)
 	name.TextXAlignment = Enum.TextXAlignment.Left
-	local info = textLabel(c, text, Color3.fromRGB(70, 44, 30), Enum.Font.GothamBold)
+	local info = textLabel(c, text, Color3.fromRGB(80, 70, 100), Enum.Font.GothamBold)
 	info:FindFirstChildOfClass("UIStroke"):Destroy()
 	info.Position = UDim2.fromOffset(74, 42)
 	info.Size = UDim2.new(1, -330, 0, 22)
@@ -949,28 +1054,121 @@ local function card(
 	return c, info
 end
 
+-- Grid item card (Pet Sim 99): a light grey square with a round icon, the name, a dark info line
+-- and a green buy button with a dark stroke. cardState switches it between:
+--   "buy"    light grey card, green button with the price,
+--   "owned"  bright green card with a big tilted "Owned!" (or "Equipped!", "MAX!") and no button,
+--   "locked" grey card with a padlock over the dimmed icon and a grey price button.
+type GridCard = {
+	frame: Frame,
+	color: Color3,
+	icon: Frame,
+	info: TextLabel,
+	button: TextButton,
+	lock: TextLabel,
+	tag: TextLabel,
+}
+local function gridCard(
+	list: Instance,
+	order: number,
+	color: Color3,
+	title: string,
+	text: string
+): GridCard
+	local c = Instance.new("Frame")
+	c.LayoutOrder = order
+	c.BackgroundColor3 = CARD_GREY
+	c.Parent = list
+	corner(c, 14)
+	stroke(c, 2.5).Color = OUTLINE
+	local icon = Instance.new("Frame")
+	icon.AnchorPoint = Vector2.new(0.5, 0)
+	icon.Position = UDim2.new(0.5, 0, 0, 12)
+	icon.Size = UDim2.fromOffset(64, 64)
+	icon.BackgroundColor3 = color
+	icon.Parent = c
+	corner(icon)
+	stroke(icon, 3).Color = OUTLINE
+	local shine = Instance.new("Frame")
+	shine.Position = UDim2.fromOffset(14, 9)
+	shine.Size = UDim2.fromOffset(18, 12)
+	shine.BackgroundColor3 = Color3.new(1, 1, 1)
+	shine.BackgroundTransparency = 0.45
+	shine.BorderSizePixel = 0
+	shine.Parent = icon
+	corner(shine)
+	local lock = textLabel(icon, "🔒", Color3.new(1, 1, 1))
+	lock.Size = UDim2.fromScale(1, 1)
+	lock.Visible = false
+	local name = textLabel(c, title, Color3.new(1, 1, 1))
+	name.Position = UDim2.new(0, 8, 0, 82)
+	name.Size = UDim2.new(1, -16, 0, 26)
+	local info = textLabel(c, text, Color3.fromRGB(80, 70, 100), Enum.Font.GothamBold)
+	info:FindFirstChildOfClass("UIStroke"):Destroy()
+	info.Position = UDim2.new(0, 10, 0, 110)
+	info.Size = UDim2.new(1, -20, 0, 40)
+	info.TextWrapped = true
+	local b = button(c, "", Color3.fromRGB(60, 200, 70))
+	b.AnchorPoint = Vector2.new(0.5, 1)
+	b.Position = UDim2.new(0.5, 0, 1, -14)
+	b.Size = UDim2.new(1, -24, 0, 46)
+	local tag = textLabel(c, "Owned!", Color3.new(1, 1, 1))
+	tag.FontFace = Font.new(
+		"rbxasset://fonts/families/GothamSSm.json",
+		Enum.FontWeight.Heavy,
+		Enum.FontStyle.Italic
+	)
+	tag.AnchorPoint = Vector2.new(0.5, 1)
+	tag.Position = UDim2.new(0.5, 0, 1, -14)
+	tag.Size = UDim2.new(1, -24, 0, 44)
+	tag.Rotation = -4
+	tag.Visible = false
+	local tagStroke = tag:FindFirstChildOfClass("UIStroke") :: UIStroke
+	tagStroke.Thickness = 3.5
+	tagStroke.Color = Color3.fromRGB(20, 70, 15)
+	return { frame = c, color = color, icon = icon, info = info, button = b, lock = lock, tag = tag }
+end
+
+local function cardState(gc: GridCard, look: string, text: string)
+	local owned, locked = look == "owned", look == "locked"
+	gc.frame.BackgroundColor3 = owned and Color3.fromRGB(110, 215, 80)
+		or locked and Color3.fromRGB(196, 198, 208)
+		or CARD_GREY
+	gc.icon.BackgroundColor3 = locked and gc.color:Lerp(Color3.fromRGB(120, 120, 130), 0.65)
+		or gc.color
+	gc.lock.Visible = locked
+	gc.info.TextColor3 = owned and Color3.fromRGB(25, 75, 20) or Color3.fromRGB(80, 70, 100)
+	gc.tag.Visible = owned
+	gc.button.Visible = not owned
+	if owned then
+		gc.tag.Text = text
+	else
+		gc.button.Text = text
+		gc.button.BackgroundColor3 = locked and Color3.fromRGB(150, 150, 162)
+			or Color3.fromRGB(60, 200, 70)
+	end
+end
+
 local buyUpgrade = remotes:WaitForChild("BuyUpgrade") :: RemoteFunction
-local upgradePanel, upgradeList = panel("UPGRADES")
--- Tool shop: every tool with BUY / OWNED / EQUIPPED (the best owned one is always held).
+local upgradePanel, upgradeList = panel("⭐ Upgrades!", true)
+-- Tool shop: every tool as a grid card. The best owned one is always held ("Equipped!"), other
+-- owned ones read "Owned!", unaffordable ones and the MVP drop are grey with a padlock.
 local toolPanel, refreshToolCards
 do
 	local buyTool = remotes:WaitForChild("BuyTool") :: RemoteFunction
 	local list
-	toolPanel, list = panel("TOOLS")
-	local cards = {}
+	toolPanel, list = panel("⚒ Tools!", true)
+	local cards: { [string]: GridCard } = {}
 	for i, tool in Config.Tools do
-		local c = card(
+		local gc = gridCard(
 			list,
 			i,
 			tool.color,
 			tool.name,
 			string.format("%s damage per swing", short(tool.damage))
 		)
-		local b = button(c, "", Color3.fromRGB(60, 190, 70))
-		b.AnchorPoint = Vector2.new(1, 0.5)
-		b.Position = UDim2.new(1, -12, 0.5, 0)
-		b.Size = UDim2.fromOffset(170, 52)
-		cards[tool.id] = b
+		cards[tool.id] = gc
+		local b = gc.button
 		b.Activated:Connect(function()
 			if not tool.cost then
 				hint("Only the Blood Moon MVP gets the " .. tool.name .. "!")
@@ -993,27 +1191,24 @@ do
 		end
 		local held = player:GetAttribute("Tool")
 		for _, tool in Config.Tools do
-			local b = cards[tool.id]
+			local gc = cards[tool.id]
 			if tool.id == held then
-				b.Text = "EQUIPPED"
-				b.BackgroundColor3 = Color3.fromRGB(230, 150, 30)
+				cardState(gc, "owned", "Equipped!")
 			elseif owned[tool.id] then
-				b.Text = "OWNED"
-				b.BackgroundColor3 = Color3.fromRGB(110, 100, 120)
+				cardState(gc, "owned", "Owned!")
 			elseif not tool.cost then
-				b.Text = "MVP DROP"
-				b.BackgroundColor3 = Color3.fromRGB(150, 60, 60)
+				cardState(gc, "locked", "MVP DROP")
 			else
-				b.Text = "BUY · " .. short(tool.cost) .. " 🍬"
-				b.BackgroundColor3 = candyValue.Value >= tool.cost and Color3.fromRGB(60, 190, 70)
-					or Color3.fromRGB(120, 110, 90)
+				local price = "🍬 " .. short(tool.cost)
+				cardState(gc, candyValue.Value >= tool.cost and "buy" or "locked", price)
 			end
 		end
 	end
 	player:GetAttributeChangedSignal("Tools"):Connect(refreshToolCards)
 	player:GetAttributeChangedSignal("Tool"):Connect(refreshToolCards)
 end
-local upgradeCards = {}
+local upgradeCards: { [string]: GridCard } = {}
+local refreshUpgradeCards -- forward: a failed buy shows its reason, then refreshes
 local UPGRADE_ORDER = { "Stack", "Mallet", "Lucky" }
 local UPGRADE_COLOR = {
 	Stack = Color3.fromRGB(255, 150, 50),
@@ -1022,12 +1217,9 @@ local UPGRADE_COLOR = {
 }
 for i, id in UPGRADE_ORDER do
 	local info = Config.Upgrades[id]
-	local c, text = card(upgradeList, i, UPGRADE_COLOR[id], info.title, info.text)
-	local b = button(c, "", Color3.fromRGB(60, 190, 70))
-	b.AnchorPoint = Vector2.new(1, 0.5)
-	b.Position = UDim2.new(1, -12, 0.5, 0)
-	b.Size = UDim2.fromOffset(160, 52)
-	upgradeCards[id] = { button = b, text = text }
+	local gc = gridCard(upgradeList, i, UPGRADE_COLOR[id], info.title, info.text)
+	upgradeCards[id] = gc
+	local b = gc.button
 	b.Activated:Connect(function()
 		local ok, message = buyUpgrade:InvokeServer(id)
 		if ok then
@@ -1035,28 +1227,23 @@ for i, id in UPGRADE_ORDER do
 			banner(info.title .. "!", info.text, 1.6)
 		else
 			b.Text = message
-			task.delay(1, function()
-				b.Text = ""
-			end)
+			task.delay(1, refreshUpgradeCards)
 		end
 	end)
 end
-local function refreshUpgradeCards()
-	for id, parts in upgradeCards do
+function refreshUpgradeCards()
+	for id, gc in upgradeCards do
 		local info = Config.Upgrades[id]
 		local level = player:GetAttribute("Up_" .. id) or 0
-		parts.text.Text = info.text
-			.. "   "
+		gc.info.Text = info.text
+			.. "\n"
 			.. string.rep("●", level)
 			.. string.rep("○", info.max - level)
 		if level >= info.max then
-			parts.button.Text = "MAX"
-			parts.button.BackgroundColor3 = Color3.fromRGB(110, 100, 120)
+			cardState(gc, "owned", "MAX!")
 		else
 			local cost = math.floor(info.base * (level + 1) ^ Config.CostPower)
-			parts.button.Text = short(cost) .. " 🍬"
-			parts.button.BackgroundColor3 = candyValue.Value >= cost and Color3.fromRGB(60, 190, 70)
-				or Color3.fromRGB(120, 110, 90)
+			cardState(gc, candyValue.Value >= cost and "buy" or "locked", "🍬 " .. short(cost))
 		end
 	end
 end
@@ -1077,27 +1264,29 @@ end)
 -- Pumpkin Index: a book of every seed x finish. Selling a new kind fills it in. -------------
 
 local FINISHES = { "Plain", "Glowing", "Ghostly", "Candy", "Cursed" }
-local indexPanel, indexList = panel("PUMPKIN INDEX")
+local indexPanel, indexList = panel("📖 Pumpkin Index!")
 local indexCells = {}
 for i, seed in Config.Seeds do
 	local row = Instance.new("Frame")
-	row.Size = UDim2.new(1, -10, 0, 52)
+	row.Size = UDim2.new(1, -4, 0, 56)
 	row.LayoutOrder = i
-	row.BackgroundTransparency = 1
+	row.BackgroundColor3 = CARD_GREY
 	row.Parent = indexList
+	corner(row, 14)
+	stroke(row, 2.5).Color = OUTLINE
 	local name = textLabel(row, seed.name, Color3.fromRGB(255, 255, 255))
-	name.Size = UDim2.new(0, 130, 1, -10)
-	name.Position = UDim2.fromOffset(0, 5)
+	name.Size = UDim2.new(0, 124, 1, -12)
+	name.Position = UDim2.fromOffset(10, 6)
 	name.TextXAlignment = Enum.TextXAlignment.Left
 	indexCells[seed.id] = { name = name }
 	for k, finish in FINISHES do
 		local cell = Instance.new("Frame")
-		cell.Size = UDim2.fromOffset(78, 46)
-		cell.Position = UDim2.fromOffset(140 + (k - 1) * 86, 3)
-		cell.BackgroundColor3 = Color3.fromRGB(60, 50, 70)
+		cell.Size = UDim2.fromOffset(78, 44)
+		cell.Position = UDim2.fromOffset(142 + (k - 1) * 86, 6)
+		cell.BackgroundColor3 = Color3.fromRGB(70, 62, 84)
 		cell.Parent = row
 		corner(cell, 10)
-		stroke(cell, 2)
+		stroke(cell, 2.5).Color = OUTLINE
 		local label = textLabel(cell, "?", Color3.fromRGB(150, 140, 160))
 		label.Size = UDim2.new(1, -8, 1, -8)
 		label.Position = UDim2.fromOffset(4, 4)
@@ -1106,8 +1295,8 @@ for i, seed in Config.Seeds do
 end
 local indexCount = textLabel(indexPanel, "", Color3.fromRGB(255, 214, 80))
 indexCount.AnchorPoint = Vector2.new(1, 0)
-indexCount.Position = UDim2.new(1, -70, 0, 16)
-indexCount.Size = UDim2.fromOffset(200, 36)
+indexCount.Position = UDim2.new(1, -54, 0, 10)
+indexCount.Size = UDim2.fromOffset(210, 34)
 local function refreshIndex()
 	local found = {}
 	for key in string.gmatch(player:GetAttribute("Index") or "", "[^,]+") do
@@ -1127,14 +1316,15 @@ local function refreshIndex()
 				parts.label.TextColor3 = Color3.fromRGB(255, 255, 255)
 			else
 				all = false
-				parts.cell.BackgroundColor3 = Color3.fromRGB(60, 50, 70)
+				-- Not found yet: a dark "?" silhouette (Pet Sim 99 index).
+				parts.cell.BackgroundColor3 = Color3.fromRGB(70, 62, 84)
 				parts.label.Text = "?"
-				parts.label.TextColor3 = Color3.fromRGB(150, 140, 160)
+				parts.label.TextColor3 = Color3.fromRGB(170, 165, 185)
 			end
 		end
 		indexCells[seed.id].name.Text = seed.name .. (all and " +10%" or "")
 	end
-	indexCount.Text = string.format("%d / %d", total, #Config.Seeds * #FINISHES)
+	indexCount.Text = string.format("Collected %d/%d", total, #Config.Seeds * #FINISHES)
 end
 player:GetAttributeChangedSignal("Index"):Connect(refreshIndex)
 refreshIndex()
@@ -1245,12 +1435,13 @@ end
 
 local hauntRemote = remotes:WaitForChild("Haunt") :: RemoteFunction
 local buySkill = remotes:WaitForChild("BuySkill") :: RemoteFunction
-local hauntPanel, hauntList = panel("HAUNT")
+local hauntPanel, hauntList = panel("👻 Haunt!")
 local soulsLabel = textLabel(hauntPanel, "", Color3.fromRGB(200, 160, 255))
 soulsLabel.AnchorPoint = Vector2.new(1, 0)
-soulsLabel.Position = UDim2.new(1, -70, 0, 16)
-soulsLabel.Size = UDim2.fromOffset(200, 36)
-local hauntInfo = textLabel(hauntList, "", Color3.fromRGB(255, 240, 220), Enum.Font.GothamBold)
+soulsLabel.Position = UDim2.new(1, -54, 0, 10)
+soulsLabel.Size = UDim2.fromOffset(200, 34)
+local hauntInfo = textLabel(hauntList, "", Color3.fromRGB(70, 60, 90), Enum.Font.GothamBold)
+hauntInfo:FindFirstChildOfClass("UIStroke"):Destroy()
 hauntInfo.LayoutOrder = 0
 hauntInfo.Size = UDim2.new(1, -10, 0, 64)
 hauntInfo.TextScaled = false
@@ -1545,7 +1736,7 @@ refreshHaunt()
 
 local shopRemote = remotes:WaitForChild("Shop") :: RemoteFunction
 type ShopItem = { kind: string, name: string, title: string, text: string, color: Color3 }
-type ShopCard = { item: ShopItem, id: number, button: TextButton, info: TextLabel, price: string }
+type ShopCard = { item: ShopItem, id: number, card: GridCard, price: string }
 local SHOP_ITEMS: { ShopItem } = {
 	{
 		kind = "pass",
@@ -1586,7 +1777,7 @@ local SHOP_ITEMS: { ShopItem } = {
 		color = Color3.fromRGB(200, 110, 255),
 	},
 }
-local shopPanel, shopList = panel("SHOP")
+local shopPanel, shopList = panel("🛒 Shop!", true)
 local shopCards: { ShopCard } = {}
 local shopQuotes: { [string]: number } = {}
 local lastPromptAt = -math.huge
@@ -1599,15 +1790,13 @@ local function refreshShop()
 	for _, entry in shopCards do
 		local item = entry.item
 		if item.kind == "pass" and ownsPass(item.name) then
-			entry.button.Text = "OWNED"
-			entry.button.BackgroundColor3 = Color3.fromRGB(110, 100, 120)
+			cardState(entry.card, "owned", "Owned!")
 		else
-			entry.button.Text = entry.price
-			entry.button.BackgroundColor3 = Color3.fromRGB(60, 190, 70)
+			cardState(entry.card, "buy", entry.price)
 		end
 		local quote = shopQuotes[item.name]
 		if type(quote) == "number" then
-			entry.info.Text = string.format("+%s candy right now", short(quote))
+			entry.card.info.Text = string.format("+%s candy right now", short(quote))
 		end
 	end
 end
@@ -1633,14 +1822,10 @@ for i, item in SHOP_ITEMS do
 	if id == 0 then
 		continue
 	end
-	local c, info = card(shopList, i, item.color, item.title, item.text)
-	local b = button(c, "BUY", Color3.fromRGB(60, 190, 70))
-	b.AnchorPoint = Vector2.new(1, 0.5)
-	b.Position = UDim2.new(1, -12, 0.5, 0)
-	b.Size = UDim2.fromOffset(160, 52)
-	local entry: ShopCard = { item = item, id = id, button = b, info = info, price = "BUY" }
+	local gc = gridCard(shopList, i, item.color, item.title, item.text)
+	local entry: ShopCard = { item = item, id = id, card = gc, price = "BUY" }
 	table.insert(shopCards, entry)
-	b.Activated:Connect(function()
+	gc.button.Activated:Connect(function()
 		buyShopItem(entry)
 	end)
 	-- Prices live in the Creator Dashboard: read them once.
@@ -1769,6 +1954,285 @@ remotes:WaitForChild("Announce").OnClientEvent:Connect(function(text: string)
 	banner("☠ " .. text, nil, 3, Color3.fromRGB(190, 90, 255))
 	play(Config.Sounds.Brew, 0.7, 0.8)
 end)
+
+-- Reward reveal (Steal an Egg hatch / Pet Sim 99 "New Item!"): a 0.15 s white flash, then a
+-- centred white card: the pumpkin itself turning slowly in a ViewportFrame over a ray burst, the
+-- rarity in its colour, the name, its income "+X/s" and a green "NEW!" tag for a type you never
+-- had. The server sends one for a new type, a rare type or a Cursed brew. It closes after
+-- Config.RevealSeconds or on any click; more queue up and show one after another.
+do
+	local revealGui = Instance.new("ScreenGui")
+	revealGui.Name = "PatchReveal"
+	revealGui.ResetOnSpawn = false
+	revealGui.IgnoreGuiInset = true
+	revealGui.DisplayOrder = 6
+	revealGui.Parent = player:WaitForChild("PlayerGui")
+	local flash = Instance.new("Frame")
+	flash.Name = "Flash"
+	flash.BackgroundColor3 = Color3.new(1, 1, 1)
+	flash.BackgroundTransparency = 1
+	flash.BorderSizePixel = 0
+	flash.Size = UDim2.fromScale(1, 1)
+	flash.ZIndex = 5
+	flash.Parent = revealGui
+	local MAX_QUEUE = 5
+	local queue: { { any } } = {}
+	local busy = false
+
+	local function rarityOf(order: number)
+		for _, r in Config.Rarities do
+			if order <= r.upTo then
+				return r
+			end
+		end
+		return Config.Rarities[#Config.Rarities]
+	end
+
+	-- The pumpkin you just got (on your head stack, or on the ground when your hands were full),
+	-- else any pumpkin of that type around; the same finish is preferred.
+	local function findPumpkin(seedId: string, mutation: string?): BasePart?
+		local fallback: BasePart? = nil
+		local roots = { player.Character, garden:FindFirstChild("Loose"), patchFolder }
+		table.insert(roots, garden:FindFirstChild("Wild"))
+		for _, root in roots do
+			for _, d in root and root:GetDescendants() or {} do
+				if d:IsA("BasePart") and d:GetAttribute("Seed") == seedId then
+					if d:GetAttribute("Mutation") == mutation then
+						return d
+					end
+					fallback = fallback or d
+				end
+			end
+		end
+		return fallback
+	end
+
+	-- A copy for the ViewportFrame (children such as welds, prompts and billboards removed);
+	-- a coloured ball stands in when no pumpkin of that type is around.
+	local function pumpkinCopy(seed, mutation: string?): BasePart
+		local source = findPumpkin(seed.id, mutation)
+		local copy: BasePart
+		if source then
+			source.Archivable = true
+			copy = source:Clone()
+			for _, child in copy:GetChildren() do
+				if not child:IsA("SurfaceAppearance") then
+					child:Destroy()
+				end
+			end
+		else
+			local ball = Instance.new("Part")
+			ball.Shape = Enum.PartType.Ball
+			ball.Size = Vector3.new(2.6, 2.6, 2.6)
+			ball.Material = Enum.Material.SmoothPlastic
+			ball.Color = seedColor(seed)
+			copy = ball
+		end
+		copy.Anchored = true
+		copy.CFrame = CFrame.new()
+		return copy
+	end
+
+	local function showCard(seedId: string, mutation: string?, isNew: boolean, rate: number)
+		local seed = seedById[seedId]
+		local rarity = rarityOf(seed.order)
+		local m = mutation and mutationById[mutation]
+		-- White flash first.
+		flash.BackgroundTransparency = 0
+		TweenService:Create(
+			flash,
+			TweenInfo.new(Config.RevealFlash, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+			{ BackgroundTransparency = 1 }
+		):Play()
+		play(Config.Sounds.Brew, isNew and 1.5 or 1.2, 0.8)
+		task.wait(Config.RevealFlash)
+
+		-- A transparent full-screen button under the card: a click anywhere closes it.
+		local catcher = Instance.new("TextButton")
+		catcher.Name = "Reveal"
+		catcher.Text = ""
+		catcher.AutoButtonColor = false
+		catcher.BackgroundTransparency = 1
+		catcher.Size = UDim2.fromScale(1, 1)
+		catcher.ZIndex = 2
+		catcher.Parent = revealGui
+		local cardFrame = Instance.new("Frame")
+		cardFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+		cardFrame.Position = UDim2.fromScale(0.5, 0.46)
+		cardFrame.Size = UDim2.fromOffset(340, 410)
+		cardFrame.BackgroundColor3 = Color3.new(1, 1, 1)
+		cardFrame.Parent = catcher
+		corner(cardFrame, 16)
+		stroke(cardFrame, 4).Color = OUTLINE
+		local scale = Instance.new("UIScale")
+		scale.Scale = 0
+		scale.Parent = cardFrame
+		TweenService:Create(
+			scale,
+			TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+			{ Scale = uiScale.Scale }
+		):Play()
+
+		-- Light rays in the rarity colour behind the pumpkin.
+		local rays = Instance.new("Frame")
+		rays.AnchorPoint = Vector2.new(0.5, 0.5)
+		rays.Position = UDim2.new(0.5, 0, 0, 132)
+		rays.Size = UDim2.fromOffset(290, 290)
+		rays.BackgroundTransparency = 1
+		rays.ZIndex = 1
+		rays.Parent = cardFrame
+		for k = 1, 8 do
+			local ray = Instance.new("Frame")
+			ray.AnchorPoint = Vector2.new(0.5, 0.5)
+			ray.Position = UDim2.fromScale(0.5, 0.5)
+			ray.Size = UDim2.new(0, 30, 1, 0)
+			ray.Rotation = k * 22.5
+			ray.BackgroundColor3 = rarity.color
+			ray.BackgroundTransparency = 0.25
+			ray.BorderSizePixel = 0
+			ray.ZIndex = 1
+			ray.Parent = rays
+			local fadeEnds = Instance.new("UIGradient")
+			fadeEnds.Rotation = 90
+			fadeEnds.Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 1),
+				NumberSequenceKeypoint.new(0.5, 0.15),
+				NumberSequenceKeypoint.new(1, 1),
+			})
+			fadeEnds.Parent = ray
+		end
+
+		-- The pumpkin itself, slowly turning.
+		local view = Instance.new("ViewportFrame")
+		view.AnchorPoint = Vector2.new(0.5, 0.5)
+		view.Position = UDim2.new(0.5, 0, 0, 132)
+		view.Size = UDim2.fromOffset(220, 220)
+		view.BackgroundTransparency = 1
+		view.Ambient = Color3.fromRGB(190, 190, 200)
+		view.LightColor = Color3.new(1, 1, 1)
+		view.LightDirection = Vector3.new(-0.6, -1, -0.8)
+		view.ZIndex = 2
+		view.Parent = cardFrame
+		local cam = Instance.new("Camera")
+		cam.FieldOfView = 40
+		cam.Parent = view
+		view.CurrentCamera = cam
+		local model = pumpkinCopy(seed, mutation)
+		model.Parent = view
+		local radius = math.max(model.Size.Magnitude / 2, 0.5)
+		local dist = radius / math.tan(math.rad(cam.FieldOfView / 2)) * 1.1
+		cam.CFrame = CFrame.lookAt(Vector3.new(0, radius * 0.45, dist), Vector3.zero)
+
+		local rarityLabel = textLabel(cardFrame, string.upper(rarity.name), rarity.color)
+		rarityLabel.Position = UDim2.fromOffset(12, 250)
+		rarityLabel.Size = UDim2.new(1, -24, 0, 40)
+		rarityLabel.ZIndex = 3
+		local rarityStroke = rarityLabel:FindFirstChildOfClass("UIStroke") :: UIStroke
+		rarityStroke.Thickness = 3.5
+		rarityStroke.Color = OUTLINE
+		local nameText = (mutation and (mutation .. " ") or "") .. seed.name
+		local nameLabel = textLabel(cardFrame, nameText, m and m.color or Color3.new(1, 1, 1))
+		nameLabel.Position = UDim2.fromOffset(12, 292)
+		nameLabel.Size = UDim2.new(1, -24, 0, 46)
+		nameLabel.ZIndex = 3
+		local nameStroke = nameLabel:FindFirstChildOfClass("UIStroke") :: UIStroke
+		nameStroke.Thickness = 4
+		nameStroke.Color = OUTLINE
+		local incomeText = "+" .. rateShort(rate) .. "/s"
+		local income = textLabel(cardFrame, incomeText, Color3.fromRGB(80, 235, 80))
+		income.Position = UDim2.fromOffset(12, 344)
+		income.Size = UDim2.new(1, -24, 0, 42)
+		income.ZIndex = 3
+		local incomeStroke = income:FindFirstChildOfClass("UIStroke") :: UIStroke
+		incomeStroke.Thickness = 3.5
+		incomeStroke.Color = Color3.fromRGB(10, 50, 10)
+
+		if isNew then
+			-- Green "NEW!" tag hanging over the top-right corner, gently pulsing.
+			local tag = Instance.new("Frame")
+			tag.AnchorPoint = Vector2.new(1, 0)
+			tag.Position = UDim2.new(1, 16, 0, -16)
+			tag.Size = UDim2.fromOffset(112, 46)
+			tag.Rotation = 8
+			tag.BackgroundColor3 = Color3.fromRGB(60, 205, 70)
+			tag.ZIndex = 4
+			tag.Parent = cardFrame
+			corner(tag, 12)
+			stroke(tag, 3.5).Color = OUTLINE
+			local newLabel = textLabel(tag, "NEW!", Color3.new(1, 1, 1))
+			newLabel.FontFace = Font.new(
+				"rbxasset://fonts/families/GothamSSm.json",
+				Enum.FontWeight.Heavy,
+				Enum.FontStyle.Italic
+			)
+			newLabel.Position = UDim2.fromOffset(6, 5)
+			newLabel.Size = UDim2.new(1, -12, 1, -10)
+			newLabel.ZIndex = 5
+			local tagScale = Instance.new("UIScale")
+			tagScale.Parent = tag
+			TweenService:Create(
+				tagScale,
+				TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+				{ Scale = 1.12 }
+			):Play()
+		end
+
+		local angle = 0
+		local spin = RunService.RenderStepped:Connect(function(dt)
+			angle += dt * 1.1
+			model.CFrame = CFrame.Angles(math.rad(-10), angle, 0)
+			rays.Rotation += dt * 20
+		end)
+		local closed = false
+		local function close()
+			if closed then
+				return
+			end
+			closed = true
+			spin:Disconnect()
+			local shrink = TweenService:Create(
+				scale,
+				TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.In),
+				{ Scale = 0 }
+			)
+			shrink:Play()
+			shrink.Completed:Once(function()
+				catcher:Destroy()
+			end)
+		end
+		catcher.Activated:Connect(close)
+		local shownAt = os.clock()
+		while not closed and os.clock() - shownAt < Config.RevealSeconds do
+			task.wait(0.05)
+		end
+		close()
+		task.wait(0.2)
+	end
+
+	remotes
+		:WaitForChild("Reveal").OnClientEvent
+		:Connect(function(seedId: string, mutation: string?, isNew: boolean, rate: number)
+			if not seedById[seedId] or #queue >= MAX_QUEUE then
+				return
+			end
+			table.insert(queue, { seedId, mutation, isNew == true, tonumber(rate) or 0 })
+			if busy then
+				return
+			end
+			busy = true
+			task.spawn(function()
+				while #queue > 0 do
+					local item = table.remove(queue, 1) :: { any }
+					-- pcall: one bad card must never jam the queue.
+					local ok, err = pcall(showCard, item[1], item[2], item[3], item[4])
+					if not ok then
+						warn("[Patch] Reveal card failed:", err)
+					end
+				end
+				busy = false
+			end)
+		end)
+end
 
 local function myPatch(): Model?
 	for _, patch in patchFolder:GetChildren() do
@@ -2300,9 +2764,6 @@ do
 					color,
 					seed.order >= 3
 				)
-				if seed.order >= 4 then
-					banner("RARE PUMPKIN!", seed.name .. " pumpkin", 2, color)
-				end
 				task.spawn(shake, 0.4, 5)
 			end
 		end)
@@ -2378,9 +2839,6 @@ remotes
 					m and m.color or Color3.new(1, 1, 1),
 					r.id == "Cursed" or r.id == "Candy"
 				)
-				if r.id == "Cursed" then
-					banner("CURSED x10!", "Super rare pumpkin!", 2, Color3.fromRGB(190, 90, 255))
-				end
 			end)
 		end
 	end)
@@ -2631,14 +3089,21 @@ do
 					prompt.Enabled = not open
 				end
 			end
+			-- The server's sign has a yellow price pill ("🍬 1k"); owned zones show a green
+			-- "UNLOCKED ✅" pill instead (local only).
 			local sign = folder:FindFirstChild("GateSign")
 			local gateGui = sign and sign:FindFirstChild("GateGui")
-			local costLabel = gateGui and gateGui:FindFirstChild("Cost") :: TextLabel?
+			local costLabel = gateGui and gateGui:FindFirstChild("Cost", true) :: TextLabel?
 			if costLabel then
-				local text = open and "✅ UNLOCKED" or ("🔒 " .. short(def.cost) .. " 🍬")
+				local text = open and "UNLOCKED ✅" or ("🍬 " .. short(def.cost))
 				if costLabel.Text ~= text then
 					costLabel.Text = text
-					costLabel.TextColor3 = open and GREEN or Color3.fromRGB(255, 240, 220)
+					local pillFrame = costLabel.Parent
+					if pillFrame and pillFrame:IsA("Frame") then
+						pillFrame.BackgroundColor3 = open and Color3.fromRGB(60, 200, 70)
+							or Color3.fromRGB(255, 205, 40)
+						pillFrame.Size = UDim2.fromOffset(open and 230 or 180, 42)
+					end
 				end
 			end
 		end
@@ -2699,12 +3164,38 @@ do
 		if not zones then
 			return
 		end
+		local lastGateToast = 0
 		for _, zoneId in Config.ZoneOrder do
 			local folder = zones:WaitForChild(zoneId, 5)
 			if not folder then
 				continue
 			end
 			folders[zoneId] = folder
+			local def = Config.Zones[zoneId]
+			local wall = folder:FindFirstChild("GateWall")
+			if def and (def.cost or 0) > 0 and wall and wall:IsA("BasePart") then
+				wall.CanTouch = true
+				wall.Touched:Connect(function(hit)
+					local character = player.Character
+					if
+						not character
+						or not hit:IsDescendantOf(character)
+						or ZoneView.has(zoneId)
+						or os.clock() - lastGateToast < 2.5
+					then
+						return
+					end
+					lastGateToast = os.clock()
+					hint(
+						string.format(
+							'You need <font color="#FFD23C">🍬 %s</font> to enter the %s!',
+							short(def.cost),
+							def.title
+						)
+					)
+					play(Config.Sounds.Bonk, 0.6, 0.6)
+				end)
+			end
 			local list = {}
 			for _, d in folder:GetDescendants() do
 				if d:IsA("BasePart") and d.Name == "Spawn" then

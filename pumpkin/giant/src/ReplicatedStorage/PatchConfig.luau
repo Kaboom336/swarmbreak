@@ -105,16 +105,19 @@ return {
 	-- Zones of wild pumpkins (breakables). Each zone is a folder under workspace.Garden.Zones
 	-- holding invisible Parts named "Spawn". weights = chance per pumpkin type; max = wild
 	-- pumpkins alive at once; cost = candy to open its gate (0 = open from the start);
-	-- center = X/Z middle of a gated zone (used by the server's locked-zone check).
+	-- center = X/Z middle of a gated zone (used by the server's locked-zone check). emoji = the
+	-- difficulty face on its gate sign (Steal an Egg ladder: 🙂 😐 😬 😨).
 	Zones = {
 		Zone1 = {
 			title = "Pumpkin Meadow",
+			emoji = "🙂",
 			cost = 0,
 			max = 45,
 			weights = { Orange = 70, Sunny = 22, Ghost = 7, Moon = 1 },
 		},
 		Zone2 = {
 			title = "Graveyard",
+			emoji = "😐",
 			cost = 1000,
 			max = 20,
 			center = Vector3.new(0, 0, -176),
@@ -122,6 +125,7 @@ return {
 		},
 		Zone3 = {
 			title = "Haunted Woods",
+			emoji = "😬",
 			cost = 25000,
 			max = 20,
 			center = Vector3.new(176, 0, 0),
@@ -129,6 +133,7 @@ return {
 		},
 		Zone4 = {
 			title = "Witch Swamp",
+			emoji = "😨",
 			cost = 400000,
 			max = 20,
 			center = Vector3.new(-176, 0, 0),
@@ -147,6 +152,20 @@ return {
 	WildBarDistance = 40,
 	HitBarSeconds = 3,
 	RareNameOrder = 3,
+	-- Reward reveal (white flash + card): a pumpkin type you never had, a type from RevealOrder up
+	-- (3 = Ghost) or a Cursed brew. The card closes after RevealSeconds or on a click.
+	RevealOrder = 3,
+	RevealSeconds = 2.2,
+	RevealFlash = 0.15,
+	-- Rarity names by pumpkin type order: a type is the first rarity whose upTo >= its order.
+	Rarities = {
+		{ name = "Common", upTo = 1, color = Color3.fromRGB(200, 200, 210) },
+		{ name = "Uncommon", upTo = 2, color = Color3.fromRGB(90, 220, 90) },
+		{ name = "Rare", upTo = 4, color = Color3.fromRGB(60, 160, 255) },
+		{ name = "Epic", upTo = 6, color = Color3.fromRGB(180, 90, 255) },
+		{ name = "Legendary", upTo = 8, color = Color3.fromRGB(255, 190, 30) },
+		{ name = "Mythic", upTo = 10, color = Color3.fromRGB(255, 60, 90) },
+	},
 	-- A popped wild pumpkin also pays its smasher this many seconds of the type's income in candy
 	-- (the candy burst that flies into the counter).
 	PopCandySeconds = 3,
