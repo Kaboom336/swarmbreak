@@ -2714,6 +2714,28 @@ for _, kind in { "Seeds", "Upgrades" } do
 	end
 end
 
+-- Stall title billboards ("Sign" BillboardGuis on the stall anchors named Sign*) are 20 %
+-- smaller, so the left HUD pills never cover their text. Once per billboard (attribute guard).
+do
+	local function shrinkSign(d: Instance)
+		if
+			d:IsA("BillboardGui")
+			and d.Name == "Sign"
+			and d.Parent
+			and string.sub(d.Parent.Name, 1, 4) == "Sign"
+			and not d:GetAttribute("Shrunk")
+		then
+			d:SetAttribute("Shrunk", true)
+			local s = d.Size
+			d.Size = UDim2.new(s.X.Scale * 0.8, s.X.Offset * 0.8, s.Y.Scale * 0.8, s.Y.Offset * 0.8)
+		end
+	end
+	for _, d in market:GetDescendants() do
+		shrinkSign(d)
+	end
+	market.DescendantAdded:Connect(shrinkSign)
+end
+
 local giveTool -- defined with the scythe builder below
 
 Remotes.buyToolFunction.OnServerInvoke = function(player: Player, id: unknown)
@@ -3387,8 +3409,9 @@ do
 		-- top and swept 40 degrees forward from the right (so its broad face shows from behind),
 		-- curving from level to hooked down. Each segment has a darker cutting edge along its
 		-- lower (inner) side; tier 4+ blades get a neon edge in the tier colour.
-		local SILVER = Color3.fromRGB(206, 212, 222)
-		local edgeColor = def.order >= 4 and def.color or Color3.fromRGB(88, 92, 104)
+		-- Steel: Metal material, cool silver, a touch of reflectance; the edge is darker steel.
+		local SILVER = Color3.fromRGB(200, 205, 215)
+		local edgeColor = def.order >= 4 and def.color or Color3.fromRGB(70, 74, 86)
 		local bladeFrame = top * CFrame.new(0, -0.05, 0) * CFrame.Angles(0, math.rad(40), 0)
 		local segments = {
 			{ len = 1.1, angle = 10, width = 0.78 },
@@ -3406,14 +3429,19 @@ do
 			local dir = Vector3.new(math.cos(a), math.sin(a), 0)
 			local center = at + dir * (len / 2)
 			local cf = bladeFrame * CFrame.new(center) * CFrame.Angles(0, 0, a)
-			metalPart("Head", Vector3.new(len + 0.06, width, 0.14), cf, SILVER)
-			metalPart(
+			local head = metalPart("Head", Vector3.new(len + 0.06, width, 0.14), cf, SILVER)
+			head.Material = Enum.Material.Metal
+			head.Reflectance = 0.15
+			local edge = metalPart(
 				"Edge",
 				Vector3.new(len + 0.06, 0.13 * k, 0.17),
 				cf * CFrame.new(0, -width / 2, 0),
 				edgeColor,
 				def.order >= 4
 			)
+			if def.order < 4 then
+				edge.Reflectance = 0.1
+			end
 			if i == 1 then
 				root = cf
 			end

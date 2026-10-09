@@ -658,7 +658,7 @@ do
 	end)
 end
 
--- Mid left (Pet Sim 99 style): candy at 32 px with a 32 px icon, the income per second under it
+-- Mid left (Pet Sim 99 style): candy at 32 px with a 40 px icon, the income per second under it
 -- and the carried stack. The frame goes into the left pill column (below the last pill) once
 -- that column exists further down.
 local candyValue = player:WaitForChild("leaderstats"):WaitForChild("Candy") :: IntValue
@@ -674,15 +674,15 @@ do
 	local icon = Instance.new("TextLabel")
 	icon.Name = "CandyIcon"
 	icon.BackgroundTransparency = 1
-	icon.Position = UDim2.fromOffset(0, 6)
-	icon.Size = UDim2.fromOffset(32, 32)
+	icon.Position = UDim2.fromOffset(-2, 2)
+	icon.Size = UDim2.fromOffset(40, 40)
 	icon.TextScaled = true
 	icon.Text = "🍬"
 	icon.Parent = stats
 	local function line(y: number, height: number, color: Color3): TextLabel
 		local label = textLabel(stats, "", color)
-		label.Position = UDim2.fromOffset(40, y)
-		label.Size = UDim2.new(1, -40, 0, height)
+		label.Position = UDim2.fromOffset(46, y)
+		label.Size = UDim2.new(1, -46, 0, height)
 		label.TextXAlignment = Enum.TextXAlignment.Left
 		return label
 	end
@@ -743,23 +743,27 @@ do
 			"+" .. short(amount),
 			Color3.fromRGB(255, 225, 90)
 		)
+		-- Big enough to read at a glance: 34 px tall, a thick dark stroke, drawn over the pills,
+		-- held for ~0.8 s before it fades.
 		plus.Name = "CandyTick"
 		plus.TextXAlignment = Enum.TextXAlignment.Left
-		plus.Position = UDim2.fromOffset(40 + candyBig.TextBounds.X + 10, 6)
-		plus.Size = UDim2.fromOffset(130, 30)
+		plus.Position = UDim2.fromOffset(46 + math.max(candyBig.TextBounds.X, 20) + 10, 2)
+		plus.Size = UDim2.fromOffset(170, 34)
+		plus.ZIndex = 8
 		local s = plus:FindFirstChildOfClass("UIStroke") :: UIStroke
+		s.Thickness = 3
 		local scale = Instance.new("UIScale")
 		scale.Scale = 0.4
 		scale.Parent = plus
-		TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Back), { Scale = 1 }):Play()
-		local rise = TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		TweenService:Create(plus, rise, { Position = plus.Position - UDim2.fromOffset(0, 22) })
+		TweenService:Create(scale, TweenInfo.new(0.22, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+		local rise = TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		TweenService:Create(plus, rise, { Position = plus.Position - UDim2.fromOffset(0, 26) })
 			:Play()
 		local fade =
-			TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.55)
+			TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.85)
 		TweenService:Create(plus, fade, { TextTransparency = 1 }):Play()
 		TweenService:Create(s, fade, { Transparency = 1 }):Play()
-		task.delay(0.95, function()
+		task.delay(1.3, function()
 			plus:Destroy()
 		end)
 	end
@@ -2047,15 +2051,19 @@ do
 		play(Config.Sounds.Brew, isNew and 1.5 or 1.2, 0.8)
 		task.wait(Config.RevealFlash)
 
-		-- A transparent full-screen button under the card: a click anywhere closes it.
+		-- A full-screen button under the card dims the world (black at 0.45) and closes the card
+		-- on a click anywhere.
 		local catcher = Instance.new("TextButton")
 		catcher.Name = "Reveal"
 		catcher.Text = ""
 		catcher.AutoButtonColor = false
+		catcher.BackgroundColor3 = Color3.new(0, 0, 0)
 		catcher.BackgroundTransparency = 1
+		catcher.BorderSizePixel = 0
 		catcher.Size = UDim2.fromScale(1, 1)
 		catcher.ZIndex = 2
 		catcher.Parent = revealGui
+		TweenService:Create(catcher, TweenInfo.new(0.2), { BackgroundTransparency = 0.45 }):Play()
 		local cardFrame = Instance.new("Frame")
 		cardFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 		cardFrame.Position = UDim2.fromScale(0.5, 0.46)
@@ -2063,13 +2071,25 @@ do
 		cardFrame.BackgroundColor3 = Color3.new(1, 1, 1)
 		cardFrame.Parent = catcher
 		corner(cardFrame, 16)
-		stroke(cardFrame, 4).Color = OUTLINE
+		-- Rarity-coloured border: a thick rarity ring inside a thin dark outline.
+		local border = stroke(cardFrame, 6)
+		border.Color = rarity.color
+		local outer = Instance.new("Frame")
+		outer.AnchorPoint = Vector2.new(0.5, 0.5)
+		outer.Position = UDim2.fromScale(0.5, 0.5)
+		outer.Size = UDim2.new(1, 12, 1, 12)
+		outer.BackgroundTransparency = 1
+		outer.ZIndex = 0
+		outer.Parent = cardFrame
+		corner(outer, 20)
+		stroke(outer, 3).Color = OUTLINE
+		-- Pop-in: 0.6 -> 1 (x the HUD scale) with Back easing (overshoots ~1.05).
 		local scale = Instance.new("UIScale")
-		scale.Scale = 0
+		scale.Scale = 0.6 * uiScale.Scale
 		scale.Parent = cardFrame
 		TweenService:Create(
 			scale,
-			TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+			TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
 			{ Scale = uiScale.Scale }
 		):Play()
 
@@ -2087,8 +2107,9 @@ do
 			ray.Position = UDim2.fromScale(0.5, 0.5)
 			ray.Size = UDim2.new(0, 30, 1, 0)
 			ray.Rotation = k * 22.5
-			ray.BackgroundColor3 = rarity.color
-			ray.BackgroundTransparency = 0.25
+			-- Rarity tint, a little lighter so the rays glow behind the pumpkin.
+			ray.BackgroundColor3 = rarity.color:Lerp(Color3.new(1, 1, 1), 0.15)
+			ray.BackgroundTransparency = 0.2
 			ray.BorderSizePixel = 0
 			ray.ZIndex = 1
 			ray.Parent = rays
@@ -2196,6 +2217,7 @@ do
 				{ Scale = 0 }
 			)
 			shrink:Play()
+			TweenService:Create(catcher, TweenInfo.new(0.15), { BackgroundTransparency = 1 }):Play()
 			shrink.Completed:Once(function()
 				catcher:Destroy()
 			end)
@@ -3288,17 +3310,28 @@ do
 		end
 	end
 
-	-- Red 3D ground arrows (Steal an Egg style). Each arrow lies flat, 0.3 studs over the ground:
-	-- a neon arrowhead 2.5 studs wide (two WedgeParts) plus a shaft, the tip on the arrow's local
-	-- -Z. An arrow's frame is CFrame.lookAt(at, at + dir), whose -Z is dir (the flat unit vector
-	-- from you to the target), so every tip points TOWARD the target. 7 arrows, 3 studs apart,
-	-- starting 5 studs in front of you so the chase camera keeps them on screen; a bright wave
+	-- Red 3D ground arrows (Steal an Egg style). Each arrow lies flat, 0.4 studs over the ground:
+	-- a neon arrowhead 2.2 studs wide (two WedgeParts) plus a shaft, the tip on the arrow's local
+	-- -Z, over a slightly bigger dark-red copy. An arrow's frame is CFrame.lookAt(at, at + dir),
+	-- whose -Z is dir (the flat unit vector from you to the target), so every tip points TOWARD
+	-- the target. 7 arrows, 2.6 studs apart, starting 2.5 studs from you; a bright wave
 	-- runs along them toward the target. The target gets a pulsing red ring on the ground and a
 	-- bobbing ⬇. A smash re-targets at once (the popped pumpkin is skipped).
+	-- Why only one arrow showed before: with the target behind the camera the chain ran from the
+	-- player toward (and past) the camera, starting 5 studs out with 3-stud gaps, so arrow 1 sat
+	-- right at the lens (the big red block at the bottom edge) and the rest were behind it. Now
+	-- the chain starts 2.5 studs out with 2.6-stud gaps (several arrows sit between you and the
+	-- camera even then), each arrow is 2.2 wide over a 1.22x dark-red underlay for contrast on
+	-- the pink ground, lifted 0.4 studs, and nearly opaque (the wave only brightens).
 	local RED = Color3.fromRGB(224, 24, 24)
 	local HOT = Color3.fromRGB(255, 125, 110)
-	local ARROWS, SPACING, FIRST, STOP, LIFT = 7, 3, 5, 7, 0.3
-	local THICK, HEAD_W, HEAD_L, SHAFT_W, SHAFT_L, HEAD_BASE = 0.3, 2.5, 1.5, 0.95, 1.3, 0.2
+	local DEEP = Color3.fromRGB(92, 6, 12)
+	local ARROWS, SPACING, FIRST, STOP, LIFT = 7, 2.6, 2.5, 6, 0.4
+	local THICK, HEAD_W, HEAD_L, SHAFT_W, SHAFT_L, HEAD_BASE = 0.25, 2.2, 1.35, 0.85, 1.1, 0.15
+	local UNDER, UNDER_DROP = 1.22, 0.1
+	-- Z centre of one arrow (tip at HEAD_BASE - HEAD_L, shaft end at HEAD_BASE + SHAFT_L): the
+	-- underlay is the same arrow scaled about it.
+	local MID = HEAD_BASE + (SHAFT_L - HEAD_L) / 2
 	local RING_R = 3.2
 	local arrowFolder = Instance.new("Folder")
 	arrowFolder.Name = "GuideArrows"
@@ -3306,28 +3339,35 @@ do
 	local arrowParts: { BasePart } = {}
 	local arrowOffsets: { CFrame } = {}
 	local arrowOf: { number } = {}
-	local function arrowPart(p: BasePart, size: Vector3, offset: CFrame, i: number)
+	local arrowUnder: { boolean } = {}
+	local function arrowPart(p: BasePart, size: Vector3, offset: CFrame, i: number, under: boolean)
 		p.Size = size
 		p.Anchored = true
 		p.CanCollide = false
 		p.CanQuery = false
 		p.CanTouch = false
 		p.CastShadow = false
-		p.Material = Enum.Material.Neon
-		p.Color = RED
+		p.Material = under and Enum.Material.SmoothPlastic or Enum.Material.Neon
+		p.Color = under and DEEP or RED
 		p.Transparency = 1
 		p.Parent = arrowFolder
 		table.insert(arrowParts, p)
 		table.insert(arrowOffsets, offset)
 		table.insert(arrowOf, i)
+		table.insert(arrowUnder, under)
 	end
-	for i = 1, ARROWS do
+	-- One arrow scaled by s about (0, MID) and dropped `drop` studs.
+	local function buildArrow(i: number, s: number, drop: number, under: boolean)
+		local function z(v: number): number
+			return MID + (v - MID) * s
+		end
 		-- Shaft: behind the head (+Z), overlapping it a little.
 		arrowPart(
 			Instance.new("Part"),
-			Vector3.new(SHAFT_W, THICK, SHAFT_L),
-			CFrame.new(0, 0, HEAD_BASE + SHAFT_L / 2 - 0.05),
-			i
+			Vector3.new(SHAFT_W * s, THICK, SHAFT_L * s),
+			CFrame.new(0, -drop, z(HEAD_BASE + SHAFT_L / 2 - 0.05)),
+			i,
+			under
 		)
 		-- Head: two flat right triangles. A WedgePart's triangle (in its Y/Z plane) has its right
 		-- angle at local (y -h/2, z +d/2), the tip at (y -h/2, z -d/2) and the far corner at
@@ -3337,16 +3377,21 @@ do
 		for side = -1, 1, 2 do
 			arrowPart(
 				Instance.new("WedgePart"),
-				Vector3.new(THICK, HEAD_W / 2, HEAD_L),
+				Vector3.new(THICK, HEAD_W / 2 * s, HEAD_L * s),
 				CFrame.fromMatrix(
-					Vector3.new(side * HEAD_W / 4, 0, HEAD_BASE - HEAD_L / 2),
+					Vector3.new(side * HEAD_W / 4 * s, -drop, z(HEAD_BASE - HEAD_L / 2)),
 					Vector3.new(0, -side, 0),
 					Vector3.new(side, 0, 0),
 					Vector3.zAxis
 				),
-				i
+				i,
+				under
 			)
 		end
+	end
+	for i = 1, ARROWS do
+		buildArrow(i, UNDER, UNDER_DROP, true)
+		buildArrow(i, 1, 0, false)
 	end
 	-- Ring on the ground around the target: a steady pulsing ring plus a ping that grows and
 	-- fades. The holder part is turned 90 degrees on X so the adornments' Z axis is vertical.
@@ -3428,8 +3473,11 @@ do
 				table.insert(skip, f)
 			end
 		end
-		if player.Character then
-			table.insert(skip, player.Character)
+		-- Every character (and the tools and pumpkin stacks they hold), not only yours.
+		for _, other in Players:GetPlayers() do
+			if other.Character then
+				table.insert(skip, other.Character)
+			end
 		end
 		rayParams.FilterDescendantsInstances = skip
 		marker.Position = target + Vector3.new(0, 2, 0)
@@ -3441,8 +3489,11 @@ do
 		if dist < STOP then
 			return
 		end
-		-- Flat unit vector from you to the target: each arrow's -Z (its tip) points along it.
+		-- Flat unit vector from you to the target: each arrow's -Z (its tip) points along it. The
+		-- chain is drawn even when the target is behind the camera: it then runs toward the lens
+		-- and leads the eye round.
 		local dir = flat.Unit
+		local feet = groundY(root.Position, root.Position.Y - 3)
 		for i = 1, ARROWS do
 			local d = FIRST + (i - 1) * SPACING
 			-- Stop before the ring around the target.
@@ -3450,7 +3501,11 @@ do
 				break
 			end
 			local p = root.Position + dir * d
-			local y = groundY(p, root.Position.Y - 3)
+			local y = groundY(p, feet)
+			-- A hit on a roof, stall or plinth would float the arrow: stay near your feet.
+			if y > feet + 2.5 then
+				y = feet
+			end
 			local at = Vector3.new(p.X, y + LIFT, p.Z)
 			arrowBase[i] = CFrame.lookAt(at, at + dir)
 		end
@@ -3467,8 +3522,14 @@ do
 			local base = arrowBase[i]
 			if base then
 				local wave = math.max(0, math.sin(t * 7 - i * 0.9)) ^ 2
-				p.Transparency = 0.3 * (1 - wave)
-				p.Color = RED:Lerp(HOT, wave)
+				if arrowUnder[k] then
+					if p.Transparency ~= 0 then
+						p.Transparency = 0
+					end
+				else
+					p.Transparency = 0.1 * (1 - wave)
+					p.Color = RED:Lerp(HOT, wave)
+				end
 				table.insert(moved, p)
 				table.insert(frames, base * CFrame.new(0, 0.15 * wave, 0) * arrowOffsets[k])
 			elseif p.Transparency ~= 1 then
@@ -3604,6 +3665,54 @@ do
 		if (player:GetAttribute("CarryStolen") or 0) > 0 then
 			return goHome(root, soil), "Place it on your base to keep it!", soil.Position
 		end
+		local current = nil
+		for _, order in data.list or {} do
+			if not order.done then
+				current = order
+				break
+			end
+		end
+		local kind, stat = current and current.target, current and current.stat or ""
+		-- Carrying wins over every other goal, with the same numbers as the carry HUD line:
+		-- 1. a Smash order with room left on the stack keeps you smashing ("1/3 · or bring them
+		--    home"); 2. orders that spend the stack elsewhere (brew, sell) lead there; 3. anything
+		--    else (full stack included) sends you home: "Go to your Base!", "Place your Pumpkin!"
+		--    once you stand on it.
+		if carry > 0 then
+			local cap = Config.BaseCarry
+				+ (player:GetAttribute("Up_Stack") or 0)
+				+ (player:GetAttribute("Pass_BigStack") and Config.BigStackCarry or 0)
+			if kind == "zone" and carry < cap then
+				return "Smash a Pumpkin!",
+					string.format(
+						"%s/%s · or bring them home",
+						short(current.have or 0),
+						short(current.need or 1)
+					),
+					zone
+			end
+			local orderSub = current
+					and string.format(
+						"%s  %s/%s",
+						current.text,
+						short(current.have or 0),
+						short(current.need or 1)
+					)
+				or ""
+			if kind == "cauldron" and unbrewed > 0 then
+				return "Brew it!", orderSub, nearestCauldron(root.Position)
+			elseif kind == "witch" or kind == "king" then
+				return "Sell to the Witch!", orderSub, stallPosition("Sell")
+			end
+			return goHome(root, soil),
+				string.format(
+					"Carrying %d/%d · worth %s 🍬",
+					carry,
+					cap,
+					short(player:GetAttribute("CarryValue") or 0)
+				),
+				soil.Position
+		end
 		if phase == "BloodMoon" and state:GetAttribute("KingHp") ~= nil then
 			return "Hit the King!", "Everyone bonk the Pumpkin King!", kingFace.Position
 		end
@@ -3629,13 +3738,6 @@ do
 					nearestGhost(root.Position) or soil.Position
 			end
 		end
-		local current = nil
-		for _, order in data.list or {} do
-			if not order.done then
-				current = order
-				break
-			end
-		end
 		if not current then
 			local left = (data.refreshAt or 0) - workspace:GetServerTimeNow()
 			return "Smash a Pumpkin!", "New orders from the Witch in " .. clockText(left), zone
@@ -3649,27 +3751,19 @@ do
 		if data.tutorial then
 			sub = string.format("Step %d/%d · %s", data.step or 1, data.steps or 8, sub)
 		end
-		local kind, stat = current.target, current.stat or ""
-		if kind == "zone" then
-			return "Smash a Pumpkin!", sub, zone
-		elseif kind == "place" or (kind == "patch" and stat == "income") then
-			if carry > 0 then
-				return goHome(root, soil), sub, soil.Position
-			end
+		-- Empty hands from here on (carrying returned above).
+		if
+			kind == "zone"
+			or kind == "place"
+			or (kind == "patch" and stat == "income")
+			or kind == "cauldron"
+			or kind == "witch"
+			or kind == "king"
+		then
+			-- Sales fill the Giant Jack, which wakes the King.
 			return "Smash a Pumpkin!", sub, zone
 		elseif kind == "steal" then
 			return "Steal a Pumpkin!", sub, otherBase(root.Position) or soil.Position
-		elseif kind == "cauldron" then
-			if unbrewed > 0 then
-				return "Brew it!", sub, nearestCauldron(root.Position)
-			end
-			return "Smash a Pumpkin!", sub, zone
-		elseif kind == "witch" or kind == "king" then
-			-- Sales fill the Giant Jack, which wakes the King.
-			if carry > 0 then
-				return "Sell to the Witch!", sub, stallPosition("Sell")
-			end
-			return "Smash a Pumpkin!", sub, zone
 		elseif kind == "tools" or kind == "seeds" then
 			return "Buy a Scythe!", sub, stallPosition("Seeds")
 		elseif kind == "upgrades" then
