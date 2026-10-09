@@ -3249,69 +3249,109 @@ do
 		tool.Name = "Scythe"
 		tool.ToolTip = def.name
 		tool.CanBeDropped = false
-		-- Held upright beside the body, leaning a little forward, blade out to the right at the
-		-- top, so it reads from the chase camera. Grip maps the hand (R6 grip / R15
-		-- RightGripAttachment, both turned -90 on X) to the handle: handle = hand-in-arm-frame * H.
+		-- Held upright like a reaper's scythe: the shaft stands vertical in the right hand, most of
+		-- it above the hand, so the blade at the top clears the head and reads over the shoulder
+		-- from the chase camera; the blade sweeps out to the right and forward and hooks down.
+		-- Roblox welds the handle at hand * C0 * Grip:Inverse(), where C0 (R6 RightGrip / R15
+		-- RightGripAttachment) is the hand turned -90 on X. While a tool is held the default
+		-- animation raises the arm straight forward, which turns the arm +90 on X, so
+		-- hand * C0 is a frame aligned with the character (X right, Y up, -Z forward) at the
+		-- hand. Grip = hold:Inverse() therefore puts the handle at `hold` in that upright frame:
+		-- `up` studs above the hand, top leaning `lean` degrees forward.
 		local h = Config.ScytheHold
 		local hold = CFrame.new(h.right, 0, -h.forward)
 			* CFrame.Angles(math.rad(-h.lean), 0, 0)
 			* CFrame.new(0, h.up, 0)
-		tool.Grip = (CFrame.Angles(math.rad(90), 0, 0) * hold):Inverse()
+		tool.Grip = hold:Inverse()
 		tool:SetAttribute("ToolId", def.id)
-		local k = 1.1 + 0.08 * (def.order - 1)
+		local k = 1 + 0.06 * (def.order - 1)
+		local SHAFT = 5.4
 		local handle = Instance.new("Part")
 		handle.Name = "Handle"
-		handle.Size = Vector3.new(0.34, 4.6, 0.34)
+		handle.Size = Vector3.new(0.32, SHAFT, 0.32)
 		handle.Material = Enum.Material.Wood
-		handle.Color = def.order >= 4 and Color3.fromRGB(50, 34, 40) or Color3.fromRGB(110, 72, 44)
+		handle.Color = Color3.fromRGB(62, 40, 26)
 		handle.Transparency = 0
 		handle.CanCollide = false
 		handle.CanQuery = false
 		handle.CanTouch = true
 		handle.Parent = tool
-		local top = handle.CFrame * CFrame.new(0, 2.2, 0)
-		local collar = Instance.new("Part")
-		collar.Name = "Collar"
-		collar.Size = Vector3.new(0.62, 0.55, 0.62)
-		collar.Material = Enum.Material.Metal
-		collar.Color = Color3.fromRGB(70, 66, 80)
-		collar.CFrame = top
-		weldTo(handle, collar)
-		collar.Parent = tool
-		local pommel = collar:Clone()
-		pommel.Name = "Pommel"
-		pommel.Size = Vector3.new(0.5, 0.4, 0.5)
-		pommel.CFrame = handle.CFrame * CFrame.new(0, -2.3, 0)
-		pommel:ClearAllChildren()
-		weldTo(handle, pommel)
-		pommel.Parent = tool
-		-- The blade: three flat pieces bending down into a hook (about 4 studs across).
-		local pieces = {
-			{ len = 2.0, x = 1.0, y = 0.12, angle = -6 },
-			{ len = 1.6, x = 2.55, y = -0.22, angle = -30 },
-			{ len = 1.05, x = 3.45, y = -0.85, angle = -60 },
+		local function metalPart(
+			name: string,
+			size: Vector3,
+			cf: CFrame,
+			color: Color3,
+			neon: boolean?
+		)
+			local p = Instance.new("Part")
+			p.Name = name
+			p.Size = size
+			p.Material = neon and Enum.Material.Neon or Enum.Material.Metal
+			p.Color = color
+			p.CanQuery = false
+			p.CFrame = cf
+			weldTo(handle, p)
+			p.Parent = tool
+			return p
+		end
+		local top = handle.CFrame * CFrame.new(0, SHAFT / 2 - 0.15, 0)
+		-- Collar at the top and a cap at the foot in the tool's tier colour, plus a small grip
+		-- peg sticking out of the shaft (a real scythe's second handle).
+		metalPart("Collar", Vector3.new(0.58, 0.5, 0.58), top, def.color)
+		metalPart(
+			"Pommel",
+			Vector3.new(0.46, 0.36, 0.46),
+			handle.CFrame * CFrame.new(0, -SHAFT / 2, 0),
+			def.color
+		)
+		local peg = metalPart(
+			"Peg",
+			Vector3.new(0.22, 0.22, 0.9),
+			handle.CFrame * CFrame.new(0, SHAFT * 0.12, -0.45),
+			Color3.fromRGB(62, 40, 26)
+		)
+		peg.Material = Enum.Material.Wood
+		-- The blade: a silver arc of flat segments in a plane through the shaft, starting at the
+		-- top and swept 40 degrees forward from the right (so its broad face shows from behind),
+		-- curving from level to hooked down. Each segment has a darker cutting edge along its
+		-- lower (inner) side; tier 4+ blades get a neon edge in the tier colour.
+		local SILVER = Color3.fromRGB(206, 212, 222)
+		local edgeColor = def.order >= 4 and def.color or Color3.fromRGB(88, 92, 104)
+		local bladeFrame = top * CFrame.new(0, -0.05, 0) * CFrame.Angles(0, math.rad(40), 0)
+		local segments = {
+			{ len = 1.1, angle = 10, width = 0.78 },
+			{ len = 1.0, angle = -4, width = 0.72 },
+			{ len = 0.95, angle = -22, width = 0.62 },
+			{ len = 0.85, angle = -42, width = 0.5 },
+			{ len = 0.7, angle = -64, width = 0.36 },
 		}
-		local glow = def.order >= 4
-		local tip = top
-		for i, piece in pieces do
-			local blade = Instance.new("Part")
-			blade.Name = "Head"
-			blade.Size = Vector3.new(piece.len * k, (0.62 - i * 0.1) * k, 0.18)
-			blade.Material = glow and Enum.Material.Neon or Enum.Material.Metal
-			blade.Color = def.color
-			blade.Transparency = 0
-			blade.CanQuery = false
-			blade.CFrame = top
-				* CFrame.new(piece.x * k, piece.y * k, 0)
-				* CFrame.Angles(0, 0, math.rad(piece.angle))
-			weldTo(handle, blade)
-			blade.Parent = tool
-			tip = blade.CFrame * CFrame.new(piece.len * k / 2, 0, 0)
+		local at = Vector3.new(0.1, 0, 0)
+		local root: CFrame? = nil
+		local tip = bladeFrame
+		for i, seg in segments do
+			local len, width = seg.len * k, seg.width * k
+			local a = math.rad(seg.angle)
+			local dir = Vector3.new(math.cos(a), math.sin(a), 0)
+			local center = at + dir * (len / 2)
+			local cf = bladeFrame * CFrame.new(center) * CFrame.Angles(0, 0, a)
+			metalPart("Head", Vector3.new(len + 0.06, width, 0.14), cf, SILVER)
+			metalPart(
+				"Edge",
+				Vector3.new(len + 0.06, 0.13 * k, 0.17),
+				cf * CFrame.new(0, -width / 2, 0),
+				edgeColor,
+				def.order >= 4
+			)
+			if i == 1 then
+				root = cf
+			end
+			at += dir * len
+			tip = bladeFrame * CFrame.new(at)
 		end
 		-- Swing trail: a white ribbon from the blade root to its tip. Off until a client swings.
 		local a0 = Instance.new("Attachment")
 		a0.Name = "TrailRoot"
-		a0.CFrame = top * CFrame.new(0.4, 0, 0)
+		a0.CFrame = handle.CFrame:ToObjectSpace(root or top)
 		a0.Parent = handle
 		local a1 = Instance.new("Attachment")
 		a1.Name = "TrailTip"

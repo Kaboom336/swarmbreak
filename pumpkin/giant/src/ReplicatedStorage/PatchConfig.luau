@@ -150,9 +150,11 @@ return {
 	-- A popped wild pumpkin also pays its smasher this many seconds of the type's income in candy
 	-- (the candy burst that flies into the counter).
 	PopCandySeconds = 3,
-	-- How the scythe sits in the hand (studs / degrees): handle centre `up` along the shaft from
-	-- the hand, pushed `forward` and `right` of it, the top leaning `lean` degrees forward.
-	ScytheHold = { right = 0.1, forward = 0.35, lean = 14, up = 1.25 },
+	-- How the scythe sits in the hand (studs / degrees), in a character-aligned frame at the hand
+	-- (the arm is raised forward while a tool is held): the shaft stands upright with its centre
+	-- `up` studs above the hand, pushed `forward` and `right` of it, the top leaning `lean`
+	-- degrees forward. The shaft is 5.4 studs, so up = 1.2 puts the blade well above the head.
+	ScytheHold = { right = 0, forward = 0, lean = 6, up = 1.2 },
 	-- A popped pumpkin that does not fit on the winner's stack lies here this long.
 	LooseSeconds = 30,
 

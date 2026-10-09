@@ -154,21 +154,28 @@ local function floatText(at: Vector3, text: string, color: Color3, big: boolean?
 end
 
 -- Damage numbers (Pet Sim 99 style): short format ("1.2k", "3.4M"), heavy white text with a
--- 2 px black stroke, bigger and warmer for bigger hits; pops in, rises 40 px and fades in 0.6 s.
+-- thick black stroke, 34 px growing to 56 px for big hits. 1.1 s in all: pops in (0.12 s),
+-- holds (0.5 s), then rises 46 px and fades. The anchor is pulled a few studs toward the camera so
+-- the pumpkin itself never hides the number, and the billboard is AlwaysOnTop.
 -- The billboard lives in PlayerGui with an explicit Adornee (an Attachment in Terrain), which
 -- always renders; a billboard parented straight under an Attachment did not show on screen.
 local function damageText(at: Vector3, damage: number, color: Color3?)
-	local px = math.clamp(22 + 7 * math.log10(math.max(damage, 1)), 22, 60)
+	local px = math.floor(math.clamp(34 + 5.5 * math.log10(math.max(damage, 1)), 34, 56))
+	local camera = workspace.CurrentCamera
+	local toCamera = camera and (camera.CFrame.Position - at) or Vector3.zero
+	if toCamera.Magnitude > 4 then
+		at += toCamera.Unit * 3
+	end
 	local holder = Instance.new("Attachment")
 	holder.WorldPosition = at
 	holder.Parent = workspace.Terrain
 	local bb = Instance.new("BillboardGui")
 	bb.Name = "DamageNumber"
 	bb.Adornee = holder
-	bb.Size = UDim2.fromOffset(px * 4, px + 44)
+	bb.Size = UDim2.fromOffset(px * 5, px + 60)
 	bb.AlwaysOnTop = true
 	bb.LightInfluence = 0
-	bb.MaxDistance = 140
+	bb.MaxDistance = 200
 	bb.ResetOnSpawn = false
 	bb.Parent = player:WaitForChild("PlayerGui")
 	local label = Instance.new("TextLabel")
@@ -187,21 +194,77 @@ local function damageText(at: Vector3, damage: number, color: Color3?)
 		)
 	label.Parent = bb
 	local outline = Instance.new("UIStroke")
-	outline.Thickness = math.max(2, px / 11)
+	outline.Thickness = math.max(3, px / 10)
 	outline.Color = Color3.new(0, 0, 0)
 	outline.Parent = label
 	local pop = Instance.new("UIScale")
-	pop.Scale = 1.5
+	pop.Scale = 1.6
 	pop.Parent = label
-	TweenService:Create(pop, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1 }):Play()
-	local info = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	TweenService:Create(label, info, { Position = UDim2.new(0, 0, 1, -40) }):Play()
-	local fade = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.3)
+	TweenService:Create(pop, TweenInfo.new(0.12, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+	-- Hold until 0.62 s, then rise and fade over the last 0.48 s.
+	local rise =
+		TweenInfo.new(0.48, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.62)
+	TweenService:Create(label, rise, { Position = UDim2.new(0, 0, 1, -46) }):Play()
+	local fade = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.7)
 	TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
 	TweenService:Create(outline, fade, { Transparency = 1 }):Play()
-	task.delay(0.65, function()
+	task.delay(1.12, function()
 		bb:Destroy()
 		holder:Destroy()
+	end)
+end
+
+-- A big white "+1 🎃" over your own head whenever your carried stack grows (any pickup:
+-- smash, loose pumpkin, your plot, a steal). Pops in, holds, rises and fades in 1.2 s.
+local function pickupPop(amount: number)
+	local character = player.Character
+	local head = character and character:FindFirstChild("Head") :: BasePart?
+	if not head then
+		return
+	end
+	local bb = Instance.new("BillboardGui")
+	bb.Name = "PickupPop"
+	bb.Adornee = head
+	bb.Size = UDim2.fromOffset(220, 72)
+	bb.StudsOffsetWorldSpace = Vector3.new(0, 3.2, 0)
+	bb.AlwaysOnTop = true
+	bb.LightInfluence = 0
+	bb.MaxDistance = 200
+	bb.ResetOnSpawn = false
+	bb.Parent = player:WaitForChild("PlayerGui")
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.fromScale(1, 1)
+	label.Font = Enum.Font.FredokaOne
+	label.TextScaled = true
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.Text = "+" .. amount .. " 🎃"
+	label.Parent = bb
+	local outline = Instance.new("UIStroke")
+	outline.Thickness = 4
+	outline.Color = Color3.fromRGB(20, 10, 30)
+	outline.Parent = label
+	local pop = Instance.new("UIScale")
+	pop.Scale = 0.3
+	pop.Parent = label
+	TweenService:Create(pop, TweenInfo.new(0.18, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+	local rise = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.7)
+	TweenService:Create(bb, rise, { StudsOffsetWorldSpace = Vector3.new(0, 5.2, 0) }):Play()
+	local fade = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.8)
+	TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
+	TweenService:Create(outline, fade, { Transparency = 1 }):Play()
+	task.delay(1.22, function()
+		bb:Destroy()
+	end)
+end
+do
+	local lastCarry = player:GetAttribute("Carry") or 0
+	player:GetAttributeChangedSignal("Carry"):Connect(function()
+		local n = player:GetAttribute("Carry") or 0
+		if n > lastCarry and player:GetAttribute("Loaded") then
+			pickupPop(n - lastCarry)
+		end
+		lastCarry = n
 	end)
 end
 
@@ -592,41 +655,41 @@ do
 	end)
 end
 
--- Bottom left: candy, the income per second under it and the carried stack, small (Steal an
--- Egg's money line). On touch screens it sits top left, clear of the thumbstick.
+-- Mid left (Pet Sim 99 style): candy at 32 px with a 32 px icon, the income per second under it
+-- and the carried stack. The frame goes into the left pill column (below the last pill) once
+-- that column exists further down.
 local candyValue = player:WaitForChild("leaderstats"):WaitForChild("Candy") :: IntValue
 local candyBig: TextLabel, incomeLabel: TextLabel, carryLabel: TextLabel
+local statsFrame = Instance.new("Frame")
 do
-	local stats = Instance.new("Frame")
+	local stats = statsFrame
 	stats.Name = "Stats"
 	stats.BackgroundTransparency = 1
-	stats.AnchorPoint = Vector2.new(0, 1)
-	stats.Position = UDim2.new(0, 14, 1, -12)
 	stats.Size = UDim2.fromOffset(300, 92)
+	stats.LayoutOrder = 100
 	stats.Parent = gui
-	if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
-		stats.AnchorPoint = Vector2.new(0, 0)
-		stats.Position = UDim2.new(0, 14, 0, 64)
-	end
 	local icon = Instance.new("TextLabel")
 	icon.Name = "CandyIcon"
 	icon.BackgroundTransparency = 1
-	icon.Size = UDim2.fromOffset(38, 38)
+	icon.Position = UDim2.fromOffset(0, 6)
+	icon.Size = UDim2.fromOffset(32, 32)
 	icon.TextScaled = true
 	icon.Text = "🍬"
 	icon.Parent = stats
 	local function line(y: number, height: number, color: Color3): TextLabel
 		local label = textLabel(stats, "", color)
-		label.Position = UDim2.fromOffset(44, y)
-		label.Size = UDim2.new(1, -44, 0, height)
+		label.Position = UDim2.fromOffset(40, y)
+		label.Size = UDim2.new(1, -40, 0, height)
 		label.TextXAlignment = Enum.TextXAlignment.Left
 		return label
 	end
-	-- A 36 px line: the Fredoka digits come out about 28 px tall, white with a thick stroke.
-	candyBig = line(1, 36, Color3.fromRGB(255, 255, 255))
+	-- The candy number is exactly 32 px, white with a thick stroke.
+	candyBig = line(4, 36, Color3.fromRGB(255, 255, 255))
+	candyBig.TextScaled = false
+	candyBig.TextSize = 32
 	candyBig:FindFirstChildOfClass("UIStroke").Thickness = 3
-	incomeLabel = line(40, 22, Color3.fromRGB(90, 235, 90))
-	carryLabel = line(64, 22, Color3.fromRGB(255, 190, 110))
+	incomeLabel = line(44, 20, Color3.fromRGB(90, 235, 90))
+	carryLabel = line(66, 20, Color3.fromRGB(255, 190, 110))
 end
 local function refreshCandy(pop: boolean)
 	candyBig.Text = short(candyValue.Value)
@@ -679,8 +742,8 @@ do
 		)
 		plus.Name = "CandyTick"
 		plus.TextXAlignment = Enum.TextXAlignment.Left
-		plus.Position = UDim2.fromOffset(44 + candyBig.TextBounds.X + 10, 4)
-		plus.Size = UDim2.fromOffset(110, 28)
+		plus.Position = UDim2.fromOffset(40 + candyBig.TextBounds.X + 10, 6)
+		plus.Size = UDim2.fromOffset(130, 30)
 		local s = plus:FindFirstChildOfClass("UIStroke") :: UIStroke
 		local scale = Instance.new("UIScale")
 		scale.Scale = 0.4
@@ -750,8 +813,15 @@ local function refreshCarry()
 	end
 	carryLabel.Text = text
 end
+-- Every gain pops a "+N" next to the counter (not the balance loaded on join).
+local lastCandy = candyValue.Value
 candyValue.Changed:Connect(function()
-	refreshCandy(true)
+	local gain = candyValue.Value - lastCandy
+	lastCandy = candyValue.Value
+	refreshCandy(gain > 0)
+	if gain > 0 and player:GetAttribute("Loaded") then
+		candyTick(gain)
+	end
 end)
 player:GetAttributeChangedSignal("Income"):Connect(function()
 	refreshCandy(false)
@@ -768,14 +838,17 @@ local leftBar = Instance.new("Frame")
 leftBar.Name = "LeftPills"
 leftBar.BackgroundTransparency = 1
 leftBar.AnchorPoint = Vector2.new(0, 0.5)
-leftBar.Position = UDim2.new(0, 12, 0.5, -10)
-leftBar.Size = UDim2.fromOffset(132, 330)
+leftBar.Position = UDim2.new(0, 12, 0.5, -14)
+-- Up to 6 pills plus the candy block under them.
+leftBar.Size = UDim2.fromOffset(132, 420)
 leftBar.Parent = gui
 do
 	local layout = Instance.new("UIListLayout")
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Padding = UDim.new(0, 9)
 	layout.Parent = leftBar
+	-- Candy sits right under the last pill (LayoutOrder 100), mid left.
+	statsFrame.Parent = leftBar
 end
 local function pill(text: string, color: Color3, order: number): TextButton
 	local b = button(leftBar, text, color)
@@ -1939,7 +2012,8 @@ do
 	local idleGrip: { [Tool]: CFrame } = setmetatable({}, { __mode = "k" }) :: any
 	local swingId: { [Tool]: number } = setmetatable({}, { __mode = "k" }) :: any
 	-- The hand frame is the arm frame turned -90 on X; poses rotate the idle hold around the hand
-	-- in the arm frame (pitch < 0 tips the top forward, roll > 0 tips it to the left).
+	-- in the arm frame (pitch < 0 tips the upright scythe's top forward and down; with the arm
+	-- raised forward, roll turns it around the vertical, sweeping the blade across).
 	local HAND = CFrame.Angles(math.rad(-90), 0, 0)
 	local function pose(base: CFrame, pitch: number, roll: number): CFrame
 		local rot = CFrame.Angles(math.rad(pitch), 0, math.rad(roll))
@@ -2157,7 +2231,7 @@ do
 		Color3.fromRGB(255, 140, 40),
 	}
 	-- Small neon candies jump out of the pumpkin, then home in on the player's chest.
-	local function candyBurst(at: Vector3, count: number, amount: number)
+	local function candyBurst(at: Vector3, count: number)
 		local landed = 0
 		for i = 1, count do
 			local candy = Instance.new("Part")
@@ -2202,7 +2276,8 @@ do
 						play(Config.Sounds.Coin, 1.3 + math.random() * 0.2, 0.45)
 					end
 					if landed == count then
-						candyTick(amount)
+						-- The "+N" already popped when the candy arrived; just punch the counter.
+						candyTick(0)
 					end
 				end
 			end)
@@ -2211,14 +2286,14 @@ do
 
 	remotes
 		:WaitForChild("WildPopped").OnClientEvent
-		:Connect(function(at: Vector3, seedId: string, winner: Player?, candy: number?)
+		:Connect(function(at: Vector3, seedId: string, winner: Player?, _candy: number?)
 			local seed = seedById[seedId or ""]
 			local color = seed and seedColor(seed) or Color3.fromRGB(255, 130, 40)
 			burst(at, color, 26, 24, SPARKLE, 1.1)
 			burst(at, color, 14, 10, nil, 2.2)
 			play(Config.Sounds.Pick, 1.3, 0.7)
 			if winner == player and seed then
-				candyBurst(at + Vector3.new(0, 1, 0), math.random(6, 10), candy or 0)
+				candyBurst(at + Vector3.new(0, 1, 0), math.random(6, 10))
 				floatText(
 					at + Vector3.new(0, 4, 0),
 					"+1 " .. seed.name .. "!",
@@ -2688,20 +2763,16 @@ do
 	bar.Name = "Objective"
 	bar.AnchorPoint = Vector2.new(0.5, 0)
 	bar.Position = UDim2.new(0.5, 0, 0, 8)
-	bar.Size = UDim2.fromOffset(480, 58)
-	bar.BackgroundColor3 = Color3.new(0, 0, 0)
-	bar.BackgroundTransparency = 0.45
+	bar.Size = UDim2.fromOffset(440, 62)
+	-- A solid rounded dark plate, so world signs behind it never show through the text.
+	bar.BackgroundColor3 = Color3.fromRGB(22, 14, 32)
+	bar.BackgroundTransparency = 0.25
 	bar.BorderSizePixel = 0
 	bar.Parent = gui
-	-- The dark bar fades out at both ends.
-	local fade = Instance.new("UIGradient")
-	fade.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 1),
-		NumberSequenceKeypoint.new(0.22, 0),
-		NumberSequenceKeypoint.new(0.78, 0),
-		NumberSequenceKeypoint.new(1, 1),
-	})
-	fade.Parent = bar
+	corner(bar, 16)
+	local barStroke = stroke(bar, 2.5)
+	barStroke.Color = Color3.fromRGB(10, 5, 16)
+	barStroke.Transparency = 0.2
 	local title = textLabel(bar, "", Color3.new(1, 1, 1))
 	title.Position = UDim2.fromOffset(0, 4)
 	title.Size = UDim2.new(1, 0, 0, 34)
@@ -2726,11 +2797,18 @@ do
 		end
 	end
 
-	-- Red 3D chevrons (Steal an Egg style): each is two chunky neon bars in a "^" 1.5 studs wide,
-	-- lying on the ground 2 studs apart. The chain starts 4 studs in front of you (so it stays on
-	-- screen with the chase camera), runs toward the target and stops 8 studs short of it.
+	-- Red 3D ground arrows (Steal an Egg style). Each arrow lies flat, 0.3 studs over the ground:
+	-- a neon arrowhead 2.5 studs wide (two WedgeParts) plus a shaft, the tip on the arrow's local
+	-- -Z. An arrow's frame is CFrame.lookAt(at, at + dir), whose -Z is dir (the flat unit vector
+	-- from you to the target), so every tip points TOWARD the target. 7 arrows, 3 studs apart,
+	-- starting 5 studs in front of you so the chase camera keeps them on screen; a bright wave
+	-- runs along them toward the target. The target gets a pulsing red ring on the ground and a
+	-- bobbing ⬇. A smash re-targets at once (the popped pumpkin is skipped).
 	local RED = Color3.fromRGB(224, 24, 24)
-	local ARROWS, SPACING, FIRST, THICK, STOP = 14, 2, 4, 0.4, 8
+	local HOT = Color3.fromRGB(255, 125, 110)
+	local ARROWS, SPACING, FIRST, STOP, LIFT = 7, 3, 5, 7, 0.3
+	local THICK, HEAD_W, HEAD_L, SHAFT_W, SHAFT_L, HEAD_BASE = 0.3, 2.5, 1.5, 0.95, 1.3, 0.2
+	local RING_R = 3.2
 	local arrowFolder = Instance.new("Folder")
 	arrowFolder.Name = "GuideArrows"
 	arrowFolder.Parent = workspace
@@ -2753,16 +2831,57 @@ do
 		table.insert(arrowOf, i)
 	end
 	for i = 1, ARROWS do
-		-- Forward is -Z: the tip sits at z = -0.4, the two arms run back to x = +-0.75.
+		-- Shaft: behind the head (+Z), overlapping it a little.
+		arrowPart(
+			Instance.new("Part"),
+			Vector3.new(SHAFT_W, THICK, SHAFT_L),
+			CFrame.new(0, 0, HEAD_BASE + SHAFT_L / 2 - 0.05),
+			i
+		)
+		-- Head: two flat right triangles. A WedgePart's triangle (in its Y/Z plane) has its right
+		-- angle at local (y -h/2, z +d/2), the tip at (y -h/2, z -d/2) and the far corner at
+		-- (y +h/2, z +d/2). Wedge Y = side * arrow X, wedge Z = arrow Z (so wedge X = Y x Z is
+		-- vertical): the right angle lands on (0, HEAD_BASE), the tip on (0, HEAD_BASE - HEAD_L)
+		-- (forward, -Z) and the far corner on (side * HEAD_W / 2, HEAD_BASE).
 		for side = -1, 1, 2 do
 			arrowPart(
-				Instance.new("Part"),
-				Vector3.new(0.42, THICK, 1.1),
-				CFrame.new(side * 0.375, 0, -0.4 + 0.375) * CFrame.Angles(0, side * math.rad(45), 0),
+				Instance.new("WedgePart"),
+				Vector3.new(THICK, HEAD_W / 2, HEAD_L),
+				CFrame.fromMatrix(
+					Vector3.new(side * HEAD_W / 4, 0, HEAD_BASE - HEAD_L / 2),
+					Vector3.new(0, -side, 0),
+					Vector3.new(side, 0, 0),
+					Vector3.zAxis
+				),
 				i
 			)
 		end
 	end
+	-- Ring on the ground around the target: a steady pulsing ring plus a ping that grows and
+	-- fades. The holder part is turned 90 degrees on X so the adornments' Z axis is vertical.
+	local ringHolder = Instance.new("Part")
+	ringHolder.Name = "GuideRing"
+	ringHolder.Anchored = true
+	ringHolder.CanCollide = false
+	ringHolder.CanQuery = false
+	ringHolder.CanTouch = false
+	ringHolder.Transparency = 1
+	ringHolder.Size = Vector3.one
+	ringHolder.Parent = arrowFolder
+	local function ringAdornment(transparency: number): CylinderHandleAdornment
+		local ring = Instance.new("CylinderHandleAdornment")
+		ring.Adornee = ringHolder
+		ring.Radius = RING_R
+		ring.InnerRadius = RING_R - 0.5
+		ring.Height = 0.2
+		ring.Color3 = RED
+		ring.Transparency = transparency
+		ring.Visible = false
+		ring.Parent = ringHolder
+		return ring
+	end
+	local ring = ringAdornment(0.05)
+	local ping = ringAdornment(0.4)
 	-- A bobbing red marker over the target itself.
 	local marker = Instance.new("Part")
 	marker.Name = "GuideTarget"
@@ -2774,7 +2893,7 @@ do
 	marker.Size = Vector3.one
 	marker.Parent = arrowFolder
 	local markerGui = Instance.new("BillboardGui")
-	markerGui.Size = UDim2.fromOffset(64, 64)
+	markerGui.Size = UDim2.fromOffset(76, 76)
 	markerGui.StudsOffsetWorldSpace = Vector3.new(0, 6, 0)
 	markerGui.AlwaysOnTop = true
 	markerGui.LightInfluence = 0
@@ -2782,25 +2901,35 @@ do
 	markerGui.Parent = marker
 	textLabel(markerGui, "⬇", RED).Size = UDim2.fromScale(1, 1)
 
+	-- A pumpkin that just popped is skipped by zoneTarget for a moment (its part may still be
+	-- there for a frame or two), and the loop below re-targets right away.
+	local ignoreAt: Vector3? = nil
+	local ignoreUntil = 0
+	local retarget = false
+	remotes:WaitForChild("WildPopped").OnClientEvent:Connect(function(at: Vector3)
+		ignoreAt, ignoreUntil = at, os.clock() + 1.5
+		retarget = true
+	end)
+
 	-- Arrow index -> where it lies (missing = hidden).
 	local arrowBase: { [number]: CFrame } = {}
 	local rayParams = RaycastParams.new()
 	rayParams.FilterType = Enum.RaycastFilterType.Exclude
 	rayParams.RespectCanCollide = true
+	local function groundY(p: Vector3, fallback: number): number
+		local hit = workspace:Raycast(p + Vector3.new(0, 6, 0), Vector3.new(0, -40, 0), rayParams)
+		return hit and hit.Position.Y or fallback
+	end
 	local function placeArrows(target: Vector3?)
 		table.clear(arrowBase)
 		local root = rootPart()
-		markerGui.Enabled = target ~= nil
+		local on = target ~= nil and root ~= nil
+		markerGui.Enabled = on
+		ring.Visible = on
+		ping.Visible = on
 		if not target or not root then
 			return
 		end
-		marker.Position = target + Vector3.new(0, 2, 0)
-		local flat = Vector3.new(target.X - root.Position.X, 0, target.Z - root.Position.Z)
-		local dist = flat.Magnitude
-		if dist < STOP then
-			return
-		end
-		local dir = flat.Unit
 		local skip: { Instance } = { arrowFolder }
 		for _, name in { "Wild", "Loose", "Ghosts" } do
 			local f = garden:FindFirstChild(name)
@@ -2812,21 +2941,32 @@ do
 			table.insert(skip, player.Character)
 		end
 		rayParams.FilterDescendantsInstances = skip
+		marker.Position = target + Vector3.new(0, 2, 0)
+		local floor = groundY(target, target.Y - 1.5)
+		ringHolder.CFrame = CFrame.new(target.X, floor + LIFT, target.Z)
+			* CFrame.Angles(math.rad(90), 0, 0)
+		local flat = Vector3.new(target.X - root.Position.X, 0, target.Z - root.Position.Z)
+		local dist = flat.Magnitude
+		if dist < STOP then
+			return
+		end
+		-- Flat unit vector from you to the target: each arrow's -Z (its tip) points along it.
+		local dir = flat.Unit
 		for i = 1, ARROWS do
 			local d = FIRST + (i - 1) * SPACING
-			if d > dist - 3 then
+			-- Stop before the ring around the target.
+			if d > dist - RING_R - 1 then
 				break
 			end
 			local p = root.Position + dir * d
-			local hit =
-				workspace:Raycast(p + Vector3.new(0, 6, 0), Vector3.new(0, -40, 0), rayParams)
-			local y = hit and hit.Position.Y or root.Position.Y - 3
-			local at = Vector3.new(p.X, y + THICK / 2 + 0.08, p.Z)
+			local y = groundY(p, root.Position.Y - 3)
+			local at = Vector3.new(p.X, y + LIFT, p.Z)
 			arrowBase[i] = CFrame.lookAt(at, at + dir)
 		end
 	end
 
-	-- A pulse runs along the trail toward the target; the marker bobs.
+	-- A bright wave runs along the arrows toward the target (the crest moves to higher i as time
+	-- goes on); the ring pulses and pings; the marker bobs.
 	RunService.RenderStepped:Connect(function()
 		local t = os.clock()
 		local moved: { BasePart } = {}
@@ -2835,10 +2975,11 @@ do
 			local i = arrowOf[k]
 			local base = arrowBase[i]
 			if base then
-				local wave = 0.5 + 0.5 * math.sin(t * 6 - i * 0.7)
-				p.Transparency = 0.25 * (1 - wave)
+				local wave = math.max(0, math.sin(t * 7 - i * 0.9)) ^ 2
+				p.Transparency = 0.3 * (1 - wave)
+				p.Color = RED:Lerp(HOT, wave)
 				table.insert(moved, p)
-				table.insert(frames, base * CFrame.new(0, 0.35 * wave, 0) * arrowOffsets[k])
+				table.insert(frames, base * CFrame.new(0, 0.15 * wave, 0) * arrowOffsets[k])
 			elseif p.Transparency ~= 1 then
 				p.Transparency = 1
 			end
@@ -2847,7 +2988,17 @@ do
 			workspace:BulkMoveTo(moved, frames, Enum.BulkMoveMode.FireCFrameChanged)
 		end
 		if markerGui.Enabled then
-			markerGui.StudsOffsetWorldSpace = Vector3.new(0, 6 + math.sin(t * 4) * 0.6, 0)
+			markerGui.StudsOffsetWorldSpace = Vector3.new(0, 6 + math.sin(t * 4) * 0.7, 0)
+		end
+		if ring.Visible then
+			local beat = 0.5 + 0.5 * math.sin(t * 6)
+			ring.Radius = RING_R + 0.25 * beat
+			ring.InnerRadius = ring.Radius - 0.55
+			ring.Transparency = 0.25 * (1 - beat)
+			local f = (t * 0.9) % 1
+			ping.Radius = RING_R + 2.6 * f
+			ping.InnerRadius = ping.Radius - 0.35
+			ping.Transparency = 0.3 + 0.7 * f
 		end
 	end)
 
@@ -2892,10 +3043,15 @@ do
 		local wild = garden:FindFirstChild("Wild")
 		local zones = garden:FindFirstChild("Zones")
 		local zone = zones and zones:FindFirstChild("Zone1")
+		local skip = os.clock() < ignoreUntil and ignoreAt or nil
 		for _, list in { wild and wild:GetChildren() or {}, zone and zone:GetChildren() or {} } do
 			for _, part in list do
 				local zoneId = part:GetAttribute("Zone")
-				if part:IsA("BasePart") and (type(zoneId) ~= "string" or ZoneView.has(zoneId)) then
+				if
+					part:IsA("BasePart")
+					and (type(zoneId) ~= "string" or ZoneView.has(zoneId))
+					and not (skip and (part.Position - skip).Magnitude < 1.5)
+				then
 					local d = (part.Position - from).Magnitude
 					if d < bestDist then
 						best, bestDist = part.Position, d
@@ -3045,7 +3201,12 @@ do
 
 	task.spawn(function()
 		while true do
-			task.wait(0.3)
+			-- Every 0.3 s, or right away after a smash.
+			local waited = 0
+			while waited < 0.3 and not retarget do
+				waited += task.wait(0.05)
+			end
+			retarget = false
 			local root = rootPart()
 			local patch = myPatch()
 			local soil = patch and patch:FindFirstChild("Soil") :: BasePart?
@@ -3309,7 +3470,11 @@ do
 	dailyGui.Parent = player:WaitForChild("PlayerGui")
 	local INK = Color3.fromRGB(26, 15, 46)
 	local open: Frame? = nil
+	-- Full-screen black at 0.5 behind the panel, dimming the world while it is open.
+	local openDim: Frame? = nil
 
+	-- Confetti bursts out of the middle of the screen (where the panel was) on screen at once,
+	-- flies up and out, then tumbles down past the bottom edge.
 	local function confetti()
 		local colors = {
 			Color3.fromRGB(255, 80, 120),
@@ -3319,32 +3484,59 @@ do
 			Color3.fromRGB(190, 120, 255),
 			Color3.fromRGB(255, 150, 50),
 		}
-		for i = 1, 30 do
+		for i = 1, 70 do
 			local bit = Instance.new("Frame")
 			bit.Name = "Confetti"
 			bit.BorderSizePixel = 0
 			bit.AnchorPoint = Vector2.new(0.5, 0.5)
 			bit.BackgroundColor3 = colors[(i - 1) % #colors + 1]
-			bit.Size = UDim2.fromOffset(math.random(8, 14), math.random(14, 22))
-			local x = 0.15 + math.random() * 0.7
-			bit.Position = UDim2.fromScale(x, -0.05 - math.random() * 0.15)
+			bit.Size = UDim2.fromOffset(math.random(10, 16), math.random(16, 26))
+			bit.Position = UDim2.fromScale(0.5 + (math.random() - 0.5) * 0.1, 0.55)
 			bit.Rotation = math.random(0, 360)
 			bit.ZIndex = 50
 			bit.Parent = dailyGui
-			local fall = 1.3 + math.random() * 0.9
-			TweenService
-				:Create(bit, TweenInfo.new(fall, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-					Position = UDim2.fromScale(x + (math.random() - 0.5) * 0.25, 1.08),
-					Rotation = bit.Rotation + math.random(-540, 540),
-				})
-				:Play()
-			task.delay(fall + 0.05, function()
+			local x = 0.5 + (math.random() - 0.5) * 0.9
+			local y = 0.08 + math.random() * 0.4
+			local up = 0.35 + math.random() * 0.2
+			local fall = 1.2 + math.random() * 0.8
+			local out = TweenService:Create(
+				bit,
+				TweenInfo.new(up, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				{
+					Position = UDim2.fromScale(x, y),
+					Rotation = bit.Rotation + math.random(-180, 180),
+				}
+			)
+			out:Play()
+			out.Completed:Once(function()
+				TweenService
+					:Create(
+						bit,
+						TweenInfo.new(fall, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+						{
+							Position = UDim2.fromScale(x + (math.random() - 0.5) * 0.2, 1.08),
+							Rotation = bit.Rotation + math.random(-540, 540),
+						}
+					)
+					:Play()
+			end)
+			task.delay(up + fall + 0.05, function()
 				bit:Destroy()
 			end)
 		end
 	end
 
 	local function close(celebrate: boolean)
+		local dim = openDim
+		openDim = nil
+		if dim then
+			local fadeOut =
+				TweenService:Create(dim, TweenInfo.new(0.25), { BackgroundTransparency = 1 })
+			fadeOut:Play()
+			fadeOut.Completed:Once(function()
+				dim:Destroy()
+			end)
+		end
 		local frame = open
 		if not frame then
 			return
@@ -3412,6 +3604,17 @@ do
 
 	local function showDaily(streak: number, candy: number, token: boolean)
 		close(false)
+		local dim = Instance.new("Frame")
+		dim.Name = "DailyDim"
+		dim.BackgroundColor3 = Color3.new(0, 0, 0)
+		dim.BackgroundTransparency = 1
+		dim.BorderSizePixel = 0
+		dim.Size = UDim2.fromScale(1, 1)
+		dim.ZIndex = 1
+		dim.Active = true
+		dim.Parent = dailyGui
+		openDim = dim
+		TweenService:Create(dim, TweenInfo.new(0.25), { BackgroundTransparency = 0.5 }):Play()
 		local frame = Instance.new("Frame")
 		frame.Name = "DailyReward"
 		frame.AnchorPoint = Vector2.new(0.5, 0.5)
