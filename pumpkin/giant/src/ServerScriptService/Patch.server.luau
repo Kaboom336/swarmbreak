@@ -1917,6 +1917,14 @@ do
 		refreshCarry(player)
 		Bases.refresh(patch)
 		if placed then
+			-- Placing a new kind fills the Index too (selling unlocks later).
+			local found = indexOf[player] or {}
+			indexOf[player] = found
+			local key = seedId .. ":" .. (top:GetAttribute("Mutation") or "Plain")
+			if not found[key] then
+				found[key] = true
+				publishIndex(player)
+			end
 			Remotes.placedEvent:FireAllClients(
 				player,
 				plot.Position,
@@ -3960,10 +3968,16 @@ for _, kind in { "Seeds", "Upgrades" } do
 	prompt.Triggered:Connect(function(player)
 		Remotes.shopEvent:FireClient(player, tools and "Tools" or "Upgrades")
 	end)
-	if tools then
-		for _, d in stall:GetDescendants() do
-			if d:IsA("TextLabel") and string.find(string.upper(d.Text), "SEED") then
-				d.Text = "⚒ TOOLS"
+	-- Both stalls read SHOP: one shop, two tabs.
+	for _, d in stall:GetDescendants() do
+		if d:IsA("TextLabel") then
+			local up = string.upper(d.Text)
+			if
+				string.find(up, "SEED")
+				or string.find(up, "TOOLS")
+				or string.find(up, "UPGRADES")
+			then
+				d.Text = "🛒 SHOP"
 			end
 		end
 	end

@@ -1328,11 +1328,17 @@ local function refreshIndex()
 	for key in string.gmatch(player:GetAttribute("Index") or "", "[^,]+") do
 		found[key] = true
 	end
+	-- Finishes come with brewing; before that the book is one slot per type.
+	local brew = player:GetAttribute("Unlock_Brew") == true
 	local total = 0
 	for _, seed in Config.Seeds do
 		local all = true
-		for _, finish in FINISHES do
+		for k, finish in FINISHES do
 			local parts = indexCells[seed.id][finish]
+			parts.cell.Visible = brew or k == 1
+			if not (brew or k == 1) then
+				continue
+			end
 			if found[seed.id .. ":" .. finish] then
 				total += 1
 				local m = mutationById[finish]
@@ -1348,11 +1354,13 @@ local function refreshIndex()
 				parts.label.TextColor3 = Color3.fromRGB(170, 165, 185)
 			end
 		end
-		indexCells[seed.id].name.Text = seed.name .. (all and " +10%" or "")
+		indexCells[seed.id].name.Text = seed.name .. ((all and brew) and " +10%" or "")
 	end
-	indexCount.Text = string.format("Collected %d/%d", total, #Config.Seeds * #FINISHES)
+	indexCount.Text =
+		string.format("Collected %d/%d", total, #Config.Seeds * (brew and #FINISHES or 1))
 end
 player:GetAttributeChangedSignal("Index"):Connect(refreshIndex)
+player:GetAttributeChangedSignal("Unlock_Brew"):Connect(refreshIndex)
 refreshIndex()
 
 -- Music: a calm day loop, a tense midnight loop and a boss loop that crossfade by phase.
