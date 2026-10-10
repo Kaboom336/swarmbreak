@@ -166,9 +166,11 @@ return {
 	-- holding invisible Parts named "Spawn" and ZMin / ZMax attributes (its stretch of the lane;
 	-- zMin / zMax here are the fallback). weights = chance per pumpkin type; max = wild pumpkins
 	-- alive at once; cost = candy to open its gate (0 = open from the start). emoji = the
-	-- difficulty face on its gate sign (Steal an Egg ladder).
+	-- difficulty face on its gate sign (Steal an Egg ladder); color = the zone name line under
+	-- the top banner on the HUD (Steal an Egg zone label colours).
 	Zones = {
 		Zone1 = {
+			color = Color3.fromRGB(255, 179, 71),
 			title = "Pumpkin Meadow",
 			emoji = "🙂",
 			cost = 0,
@@ -178,6 +180,7 @@ return {
 			weights = { Orange = 70, Sunny = 22, Ghost = 7, Moon = 1 },
 		},
 		Zone2 = {
+			color = Color3.fromRGB(200, 204, 208),
 			title = "Graveyard",
 			emoji = "😐",
 			cost = 1000,
@@ -187,6 +190,7 @@ return {
 			weights = { Sunny = 50, Ghost = 35, Moon = 13, CandyCorn = 2 },
 		},
 		Zone3 = {
+			color = Color3.fromRGB(155, 234, 58),
 			title = "Haunted Woods",
 			emoji = "😬",
 			cost = 25000,
@@ -196,6 +200,7 @@ return {
 			weights = { Ghost = 45, Moon = 35, CandyCorn = 17, Golden = 3 },
 		},
 		Zone4 = {
+			color = Color3.fromRGB(160, 64, 224),
 			title = "Witch Swamp",
 			emoji = "😨",
 			cost = 400000,
@@ -205,6 +210,7 @@ return {
 			weights = { Moon = 30, CandyCorn = 40, Golden = 25, Shadow = 5 },
 		},
 		Zone5 = {
+			color = Color3.fromRGB(224, 32, 32),
 			title = "Vampire Castle",
 			emoji = "😱",
 			cost = 2500000,
@@ -214,6 +220,7 @@ return {
 			weights = { CandyCorn = 30, Golden = 40, Shadow = 25, Crystal = 5 },
 		},
 		Zone6 = {
+			color = Color3.fromRGB(255, 110, 199),
 			title = "Candy Kingdom",
 			emoji = "😈",
 			cost = 17500000,
@@ -223,6 +230,7 @@ return {
 			weights = { Golden = 30, Shadow = 40, Crystal = 25, Inferno = 5 },
 		},
 		Zone7 = {
+			color = Color3.fromRGB(240, 208, 32),
 			title = "Pumpkin King's Throne",
 			emoji = "👹",
 			cost = 140000000,
@@ -410,9 +418,16 @@ return {
 	PadForward = 70,
 	PadUp = 60,
 
-	-- Day / midnight cycle (seconds).
+	-- Day / midnight cycle (seconds). Midnight keeps the bright day look (ghost raids only).
 	DayLength = 150,
 	MidnightLength = 45,
+	-- Spooky Hour: every SpookyEvery seconds for SpookyLength seconds the world takes an
+	-- orange-purple tint, SpookyBats bats circle over the lane (client side) and base income pays
+	-- x SpookyMult. Never real night.
+	SpookyEvery = 600,
+	SpookyLength = 90,
+	SpookyMult = 2,
+	SpookyBats = 20,
 
 	-- Ghosts come at midnight to steal pumpkins from bases (locked bases are skipped).
 	-- Ghost HP counts swings; each swing does as many hits as the tool's tier (Rusty 1, Wooden 2...).

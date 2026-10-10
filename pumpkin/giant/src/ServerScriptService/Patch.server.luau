@@ -60,6 +60,38 @@ local state = Instance.new("Configuration")
 state.Name = "PatchState"
 state.Parent = ReplicatedStorage
 
+-- Spooky Hour (replaces the old dark Midnight look): every Config.SpookyEvery seconds for
+-- Config.SpookyLength seconds base income pays x Config.SpookyMult. State "SpookyEnds" = its end
+-- (server time, nil when off), "SpookyNext" = the next start. Clients tint the world and fly bats.
+local Spooky: { [string]: any } = {}
+do
+	local nextAt = workspace:GetServerTimeNow() + (Config.SpookyEvery or 600)
+	state:SetAttribute("SpookyNext", nextAt)
+	function Spooky.active(): boolean
+		return (state:GetAttribute("SpookyEnds") or 0) > workspace:GetServerTimeNow()
+	end
+	function Spooky.mult(): number
+		return Spooky.active() and (Config.SpookyMult or 2) or 1
+	end
+	function Spooky.start()
+		local t = workspace:GetServerTimeNow()
+		state:SetAttribute("SpookyEnds", t + (Config.SpookyLength or 90))
+		nextAt = t + (Config.SpookyEvery or 600)
+		state:SetAttribute("SpookyNext", nextAt)
+	end
+	-- Every second (main loop).
+	function Spooky.tick()
+		local t = workspace:GetServerTimeNow()
+		local ends = state:GetAttribute("SpookyEnds")
+		if type(ends) == "number" and t >= ends then
+			state:SetAttribute("SpookyEnds", nil)
+		end
+		if t >= nextAt then
+			Spooky.start()
+		end
+	end
+end
+
 -- Remote events and functions, created in this order under ReplicatedStorage.PatchRemotes.
 local Remotes
 do
@@ -104,7 +136,8 @@ do
 		revealEvent = remote("Reveal"),
 		-- Server -> one client: Hoard drama ("grab" / "bonk" / "safe" / "deliver", seedId).
 		hoardEvent = remote("Hoard"),
-		-- Server -> all clients: a placed pumpkin finished hatching (pumpkin, ownerId, pet name?).
+		-- Server -> all clients: a placed pumpkin finished hatching (pumpkin, ownerId, pet name?,
+		-- isNew = the owner's first hatch of that type).
 		carvedEvent = remote("Carved"),
 		buyToolFunction = remote("BuyTool", "RemoteFunction") :: RemoteFunction,
 		buyUpgradeFunction = remote("BuyUpgrade", "RemoteFunction") :: RemoteFunction,
@@ -1871,8 +1904,9 @@ do
 		pumpkin:SetAttribute("Jack", true)
 	end
 
-	-- The pumpkin hatches: white flash and burst (clients), the pet (or Jack) and, the first time
-	-- its owner hatches this type, a reveal card.
+	-- The pumpkin hatches into its pet (or Jack). Clients play the hatch: everyone near sees the
+	-- shell burst; the owner gets the flash, camera punch and the reveal card (built on the client
+	-- from the pumpkin's attributes). isNew = the first time its owner hatches this type.
 	local function carve(pumpkin: BasePart)
 		pumpkin:SetAttribute("CarveAt", nil)
 		local tag = pumpkin:FindFirstChild("CarveTag")
@@ -1881,17 +1915,18 @@ do
 		end
 		becomeAlive(pumpkin)
 		local ownerId = pumpkin:GetAttribute("Owner") or 0
-		Remotes.carvedEvent:FireAllClients(pumpkin, ownerId, pumpkin:GetAttribute("Pet"))
 		local owner = Players:GetPlayerByUserId(ownerId)
 		local seedId = pumpkin:GetAttribute("Seed")
+		local isNew = false
 		if owner and type(seedId) == "string" then
 			local carved = Bases.carvedOf[owner] or {}
 			Bases.carvedOf[owner] = carved
 			if not carved[seedId] then
 				carved[seedId] = true
-				Reveal.send(owner, pumpkin, true, "jack")
+				isNew = true
 			end
 		end
+		Remotes.carvedEvent:FireAllClients(pumpkin, ownerId, pumpkin:GetAttribute("Pet"), isNew)
 	end
 
 	-- Puts a new pumpkin on an empty plot, sized to fit it. Returns it (nil when not possible).
@@ -2459,7 +2494,8 @@ do
 			if player.Parent and isLoaded(player) then
 				Bases.refresh(patch)
 				local income = player:GetAttribute("Income") or 0
-				local total = (carry[player] or 0) + income
+				-- Spooky Hour pays x SpookyMult (orders still count the plain income).
+				local total = (carry[player] or 0) + income * Spooky.mult()
 				local whole = math.floor(total)
 				carry[player] = total - whole
 				if whole > 0 then
@@ -6230,6 +6266,10 @@ task.spawn(function()
 		if not refilled then
 			warn("[Patch] Hoard refill failed:", hoardErr)
 		end
+		local spookyOk, spookyErr = pcall(Spooky.tick)
+		if not spookyOk then
+			warn("[Patch] Spooky Hour tick failed:", spookyErr)
+		end
 		-- Playtime (session and saved total) and the unlock gates it opens.
 		for _, player in Players:GetPlayers() do
 			if isLoaded(player) then
@@ -6340,6 +6380,10 @@ if RunService:IsStudio() then
 			return patchOf[player] and patchOf[player]:GetAttribute("LockedUntil")
 		elseif action == "ghosts" then
 			return #ghosts
+		elseif action == "spooky" then
+			-- Start a Spooky Hour now (the next one comes SpookyEvery seconds later).
+			Spooky.start()
+			return state:GetAttribute("SpookyEnds")
 		end
 		return nil
 	end

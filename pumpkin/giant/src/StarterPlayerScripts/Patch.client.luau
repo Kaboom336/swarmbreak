@@ -289,6 +289,17 @@ local function unlocked(name: string, who: Player?): boolean
 	return (who or player):GetAttribute("Unlock_" .. name) == true
 end
 
+-- Spooky Hour (server state "SpookyEnds"): x Config.SpookyMult base income, tint and bats.
+local function spookyOn(): boolean
+	return (state:GetAttribute("SpookyEnds") or 0) > workspace:GetServerTimeNow()
+end
+
+-- Defined further down, used above their definitions: confetti (Daily panel block, optional
+-- ScreenGui to draw in) and queueReveal (the reveal card queue: seedId, mutation, isNew, rate,
+-- kind, pet).
+local confetti: (ScreenGui?) -> ()
+local queueReveal: (string, string?, boolean, number, string?, string?) -> ()
+
 -- Screen -----------------------------------------------------------------------------------
 
 local gui = Instance.new("ScreenGui")
@@ -331,6 +342,15 @@ workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchCamera)
 watchCamera()
 
 local DARK = Color3.fromRGB(34, 22, 48)
+-- Halloween skin (refs aspects/halloween 2.5, ui HOWTO 2): charcoal panels with an orange rim, a
+-- lime gradient on buy buttons, purple close / back buttons. HUD numbers: money green, speed yellow.
+local CHARCOAL = Color3.fromRGB(42, 42, 46)
+local ORANGE = Color3.fromRGB(242, 140, 26)
+local BUY = Color3.fromRGB(141, 248, 22)
+local BUY_LOW = Color3.fromRGB(107, 241, 3)
+local PURPLE = Color3.fromRGB(122, 82, 191)
+local MONEY = Color3.fromRGB(68, 255, 47)
+local SPEED_YELLOW = Color3.fromRGB(248, 255, 67)
 local function stroke(parent: Instance, thickness: number)
 	local s = Instance.new("UIStroke")
 	s.Thickness = thickness
@@ -385,11 +405,12 @@ local function chunky(b: GuiButton): (Frame, UIStroke)
 	faceStroke.Color = OUTLINE
 	local gradient = Instance.new("UIGradient")
 	gradient.Rotation = 90
-	gradient.Color = ColorSequence.new({
+	local shade = ColorSequence.new({
 		ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
 		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(225, 225, 225)),
 		ColorSequenceKeypoint.new(1, Color3.fromRGB(165, 165, 165)),
 	})
+	gradient.Color = shade
 	gradient.Parent = face
 	-- A soft white gloss across the top makes the top lighter than the base color.
 	local gloss = Instance.new("Frame")
@@ -410,12 +431,22 @@ local function chunky(b: GuiButton): (Frame, UIStroke)
 	end
 	base.Parent = b
 	face.Parent = b
+	-- A BUY-coloured button gets the lime gradient #8DF816 -> #6BF103 (the face turns white so
+	-- the gradient shows true); every other colour keeps the white-to-grey shading.
 	local function sync()
-		face.BackgroundColor3 = b.BackgroundColor3
-		base.BackgroundColor3 = b.BackgroundColor3:Lerp(Color3.new(0, 0, 0), 0.45)
+		local c = b.BackgroundColor3
+		if c == BUY then
+			face.BackgroundColor3 = Color3.new(1, 1, 1)
+			gradient.Color = ColorSequence.new(BUY, BUY_LOW)
+		else
+			face.BackgroundColor3 = c
+			gradient.Color = shade
+		end
+		base.BackgroundColor3 = c:Lerp(Color3.new(0, 0, 0), 0.45)
 	end
 	b:GetPropertyChangedSignal("BackgroundColor3"):Connect(sync)
 	sync()
+	-- Squash (ui HOWTO 3): hover 1.08, press 0.9, release springs back with Back easing.
 	local scale = Instance.new("UIScale")
 	scale.Parent = b
 	local hovered = false
@@ -428,17 +459,17 @@ local function chunky(b: GuiButton): (Frame, UIStroke)
 	end
 	b.MouseEnter:Connect(function()
 		hovered = true
-		to(1.06, 0.12)
+		to(1.08, 0.12)
 	end)
 	b.MouseLeave:Connect(function()
 		hovered = false
 		to(1, 0.12)
 	end)
 	b.MouseButton1Down:Connect(function()
-		to(0.94, 0.06)
+		to(0.9, 0.06)
 	end)
 	b.MouseButton1Up:Connect(function()
-		to(hovered and 1.06 or 1, 0.12)
+		to(hovered and 1.08 or 1, 0.18)
 	end)
 	b.Activated:Connect(function()
 		play(Config.Sounds.Pick, 2.2, 0.35)
@@ -586,31 +617,47 @@ local function toast(title: string, sub: string?)
 	hint(title .. (sub and sub ~= "" and (" · " .. sub) or ""))
 end
 
--- Top right: one small chip with the midnight clock only (Steal an Egg: just the timer). Players
--- past the King gate also see the Blood Moon / King state there. The world MeterRing around the
--- Giant Jack still fills. The top centre belongs to the objective banner; the centre stays clear.
+-- Bottom right (Steal an Egg): the moon timer to midnight ("🌙 in 1:54", red in its last 10 s; a
+-- sun "☀ in 0:32" while the midnight raid runs) and over it the Spooky Hour line ("🦇 Spooky Hour in
+-- 6:12", orange "🦇 SPOOKY HOUR! x2 1:12" while it runs). Players past the King gate also see the
+-- Blood Moon / King state in the moon line, with a thin bar. On touch screens (jump button
+-- bottom right) the stack sits top right instead. The world MeterRing around the Giant Jack
+-- still fills. The top centre belongs to the objective banner; the centre stays clear.
 local KING_FILL = ColorSequence.new(Color3.fromRGB(200, 25, 45), Color3.fromRGB(255, 120, 60))
 do
 	local chip = Instance.new("Frame")
 	chip.Name = "PhaseChip"
-	chip.AnchorPoint = Vector2.new(1, 0)
-	chip.Position = UDim2.new(1, -12, 0, 12)
-	chip.Size = UDim2.fromOffset(210, 34)
-	chip.BackgroundColor3 = DARK
-	chip.BackgroundTransparency = 0.25
+	chip.BackgroundTransparency = 1
+	chip.Size = UDim2.fromOffset(280, 66)
 	chip.Parent = gui
-	corner(chip)
-	stroke(chip, 2)
+	local function place()
+		local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+		chip.AnchorPoint = touch and Vector2.new(1, 0) or Vector2.new(1, 1)
+		chip.Position = touch and UDim2.new(1, -12, 0, 12) or UDim2.new(1, -16, 1, -12)
+	end
+	place()
+	UserInputService.LastInputTypeChanged:Connect(place)
+	local spookyLine = textLabel(chip, "", Color3.fromRGB(255, 190, 120))
+	spookyLine.Name = "Spooky"
+	spookyLine.Size = UDim2.new(1, 0, 0, 22)
+	spookyLine.TextXAlignment = Enum.TextXAlignment.Right
+	local label = textLabel(chip, "", Color3.fromRGB(255, 255, 255))
+	label.Name = "Moon"
+	label.Position = UDim2.fromOffset(0, 24)
+	label.Size = UDim2.new(1, 0, 0, 32)
+	label.TextXAlignment = Enum.TextXAlignment.Right
+	local labelStroke = label:FindFirstChildOfClass("UIStroke") :: UIStroke
+	labelStroke.Thickness = 3
 	local fill = Instance.new("Frame")
-	fill.AnchorPoint = Vector2.new(0, 1)
-	fill.Position = UDim2.new(0, 12, 1, -3)
-	fill.Size = UDim2.new(0, 0, 0, 4)
+	fill.AnchorPoint = Vector2.new(1, 1)
+	fill.Position = UDim2.new(1, 0, 1, 0)
+	fill.Size = UDim2.new(0, 0, 0, 5)
 	fill.BorderSizePixel = 0
+	fill.Visible = false
 	fill.Parent = chip
 	corner(fill)
-	local label = textLabel(chip, "", Color3.fromRGB(255, 255, 255))
-	label.Position = UDim2.fromOffset(10, 3)
-	label.Size = UDim2.new(1, -20, 1, -10)
+	local spookyScale = Instance.new("UIScale")
+	spookyScale.Parent = spookyLine
 	-- One toast 5 s before midnight (once per day phase).
 	local warnedFor = 0
 	local function refreshChip()
@@ -623,17 +670,15 @@ do
 		local jack = math.clamp(candy / goal, 0, 1)
 		local locksOff = state:GetAttribute("LocksOff")
 		local king = unlocked("King")
-		-- The bar shows how far the day has run toward midnight.
-		local text, color = "", Color3.fromRGB(255, 225, 170)
-		local amount = phase == "Day" and 1 - left / math.max(Config.DayLength, 1) or 0
-		local barColor = Color3.fromRGB(120, 150, 255)
+		local text, color = "", Color3.fromRGB(255, 255, 255)
+		local amount, barColor = 0, nil
 		if phase == "Day" and left <= 5 and left > 0 and warnedFor ~= ends then
 			warnedFor = ends
 			toast("Midnight in 5s...", "ALL PUMPKINS RESET!")
 		end
 		if phase == "BloodMoon" and not king then
 			-- New players are not sent to the King: just the clock to the next midnight.
-			text = "🌙 Midnight in " .. clockText(left + Config.DayLength)
+			text = "🌙 in " .. clockText(left + Config.DayLength)
 		elseif phase == "BloodMoon" and locksOff then
 			text = "🔓 LOCKS OFF " .. clockText(locksOff - now)
 			color, amount, barColor = Color3.fromRGB(255, 140, 140), 1, Color3.fromRGB(220, 40, 50)
@@ -651,18 +696,45 @@ do
 			color, amount = Color3.fromRGB(255, 150, 140), hp / maxHp
 			barColor = Color3.fromRGB(230, 50, 50)
 		elseif phase == "Midnight" then
-			text = "🌙 MIDNIGHT " .. clockText(left)
+			text = "☀ in " .. clockText(left)
 			color = Color3.fromRGB(170, 230, 255)
 		else
-			text = "🌙 Midnight in " .. clockText(left)
+			text = "🌙 in " .. clockText(left)
+			if left <= 10 then
+				color = Color3.fromRGB(255, 59, 59)
+			end
 		end
 		if label.Text ~= text then
 			label.Text = text
 		end
 		label.TextColor3 = color
-		fill.BackgroundColor3 = barColor
-		local a = math.clamp(amount, 0, 1)
-		fill.Size = UDim2.new(a, -24 * a, 0, 4)
+		fill.Visible = barColor ~= nil
+		if barColor then
+			fill.BackgroundColor3 = barColor
+			fill.Size = UDim2.new(math.clamp(amount, 0, 1) * 0.6, 0, 0, 5)
+		end
+		-- Spooky Hour line.
+		local spookyEnds = state:GetAttribute("SpookyEnds")
+		local spookyText
+		if spookyOn() and type(spookyEnds) == "number" then
+			spookyText = string.format(
+				"🦇 SPOOKY HOUR! x%d %s",
+				Config.SpookyMult or 2,
+				clockText(spookyEnds - now)
+			)
+			spookyLine.TextColor3 = Color3.fromRGB(255, 150, 40)
+			spookyScale.Scale = 1 + 0.06 * math.abs(math.sin(os.clock() * 4))
+		else
+			local nextAt = state:GetAttribute("SpookyNext")
+			spookyText = type(nextAt) == "number"
+					and ("🦇 Spooky Hour in " .. clockText(nextAt - now))
+				or ""
+			spookyLine.TextColor3 = Color3.fromRGB(205, 170, 255)
+			spookyScale.Scale = 1
+		end
+		if spookyLine.Text ~= spookyText then
+			spookyLine.Text = spookyText
+		end
 		if phase ~= "BloodMoon" then
 			local ringColor = Color3.fromRGB(255, 140, 40):Lerp(Color3.fromRGB(255, 60, 40), jack)
 			if meterRing.Color ~= ringColor then
@@ -679,59 +751,121 @@ do
 	end)
 end
 
--- Mid left (Pet Sim 99 style): candy at 32 px with a 40 px icon, the income per second under it
--- and the carried stack. The frame goes into the left pill column (below the last pill) once
--- that column exists further down.
+-- Bottom left (Steal an Egg): the speed / carry line in yellow #F8FF43 ("👟 24  🎃 1/3 Carrying"),
+-- under it the candy icon and the money in green #44FF2F with a dark stroke and the income
+-- "+X/s" after it. Money rolls up to a new value in 0.6 s (a NumberValue tween) while the icon
+-- pops 1.25x. Spooky Hour shows the doubled income with "x2".
 local candyValue = player:WaitForChild("leaderstats"):WaitForChild("Candy") :: IntValue
 local candyBig: TextLabel, incomeLabel: TextLabel, carryLabel: TextLabel
 local statsFrame = Instance.new("Frame")
+local refreshCandy: (boolean) -> ()
+local refreshIncome: () -> ()
 do
 	local stats = statsFrame
 	stats.Name = "Stats"
 	stats.BackgroundTransparency = 1
-	stats.Size = UDim2.fromOffset(300, 92)
-	stats.LayoutOrder = 100
+	stats.AnchorPoint = Vector2.new(0, 1)
+	stats.Position = UDim2.new(0, 14, 1, -12)
+	stats.Size = UDim2.fromOffset(340, 74)
 	stats.Parent = gui
+	carryLabel = textLabel(stats, "", SPEED_YELLOW)
+	carryLabel.Name = "Carry"
+	carryLabel.Position = UDim2.fromOffset(2, 0)
+	carryLabel.Size = UDim2.new(1, -2, 0, 24)
+	carryLabel.TextXAlignment = Enum.TextXAlignment.Left
 	local icon = Instance.new("TextLabel")
 	icon.Name = "CandyIcon"
 	icon.BackgroundTransparency = 1
-	icon.Position = UDim2.fromOffset(-2, 2)
-	icon.Size = UDim2.fromOffset(40, 40)
+	icon.Position = UDim2.fromOffset(-2, 28)
+	icon.Size = UDim2.fromOffset(44, 44)
 	icon.TextScaled = true
 	icon.Text = "🍬"
 	icon.Parent = stats
-	local function line(y: number, height: number, color: Color3): TextLabel
-		local label = textLabel(stats, "", color)
-		label.Position = UDim2.fromOffset(46, y)
-		label.Size = UDim2.new(1, -46, 0, height)
-		label.TextXAlignment = Enum.TextXAlignment.Left
-		return label
-	end
-	-- The candy number is exactly 32 px, white with a thick stroke.
-	candyBig = line(4, 36, Color3.fromRGB(255, 255, 255))
+	local iconScale = Instance.new("UIScale")
+	iconScale.Parent = icon
+	-- The money number: 36 px, green with a thick dark stroke.
+	candyBig = textLabel(stats, "", MONEY)
+	candyBig.Name = "Money"
+	candyBig.Position = UDim2.fromOffset(46, 30)
+	candyBig.Size = UDim2.new(1, -46, 0, 40)
 	candyBig.TextScaled = false
-	candyBig.TextSize = 32
-	candyBig:FindFirstChildOfClass("UIStroke").Thickness = 3
-	incomeLabel = line(44, 20, Color3.fromRGB(90, 235, 90))
-	carryLabel = line(66, 20, Color3.fromRGB(255, 190, 110))
-end
-local function refreshCandy(pop: boolean)
-	candyBig.Text = short(candyValue.Value)
-	local income = player:GetAttribute("Income") or 0
-	incomeLabel.Text = income > 0 and ("+" .. rateShort(income) .. "/s") or ""
-	if pop then
-		candyBig.TextColor3 = Color3.fromRGB(255, 225, 90)
-		TweenService
-			:Create(candyBig, TweenInfo.new(0.4), { TextColor3 = Color3.fromRGB(255, 255, 255) })
-			:Play()
+	candyBig.TextSize = 36
+	candyBig.TextXAlignment = Enum.TextXAlignment.Left
+	local moneyStroke = candyBig:FindFirstChildOfClass("UIStroke") :: UIStroke
+	moneyStroke.Thickness = 3
+	moneyStroke.Color = Color3.fromRGB(10, 40, 10)
+	incomeLabel = textLabel(stats, "", MONEY)
+	incomeLabel.Name = "Income"
+	incomeLabel.Size = UDim2.fromOffset(140, 22)
+	incomeLabel.TextXAlignment = Enum.TextXAlignment.Left
+	local function placeIncome()
+		incomeLabel.Position = UDim2.fromOffset(46 + math.max(candyBig.TextBounds.X, 16) + 10, 42)
 	end
+	candyBig:GetPropertyChangedSignal("TextBounds"):Connect(placeIncome)
+	placeIncome()
+
+	local shown = Instance.new("NumberValue")
+	shown.Value = candyValue.Value
+	shown.Changed:Connect(function(v: number)
+		candyBig.Text = short(math.max(0, math.floor(v + 0.5)))
+	end)
+	candyBig.Text = short(candyValue.Value)
+	local roll: Tween? = nil
+
+	function refreshIncome()
+		local income = player:GetAttribute("Income") or 0
+		local mult = spookyOn() and (Config.SpookyMult or 2) or 1
+		local text = income > 0
+				and ("+" .. rateShort(income * mult) .. "/s" .. (mult > 1 and (" x" .. mult) or ""))
+			or ""
+		if incomeLabel.Text ~= text then
+			incomeLabel.Text = text
+		end
+	end
+
+	-- pop = a gain: roll up to the new balance and pop the icon; otherwise jump there.
+	function refreshCandy(pop: boolean)
+		refreshIncome()
+		if roll then
+			roll:Cancel()
+			roll = nil
+		end
+		if not pop then
+			shown.Value = candyValue.Value
+			return
+		end
+		roll = TweenService:Create(
+			shown,
+			TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{ Value = candyValue.Value }
+		)
+		roll:Play()
+		local up = TweenService:Create(
+			iconScale,
+			TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{ Scale = 1.25 }
+		)
+		up:Play()
+		up.Completed:Once(function()
+			TweenService:Create(
+				iconScale,
+				TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+				{ Scale = 1 }
+			):Play()
+		end)
+	end
+	player:GetAttributeChangedSignal("Income"):Connect(refreshIncome)
+	state:GetAttributeChangedSignal("SpookyEnds"):Connect(refreshIncome)
 end
--- Sell juice: candies fly from the screen center into the candy counter, which punches 1 -> 1.2 -> 1.
--- They live in their own unscaled ScreenGui so screen pixels line up with AbsolutePosition.
+-- Sell juice: candies fly from the screen center into the candy counter, which punches (the
+-- icon 1.25x, the number 1.1x). They live in their own unscaled ScreenGui so screen pixels line up
+-- with AbsolutePosition.
 local candyShower, candyTick
 do
 	local punchScale = Instance.new("UIScale")
 	punchScale.Parent = candyBig
+	local icon = statsFrame:FindFirstChild("CandyIcon") :: TextLabel
+	local iconPunch = icon:FindFirstChildOfClass("UIScale") :: UIScale
 	local fxGui = Instance.new("ScreenGui")
 	fxGui.Name = "PatchFx"
 	fxGui.ResetOnSpawn = false
@@ -739,46 +873,45 @@ do
 	fxGui.DisplayOrder = 5
 	fxGui.Parent = player:WaitForChild("PlayerGui")
 	local function punch()
-		local up = TweenService:Create(
-			punchScale,
-			TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{ Scale = 1.2 }
-		)
-		up:Play()
-		up.Completed:Once(function()
-			TweenService:Create(
-				punchScale,
-				TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-				{ Scale = 1 }
-			):Play()
-		end)
+		for target, size in { [punchScale] = 1.1, [iconPunch] = 1.25 } do
+			local up = TweenService:Create(
+				target,
+				TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				{ Scale = size }
+			)
+			up:Play()
+			up.Completed:Once(function()
+				TweenService:Create(
+					target,
+					TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+					{ Scale = 1 }
+				):Play()
+			end)
+		end
 	end
-	-- The counter punches and a yellow "+N" pops just right of the number, rises and fades.
+	-- The counter punches and a green "+N" pops over the end of the number, rises and fades.
 	function candyTick(amount: number)
 		punch()
 		if amount <= 0 then
 			return
 		end
-		local plus = textLabel(
-			candyBig.Parent :: Instance,
-			"+" .. short(amount),
-			Color3.fromRGB(255, 225, 90)
-		)
-		-- Big enough to read at a glance: 34 px tall, a thick dark stroke, drawn over the pills,
+		local plus = textLabel(statsFrame, "+" .. short(amount), MONEY)
+		-- Big enough to read at a glance: 30 px tall, a thick dark stroke, drawn over the HUD,
 		-- held for ~0.8 s before it fades.
 		plus.Name = "CandyTick"
 		plus.TextXAlignment = Enum.TextXAlignment.Left
-		plus.Position = UDim2.fromOffset(46 + math.max(candyBig.TextBounds.X, 20) + 10, 2)
-		plus.Size = UDim2.fromOffset(170, 34)
+		plus.Position = UDim2.fromOffset(46 + math.max(candyBig.TextBounds.X, 20) + 10, 10)
+		plus.Size = UDim2.fromOffset(170, 30)
 		plus.ZIndex = 8
 		local s = plus:FindFirstChildOfClass("UIStroke") :: UIStroke
 		s.Thickness = 3
+		s.Color = Color3.fromRGB(10, 40, 10)
 		local scale = Instance.new("UIScale")
 		scale.Scale = 0.4
 		scale.Parent = plus
 		TweenService:Create(scale, TweenInfo.new(0.22, Enum.EasingStyle.Back), { Scale = 1 }):Play()
 		local rise = TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		TweenService:Create(plus, rise, { Position = plus.Position - UDim2.fromOffset(0, 26) })
+		TweenService:Create(plus, rise, { Position = plus.Position - UDim2.fromOffset(0, 30) })
 			:Play()
 		local fade =
 			TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.85)
@@ -794,7 +927,7 @@ do
 			return
 		end
 		local view = camera.ViewportSize
-		local target = candyBig.AbsolutePosition + candyBig.AbsoluteSize / 2
+		local target = icon.AbsolutePosition + icon.AbsoluteSize / 2
 		for i = 1, count do
 			local candy = Instance.new("TextLabel")
 			candy.BackgroundTransparency = 1
@@ -830,29 +963,33 @@ do
 	end
 end
 
+-- The yellow line: walk speed and the carried stack (plus its worth while carrying).
 local function refreshCarry()
 	local n = player:GetAttribute("Carry") or 0
 	local cap = Config.BaseCarry
 		+ (player:GetAttribute("Up_Stack") or 0)
 		+ (player:GetAttribute("Pass_BigStack") and Config.BigStackCarry or 0)
-	local text = string.format("🎃 %d/%d Carrying", n, cap)
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local speed = humanoid and math.floor(humanoid.WalkSpeed + 0.5) or Config.WalkSpeed
+	local text = string.format("👟 %d   🎃 %d/%d Carrying", speed, n, cap)
 	if n > 0 then
 		text ..= " · worth " .. short(player:GetAttribute("CarryValue") or 0) .. " 🍬"
 	end
-	carryLabel.Text = text
+	if carryLabel.Text ~= text then
+		carryLabel.Text = text
+	end
 end
--- Every gain pops a "+N" next to the counter (not the balance loaded on join).
+-- Every gain rolls the counter up and pops a "+N" (not the balance loaded on join).
 local lastCandy = candyValue.Value
 candyValue.Changed:Connect(function()
 	local gain = candyValue.Value - lastCandy
 	lastCandy = candyValue.Value
-	refreshCandy(gain > 0)
-	if gain > 0 and player:GetAttribute("Loaded") then
+	local loaded = player:GetAttribute("Loaded") == true
+	refreshCandy(gain > 0 and loaded)
+	if gain > 0 and loaded then
 		candyTick(gain)
 	end
-end)
-player:GetAttributeChangedSignal("Income"):Connect(function()
-	refreshCandy(false)
 end)
 for _, attr in { "Carry", "CarryValue", "Up_Stack", "Pass_BigStack" } do
 	player:GetAttributeChangedSignal(attr):Connect(refreshCarry)
@@ -860,23 +997,21 @@ end
 refreshCandy(false)
 refreshCarry()
 
--- Left edge: small coloured pill buttons (icon + short label, dark outline), Steal an Egg / Pet
--- Sim 99 style, stacked top to bottom by LayoutOrder.
+-- Left edge: exactly two pill buttons, Shop and Index (Steal an Egg x 1-10.5 %, y 40-54 %; Hit
+-- Game Bible: 2 HUD buttons). Haunt lives in the Shop as a tab; the base lock is the prompt on
+-- your base's sign post.
 local leftBar = Instance.new("Frame")
 leftBar.Name = "LeftPills"
 leftBar.BackgroundTransparency = 1
 leftBar.AnchorPoint = Vector2.new(0, 0.5)
-leftBar.Position = UDim2.new(0, 12, 0.5, -14)
--- Up to 6 pills plus the candy block under them.
-leftBar.Size = UDim2.fromOffset(132, 420)
+leftBar.Position = UDim2.new(0, 12, 0.47, 0)
+leftBar.Size = UDim2.fromOffset(132, 110)
 leftBar.Parent = gui
 do
 	local layout = Instance.new("UIListLayout")
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Padding = UDim.new(0, 9)
 	layout.Parent = leftBar
-	-- Candy sits right under the last pill (LayoutOrder 100), mid left.
-	statsFrame.Parent = leftBar
 end
 local function pill(text: string, color: Color3, order: number): TextButton
 	local b = button(leftBar, text, color)
@@ -906,9 +1041,11 @@ local function seedColor(seed): Color3
 		or Color3.fromRGB(255, 130, 40)
 end
 
--- Panels (Pet Sim 99 style): a white rounded box, an italic heavy title ending in "!" tilted -4
--- degrees over the top-left edge, a red square X over the top-right corner, a quick pop-in, and a
--- dim over the world (its own ScreenGui under the HUD) while any panel is open. A click on the
+-- Panels (Halloween skin over the Pet Sim 99 layout): a dark charcoal #2A2A2E rounded box with
+-- an orange #F28C1A rim and a cobweb in its top-left corner, a FredokaOne title with a pumpkin
+-- and a dark stroke tilted -4 degrees over the top-left edge, a purple X over the top-right
+-- corner, a 0 -> 1 pop-in (0.3 s Back Out), and a dim over the world (its own ScreenGui under
+-- the HUD) while any panel is open. A click on the
 -- dim closes the open panel. grid = the items sit in a 3-column grid of cards (gridCard).
 local CARD_GREY = Color3.fromRGB(236, 238, 244)
 local panelFrames: { Frame } = {}
@@ -958,33 +1095,33 @@ local function refreshDim()
 	end
 end
 
-local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
-	local frame = Instance.new("Frame")
-	frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	frame.Position = UDim2.fromScale(0.5, 0.54)
-	frame.Size = UDim2.fromOffset(640, 440)
-	frame.BackgroundColor3 = Color3.new(1, 1, 1)
-	frame.Visible = false
-	frame.ZIndex = 10
-	frame.Parent = gui
-	corner(frame, 16)
-	stroke(frame, 4).Color = OUTLINE
-	local head = textLabel(frame, title, Color3.new(1, 1, 1))
-	head.FontFace = Font.new(
-		"rbxasset://fonts/families/GothamSSm.json",
-		Enum.FontWeight.Heavy,
-		Enum.FontStyle.Italic
-	)
-	head.AnchorPoint = Vector2.new(0, 0.5)
-	head.Position = UDim2.fromOffset(-16, 4)
-	head.Size = UDim2.fromOffset(360, 56)
-	head.Rotation = -4
-	head.ZIndex = 14
-	head.TextXAlignment = Enum.TextXAlignment.Left
-	local headStroke = head:FindFirstChildOfClass("UIStroke") :: UIStroke
-	headStroke.Thickness = 4.5
-	headStroke.Color = OUTLINE
-	local close = button(frame, "X", Color3.fromRGB(225, 50, 50))
+-- Halloween skin corner: a small cobweb on a panel's top-left (two thin white strands, 30 %
+-- transparent: one from the corner inward, one across it).
+local function cobweb(frame: GuiObject, z: number)
+	local web = Instance.new("Frame")
+	web.Name = "Cobweb"
+	web.BackgroundTransparency = 1
+	web.Position = UDim2.fromOffset(2, 2)
+	web.Size = UDim2.fromOffset(52, 52)
+	web.ZIndex = z
+	web.Parent = frame
+	for _, s in { { 70, 2, 45, 0.5, 0.5 }, { 50, 2, -45, 0.36, 0.36 } } do
+		local strand = Instance.new("Frame")
+		strand.AnchorPoint = Vector2.new(0.5, 0.5)
+		strand.Position = UDim2.fromScale(s[4], s[5])
+		strand.Size = UDim2.fromOffset(s[1], s[2])
+		strand.Rotation = s[3]
+		strand.BackgroundColor3 = Color3.new(1, 1, 1)
+		strand.BackgroundTransparency = 0.3
+		strand.BorderSizePixel = 0
+		strand.ZIndex = z
+		strand.Parent = web
+	end
+end
+
+-- Purple rounded close X over a panel's top-right corner.
+local function closeButton(frame: GuiObject): TextButton
+	local close = button(frame, "X", PURPLE)
 	close.AnchorPoint = Vector2.new(1, 0)
 	close.Position = UDim2.new(1, 12, 0, -12)
 	close.Size = UDim2.fromOffset(48, 48)
@@ -996,7 +1133,32 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 			d.CornerRadius = UDim.new(0, 10)
 		end
 	end
-	close.Activated:Connect(function()
+	return close
+end
+
+local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
+	local frame = Instance.new("Frame")
+	frame.AnchorPoint = Vector2.new(0.5, 0.5)
+	frame.Position = UDim2.fromScale(0.5, 0.54)
+	frame.Size = UDim2.fromOffset(640, 440)
+	frame.BackgroundColor3 = CHARCOAL
+	frame.Visible = false
+	frame.ZIndex = 10
+	frame.Parent = gui
+	corner(frame, 16)
+	stroke(frame, 3).Color = ORANGE
+	cobweb(frame, 11)
+	local head = textLabel(frame, title, Color3.new(1, 1, 1))
+	head.AnchorPoint = Vector2.new(0, 0.5)
+	head.Position = UDim2.fromOffset(-16, 4)
+	head.Size = UDim2.fromOffset(360, 56)
+	head.Rotation = -4
+	head.ZIndex = 14
+	head.TextXAlignment = Enum.TextXAlignment.Left
+	local headStroke = head:FindFirstChildOfClass("UIStroke") :: UIStroke
+	headStroke.Thickness = 4.5
+	headStroke.Color = OUTLINE
+	closeButton(frame).Activated:Connect(function()
 		frame.Visible = false
 	end)
 	local list = Instance.new("ScrollingFrame")
@@ -1027,15 +1189,15 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 		layout.SortOrder = Enum.SortOrder.LayoutOrder
 		layout.Parent = list
 	end
-	-- Pop in fast (about 0.15 s) each time it opens.
+	-- Pops 0 -> 1 in 0.3 s (Back Out) each time it opens.
 	local pop = Instance.new("UIScale")
 	pop.Parent = frame
 	frame:GetPropertyChangedSignal("Visible"):Connect(function()
 		if frame.Visible then
-			pop.Scale = 0.85
+			pop.Scale = 0
 			TweenService:Create(
 				pop,
-				TweenInfo.new(0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+				TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
 				{ Scale = 1 }
 			):Play()
 		end
@@ -1133,7 +1295,7 @@ local function gridCard(
 	info.Position = UDim2.new(0, 10, 0, 110)
 	info.Size = UDim2.new(1, -20, 0, 40)
 	info.TextWrapped = true
-	local b = button(c, "", Color3.fromRGB(60, 200, 70))
+	local b = button(c, "", BUY)
 	b.AnchorPoint = Vector2.new(0.5, 1)
 	b.Position = UDim2.new(0.5, 0, 1, -14)
 	b.Size = UDim2.new(1, -24, 0, 46)
@@ -1169,8 +1331,7 @@ local function cardState(gc: GridCard, look: string, text: string)
 		gc.tag.Text = text
 	else
 		gc.button.Text = text
-		gc.button.BackgroundColor3 = locked and Color3.fromRGB(150, 150, 162)
-			or Color3.fromRGB(60, 200, 70)
+		gc.button.BackgroundColor3 = locked and Color3.fromRGB(150, 150, 162) or BUY
 	end
 end
 
@@ -1178,14 +1339,14 @@ local buyUpgrade = remotes:WaitForChild("BuyUpgrade") :: RemoteFunction
 -- The one Shop panel has three tabs, each its own frame: Scythes (toolPanel), Upgrades
 -- (upgradePanel) and Robux (shopPanel, hidden while every ID is 0). The tab bar is added further
 -- down, where all three exist.
-local upgradePanel, upgradeList = panel("🛒 Shop!", true)
+local upgradePanel, upgradeList = panel("🎃 Shop!", true)
 -- Scythes tab: every tool as a grid card. The best owned one is always held ("Equipped!"), other
 -- owned ones read "Owned!", unaffordable ones and the MVP drop are grey with a padlock.
 local toolPanel, refreshToolCards
 do
 	local buyTool = remotes:WaitForChild("BuyTool") :: RemoteFunction
 	local list
-	toolPanel, list = panel("🛒 Shop!", true)
+	toolPanel, list = panel("🎃 Shop!", true)
 	local cards: { [string]: GridCard } = {}
 	for i, tool in Config.Tools do
 		local gc = gridCard(
@@ -1290,7 +1451,7 @@ refreshUpgradeCards()
 -- Pumpkin Index: a book of every seed x finish. Selling a new kind fills it in. -------------
 
 local FINISHES = { "Plain", "Glowing", "Ghostly", "Candy", "Cursed" }
-local indexPanel, indexList = panel("📖 Pumpkin Index!")
+local indexPanel, indexList = panel("🎃 Pumpkin Index!")
 local indexCells = {}
 for i, seed in Config.Seeds do
 	local row = Instance.new("Frame")
@@ -1394,6 +1555,16 @@ do
 	end
 	state:GetAttributeChangedSignal("Phase"):Connect(refreshMusic)
 	refreshMusic()
+	-- Spooky Hour plays the day loop a little faster (the "faster variant" of the hub music).
+	local function refreshTempo()
+		local fast = state:GetAttribute("SpookyEnds") ~= nil
+		for name, music in tracks do
+			local speed = (fast and name == "Day") and 1.12 or 1
+			TweenService:Create(music, TweenInfo.new(1.5), { PlaybackSpeed = speed }):Play()
+		end
+	end
+	state:GetAttributeChangedSignal("SpookyEnds"):Connect(refreshTempo)
+	refreshTempo()
 
 	function toggleSound(): boolean
 		musicOn = not musicOn
@@ -1422,17 +1593,10 @@ local indexButton = pill("📖 Index", Color3.fromRGB(40, 190, 235), 2)
 -- Red badge: Index entries found since the Index was last opened.
 local indexBadge = pillBadge(indexButton)
 
--- LOCK: locks your base for a while (no stealing, ghosts skip it), then recharges. Hidden while
--- the new-player shield is on (nobody can raid you then); it appears with one banner when the
--- shield ends.
+-- Gate news. The base lock has no pill (2 HUD buttons only): the LOCK prompt on your base's sign
+-- post does it. When the new-player shield ends one banner says so; the later gates arrive as one
+-- toast each. Only a gate that opens while playing is announced (not one a returning player had).
 do
-	local lockEvent = remotes:WaitForChild("Lock")
-	local lockButton = pill("🔒 Lock", Color3.fromRGB(140, 80, 220), 4)
-	lockButton.Activated:Connect(function()
-		lockEvent:FireServer()
-	end)
-	lockButton.Visible = unlocked("PlayerSteal")
-	-- Only a gate that opens while playing is announced (not one a returning player had already).
 	local loadedAt = player:GetAttribute("Loaded") and -math.huge or nil
 	player:GetAttributeChangedSignal("Loaded"):Connect(function()
 		loadedAt = loadedAt or os.clock()
@@ -1441,19 +1605,16 @@ do
 		return loadedAt ~= nil and os.clock() - loadedAt > 3
 	end
 	player:GetAttributeChangedSignal("Unlock_PlayerSteal"):Connect(function()
-		local on = unlocked("PlayerSteal")
-		lockButton.Visible = on
-		if on and fresh() then
+		if unlocked("PlayerSteal") and fresh() then
 			banner(
 				"Ghosts and players can raid you now!",
-				"Lock your Base!",
+				"Lock your Base at its sign post!",
 				3.5,
 				Color3.fromRGB(200, 140, 255)
 			)
 			play(Config.Sounds.Bonk, 0.6, 0.9)
 		end
 	end)
-	-- The later gates arrive as one toast each.
 	for name, text in
 		{
 			Sell = "The Witch buys pumpkins now! Pick some up from your base and sell them.",
@@ -1461,7 +1622,7 @@ do
 			LuckySwing = "New upgrade in the Shop: Lucky Swing!",
 			King = "The Pumpkin King wakes in every Blood Moon. Bonk him for candy!",
 			Haunt = string.format(
-				"👻 Haunt is open! Reset for +%d%% candy forever.",
+				"👻 Haunt is open in the Shop! Reset for +%d%% candy forever.",
 				math.floor(Config.HauntSellBonus * 100 + 0.5)
 			),
 		}
@@ -1472,52 +1633,18 @@ do
 			end
 		end)
 	end
-	local function myBase(): Instance?
-		for _, patch in patchFolder:GetChildren() do
-			if patch:GetAttribute("Owner") == player.UserId then
-				return patch
-			end
-		end
-		return nil
-	end
-	task.spawn(function()
-		while true do
-			task.wait(0.25)
-			local now = workspace:GetServerTimeNow()
-			local base = myBase()
-			local lockedUntil = base and base:GetAttribute("LockedUntil") or 0
-			local ready = base and base:GetAttribute("LockCooldownUntil") or 0
-			local text, color
-			if (state:GetAttribute("LocksOff") or 0) > now then
-				text, color = "🩸 Off", Color3.fromRGB(200, 50, 60)
-			elseif lockedUntil > now then
-				text = "🔒 " .. clockText(lockedUntil - now)
-				color = Color3.fromRGB(170, 90, 255)
-			elseif ready > now then
-				text, color = "⏳ " .. clockText(ready - now), Color3.fromRGB(90, 80, 100)
-			else
-				text, color = "🔒 Lock", Color3.fromRGB(140, 80, 220)
-			end
-			if lockButton.Text ~= text then
-				lockButton.Text = text
-			end
-			if lockButton.BackgroundColor3 ~= color then
-				lockButton.BackgroundColor3 = color
-			end
-		end
-	end)
 end
 
 -- Haunt: reset for +50% sell value forever and Souls to spend in the Soul skill tree. -----------
 
 local hauntRemote = remotes:WaitForChild("Haunt") :: RemoteFunction
 local buySkill = remotes:WaitForChild("BuySkill") :: RemoteFunction
-local hauntPanel, hauntList = panel("👻 Haunt!")
+local hauntPanel, hauntList = panel("🎃 Haunt!")
 local soulsLabel = textLabel(hauntPanel, "", Color3.fromRGB(200, 160, 255))
 soulsLabel.AnchorPoint = Vector2.new(1, 0)
 soulsLabel.Position = UDim2.new(1, -54, 0, 10)
 soulsLabel.Size = UDim2.fromOffset(200, 34)
-local hauntInfo = textLabel(hauntList, "", Color3.fromRGB(70, 60, 90), Enum.Font.GothamBold)
+local hauntInfo = textLabel(hauntList, "", Color3.fromRGB(225, 220, 240), Enum.Font.GothamBold)
 hauntInfo:FindFirstChildOfClass("UIStroke"):Destroy()
 hauntInfo.LayoutOrder = 0
 hauntInfo.Size = UDim2.new(1, -10, 0, 64)
@@ -1852,7 +1979,7 @@ local SHOP_ITEMS: { ShopItem } = {
 		color = Color3.fromRGB(200, 110, 255),
 	},
 }
-local shopPanel, shopList = panel("🛒 Shop!", true)
+local shopPanel, shopList = panel("🎃 Shop!", true)
 local shopCards: { ShopCard } = {}
 local shopQuotes: { [string]: number } = {}
 local lastPromptAt = -math.huge
@@ -1932,24 +2059,54 @@ for name in Config.GamePasses do
 	end)
 end
 
--- Left pills (Steal an Egg footprint): Shop and Index only, plus Haunt once its gate opens and
--- Lock after the shield. Each pill opens one panel at a time (the same pill closes it again).
--- Shop is one panel with tabs (Scythes / Upgrades / Robux) and a small speaker (mute) button.
+-- Left pills (Steal an Egg footprint): exactly Shop and Index. Each pill opens one panel at a time
+-- (the same pill closes it again). Shop is one panel with tabs (Scythes / Upgrades / Haunt once
+-- its gate opens / Robux while any ID is set) and a small speaker (mute) button.
 do
 	local panels = { toolPanel, indexPanel, hauntPanel, shopPanel, upgradePanel }
 	local SHOP_TABS = {
 		{ name = "Scythes", label = "⚒ Scythes", frame = toolPanel },
 		{ name = "Upgrades", label = "⭐ Upgrades", frame = upgradePanel },
+		{ name = "Haunt", label = "👻 Haunt", frame = hauntPanel },
 		{ name = "Robux", label = "💎 Robux", frame = shopPanel },
 	}
-	local TAB_ON, TAB_OFF = Color3.fromRGB(60, 200, 70), Color3.fromRGB(150, 150, 162)
+	local TAB_ON, TAB_OFF = BUY, Color3.fromRGB(150, 150, 162)
 	local hasRobux = #shopCards > 0
 	local lastTab = "Scythes"
 	local tabButtons: { { button: TextButton, name: string } } = {}
 	local muteButtons: { TextButton } = {}
 
+	local function tabShown(name: string): boolean
+		if name == "Robux" then
+			return hasRobux
+		elseif name == "Haunt" then
+			return unlocked("Haunt")
+		end
+		return true
+	end
+
+	-- Shown tabs sit left to right without gaps (each tab frame has its own row).
+	local function layoutTabs()
+		local slot: { [Instance]: number } = {}
+		for _, t in tabButtons do
+			local frame = t.button.Parent :: Instance
+			local shown = tabShown(t.name)
+			t.button.Visible = shown
+			if shown then
+				local k = slot[frame] or 0
+				slot[frame] = k + 1
+				t.button.Position = UDim2.fromOffset(20 + k * 126, 52)
+			end
+		end
+	end
+
 	local function shopOpen(): boolean
-		return toolPanel.Visible or upgradePanel.Visible or shopPanel.Visible
+		for _, tab in SHOP_TABS do
+			if tab.frame.Visible then
+				return true
+			end
+		end
+		return false
 	end
 
 	-- name = the tab to show; nil closes every panel.
@@ -1960,10 +2117,10 @@ do
 		if not name then
 			return
 		end
-		if name == "Robux" and not hasRobux then
+		if not tabShown(name) then
 			name = "Scythes"
 		end
-		lastTab = name
+		lastTab = name :: string
 		for _, tab in SHOP_TABS do
 			tab.frame.Visible = tab.name == name
 		end
@@ -1998,11 +2155,9 @@ do
 			list.Position = UDim2.fromOffset(16, 104)
 			list.Size = UDim2.new(1, -32, 1, -118)
 		end
-		for k, other in SHOP_TABS do
+		for _, other in SHOP_TABS do
 			local b = button(frame, other.label, TAB_OFF)
-			b.Position = UDim2.fromOffset(20 + (k - 1) * 158, 52)
-			b.Size = UDim2.fromOffset(148, 42)
-			b.Visible = other.name ~= "Robux" or hasRobux
+			b.Size = UDim2.fromOffset(118, 42)
 			b.Activated:Connect(function()
 				openShop(other.name)
 			end)
@@ -2020,6 +2175,9 @@ do
 		end)
 		table.insert(muteButtons, mute)
 	end
+	layoutTabs()
+	-- Haunt costs millions: its tab waits for the HauntPillAt gate (lifetime candy).
+	player:GetAttributeChangedSignal("Unlock_Haunt"):Connect(layoutTabs)
 
 	local shopButton = pill("🛒 Shop", Color3.fromRGB(240, 170, 30), 1)
 	shopButton.Activated:Connect(function()
@@ -2065,16 +2223,6 @@ do
 		openShop(if frame.Visible then nil else name)
 	end)
 
-	-- Haunt costs millions: its pill waits for the HauntPillAt gate (lifetime candy).
-	local hauntButton = pill("👻 Haunt", Color3.fromRGB(95, 85, 235), 3)
-	hauntButton.Visible = unlocked("Haunt")
-	player:GetAttributeChangedSignal("Unlock_Haunt"):Connect(function()
-		hauntButton.Visible = unlocked("Haunt")
-	end)
-	hauntButton.Activated:Connect(function()
-		toggle(hauntPanel)
-	end)
-
 	indexButton.Activated:Connect(function()
 		toggle(indexPanel)
 		indexBadge.Visible = false
@@ -2109,9 +2257,16 @@ end)
 -- Reward reveal (Steal an Egg hatch / Pet Sim 99 "New Item!"): a 0.15 s white flash, then a
 -- centred white card: the pumpkin itself turning slowly in a ViewportFrame over a ray burst, the
 -- rarity in its colour, the name, its income "+X/s" and a green "NEW!" tag for a type you never
--- had. The server sends one for a new type, a rare type or a Cursed brew. It closes after
--- Config.RevealSeconds or on any click; more queue up and show one after another.
+-- had. The server sends one for a new type, a rare type or a Cursed brew; a hatch (kind "jack")
+-- is queued by the client's hatch sequence (it did its own pink flash, so no white one), with
+-- confetti for Rare and up. The world behind blurs (BlurEffect 0 -> 18) while a card shows. It
+-- closes after Config.RevealSeconds or on a click (clicks count after the first second); more
+-- queue up and show one after another.
 do
+	local blur = Instance.new("BlurEffect")
+	blur.Name = "RevealBlur"
+	blur.Size = 0
+	blur.Parent = Lighting
 	local revealGui = Instance.new("ScreenGui")
 	revealGui.Name = "PatchReveal"
 	revealGui.ResetOnSpawn = false
@@ -2224,15 +2379,22 @@ do
 		local seed = seedById[seedId]
 		local rarity = rarityOf(seed.order)
 		local m = mutation and mutationById[mutation]
-		-- White flash first.
-		flash.BackgroundTransparency = 0
-		TweenService:Create(
-			flash,
-			TweenInfo.new(Config.RevealFlash, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-			{ BackgroundTransparency = 1 }
-		):Play()
+		-- White flash first (a hatch already flashed pink).
+		if kind ~= "jack" then
+			flash.BackgroundTransparency = 0
+			TweenService:Create(
+				flash,
+				TweenInfo.new(Config.RevealFlash, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+				{ BackgroundTransparency = 1 }
+			):Play()
+		end
 		play(Config.Sounds.Brew, isNew and 1.5 or 1.2, 0.8)
 		task.wait(Config.RevealFlash)
+		TweenService:Create(blur, TweenInfo.new(0.3), { Size = 18 }):Play()
+		if kind == "jack" and seed.order >= 3 then
+			-- Rare and up: confetti over the card.
+			confetti(revealGui)
+		end
 
 		-- A full-screen button under the card dims the world (black at 0.45) and closes the card
 		-- on a click anywhere.
@@ -2353,7 +2515,7 @@ do
 		nameStroke.Thickness = 4
 		nameStroke.Color = OUTLINE
 		local incomeText = "+" .. rateShort(rate) .. "/s"
-		local income = textLabel(cardFrame, incomeText, Color3.fromRGB(80, 235, 80))
+		local income = textLabel(cardFrame, incomeText, MONEY)
 		income.Position = UDim2.fromOffset(12, 344)
 		income.Size = UDim2.new(1, -24, 0, 42)
 		income.ZIndex = 3
@@ -2404,6 +2566,7 @@ do
 			end
 			closed = true
 			spin:Disconnect()
+			TweenService:Create(blur, TweenInfo.new(0.3), { Size = 0 }):Play()
 			local shrink = TweenService:Create(
 				scale,
 				TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.In),
@@ -2415,8 +2578,12 @@ do
 				catcher:Destroy()
 			end)
 		end
-		catcher.Activated:Connect(close)
 		local shownAt = os.clock()
+		catcher.Activated:Connect(function()
+			if os.clock() - shownAt >= 1 then
+				close()
+			end
+		end)
 		while not closed and os.clock() - shownAt < Config.RevealSeconds do
 			task.wait(0.05)
 		end
@@ -2424,37 +2591,37 @@ do
 		task.wait(0.2)
 	end
 
-	remotes:WaitForChild("Reveal").OnClientEvent:Connect(
-		function(
-			seedId: string,
-			mutation: string?,
-			isNew: boolean,
-			rate: number,
-			kind: string?,
-			pet: string?
-		)
-			if not seedById[seedId] or #queue >= MAX_QUEUE then
-				return
-			end
-			table.insert(queue, { seedId, mutation, isNew == true, tonumber(rate) or 0, kind, pet })
-			if busy then
-				return
-			end
-			busy = true
-			task.spawn(function()
-				while #queue > 0 do
-					local item = table.remove(queue, 1) :: { any }
-					-- pcall: one bad card must never jam the queue.
-					local ok, err =
-						pcall(showCard, item[1], item[2], item[3], item[4], item[5], item[6])
-					if not ok then
-						warn("[Patch] Reveal card failed:", err)
-					end
-				end
-				busy = false
-			end)
-		end
+	function queueReveal(
+		seedId: string,
+		mutation: string?,
+		isNew: boolean,
+		rate: number,
+		kind: string?,
+		pet: string?
 	)
+		if not seedById[seedId] or #queue >= MAX_QUEUE then
+			return
+		end
+		table.insert(queue, { seedId, mutation, isNew == true, tonumber(rate) or 0, kind, pet })
+		if busy then
+			return
+		end
+		busy = true
+		task.spawn(function()
+			while #queue > 0 do
+				local item = table.remove(queue, 1) :: { any }
+				-- pcall: one bad card must never jam the queue.
+				local ok, err =
+					pcall(showCard, item[1], item[2], item[3], item[4], item[5], item[6])
+				if not ok then
+					warn("[Patch] Reveal card failed:", err)
+					blur.Size = 0
+				end
+			end
+			busy = false
+		end)
+	end
+	remotes:WaitForChild("Reveal").OnClientEvent:Connect(queueReveal)
 end
 
 local function myPatch(): Model?
@@ -2594,25 +2761,26 @@ do
 		AtmosphereDecay = atmosphere and atmosphere.Decay or Color3.new(),
 		AtmosphereDensity = atmosphere and atmosphere.Density or 0.3,
 	}
-	-- The default look is bright daytime (captured above from Studio Lighting). Events only grade
-	-- softly: Midnight is a light blue evening (bright ambient, barely tinted, no extra haze, so the
-	-- toy colours still read), the Blood Moon a soft red, then back to base.
+	-- The default look is bright daytime (captured above from Studio Lighting), and Midnight keeps
+	-- it (the ghost raid is the event, never real night). Spooky Hour grades the day orange-purple
+	-- (TintColor #FFD9B0, Saturation +0.25, an orange haze with a purple decay; same sun), the
+	-- Blood Moon a soft red; then back to base.
 	local EVENT_LOOK = {
-		Midnight = {
+		Spooky = {
 			lighting = {
-				Ambient = Color3.fromRGB(150, 155, 195),
-				OutdoorAmbient = Color3.fromRGB(170, 175, 210),
-				Brightness = math.max(1.6, base.Brightness * 0.85),
-				ClockTime = 17.6,
+				Ambient = base.Ambient:Lerp(Color3.fromRGB(170, 110, 160), 0.35),
+				OutdoorAmbient = base.OutdoorAmbient:Lerp(Color3.fromRGB(190, 120, 170), 0.35),
+				Brightness = base.Brightness,
+				ClockTime = base.ClockTime,
 			},
 			tint = {
-				TintColor = Color3.fromRGB(236, 240, 255),
-				Saturation = 0,
-				Contrast = 0.02,
+				TintColor = Color3.fromRGB(255, 217, 176),
+				Saturation = 0.25,
+				Contrast = 0.05,
 			},
 			atmosphere = {
-				Color = Color3.fromRGB(160, 170, 210),
-				Decay = Color3.fromRGB(110, 115, 160),
+				Color = Color3.fromRGB(242, 163, 94),
+				Decay = Color3.fromRGB(122, 82, 191),
 				Density = base.AtmosphereDensity,
 			},
 		},
@@ -2635,10 +2803,10 @@ do
 			},
 		},
 	}
-	local function setLighting(phase: string)
-		local info = TweenInfo.new(2.5, Enum.EasingStyle.Sine)
+	local function setLighting(name: string?)
+		local info = TweenInfo.new(name == "Spooky" and 3 or 2.5, Enum.EasingStyle.Sine)
 		local tint = correction :: ColorCorrectionEffect
-		local look = EVENT_LOOK[phase]
+		local look = name and EVENT_LOOK[name]
 		if look then
 			TweenService:Create(Lighting, info, look.lighting):Play()
 			TweenService:Create(tint, info, look.tint):Play()
@@ -2668,15 +2836,26 @@ do
 			end
 		end
 	end
+	local lastLook: string? = "none"
+	local function refreshLook()
+		local phase = state:GetAttribute("Phase") or "Day"
+		local name = phase == "BloodMoon" and "BloodMoon"
+			or state:GetAttribute("SpookyEnds") ~= nil and "Spooky"
+			or nil
+		if name ~= lastLook then
+			lastLook = name
+			setLighting(name)
+		end
+	end
 	local lastPhase = nil
 	local function onPhase()
+		refreshLook()
 		local phase = state:GetAttribute("Phase") or "Day"
 		if phase == lastPhase then
 			return
 		end
 		local previous = lastPhase
 		lastPhase = phase
-		setLighting(phase)
 		-- The midnight reset keeps its big banner; the other phase news are toasts, and only for
 		-- players whose gate is open (new farmers are never sent to ghosts or the King).
 		if phase == "Midnight" then
@@ -2709,6 +2888,128 @@ do
 	end
 	state:GetAttributeChangedSignal("Phase"):Connect(onPhase)
 	onPhase()
+
+	-- Spooky Hour: the tint above, a banner, and Config.SpookyBats bats (client only) circling over
+	-- the lane around you: a dark purple body with two flapping wings (+-35 degrees) and tiny
+	-- glowing eyes, each on its own loop (R 20-40 studs) 18-30 studs up.
+	local BAT = Color3.fromRGB(45, 22, 70)
+	local bats: { { parts: { BasePart }, offsets: { CFrame }, r: number, h: number, w: number, p: number } } =
+		{}
+	local batFolder: Folder? = nil
+	local batConn: RBXScriptConnection? = nil
+	local function batPart(folder: Folder, size: Vector3, color: Color3, neon: boolean?): Part
+		local p = Instance.new("Part")
+		p.Size = size
+		p.Color = color
+		p.Material = neon and Enum.Material.Neon or Enum.Material.SmoothPlastic
+		p.Anchored = true
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.CastShadow = false
+		p.Parent = folder
+		return p
+	end
+	local function stopBats()
+		if batConn then
+			batConn:Disconnect()
+			batConn = nil
+		end
+		if batFolder then
+			batFolder:Destroy()
+			batFolder = nil
+		end
+		table.clear(bats)
+	end
+	local function startBats()
+		stopBats()
+		local folder = Instance.new("Folder")
+		folder.Name = "SpookyBats"
+		folder.Parent = workspace
+		batFolder = folder
+		for i = 1, Config.SpookyBats or 20 do
+			local s = 0.8 + math.random() * 0.5
+			local body = batPart(folder, Vector3.new(0.9, 0.7, 1.1) * s, BAT)
+			local wingL = batPart(folder, Vector3.new(1.6, 0.12, 0.9) * s, BAT)
+			local wingR = batPart(folder, Vector3.new(1.6, 0.12, 0.9) * s, BAT)
+			local eyes =
+				batPart(folder, Vector3.new(0.5, 0.12, 0.1) * s, Color3.fromRGB(255, 200, 60), true)
+			table.insert(bats, {
+				parts = { body, wingL, wingR, eyes },
+				offsets = {
+					CFrame.new(),
+					CFrame.new(-0.8 * s, 0.1, 0),
+					CFrame.new(0.8 * s, 0.1, 0),
+					CFrame.new(0, 0.1 * s, -0.56 * s),
+				},
+				r = 20 + math.random() * 20,
+				h = 18 + math.random() * 12,
+				w = (0.25 + math.random() * 0.2) * (i % 2 == 0 and 1 or -1),
+				p = math.random() * math.pi * 2,
+			})
+		end
+		local moved: { BasePart } = {}
+		local frames: { CFrame } = {}
+		batConn = RunService.RenderStepped:Connect(function()
+			local root = rootPart()
+			local t = os.clock()
+			local z = root and root.Position.Z or Config.SafeLineZ or 150
+			local y = root and root.Position.Y or 0
+			local center = Vector3.new(Config.MapCenterX or 0, y, z)
+			table.clear(moved)
+			table.clear(frames)
+			for _, bat in bats do
+				local a = t * bat.w + bat.p
+				local pos = center
+					+ Vector3.new(
+						math.cos(a) * bat.r,
+						bat.h + 2 * math.sin(2 * a),
+						math.sin(a) * bat.r * 1.5
+					)
+				-- Fly along the loop (the derivative of the path), wings flapping.
+				local ahead = Vector3.new(-math.sin(a) * bat.r, 0, math.cos(a) * bat.r * 1.5)
+					* math.sign(bat.w)
+				local cf =
+					CFrame.lookAt(pos, pos + (ahead.Magnitude > 0.01 and ahead or Vector3.zAxis))
+				local flap = math.rad(35) * math.sin(t * 22 + bat.p)
+				for k, part in bat.parts do
+					local o = bat.offsets[k]
+					if k == 2 then
+						o = CFrame.new(0, 0.1, 0) * CFrame.Angles(0, 0, flap) * o
+					elseif k == 3 then
+						o = CFrame.new(0, 0.1, 0) * CFrame.Angles(0, 0, -flap) * o
+					end
+					table.insert(moved, part)
+					table.insert(frames, cf * o)
+				end
+			end
+			workspace:BulkMoveTo(moved, frames, Enum.BulkMoveMode.FireCFrameChanged)
+		end)
+	end
+	local spookyWas = false
+	local function onSpooky()
+		refreshLook()
+		local on = state:GetAttribute("SpookyEnds") ~= nil
+		if on == spookyWas then
+			return
+		end
+		spookyWas = on
+		if on then
+			startBats()
+			banner(
+				"🦇 SPOOKY HOUR! 2x CANDY",
+				"Your base earns double candy for " .. clockText(Config.SpookyLength or 90) .. "!",
+				3.5,
+				Color3.fromRGB(255, 150, 40)
+			)
+			play(Config.Sounds.Brew, 0.6, 0.9)
+		else
+			stopBats()
+			toast("Spooky Hour is over", "See you in " .. clockText(Config.SpookyEvery or 600))
+		end
+	end
+	state:GetAttributeChangedSignal("SpookyEnds"):Connect(onSpooky)
+	onSpooky()
 end
 
 -- Scythe ---------------------------------------------------------------------------------------
@@ -3362,19 +3663,58 @@ do
 		return false
 	end
 
+	-- Zone name line under the top objective banner (Steal an Egg zone label): the zone's emoji
+	-- and name in its Config colour with a dark stroke, on a faint dark band; "SAFE ZONE" in the
+	-- hub. It pops when it changes.
+	local zoneLine = Instance.new("Frame")
+	zoneLine.Name = "ZoneLine"
+	zoneLine.AnchorPoint = Vector2.new(0.5, 0)
+	zoneLine.Position = UDim2.new(0.5, 0, 0, 74)
+	zoneLine.Size = UDim2.fromOffset(420, 30)
+	zoneLine.BackgroundColor3 = Color3.new(0, 0, 0)
+	zoneLine.BackgroundTransparency = 0.45
+	zoneLine.BorderSizePixel = 0
+	zoneLine.Parent = gui
+	local band = Instance.new("UIGradient")
+	band.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(0.3, 0.2),
+		NumberSequenceKeypoint.new(0.7, 0.2),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	band.Parent = zoneLine
+	local zoneText = textLabel(zoneLine, "", Color3.new(1, 1, 1))
+	zoneText.Size = UDim2.fromScale(1, 1)
+	local zoneStroke = zoneText:FindFirstChildOfClass("UIStroke") :: UIStroke
+	zoneStroke.Thickness = 3
+	local zonePop = Instance.new("UIScale")
+	zonePop.Parent = zoneLine
+	local function showZone(zoneId: string?)
+		local def = zoneId and Config.Zones[zoneId]
+		zoneText.Text = def and ((def.emoji or "") .. " " .. def.title) or "🛡 Safe Zone"
+		zoneText.TextColor3 = def and def.color or Color3.fromRGB(190, 255, 170)
+		zonePop.Scale = 1.2
+		TweenService:Create(zonePop, TweenInfo.new(0.3, Enum.EasingStyle.Back), { Scale = 1 })
+			:Play()
+	end
+	showZone(nil)
+
+	-- Walking into a zone you have not unlocked still explains the gate in a toast.
 	local function zoneBanner(zoneId: string)
 		local def = Config.Zones[zoneId]
 		if not def then
 			return
 		end
-		local level = table.find(Config.ZoneOrder, zoneId) or 1
-		local sub = ZoneView.has(zoneId)
-				and string.format("Zone %d · smash the wild pumpkins!", level)
-			or string.format(
-				"🔒 Locked · unlock it at the gate for %s 🍬",
-				short(def.cost or 0)
+		showZone(zoneId)
+		if not ZoneView.has(zoneId) then
+			toast(
+				string.upper(def.title),
+				string.format(
+					"🔒 Locked · unlock it at the gate for %s 🍬",
+					short(def.cost or 0)
+				)
 			)
-		toast(string.upper(def.title), sub)
+		end
 	end
 
 	local known = ownedSet()
@@ -3484,6 +3824,8 @@ do
 				inside = here
 				if here then
 					zoneBanner(here)
+				else
+					showZone(nil)
 				end
 			end
 		end
@@ -4047,7 +4389,7 @@ do
 	local run = Instance.new("Frame")
 	run.Name = "Run"
 	run.AnchorPoint = Vector2.new(0.5, 0)
-	run.Position = UDim2.new(0.5, 0, 0, 72)
+	run.Position = UDim2.new(0.5, 0, 0, 110)
 	run.Size = UDim2.fromOffset(150, 40)
 	run.BackgroundColor3 = Color3.fromRGB(139, 0, 0)
 	run.Visible = false
@@ -4201,8 +4543,10 @@ do
 	end)
 end
 
--- Income pops: every second each pumpkin on YOUR base pops a green "+X" (its candy per second,
--- from the server's "Rate" attribute). ----------------------------------------------------------
+-- Income pops: every second each pet / pumpkin on YOUR base pops a green #44FF2F "+X" with a dark
+-- stroke (its candy per second from the server's "Rate" attribute, x2 in a Spooky Hour). The
+-- BillboardGui pops in, floats up 3 studs over 0.8 s (its offset is tweened) and fades. A short
+-- pop sound plays only every 5th tick. ------------------------------------------------------------
 
 do
 	local playerGui = player:WaitForChild("PlayerGui")
@@ -4210,11 +4554,12 @@ do
 		if not p.Parent then
 			return
 		end
-		local y = p.Size.Y / 2 + 2.4
+		local y = p.Size.Y / 2 + 2
 		local bb = Instance.new("BillboardGui")
+		bb.Name = "IncomePop"
 		bb.Adornee = p
-		bb.Size = UDim2.fromOffset(110, 32)
-		bb.StudsOffsetWorldSpace = Vector3.new(0, y, 0)
+		bb.Size = UDim2.fromOffset(120, 34)
+		bb.StudsOffsetWorldSpace = Vector3.new((math.random() - 0.5) * 0.8, y, 0)
 		bb.AlwaysOnTop = true
 		bb.LightInfluence = 0
 		bb.MaxDistance = 90
@@ -4223,28 +4568,33 @@ do
 		label.Size = UDim2.fromScale(1, 1)
 		label.Font = Enum.Font.FredokaOne
 		label.TextScaled = true
-		label.TextColor3 = Color3.fromRGB(80, 255, 80)
+		label.TextColor3 = MONEY
 		label.Text = "+" .. rateShort(rate)
 		label.Parent = bb
 		local outline = Instance.new("UIStroke")
-		outline.Thickness = 2.5
+		outline.Thickness = 3
 		outline.Color = Color3.fromRGB(10, 40, 10)
 		outline.Parent = label
+		local pop = Instance.new("UIScale")
+		pop.Scale = 0.3
+		pop.Parent = label
 		bb.Parent = playerGui
+		TweenService:Create(pop, TweenInfo.new(0.12, Enum.EasingStyle.Back), { Scale = 1 }):Play()
 		TweenService:Create(
 			bb,
-			TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{ StudsOffsetWorldSpace = Vector3.new(0, y + 2.4, 0) }
+			TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{ StudsOffsetWorldSpace = bb.StudsOffsetWorldSpace + Vector3.new(0, 3, 0) }
 		):Play()
 		local fade =
-			TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.45)
+			TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.5)
 		TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
 		TweenService:Create(outline, fade, { Transparency = 1 }):Play()
-		task.delay(0.95, function()
+		task.delay(0.85, function()
 			bb:Destroy()
 		end)
 	end
 	task.spawn(function()
+		local ticks = 0
 		while true do
 			task.wait(1)
 			local patch = myPatch()
@@ -4252,6 +4602,8 @@ do
 			if not patch or not root then
 				continue
 			end
+			local mult = spookyOn() and (Config.SpookyMult or 2) or 1
+			local any = false
 			for _, plot in patch:GetChildren() do
 				local p = plot.Name == "Plot" and plot:FindFirstChild("Pumpkin")
 				if p and p:IsA("BasePart") then
@@ -4261,8 +4613,15 @@ do
 						and rate > 0
 						and (p.Position - root.Position).Magnitude < 90
 					then
-						task.delay(math.random() * 0.25, incomePop, p, rate)
+						any = true
+						task.delay(math.random() * 0.25, incomePop, p, rate * mult)
 					end
+				end
+			end
+			if any then
+				ticks += 1
+				if ticks % 5 == 0 then
+					play(Config.Sounds.Pick, 2.4, 0.25)
 				end
 			end
 		end
@@ -4275,11 +4634,12 @@ remotes:WaitForChild("OrderDone").OnClientEvent:Connect(function(text: string, r
 	play(Config.Sounds.Brew, 1.6, 0.5)
 end)
 
--- Daily reward (Pet Sim 99 panel style). The server grants the candy on join and fires Daily;
--- this shows a centred white panel: tilted italic "DAILY REWARD!" on the top-left edge, a red X,
+-- Daily reward (Pet Sim 99 panel layout, Halloween skin). The server grants the candy on join and
+-- fires Daily; this shows a centred charcoal panel with an orange rim and a cobweb: a tilted
+-- "🎃 DAILY REWARD!" on the top-left edge, a purple X,
 -- a chest, a 7-day strip (past days ticked, today highlighted), the reward and a big green
 -- CLAIM! button that closes it with confetti and candies flying into the counter.
-local confetti: () -> () -- defined in the block below (also used for Hoard deliveries)
+-- confetti (declared near the top) is defined here; Hoard deliveries and hatch reveals use it.
 do
 	local dailyGui = Instance.new("ScreenGui")
 	dailyGui.Name = "PatchDaily"
@@ -4293,8 +4653,9 @@ do
 	local openDim: Frame? = nil
 
 	-- Confetti bursts out of the middle of the screen (where the panel was) on screen at once,
-	-- flies up and out, then tumbles down past the bottom edge.
-	function confetti()
+	-- flies up and out, then tumbles down past the bottom edge. parentGui = the ScreenGui to draw
+	-- in (default: this panel's, under the reveal card's dim).
+	function confetti(parentGui: ScreenGui?)
 		local colors = {
 			Color3.fromRGB(255, 80, 120),
 			Color3.fromRGB(255, 210, 60),
@@ -4313,7 +4674,7 @@ do
 			bit.Position = UDim2.fromScale(0.5 + (math.random() - 0.5) * 0.1, 0.55)
 			bit.Rotation = math.random(0, 360)
 			bit.ZIndex = 50
-			bit.Parent = dailyGui
+			bit.Parent = parentGui or dailyGui
 			local x = 0.5 + (math.random() - 0.5) * 0.9
 			local y = 0.08 + math.random() * 0.4
 			local up = 0.35 + math.random() * 0.2
@@ -4439,11 +4800,12 @@ do
 		frame.AnchorPoint = Vector2.new(0.5, 0.5)
 		frame.Position = UDim2.fromScale(0.5, 0.52)
 		frame.Size = UDim2.fromOffset(520, 400)
-		frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		frame.BackgroundColor3 = CHARCOAL
 		frame.ZIndex = 10
 		frame.Parent = dailyGui
 		corner(frame, 16)
-		stroke(frame, 4).Color = INK
+		stroke(frame, 3).Color = ORANGE
+		cobweb(frame, 11)
 		local scale = Instance.new("UIScale")
 		scale.Scale = 0
 		scale.Parent = frame
@@ -4455,12 +4817,7 @@ do
 		):Play()
 
 		-- Tilted italic title hanging over the top-left edge.
-		local title = textLabel(frame, "DAILY REWARD!", Color3.fromRGB(255, 200, 40))
-		title.FontFace = Font.new(
-			"rbxasset://fonts/families/GothamSSm.json",
-			Enum.FontWeight.Heavy,
-			Enum.FontStyle.Italic
-		)
+		local title = textLabel(frame, "🎃 DAILY REWARD!", Color3.fromRGB(255, 200, 40))
 		title.AnchorPoint = Vector2.new(0, 0.5)
 		title.Position = UDim2.fromOffset(-14, 2)
 		title.Size = UDim2.fromOffset(300, 54)
@@ -4471,19 +4828,7 @@ do
 		titleStroke.Thickness = 4
 		titleStroke.Color = INK
 
-		local x = button(frame, "X", Color3.fromRGB(225, 50, 50))
-		x.AnchorPoint = Vector2.new(1, 0)
-		x.Position = UDim2.new(1, 12, 0, -12)
-		x.Size = UDim2.fromOffset(48, 48)
-		x.ZIndex = 14
-		for _, d in x:GetDescendants() do
-			if d:IsA("GuiObject") then
-				d.ZIndex += 13
-			elseif d:IsA("UICorner") then
-				d.CornerRadius = UDim.new(0, 10)
-			end
-		end
-		x.Activated:Connect(function()
+		closeButton(frame).Activated:Connect(function()
 			close(false)
 		end)
 
@@ -4562,7 +4907,7 @@ do
 			streak == Config.DailyMaxStreak
 					and string.format("Day %d bonus: x%d candy!", streak, Config.DailyLastMult)
 				or "Come back tomorrow for more!",
-			Color3.fromRGB(110, 100, 130),
+			Color3.fromRGB(215, 205, 235),
 			Enum.Font.GothamBold
 		)
 		sub:FindFirstChildOfClass("UIStroke"):Destroy()
@@ -4571,7 +4916,7 @@ do
 		sub.Size = UDim2.fromOffset(400, 22)
 		sub.ZIndex = 12
 
-		local claim = button(frame, "CLAIM!", Color3.fromRGB(60, 200, 70))
+		local claim = button(frame, "CLAIM!", BUY)
 		claim.AnchorPoint = Vector2.new(0.5, 1)
 		claim.Position = UDim2.new(0.5, 0, 1, -22)
 		claim.Size = UDim2.fromOffset(240, 64)
@@ -4650,6 +4995,8 @@ RunService.Heartbeat:Connect(function()
 	end
 	if humanoid.WalkSpeed ~= speed then
 		humanoid.WalkSpeed = speed
+		-- The yellow HUD line shows the walk speed.
+		refreshCarry()
 	end
 	if humanoid.JumpPower ~= Config.JumpPower then
 		humanoid.UseJumpPower = true
@@ -5140,45 +5487,240 @@ remotes:WaitForChild("Hoard").OnClientEvent:Connect(function(kind: string, seedI
 	end
 end)
 
--- A placed pumpkin hatched: a white flash and a burst as the pumpkin turns into its pet (or a
--- living Jack when there is no pet model).
-remotes
-	:WaitForChild("Carved").OnClientEvent
-	:Connect(function(p: BasePart?, ownerId: number?, pet: string?)
-		local camera = workspace.CurrentCamera
-		if not p or not p.Parent or not camera then
-			return
+-- Hatching (Steal an Egg, about 4 s from the first rock to the card). World part, for every
+-- client near it: over the last 1.6 s before a placed pumpkin hatches (the replicated CarveAt) it
+-- rocks +-15 degrees about its base in 10 cycles, each shorter than the last, glowing whiter; it
+-- keeps rocking at full speed until the server hatches it (the server checks once a second).
+-- Then Carved: a white flash and it bursts into 6-10 shell slabs in its colour that fly out, lie
+-- on the ground about 2.5 s and fade. Owner part (near the pumpkin and not running with loot): a
+-- pink/white screen flash, a small shake, a camera punch (FOV 70 -> 85 -> 70, Back easing), then
+-- the reveal card (blur behind, the pet turning, rarity / name / green +X/s, confetti for Rare
+-- and up; a click skips it after 1 s). A far-away owner gets a toast, and the card for a new type.
+do
+	local SHAKE_TIME = 1.6
+	local LATE = 1.5
+	local shaking: { [BasePart]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+
+	local function rock(p: BasePart, carveAt: number)
+		shaking[p] = true
+		local base = p.CFrame
+		local h = p.Size.Y / 2
+		local dur = math.max(0.4, carveAt - workspace:GetServerTimeNow())
+		-- 10 cycles, each 6 % shorter than the one before (weights 1 .. 0.46, sum 7.3).
+		local ends: { number } = {}
+		local acc = 0
+		for i = 1, 10 do
+			acc += dur * (1 - 0.06 * (i - 1)) / 7.3
+			ends[i] = acc
 		end
-		if (p.Position - camera.CFrame.Position).Magnitude > 150 then
-			return
-		end
-		local flash = Instance.new("Highlight")
-		flash.FillColor = Color3.new(1, 1, 1)
-		flash.FillTransparency = 0
-		flash.OutlineColor = Color3.new(1, 1, 1)
-		flash.OutlineTransparency = 0
-		flash.DepthMode = Enum.HighlightDepthMode.Occluded
-		flash.Parent = p
-		TweenService:Create(
-			flash,
-			TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-			{ FillTransparency = 1, OutlineTransparency = 1 }
-		):Play()
-		task.delay(0.55, function()
-			flash:Destroy()
+		local last = ends[10] - ends[9]
+		local glow = Instance.new("Highlight")
+		glow.FillColor = Color3.new(1, 1, 1)
+		glow.FillTransparency = 1
+		glow.OutlineColor = Color3.new(1, 1, 1)
+		glow.OutlineTransparency = 1
+		glow.DepthMode = Enum.HighlightDepthMode.Occluded
+		glow.Parent = p
+		local t0 = os.clock()
+		local conn: RBXScriptConnection
+		conn = RunService.RenderStepped:Connect(function()
+			local t = os.clock() - t0
+			local hatched = p:GetAttribute("CarveAt") == nil or p:GetAttribute("Jack") == true
+			if not p.Parent or hatched or t > dur + LATE then
+				conn:Disconnect()
+				glow:Destroy()
+				if p.Parent and not hatched then
+					p.CFrame = base
+				end
+				return
+			end
+			local f, amp
+			if t < dur then
+				local i = 1
+				while i < 10 and t > ends[i] do
+					i += 1
+				end
+				local start = i == 1 and 0 or ends[i - 1]
+				f = (t - start) / (ends[i] - start)
+				amp = math.rad(15) * (0.6 + 0.04 * i)
+			else
+				-- Waiting for the server: the fastest cycle, full swing.
+				f = ((t - dur) / last) % 1
+				amp = math.rad(15)
+			end
+			p.CFrame = base
+				* CFrame.new(0, -h, 0)
+				* CFrame.Angles(0, 0, math.sin(f * math.pi * 2) * amp)
+				* CFrame.new(0, h, 0)
+			glow.FillTransparency = 1 - 0.6 * math.clamp((t / dur - 0.5) * 2, 0, 1)
 		end)
-		burst(p.Position + Vector3.new(0, 1, 0), Color3.new(1, 1, 1), 24, 16, SPARKLE, 1)
-		burst(p.Position, Color3.fromRGB(255, 240, 220), 10, 10, nil, 1.4)
-		if ownerId == player.UserId then
-			play(Config.Sounds.Brew, 1.5, 0.7)
-			local def = pet and Config.Pets and Config.Pets[pet]
-			floatText(
-				p.Position + Vector3.new(0, p.Size.Y / 2 + 2.5, 0),
-				def and ("HATCHED! " .. def.display) or "HATCHED!",
-				Color3.fromRGB(255, 200, 90)
-			)
+	end
+
+	task.spawn(function()
+		while true do
+			task.wait(0.1)
+			local camera = workspace.CurrentCamera
+			local now = workspace:GetServerTimeNow()
+			for _, patch in patchFolder:GetChildren() do
+				for _, plot in patch:GetChildren() do
+					local p = plot.Name == "Plot" and plot:FindFirstChild("Pumpkin")
+					local carveAt = p and p:GetAttribute("CarveAt")
+					if
+						p
+						and p:IsA("BasePart")
+						and type(carveAt) == "number"
+						and not shaking[p]
+						and camera
+						and carveAt - now <= SHAKE_TIME
+						and carveAt - now > 0.05
+						and (p.Position - camera.CFrame.Position).Magnitude < 150
+					then
+						task.spawn(rock, p, carveAt)
+					end
+				end
+			end
 		end
 	end)
+
+	-- 6-10 shell slabs fly out of the pumpkin's base, land, lie about 2.5 s and fade (local parts).
+	local function slabs(p: BasePart, color: Color3)
+		local baseSize = p:GetAttribute("BaseSize")
+		local size = if typeof(baseSize) == "Vector3" then baseSize else p.Size
+		local w = math.clamp(size.X * 0.42, 0.8, 2.4)
+		local bottom = p.Position - Vector3.new(0, p.Size.Y / 2, 0)
+		local n = math.random(6, 10)
+		for i = 1, n do
+			local slab = Instance.new("Part")
+			slab.Name = "ShellSlab"
+			slab.Size = Vector3.new(
+				w * (0.8 + math.random() * 0.4),
+				w * 0.22,
+				w * (0.7 + math.random() * 0.4)
+			)
+			slab.Color = color:Lerp(Color3.fromRGB(211, 82, 8), math.random() * 0.35)
+			slab.Material = Enum.Material.SmoothPlastic
+			slab.CanCollide = true
+			slab.CanQuery = false
+			slab.CanTouch = false
+			local a = (i / n) * math.pi * 2 + math.random() * 0.4
+			local out = Vector3.new(math.cos(a), 0, math.sin(a))
+			slab.CFrame = CFrame.new(bottom + Vector3.new(0, size.Y * 0.5, 0) + out * w * 0.4)
+				* CFrame.Angles(math.random() * 6, math.random() * 6, math.random() * 6)
+			slab.Parent = workspace
+			slab.AssemblyLinearVelocity = out * (10 + math.random() * 8)
+				+ Vector3.new(0, 18 + math.random() * 10, 0)
+			slab.AssemblyAngularVelocity = Vector3.new(
+				(math.random() - 0.5) * 24,
+				(math.random() - 0.5) * 24,
+				(math.random() - 0.5) * 24
+			)
+			task.delay(2.5 + math.random() * 0.2, function()
+				if slab.Parent then
+					TweenService:Create(slab, TweenInfo.new(0.3), { Transparency = 1 }):Play()
+				end
+				task.wait(0.32)
+				slab:Destroy()
+			end)
+		end
+	end
+
+	-- The owner's screen flash: white turning pink while it fades (0.5 s).
+	local hatchGui = Instance.new("ScreenGui")
+	hatchGui.Name = "PatchHatch"
+	hatchGui.ResetOnSpawn = false
+	hatchGui.IgnoreGuiInset = true
+	hatchGui.DisplayOrder = 7
+	hatchGui.Parent = player:WaitForChild("PlayerGui")
+	local screenFlash = Instance.new("Frame")
+	screenFlash.Name = "Flash"
+	screenFlash.BackgroundColor3 = Color3.new(1, 1, 1)
+	screenFlash.BackgroundTransparency = 1
+	screenFlash.BorderSizePixel = 0
+	screenFlash.Size = UDim2.fromScale(1, 1)
+	screenFlash.Parent = hatchGui
+
+	local function ownerHatch()
+		screenFlash.BackgroundColor3 = Color3.new(1, 1, 1)
+		screenFlash.BackgroundTransparency = 0.1
+		TweenService:Create(
+			screenFlash,
+			TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{ BackgroundTransparency = 1, BackgroundColor3 = Color3.fromRGB(255, 150, 215) }
+		):Play()
+		task.spawn(shake, 0.5, 8)
+		local camera = workspace.CurrentCamera
+		if camera then
+			local out = TweenService:Create(
+				camera,
+				TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+				{ FieldOfView = 85 }
+			)
+			out:Play()
+			out.Completed:Once(function()
+				TweenService:Create(
+					camera,
+					TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+					{ FieldOfView = sprinting and Config.SprintFov or 70 }
+				):Play()
+			end)
+		end
+	end
+
+	remotes
+		:WaitForChild("Carved").OnClientEvent
+		:Connect(function(p: BasePart?, ownerId: number?, pet: string?, isNew: boolean?)
+			local camera = workspace.CurrentCamera
+			if not p or not p.Parent or not camera then
+				return
+			end
+			local seed = seedById[p:GetAttribute("Seed") or ""]
+			if (p.Position - camera.CFrame.Position).Magnitude <= 150 then
+				local flash = Instance.new("Highlight")
+				flash.FillColor = Color3.new(1, 1, 1)
+				flash.FillTransparency = 0
+				flash.OutlineColor = Color3.new(1, 1, 1)
+				flash.OutlineTransparency = 0
+				flash.DepthMode = Enum.HighlightDepthMode.Occluded
+				flash.Parent = p
+				TweenService:Create(
+					flash,
+					TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+					{ FillTransparency = 1, OutlineTransparency = 1 }
+				):Play()
+				task.delay(0.55, function()
+					flash:Destroy()
+				end)
+				burst(p.Position + Vector3.new(0, 1, 0), Color3.new(1, 1, 1), 24, 16, SPARKLE, 1)
+				burst(p.Position, Color3.fromRGB(255, 240, 220), 10, 10, nil, 1.4)
+				slabs(p, seed and seedColor(seed) or ORANGE)
+				play(Config.Sounds.Bonk, 1.5, 0.6)
+			end
+			if ownerId ~= player.UserId or not seed then
+				return
+			end
+			local def = pet and Config.Pets and Config.Pets[pet]
+			local name = def and def.display or (seed.name .. " Jack")
+			local rate = tonumber(p:GetAttribute("Rate")) or 0
+			local mutation = p:GetAttribute("Mutation")
+			local root = rootPart()
+			local running = (player:GetAttribute("CarryStolen") or 0) > 0
+				or (player:GetAttribute("CarryHoard") or 0) > 0
+			if root and not running and (p.Position - root.Position).Magnitude < 90 then
+				ownerHatch()
+				task.delay(0.35, queueReveal, seed.id, mutation, isNew == true, rate, "jack", pet)
+			else
+				hint(
+					string.format(
+						'🐣 Your pumpkin hatched: <font color="#44FF2F">%s</font>!',
+						name
+					)
+				)
+				if isNew then
+					queueReveal(seed.id, mutation, true, rate, "jack", pet)
+				end
+			end
+		end)
+end
 
 -- Guardian tags: the cyan "Z z Z" bobs slowly while it sleeps, the red "!" jumps while it is awake
 -- (local only, so nothing replicates every frame).
@@ -5324,6 +5866,187 @@ do
 			p.CFrame = CFrame.new(
 				home.Position + hop.from:Lerp(hop.to, f) + Vector3.new(0, lift, 0)
 			) * CFrame.Angles(0, yaw, 0)
+		end
+	end)
+end
+
+-- Carry look (Steal an Egg): every pumpkin carried over a head floats inside a soft rainbow halo,
+-- a see-through Neon ball (local, anchored, following the pumpkin each frame) whose colour cycles
+-- slowly. RUN!!, Drop and the red vignette stay as they are. -----------------------------------
+do
+	local halos: { [BasePart]: Part } = {}
+	local folder = Instance.new("Folder")
+	folder.Name = "CarryHalos"
+	folder.Parent = workspace
+	task.spawn(function()
+		while true do
+			task.wait(0.25)
+			local want: { [BasePart]: boolean } = {}
+			for _, who in Players:GetPlayers() do
+				local character = who.Character
+				for _, child in character and character:GetChildren() or {} do
+					if child:IsA("BasePart") and child:GetAttribute("Seed") ~= nil then
+						want[child] = true
+					end
+				end
+			end
+			for p, halo in halos do
+				if not want[p] then
+					halo:Destroy()
+					halos[p] = nil
+				end
+			end
+			for p in want do
+				if not halos[p] then
+					local halo = Instance.new("Part")
+					halo.Name = "Halo"
+					halo.Shape = Enum.PartType.Ball
+					halo.Material = Enum.Material.Neon
+					halo.Transparency = 0.8
+					halo.Anchored = true
+					halo.CanCollide = false
+					halo.CanQuery = false
+					halo.CanTouch = false
+					halo.CastShadow = false
+					halo.Parent = folder
+					halos[p] = halo
+				end
+			end
+		end
+	end)
+	RunService.RenderStepped:Connect(function()
+		local t = os.clock()
+		local k = 0
+		for p, halo in halos do
+			k += 1
+			local s = math.max(p.Size.X, p.Size.Y, p.Size.Z) * 1.45
+			if halo.Size.X ~= s then
+				halo.Size = Vector3.one * s
+			end
+			halo.CFrame = CFrame.new(p.Position)
+			halo.Color = Color3.fromHSV((t * 0.12 + k * 0.17) % 1, 0.45, 1)
+		end
+	end)
+end
+
+-- Glow. Nest (Hoard) mystery pumpkins pulse: a PointLight 1.5 <-> 3 every 1.2 s (the model's own
+-- LookGlow is switched off locally so it is the only light). Rare pets (Rare and up, on a plot)
+-- get a Highlight outline in their rarity colour (the 20 nearest: Roblox draws at most 31) and a
+-- sparkle emitter (LightEmission 1, LightInfluence 0). ------------------------------------------
+do
+	local pulsed: { [BasePart]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+	local function pulse(d: Instance)
+		if not d:IsA("BasePart") or d.Name ~= "HoardPumpkin" or pulsed[d] then
+			return
+		end
+		pulsed[d] = true
+		local own = d:FindFirstChild("LookGlow", true)
+		if own and own:IsA("PointLight") then
+			own.Enabled = false
+		end
+		local light = Instance.new("PointLight")
+		light.Name = "NestPulse"
+		light.Color = Color3.fromRGB(255, 170, 70)
+		light.Range = 11
+		light.Shadows = false
+		light.Brightness = 1.5
+		light.Parent = d
+		TweenService:Create(
+			light,
+			TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+			{ Brightness = 3 }
+		):Play()
+	end
+	task.spawn(function()
+		local zones = garden:WaitForChild("Zones", 15)
+		if not zones then
+			return
+		end
+		zones.DescendantAdded:Connect(pulse)
+		for _, d in zones:GetDescendants() do
+			pulse(d)
+		end
+	end)
+
+	local function rarityColor(order: number): Color3
+		for _, r in Config.Rarities do
+			if order <= r.upTo then
+				return r.color
+			end
+		end
+		return Config.Rarities[#Config.Rarities].color
+	end
+	local MAX_OUTLINES = 20
+	type Glow = { outline: Highlight, sparkle: ParticleEmitter }
+	local glows: { [BasePart]: Glow } = {}
+	task.spawn(function()
+		while true do
+			task.wait(0.6)
+			local camera = workspace.CurrentCamera
+			local eye = camera and camera.CFrame.Position or Vector3.zero
+			local list: { BasePart } = {}
+			for _, patch in patchFolder:GetChildren() do
+				for _, plot in patch:GetChildren() do
+					local p = plot.Name == "Plot" and plot:FindFirstChild("Pumpkin")
+					local seed = p and seedById[p:GetAttribute("Seed") or ""]
+					if
+						p
+						and p:IsA("BasePart")
+						and seed
+						and seed.order >= 3
+						and p:GetAttribute("Pet") ~= nil
+						and p:GetAttribute("Placed") == true
+					then
+						table.insert(list, p)
+					end
+				end
+			end
+			local keep: { [BasePart]: boolean } = {}
+			for _, p in list do
+				keep[p] = true
+			end
+			for p, g in glows do
+				if not keep[p] or not p.Parent then
+					g.outline:Destroy()
+					g.sparkle:Destroy()
+					glows[p] = nil
+				end
+			end
+			table.sort(list, function(a, b)
+				return (a.Position - eye).Magnitude < (b.Position - eye).Magnitude
+			end)
+			for i, p in list do
+				local g = glows[p]
+				if not g then
+					local color = rarityColor(seedById[p:GetAttribute("Seed")].order)
+					local outline = Instance.new("Highlight")
+					outline.Name = "RareGlow"
+					outline.FillTransparency = 1
+					outline.OutlineColor = color
+					outline.OutlineTransparency = 0
+					outline.DepthMode = Enum.HighlightDepthMode.Occluded
+					outline.Adornee = p:FindFirstChild("PetLook") or p
+					outline.Parent = p
+					local sparkle = Instance.new("ParticleEmitter")
+					sparkle.Name = "RareSparkle"
+					sparkle.Texture = SPARKLE
+					sparkle.Color = ColorSequence.new(color:Lerp(Color3.new(1, 1, 1), 0.25))
+					sparkle.LightEmission = 1
+					sparkle.LightInfluence = 0
+					sparkle.Size = NumberSequence.new(0.45, 0)
+					sparkle.Lifetime = NumberRange.new(0.6, 1)
+					sparkle.Rate = 4
+					sparkle.Speed = NumberRange.new(0.5, 1.5)
+					sparkle.SpreadAngle = Vector2.new(180, 180)
+					sparkle.Parent = p
+					g = { outline = outline, sparkle = sparkle }
+					glows[p] = g
+				end
+				local on = i <= MAX_OUTLINES
+				if g.outline.Enabled ~= on then
+					g.outline.Enabled = on
+				end
+			end
 		end
 	end)
 end
