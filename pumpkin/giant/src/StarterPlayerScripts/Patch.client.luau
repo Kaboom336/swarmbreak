@@ -1,6 +1,7 @@
 -- Client side of Pumpkin Patch Panic: which base prompts you see (Place / Pick up / Steal / Lock),
 -- lighting for day / midnight / Blood Moon, scythe swings, hit and pop effects, HUD (candy,
--- income, carry, LOCK), tool shop, upgrades, Haunt, Witch's Orders.
+-- income, carry), the Shop (Scythes / Upgrades / Robux tabs), Index, Haunt, Witch's Orders.
+-- Systems behind an unlock gate (Config.Unlocks, "Unlock_<Name>" attributes) stay hidden.
 local HttpService = game:GetService("HttpService")
 local Lighting = game:GetService("Lighting")
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -280,6 +281,12 @@ end
 local function rootPart(): BasePart?
 	local character = player.Character
 	return character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+end
+
+-- Unlock gates (Config.Unlocks): the server sets sticky "Unlock_<Name>" attributes (PlayerSteal,
+-- Sell, Brew, LuckySwing, King, Haunt); systems stay hidden until then.
+local function unlocked(name: string, who: Player?): boolean
+	return (who or player):GetAttribute("Unlock_" .. name) == true
 end
 
 -- Screen -----------------------------------------------------------------------------------
@@ -574,8 +581,14 @@ do
 end
 remotes:WaitForChild("Hint").OnClientEvent:Connect(hint)
 
--- Top right: one small chip with the Giant Jack and the phase clock (the world MeterRing around
--- the Jack fills too). The top centre belongs to the objective banner; the centre stays clear.
+-- Event news that used to be big banners: one small toast line ("TITLE · sub").
+local function toast(title: string, sub: string?)
+	hint(title .. (sub and sub ~= "" and (" · " .. sub) or ""))
+end
+
+-- Top right: one small chip with the midnight clock only (Steal an Egg: just the timer). Players
+-- past the King gate also see the Blood Moon / King state there. The world MeterRing around the
+-- Giant Jack still fills. The top centre belongs to the objective banner; the centre stays clear.
 local KING_FILL = ColorSequence.new(Color3.fromRGB(200, 25, 45), Color3.fromRGB(255, 120, 60))
 do
 	local chip = Instance.new("Frame")
@@ -598,17 +611,30 @@ do
 	local label = textLabel(chip, "", Color3.fromRGB(255, 255, 255))
 	label.Position = UDim2.fromOffset(10, 3)
 	label.Size = UDim2.new(1, -20, 1, -10)
+	-- One toast 5 s before midnight (once per day phase).
+	local warnedFor = 0
 	local function refreshChip()
 		local now = workspace:GetServerTimeNow()
 		local phase = state:GetAttribute("Phase") or "Day"
-		local left = math.max(0, (state:GetAttribute("PhaseEnds") or 0) - now)
+		local ends = state:GetAttribute("PhaseEnds") or 0
+		local left = math.max(0, ends - now)
 		local candy = state:GetAttribute("JackCandy") or 0
 		local goal = math.max(state:GetAttribute("JackGoal") or 1, 1)
 		local jack = math.clamp(candy / goal, 0, 1)
 		local locksOff = state:GetAttribute("LocksOff")
-		local text, color, amount = "", Color3.fromRGB(255, 225, 170), jack
-		local barColor = Color3.fromRGB(255, 150, 40)
-		if phase == "BloodMoon" and locksOff then
+		local king = unlocked("King")
+		-- The bar shows how far the day has run toward midnight.
+		local text, color = "", Color3.fromRGB(255, 225, 170)
+		local amount = phase == "Day" and 1 - left / math.max(Config.DayLength, 1) or 0
+		local barColor = Color3.fromRGB(120, 150, 255)
+		if phase == "Day" and left <= 5 and left > 0 and warnedFor ~= ends then
+			warnedFor = ends
+			toast("Midnight in 5s...", "ALL PUMPKINS RESET!")
+		end
+		if phase == "BloodMoon" and not king then
+			-- New players are not sent to the King: just the clock to the next midnight.
+			text = "🌙 Midnight in " .. clockText(left + Config.DayLength)
+		elseif phase == "BloodMoon" and locksOff then
 			text = "🔓 LOCKS OFF " .. clockText(locksOff - now)
 			color, amount, barColor = Color3.fromRGB(255, 140, 140), 1, Color3.fromRGB(220, 40, 50)
 		elseif phase == "BloodMoon" then
@@ -625,15 +651,10 @@ do
 			color, amount = Color3.fromRGB(255, 150, 140), hp / maxHp
 			barColor = Color3.fromRGB(230, 50, 50)
 		elseif phase == "Midnight" then
-			text = "👻 Midnight " .. clockText(left)
+			text = "🌙 MIDNIGHT " .. clockText(left)
 			color = Color3.fromRGB(170, 230, 255)
-		elseif candy >= goal then
-			-- The Jack is full but the last Blood Moon was recent: the King waits.
-			local wake = (state:GetAttribute("KingWakesAt") or 0) - now
-			text = wake > 0 and ("👑 King wakes " .. clockText(wake)) or "👑 The King wakes!"
-			color, amount = Color3.fromRGB(255, 200, 120), 1
 		else
-			text = "🎃 " .. short(candy) .. "/" .. short(goal) .. "   🌙 " .. clockText(left)
+			text = "🌙 Midnight in " .. clockText(left)
 		end
 		if label.Text ~= text then
 			label.Text = text
@@ -1154,14 +1175,17 @@ local function cardState(gc: GridCard, look: string, text: string)
 end
 
 local buyUpgrade = remotes:WaitForChild("BuyUpgrade") :: RemoteFunction
-local upgradePanel, upgradeList = panel("⭐ Upgrades!", true)
--- Tool shop: every tool as a grid card. The best owned one is always held ("Equipped!"), other
+-- The one Shop panel has three tabs, each its own frame: Scythes (toolPanel), Upgrades
+-- (upgradePanel) and Robux (shopPanel, hidden while every ID is 0). The tab bar is added further
+-- down, where all three exist.
+local upgradePanel, upgradeList = panel("🛒 Shop!", true)
+-- Scythes tab: every tool as a grid card. The best owned one is always held ("Equipped!"), other
 -- owned ones read "Owned!", unaffordable ones and the MVP drop are grey with a padlock.
 local toolPanel, refreshToolCards
 do
 	local buyTool = remotes:WaitForChild("BuyTool") :: RemoteFunction
 	local list
-	toolPanel, list = panel("⚒ Tools!", true)
+	toolPanel, list = panel("🛒 Shop!", true)
 	local cards: { [string]: GridCard } = {}
 	for i, tool in Config.Tools do
 		local gc = gridCard(
@@ -1181,7 +1205,7 @@ do
 			local ok, message = buyTool:InvokeServer(tool.id)
 			if ok then
 				play(Config.Sounds.Coin, 0.9, 0.8)
-				banner(string.upper(tool.name) .. "!", short(tool.damage) .. " damage per swing", 2)
+				toast(string.upper(tool.name) .. "!", short(tool.damage) .. " damage per swing")
 			else
 				b.Text = tostring(message or "?")
 				task.delay(1, refreshToolCards)
@@ -1213,10 +1237,10 @@ do
 end
 local upgradeCards: { [string]: GridCard } = {}
 local refreshUpgradeCards -- forward: a failed buy shows its reason, then refreshes
-local UPGRADE_ORDER = { "Stack", "Mallet", "Lucky" }
+-- Sharp Blade (Mallet) is cut; Lucky Swing shows once its gate opens.
+local UPGRADE_ORDER = { "Stack", "Lucky" }
 local UPGRADE_COLOR = {
 	Stack = Color3.fromRGB(255, 150, 50),
-	Mallet = Color3.fromRGB(190, 200, 220),
 	Lucky = Color3.fromRGB(110, 210, 90),
 }
 for i, id in UPGRADE_ORDER do
@@ -1228,7 +1252,7 @@ for i, id in UPGRADE_ORDER do
 		local ok, message = buyUpgrade:InvokeServer(id)
 		if ok then
 			play(Config.Sounds.Coin, 0.9, 0.8)
-			banner(info.title .. "!", info.text, 1.6)
+			toast(info.title, info.text)
 		else
 			b.Text = message
 			task.delay(1, refreshUpgradeCards)
@@ -1239,6 +1263,7 @@ function refreshUpgradeCards()
 	for id, gc in upgradeCards do
 		local info = Config.Upgrades[id]
 		local level = player:GetAttribute("Up_" .. id) or 0
+		gc.frame.Visible = id ~= "Lucky" or unlocked("LuckySwing")
 		gc.info.Text = info.text
 			.. "\n"
 			.. string.rep("●", level)
@@ -1254,16 +1279,13 @@ end
 for _, id in UPGRADE_ORDER do
 	player:GetAttributeChangedSignal("Up_" .. id):Connect(refreshUpgradeCards)
 end
+player:GetAttributeChangedSignal("Unlock_LuckySwing"):Connect(refreshUpgradeCards)
 candyValue.Changed:Connect(function()
 	refreshToolCards()
 	refreshUpgradeCards()
 end)
 refreshToolCards()
 refreshUpgradeCards()
-remotes:WaitForChild("OpenShop").OnClientEvent:Connect(function(kind: string)
-	toolPanel.Visible = kind == "Tools" and not toolPanel.Visible
-	upgradePanel.Visible = kind == "Upgrades" and not upgradePanel.Visible
-end)
 
 -- Pumpkin Index: a book of every seed x finish. Selling a new kind fills it in. -------------
 
@@ -1334,6 +1356,8 @@ player:GetAttributeChangedSignal("Index"):Connect(refreshIndex)
 refreshIndex()
 
 -- Music: a calm day loop, a tense midnight loop and a boss loop that crossfade by phase.
+-- toggleSound (the small speaker button in the Shop panel corner) mutes music and effects.
+local toggleSound: () -> boolean
 do
 	local tracks = {}
 	for phase, id in
@@ -1363,14 +1387,12 @@ do
 	state:GetAttributeChangedSignal("Phase"):Connect(refreshMusic)
 	refreshMusic()
 
-	-- One Sound pill turns music and sound effects on and off together.
-	local soundPill = pill("🔊 Sound", Color3.fromRGB(95, 95, 115), 6)
-	soundPill.Activated:Connect(function()
+	function toggleSound(): boolean
 		musicOn = not musicOn
 		sfxOn = musicOn
-		soundPill.Text = musicOn and "🔊 Sound" or "🔇 Muted"
 		refreshMusic()
-	end)
+		return musicOn
+	end
 end
 
 -- Red round count badge on the top-right corner of a pill (Pet Sim 99 / Steal an Egg style).
@@ -1392,13 +1414,56 @@ local indexButton = pill("📖 Index", Color3.fromRGB(40, 190, 235), 2)
 -- Red badge: Index entries found since the Index was last opened.
 local indexBadge = pillBadge(indexButton)
 
--- LOCK: locks your base for a while (no stealing, ghosts skip it), then recharges.
+-- LOCK: locks your base for a while (no stealing, ghosts skip it), then recharges. Hidden while
+-- the new-player shield is on (nobody can raid you then); it appears with one banner when the
+-- shield ends.
 do
 	local lockEvent = remotes:WaitForChild("Lock")
 	local lockButton = pill("🔒 Lock", Color3.fromRGB(140, 80, 220), 4)
 	lockButton.Activated:Connect(function()
 		lockEvent:FireServer()
 	end)
+	lockButton.Visible = unlocked("PlayerSteal")
+	-- Only a gate that opens while playing is announced (not one a returning player had already).
+	local loadedAt = player:GetAttribute("Loaded") and -math.huge or nil
+	player:GetAttributeChangedSignal("Loaded"):Connect(function()
+		loadedAt = loadedAt or os.clock()
+	end)
+	local function fresh(): boolean
+		return loadedAt ~= nil and os.clock() - loadedAt > 3
+	end
+	player:GetAttributeChangedSignal("Unlock_PlayerSteal"):Connect(function()
+		local on = unlocked("PlayerSteal")
+		lockButton.Visible = on
+		if on and fresh() then
+			banner(
+				"Ghosts and players can raid you now!",
+				"Lock your Base!",
+				3.5,
+				Color3.fromRGB(200, 140, 255)
+			)
+			play(Config.Sounds.Bonk, 0.6, 0.9)
+		end
+	end)
+	-- The later gates arrive as one toast each.
+	for name, text in
+		{
+			Sell = "The Witch buys pumpkins now! Pick some up from your base and sell them.",
+			Brew = "The Magic Cauldrons are open! Brew pumpkins for x2 to x10.",
+			LuckySwing = "New upgrade in the Shop: Lucky Swing!",
+			King = "The Pumpkin King wakes in every Blood Moon. Bonk him for candy!",
+			Haunt = string.format(
+				"👻 Haunt is open! Reset for +%d%% candy forever.",
+				math.floor(Config.HauntSellBonus * 100 + 0.5)
+			),
+		}
+	do
+		player:GetAttributeChangedSignal("Unlock_" .. name):Connect(function()
+			if unlocked(name) and fresh() then
+				hint(text)
+			end
+		end)
+	end
 	local function myBase(): Instance?
 		for _, patch in patchFolder:GetChildren() do
 			if patch:GetAttribute("Owner") == player.UserId then
@@ -1522,7 +1587,7 @@ local function onNodeClicked(node: SkillNode)
 	buyingSkill = false
 	if ok then
 		play(Config.Sounds.Brew, 1.3, 0.8)
-		banner(skill.title .. "!", skill.text, 1.8, node.color)
+		toast(skill.title .. "!", skill.text)
 	else
 		node.status.Text = tostring(message or "?")
 		node.status.TextColor3 = Color3.fromRGB(255, 130, 130)
@@ -1712,16 +1777,14 @@ hauntGo.Activated:Connect(function()
 	local ok, message = hauntRemote:InvokeServer()
 	if ok then
 		play(Config.Sounds.Brew, 0.5, 1)
-		banner(
+		toast(
 			"HAUNTED!",
 			string.format(
 				"+%d%% sell forever · +%d Soul%s",
 				math.floor(Config.HauntSellBonus * 100),
 				gain,
 				gain == 1 and "" or "s"
-			),
-			3,
-			Color3.fromRGB(190, 120, 255)
+			)
 		)
 	else
 		hauntGo.Text = message
@@ -1853,7 +1916,7 @@ for name in Config.GamePasses do
 		if ownsPass(name) and os.clock() - lastPromptAt < 300 then
 			for _, item in SHOP_ITEMS do
 				if item.name == name then
-					banner(item.title .. "!", item.text, 2.4, Color3.fromRGB(255, 205, 60))
+					toast(item.title .. "!", item.text)
 				end
 			end
 			play(Config.Sounds.Coin, 0.8, 1)
@@ -1861,9 +1924,55 @@ for name in Config.GamePasses do
 	end)
 end
 
--- Left pills open one panel at a time (the same pill closes it again).
+-- Left pills (Steal an Egg footprint): Shop and Index only, plus Haunt once its gate opens and
+-- Lock after the shield. Each pill opens one panel at a time (the same pill closes it again).
+-- Shop is one panel with tabs (Scythes / Upgrades / Robux) and a small speaker (mute) button.
 do
 	local panels = { toolPanel, indexPanel, hauntPanel, shopPanel, upgradePanel }
+	local SHOP_TABS = {
+		{ name = "Scythes", label = "⚒ Scythes", frame = toolPanel },
+		{ name = "Upgrades", label = "⭐ Upgrades", frame = upgradePanel },
+		{ name = "Robux", label = "💎 Robux", frame = shopPanel },
+	}
+	local TAB_ON, TAB_OFF = Color3.fromRGB(60, 200, 70), Color3.fromRGB(150, 150, 162)
+	local hasRobux = #shopCards > 0
+	local lastTab = "Scythes"
+	local tabButtons: { { button: TextButton, name: string } } = {}
+	local muteButtons: { TextButton } = {}
+
+	local function shopOpen(): boolean
+		return toolPanel.Visible or upgradePanel.Visible or shopPanel.Visible
+	end
+
+	-- name = the tab to show; nil closes every panel.
+	local function openShop(name: string?)
+		for _, p in panels do
+			p.Visible = false
+		end
+		if not name then
+			return
+		end
+		if name == "Robux" and not hasRobux then
+			name = "Scythes"
+		end
+		lastTab = name
+		for _, tab in SHOP_TABS do
+			tab.frame.Visible = tab.name == name
+		end
+		for _, t in tabButtons do
+			t.button.BackgroundColor3 = t.name == name and TAB_ON or TAB_OFF
+		end
+		if name == "Robux" then
+			task.spawn(function()
+				local ok, quotes = pcall(shopRemote.InvokeServer, shopRemote, "open")
+				if ok and type(quotes) == "table" then
+					shopQuotes = quotes
+					refreshShop()
+				end
+			end)
+		end
+	end
+
 	local function toggle(which: Frame)
 		local open = not which.Visible
 		for _, p in panels do
@@ -1872,14 +1981,46 @@ do
 		which.Visible = open
 	end
 
-	local toolsButton = pill("⚒ Tools", Color3.fromRGB(60, 190, 70), 1)
-	toolsButton.Activated:Connect(function()
-		toggle(toolPanel)
+	-- Every tab frame gets the same tab row under its title (the item list moves down under it)
+	-- and the speaker button at the row's right end.
+	for _, tab in SHOP_TABS do
+		local frame = tab.frame
+		local list = frame:FindFirstChildOfClass("ScrollingFrame")
+		if list then
+			list.Position = UDim2.fromOffset(16, 104)
+			list.Size = UDim2.new(1, -32, 1, -118)
+		end
+		for k, other in SHOP_TABS do
+			local b = button(frame, other.label, TAB_OFF)
+			b.Position = UDim2.fromOffset(20 + (k - 1) * 158, 52)
+			b.Size = UDim2.fromOffset(148, 42)
+			b.Visible = other.name ~= "Robux" or hasRobux
+			b.Activated:Connect(function()
+				openShop(other.name)
+			end)
+			table.insert(tabButtons, { button = b, name = other.name })
+		end
+		local mute = button(frame, "🔊", Color3.fromRGB(95, 95, 115))
+		mute.AnchorPoint = Vector2.new(1, 0)
+		mute.Position = UDim2.new(1, -20, 0, 52)
+		mute.Size = UDim2.fromOffset(46, 42)
+		mute.Activated:Connect(function()
+			local on = toggleSound()
+			for _, m in muteButtons do
+				m.Text = on and "🔊" or "🔇"
+			end
+		end)
+		table.insert(muteButtons, mute)
+	end
+
+	local shopButton = pill("🛒 Shop", Color3.fromRGB(240, 170, 30), 1)
+	shopButton.Activated:Connect(function()
+		openShop(if shopOpen() then nil else lastTab)
 	end)
 	-- "!" badge while a better scythe than the one you hold is affordable.
-	local toolsBadge = pillBadge(toolsButton)
-	toolsBadge.Text = "!"
-	local function refreshToolsBadge()
+	local shopBadge = pillBadge(shopButton)
+	shopBadge.Text = "!"
+	local function refreshShopBadge()
 		local owned = {}
 		for id in string.gmatch(player:GetAttribute("Tools") or "", "[^,]+") do
 			owned[id] = true
@@ -1901,29 +2042,27 @@ do
 				affordable = true
 			end
 		end
-		toolsBadge.Visible = affordable
+		shopBadge.Visible = affordable
 	end
-	candyValue.Changed:Connect(refreshToolsBadge)
-	player:GetAttributeChangedSignal("Tools"):Connect(refreshToolsBadge)
-	player:GetAttributeChangedSignal("Tool"):Connect(refreshToolsBadge)
-	refreshToolsBadge()
+	candyValue.Changed:Connect(refreshShopBadge)
+	player:GetAttributeChangedSignal("Tools"):Connect(refreshShopBadge)
+	player:GetAttributeChangedSignal("Tool"):Connect(refreshShopBadge)
+	refreshShopBadge()
 
-	local shopButton = pill("🛒 Shop", Color3.fromRGB(240, 170, 30), 5)
-	shopButton.Visible = #shopCards > 0
-	shopButton.Activated:Connect(function()
-		toggle(shopPanel)
-		if shopPanel.Visible then
-			task.spawn(function()
-				local ok, quotes = pcall(shopRemote.InvokeServer, shopRemote, "open")
-				if ok and type(quotes) == "table" then
-					shopQuotes = quotes
-					refreshShop()
-				end
-			end)
-		end
+	-- Walking into a stall opens the Shop on its tab (Tools stall: Scythes, Upgrades stall:
+	-- Upgrades); again on the open tab closes it.
+	remotes:WaitForChild("OpenShop").OnClientEvent:Connect(function(kind: string)
+		local name = kind == "Tools" and "Scythes" or "Upgrades"
+		local frame = name == "Scythes" and toolPanel or upgradePanel
+		openShop(if frame.Visible then nil else name)
 	end)
 
+	-- Haunt costs millions: its pill waits for the HauntPillAt gate (lifetime candy).
 	local hauntButton = pill("👻 Haunt", Color3.fromRGB(95, 85, 235), 3)
+	hauntButton.Visible = unlocked("Haunt")
+	player:GetAttributeChangedSignal("Unlock_Haunt"):Connect(function()
+		hauntButton.Visible = unlocked("Haunt")
+	end)
 	hauntButton.Activated:Connect(function()
 		toggle(hauntPanel)
 	end)
@@ -1947,7 +2086,7 @@ remotes:WaitForChild("IndexNew").OnClientEvent:Connect(function(keys: { string }
 		if seed then
 			task.delay((i - 1) * 0.9, function()
 				local label = finish == "Plain" and seed.name or (finish .. " " .. seed.name)
-				banner("NEW IN YOUR INDEX!", label, 1.8, Color3.fromRGB(190, 140, 255))
+				toast("NEW IN YOUR INDEX!", label)
 				play(Config.Sounds.Brew, 1.5, 0.6)
 			end)
 		end
@@ -1955,7 +2094,7 @@ remotes:WaitForChild("IndexNew").OnClientEvent:Connect(function(keys: { string }
 end)
 
 remotes:WaitForChild("Announce").OnClientEvent:Connect(function(text: string)
-	banner("☠ " .. text, nil, 3, Color3.fromRGB(190, 90, 255))
+	toast("☠ " .. text)
 	play(Config.Sounds.Brew, 0.7, 0.8)
 end)
 
@@ -2302,14 +2441,24 @@ do
 		local mutation = pumpkin:GetAttribute("Mutation")
 		return (mutation and (mutation .. " ") or "") .. seed.name .. " pumpkin"
 	end
+	-- Prompts of systems behind an unlock gate stay hidden until it opens (the server refuses them
+	-- too): Pick up and the Witch (Sell), cauldrons (Brew), Steal and LOCK (PlayerSteal).
+	local sellPrompt = market:WaitForChild("Sell"):FindFirstChild("PromptPart")
 	local function refreshPrompts()
 		local now = workspace:GetServerTimeNow()
 		local locksOff = (state:GetAttribute("LocksOff") or 0) > now
 		local carrying = (player:GetAttribute("Carry") or 0) > 0
+		local canSell, canSteal = unlocked("Sell"), unlocked("PlayerSteal")
 		for _, patch in patchFolder:GetChildren() do
 			local owner = patch:GetAttribute("Owner") or 0
 			local mine = owner == player.UserId
 			local locked = not locksOff and (patch:GetAttribute("LockedUntil") or 0) > now
+			-- A shielded owner (new farmer) cannot be robbed.
+			local ownerPlayer = not mine and owner ~= 0 and Players:GetPlayerByUserId(owner) or nil
+			local robbable = canSteal
+				and ownerPlayer ~= nil
+				and unlocked("PlayerSteal", ownerPlayer)
+				and not locked
 			for _, plot in patch:GetChildren() do
 				if plot.Name == "Plot" then
 					local filled = plot:GetAttribute("Filled") == true
@@ -2319,19 +2468,21 @@ do
 						mine and carrying and not filled,
 						"Your plot"
 					)
-					set(plot:FindFirstChild("PickupPrompt"), mine and filled, name)
+					set(plot:FindFirstChild("PickupPrompt"), mine and filled and canSell, name)
 					set(
 						plot:FindFirstChild("StealPrompt"),
-						not mine
-							and owner ~= 0
-							and filled
-							and not locked
-							and plot:GetAttribute("Protected") ~= true,
+						robbable and filled and plot:GetAttribute("Protected") ~= true,
 						name
 					)
 				end
 			end
-			set(patch:FindFirstChild("LockPrompt", true), mine and not locksOff)
+			set(patch:FindFirstChild("LockPrompt", true), mine and not locksOff and canSteal)
+		end
+		set(sellPrompt and sellPrompt:FindFirstChildOfClass("ProximityPrompt"), canSell)
+		local canBrew = unlocked("Brew")
+		for _, cauldron in cauldronFolder:GetChildren() do
+			local pot = cauldron:FindFirstChild("Pot")
+			set(pot and pot:FindFirstChildOfClass("ProximityPrompt"), canBrew)
 		end
 	end
 	patchFolder.DescendantAdded:Connect(function(d)
@@ -2395,24 +2546,25 @@ do
 		AtmosphereDensity = atmosphere and atmosphere.Density or 0.3,
 	}
 	-- The default look is bright daytime (captured above from Studio Lighting). Events only grade
-	-- softly: Midnight is a blue dusk (never black), the Blood Moon a soft red, then back to base.
+	-- softly: Midnight is a light blue evening (bright ambient, barely tinted, no extra haze, so the
+	-- toy colours still read), the Blood Moon a soft red, then back to base.
 	local EVENT_LOOK = {
 		Midnight = {
 			lighting = {
-				Ambient = Color3.fromRGB(95, 105, 160),
-				OutdoorAmbient = Color3.fromRGB(120, 130, 185),
-				Brightness = math.max(1.2, base.Brightness * 0.7),
-				ClockTime = 18.4,
+				Ambient = Color3.fromRGB(150, 155, 195),
+				OutdoorAmbient = Color3.fromRGB(170, 175, 210),
+				Brightness = math.max(1.6, base.Brightness * 0.85),
+				ClockTime = 17.6,
 			},
 			tint = {
-				TintColor = Color3.fromRGB(215, 225, 255),
-				Saturation = -0.05,
-				Contrast = 0.05,
+				TintColor = Color3.fromRGB(236, 240, 255),
+				Saturation = 0,
+				Contrast = 0.02,
 			},
 			atmosphere = {
-				Color = Color3.fromRGB(110, 120, 180),
-				Decay = Color3.fromRGB(60, 60, 120),
-				Density = math.max(base.AtmosphereDensity, 0.32),
+				Color = Color3.fromRGB(160, 170, 210),
+				Decay = Color3.fromRGB(110, 115, 160),
+				Density = base.AtmosphereDensity,
 			},
 		},
 		BloodMoon = {
@@ -2476,26 +2628,34 @@ do
 		local previous = lastPhase
 		lastPhase = phase
 		setLighting(phase)
+		-- The midnight reset keeps its big banner; the other phase news are toasts, and only for
+		-- players whose gate is open (new farmers are never sent to ghosts or the King).
 		if phase == "Midnight" then
+			local hoard = seedById[Config.Hoards.Zone1.type]
 			banner(
-				"MIDNIGHT!",
-				"Ghosts are raiding the bases. Lock yours and bonk them!",
+				"ALL PUMPKINS RESET!",
+				string.format(
+					"Midnight! The %s's nest is full of %s Pumpkins again!",
+					Config.Hoards.Zone1.guardian,
+					hoard and hoard.name or "Hoard"
+				),
 				3,
 				Color3.fromRGB(170, 220, 255)
 			)
+			if unlocked("PlayerSteal") then
+				toast("Ghosts are raiding the bases!", "Lock yours and bonk them!")
+			end
 			play(Config.Sounds.Brew, 0.5, 0.8)
-		elseif phase == "BloodMoon" then
+		elseif phase == "BloodMoon" and unlocked("King") then
 			local locksOff = (state:GetAttribute("LocksOff") or 0) > workspace:GetServerTimeNow()
-			banner(
+			toast(
 				"BLOOD MOON!",
-				locksOff and "Every lock is OFF! Steal from any base before the King wakes!"
-					or "The Pumpkin King wakes! Everyone bonk him!",
-				3.5,
-				Color3.fromRGB(255, 90, 80)
+				locksOff and "Every lock is OFF! Steal before the King wakes!"
+					or "The Pumpkin King wakes! Everyone bonk him!"
 			)
 			play(Config.Sounds.Brew, 0.4, 1)
-		elseif previous == "Midnight" then
-			banner("DAWN", "The ghosts flee. Back to farming!", 2.4)
+		elseif previous == "Midnight" and unlocked("PlayerSteal") then
+			toast("Dawn!", "The ghosts flee. Back to farming!")
 		end
 	end
 	state:GetAttributeChangedSignal("Phase"):Connect(onPhase)
@@ -2891,7 +3051,7 @@ remotes
 			)
 			play(Config.Sounds.Coin, 1, 0.9)
 			candyShower(8)
-			if raw > 0 then
+			if raw > 0 and unlocked("Brew") then
 				task.delay(1.2, function()
 					hint("Tip: brew pumpkins in a Magic Cauldron first. They sell for x2 to x10!")
 				end)
@@ -2989,13 +3149,15 @@ end)
 remotes
 	:WaitForChild("KingDone").OnClientEvent
 	:Connect(function(kind: string, payouts: { [string]: number }, mvp: Player?)
+		local mine = kind == "won" and payouts[tostring(player.UserId)] or nil
+		if not unlocked("King") and not mine then
+			return
+		end
 		if kind == "won" then
-			local mine = payouts[tostring(player.UserId)]
-			banner(
+			toast(
 				"THE KING IS DEFEATED!",
 				(mine and ("+" .. mine .. " 🍬 for helping! ") or "")
-					.. (mvp and ("MVP: " .. mvp.DisplayName) or ""),
-				4
+					.. (mvp and ("MVP: " .. mvp.DisplayName) or "")
 			)
 			burst(kingFace.Position, Color3.fromRGB(255, 220, 120), 120, 60, SPARKLE, 2.4)
 			burst(kingFace.Position, Color3.fromRGB(255, 140, 40), 40, 30)
@@ -3007,38 +3169,23 @@ remotes
 				:Create(camera, TweenInfo.new(0.6, Enum.EasingStyle.Quad), { FieldOfView = 70 })
 				:Play()
 		elseif kind == "wake" then
-			banner("THE PUMPKIN KING WAKES!", "Everyone bonk him!", 3, Color3.fromRGB(255, 90, 80))
+			toast("THE PUMPKIN KING WAKES!", "Everyone bonk him!")
 			play(Config.Sounds.Brew, 0.4, 1)
 		elseif kind == "swell" then
-			banner("HE'S GOING TO BURST!", nil, 1.5, Color3.fromRGB(255, 120, 60))
+			toast("HE'S GOING TO BURST!")
 			play(Config.Sounds.Brew, 0.5, 1)
 		elseif kind == "phase2" then
-			banner(
-				"SHIELD UP!",
-				"Bonk the Lantern ghosts at the cauldrons!",
-				3,
-				Color3.fromRGB(200, 140, 255)
-			)
+			toast("SHIELD UP!", "Bonk the Lantern ghosts at the cauldrons!")
 			play(Config.Sounds.Brew, 0.6, 1)
 		elseif kind == "stun" then
-			banner("HE'S STUNNED! SMASH HIM!", "Double damage!", 2.5, Color3.fromRGB(255, 200, 60))
+			toast("HE'S STUNNED! SMASH HIM!", "Double damage!")
 			play(Config.Sounds.Bonk, 0.5, 1)
 			task.spawn(shake, 1, 8)
 		elseif kind == "phase3" then
-			banner(
-				"THE KING IS ANGRY!",
-				"Faster attacks. Finish him!",
-				2.5,
-				Color3.fromRGB(255, 70, 50)
-			)
+			toast("THE KING IS ANGRY!", "Faster attacks. Finish him!")
 			play(Config.Sounds.Brew, 0.4, 1)
 		else
-			banner(
-				"THE KING ESCAPED",
-				"The Jack is half full. Sell to try again!",
-				3,
-				Color3.fromRGB(255, 140, 120)
-			)
+			toast("THE KING ESCAPED", "The Jack is half full. Sell to try again!")
 		end
 	end)
 
@@ -3059,7 +3206,6 @@ end)
 
 local ZoneView: { [string]: any } = {}
 do
-	local GREEN = Color3.fromRGB(150, 255, 110)
 	local folders: { [string]: Instance } = {}
 	-- One X/Z box per Spawn part of each zone: { minX, maxX, minZ, maxZ }. A single box around all
 	-- of a zone's spawns would cover the market between Zone1's strips, so each spawn counts alone.
@@ -3170,7 +3316,7 @@ do
 				"🔒 Locked · unlock it at the gate for %s 🍬",
 				short(def.cost or 0)
 			)
-		banner(string.upper(def.title), sub, 2, Color3.fromRGB(255, 190, 90))
+		toast(string.upper(def.title), sub)
 	end
 
 	local known = ownedSet()
@@ -3180,12 +3326,7 @@ do
 			for _, zoneId in Config.ZoneOrder do
 				local def = Config.Zones[zoneId]
 				if def and now[zoneId] and not known[zoneId] and (def.cost or 0) > 0 then
-					banner(
-						string.upper(def.title) .. " UNLOCKED!",
-						"New pumpkins to smash inside!",
-						2.6,
-						GREEN
-					)
+					toast(string.upper(def.title) .. " UNLOCKED!", "New pumpkins to smash inside!")
 					play(Config.Sounds.Coin, 0.8, 1)
 				end
 			end
@@ -3670,15 +3811,20 @@ do
 		return nest and nest.Position
 	end
 
-	-- Carrying toward your base: "Go to your Base!" until you stand on it.
+	-- Carrying toward your base: "Go to your Base!" until you stand on it, then "Place it!".
 	local function goHome(root: BasePart, soil: BasePart): string
 		local d =
 			Vector3.new(root.Position.X - soil.Position.X, 0, root.Position.Z - soil.Position.Z)
 		local reach = math.max(soil.Size.X, soil.Size.Z) / 2 + 6
-		return d.Magnitude < reach and "Place your Pumpkin!" or "Go to your Base!"
+		return d.Magnitude < reach and "Place it!" or "Go to your Base!"
 	end
 
-	-- One verb, a progress line and the target for what you should do right now.
+	-- The Zone1 Hoard's real guardian and pumpkin type (Config.Hoards), never a hard-coded name.
+	local GUARDIAN = Config.Hoards.Zone1.guardian or "Guardian"
+
+	-- One verb, a progress line and the target for what you should do right now. The verb always
+	-- matches where the arrows point: while you carry something in the tutorial it is only
+	-- "Go to your Base!" / "Place it!"; with empty hands it is the current step's own verb.
 	local function objective(data, root: BasePart, soil: BasePart): (string, string, Vector3?)
 		local carry = player:GetAttribute("Carry") or 0
 		local unbrewed = carry - (player:GetAttribute("CarryBrewed") or 0)
@@ -3698,75 +3844,67 @@ do
 			end
 		end
 		local kind, stat = current and current.target, current and current.stat or ""
-		-- Carrying wins over every other goal, with the same numbers as the carry HUD line:
-		-- 1. a Smash order with room left on the stack keeps you smashing ("1/3 · or bring them
-		--    home"); 2. orders that spend the stack elsewhere (brew, sell) lead there; 3. anything
-		--    else (full stack included) sends you home: "Go to your Base!", "Place your Pumpkin!"
-		--    once you stand on it.
+		local sub = current
+				and string.format(
+					"%s  %s/%s",
+					current.text,
+					short(current.have or 0),
+					short(current.need or 1)
+				)
+			or ""
+		if data.tutorial and current then
+			sub = string.format(
+				"Step %d/%d · %s",
+				data.step or 1,
+				data.steps or #Config.TutorialOrders,
+				current.text
+			)
+		end
 		if carry > 0 then
 			local cap = Config.BaseCarry
 				+ (player:GetAttribute("Up_Stack") or 0)
 				+ (player:GetAttribute("Pass_BigStack") and Config.BigStackCarry or 0)
-			if kind == "zone" and carry < cap then
-				return "Smash a Pumpkin!",
-					string.format(
-						"%s/%s · or bring them home",
-						short(current.have or 0),
-						short(current.need or 1)
-					),
-					zone
-			end
-			local orderSub = current
-					and string.format(
-						"%s  %s/%s",
-						current.text,
-						short(current.have or 0),
-						short(current.need or 1)
-					)
-				or ""
-			if kind == "hoard" then
-				-- Room for one more: go steal it; hands full: put these down first.
-				if carry < cap then
-					return "Steal a Golden Pumpkin!",
-						"Sneak in and grab one from the Hoard nest",
-						hoardSpot("Zone1") or zone
+			-- After the tutorial a few orders spend the stack elsewhere (only once unlocked).
+			if not data.tutorial then
+				if kind == "zone" and carry < cap then
+					return "Smash a Pumpkin!", sub, zone
+				elseif kind == "cauldron" and unbrewed > 0 and unlocked("Brew") then
+					return "Brew it!", sub, nearestCauldron(root.Position)
+				elseif kind == "witch" and unlocked("Sell") then
+					return "Sell to the Witch!", sub, stallPosition("Sell")
 				end
-				return goHome(root, soil), "Hands full: place these, then go steal!", soil.Position
 			end
-			if kind == "cauldron" and unbrewed > 0 then
-				return "Brew it!", orderSub, nearestCauldron(root.Position)
-			elseif kind == "witch" or kind == "king" then
-				return "Sell to the Witch!", orderSub, stallPosition("Sell")
-			end
+			local carryLine = string.format(
+				"Carrying %d/%d · worth %s 🍬",
+				carry,
+				cap,
+				short(player:GetAttribute("CarryValue") or 0)
+			)
 			return goHome(root, soil),
-				string.format(
-					"Carrying %d/%d · worth %s 🍬",
-					carry,
-					cap,
-					short(player:GetAttribute("CarryValue") or 0)
-				),
+				(data.tutorial and kind == "place") and sub or carryLine,
 				soil.Position
 		end
-		if phase == "BloodMoon" and state:GetAttribute("KingHp") ~= nil then
+		if phase == "BloodMoon" and state:GetAttribute("KingHp") ~= nil and unlocked("King") then
 			return "Hit the King!", "Everyone bonk the Pumpkin King!", kingFace.Position
 		end
-		if phase == "BloodMoon" and state:GetAttribute("LocksOff") then
+		if phase == "BloodMoon" and state:GetAttribute("LocksOff") and unlocked("PlayerSteal") then
 			local other = otherBase(root.Position)
 			if other then
 				return "Steal a Pumpkin!", "Blood Moon: every lock is off!", other
 			end
 		end
 		if not data.tutorial then
-			-- After the tutorial: an affordable next zone comes first, then midnight ghosts.
+			-- After the tutorial: an affordable next zone comes first, then midnight ghosts (only
+			-- once raids are on for you).
 			local nextZone = ZoneView.nextLocked()
 			local def = nextZone and Config.Zones[nextZone]
 			local gate = nextZone and ZoneView.gate(nextZone)
 			if def and gate and candyValue.Value >= (def.cost or 0) then
-				return "Unlock the " .. def.title .. "!",
+				return "Unlock the " .. def.title .. "! " .. (def.emoji or ""),
 					"Costs " .. short(def.cost or 0) .. " 🍬 at its gate",
 					gate
 			end
-			if phase == "Midnight" then
+			if phase == "Midnight" and unlocked("PlayerSteal") then
 				return "Bonk the Ghosts!",
 					"Ghosts are raiding the bases",
 					nearestGhost(root.Position) or soil.Position
@@ -3776,37 +3914,23 @@ do
 			local left = (data.refreshAt or 0) - workspace:GetServerTimeNow()
 			return "Smash a Pumpkin!", "New orders from the Witch in " .. clockText(left), zone
 		end
-		local sub = string.format(
-			"%s  %s/%s",
-			current.text,
-			short(current.have or 0),
-			short(current.need or 1)
-		)
-		if data.tutorial then
-			sub = string.format("Step %d/%d · %s", data.step or 1, data.steps or 8, sub)
-		end
 		-- Empty hands from here on (carrying returned above).
 		if kind == "hoard" then
-			return "Steal a Golden Pumpkin!", sub, hoardSpot("Zone1") or zone
-		elseif
-			kind == "zone"
-			or kind == "place"
-			or (kind == "patch" and stat == "income")
-			or kind == "cauldron"
-			or kind == "witch"
-			or kind == "king"
-		then
-			-- Sales fill the Giant Jack, which wakes the King.
-			return "Smash a Pumpkin!", sub, zone
-		elseif kind == "steal" then
-			return "Steal a Pumpkin!", sub, otherBase(root.Position) or soil.Position
+			return "Steal from the " .. GUARDIAN .. "!", sub, hoardSpot("Zone1") or zone
 		elseif kind == "tools" or kind == "seeds" then
 			return "Buy a Scythe!", sub, stallPosition("Seeds")
 		elseif kind == "upgrades" then
-			return "Buy an Upgrade!", sub, stallPosition("Upgrades")
+			return "Upgrade your Base!", sub, stallPosition("Upgrades")
 		elseif kind == "gate" then
 			local nextZone = ZoneView.nextLocked()
-			return "Unlock a Zone!", sub, nextZone and ZoneView.gate(nextZone) or soil.Position
+			local def = nextZone and Config.Zones[nextZone]
+			if def then
+				return "Unlock the " .. def.title .. "! " .. (def.emoji or ""),
+					"Costs " .. short(def.cost or 0) .. " 🍬 at its gate",
+					ZoneView.gate(nextZone) or soil.Position
+			end
+		elseif kind == "steal" then
+			return "Steal a Pumpkin!", sub, otherBase(root.Position) or soil.Position
 		elseif stat == "bonkGhost" then
 			local ghost = phase == "Midnight" and nearestGhost(root.Position) or nil
 			return "Bonk the Ghosts!", sub .. " · they come at midnight", ghost or soil.Position
@@ -3817,7 +3941,8 @@ do
 		elseif stat == "rescue" then
 			return "Save your Pumpkins!", sub, soil.Position
 		end
-		return "Go to your Base!", sub, soil.Position
+		-- Smash, place, income, brew, sell and King orders all start with a fresh pumpkin.
+		return "Smash a Pumpkin!", sub, zone
 	end
 
 	task.spawn(function()
@@ -4076,7 +4201,7 @@ do
 end
 
 remotes:WaitForChild("OrderDone").OnClientEvent:Connect(function(text: string, reward: string)
-	banner("ORDER DONE!", text .. " · " .. reward, 2.6, Color3.fromRGB(150, 255, 110))
+	toast("✅ " .. text .. "!", reward)
 	play(Config.Sounds.Coin, 1.2, 0.9)
 	play(Config.Sounds.Brew, 1.6, 0.5)
 end)
@@ -4227,7 +4352,7 @@ do
 		return holder
 	end
 
-	local function showDaily(streak: number, candy: number, token: boolean)
+	local function showDaily(streak: number, candy: number)
 		close(false)
 		local dim = Instance.new("Frame")
 		dim.Name = "DailyDim"
@@ -4335,7 +4460,11 @@ do
 			dayLabel.Position = UDim2.fromOffset(4, 4)
 			dayLabel.Size = UDim2.new(1, -8, 0, 18)
 			dayLabel.ZIndex = 12
-			local value = day == Config.DailyMaxStreak and "💀" or short(Config.DailyCandy * day)
+			local value = short(
+				Config.DailyCandy
+					* day
+					* (day == Config.DailyMaxStreak and Config.DailyLastMult or 1)
+			)
 			local mid = textLabel(
 				cell,
 				past and "✓" or value,
@@ -4344,7 +4473,7 @@ do
 			mid.Position = UDim2.new(0, 4, 0, 24)
 			mid.Size = UDim2.new(1, -8, 1, -30)
 			mid.ZIndex = 12
-			if not past and day ~= Config.DailyMaxStreak then
+			if not past then
 				mid.Text = "🍬" .. value
 			end
 		end
@@ -4361,8 +4490,10 @@ do
 		reward:FindFirstChildOfClass("UIStroke").Thickness = 3.5
 		local sub = textLabel(
 			frame,
-			token and "Bonus: your next brew is CURSED x10!" or "Come back tomorrow for more!",
-			token and Color3.fromRGB(190, 110, 255) or Color3.fromRGB(110, 100, 130),
+			streak == Config.DailyMaxStreak
+					and string.format("Day %d bonus: x%d candy!", streak, Config.DailyLastMult)
+				or "Come back tomorrow for more!",
+			Color3.fromRGB(110, 100, 130),
 			Enum.Font.GothamBold
 		)
 		sub:FindFirstChildOfClass("UIStroke"):Destroy()
@@ -4387,11 +4518,24 @@ do
 		play(Config.Sounds.Brew, 1.4, 0.6)
 	end
 
+	-- mode "toast": the first visit ever, or the tutorial is still running (no popup then; the
+	-- candy is already granted). "panel": the chest panel, after the HUD has settled.
 	remotes
 		:WaitForChild("Daily").OnClientEvent
-		:Connect(function(streak: number, candy: number, token: boolean)
-			-- Let the HUD settle after joining before the panel pops in.
-			task.delay(1.2, showDaily, streak, candy, token)
+		:Connect(function(streak: number, candy: number, _token: boolean?, mode: string?)
+			if mode ~= "panel" then
+				task.delay(1.5, function()
+					hint(
+						string.format(
+							'🎁 Daily gift: <font color="#FFD23C">+%s 🍬</font> (Day %d)',
+							short(candy),
+							streak
+						)
+					)
+				end)
+				return
+			end
+			task.delay(1.2, showDaily, streak, candy)
 		end)
 end
 
@@ -4893,7 +5037,8 @@ end)
 
 remotes:WaitForChild("Hoard").OnClientEvent:Connect(function(kind: string, seedId: string?)
 	local seed = seedById[seedId or ""]
-	local name = seed and string.upper(seed.name) or "GOLDEN"
+	local hoardSeed = seedById[Config.Hoards.Zone1.type]
+	local name = string.upper((seed or hoardSeed or { name = "Hoard" }).name)
 	if kind == "grab" then
 		hint(
 			string.format(

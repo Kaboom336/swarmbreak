@@ -1,6 +1,27 @@
 -- Tuning for Pumpkin Patch Panic. All values are first guesses to judge on screen.
+-- Shared by several entries below (one place to change them).
+local SHIELD = 600 -- new-player shield: seconds of a player's total playtime
+local HAUNT_COST = 2500000
+local HOARD1 = "Ghost" -- the Zone1 Hoard's pumpkin type (the tutorial text names it)
 return {
 	StartCandy = 30,
+
+	-- Unlock gates (Hit Game Bible: learn at most 5 systems in the first 10 minutes). Seconds of a
+	-- player's saved total playtime (player attribute "PlayTime"); the server publishes each gate as
+	-- a sticky "Unlock_<Name>" player attribute and clients show / hide by it. PlayerSteal: steal
+	-- from other bases, the Lock pill / prompt, ghost raids on your base and their orders (equals
+	-- the new-player shield). Sell: the Witch and Pick up on your own plots (also opens when every
+	-- plot of your base is full). Brew: cauldron prompts. LuckySwing: the upgrade card. King: the
+	-- Blood Moon / King banners, chip and orders (the event still runs for the server).
+	-- HauntPillAt: lifetime candy that shows the Haunt pill.
+	Unlocks = {
+		PlayerSteal = SHIELD,
+		Sell = 1800,
+		Brew = 1800,
+		LuckySwing = 1800,
+		King = 1800,
+		HauntPillAt = 0.5 * HAUNT_COST,
+	},
 
 	-- Pumpkin TYPES in rarity order (the table keeps its old name "Seeds" and the old ids so the
 	-- Index and saves still work). income = candy per second when placed on a base plot (before
@@ -189,7 +210,7 @@ return {
 	-- farthest from the map centre, the others HoardOutward studs outward from the zone centre
 	-- (a Model or Part named "Hoard" in a zone folder overrides the spot).
 	Hoards = {
-		Zone1 = { type = "Ghost", guardian = "Scarecrow" },
+		Zone1 = { type = HOARD1, guardian = "Scarecrow" },
 		Zone2 = { type = "Moon", guardian = "SkeletonKnight" },
 		Zone3 = { type = "Golden", guardian = "TreeEnt" },
 		Zone4 = { type = "Shadow", guardian = "SwampToad" },
@@ -216,6 +237,9 @@ return {
 	CarveSeconds = 20,
 	CarveFastSeconds = 8,
 	CarveFastOrder = 1,
+	-- During a player's first CarveNewUntil seconds of playtime every type carves in CarveNewSeconds.
+	CarveNewSeconds = 8,
+	CarveNewUntil = 1800,
 	JackHop = 3,
 
 	-- Tools (scythes). Owning is saved; the best owned one is always the one you hold.
@@ -269,8 +293,8 @@ return {
 	StealHold = 1.5,
 	-- The robbed owner gets this share of the stolen pumpkin's sell value.
 	StealOwnerShare = 0.25,
-	-- Players newer than this (in this session) cannot be robbed.
-	NewPlayerShield = 600,
+	-- Players with less total playtime than this cannot be robbed (by players or midnight ghosts).
+	NewPlayerShield = SHIELD,
 	-- A victim cannot be robbed again for this long.
 	VictimCooldown = 120,
 	LockSeconds = 45,
@@ -366,8 +390,15 @@ return {
 	-- A finished Pumpkin Index row (all 5 finishes of a type) sells that type for 10% more.
 	IndexRowBonus = 0.1,
 	Upgrades = {
-		Stack = { title = "Bigger Stack", text = "Carry 1 more pumpkin", base = 40, max = 10 },
-		Mallet = { title = "Sharp Blade", text = "+10% swing damage", base = 50, max = 10 },
+		Stack = { title = "Upgrade your Base!", text = "Carry +1", base = 40, max = 10 },
+		-- Cut (two ways to buy damage): not sold; its saved level is kept but has no effect.
+		Mallet = {
+			title = "Sharp Blade",
+			text = "+10% swing damage",
+			base = 50,
+			max = 10,
+			cut = true,
+		},
 		Lucky = {
 			title = "Lucky Swing",
 			text = "+5% chance of a rarer pumpkin",
@@ -381,48 +412,35 @@ return {
 	-- Witch's Orders. B = income of the player's best pumpkin type ever found x OrderIncomeSeconds.
 	OrderIncomeSeconds = 60,
 	OrderRefresh = 1200,
-	RotatingCount = 3,
+	RotatingCount = 1,
 	-- target tells the client which verb to show in the top objective banner and where the red
-	-- ground arrows point: zone (nearest wild pumpkin), patch (your
-	-- base), place (your base while carrying, else the zone), steal (another base), cauldron,
-	-- witch, tools (the tool stall), upgrades, king, gate (the next locked zone's gate), hoard (the
-	-- Zone1 Hoard nest). Saved progress counts steps; the server shifts saves from before the Hoard
-	-- step (orders save version 2).
+	-- ground arrows point: zone (nearest wild pumpkin), patch (your base), place (your base while
+	-- carrying, else the zone), steal (another base), cauldron, witch, tools (the tool stall),
+	-- upgrades (the upgrade stall), king, gate (the next locked zone's gate), hoard (the Zone1 Hoard
+	-- nest). Saved progress counts steps (orders save version 3; older saves are mapped onto these
+	-- 5 steps by the server). After the tutorial: the Graveyard gate, then one rotating order at a
+	-- time, only from unlocked systems.
 	TutorialOrders = {
 		{
 			stat = "smash",
-			need = 3,
-			text = "Smash 3 pumpkins",
+			need = 1,
+			text = "Smash a pumpkin",
 			target = "zone",
 			reward = { candy = 25 },
 		},
 		{
-			stat = "hoardSteal",
-			need = 1,
-			text = "Steal a Golden Pumpkin!",
-			target = "hoard",
-			reward = { candy = 60 },
-		},
-		{
 			stat = "place",
 			need = 1,
-			text = "Place a pumpkin on your base",
+			text = "Place it on your base",
 			target = "place",
 			reward = { candy = 40 },
 		},
 		{
-			stat = "brew",
+			stat = "hoardSteal",
 			need = 1,
-			text = "Brew a pumpkin at a Magic Cauldron",
-			target = "cauldron",
-			reward = { candy = 40 },
-		},
-		{
-			stat = "sell",
-			need = 1,
-			text = "Sell a pumpkin to the Witch",
-			target = "witch",
-			reward = { candy = 80 },
+			text = "Steal a " .. HOARD1 .. " Pumpkin from the Hoard",
+			target = "hoard",
+			reward = { candy = 60 },
 		},
 		{
 			stat = "buyTool",
@@ -432,25 +450,11 @@ return {
 			reward = { candy = 120 },
 		},
 		{
-			stat = "bonkGhost",
-			need = 3,
-			text = "Bonk 3 ghosts",
-			target = "patch",
-			reward = { candy = 150 },
-		},
-		{
-			stat = "lock",
+			stat = "upgrade:Stack",
 			need = 1,
-			text = "Lock your base once",
-			target = "patch",
-			reward = { candy = 150 },
-		},
-		{
-			stat = "kingHit",
-			need = 1,
-			text = "Hit the Pumpkin King",
-			target = "king",
-			reward = { candy = 500, title = "Patch Keeper" },
+			text = "Upgrade your Base: Carry +1",
+			target = "upgrades",
+			reward = { candy = 150, title = "Patch Keeper" },
 		},
 	},
 	-- b = reward in multiples of B. reach = need is a level to reach (not a count); its need is
@@ -515,7 +519,7 @@ return {
 
 	-- Haunt (rebirth): cost grows x HauntGrowth per Haunt. Each Haunt adds HauntSellBonus to sell
 	-- value and income. Haunt number n gives n Souls (1st = 1, 2nd = 2, ...).
-	HauntCost = 2500000,
+	HauntCost = HAUNT_COST,
 	HauntGrowth = 3,
 	HauntSellBonus = 0.5,
 
@@ -604,10 +608,13 @@ return {
 	SkillGhostCandyMult = 2,
 	SkillKingDamageMult = 1.5,
 
-	-- Daily chest: streak day n gives DailyCandy x n candy.
-	-- The streak runs 1..DailyMaxStreak and then starts over at 1; the last day adds a Cursed token.
+	-- Daily chest: streak day n gives DailyCandy x n candy (the last day x DailyLastMult instead of
+	-- the old Cursed token). The streak runs 1..DailyMaxStreak and then starts over at 1. The very
+	-- first visit grants day 1 with a toast (no popup); later days open the panel only after the
+	-- tutorial.
 	DailyCandy = 100,
 	DailyMaxStreak = 7,
+	DailyLastMult = 2,
 
 	-- Monetization. Paste the real IDs from the Creator Dashboard; an ID of 0 hides that item and
 	-- turns its effect off (all 0 hides the SHOP button). Prices are set in the dashboard; the

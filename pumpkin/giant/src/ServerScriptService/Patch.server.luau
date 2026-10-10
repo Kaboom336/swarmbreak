@@ -3,6 +3,9 @@
 -- in a Magic Cauldron for a multiplier, sell them to the Witch, steal from other bases (and lock
 -- yours). At midnight ghosts raid the bases. Every sale fills the Giant Jack; when it is full the
 -- Blood Moon turns every lock off for a while, then everyone fights the Pumpkin King.
+-- New players meet only the core loop (smash, place, Hoard steal, Shop, zone gates): stealing,
+-- locks and ghost raids open after the new-player shield, Sell / Brew / King / Lucky Swing after
+-- about 30 minutes and Haunt at half its cost (Config.Unlocks, see Unlock below).
 local AnalyticsService = game:GetService("AnalyticsService")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
@@ -149,6 +152,17 @@ local function isLoaded(player: Player): boolean
 	return player:GetAttribute("Loaded") == true
 end
 
+-- Unlock gates (Config.Unlocks): sticky "Unlock_<Name>" player attributes, set by Unlock.refresh
+-- (defined with the bases below) from the saved total playtime ("PlayTime"), lifetime candy and a
+-- full base. Clients show / hide by the same attributes; the server checks them here.
+-- Haunt is the HauntPillAt gate (lifetime candy); the others are playtime gates.
+local Unlock: { [string]: any } = {
+	NAMES = { "PlayerSteal", "Sell", "Brew", "LuckySwing", "King", "Haunt" },
+}
+function Unlock.has(player: Player?, name: string): boolean
+	return player ~= nil and player:GetAttribute("Unlock_" .. name) == true
+end
+
 -- Haunts add to sell value; VIP and Double Candy multiply on top.
 local function sellMult(player: Player): number
 	return (1 + Config.HauntSellBonus * (player:GetAttribute("Haunts") or 0))
@@ -230,11 +244,11 @@ local function nextLockedZone(player: Player): string?
 	return nil
 end
 
--- Swing damage on wild pumpkins and the King: tool damage x Sharp Blade x Heavy Swing.
+-- Swing damage on wild pumpkins and the King: tool damage x Heavy Swing. Sharp Blade (Mallet) is
+-- cut: its saved level is kept but ignored.
 local function swingDamage(player: Player): number
-	local sharp = 1 + Config.SharpBonus * upgradeLevel(player, "Mallet")
 	local heavy = hasSkill(player, "HeavyMallet") and Config.SkillDamageMult or 1
-	return math.max(1, math.floor(bestTool(player).damage * sharp * heavy + 0.5))
+	return math.max(1, math.floor(bestTool(player).damage * heavy + 0.5))
 end
 
 -- Pumpkin types a player has found at least once (Orange counts from the start).
@@ -369,11 +383,57 @@ local function makeOrder(id: string, base: number?, level: number?): Order?
 	}
 end
 
+-- Rotating orders are only dealt once their system is unlocked (stat -> Config.Unlocks name).
+local ORDER_UNLOCK = {
+	steal = "PlayerSteal",
+	stopThief = "PlayerSteal",
+	rescue = "PlayerSteal",
+	bonkGhost = "PlayerSteal",
+	sell = "Sell",
+	sellStackOf5 = "Sell",
+	newIndex = "Sell",
+	sellBrewed = "Brew",
+	brewRare = "Brew",
+	["sellMutation:Cursed"] = "Brew",
+	kingHit = "King",
+}
+
 local function nextOrders(player: Player)
 	local o = orders[player]
+	-- Tutorial steps the player already did some other way are skipped (a better scythe owned,
+	-- the stack already upgraded), so an old save can never get stuck on them.
+	while o.tut <= TUTORIAL_COUNT do
+		local stat = Config.TutorialOrders[o.tut].stat
+		if
+			(stat == "buyTool" and bestTool(player).order >= 2)
+			or (stat == "upgrade:Stack" and upgradeLevel(player, "Stack") >= 1)
+		then
+			o.tut += 1
+		else
+			break
+		end
+	end
 	if o.tut <= TUTORIAL_COUNT then
 		o.list = { makeOrder("T" .. o.tut) :: Order }
 		return
+	end
+	-- Right after the tutorial: the first gated zone (the Graveyard) is the only goal.
+	local firstGate = nil
+	for _, zoneId in Config.ZoneOrder do
+		local def = Config.Zones[zoneId]
+		if def and (def.cost or 0) > 0 then
+			firstGate = zoneId
+			break
+		end
+	end
+	if firstGate and not hasZone(player, firstGate) then
+		for i, def in Config.RotatingOrders do
+			if def.stat == "unlockZone" then
+				o.list = { makeOrder("R" .. i, orderBase(player)) :: Order }
+				o.refreshAt = os.time() + Config.OrderRefresh
+				return
+			end
+		end
 	end
 	-- Skip orders the player cannot finish right now.
 	local indexFull = false
@@ -389,9 +449,11 @@ local function nextOrders(player: Player)
 	end
 	local pool = {}
 	for i, def in Config.RotatingOrders do
+		local gate = ORDER_UNLOCK[def.stat]
 		local impossible = (def.stat == "sellStackOf5" and carryCapacity(player) < 5)
 			or (def.stat == "newIndex" and indexFull)
 			or (def.stat == "unlockZone" and nextLockedZone(player) == nil)
+			or (gate ~= nil and not Unlock.has(player, gate))
 		if not impossible then
 			table.insert(pool, i)
 		end
@@ -502,6 +564,15 @@ local function track(player: Player?, stat: string, amount: number?, reach: bool
 	if finished and o.tut <= TUTORIAL_COUNT then
 		o.tut += 1
 		nextOrders(player)
+	elseif finished then
+		-- One rotating order at a time: the next one is dealt as soon as this one is done.
+		local open = false
+		for _, order in o.list do
+			open = open or not order.done
+		end
+		if not open then
+			nextOrders(player)
+		end
 	end
 	if changed then
 		publishOrders(player)
@@ -511,16 +582,25 @@ end
 local function loadOrders(player: Player, saved: any)
 	local o: Orders = { tut = 1, list = {}, refreshAt = 0, counters = {} }
 	orders[player] = o
-	-- Saves from before the Hoard step (orders version 1) count tutorial steps one lower from
-	-- step 2 on: shift them, and deal a fresh tutorial order when the shift lands inside it.
+	-- Older saves count steps of the old tutorials: version 1 (8 steps, before the Hoard step) is
+	-- shifted onto version 2 (9 steps: smash, hoard, place, brew, sell, tool, ghosts, lock, King),
+	-- which is mapped onto today's 5 steps (smash, place, hoard, tool, stack). A mapped save gets
+	-- freshly dealt orders.
 	local shifted = false
 	if type(saved) == "table" then
 		if type(saved.tut) == "number" then
-			o.tut = math.clamp(math.floor(saved.tut), 1, TUTORIAL_COUNT + 1)
-			if saved.v ~= 2 and o.tut >= 2 then
-				o.tut = math.min(o.tut + 1, TUTORIAL_COUNT + 1)
-				shifted = o.tut <= TUTORIAL_COUNT
+			local tut = math.max(1, math.floor(saved.tut))
+			if saved.v ~= 3 then
+				if saved.v ~= 2 and tut >= 2 then
+					tut += 1
+				end
+				-- Old (version 2) step -> new step; 10+ = the old tutorial was finished.
+				local V2_TO_V3 = { 1, 2, 2, 4, 4, 4, 5, 5, 5 }
+				tut = V2_TO_V3[tut] or TUTORIAL_COUNT + 1
+				-- Re-deal: old rotating lists may hold orders of systems that are locked now.
+				shifted = true
 			end
+			o.tut = math.clamp(tut, 1, TUTORIAL_COUNT + 1)
 		end
 		if type(saved.refreshAt) == "number" then
 			o.refreshAt = saved.refreshAt
@@ -586,7 +666,7 @@ local function saveOrders(player: Player): any
 			reward = string.sub(order.id, 1, 1) == "R" and order.reward or nil,
 		})
 	end
-	return { v = 2, tut = o.tut, refreshAt = o.refreshAt, counters = o.counters, list = list }
+	return { v = 3, tut = o.tut, refreshAt = o.refreshAt, counters = o.counters, list = list }
 end
 
 -- Saving -------------------------------------------------------------------------------------
@@ -783,6 +863,17 @@ do
 		if data.firstHoard == true then
 			player:SetAttribute("FirstHoardDone", true)
 		end
+		-- Total playtime (unlock gates, the new-player shield) and sticky unlocks.
+		if type(data.playTime) == "number" then
+			player:SetAttribute("PlayTime", math.max(0, math.floor(data.playTime)))
+		end
+		if type(data.unlocks) == "table" then
+			for _, name in data.unlocks do
+				if type(name) == "string" and table.find(Unlock.NAMES, name) then
+					player:SetAttribute("Unlock_" .. name, true)
+				end
+			end
+		end
 		local carved = Bases.carvedOf[player] or {}
 		Bases.carvedOf[player] = carved
 		if type(data.carved) == "table" then
@@ -828,7 +919,7 @@ do
 		-- Saves from before Witch's Orders skip the tutorial (a maxed Stack could never finish it).
 		local savedOrders = data.orders
 		if savedOrders == nil and type(data.candy) == "number" then
-			savedOrders = { v = 2, tut = TUTORIAL_COUNT + 1 }
+			savedOrders = { v = 3, tut = TUTORIAL_COUNT + 1 }
 		end
 		loadOrders(player, savedOrders)
 	end
@@ -866,11 +957,18 @@ do
 		end
 		local stats = player:FindFirstChild("leaderstats")
 		local kings = stats and stats:FindFirstChild("Kings") :: IntValue?
-		local carvedList = {}
+		local carvedList, unlockList = {}, {}
 		for id in Bases.carvedOf[player] or {} do
 			table.insert(carvedList, id)
 		end
+		for _, name in Unlock.NAMES do
+			if Unlock.has(player, name) then
+				table.insert(unlockList, name)
+			end
+		end
 		return {
+			playTime = player:GetAttribute("PlayTime") or 0,
+			unlocks = unlockList,
 			firstHoard = player:GetAttribute("FirstHoardDone") == true,
 			carved = carvedList,
 			candy = candy.Value,
@@ -1617,8 +1715,12 @@ do
 			pumpkin:SetAttribute("JackHome", pumpkin.CFrame)
 			pumpkin:SetAttribute("Jack", true)
 		else
-			local seconds = seedById[seedId].order <= Config.CarveFastOrder
-					and Config.CarveFastSeconds
+			-- New players (first CarveNewUntil s of playtime): every type carves fast.
+			local owner = Players:GetPlayerByUserId(ownerId)
+			local newbie = owner ~= nil
+				and (owner:GetAttribute("PlayTime") or 0) < Config.CarveNewUntil
+			local seconds = newbie and Config.CarveNewSeconds
+				or seedById[seedId].order <= Config.CarveFastOrder and Config.CarveFastSeconds
 				or Config.CarveSeconds
 			pumpkin:SetAttribute("CarveAt", now() + seconds)
 			carveTag(pumpkin, seconds)
@@ -1653,6 +1755,20 @@ do
 		end
 		Bases.refresh(plot.Parent)
 		return p
+	end
+
+	-- Every plot of the patch holds a pumpkin (opens the Witch early).
+	function Bases.full(patch: Instance?): boolean
+		if not patch then
+			return false
+		end
+		local plots = plotsOf(patch)
+		for _, plot in plots do
+			if not (plotState[plot] and plotState[plot].pumpkin) then
+				return false
+			end
+		end
+		return #plots > 0
 	end
 
 	local function firstEmptyPlot(patch: Instance?): BasePart?
@@ -1825,6 +1941,10 @@ do
 		if not aliveRoot(player) then
 			return
 		end
+		-- Picking up only feeds selling / brewing: locked until the Witch opens.
+		if not Unlock.has(player, "Sell") then
+			return
+		end
 		if #(carrying[player] or {}) >= carryCapacity(player) then
 			hint(player, "Your hands are full! Place, brew or sell what you carry first.")
 			return
@@ -1852,13 +1972,17 @@ do
 			return
 		end
 		local t = now()
-		if plot:GetAttribute("Protected") then
+		if not Unlock.has(thief, "PlayerSteal") then
+			-- The prompt is hidden on the client until then; this is the server-side check.
+			return
+		elseif plot:GetAttribute("Protected") then
 			hint(thief, "🛡 Their best pumpkin is protected. Try another one!")
 		elseif Bases.isLocked(patch) then
 			hint(thief, "🔒 This base is locked!")
 		elseif patchOf[thief] and Bases.isLocked(patchOf[thief]) then
 			hint(thief, "You can't steal while your own base is locked.")
-		elseif t - (owner:GetAttribute("JoinedAt") or t) < Config.NewPlayerShield then
+		elseif not Unlock.has(owner, "PlayerSteal") then
+			-- New-player shield: under Config.NewPlayerShield seconds of total playtime.
 			hint(thief, owner.DisplayName .. " is a new farmer and shielded for now.")
 		elseif t - (robbedAt[ownerId] or -math.huge) < Config.VictimCooldown then
 			hint(thief, owner.DisplayName .. " was robbed a moment ago. Try again later.")
@@ -1999,7 +2123,8 @@ do
 
 	function Bases.lock(player: Player)
 		local patch = patchOf[player]
-		if not patch or not isLoaded(player) then
+		if not patch or not isLoaded(player) or not Unlock.has(player, "PlayerSteal") then
+			-- Nobody can raid a shielded base, so the lock opens with the shield's end.
 			return
 		end
 		local t = now()
@@ -2146,6 +2271,29 @@ do
 					Bases.lock(player)
 				end
 			end)
+		end
+	end
+end
+
+-- Sets the unlock flags a player has reached (every second while loaded, and on load). Flags never
+-- turn off again; reset (the Studio "playtime" debug action) recomputes them from scratch.
+function Unlock.refresh(player: Player, reset: boolean?)
+	local gates = Config.Unlocks
+	local played = player:GetAttribute("PlayTime") or 0
+	for _, name in Unlock.NAMES do
+		if not reset and Unlock.has(player, name) then
+			continue
+		end
+		local on
+		if name == "Haunt" then
+			on = (lifetime[player] or 0) >= gates.HauntPillAt
+		else
+			on = played >= (gates[name] or 0) or (name == "Sell" and Bases.full(patchOf[player]))
+		end
+		if reset and not on then
+			player:SetAttribute("Unlock_" .. name, nil)
+		elseif on and not Unlock.has(player, name) then
+			player:SetAttribute("Unlock_" .. name, true)
 		end
 	end
 end
@@ -2479,7 +2627,7 @@ do
 			)
 			Remotes.hintEvent:FireClient(
 				winner,
-				"Your hands are full! It's on the ground: place, brew or sell what you carry."
+				"Your hands are full! It's on the ground: place what you carry on your base first."
 			)
 		end
 		Reveal.send(winner, pumpkin, isNew)
@@ -3319,6 +3467,20 @@ do
 		end
 	end
 
+	-- Midnight reset: every nest is filled up at once (Steal an Egg "ALL EGG RESET!").
+	function Hoards.refillAll()
+		for _, h in hoards do
+			for i = 1, Config.HoardCount do
+				if not h.slots[i] then
+					local p = newPumpkin(h)
+					seat(h, i, p)
+					Remotes.harvestedEvent:FireAllClients(nil, p.Position)
+				end
+			end
+			h.nextRefill = os.clock() + Config.HoardRefill
+		end
+	end
+
 	RunService.Heartbeat:Connect(function(dt)
 		local busy = false
 		for _, h in hoards do
@@ -3596,6 +3758,10 @@ for _, cauldron in cauldronFolder:GetChildren() do
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = pot
 	prompt.Triggered:Connect(function(player)
+		-- Brewing opens later (Config.Unlocks.Brew); the client hides the prompt until then.
+		if not Unlock.has(player, "Brew") then
+			return
+		end
 		local stack = carrying[player] or {}
 		local results = {}
 		for _, pumpkin in stack do
@@ -3697,6 +3863,10 @@ do
 			Remotes.hintEvent:FireClient(player, "Loading your farm...")
 			return
 		end
+		-- The Witch opens later (Config.Unlocks.Sell); the client hides the prompt until then.
+		if not Unlock.has(player, "Sell") then
+			return
+		end
 		local stack = carrying[player] or {}
 		if #stack == 0 then
 			Remotes.hintEvent:FireClient(
@@ -3775,13 +3945,14 @@ do
 	end)
 end
 
--- The old Seeds stall is the tool shop now: its prompt and signs are renamed here.
+-- The old Seeds stall is the tool shop now: its prompt and signs are renamed here. Both stalls
+-- open the one Shop panel, on its Scythes or Upgrades tab.
 for _, kind in { "Seeds", "Upgrades" } do
 	local stall = market:WaitForChild(kind)
 	local tools = kind == "Seeds"
 	local prompt = Instance.new("ProximityPrompt")
-	prompt.ActionText = tools and "Tools" or "Upgrades"
-	prompt.ObjectText = tools and "Tool shop" or "Upgrade stall"
+	prompt.ActionText = "Shop"
+	prompt.ObjectText = tools and "Scythes" or "Upgrades"
 	prompt.HoldDuration = 0
 	prompt.MaxActivationDistance = 12
 	prompt.RequiresLineOfSight = false
@@ -3852,8 +4023,11 @@ end
 
 Remotes.buyUpgradeFunction.OnServerInvoke = function(player: Player, id: unknown)
 	local info = type(id) == "string" and Config.Upgrades[id]
-	if not info then
+	if not info or info.cut then
 		return false, "?"
+	end
+	if id == "Lucky" and not Unlock.has(player, "LuckySwing") then
+		return false, "Locked"
 	end
 	if not isLoaded(player) then
 		return false, "Loading"
@@ -4238,15 +4412,20 @@ end
 
 local spawnGhost
 do
-	-- Ghosts go for pumpkins placed on bases that are not locked.
+	-- Ghosts go for pumpkins placed on bases that are not locked and whose owner is past the
+	-- new-player shield (a ghost must never empty a new farmer's base).
 	local function stealTargets(): { BasePart }
 		local list = {}
 		for plot, s in plotState do
+			local patch = plot.Parent
+			local owner = patch and Players:GetPlayerByUserId(patch:GetAttribute("Owner") or 0)
+				or nil
 			if
 				s.pumpkin
 				and s.pumpkin.Parent == plot
 				and not s.pumpkin:GetAttribute("Targeted")
 				and not Bases.isLocked(plot.Parent)
+				and Unlock.has(owner, "PlayerSteal")
 			then
 				table.insert(list, plot)
 			end
@@ -5211,6 +5390,7 @@ function runDay()
 		return
 	end
 	setPhase("Midnight", Config.MidnightLength)
+	pcall(Hoards.refillAll)
 	local wanted = math.min(
 		Config.GhostMax,
 		math.floor(Config.GhostBase + Config.GhostPerPatch * ownedPatchCount())
@@ -5235,12 +5415,15 @@ end
 -- Daily chest --------------------------------------------------------------------------------
 
 -- Runs on join and from the 5 s loop (players online across UTC midnight). The streak cycles
--- 1..DailyMaxStreak and starts over, so the Cursed token comes once per cycle.
+-- 1..DailyMaxStreak and starts over; the last day pays x DailyLastMult (the Cursed token is cut).
+-- The very first claim ever is only a toast (no popup on the first visit); later claims open the
+-- panel once the tutorial is done, else they are toasts too.
 local function claimDaily(player: Player)
 	if not isLoaded(player) then
 		return
 	end
 	local today = math.floor(os.time() / 86400)
+	local first = dailyOf[player] == nil
 	local last = dailyOf[player] or { day = 0, streak = 0 }
 	if last.day >= today then
 		return
@@ -5249,13 +5432,13 @@ local function claimDaily(player: Player)
 		then math.max(0, math.floor(last.streak)) % Config.DailyMaxStreak + 1
 		else 1
 	dailyOf[player] = { day = today, streak = streak }
-	local candy = Config.DailyCandy * streak
+	local candy = Config.DailyCandy
+		* streak
+		* (streak == Config.DailyMaxStreak and Config.DailyLastMult or 1)
 	addCandy(player, candy)
-	local token = streak == Config.DailyMaxStreak
-	if token then
-		player:SetAttribute("CursedTokens", (player:GetAttribute("CursedTokens") or 0) + 1)
-	end
-	Remotes.dailyEvent:FireClient(player, streak, candy, token)
+	local o = orders[player]
+	local panel = not first and o ~= nil and o.tut > TUTORIAL_COUNT
+	Remotes.dailyEvent:FireClient(player, streak, candy, false, panel and "panel" or "toast")
 end
 
 -- Global board: lifetime candy, top 10 (needs a published game). -----------------------------
@@ -5602,8 +5785,11 @@ local function onPlayerAdded(player: Player)
 	kings.Parent = stats
 	player:SetAttribute("Carry", 0)
 	player:SetAttribute("Income", 0)
-	-- Session start: new players are shielded from stealing for a while.
+	-- Session start; "PlayTime" (saved total seconds played) drives the unlock gates and the
+	-- new-player shield, "SessionTime" counts this session only.
 	player:SetAttribute("JoinedAt", workspace:GetServerTimeNow())
+	player:SetAttribute("PlayTime", 0)
+	player:SetAttribute("SessionTime", 0)
 	for id in Config.Upgrades do
 		player:SetAttribute("Up_" .. id, 0)
 	end
@@ -5667,6 +5853,8 @@ local function onPlayerAdded(player: Player)
 	refreshCarry(player)
 	giveTool(player, true)
 	Bases.refresh(patchOf[player])
+	-- Unlock flags before Loaded, so clients never announce a gate a returning player already had.
+	Unlock.refresh(player)
 	player:SetAttribute("Loaded", true)
 	onboard(player, 1)
 	kingAddPlayer(player)
@@ -5737,6 +5925,17 @@ task.spawn(function()
 		if not refilled then
 			warn("[Patch] Hoard refill failed:", hoardErr)
 		end
+		-- Playtime (session and saved total) and the unlock gates it opens.
+		for _, player in Players:GetPlayers() do
+			if isLoaded(player) then
+				player:SetAttribute("PlayTime", (player:GetAttribute("PlayTime") or 0) + 1)
+				player:SetAttribute("SessionTime", (player:GetAttribute("SessionTime") or 0) + 1)
+				local unlockedOk, unlockErr = pcall(Unlock.refresh, player)
+				if not unlockedOk then
+					warn("[Patch] Unlock refresh failed:", unlockErr)
+				end
+			end
+		end
 		if seconds % 5 == 0 then
 			for _, player in Players:GetPlayers() do
 				claimDaily(player)
@@ -5779,6 +5978,7 @@ if RunService:IsStudio() then
 			phaseToken += 1
 			local token = phaseToken
 			setPhase("Midnight", Config.MidnightLength)
+			pcall(Hoards.refillAll)
 			task.spawn(function()
 				local wanted = math.min(
 					Config.GhostMax,
@@ -5819,9 +6019,17 @@ if RunService:IsStudio() then
 		elseif action == "unshield" then
 			-- End the new-farmer steal shield for one player (or everyone) to test stealing.
 			for _, p in player and { player } or Players:GetPlayers() do
-				p:SetAttribute("JoinedAt", workspace:GetServerTimeNow() - Config.NewPlayerShield)
+				local played = p:GetAttribute("PlayTime") or 0
+				p:SetAttribute("PlayTime", math.max(played, Config.NewPlayerShield))
+				Unlock.refresh(p)
 			end
 			return true
+		elseif action == "playtime" and player then
+			-- Set a player's total playtime to N seconds and recompute their unlocks from scratch
+			-- (e.g. 0 = brand-new, 600 = shield over, 1800 = Witch, cauldrons, King, Lucky Swing).
+			player:SetAttribute("PlayTime", math.max(0, math.floor(amount or 0)))
+			Unlock.refresh(player, true)
+			return player:GetAttribute("PlayTime")
 		elseif action == "lock" and player then
 			Bases.lock(player)
 			return patchOf[player] and patchOf[player]:GetAttribute("LockedUntil")
