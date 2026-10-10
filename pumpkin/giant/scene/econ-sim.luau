@@ -5,11 +5,42 @@ local luau = require("@lune/luau")
 local roblox = require("@lune/roblox")
 local process = require("@lune/process")
 local Config = luau.load(fs.readFile("src/ReplicatedStorage/PatchConfig.luau"), {
-	environment = { Color3 = roblox.Color3, Vector3 = roblox.Vector3 },
+	environment = { Color3 = roblox.Color3, Vector3 = roblox.Vector3, Vector2 = roblox.Vector2 },
 	injectGlobals = true,
 })()
 local E, P, F = Config.Economy, Config.Progression, Config.Farm
 local tune = process.args[1] == "tune"
+for level = 0, Config.Upgrades.Boots.max do
+	assert(Config.walkSpeed(level) == 16 + level * 2, "Boots speed ladder")
+	for _, zone in Config.ZoneOrder do
+		local runner = math.max(
+			Config.MinCarrySpeed,
+			Config.walkSpeed(level) * Config.Movement.sprintMult - Config.SlowPerPumpkin
+		)
+		assert(Config.GuardSpeed[zone] * runner < runner, "Clean runner must outrun every guard")
+	end
+end
+assert(Config.walkSpeed(100) == 26 and Config.walkSpeed(-1) == 16, "Boots caps")
+assert(Config.walkSpeed(5) * Config.Movement.sprintMult == 32.5, "Sprint stays x1.25")
+do
+	local attrs = {
+		RoamFrom = roblox.Vector3.new(0, 0, 0),
+		RoamTo = roblox.Vector3.new(10, 0, 0),
+		RoamStart = 10,
+		RoamEnd = 12,
+	}
+	local pet = {
+		GetAttribute = function(_, key)
+			return attrs[key]
+		end,
+	}
+	assert(
+		Config.roamPoint(pet, 9).X == 0
+			and Config.roamPoint(pet, 11).X == 5
+			and Config.roamPoint(pet, 13).X == 10,
+		"Roam interpolation and endpoint clamps"
+	)
+end
 local seedRanks = {}
 for _, seed in Config.Seeds do
 	seedRanks[seed.id] = E.rarityRanks[Config.Pets[seed.pet].rarity]
@@ -41,6 +72,7 @@ local function run(crateTier, calibrate, sellCrates)
 		candy = Config.StartCandy,
 		zone = 1,
 		tool = 1,
+		boots = 0,
 		pets = {},
 		owned = {},
 		stamps = {},
@@ -53,6 +85,24 @@ local function run(crateTier, calibrate, sellCrates)
 		farmed = 0,
 		tutorial = false,
 	}
+	local function stealSeconds()
+		local zone = Config.Zones[Config.ZoneOrder[s.zone]]
+		local distance = math.max(0, (zone.zMin + zone.zMax) / 2 - E.sim.penZ)
+		local walk = Config.walkSpeed(s.boots) * Config.Movement.sprintMult
+		-- Dash works only outbound; cooldown limits its expected distance per second.
+		local outbound = walk
+			+ (s.tool >= Config.Dash.tier and Config.Dash.distance / Config.Dash.cooldown or 0)
+		local returning = math.max(Config.MinCarrySpeed, walk - Config.SlowPerPumpkin)
+		return math.max(
+			Config.HoardRefill,
+			E.sim.stealSeconds
+				- E.sim.travelBudget
+				+ distance / outbound
+				+ distance / returning
+				+ Config.HoardHold
+				+ Config.GuardianWake
+		)
+	end
 	local function slots()
 		return s.zone >= 5 and P.castleSlots or s.zone >= 3 and P.woodsSlots or P.baseSlots
 	end
@@ -132,11 +182,19 @@ local function run(crateTier, calibrate, sellCrates)
 			s.tool += 1
 			s.candy -= Config.Tools[s.tool].cost
 			if s.tool == 2 then
-				s.nextSteal = t + E.sim.stealSeconds
+				s.nextSteal = t + stealSeconds()
+			end
+		end
+		-- Buy each Boots level as soon as affordable, after the required scythe.
+		if s.boots < Config.Upgrades.Boots.max then
+			local cost = Config.upgradeCost("Boots", s.boots)
+			if s.candy >= cost then
+				s.candy -= cost
+				s.boots += 1
 			end
 		end
 		if s.nextSteal and t >= s.nextSteal then
-			s.nextSteal += E.sim.stealSeconds
+			s.nextSteal = t + stealSeconds()
 			s.steals[s.zone] = (s.steals[s.zone] or 0) + 1
 			local pick = 1 + (s.steals[s.zone] - 1) % 2
 			place(zone.pets[pick], false)
@@ -179,7 +237,7 @@ end
 
 local base = run(nil, tune)
 print(
-	"Expected-value assumptions: 50% farm uptime, equal nest rolls, successful steal every 90s, weakest swap/sell, stamps, Spooky Hour; no passes/brew/rebirth."
+	"Expected-value assumptions: 50% farm uptime, equal nest rolls, Boots bought when affordable, outbound dash, distance-based round trips, weakest swap/sell, stamps, Spooky Hour; no teleports/passes/brew/rebirth."
 )
 for i, rate in base.rates do
 	print(
@@ -227,5 +285,6 @@ else
 		print("Cash out crates, tier", tier, "max gates bought in one second", sold.burst)
 		assert(sold.burst <= 1, "Cashing out crates skipped more than one gate at once")
 	end
-	print("OK: baseline arrivals within 25%; all crate tiers cross at most one gate at a time")
+	print("Boots levels purchased:", base.boots)
+	print("OK: Boots + dash arrivals within 25%; all crate tiers cross at most one gate at a time")
 end

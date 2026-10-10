@@ -20,6 +20,7 @@ local Config = {
 		ink = Color3.fromRGB(26, 16, 48),
 		icons = {
 			Shop = "rbxasset://textures/ui/TopBar/inventoryOff.png",
+			Teleport = "rbxasset://textures/ui/Settings/MenuBarIcons/HomeTab.png",
 			Index = "rbxasset://textures/ui/Settings/MenuBarIcons/PlayersTab.png",
 			Daily = "rbxasset://textures/ui/PlayerList/StarIcon.png",
 			Admin = "rbxasset://textures/ui/Settings/MenuBarIcons/GameSettingsTab.png",
@@ -528,10 +529,10 @@ local Config = {
 	BaseCarry = 2,
 
 	-- Movement: faster than Roblox's 16, sprint on Shift / RUN, each carried pumpkin slows you a bit.
-	WalkSpeed = 24,
-	SprintSpeed = 34,
+	WalkSpeed = 16,
+	SprintSpeed = 20,
 	SlowPerPumpkin = 1,
-	MinCarrySpeed = 20,
+	MinCarrySpeed = 10,
 	JumpPower = 55,
 	SprintFov = 80,
 	PadForward = 70,
@@ -610,6 +611,12 @@ local Config = {
 	-- A finished Pumpkin Index row (all 5 finishes of a type) sells that type for 10% more.
 	IndexRowBonus = 0.1,
 	Upgrades = {
+		Boots = {
+			title = "Boots",
+			text = "+2 walk speed (cap 26)",
+			max = 5,
+			prices = { 750, 7500, 75000, 750000, 7500000 },
+		},
 		Stack = { title = "Upgrade your Base!", text = "Carry +1", base = 40, max = 10 },
 		-- Cut (two ways to buy damage): not sold; its saved level is kept but has no effect.
 		Mallet = {
@@ -925,6 +932,11 @@ Config.Raid = {
 	tapInterval = 0.15,
 }
 Config.KingNight = {
+	height = 28,
+	walkSpeed = 10,
+	padPause = 3,
+	ring = Vector2.new(80, 50),
+	windup = 1.2,
 	signOffset = Vector3.new(28, 8, 0),
 	look = {
 		tint = Color3.fromRGB(255, 201, 184),
@@ -938,7 +950,7 @@ Config.KingNight = {
 		decay = Color3.fromRGB(100, 90, 155),
 		density = 0.25,
 	},
-	minutes = { 0, 20 },
+	minutes = { 0, 20, 40 },
 	warning = 60,
 	hits = 15,
 	damageShare = 0.03,
@@ -1133,6 +1145,8 @@ Config.Economy = {
 	rarityRanks = { Common = 1, Rare = 2, Epic = 3, Legendary = 4, Mythic = 5 },
 	sim = {
 		stealSeconds = 90,
+		penZ = 70, -- model assumption, never a teleport target
+		travelBudget = 45, -- part of the old 90s cycle replaced with measured lane distance
 		durationMinutes = 180,
 		tolerance = 0.25,
 		crateMinutes = { 20, 40 },
@@ -1196,5 +1210,57 @@ function Config.Economy.crateSeed(zoneIndex, tier, pick)
 end
 for i, id in Config.ZoneOrder do
 	Config.GuardTwists[id].pitch = 0.7 + i * 0.12
+end
+-- R24: shared movement/size rules; visual sizes never change income.
+Config.Movement = { sprintMult = 1.25, bootStep = 2, cap = 26, requestInterval = 0.1 }
+Config.Dash = {
+	tier = 2,
+	distance = 16,
+	cooldown = 5,
+	clearance = 2,
+	bodySize = Vector3.new(4, 5, 3),
+	mobile = Vector2.new(0.70, 0.78),
+}
+Config.Teleport = { cooldown = 10, height = 4, standOff = 8, rayHeight = 60, rayDepth = 200 }
+Config.MysterySizes = {
+	nest = { { 3, 4 }, { 3.5, 4.5 }, { 4, 5 }, { 4.5, 5.5 }, { 5, 6 }, { 5.5, 7 }, { 6, 7.5 } },
+	penMin = 15,
+	penMax = 40,
+	weightScale = 0.6,
+	characterHeight = 6,
+	nestRadius = 10,
+	nestSlotRadius = 6,
+	heights = { Common = 15, Rare = 20, Epic = 26, Legendary = 33, Mythic = 40 },
+	carry = 4,
+}
+Config.PetRoam = { inset = 2, minSpeed = 4, maxSpeed = 6, minIdle = 1, maxIdle = 3, bob = 0.25 }
+Config.GuardSpeed = {
+	Zone1 = 0.70,
+	Zone2 = 0.75,
+	Zone3 = 0.80,
+	Zone4 = 0.85,
+	Zone5 = 0.90,
+	Zone6 = 0.93,
+	Zone7 = 0.95,
+}
+function Config.walkSpeed(level)
+	return math.min(
+		Config.Movement.cap,
+		Config.WalkSpeed
+			+ math.clamp(level or 0, 0, Config.Upgrades.Boots.max) * Config.Movement.bootStep
+	)
+end
+function Config.upgradeCost(id, level)
+	local info = Config.Upgrades[id]
+	return info.prices and info.prices[level + 1]
+		or math.floor(info.base * (level + 1) ^ Config.CostPower)
+end
+function Config.roamPoint(p, time)
+	local home = p:GetAttribute("JackHome")
+	local from = p:GetAttribute("RoamFrom") or (home and home.Position) or p.Position
+	local goal = p:GetAttribute("RoamTo") or from
+	local start = p:GetAttribute("RoamStart") or time
+	local finish = p:GetAttribute("RoamEnd") or start
+	return from:Lerp(goal, math.clamp((time - start) / math.max(0.001, finish - start), 0, 1))
 end
 return Config

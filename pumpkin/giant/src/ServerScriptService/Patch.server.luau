@@ -106,6 +106,9 @@ do
 	end
 	Remotes = {
 		adminFunction = remote("Admin", "RemoteFunction") :: RemoteFunction,
+		teleportFunction = remote("Teleport", "RemoteFunction") :: RemoteFunction,
+		dashFunction = remote("Dash", "RemoteFunction") :: RemoteFunction,
+		sprintEvent = remote("Sprint"),
 		dailyClaimFunction = remote("ClaimDaily", "RemoteFunction") :: RemoteFunction,
 		hintEvent = remote("Hint"),
 		placedEvent = remote("Placed"),
@@ -472,6 +475,88 @@ local ORDER_UNLOCK = {
 	kingHit = "King",
 }
 
+-- Live targets only, including solo servers. Rechecked after load and during play.
+function Progress.orderLive(player, def)
+	if def.target == "gate" then
+		return nextLockedZone(player) ~= nil
+	end
+	if def.target == "king" then
+		return state:GetAttribute("KingActive") == true and (state:GetAttribute("KingHp") or 0) > 0
+	end
+	if def.target == "tools" or def.target == "upgrades" or def.target == "witch" then
+		local name = def.target == "tools" and "Seeds"
+			or def.target == "witch" and "Sell"
+			or "Upgrades"
+		return market:FindFirstChild(name) ~= nil
+	end
+	if def.target == "cauldron" then
+		return Unlock.has(player, "Brew") and #cauldronFolder:GetChildren() > 0
+	end
+	if def.stat == "bonkGhost" or def.stat == "rescue" then
+		for _, ghost in ghostFolder:GetChildren() do
+			if def.stat == "bonkGhost" or ghost:GetAttribute("StashOwner") == player.UserId then
+				return true
+			end
+		end
+		return false
+	end
+	if def.stat == "steal" or def.stat == "stopThief" then
+		for _, other in Players:GetPlayers() do
+			if other ~= player and Unlock.has(other, "PlayerSteal") then
+				if def.stat == "stopThief" then
+					if
+						(other:GetAttribute("CarryStolen") or 0) > 0
+						and string.find(
+							other:GetAttribute("StealingFrom") or "",
+							"," .. player.UserId .. ",",
+							1,
+							true
+						)
+					then
+						return true
+					end
+				else
+					for _, pen in patchFolder:GetChildren() do
+						if
+							pen:GetAttribute("Owner") == other.UserId
+							and (pen:GetAttribute("LockedUntil") or 0) <= workspace:GetServerTimeNow()
+							and (pen:GetAttribute("RobbedUntil") or 0)
+								<= workspace:GetServerTimeNow()
+						then
+							for _, plot in pen:GetChildren() do
+								if
+									plot.Name == "Plot"
+									and plot:GetAttribute("Filled")
+									and not plot:GetAttribute("Protected")
+								then
+									return true
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+		return false
+	end
+	if def.target == "hoard" or def.target == "place" then
+		local zones = garden:FindFirstChild("Zones")
+		local zone = zones and zones:FindFirstChild("Zone1")
+		local hoard = zone and zone:FindFirstChild("Hoard")
+		for _, p in hoard and hoard:GetChildren() or {} do
+			if
+				p:IsA("BasePart")
+				and p.Name == "HoardPumpkin"
+				and p:FindFirstChild("StealPrompt")
+			then
+				return true
+			end
+		end
+		return false
+	end
+	return true
+end
+
 local function nextOrders(player: Player)
 	local o = orders[player]
 	-- Tutorial steps the player already did some other way are skipped (a better scythe owned,
@@ -525,8 +610,8 @@ local function nextOrders(player: Player)
 	local pool = {}
 	for i, def in Config.RotatingOrders do
 		local gate = ORDER_UNLOCK[def.stat]
-		local impossible = Config.RemovedOrders[string.match(def.stat, "^[^:]+") or def.stat]
-				== true
+		local impossible = not Progress.orderLive(player, def)
+			or Config.RemovedOrders[string.match(def.stat, "^[^:]+") or def.stat] == true
 			or (def.stat == "sellStackOf5" and carryCapacity(player) < 5)
 			or (def.stat == "newIndex" and indexFull)
 			or (def.stat == "unlockZone" and nextLockedZone(player) == nil)
@@ -731,7 +816,10 @@ local function loadOrders(player: Player, saved: any)
 	else
 		stale = #o.list == 0 or os.time() >= o.refreshAt
 		for _, order in o.list do
-			if Config.RemovedOrders[string.match(order.stat, "^[^:]+") or order.stat] then
+			if
+				not Progress.orderLive(player, order)
+				or Config.RemovedOrders[string.match(order.stat, "^[^:]+") or order.stat]
+			then
 				stale = true
 			end
 		end
@@ -906,7 +994,10 @@ do
 		if type(data.upgrades) == "table" then
 			for id in Config.Upgrades do
 				if type(data.upgrades[id]) == "number" then
-					player:SetAttribute("Up_" .. id, data.upgrades[id])
+					player:SetAttribute(
+						"Up_" .. id,
+						math.clamp(math.floor(data.upgrades[id]), 0, Config.Upgrades[id].max)
+					)
 				end
 			end
 		end
@@ -1806,9 +1897,9 @@ local function stackPumpkin(player: Player, pumpkin: BasePart): boolean
 	stripPumpkin(pumpkin)
 	-- A model look (pet, mystery pumpkin) may be taller than wide: its biggest side counts.
 	local hasLook = pumpkin:FindFirstChild("PetLook") ~= nil
-	local big = hasLook and math.max(pumpkin.Size.X, pumpkin.Size.Y) or pumpkin.Size.X
-	if big > 2.6 then
-		pumpkin.Size *= 2.6 / big
+	local big = math.max(pumpkin.Size.X, pumpkin.Size.Y, pumpkin.Size.Z)
+	if big > Config.MysterySizes.carry then
+		pumpkin.Size *= Config.MysterySizes.carry / big
 		if hasLook then
 			Looks.refit(pumpkin)
 		elseif pumpkin:GetAttribute("Jack") == true then
@@ -2130,6 +2221,11 @@ do
 						.. "\n$"
 						.. rateText(incomeOf(p) * mult)
 						.. "/s"
+						.. (
+							p:GetAttribute("WeightKg")
+								and string.format(" | %.1f kg", p:GetAttribute("WeightKg"))
+							or ""
+						)
 				end
 				tag.Enabled = p:GetAttribute("Jack") == true
 				if p:GetAttribute("Stashed") then
@@ -2188,7 +2284,7 @@ do
 		dome.Name = "HatchDome"
 		dome.Parent = pumpkin
 		local origin = pumpkin.Position - Vector3.yAxis * pumpkin.Size.Y / 2
-		local radius = Config.Plots.domeWidth / 2
+		local radius = math.max(Config.Plots.domeWidth, pumpkin.Size.X, pumpkin.Size.Z) / 2
 		for band = 1, Config.Plots.domeBands do
 			local lo = (band - 1) / Config.Plots.domeBands * math.pi / 2
 			local hi = band / Config.Plots.domeBands * math.pi / 2
@@ -2273,6 +2369,19 @@ do
 		end
 		pumpkin:SetAttribute("JackHome", pumpkin.CFrame)
 		pumpkin:SetAttribute("Jack", true)
+		pumpkin:SetAttribute("RoamFrom", pumpkin.Position)
+		pumpkin:SetAttribute("RoamTo", pumpkin.Position)
+		pumpkin:SetAttribute("RoamStart", now())
+		pumpkin:SetAttribute("RoamEnd", now())
+		local anchor = Instance.new("Attachment")
+		anchor.Name = "PetPromptAnchor"
+		anchor.Parent = pumpkin
+		for _, name in { "PickupPrompt", "StealPrompt" } do
+			local prompt = pumpkin.Parent and pumpkin.Parent:FindFirstChild(name, true)
+			if prompt then
+				prompt.Parent = anchor
+			end
+		end
 	end
 
 	-- The pumpkin hatches into its pet (or Jack). Clients play the hatch: everyone near sees the
@@ -2332,10 +2441,29 @@ do
 			return nil
 		end
 		local pumpkin = makePumpkin(seedId, sizeMult)
-		-- Plots are flat cylinders lying on their side: the thin axis is X, the disc is Y x Z.
-		local fit = math.min(plot.Size.Y, plot.Size.Z) * 0.95
-		if pumpkin.Size.X > fit then
-			pumpkin.Size *= fit / pumpkin.Size.X
+		local petSize = Config.PetSizes[Config.Pets[seedById[seedId].pet].rarity]
+		local kg = extra and extra.weight
+		if type(kg) ~= "number" or kg ~= kg or kg <= 0 or kg == math.huge then
+			kg = math.floor(petSize.median * math.exp((math.random() - 0.5) * 3.2) * 10 + 0.5) / 10
+		end
+		pumpkin:SetAttribute("WeightKg", kg)
+		if not (extra and extra.jack) then
+			local rarity = Config.Pets[seedById[seedId].pet].rarity
+			-- Rarity sets the median silhouette; the quarter-power weight term adds size.
+			local height = math.clamp(
+				Config.MysterySizes.heights[rarity]
+					+ Config.MysterySizes.weightScale
+						* Config.MysterySizes.characterHeight
+						* (kg ^ 0.25 - petSize.median ^ 0.25),
+				Config.MysterySizes.penMin,
+				Config.MysterySizes.penMax
+			)
+			pumpkin.Size *= height / pumpkin.Size.Y
+			plot.Size = Vector3.new(
+				plot.Size.X,
+				math.max(plot.Size.Y, pumpkin.Size.X),
+				math.max(plot.Size.Z, pumpkin.Size.Z)
+			)
 		end
 		pumpkin.CFrame = CFrame.new(plot.Position + Vector3.new(0, 0.15 + pumpkin.Size.Y / 2, 0))
 			* CFrame.Angles(0, math.random() * math.pi * 2, 0)
@@ -2358,7 +2486,12 @@ do
 		if extra and extra.jack and extra.goldRolled == nil then
 			pumpkin:SetAttribute("GoldRolled", true)
 		end
-		if extra and extra.weight then
+		if
+			extra
+			and type(extra.weight) == "number"
+			and extra.weight > 0
+			and extra.weight < math.huge
+		then
 			pumpkin:SetAttribute("WeightKg", extra.weight)
 		end
 		pumpkin:SetAttribute("Placed", true)
@@ -2369,6 +2502,12 @@ do
 		if extra and extra.hoard then
 			pumpkin:SetAttribute("Hoard", true)
 			Hoards.look(pumpkin, extra.jack == true)
+		end
+		pumpkin.Parent = plot
+		if not (extra and extra.jack) then
+			local width = math.max(pumpkin.Size.X, pumpkin.Size.Z)
+			plot.Size =
+				Vector3.new(plot.Size.X, math.max(plot.Size.Y, width), math.max(plot.Size.Z, width))
 		end
 		incomeTag(pumpkin)
 		if extra and extra.jack then
@@ -2381,12 +2520,7 @@ do
 			local seconds = newbie and Config.CarveNewSeconds
 				or seedById[seedId].order <= Config.CarveFastOrder and Config.CarveFastSeconds
 				or Config.CarveSeconds
-			Looks.attach(
-				pumpkin,
-				"PetModels",
-				Config.MysteryModel,
-				math.min(pumpkin.Size.Y, Config.Plots.domeWidth * 0.42)
-			)
+			Looks.attach(pumpkin, "PetModels", Config.MysteryModel, pumpkin.Size.Y)
 			local final = pumpkin.Size
 			pumpkin:SetAttribute("GrowthSize", final)
 			pumpkin:SetAttribute("GrowthStartAt", now())
@@ -2426,6 +2560,12 @@ do
 			return nil
 		end
 		s.pumpkin = nil
+		for _, name in { "PickupPrompt", "StealPrompt" } do
+			local prompt = p:FindFirstChild(name, true)
+			if prompt then
+				prompt.Parent = plot
+			end
+		end
 		p:SetAttribute("Placed", nil)
 		-- Off the plot: no more idling (clients) or hatching (a re-placed one hatches again).
 		p:SetAttribute("JackHome", nil)
@@ -2441,6 +2581,17 @@ do
 		end
 		Bases.refresh(plot.Parent)
 		return p
+	end
+
+	-- Client motion follows server-authored waypoints; reach never uses client CFrames.
+	function Bases.petReach(player, plot)
+		local _, root = aliveRoot(player)
+		local p = plotState[plot] and plotState[plot].pumpkin
+		if not root or not p then
+			return false
+		end
+		local at = Config.roamPoint(p, now())
+		return (root.Position - at).Magnitude <= 11
 	end
 
 	-- Every plot of the patch holds a pumpkin (opens the Witch early).
@@ -2615,6 +2766,10 @@ do
 
 	-- Place the top carried pumpkin on one of your empty plots (it keeps type, size and brew).
 	local function place(player: Player, plot: BasePart)
+		local _, root = aliveRoot(player)
+		if not root or (root.Position - plot.Position).Magnitude > 11 then
+			return
+		end
 		local patch = plot.Parent
 		if
 			patchOf[player] ~= patch
@@ -2758,6 +2913,9 @@ do
 		return n
 	end
 	local function pickUp(player: Player, plot: BasePart)
+		if not Bases.petReach(player, plot) then
+			return
+		end
 		if patchOf[player] ~= plot.Parent or not plotState[plot] or not plotState[plot].pumpkin then
 			return
 		end
@@ -2784,6 +2942,9 @@ do
 	local robbedAt: { [number]: number } = {}
 
 	local function steal(thief: Player, plot: BasePart)
+		if not Bases.petReach(thief, plot) then
+			return
+		end
 		local patch = plot.Parent :: Instance
 		local ownerId = patch:GetAttribute("Owner") or 0
 		local owner = Players:GetPlayerByUserId(ownerId)
@@ -2825,6 +2986,7 @@ do
 				return
 			end
 			robbedAt[ownerId] = t
+			patch:SetAttribute("RobbedUntil", t + Config.VictimCooldown)
 			local seed = seedById[p:GetAttribute("Seed") or ""]
 			local name = seed and seed.name or "a"
 			local share = math.floor(pumpkinValue(p) * Config.StealOwnerShare + 0.5)
@@ -3078,6 +3240,52 @@ do
 			end
 		end
 	end
+
+	RunService.Heartbeat:Connect(function()
+		-- Pick random Soil-local waypoints; render motion stays client-side.
+		local t = now()
+		for plot, s in plotState do
+			local p = s.pumpkin
+			local soil = plot.Parent and plot.Parent:FindFirstChild("Soil")
+			if
+				p
+				and p:GetAttribute("Jack")
+				and not p:GetAttribute("Stashed")
+				and soil
+				and t >= (p:GetAttribute("RoamNext") or 0)
+			then
+				local from = Config.roamPoint(p, t)
+				local cfg = Config.PetRoam
+				local x = math.max(0, soil.Size.X / 2 - cfg.inset)
+				local z = math.max(0, soil.Size.Z / 2 - cfg.inset)
+				local goal = soil.CFrame:PointToWorldSpace(
+					Vector3.new(
+						(math.random() * 2 - 1) * x,
+						soil.Size.Y / 2,
+						(math.random() * 2 - 1) * z
+					)
+				)
+				goal += Vector3.yAxis * p.Size.Y / 2
+				local duration = (goal - from).Magnitude
+					/ (cfg.minSpeed + math.random() * (cfg.maxSpeed - cfg.minSpeed))
+				p:SetAttribute("RoamFrom", from)
+				p:SetAttribute("RoamTo", goal)
+				p:SetAttribute("RoamStart", t)
+				p:SetAttribute("RoamEnd", t + duration)
+				p:SetAttribute(
+					"RoamNext",
+					t + duration + cfg.minIdle + math.random() * (cfg.maxIdle - cfg.minIdle)
+				)
+			end
+		end
+		for _, s in plotState do
+			local p = s.pumpkin
+			local anchor = p and p:FindFirstChild("PetPromptAnchor")
+			if anchor then
+				anchor.WorldPosition = Config.roamPoint(p, t)
+			end
+		end
+	end)
 
 	-- Prompts on every plot and sign post, enabled on the server (it only accepts enabled ones);
 	-- each client hides the ones that do not apply to it (Place / Pick up on its own base, Steal
@@ -3952,7 +4160,7 @@ do
 		return false
 	end
 	local fights: { [Player]: any } = {}
-	local NEST_R, SLOT_R, SLOT_FIT = 4.8, 2.3, 3.2
+	local NEST_R, SLOT_R = Config.MysterySizes.nestRadius, Config.MysterySizes.nestSlotRadius
 	local V, C = Vector3.new, Color3.fromRGB
 	local INK = C(26, 18, 24)
 
@@ -4311,7 +4519,7 @@ do
 	end
 
 	local function wake(g: Guardian, player: Player)
-		local first = g.zone == "Zone1" and player:GetAttribute("FirstHoardDone") ~= true
+		-- Zone fractions supersede the earlier first-steal formula.
 		player:SetAttribute("FirstHoardDone", true)
 		-- Already after this thief, or busy with another one who still has the loot.
 		if
@@ -4324,7 +4532,7 @@ do
 		player:SetAttribute("Wake_" .. g.zone, true)
 		g.model:SetAttribute("WakeSeconds", full and Config.GuardianWake or Config.Fight.repeatWake)
 		Remotes.wakeEvent:FireClient(player, g.model, full)
-		g.share = first and Config.GuardianFirstShare or Config.GuardianShare
+		g.share = Config.GuardSpeed[g.zone]
 		g.state = "wake"
 		g.target = player
 		g.wokeAt = os.clock()
@@ -4376,10 +4584,8 @@ do
 		local pets = Config.Zones[h.zone].pets
 		local p = makePumpkin(pets[math.random(#pets)], Config.HoardSize)
 		p.Name = "HoardPumpkin"
-		-- Smaller to fit the nest; income uses the SizeMult attribute, not the look.
-		if p.Size.X > SLOT_FIT then
-			p.Size *= SLOT_FIT / p.Size.X
-		end
+		local range = Config.MysterySizes.nest[table.find(Config.ZoneOrder, h.zone) or 1]
+		p.Size *= (range[1] + math.random() * (range[2] - range[1])) / p.Size.Y
 		p:SetAttribute("Hoard", true)
 		p:SetAttribute("HoardZone", h.zone)
 		Hoards.look(p)
@@ -4744,7 +4950,7 @@ do
 			if cfg.predict then
 				pos += direction * math.min(
 					root.AssemblyLinearVelocity.Magnitude,
-					Config.SprintSpeed
+					Config.walkSpeed(upgradeLevel(player, "Boots")) * Config.Movement.sprintMult
 				) * cfg.predict
 			end
 			if cfg.ahead then
@@ -4939,19 +5145,17 @@ do
 								Hoards.fight(thief, g)
 							end
 						else
-							-- Share of the thief's speed: their walk speed with the carry slow-down,
-							-- or what they really move at (sprinting) if that is more.
-							local carried = #(carrying[thief] or {})
-							local walk = math.max(
+							local top = Config.walkSpeed(upgradeLevel(thief, "Boots"))
+								* (
+									thief:GetAttribute("Sprinting")
+										and Config.Movement.sprintMult
+									or 1
+								)
+							local running = math.max(
 								Config.MinCarrySpeed,
-								Config.WalkSpeed - carried * Config.SlowPerPumpkin
+								top - #(carrying[thief] or {}) * Config.SlowPerPumpkin
 							)
-							local v = thiefRoot.AssemblyLinearVelocity
-							local moving =
-								math.min(V(v.X, 0, v.Z).Magnitude, Config.SprintSpeed + 6)
-							g.seen += (moving - g.seen) * math.min(1, dt * 4)
-							local speed =
-								math.max(Config.GuardianMinSpeed, g.share * math.max(walk, g.seen))
+							local speed = Config.GuardSpeed[g.zone] * running
 							step(g, to.Unit, math.min(speed * dt, to.Magnitude), dt)
 						end
 					end
@@ -5427,7 +5631,7 @@ Remotes.buyUpgradeFunction.OnServerInvoke = function(player: Player, id: unknown
 	if level >= info.max then
 		return false, "MAX"
 	end
-	local cost = math.floor(info.base * (level + 1) ^ Config.CostPower)
+	local cost = Config.upgradeCost(id, level)
 	local candy = candyValue(player)
 	if not candy or candy.Value < cost then
 		return false, "Need " .. short(cost)
@@ -5898,6 +6102,7 @@ do
 				ghost.carried:SetAttribute("Stashed", nil)
 				ghost.carried.CFrame = ghost.savedCF
 				ghost.carried:SetAttribute("JackHome", ghost.savedCF)
+				ghost.carried:SetAttribute("RoamNext", 0)
 				local owner = Players:GetPlayerByUserId(ghost.carried:GetAttribute("Owner") or 0)
 				if owner and owner.Parent then
 					track(owner, "rescue", 1)
@@ -5995,6 +6200,9 @@ RunService.Heartbeat:Connect(function(dt)
 				pumpkin:SetAttribute("Targeted", nil)
 				pumpkin:SetAttribute("Stashed", true)
 				pumpkin:SetAttribute("JackHome", nil)
+				pumpkin:SetAttribute("RoamFrom", pumpkin.Position)
+				pumpkin:SetAttribute("RoamTo", pumpkin.Position)
+				pumpkin:SetAttribute("RoamEnd", workspace:GetServerTimeNow())
 				ghost.savedCF = pumpkin.CFrame
 				ghost.carried = pumpkin
 				ghost.target = nil
@@ -6288,6 +6496,12 @@ local king = {
 	damage = {} :: { [Player]: number },
 	hits = {} :: { [Player]: number },
 	faceBase = kingFace.CFrame,
+	homeBase = kingFace.CFrame,
+	homeCollide = kingFace.CanCollide,
+	pad = 0,
+	moving = false,
+	attackBusy = false,
+	plantedUntil = 0,
 	phase = 1,
 	shield = false,
 	stunnedUntil = 0,
@@ -6341,6 +6555,7 @@ local kingGround = Vector3.new(
 	kingFace.Position.Z
 )
 
+king.groundHome = kingGround
 local lastBonk: { [Player]: number } = {}
 local bonkSpot: { [Player]: { pos: Vector3, t: number } } = {}
 local defeatKing -- forward
@@ -6552,12 +6767,19 @@ local runDay -- forward
 
 local function endBloodMoon(refill: number)
 	king.active = false
+	state:SetAttribute("KingActive", false)
 	king.shield = false
 	giantJack.Transparency = 0
 	giantJack.CanCollide = true
 	kingFace.Transparency = 1
 	kingFace.Size = king.faceSize or kingFace.Size
-	kingFace.CFrame = king.faceBase
+	king.faceBase = king.homeBase
+	kingFace.CFrame = king.homeBase
+	kingFace.CanCollide = king.homeCollide
+	kingGround = king.groundHome
+	king.moving = false
+	state:SetAttribute("KingWalking", false)
+	king.attackBusy = false
 	state:SetAttribute("KingHp", nil)
 	state:SetAttribute("KingMaxHp", nil)
 	state:SetAttribute("KingPhase", nil)
@@ -6577,6 +6799,7 @@ function defeatKing()
 		return
 	end
 	king.active = false
+	state:SetAttribute("KingActive", false)
 	phaseToken += 1
 	-- Finale: the King swells, then bursts.
 	for player in king.damage do
@@ -6636,14 +6859,50 @@ do
 	end
 	Progress.landAttack = landAttack
 
+	local function walkKing(dt)
+		if king.phase == 1 or king.attackBusy or os.clock() < king.stunnedUntil then
+			return
+		end
+		if not king.moving and os.clock() >= king.plantedUntil then
+			king.pad = king.pad % 4 + 1
+			local ring = Config.KingNight.ring
+			local pads = {
+				Vector3.new(-ring.X / 2, 0, 0),
+				Vector3.new(0, 0, -ring.Y / 2),
+				Vector3.new(ring.X / 2, 0, 0),
+				Vector3.new(0, 0, ring.Y / 2),
+			}
+			king.destination = king.groundHome + pads[king.pad]
+			king.moving = true
+		end
+		if king.moving then
+			local delta = king.destination - kingGround
+			local distance = math.min(delta.Magnitude, Config.KingNight.walkSpeed * dt)
+			if delta.Magnitude > 0.001 then
+				kingGround += delta.Unit * distance
+			end
+			king.faceBase = king.eventBase + (kingGround - king.groundHome)
+			kingFace.CFrame = king.faceBase
+			if delta.Magnitude <= distance + 0.001 then
+				king.moving = false
+				king.plantedUntil = os.clock() + Config.KingNight.padPause
+			end
+		end
+		state:SetAttribute("KingWalking", king.moving)
+	end
+
 	local function attack(token: number, kind: string)
+		if king.moving or king.attackBusy then
+			return
+		end
+		king.attackBusy = true
 		local circles = {}
 		local warn
 		if kind == "Slam" then
-			warn = Config.SlamWarn
+			warn = Config.KingNight.windup
 			table.insert(circles, { pos = kingGround, radius = Config.SlamRadius })
 		else
-			warn = Config.VolleyWarn
+			warn = Config.KingNight.windup
 			for i = -1, 1 do
 				local pos = kingGround
 					+ Vector3.new(
@@ -6658,12 +6917,6 @@ do
 					length = Config.KingNight.volleyLength,
 				})
 			end
-		end
-		if kind == "Slam" and king.phase == 3 then
-			table.insert(circles, {
-				pos = kingGround + Vector3.new(0, 0, Config.SlamRadius * 2),
-				radius = Config.SlamRadius,
-			})
 		end
 		Remotes.telegraphEvent:FireAllClients(kind, circles, warn)
 		task.wait(warn)
@@ -6690,8 +6943,13 @@ do
 			down:Play()
 			down.Completed:Wait()
 		end
+		if token ~= phaseToken or not king.active then
+			king.attackBusy = false
+			return
+		end
 		Remotes.stompEvent:FireAllClients(kind, circles)
 		landAttack(circles)
+		king.attackBusy = false
 	end
 
 	local function spawnLackeys(count: number)
@@ -6780,13 +7038,24 @@ do
 		king.damage = {}
 		king.hits = {}
 		king.active = true
+		state:SetAttribute("KingActive", true)
 		king.phase = 1
 		king.shield = false
 		king.stunnedUntil = 0
 		king.lastHitter = nil
 		king.faceSize = king.faceSize or kingFace.Size
-		kingFace.Size = king.faceSize
+		kingFace.Size = king.faceSize * (Config.KingNight.height / king.faceSize.Y)
+		king.faceBase = king.homeBase + Vector3.yAxis * ((kingFace.Size.Y - king.faceSize.Y) / 2)
+		-- Move relative to the scaled plinth pose throughout this event.
+		king.eventBase = king.faceBase
+		kingGround = king.groundHome
 		kingFace.CFrame = king.faceBase
+		kingFace.CanCollide = false
+		king.moving = false
+		king.attackBusy = false
+		king.pad = 0
+		king.plantedUntil = os.clock() + Config.KingNight.padPause
+		state:SetAttribute("KingWalking", false)
 		for _, player in Players:GetPlayers() do
 			player:SetAttribute("MVP", nil)
 		end
@@ -6804,6 +7073,7 @@ do
 			local nextAttack = os.clock() + 4
 			local turn = 0
 			local nextWeak = math.huge
+			local lastWalk = os.clock()
 			while
 				king.active
 				and token == phaseToken
@@ -6814,6 +7084,9 @@ do
 					lastTop = os.clock()
 					publishTopDamage()
 				end
+				local walkNow = os.clock()
+				walkKing(walkNow - lastWalk)
+				lastWalk = walkNow
 				local fraction = king.hp / king.maxHp
 				if king.phase == 1 and fraction <= 0.66 then
 					king.phase = 2
@@ -6844,7 +7117,12 @@ do
 						state:SetAttribute("KingStunned", nil)
 					end)
 				end
-				if os.clock() >= nextAttack and os.clock() >= king.stunnedUntil then
+				if
+					not king.moving
+					and not king.attackBusy
+					and os.clock() >= nextAttack
+					and os.clock() >= king.stunnedUntil
+				then
 					turn += 1
 					local kind = (turn % 2 == 1) and "Slam" or "Volley"
 					task.spawn(attack, token, kind)
@@ -6853,6 +7131,7 @@ do
 			end
 			if king.active and token == phaseToken then
 				king.active = false
+				state:SetAttribute("KingActive", false)
 				Progress.kingRewards(false)
 				Remotes.kingDoneEvent:FireAllClients("escaped", {})
 				clearGhosts()
@@ -7772,7 +8051,7 @@ do
 		local character = player.Character
 		local hum = character and character:FindFirstChildOfClass("Humanoid")
 		if hum then
-			hum.WalkSpeed = Config.WalkSpeed * mult
+			hum.WalkSpeed = Config.walkSpeed(upgradeLevel(player, "Boots")) * mult
 		end
 		task.delay(seconds, function()
 			if player.Parent and player:GetAttribute("GuardEffectUntil") == untilAt then
@@ -7780,7 +8059,7 @@ do
 				player:SetAttribute("GuardEffectIcon", nil)
 				local h = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 				if h then
-					h.WalkSpeed = Config.WalkSpeed
+					h.WalkSpeed = Config.walkSpeed(upgradeLevel(player, "Boots"))
 				end
 			end
 		end)
@@ -8255,7 +8534,10 @@ task.spawn(function()
 					player.Parent
 					and isLoaded(player)
 					and o.tut > TUTORIAL_COUNT
-					and os.time() >= o.refreshAt
+					and (
+						os.time() >= o.refreshAt
+						or (o.list[1] and not Progress.orderLive(player, o.list[1]))
+					)
 				then
 					nextOrders(player)
 					publishOrders(player)
@@ -8486,3 +8768,172 @@ do
 end
 
 task.spawn(runDay)
+
+-- R24 movement requests contain only an action; positions and restrictions come from the server.
+do
+	local clocks = setmetatable({}, { __mode = "k" })
+	local function movementBlocked(player, teleport)
+		if player:GetAttribute("FightActive") or player:GetAttribute("PurgeStealing") then
+			return true
+		end
+		if not teleport and state:GetAttribute("PurgeEnds") then
+			return true
+		end
+		if teleport and Hoards.targets(player) then
+			return true
+		end
+		for _, p in carrying[player] or {} do
+			if p:GetAttribute("HoardZone") or p:GetAttribute("StolenFrom") then
+				return true
+			end
+		end
+		return (player:GetAttribute("GuardEffectUntil") or 0) > workspace:GetServerTimeNow()
+			and (player:GetAttribute("WalkSpeedMultiplier") or 1) == 0
+	end
+	local function request(player, action, cooldown)
+		if not isLoaded(player) then
+			return nil, "Loading"
+		end
+		local character, root = aliveRoot(player)
+		if not root then
+			return nil, "Respawn first"
+		end
+		local c = clocks[player] or {}
+		clocks[player] = c
+		local t = workspace:GetServerTimeNow()
+		if t < (c.attempt or 0) then
+			return nil, "Wait a moment"
+		end
+		c.attempt = t + Config.Movement.requestInterval
+		if t < (c[action] or 0) then
+			return nil, "Cooldown"
+		end
+		return { character = character, root = root, clock = c, time = t, cooldown = cooldown }
+	end
+	Remotes.sprintEvent.OnServerEvent:Connect(function(player, on)
+		if type(on) == "boolean" and isLoaded(player) then
+			player:SetAttribute("Sprinting", on)
+		end
+	end)
+	Remotes.teleportFunction.OnServerInvoke = function(player, target)
+		if target ~= "My Pen" and target ~= "Zone Gate" and target ~= "Shop" then
+			return false, "Unknown target"
+		end
+		local r, why = request(player, "teleport", Config.Teleport.cooldown)
+		if not r then
+			return false, why
+		end
+		if movementBlocked(player, true) then
+			return false, "Escape or finish carrying first"
+		end
+		local part, offset
+		if target == "My Pen" then
+			local pen = patchOf[player]
+			part = pen and pen:FindFirstChild("Soil")
+		elseif target == "Shop" then
+			local shop = market:FindFirstChild("Seeds")
+			part = shop and shop:FindFirstChild("PromptPart", true)
+		else
+			local zones = garden:FindFirstChild("Zones")
+			for _, id in Config.ZoneOrder do
+				if hasZone(player, id) then
+					local zone = zones and zones:FindFirstChild(id)
+					part = zone
+						and (
+							zone:FindFirstChild("GateWall", true)
+							or zone:FindFirstChild("Spawn", true)
+						)
+				end
+			end
+			offset = Vector3.new(0, 0, -Config.Teleport.standOff)
+		end
+		if not part or not part:IsA("BasePart") then
+			return false, "Target missing from map"
+		end
+		local pos = part.Position + (offset or Vector3.zero)
+		-- Tall gate walls are not a floor. Find the ground beside the named target.
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { r.character, loose, ghostFolder }
+		params.RespectCanCollide = true
+		params.FilterDescendantsInstances = { r.character, loose, ghostFolder, part }
+		local floor = workspace:Raycast(
+			pos + Vector3.yAxis * Config.Teleport.rayHeight,
+			-Vector3.yAxis * Config.Teleport.rayDepth,
+			params
+		)
+		if not floor then
+			return false, "No safe landing"
+		end
+		pos = floor.Position + Vector3.yAxis * Config.Teleport.height
+		r.clock.teleport = r.time + r.cooldown
+		player:SetAttribute("TeleportReadyAt", r.clock.teleport)
+		r.character:PivotTo(CFrame.new(pos) * r.root.CFrame.Rotation)
+		r.root.AssemblyLinearVelocity = Vector3.zero
+		return true
+	end
+	Remotes.dashFunction.OnServerInvoke = function(player)
+		local r, why = request(player, "dash", Config.Dash.cooldown)
+		if not r then
+			return false, why
+		end
+		if bestTool(player).order < Config.Dash.tier then
+			return false, "Requires Iron Scythe"
+		end
+		if movementBlocked(player, false) then
+			return false, "Dash blocked while carrying or fighting"
+		end
+		local forward = r.root.CFrame.LookVector * Vector3.new(1, 0, 1)
+		if forward.Magnitude < 0.01 then
+			return false, "No direction"
+		end
+		forward = forward.Unit
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { r.character, loose, ghostFolder }
+		params.RespectCanCollide = true
+		local distance = Config.Dash.distance
+		-- Sweep the body volume, then raycast its centre. Never cross a wall or locked gate.
+		local hit =
+			workspace:Blockcast(r.root.CFrame, Config.Dash.bodySize, forward * distance, params)
+		local ray = workspace:Raycast(r.root.Position, forward * distance, params)
+		if hit then
+			distance = math.min(distance, math.max(0, hit.Distance - Config.Dash.clearance))
+		end
+		if ray then
+			distance = math.min(distance, math.max(0, ray.Distance - Config.Dash.clearance))
+		end
+		if distance <= 0 then
+			return false, "Wall ahead"
+		end
+		r.clock.dash = r.time + r.cooldown
+		player:SetAttribute("DashReadyAt", r.clock.dash)
+		r.character:PivotTo(r.character:GetPivot() + forward * distance)
+		r.root.AssemblyLinearVelocity = Vector3.zero
+		return true
+	end
+	-- The client predicts this for responsiveness; the server owns the allowed speed.
+	RunService.Heartbeat:Connect(function()
+		for _, player in Players:GetPlayers() do
+			local character = player.Character
+			local hum = character and character:FindFirstChildOfClass("Humanoid")
+			if hum and isLoaded(player) then
+				local speed = Config.walkSpeed(upgradeLevel(player, "Boots"))
+					* (player:GetAttribute("Sprinting") and Config.Movement.sprintMult or 1)
+				speed = math.max(
+					Config.MinCarrySpeed,
+					speed - #(carrying[player] or {}) * Config.SlowPerPumpkin
+				)
+				if
+					(player:GetAttribute("GuardEffectUntil") or 0) > workspace:GetServerTimeNow()
+				then
+					speed *= player:GetAttribute("WalkSpeedMultiplier") or 1
+				end
+				if player:GetAttribute("FightActive") then
+					speed = 0
+				end
+				hum.WalkSpeed = speed
+			end
+		end
+	end)
+end

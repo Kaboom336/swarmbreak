@@ -1037,7 +1037,10 @@ local function pill(text: string, color: Color3, order: number): TextButton
 	local b = button(leftBar, text, color)
 	b.Size = UDim2.fromScale(1, 0.065 / 0.225)
 	if order > 0 then
-		local name = order == 1 and "Shop" or order == 2 and "Index" or "Daily"
+		local name = order == 1 and "Shop"
+			or order == 2 and "Index"
+			or order == 3 and "Teleport"
+			or "Daily"
 		local icon = Instance.new("ImageLabel")
 		icon.BackgroundTransparency = 1
 		icon.Image = Config.UI.icons[name]
@@ -1161,6 +1164,7 @@ end
 
 local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	local frame = Instance.new("Frame")
+	frame:SetAttribute("PanelTitle", title)
 	frame.AnchorPoint = Vector2.new(0.5, 0.5)
 	frame.Position = UDim2.fromScale(0.5, 0.54)
 	frame.Size = UDim2.fromScale(Config.UI.panelSize.X, Config.UI.panelSize.Y)
@@ -1531,8 +1535,9 @@ end
 local upgradeCards: { [string]: GridCard } = {}
 local refreshUpgradeCards -- forward: a failed buy shows its reason, then refreshes
 -- Sharp Blade (Mallet) is cut; Lucky Swing shows once its gate opens.
-local UPGRADE_ORDER = { "Stack", "Lucky" }
+local UPGRADE_ORDER = { "Boots", "Stack", "Lucky" }
 local UPGRADE_COLOR = {
+	Boots = Color3.fromRGB(255, 210, 65),
 	Stack = Color3.fromRGB(255, 150, 50),
 	Lucky = Color3.fromRGB(110, 210, 90),
 }
@@ -1564,7 +1569,7 @@ function refreshUpgradeCards()
 		if level >= info.max then
 			cardState(gc, "owned", "MAX!")
 		else
-			local cost = math.floor(info.base * (level + 1) ^ Config.CostPower)
+			local cost = Config.upgradeCost(id, level)
 			cardState(gc, candyValue.Value >= cost and "buy" or "locked", "🍬 " .. short(cost))
 		end
 	end
@@ -2828,7 +2833,7 @@ do
 						"Your plot"
 					)
 					set(
-						plot:FindFirstChild("PickupPrompt"),
+						plot:FindFirstChild("PickupPrompt", true),
 						active
 							and mine
 							and filled
@@ -2841,7 +2846,7 @@ do
 						name
 					)
 					set(
-						plot:FindFirstChild("StealPrompt"),
+						plot:FindFirstChild("StealPrompt", true),
 						active and robbable and filled and plot:GetAttribute("Protected") ~= true,
 						name
 					)
@@ -4137,6 +4142,53 @@ do
 	local progress = textLabel(bar, "", Color3.fromRGB(255, 225, 150))
 	progress.Position = UDim2.fromScale(0, 0.65)
 	progress.Size = UDim2.fromScale(1, 0.30)
+	local questToggle = button(gui, "Zone quests", Color3.fromRGB(100, 70, 150))
+	questToggle.Position = UDim2.fromScale(0.67, Config.UI.zoneY)
+	questToggle.Size = UDim2.fromScale(0.11, 0.025)
+	local questPanel = textLabel(gui, "", Color3.new(1, 1, 1))
+	questPanel.BackgroundColor3 = Config.UI.body
+	questPanel.BackgroundTransparency = 0.1
+	questPanel.Position = UDim2.fromScale(0.67, Config.UI.zoneY + 0.03)
+	questPanel.Size = UDim2.fromScale(0.20, 0.11)
+	questPanel.Visible = false
+	corner(questPanel, 10)
+	questToggle.Activated:Connect(function()
+		questPanel.Visible = not questPanel.Visible
+	end)
+	local function refreshQuests(root)
+		questToggle.Visible = not anyPanelOpen()
+		if anyPanelOpen() then
+			questPanel.Visible = false
+		end
+		local ok, data =
+			pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("ZoneProgress") or "{}")
+		if not ok then
+			return
+		end
+		for _, id in Config.ZoneOrder do
+			local folder = garden.Zones:FindFirstChild(id)
+			local z = Config.Zones[id]
+			if
+				folder
+				and root.Position.Z >= (folder:GetAttribute("ZMin") or z.zMin)
+				and root.Position.Z < (folder:GetAttribute("ZMax") or z.zMax)
+			then
+				local q = data.quests and data.quests[id] or {}
+				questPanel.Text = string.format(
+					"%s\n[%s] Smash %d/%d\n[%s] Steal  [%s] Own pet\nNext gate -%d%%",
+					z.title,
+					(q.smash or 0) >= Config.Progression.questSmashes and "x" or " ",
+					q.smash or 0,
+					Config.Progression.questSmashes,
+					(q.steal or 0) >= Config.Progression.questSteals and "x" or " ",
+					q.own and "x" or " ",
+					Config.Progression.gateDiscount * 100
+				)
+				return
+			end
+		end
+		questPanel.Text = "Enter a zone to see its quests"
+	end
 	local popScale = Instance.new("UIScale")
 	popScale.Parent = bar
 
@@ -4503,6 +4555,7 @@ do
 				local zoneId = part:GetAttribute("Zone")
 				if
 					part:IsA("BasePart")
+					and (part.Name == "WildPumpkin" or part.Name == "Spawn")
 					and (type(zoneId) ~= "string" or ZoneView.has(zoneId))
 					and not (skip and (part.Position - skip).Magnitude < 1.5)
 				then
@@ -4551,12 +4604,21 @@ do
 	end
 
 	-- A zone's Hoard nest (the server builds it as Zones.<zone>.Hoard.Nest).
-	local function hoardSpot(zoneId: string): Vector3?
+	local function hoardSpot(zoneId: string): (Vector3?, boolean)
 		local zones = garden:FindFirstChild("Zones")
 		local zone = zones and zones:FindFirstChild(zoneId)
 		local hoard = zone and zone:FindFirstChild("Hoard")
 		local nest = hoard and hoard:FindFirstChild("Nest") :: BasePart?
-		return nest and nest.Position
+		for _, p in hoard and hoard:GetChildren() or {} do
+			if
+				p:IsA("BasePart")
+				and p.Name == "HoardPumpkin"
+				and p:FindFirstChild("StealPrompt")
+			then
+				return p.Position, true
+			end
+		end
+		return nest and nest.Position, false
 	end
 
 	-- Carrying toward your base: "Go to your Base!" until you stand on it, then "Place it!".
@@ -4578,6 +4640,11 @@ do
 		end
 		local kind = current and current.target or "zone"
 		local stat = current and current.stat or "smash"
+		if kind == "king" and not state:GetAttribute("KingActive") then
+			current = nil
+			kind = "zone"
+			stat = "smash"
+		end
 		local sub = current
 				and string.format(
 					"%s  %s/%s",
@@ -4586,36 +4653,18 @@ do
 					short(current.need or 1)
 				)
 			or "Smash for candy"
-		if not data.tutorial then
-			local ok, zoneProgress = pcall(function()
-				return HttpService:JSONDecode(player:GetAttribute("ZoneProgress") or "{}")
-			end)
-			if ok then
-				for _, id in Config.ZoneOrder do
-					local folder = garden.Zones:FindFirstChild(id)
-					local z = Config.Zones[id]
-					if
-						folder
-						and root.Position.Z >= (folder:GetAttribute("ZMin") or z.zMin)
-						and root.Position.Z < (folder:GetAttribute("ZMax") or z.zMax)
-					then
-						local q = zoneProgress.quests and zoneProgress.quests[id] or {}
-						sub = string.format(
-							"[%s] Smash %d/%d  [%s] Steal  [%s] Own pet | Next gate -25%%",
-							(q.smash or 0) >= Config.Progression.questSmashes and "x" or " ",
-							q.smash or 0,
-							Config.Progression.questSmashes,
-							(q.steal or 0) >= 1 and "x" or " ",
-							q.own and "x" or " "
-						)
-					end
-				end
-			end
-		end
 		if state:GetAttribute("KingWarning") then
 			return "JOIN KING NIGHT!", "Pet + loot!", kingFace.Position
 		end
 		local zone = zoneTarget(root.Position) or soil.Position
+		local _, nestReady = hoardSpot("Zone1")
+		if
+			carry == 0
+			and (kind == "hoard" or (kind == "place" and (player:GetAttribute("PenFilled") or 0) == 0))
+			and not nestReady
+		then
+			return "Nest refilling...", "Smash for candy while you wait", zone
+		end
 		if carry > 0 then
 			if
 				player:GetAttribute("CarryPet")
@@ -4679,7 +4728,11 @@ do
 			return "Brew your pumpkin!", sub .. " · pick up a pet", soil.Position
 		elseif kind == "steal" then
 			return "Steal a Pumpkin!", sub, otherBase(root.Position) or soil.Position
-		elseif kind == "king" then
+		elseif
+			kind == "king"
+			and state:GetAttribute("KingActive")
+			and (state:GetAttribute("KingHp") or 0) > 0
+		then
 			return "Hit the Pumpkin King!", sub, kingFace.Position
 		elseif stat == "bonkGhost" then
 			return "Bonk the Ghosts!", sub, nearestGhost(root.Position) or soil.Position
@@ -4712,6 +4765,7 @@ do
 				placeArrows(nil)
 				continue
 			end
+			refreshQuests(root)
 			local verb, sub, target = objective(data, root, soil)
 			setObjective(verb, sub)
 			placeArrows(target)
@@ -5027,7 +5081,7 @@ do
 	end
 
 	local frame, list = panel("Daily Reward")
-	local daily = pill("Daily", BUY, 3)
+	local daily = pill("Daily", BUY, 4)
 	local reward = textLabel(list, "Claim today's candy gift!", Color3.new(1, 1, 1))
 	reward.Size = UDim2.new(1, 0, 0, 60)
 	local claim = button(list, "Claim daily gift", BUY)
@@ -5078,6 +5132,7 @@ local function setSprint(on: boolean)
 		return
 	end
 	sprinting = on
+	remotes:WaitForChild("Sprint"):FireServer(on)
 	local camera = workspace.CurrentCamera
 	TweenService:Create(camera, TweenInfo.new(on and 0.2 or 0.3, Enum.EasingStyle.Quad), {
 		FieldOfView = on and Config.SprintFov or 70,
@@ -5090,7 +5145,7 @@ ContextActionService:BindAction("Sprint", function(_, inputState)
 		setSprint(false)
 	end
 	return Enum.ContextActionResult.Pass
-end, true, Enum.KeyCode.LeftShift)
+end, false, Enum.KeyCode.LeftShift)
 ContextActionService:SetTitle("Sprint", "RUN")
 ContextActionService:SetPosition("Sprint", UDim2.fromScale(0.64, 0.52))
 
@@ -5100,7 +5155,8 @@ RunService.Heartbeat:Connect(function()
 	if not humanoid then
 		return
 	end
-	local speed = sprinting and Config.SprintSpeed or Config.WalkSpeed
+	local speed = Config.walkSpeed(player:GetAttribute("Up_Boots"))
+		* (sprinting and Config.Movement.sprintMult or 1)
 	speed = math.max(
 		Config.MinCarrySpeed,
 		speed - (player:GetAttribute("Carry") or 0) * Config.SlowPerPumpkin
@@ -6160,145 +6216,57 @@ do
 	end)
 end
 
--- Hatched pets idle on their pedestals: a gentle bob and a slow look left and right. Living Jacks
--- (no pet model) hop gently around their plots: a short arc to a random spot within
--- Config.JackHop studs (and the plot) of their home every second or two, facing where they hop.
--- Local only: the server keeps each one at JackHome on its plot, and one that leaves its plot
--- (picked up, stolen, grabbed by a ghost) is never touched again.
+-- Pets render a random walk through their whole pen; the server validates the same waypoints.
 do
-	type Hop = {
-		from: Vector3,
-		to: Vector3,
-		t0: number,
-		nextAt: number,
-		yaw: number,
-		fromYaw: number,
-	}
-	local HOP_TIME = 0.42
-	local hops: { [BasePart]: Hop } = {}
-	local jacks: { BasePart } = {}
-	local function onPlot(p: BasePart): boolean
-		local plot = p.Parent
-		return plot ~= nil
-			and plot.Name == "Plot"
-			and p:GetAttribute("Placed") == true
-			and p:GetAttribute("Jack") == true
-			and typeof(p:GetAttribute("JackHome")) == "CFrame"
-	end
+	local pets = {}
 	task.spawn(function()
 		while true do
 			local list = {}
-			for _, patch in patchFolder:GetChildren() do
-				for _, plot in patch:GetChildren() do
+			for _, pen in patchFolder:GetChildren() do
+				for _, plot in pen:GetChildren() do
 					local p = plot.Name == "Plot" and plot:FindFirstChild("Pumpkin")
-					if p and p:IsA("BasePart") and onPlot(p) then
+					if
+						p
+						and p:IsA("BasePart")
+						and p:GetAttribute("Jack")
+						and p:GetAttribute("Placed")
+					then
 						table.insert(list, p)
 					end
 				end
 			end
-			jacks = list
-			for p in hops do
-				if not onPlot(p) then
-					hops[p] = nil
-				end
-			end
+			pets = list
 			task.wait(0.5)
 		end
 	end)
-	RunService.Heartbeat:Connect(function()
-		local camera = workspace.CurrentCamera
-		if not camera then
-			return
-		end
-		local eye = camera.CFrame.Position
-		local t = os.clock()
-		for _, p in jacks do
-			if not onPlot(p) then
-				hops[p] = nil
+	RunService.RenderStepped:Connect(function()
+		local now = workspace:GetServerTimeNow()
+		for _, p in pets do
+			if not p.Parent or not p:GetAttribute("Placed") or not p:GetAttribute("JackHome") then
 				continue
 			end
-			local home = p:GetAttribute("JackHome") :: CFrame
-			if (home.Position - eye).Magnitude > 140 then
+			if p:GetAttribute("Stashed") then
 				continue
 			end
-			if p:GetAttribute("Pet") then
-				-- Each pet gets its own phase from its position, so a row never moves in step.
-				local phase = (home.Position.X * 0.37 + home.Position.Z * 0.61) % (math.pi * 2)
-				local bob = (math.sin(t * 2.2 + phase) + 1) * 0.18
-				local turn = math.sin(t * 0.6 + phase) * math.rad(25)
-				local plot = p.Parent
-				local soil = plot and plot.Parent and plot.Parent:FindFirstChild("Soil")
-				local front = soil
-						and Vector3.new(
-							Config.MapCenterX - soil.Position.X,
-							0,
-							Config.Plots.frontZ - soil.Position.Z
-						)
-					or Vector3.zAxis
-				front = front.Magnitude > 0.01 and front.Unit or Vector3.zAxis
-				local right = soil and soil.CFrame.RightVector or Vector3.xAxis
-				local offset = front
-						* (Config.Plots.wander * (0.6 + 0.2 * math.sin(t * 0.4 + phase)))
-					+ right * (Config.Plots.wander * 0.3 * math.sin(t * 0.65 + phase))
-				p.CFrame = (home + offset + Vector3.yAxis * bob) * CFrame.Angles(0, turn, 0)
-				continue
+			local from = p:GetAttribute("RoamFrom")
+			local goal = p:GetAttribute("RoamTo")
+			local at = Config.roamPoint(p, now)
+			local moving = now < (p:GetAttribute("RoamEnd") or 0)
+			local direction = from and goal and (goal - from) * Vector3.new(1, 0, 1) or Vector3.zero
+			local rotation = (p:GetAttribute("JackHome") :: CFrame).Rotation
+			if direction.Magnitude > 0.01 then
+				rotation = CFrame.lookAt(Vector3.zero, direction).Rotation
 			end
-			local plot = p.Parent :: BasePart
-			local radius =
-				math.min(Config.JackHop, math.max(0, math.min(plot.Size.Y, plot.Size.Z) / 2 - 0.3))
-			local hop = hops[p]
-			if not hop then
-				local _, yaw = home:ToOrientation()
-				hop = {
-					from = Vector3.zero,
-					to = Vector3.zero,
-					t0 = -1,
-					nextAt = t + math.random() * 1.5,
-					yaw = yaw,
-					fromYaw = yaw,
-				}
-				hops[p] = hop
+			local bob = moving and math.abs(math.sin(now * 9)) * Config.PetRoam.bob
+				or math.abs(math.sin(now * 3)) * 0.06
+			p.CFrame = CFrame.new(at + Vector3.yAxis * bob) * rotation
+			local anchor = p:FindFirstChild("PetPromptAnchor")
+			if anchor then
+				anchor.Position = Vector3.zero
 			end
-			if t >= hop.nextAt then
-				local a = math.random() * math.pi * 2
-				local r = math.sqrt(math.random()) * radius
-				local soil = plot.Parent and plot.Parent:FindFirstChild("Soil")
-				local front = soil
-						and Vector3.new(
-							Config.MapCenterX - soil.Position.X,
-							0,
-							Config.Plots.frontZ - soil.Position.Z
-						)
-					or Vector3.zAxis
-				front = front.Magnitude > 0.01 and front.Unit or Vector3.zAxis
-				local goal = front * (Config.Plots.wander * 0.55)
-					+ Vector3.new(math.cos(a) * r, 0, math.sin(a) * r) * 0.4
-				local dir = goal - hop.to
-				hop.from = hop.to
-				hop.to = goal
-				hop.t0 = t
-				hop.nextAt = t + HOP_TIME + 0.8 + math.random() * 1.6
-				hop.fromYaw = hop.yaw
-				if dir.Magnitude > 0.05 then
-					-- CFrame.Angles(0, yaw, 0) looks along (-sin yaw, 0, -cos yaw): toward dir.
-					hop.yaw = math.atan2(-dir.X, -dir.Z)
-				end
-			end
-			local f = hop.t0 >= 0 and math.clamp((t - hop.t0) / HOP_TIME, 0, 1) or 1
-			local turn = (hop.yaw - hop.fromYaw + math.pi) % (math.pi * 2) - math.pi
-			local yaw = hop.fromYaw + turn * math.min(1, f * 2)
-			local lift = math.sin(f * math.pi) * 0.9
-			if f >= 1 then
-				-- Idle: a tiny breathing bounce.
-				lift = math.abs(math.sin(t * 3)) * 0.06
-			end
-			p.CFrame = CFrame.new(
-				home.Position + hop.from:Lerp(hop.to, f) + Vector3.new(0, lift, 0)
-			) * CFrame.Angles(0, yaw, 0)
 		end
 	end)
 end
-
 -- Carry look (Steal an Egg): every pumpkin carried over a head floats inside a soft rainbow halo,
 -- a see-through Neon ball (local, anchored, following the pumpkin each frame) whose colour cycles
 -- slowly. RUN!!, Drop and the red vignette stay as they are. -----------------------------------
@@ -6690,4 +6658,131 @@ do
 		watch(patch)
 	end
 	patchFolder.ChildAdded:Connect(watch)
+end
+
+-- Free travel menu and tier-two dash. Only action names leave this client.
+do
+	local travel, list = panel("Teleport")
+	local teleport = pill("Teleport", Color3.fromRGB(135, 90, 225), 3)
+	local pending = false
+	teleport.Activated:Connect(function()
+		local open = not travel.Visible
+		for _, f in panelFrames do
+			f.Visible = false
+		end
+		travel.Visible = open
+	end)
+	for i, target in { "My Pen", "Zone Gate", "Shop" } do
+		local b = button(list, target, BUY)
+		b.Size = UDim2.new(1, 0, 0, 48)
+		b.LayoutOrder = i
+		b.Activated:Connect(function()
+			if pending then
+				return
+			end
+			pending = true
+			local ok, success, message = pcall(function()
+				return remotes:WaitForChild("Teleport"):InvokeServer(target)
+			end)
+			pending = false
+			if ok and success then
+				travel.Visible = false
+			else
+				hint(message or "Travel unavailable")
+			end
+		end)
+	end
+	local index = button(list, "Open Index", Color3.fromRGB(40, 190, 235))
+	index.Size = UDim2.new(1, 0, 0, 42)
+	index.LayoutOrder = 4
+	index.Activated:Connect(function()
+		travel.Visible = false
+		indexPanel.Visible = true
+	end)
+	local daily = button(list, "Daily gift", BUY)
+	daily.Size = UDim2.new(1, 0, 0, 42)
+	daily.LayoutOrder = 5
+	daily.Activated:Connect(function()
+		travel.Visible = false
+		for _, f in panelFrames do
+			if f:GetAttribute("PanelTitle") == "Daily Reward" then
+				f.Visible = true
+			end
+		end
+	end)
+	local run = button(list, "Toggle sprint", Color3.fromRGB(255, 210, 65))
+	run.Size = UDim2.new(1, 0, 0, 42)
+	run.LayoutOrder = 6
+	run.Activated:Connect(function()
+		setSprint(not sprinting)
+		travel.Visible = false
+	end)
+	local dashPending = false
+	local function dash(_, inputState)
+		if
+			inputState ~= Enum.UserInputState.Begin
+			or UserInputService:GetFocusedTextBox()
+			or anyPanelOpen()
+			or dashPending
+		then
+			return Enum.ContextActionResult.Pass
+		end
+		if (player:GetAttribute("Tool") or Config.StartTool) == Config.StartTool then
+			return Enum.ContextActionResult.Pass
+		end
+		dashPending = true
+		task.spawn(function()
+			local ok, success, message = pcall(function()
+				return remotes:WaitForChild("Dash"):InvokeServer()
+			end)
+			dashPending = false
+			if not ok or not success then
+				hint(message or "Dash unavailable")
+			end
+		end)
+		return Enum.ContextActionResult.Sink
+	end
+	ContextActionService:BindAction("ScytheDash", dash, true, Enum.KeyCode.Q)
+	ContextActionService:SetTitle("ScytheDash", "DASH")
+	ContextActionService:SetPosition(
+		"ScytheDash",
+		UDim2.fromScale(Config.Dash.mobile.X, Config.Dash.mobile.Y)
+	)
+	RunService.Heartbeat:Connect(function()
+		local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+		local unlockedDash = (player:GetAttribute("Tool") or Config.StartTool) ~= Config.StartTool
+		local dashButton = ContextActionService:GetButton("ScytheDash")
+		if dashButton then
+			dashButton.Visible = touch
+				and unlockedDash
+				and not anyPanelOpen()
+				and (player:GetAttribute("CarryHoard") or 0) == 0
+				and (player:GetAttribute("CarryStolen") or 0) == 0
+				and not player:GetAttribute("FightActive")
+				and not state:GetAttribute("PurgeEnds")
+			local remaining = math.max(
+				0,
+				math.ceil((player:GetAttribute("DashReadyAt") or 0) - workspace:GetServerTimeNow())
+			)
+			ContextActionService:SetTitle(
+				"ScytheDash",
+				remaining > 0 and tostring(remaining) or "DASH"
+			)
+		end
+		-- Index remains accessible inside the travel menu when dash takes the third mobile slot.
+		indexButton.Visible = not (
+			touch and (unlockedDash or (player:GetAttribute("Carry") or 0) > 0)
+		)
+		for _, b in leftBar:GetChildren() do
+			if b:IsA("TextButton") and b.LayoutOrder == 4 then
+				b.Visible = not touch and player:GetAttribute("DailyClaimable") == true
+			end
+		end
+		daily.Visible = player:GetAttribute("DailyClaimable") == true
+		local remaining = math.max(
+			0,
+			math.ceil((player:GetAttribute("TeleportReadyAt") or 0) - workspace:GetServerTimeNow())
+		)
+		teleport.Text = touch and "" or remaining > 0 and ("Teleport " .. remaining) or "Teleport"
+	end)
 end
