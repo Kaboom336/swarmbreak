@@ -3888,16 +3888,29 @@ do
 	-- the chain starts 2.5 studs out with 2.6-stud gaps (several arrows sit between you and the
 	-- camera even then), each arrow is 2.2 wide over a 1.22x dark-red underlay for contrast on
 	-- the pink ground, lifted 0.4 studs, and nearly opaque (the wave only brightens).
-	local RED = Color3.fromRGB(224, 24, 24)
-	local HOT = Color3.fromRGB(255, 125, 110)
-	local DEEP = Color3.fromRGB(92, 6, 12)
-	local ARROWS, SPACING, FIRST, STOP, LIFT = 7, 2.6, 2.5, 6, 0.4
-	local THICK, HEAD_W, HEAD_L, SHAFT_W, SHAFT_L, HEAD_BASE = 0.25, 2.2, 1.35, 0.85, 1.1, 0.15
-	local UNDER, UNDER_DROP = 1.22, 0.1
+	-- Arrow and ring constants live in one table (keeps the register count under 200).
+	local AK = {
+		RED = Color3.fromRGB(224, 24, 24),
+		HOT = Color3.fromRGB(255, 125, 110),
+		DEEP = Color3.fromRGB(92, 6, 12),
+		ARROWS = 7,
+		SPACING = 2.6,
+		FIRST = 2.5,
+		STOP = 6,
+		LIFT = 0.4,
+		THICK = 0.25,
+		HEAD_W = 2.2,
+		HEAD_L = 1.35,
+		SHAFT_W = 0.85,
+		SHAFT_L = 1.1,
+		HEAD_BASE = 0.15,
+		UNDER = 1.22,
+		UNDER_DROP = 0.1,
+		RING_R = 3.2,
+	}
 	-- Z centre of one arrow (tip at HEAD_BASE - HEAD_L, shaft end at HEAD_BASE + SHAFT_L): the
 	-- underlay is the same arrow scaled about it.
-	local MID = HEAD_BASE + (SHAFT_L - HEAD_L) / 2
-	local RING_R = 3.2
+	AK.MID = AK.HEAD_BASE + (AK.SHAFT_L - AK.HEAD_L) / 2
 	local arrowFolder = Instance.new("Folder")
 	arrowFolder.Name = "GuideArrows"
 	arrowFolder.Parent = workspace
@@ -3913,7 +3926,7 @@ do
 		p.CanTouch = false
 		p.CastShadow = false
 		p.Material = under and Enum.Material.SmoothPlastic or Enum.Material.Neon
-		p.Color = under and DEEP or RED
+		p.Color = under and AK.DEEP or AK.RED
 		p.Transparency = 1
 		p.Parent = arrowFolder
 		table.insert(arrowParts, p)
@@ -3921,30 +3934,30 @@ do
 		table.insert(arrowOf, i)
 		table.insert(arrowUnder, under)
 	end
-	-- One arrow scaled by s about (0, MID) and dropped `drop` studs.
+	-- One arrow scaled by s about (0, AK.MID) and dropped `drop` studs.
 	local function buildArrow(i: number, s: number, drop: number, under: boolean)
 		local function z(v: number): number
-			return MID + (v - MID) * s
+			return AK.MID + (v - AK.MID) * s
 		end
 		-- Shaft: behind the head (+Z), overlapping it a little.
 		arrowPart(
 			Instance.new("Part"),
-			Vector3.new(SHAFT_W * s, THICK, SHAFT_L * s),
-			CFrame.new(0, -drop, z(HEAD_BASE + SHAFT_L / 2 - 0.05)),
+			Vector3.new(AK.SHAFT_W * s, AK.THICK, AK.SHAFT_L * s),
+			CFrame.new(0, -drop, z(AK.HEAD_BASE + AK.SHAFT_L / 2 - 0.05)),
 			i,
 			under
 		)
 		-- Head: two flat right triangles. A WedgePart's triangle (in its Y/Z plane) has its right
 		-- angle at local (y -h/2, z +d/2), the tip at (y -h/2, z -d/2) and the far corner at
 		-- (y +h/2, z +d/2). Wedge Y = side * arrow X, wedge Z = arrow Z (so wedge X = Y x Z is
-		-- vertical): the right angle lands on (0, HEAD_BASE), the tip on (0, HEAD_BASE - HEAD_L)
-		-- (forward, -Z) and the far corner on (side * HEAD_W / 2, HEAD_BASE).
+		-- vertical): the right angle lands on (0, AK.HEAD_BASE), the tip on (0, AK.HEAD_BASE - AK.HEAD_L)
+		-- (forward, -Z) and the far corner on (side * AK.HEAD_W / 2, AK.HEAD_BASE).
 		for side = -1, 1, 2 do
 			arrowPart(
 				Instance.new("WedgePart"),
-				Vector3.new(THICK, HEAD_W / 2 * s, HEAD_L * s),
+				Vector3.new(AK.THICK, AK.HEAD_W / 2 * s, AK.HEAD_L * s),
 				CFrame.fromMatrix(
-					Vector3.new(side * HEAD_W / 4 * s, -drop, z(HEAD_BASE - HEAD_L / 2)),
+					Vector3.new(side * AK.HEAD_W / 4 * s, -drop, z(AK.HEAD_BASE - AK.HEAD_L / 2)),
 					Vector3.new(0, -side, 0),
 					Vector3.new(side, 0, 0),
 					Vector3.zAxis
@@ -3954,8 +3967,8 @@ do
 			)
 		end
 	end
-	for i = 1, ARROWS do
-		buildArrow(i, UNDER, UNDER_DROP, true)
+	for i = 1, AK.ARROWS do
+		buildArrow(i, AK.UNDER, AK.UNDER_DROP, true)
 		buildArrow(i, 1, 0, false)
 	end
 	-- Ring on the ground around the target: a steady pulsing ring plus a ping that grows and
@@ -3972,10 +3985,10 @@ do
 	local function ringAdornment(transparency: number): CylinderHandleAdornment
 		local ring = Instance.new("CylinderHandleAdornment")
 		ring.Adornee = ringHolder
-		ring.Radius = RING_R
-		ring.InnerRadius = RING_R - 0.5
+		ring.Radius = AK.RING_R
+		ring.InnerRadius = AK.RING_R - 0.5
 		ring.Height = 0.2
-		ring.Color3 = RED
+		ring.Color3 = AK.RED
 		ring.Transparency = transparency
 		ring.Visible = false
 		ring.Parent = ringHolder
@@ -4000,7 +4013,7 @@ do
 	markerGui.LightInfluence = 0
 	markerGui.Enabled = false
 	markerGui.Parent = marker
-	textLabel(markerGui, "⬇", RED).Size = UDim2.fromScale(1, 1)
+	textLabel(markerGui, "⬇", AK.RED).Size = UDim2.fromScale(1, 1)
 
 	-- A pumpkin that just popped is skipped by zoneTarget for a moment (its part may still be
 	-- there for a frame or two), and the loop below re-targets right away.
@@ -4047,11 +4060,11 @@ do
 		rayParams.FilterDescendantsInstances = skip
 		marker.Position = target + Vector3.new(0, 2, 0)
 		local floor = groundY(target, target.Y - 1.5)
-		ringHolder.CFrame = CFrame.new(target.X, floor + LIFT, target.Z)
+		ringHolder.CFrame = CFrame.new(target.X, floor + AK.LIFT, target.Z)
 			* CFrame.Angles(math.rad(90), 0, 0)
 		local flat = Vector3.new(target.X - root.Position.X, 0, target.Z - root.Position.Z)
 		local dist = flat.Magnitude
-		if dist < STOP then
+		if dist < AK.STOP then
 			return
 		end
 		-- Flat unit vector from you to the target: each arrow's -Z (its tip) points along it. The
@@ -4059,10 +4072,10 @@ do
 		-- and leads the eye round.
 		local dir = flat.Unit
 		local feet = groundY(root.Position, root.Position.Y - 3)
-		for i = 1, ARROWS do
-			local d = FIRST + (i - 1) * SPACING
+		for i = 1, AK.ARROWS do
+			local d = AK.FIRST + (i - 1) * AK.SPACING
 			-- Stop before the ring around the target.
-			if d > dist - RING_R - 1 then
+			if d > dist - AK.RING_R - 1 then
 				break
 			end
 			local p = root.Position + dir * d
@@ -4071,7 +4084,7 @@ do
 			if y > feet + 2.5 then
 				y = feet
 			end
-			local at = Vector3.new(p.X, y + LIFT, p.Z)
+			local at = Vector3.new(p.X, y + AK.LIFT, p.Z)
 			arrowBase[i] = CFrame.lookAt(at, at + dir)
 		end
 	end
@@ -4093,7 +4106,7 @@ do
 					end
 				else
 					p.Transparency = 0.1 * (1 - wave)
-					p.Color = RED:Lerp(HOT, wave)
+					p.Color = AK.RED:Lerp(AK.HOT, wave)
 				end
 				table.insert(moved, p)
 				table.insert(frames, base * CFrame.new(0, 0.15 * wave, 0) * arrowOffsets[k])
@@ -4109,11 +4122,11 @@ do
 		end
 		if ring.Visible then
 			local beat = 0.5 + 0.5 * math.sin(t * 6)
-			ring.Radius = RING_R + 0.25 * beat
+			ring.Radius = AK.RING_R + 0.25 * beat
 			ring.InnerRadius = ring.Radius - 0.55
 			ring.Transparency = 0.25 * (1 - beat)
 			local f = (t * 0.9) % 1
-			ping.Radius = RING_R + 2.6 * f
+			ping.Radius = AK.RING_R + 2.6 * f
 			ping.InnerRadius = ping.Radius - 0.35
 			ping.Transparency = 0.3 + 0.7 * f
 		end
