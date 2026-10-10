@@ -187,7 +187,9 @@ local Config = {
 	MysteryModel = "MysteryPumpkin",
 
 	-- The Witch pays SellPerIncome seconds of a pumpkin's income for it.
-	SellPerIncome = 1800, -- 50% of one hour's earnings
+	SellPerIncome = 30,
+	FullPenSellSeconds = 300,
+	WitchSellSeconds = 300, -- five minutes of income
 	-- Each pumpkin rolls a size; it multiplies income, sell value and the look.
 	SizeMin = 0.85,
 	SizeMax = 1.4,
@@ -582,7 +584,7 @@ local Config = {
 			need = 30,
 			text = "Smash pumpkins!",
 			target = "zone",
-			reward = { candy = 120 },
+			reward = { candy = 20 },
 		},
 		{
 			stat = "buyTool",
@@ -815,8 +817,299 @@ local Config = {
 	},
 }
 
+Config.RemovedOrders =
+	{ sellBrewed = true, sell = true, brewRare = true, sellStackOf5 = true, sellMutation = true }
+
+-- R21 tuning. Arrival simulation assumes an active player fills the current pen, average
+-- nest size, equal pet rolls, matching scythe, 50% farming uptime, and earns the quest discount.
+Config.Progression = {
+	stampBonus = 0.1,
+	roundEpsilon = 1e-8,
+	questSmashes = 50,
+	questSteals = 1,
+	gateDiscount = 0.25,
+	baseSlots = 6,
+	woodsSlots = 8,
+	castleSlots = 10,
+	fuseCount = 3,
+	fuseWeight = 1.5,
+	shinyChance = 0.1,
+	shinyIncome = 1.25,
+	witchRestock = 300,
+	witchOffers = 3,
+	witchPriceSeconds = 300,
+	goldOneIn = 12,
+	goldIncome = 2,
+	rebirthCost = 5000000,
+	rebirthBonus = 0.25,
+	rebirthCap = 10,
+	activity = 0.5,
+	arrivalMinutes = { 0, 5, 15, 30, 50, 80, 120 },
+	promptRange = 14,
+	slotSpacing = 8,
+	slotRows = 2,
+	slotMargin = 3,
+}
+Config.Raid = {
+	grace = 900,
+	warning = 30,
+	homeRadius = 60,
+	idle = 45,
+	petAge = 300,
+	cooldown = 1200,
+	taps = 5,
+	hover = 8,
+	tapInterval = 0.15,
+}
+Config.KingNight = {
+	minutes = { 0, 20 },
+	warning = 60,
+	hits = 15,
+	damageShare = 0.03,
+	farmSeconds = 480,
+	pity = 10,
+	finisherBonus = 0.05,
+	consolation = 0.25,
+	rarityWeights = { 55, 33, 10, 2 },
+	rewardSeeds = { "Ghost", "CandyCorn", "Inferno", "KingletSeed" },
+	weakEvery = 20,
+	lackeysPerPlayer = 2,
+	lackeyMax = 12,
+	stagger = 1,
+	volleyLength = 60,
+	volleyWidth = 6,
+	volleySpacing = 14,
+	push = 50,
+	lift = 40,
+	finale = 1.5,
+	finaleSpeed = 0.15,
+	rain = 3,
+	resultsSeconds = 6,
+	topCount = 5,
+	critChance = 0.1,
+	critMult = 3,
+}
+Config.GuardTwists = {
+	Zone1 = {
+		kind = "Crow",
+		cooldown = 8,
+		warn = 1.5,
+		radius = 6,
+		slow = 0.6,
+		seconds = 1.5,
+		sound = 9113730784,
+	},
+	Zone2 = {
+		kind = "Bone",
+		cooldown = 7,
+		warn = 1.3,
+		length = 40,
+		width = 3,
+		push = 12,
+		slow = 0.6,
+		seconds = 1,
+		sound = 9116488438,
+	},
+	Zone3 = {
+		kind = "Root",
+		cooldown = 8,
+		warn = 1.4,
+		radius = 8,
+		slow = 0,
+		seconds = 1.5,
+		sound = 99963459517796,
+	},
+	Zone4 = {
+		kind = "Tongue",
+		cooldown = 8,
+		warn = 1.2,
+		radius = 7,
+		predict = 1,
+		pull = 10,
+		sound = 9120972321,
+	},
+	Zone5 = {
+		kind = "Bat",
+		cooldown = 9,
+		warn = 1.5,
+		radius = 7,
+		ahead = 18,
+		sound = 140677698800750,
+	},
+	Zone6 = {
+		kind = "Sticky",
+		cooldown = 8,
+		warn = 1.2,
+		radius = 6,
+		puddles = 2,
+		spacing = 10,
+		lifetime = 6,
+		slow = 0.4,
+		seconds = 0.25,
+		sound = 1169806635,
+	},
+	Zone7 = {
+		kind = "Boulder",
+		cooldown = 7,
+		warn = 1.5,
+		lanes = 3,
+		fanAngle = 20,
+		slow = 0.6,
+		width = 6,
+		length = 40,
+		speed = 50,
+		push = 14,
+		seconds = 1,
+		sound = 128007000574959,
+	},
+	first = 3,
+	mercy = 1,
+	slowCap = 2,
+	effectTick = 0.1,
+	iconHeight = 4,
+}
+Config.PetFinishes = { Gold = Color3.fromRGB(255, 200, 60), Shiny = Color3.fromRGB(220, 255, 255) }
+Config.KingSkin = { color = Color3.fromRGB(255, 190, 40), shapeTier = 7 }
+Config.Progression.rewardCarry = true
+Config.Pets.BonePup.rarity = "Rare"
+Config.Pets.FrostOwl.rarity = "Epic"
+Config.Pets.LavaSlime.rarity = "Legendary"
+for _, def in
+	{
+		{ id = "MothSeed", pet = "Moth", name = "Moth", income = 75, rarity = "Rare" },
+		{ id = "ToadSeed", pet = "Toad", name = "Toad", income = 250, rarity = "Epic" },
+		{
+			id = "GummySeed",
+			pet = "GummyBear",
+			name = "Gummy Bear",
+			income = 3200,
+			rarity = "Legendary",
+		},
+		{
+			id = "DragonSeed",
+			pet = "PumpkinDragon",
+			name = "Pumpkin Dragon",
+			income = 12000,
+			rarity = "Mythic",
+		},
+		{
+			id = "KingletSeed",
+			pet = "Kinglet",
+			name = "Pumpkin Kinglet",
+			income = 140000,
+			rarity = "Mythic",
+		},
+	}
+do
+	Config.Pets[def.pet] = { display = def.name, rarity = def.rarity }
+	table.insert(Config.Seeds, {
+		id = def.id,
+		pet = def.pet,
+		name = def.name,
+		income = def.income,
+		hp = 10,
+		template = "pumpkin_orange",
+		scale = 2,
+	})
+end
+-- Retain legacy IDs and incomes; zone nests roll only their own two inhabitants.
+local ladder = {
+	{ "Orange", "Sunny", "R20 tutorial" },
+	{ "Ghost", "Shadow", "Fuse Machine" },
+	{ "Moon", "MothSeed", "Pen slots 7-8" },
+	{ "Crystal", "ToadSeed", "Witch Merchant" },
+	{ "Golden", "CandyCorn", "Pen slots 9-10" },
+	{ "Inferno", "GummySeed", "Gold mutation" },
+	{ "KingSeed", "DragonSeed", "Rebirth" },
+}
+for i, zoneId in Config.ZoneOrder do
+	local z = Config.Zones[zoneId]
+	z.pets = { ladder[i][1], ladder[i][2] }
+	z.unlock = ladder[i][3]
+	z.arrival = Config.Progression.arrivalMinutes[i]
+end
+Config.Unlocks.King = 0
+Config.KingHpPerDamage = 30
+Config.KingHpPerPlayer = 200
+Config.KingSeconds = 300
+Config.AttackEvery = { 6, 4.5, 3.5 }
+Config.SlamWarn = 1.5
+Config.SlamRadius = 14
+Config.VolleyWarn = 1.2
+Config.LackeyHp = 1
+Config.RainSeconds = Config.KingNight.rain
+
 -- All world themes, farm tuning and nest inhabitants live in Zones.
 for _, id in Config.ZoneOrder do
 	Config.Hoards[id] = Config.Zones[id].hoard
 end
+
+-- Preserve the first gate and calibrate later ones against a transparent active-player model.
+-- These are arrival hypotheses, not measured retention/playtest data. The live tools/pets,
+-- quest discount, stamps, and acquisition ramp feed the same formula on server and client.
+Config.Economy = {
+	baseGateCosts = { 1000, 25000, 400000, 2500000, 17500000, 140000000 },
+	nestIncome = {
+		Orange = 1,
+		Sunny = 4,
+		Ghost = 15,
+		Shadow = 18,
+		Moon = 60,
+		MothSeed = 75,
+		Crystal = 200,
+		ToadSeed = 250,
+		Golden = 700,
+		CandyCorn = 900,
+		Inferno = 2500,
+		GummySeed = 3200,
+		KingSeed = 9000,
+		DragonSeed = 12000,
+	},
+	occupied = { 2, 6, 8, 8, 10, 10, 10 },
+	acquisitionShare = 0.65,
+	completedStampShare = 0.5,
+	roundTo = 1000,
+	results = {},
+}
+-- Legacy pet IDs remain unchanged and loadable; future zone economy is tuned here.
+local incomes = {}
+for _, seed in Config.Seeds do
+	seed.income = Config.Economy.nestIncome[seed.id] or seed.income
+	incomes[seed.id] = seed.income
+end
+for i = 2, #Config.ZoneOrder do
+	local previous = Config.Zones[Config.ZoneOrder[i - 1]]
+	local before = i > 2 and Config.Zones[Config.ZoneOrder[i - 2]] or previous
+	local pets, oldPets = previous.pets, before.pets
+	local average = (incomes[pets[1]] + incomes[pets[2]]) / 2
+	local oldAverage = (incomes[oldPets[1]] + incomes[oldPets[2]]) / 2
+	local ramp = oldAverage + (average - oldAverage) * Config.Economy.acquisitionShare
+	local pen = ramp * Config.HoardMult * Config.HoardSize * Config.Economy.occupied[i - 1]
+	local tool = Config.Tools[i - 1]
+	local crit = 1 + Config.Farm.critChance * (Config.Farm.critMult - 1)
+	local swings = math.max(1, math.ceil(previous.hp / (tool.damage * crit)))
+	local farm = previous.candy / (swings * Config.BonkCooldown) * Config.Progression.activity
+	local bonus = 1 + (i - 2) * Config.Progression.stampBonus * Config.Economy.completedStampShare
+	local rate = (pen + farm) * bonus
+	local elapsed = (
+		Config.Progression.arrivalMinutes[i] - Config.Progression.arrivalMinutes[i - 1]
+	) * 60
+	local toolSpend = Config.Tools[i].cost or 0
+	local discounted = math.max(0, rate * elapsed - toolSpend)
+	local price = math.floor(
+		discounted / (1 - Config.Progression.gateDiscount) / Config.Economy.roundTo + 0.5
+	) * Config.Economy.roundTo
+	if i == 2 then
+		price = Config.Economy.baseGateCosts[1]
+	end
+	Config.Zones[Config.ZoneOrder[i]].cost = price
+	Config.Economy.results[i] = {
+		rate = rate,
+		cost = price,
+		minutes = i == 2 and Config.Progression.arrivalMinutes[i]
+			or Config.Progression.arrivalMinutes[i - 1]
+				+ (price * (1 - Config.Progression.gateDiscount) + toolSpend) / rate / 60,
+	}
+end
+
 return Config

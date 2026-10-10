@@ -550,7 +550,11 @@ local showBanner -- forward
 local function banner(text: string, sub: string?, seconds: number, color: Color3?)
 	task.spawn(function()
 		Center.acquire()
-		showBanner(text, sub, seconds, color)
+		local ok, err = pcall(showBanner, text, sub, seconds, color)
+		Center.release()
+		if not ok then
+			warn("[Patch] Banner:", err)
+		end
 	end)
 end
 function showBanner(text: string, sub: string?, seconds: number, color: Color3?)
@@ -575,7 +579,7 @@ function showBanner(text: string, sub: string?, seconds: number, color: Color3?)
 		subLabel.Position = UDim2.fromScale(0.5, 0.39)
 		subLabel.Size = UDim2.fromScale(0.55, 0.05)
 	end
-	task.spawn(function()
+	do
 		local remaining = seconds
 		while remaining > 0 do
 			local dt = task.wait(0.05)
@@ -587,8 +591,7 @@ function showBanner(text: string, sub: string?, seconds: number, color: Color3?)
 		if subLabel then
 			subLabel:Destroy()
 		end
-		Center.release()
-	end)
+	end
 end
 
 -- Toasts (Steal an Egg style): small white stroked lines stacked at the bottom centre, newest at
@@ -700,11 +703,8 @@ do
 		local phase = state:GetAttribute("Phase") or "Day"
 		local ends = state:GetAttribute("PhaseEnds") or 0
 		local left = math.max(0, ends - now)
-		local candy = state:GetAttribute("JackCandy") or 0
-		local goal = math.max(state:GetAttribute("JackGoal") or 1, 1)
-		local jack = math.clamp(candy / goal, 0, 1)
 		local locksOff = state:GetAttribute("LocksOff")
-		local king = unlocked("King")
+		local king = true
 		local text, color = "", Color3.fromRGB(255, 255, 255)
 		local amount, barColor = 0, nil
 		if phase == "Day" and left <= 5 and left > 0 and warnedFor ~= ends then
@@ -740,6 +740,10 @@ do
 			end
 		end
 		if label.Text ~= text then
+			if phase ~= "BloodMoon" then
+				text = "KING NIGHT in "
+					.. clockText(math.max(0, (state:GetAttribute("KingWakesAt") or now) - now))
+			end
 			label.Text = text
 		end
 		label.TextColor3 = color
@@ -770,13 +774,7 @@ do
 		if spookyLine.Text ~= spookyText then
 			spookyLine.Text = spookyText
 		end
-		if phase ~= "BloodMoon" then
-			local ringColor = Color3.fromRGB(255, 140, 40):Lerp(Color3.fromRGB(255, 60, 40), jack)
-			if meterRing.Color ~= ringColor then
-				meterRing.Color = ringColor
-				meterRing.Transparency = 0.6 - 0.5 * jack
-			end
-		end
+		meterRing.Transparency = 1
 	end
 	task.spawn(function()
 		while chip.Parent do
@@ -1656,10 +1654,7 @@ do
 			Brew = "The Magic Cauldrons are open! Brew pumpkins for x2 to x10.",
 			LuckySwing = "New upgrade in the Shop: Lucky Swing!",
 			King = "The Pumpkin King wakes in every Blood Moon. Bonk him for candy!",
-			Haunt = string.format(
-				"👻 Haunt is open in the Shop! Reset for +%d%% candy forever.",
-				math.floor(Config.HauntSellBonus * 100 + 0.5)
-			),
+			Haunt = "Rebirth is open! Finish the Throne quest, own a Legendary and bring 5M candy.",
 		}
 	do
 		player:GetAttributeChangedSignal("Unlock_" .. name):Connect(function()
@@ -1674,7 +1669,7 @@ end
 
 local hauntRemote = remotes:WaitForChild("Haunt") :: RemoteFunction
 local buySkill = remotes:WaitForChild("BuySkill") :: RemoteFunction
-local hauntPanel, hauntList = panel("🎃 Haunt!")
+local hauntPanel, hauntList = panel("Rebirth!")
 local soulsLabel = textLabel(hauntPanel, "", Color3.fromRGB(200, 160, 255))
 soulsLabel.AnchorPoint = Vector2.new(1, 0)
 soulsLabel.Position = UDim2.new(1, -54, 0, 10)
@@ -1687,7 +1682,7 @@ hauntInfo.TextScaled = false
 hauntInfo.TextSize = 17
 hauntInfo.TextWrapped = true
 hauntInfo.TextXAlignment = Enum.TextXAlignment.Left
-local hauntCard, hauntCardText = card(hauntList, 1, Color3.fromRGB(150, 90, 255), "Haunt", "")
+local hauntCard, hauntCardText = card(hauntList, 1, Color3.fromRGB(150, 90, 255), "Rebirth", "")
 local hauntGo = button(hauntCard, "", Color3.fromRGB(150, 90, 255))
 hauntGo.AnchorPoint = Vector2.new(1, 0.5)
 hauntGo.Position = UDim2.new(1, -12, 0.5, 0)
@@ -1897,37 +1892,22 @@ end)
 player:GetAttributeChangedSignal("Skills"):Connect(refreshTree)
 
 local function hauntCost(): number
-	return math.floor(Config.HauntCost * Config.HauntGrowth ^ (player:GetAttribute("Haunts") or 0))
+	return Config.Progression.rebirthCost
 end
 local confirmUntil = 0
 local function refreshHaunt()
-	local haunts = player:GetAttribute("Haunts") or 0
-	local souls = player:GetAttribute("Souls") or 0
-	local cost = hauntCost()
-	local gain = haunts + 1
-	soulsLabel.Text = string.format("👻 %d Souls", souls)
-	hauntInfo.Text = string.format(
-		"Haunts: %d (sell and income x%.1f). Haunting resets candy, upgrades, unlocked zones and "
-			.. "your base pumpkins. You keep your tools, Index, Kings, Souls, skills and titles.",
-		haunts,
-		1 + Config.HauntSellBonus * haunts
-	)
+	local n = player:GetAttribute("Rebirths") or 0
+	soulsLabel.Text = string.format("Rebirth %d/%d", n, Config.Progression.rebirthCap)
+	hauntInfo.Text =
+		"Finish the Throne quest + own a Legendary + 5M candy. Resets candy, scythe and gates. Keeps pets, pen and stamps."
 	hauntCardText.Text = string.format(
-		"Costs %s 🍬 · +%d%% sell · +%d Soul%s",
-		short(cost),
-		math.floor(Config.HauntSellBonus * 100 + 0.5),
-		gain,
-		gain == 1 and "" or "s"
+		"+25%% candy each | current bonus +%d%%",
+		n * Config.Progression.rebirthBonus * 100
 	)
-	if os.clock() < confirmUntil then
-		hauntGo.Text = "SURE? Click again"
-		hauntGo.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
-	else
-		hauntGo.Text = "HAUNT · " .. short(cost) .. " 🍬"
-		hauntGo.BackgroundColor3 = candyValue.Value >= cost and Color3.fromRGB(150, 90, 255)
-			or Color3.fromRGB(120, 110, 90)
+	hauntGo.Text = os.clock() < confirmUntil and "SURE? Click again" or "REBIRTH | 5M candy"
+	for _, node in skillNodes do
+		node.button.Visible = false
 	end
-	refreshTree()
 end
 hauntGo.Activated:Connect(function()
 	local cost = hauntCost()
@@ -1943,19 +1923,10 @@ hauntGo.Activated:Connect(function()
 		return
 	end
 	confirmUntil = 0
-	local gain = (player:GetAttribute("Haunts") or 0) + 1
 	local ok, message = hauntRemote:InvokeServer()
 	if ok then
 		play(Config.Sounds.Brew, 0.5, 1)
-		toast(
-			"HAUNTED!",
-			string.format(
-				"+%d%% sell forever · +%d Soul%s",
-				math.floor(Config.HauntSellBonus * 100),
-				gain,
-				gain == 1 and "" or "s"
-			)
-		)
+		toast("REBIRTH!", "+25% candy forever")
 	else
 		hauntGo.Text = message
 		task.delay(1, refreshHaunt)
@@ -1963,7 +1934,7 @@ hauntGo.Activated:Connect(function()
 	end
 	refreshHaunt()
 end)
-for _, attr in { "Haunts", "Souls" } do
+for _, attr in { "Rebirths", "Unlock_Haunt" } do
 	player:GetAttributeChangedSignal(attr):Connect(refreshHaunt)
 end
 candyValue.Changed:Connect(refreshHaunt)
@@ -2102,7 +2073,7 @@ do
 	local SHOP_TABS = {
 		{ name = "Scythes", label = "⚒ Scythes", frame = toolPanel },
 		{ name = "Upgrades", label = "⭐ Upgrades", frame = upgradePanel },
-		{ name = "Haunt", label = "👻 Haunt", frame = hauntPanel },
+		{ name = "Haunt", label = "Rebirth", frame = hauntPanel },
 		{ name = "Robux", label = "💎 Robux", frame = shopPanel },
 	}
 	local TAB_ON, TAB_OFF = BUY, Color3.fromRGB(150, 150, 162)
@@ -2285,7 +2256,15 @@ remotes:WaitForChild("IndexNew").OnClientEvent:Connect(function(keys: { string }
 end)
 
 remotes:WaitForChild("Announce").OnClientEvent:Connect(function(text: string)
-	toast("☠ " .. text)
+	if
+		text == "Ghosts coming! Lock base or go home"
+		or text == "PUMPKIN KING RISES! PET + LOOT!"
+	then
+		banner(text, nil, 3, Color3.fromRGB(255, 80, 70))
+		play(Config.Sounds.Roar, 0.6, 1)
+	else
+		toast(text)
+	end
 	play(Config.Sounds.Brew, 0.7, 0.8)
 end)
 
@@ -2415,6 +2394,15 @@ do
 		Center.acquire()
 		local seed = seedById[seedId]
 		local rarity = rarityOf(seed.order)
+		local rarityPet = Config.Pets[pet or seed.pet]
+		if rarityPet then
+			for _, r in Config.Rarities do
+				if r.name == rarityPet.rarity then
+					rarity = r
+					break
+				end
+			end
+		end
 		local m = mutation and mutationById[mutation]
 		-- White flash first (a hatch already flashed pink).
 		if kind ~= "jack" then
@@ -2730,17 +2718,31 @@ do
 				and not locked
 			for _, plot in patch:GetChildren() do
 				if plot.Name == "Plot" then
+					local active = (plot:GetAttribute("Index") or 1)
+						<= (patch:GetAttribute("PenSlots") or Config.Progression.baseSlots)
 					local filled = plot:GetAttribute("Filled") == true
 					local name = filled and pumpkinName(plot) or nil
 					set(
 						plot:FindFirstChild("PlacePrompt"),
-						mine and carrying and not filled,
+						active and mine and carrying and not filled,
 						"Your plot"
 					)
-					set(plot:FindFirstChild("PickupPrompt"), mine and filled and canSell, name)
+					set(
+						plot:FindFirstChild("PickupPrompt"),
+						active
+							and mine
+							and filled
+							and canSell
+							and not (
+								carrying
+								and (player:GetAttribute("PenFilled") or 0)
+									>= (player:GetAttribute("PenSlots") or 6)
+							),
+						name
+					)
 					set(
 						plot:FindFirstChild("StealPrompt"),
-						robbable and filled and plot:GetAttribute("Protected") ~= true,
+						active and robbable and filled and plot:GetAttribute("Protected") ~= true,
 						name
 					)
 				end
@@ -2748,11 +2750,17 @@ do
 			set(patch:FindFirstChild("LockPrompt", true), mine and not locksOff and canSteal)
 			local count = 0
 			for _, plot in patch:GetChildren() do
-				if plot.Name == "Plot" and plot:IsA("BasePart") then
+				if
+					plot.Name == "Plot"
+					and plot:IsA("BasePart")
+					and (plot:GetAttribute("Index") or 1)
+						<= (patch:GetAttribute("PenSlots") or Config.Progression.baseSlots)
+				then
 					count += 1
 				end
 			end
 			local full = mine
+				and player:GetAttribute("CarryPet")
 				and carrying
 				and count > 0
 				and (player:GetAttribute("PenFilled") or 0) >= count
@@ -2773,11 +2781,29 @@ do
 					.. " 🍬"
 			end
 		end
-		set(sellPrompt and sellPrompt:FindFirstChildOfClass("ProximityPrompt"), canSell)
+		for _, p in sellPrompt and sellPrompt:GetChildren() or {} do
+			if p:IsA("ProximityPrompt") then
+				if p.Name == "RebirthPrompt" then
+					set(p, unlocked("Haunt"))
+				elseif string.sub(p.Name, 1, 10) == "WitchOffer" then
+					set(p, unlocked("Witch"))
+				else
+					set(p, canSell)
+				end
+			end
+		end
 		local canBrew = unlocked("Brew")
 		for _, cauldron in cauldronFolder:GetChildren() do
 			local pot = cauldron:FindFirstChild("Pot")
-			set(pot and pot:FindFirstChildOfClass("ProximityPrompt"), canBrew)
+			for _, p in pot and pot:GetChildren() or {} do
+				if p:IsA("ProximityPrompt") then
+					set(
+						p,
+						p.Name == "FusePrompt" and unlocked("Fuse")
+							or p.Name ~= "FusePrompt" and canBrew
+					)
+				end
+			end
 		end
 	end
 	patchFolder.DescendantAdded:Connect(function(d)
@@ -2918,7 +2944,7 @@ do
 	local lastLook: string? = "none"
 	local function refreshLook()
 		local phase = state:GetAttribute("Phase") or "Day"
-		local name = phase == "BloodMoon" and "BloodMoon"
+		local name = (phase == "BloodMoon" or state:GetAttribute("KingWarning")) and "BloodMoon"
 			or state:GetAttribute("SpookyEnds") ~= nil and "Spooky"
 			or nil
 		if name ~= lastLook then
@@ -2949,23 +2975,17 @@ do
 				3,
 				Color3.fromRGB(170, 220, 255)
 			)
-			if unlocked("PlayerSteal") then
-				toast("Ghosts are raiding the bases!", "Lock yours and bonk them!")
-			end
+
 			play(Config.Sounds.Brew, 0.5, 0.8)
 		elseif phase == "BloodMoon" and unlocked("King") then
-			local locksOff = (state:GetAttribute("LocksOff") or 0) > workspace:GetServerTimeNow()
-			toast(
-				"BLOOD MOON!",
-				locksOff and "Every lock is OFF! Steal before the King wakes!"
-					or "The Pumpkin King wakes! Everyone bonk him!"
-			)
+			toast("KING NIGHT!", "Pet + loot! Join the raid!")
 			play(Config.Sounds.Brew, 0.4, 1)
 		elseif previous == "Midnight" and unlocked("PlayerSteal") then
 			toast("Dawn!", "The ghosts flee. Back to farming!")
 		end
 	end
 	state:GetAttributeChangedSignal("Phase"):Connect(onPhase)
+	state:GetAttributeChangedSignal("KingWarning"):Connect(refreshLook)
 	onPhase()
 
 	-- Spooky Hour: the tint above, a banner, and Config.SpookyBats bats (client only) circling over
@@ -3548,6 +3568,27 @@ remotes
 remotes:WaitForChild("Stomp").OnClientEvent:Connect(function(kind: string, circles: { any })
 	local root = rootPart()
 	for _, c in circles do
+		if c.cf then
+			local lane = Instance.new("Part")
+			lane.Anchored = true
+			lane.CanCollide = false
+			lane.CanQuery = false
+			lane.CanTouch = false
+			lane.Material = Enum.Material.Neon
+			lane.Color = Color3.fromRGB(255, 70, 50)
+			lane.Size = Vector3.new(c.width, 0.3, c.length)
+			lane.CFrame = c.cf
+			lane.Parent = workspace
+			TweenService:Create(lane, TweenInfo.new(0.4), { Transparency = 1 }):Play()
+			task.delay(0.4, function()
+				lane:Destroy()
+			end)
+			continue
+		end
+		if kind == "GuardBat" then
+			burst(c.pos, Color3.fromRGB(170, 80, 255), 30, 15)
+			continue
+		end
 		local ring = Instance.new("Part")
 		ring.Shape = Enum.PartType.Cylinder
 		ring.Material = Enum.Material.Neon
@@ -3592,7 +3633,7 @@ remotes
 	:WaitForChild("KingDone").OnClientEvent
 	:Connect(function(kind: string, payouts: { [string]: number }, mvp: Player?)
 		local mine = kind == "won" and payouts[tostring(player.UserId)] or nil
-		if not unlocked("King") and not mine then
+		if kind ~= "results" and not unlocked("King") and not mine then
 			return
 		end
 		if kind == "won" then
@@ -3614,6 +3655,19 @@ remotes
 			toast("THE PUMPKIN KING WAKES!", "Everyone bonk him!")
 			play(Config.Sounds.Brew, 0.4, 1)
 		elseif kind == "swell" then
+			for _, who in Players:GetPlayers() do
+				local humanoid = who.Character and who.Character:FindFirstChildOfClass("Humanoid")
+				local animator = humanoid and humanoid:FindFirstChildOfClass("Animator")
+				for _, track in animator and animator:GetPlayingAnimationTracks() or {} do
+					local speed = track.Speed
+					track:AdjustSpeed(Config.KingNight.finaleSpeed)
+					task.delay(Config.KingNight.finale, function()
+						if track.Parent then
+							track:AdjustSpeed(speed)
+						end
+					end)
+				end
+			end
 			toast("HE'S GOING TO BURST!")
 			play(Config.Sounds.Brew, 0.5, 1)
 		elseif kind == "phase2" then
@@ -3627,7 +3681,10 @@ remotes
 			toast("THE KING IS ANGRY!", "Faster attacks. Finish him!")
 			play(Config.Sounds.Brew, 0.4, 1)
 		else
-			toast("THE KING ESCAPED", "The Jack is half full. Sell to try again!")
+			toast(
+				"THE KING ESCAPED",
+				"Qualifiers receive 25% candy. Next King Night is on the clock."
+			)
 		end
 	end)
 
@@ -3688,6 +3745,21 @@ do
 		return wall and wall.Position
 	end
 
+	local function gateCost(zoneId)
+		local before = Config.ZoneOrder[(table.find(Config.ZoneOrder, zoneId) or 1) - 1]
+		local ok, d = pcall(function()
+			return HttpService:JSONDecode(player:GetAttribute("ZoneProgress") or "{}")
+		end)
+		local q = ok and d.quests and before and d.quests[before]
+		local complete = q
+			and (q.smash or 0) >= Config.Progression.questSmashes
+			and (q.steal or 0) >= Config.Progression.questSteals
+			and q.own
+		return math.floor(
+			Config.Zones[zoneId].cost * (complete and (1 - Config.Progression.gateDiscount) or 1)
+		),
+			complete
+	end
 	local function refreshGates()
 		local owned = ownedSet()
 		for zoneId, folder in folders do
@@ -3696,6 +3768,7 @@ do
 				continue
 			end
 			local open = ZoneView.has(zoneId, owned)
+			local price, discount = gateCost(zoneId)
 			local wall = folder:FindFirstChild("GateWall")
 			if wall and wall:IsA("BasePart") then
 				if wallLook[wall] == nil then
@@ -3709,6 +3782,14 @@ do
 					wall.Transparency = transparency
 				end
 				local prompt = wall:FindFirstChild("UnlockPrompt") :: ProximityPrompt?
+				if prompt then
+					prompt.ActionText = "Unlock "
+						.. def.title
+						.. " ("
+						.. short(price)
+						.. " candy)"
+						.. (discount and " -25%" or "")
+				end
 				if prompt and prompt.Enabled == open then
 					prompt.Enabled = not open
 				end
@@ -3723,7 +3804,8 @@ do
 			end
 			local costLabel = gateGui and gateGui:FindFirstChild("Cost", true) :: TextLabel?
 			if costLabel then
-				local text = open and "UNLOCKED ✅" or ("🍬 " .. short(def.cost))
+				local text = open and "UNLOCKED"
+					or (short(price) .. " candy" .. (discount and " -25%" or ""))
 				if costLabel.Text ~= text then
 					costLabel.Text = text
 					local pillFrame = costLabel.Parent
@@ -3807,6 +3889,7 @@ do
 		end
 	end
 
+	player:GetAttributeChangedSignal("ZoneProgress"):Connect(refreshGates)
 	local known = ownedSet()
 	player:GetAttributeChangedSignal("Zones"):Connect(function()
 		local now = ownedSet()
@@ -4396,9 +4479,42 @@ do
 					short(current.need or 1)
 				)
 			or "Smash for candy"
+		if not data.tutorial then
+			local ok, zoneProgress = pcall(function()
+				return HttpService:JSONDecode(player:GetAttribute("ZoneProgress") or "{}")
+			end)
+			if ok then
+				for _, id in Config.ZoneOrder do
+					local folder = garden.Zones:FindFirstChild(id)
+					local z = Config.Zones[id]
+					if
+						folder
+						and root.Position.Z >= (folder:GetAttribute("ZMin") or z.zMin)
+						and root.Position.Z < (folder:GetAttribute("ZMax") or z.zMax)
+					then
+						local q = zoneProgress.quests and zoneProgress.quests[id] or {}
+						sub = string.format(
+							"[%s] Smash %d/%d  [%s] Steal  [%s] Own pet | Next gate -25%%",
+							(q.smash or 0) >= Config.Progression.questSmashes and "x" or " ",
+							q.smash or 0,
+							Config.Progression.questSmashes,
+							(q.steal or 0) >= 1 and "x" or " ",
+							q.own and "x" or " "
+						)
+					end
+				end
+			end
+		end
+		if state:GetAttribute("KingWarning") then
+			return "JOIN KING NIGHT!", "Pet + loot!", kingFace.Position
+		end
 		local zone = zoneTarget(root.Position) or soil.Position
 		if carry > 0 then
-			if (player:GetAttribute("PenFilled") or 0) >= 6 then
+			if
+				player:GetAttribute("CarryPet")
+				and (player:GetAttribute("PenFilled") or 0)
+					>= (player:GetAttribute("PenSlots") or 6)
+			then
 				return "Pens full! Swap or Sell", "Choose in your pen", soil.Position
 			end
 			if not data.tutorial and kind == "witch" and unlocked("Sell") then
@@ -5066,7 +5182,21 @@ do
 				end)
 				return
 			end
-			task.delay(1.2, showDaily, streak, candy)
+			task.delay(1.2, function()
+				local ok, err = pcall(showDaily, streak, candy)
+				if not ok then
+					if open then
+						open:Destroy()
+						open = nil
+					end
+					if openDim then
+						openDim:Destroy()
+						openDim = nil
+					end
+					Center.release()
+					warn("[Patch] Daily:", err)
+				end
+			end)
 		end)
 end
 
@@ -5109,6 +5239,9 @@ RunService.Heartbeat:Connect(function()
 	)
 	if os.clock() < dizzyUntil then
 		speed = 6
+	end
+	if workspace:GetServerTimeNow() < (player:GetAttribute("GuardEffectUntil") or 0) then
+		speed *= player:GetAttribute("WalkSpeedMultiplier") or 1
 	end
 	if player:GetAttribute("FightActive") then
 		speed = 0
@@ -5187,7 +5320,9 @@ remotes:WaitForChild("Knock").OnClientEvent:Connect(function(velocity: Vector3, 
 	if root then
 		launch(root, velocity, 0.35)
 		dizzyUntil = os.clock() + dizzy
-		floatText(root.Position + Vector3.new(0, 4, 0), "DIZZY!", Color3.fromRGB(255, 230, 120))
+		if dizzy > 0 then
+			floatText(root.Position + Vector3.new(0, 4, 0), "DIZZY!", Color3.fromRGB(255, 230, 120))
+		end
 		task.spawn(shake, 1.4, 10)
 	end
 end)
@@ -5215,11 +5350,11 @@ ContextActionService:SetPosition("Bonk", UDim2.new(1, -250, 1, -100))
 
 -- Boss: warnings, shield bubble, enrage glow, MVP crowns, top damage. -----------------------
 
-local function circlePart(pos: Vector3, radius: number, warn: number)
+local function circlePart(pos: Vector3, radius: number, warn: number, color: Color3?)
 	local disc = Instance.new("Part")
 	disc.Shape = Enum.PartType.Cylinder
 	disc.Material = Enum.Material.Neon
-	disc.Color = Color3.fromRGB(255, 60, 50)
+	disc.Color = color or Color3.fromRGB(255, 60, 50)
 	-- A see-through fill grows inside a thin glowing outline ring (no solid red floor).
 	disc.Transparency = 0.75
 	disc.Anchored = true
@@ -5244,7 +5379,7 @@ local function circlePart(pos: Vector3, radius: number, warn: number)
 	ring.Radius = radius
 	ring.InnerRadius = math.max(0, radius - 0.7)
 	ring.Height = 0.25
-	ring.Color3 = Color3.fromRGB(255, 70, 50)
+	ring.Color3 = color or Color3.fromRGB(255, 70, 50)
 	ring.Transparency = 0.4
 	ring.Parent = edge
 	TweenService:Create(disc, TweenInfo.new(warn, Enum.EasingStyle.Linear), {
@@ -5258,42 +5393,122 @@ end
 
 remotes
 	:WaitForChild("Telegraph").OnClientEvent
-	:Connect(function(kind: string, circles: { any }, warn: number)
-		for _, c in circles do
-			circlePart(c.pos, c.radius, warn)
-			if kind == "Volley" then
-				-- A seed ball arcs from the King onto each circle.
-				task.delay(warn - 0.45, function()
-					local seed = Instance.new("Part")
-					seed.Shape = Enum.PartType.Ball
-					seed.Size = Vector3.new(3, 3, 3)
-					seed.Material = Enum.Material.SmoothPlastic
-					seed.Color = Color3.fromRGB(40, 24, 20)
-					seed.Anchored = true
-					seed.CanCollide = false
-					seed.CanQuery = false
-					seed.Position = kingFace.Position + Vector3.new(0, 6, 0)
-					seed.Parent = workspace
-					local from = seed.Position
-					local to = c.pos + Vector3.new(0, 1.5, 0)
-					local t0 = os.clock()
-					local conn
-					conn = RunService.RenderStepped:Connect(function()
-						local t = math.min(1, (os.clock() - t0) / 0.45)
-						local p = from:Lerp(to, t) + Vector3.new(0, math.sin(t * math.pi) * 18, 0)
-						seed.Position = p
-						if t >= 1 then
-							conn:Disconnect()
-							seed:Destroy()
+	:Connect(
+		function(kind: string, circles: { any }, warn: number, sound: number?, lifetime: number?)
+			if sound then
+				play(sound, 1, 0.7)
+			end
+			for _, c in circles do
+				if c.cf then
+					local lane = Instance.new("Part")
+					lane.Anchored = true
+					lane.CanCollide = false
+					lane.CanQuery = false
+					lane.CanTouch = false
+					lane.Material = Enum.Material.Neon
+					lane.Color = Color3.fromRGB(255, 60, 50)
+					lane.Transparency = 0.65
+					lane.Size = Vector3.new(c.width, 0.2, c.length)
+					lane.CFrame = c.cf
+					lane.Parent = workspace
+					task.delay(warn, function()
+						if kind == "Guard:Boulder" then
+							local rock = Instance.new("Part")
+							rock.Shape = Enum.PartType.Ball
+							rock.Size = Vector3.one * c.width
+							rock.Anchored = true
+							rock.CanCollide = false
+							rock.Color = Color3.fromRGB(80, 45, 30)
+							rock.Position = c.origin + Vector3.yAxis * c.width / 2
+							rock.Parent = workspace
+							local cfg = Config.GuardTwists.Zone7
+							TweenService:Create(
+								rock,
+								TweenInfo.new(cfg.length / cfg.speed, Enum.EasingStyle.Linear),
+								{ Position = rock.Position + c.direction * cfg.length }
+							):Play()
+							task.delay(cfg.length / cfg.speed, function()
+								rock:Destroy()
+							end)
 						end
+						lane:Destroy()
 					end)
-				end)
+				else
+					circlePart(
+						c.pos,
+						c.radius,
+						warn,
+						kind == "Guard:Bat" and Color3.fromRGB(170, 80, 255)
+							or kind == "Guard:Sticky" and Color3.fromRGB(255, 110, 199)
+							or nil
+					)
+					if kind == "Guard:Sticky" then
+						local puddle = Instance.new("Part")
+						puddle.Shape = Enum.PartType.Cylinder
+						puddle.Anchored = true
+						puddle.CanCollide = false
+						puddle.CanQuery = false
+						puddle.CanTouch = false
+						puddle.Material = Enum.Material.Neon
+						puddle.Color = Color3.fromRGB(255, 110, 199)
+						puddle.Transparency = 0.55
+						puddle.Size = Vector3.new(0.2, c.radius * 2, c.radius * 2)
+						puddle.CFrame = CFrame.new(c.pos) * CFrame.Angles(0, 0, math.pi / 2)
+						puddle.Parent = workspace
+						task.delay(warn + (lifetime or 0), function()
+							puddle:Destroy()
+						end)
+					elseif kind == "Guard:Bat" then
+						local ghost = Instance.new("Part")
+						ghost.Anchored = true
+						ghost.CanCollide = false
+						ghost.CanQuery = false
+						ghost.Size = Vector3.new(3, 6, 3)
+						ghost.Color = Color3.fromRGB(180, 80, 255)
+						ghost.Transparency = 0.65
+						ghost.CFrame = CFrame.new(c.pos + Vector3.yAxis * 3)
+						ghost.Parent = workspace
+						task.delay(warn, function()
+							burst(ghost.Position, ghost.Color, 30, 15)
+							ghost:Destroy()
+						end)
+					end
+				end
+				if kind == "Volley" and not c.cf then
+					-- A seed ball arcs from the King onto each circle.
+					task.delay(warn - 0.45, function()
+						local seed = Instance.new("Part")
+						seed.Shape = Enum.PartType.Ball
+						seed.Size = Vector3.new(3, 3, 3)
+						seed.Material = Enum.Material.SmoothPlastic
+						seed.Color = Color3.fromRGB(40, 24, 20)
+						seed.Anchored = true
+						seed.CanCollide = false
+						seed.CanQuery = false
+						seed.Position = kingFace.Position + Vector3.new(0, 6, 0)
+						seed.Parent = workspace
+						local from = seed.Position
+						local to = c.pos + Vector3.new(0, 1.5, 0)
+						local t0 = os.clock()
+						local conn
+						conn = RunService.RenderStepped:Connect(function()
+							local t = math.min(1, (os.clock() - t0) / 0.45)
+							local p = from:Lerp(to, t)
+								+ Vector3.new(0, math.sin(t * math.pi) * 18, 0)
+							seed.Position = p
+							if t >= 1 then
+								conn:Disconnect()
+								seed:Destroy()
+							end
+						end)
+					end)
+				end
+			end
+			if kind == "Slam" then
+				play(Config.Sounds.Brew, 0.35, 0.9)
 			end
 		end
-		if kind == "Slam" then
-			play(Config.Sounds.Brew, 0.35, 0.9)
-		end
-	end)
+	)
 
 do
 	local shieldBubble: Part? = nil
@@ -5319,7 +5534,10 @@ do
 			shieldBubble:Destroy()
 			shieldBubble = nil
 		end
-		if phase == "BloodMoon" and (state:GetAttribute("KingPhase") or 1) >= 3 then
+		if
+			phase == "BloodMoon"
+			and (state:GetAttribute("KingStunned") or (state:GetAttribute("KingPhase") or 1) >= 3)
+		then
 			if not enrageGlow then
 				local h = Instance.new("Highlight")
 				h.FillColor = Color3.fromRGB(255, 30, 30)
@@ -5328,12 +5546,17 @@ do
 				h.Parent = kingFace
 				enrageGlow = h
 			end
+			if enrageGlow then
+				enrageGlow.FillColor = state:GetAttribute("KingStunned")
+						and Color3.fromRGB(255, 240, 120)
+					or Color3.fromRGB(255, 30, 30)
+			end
 		elseif enrageGlow then
 			enrageGlow:Destroy()
 			enrageGlow = nil
 		end
 	end
-	for _, attr in { "Phase", "KingShield", "KingPhase" } do
+	for _, attr in { "Phase", "KingShield", "KingPhase", "KingStunned" } do
 		state:GetAttributeChangedSignal(attr):Connect(refreshBossLook)
 	end
 	refreshBossLook()
@@ -5430,16 +5653,51 @@ task.spawn(function()
 	hpText.Size = UDim2.fromScale(1, 0.8)
 	hpText.Position = UDim2.fromScale(0, 0.1)
 	hpText.ZIndex = 2
+	local wide = Instance.new("Frame")
+	wide.Name = "KingTopHp"
+	wide.AnchorPoint = Vector2.new(0.5, 0)
+	wide.Position = UDim2.fromScale(0.5, 0.15)
+	wide.Size = UDim2.fromScale(0.62, 0.045)
+	wide.BackgroundColor3 = DARK
+	wide.Parent = gui
+	corner(wide, 8)
+	local wideFill = Instance.new("Frame")
+	wideFill.Size = UDim2.fromScale(1, 1)
+	wideFill.BackgroundColor3 = Color3.fromRGB(230, 50, 50)
+	wideFill.Parent = wide
+	corner(wideFill, 8)
+	local wideText = textLabel(wide, "", Color3.new(1, 1, 1))
+	wideText.Size = UDim2.fromScale(1, 1)
+	wideText.ZIndex = 3
+	for _, fraction in { 0.33, 0.66 } do
+		local tick = Instance.new("Frame")
+		tick.Size = UDim2.new(0, 3, 1, 0)
+		tick.Position = UDim2.fromScale(fraction, 0)
+		tick.BackgroundColor3 = Color3.new(1, 1, 1)
+		tick.ZIndex = 2
+		tick.Parent = wide
+	end
 	local function refreshHpBar()
 		local on = state:GetAttribute("Phase") == "BloodMoon"
 			and state:GetAttribute("KingHp") ~= nil
 		hpGui.Enabled = on
+		wide.Visible = on
 		if not on then
 			return
 		end
 		local hp = state:GetAttribute("KingHp") or 0
 		local maxHp = math.max(state:GetAttribute("KingMaxHp") or 1, 1)
 		local shielded = state:GetAttribute("KingShield") ~= nil
+		wideFill.Size = UDim2.fromScale(math.clamp(hp / maxHp, 0, 1), 1)
+		wideText.Text = shielded
+				and string.format(
+					"SHIELD %d/%d",
+					(state:GetAttribute("KingShieldMax") or state:GetAttribute("KingShield"))
+						- state:GetAttribute("KingShield"),
+					state:GetAttribute("KingShieldMax") or state:GetAttribute("KingShield")
+				)
+			or state:GetAttribute("KingStunned") and "WEAK SPOT x2"
+			or string.format("PUMPKIN KING %s / %s", short(hp), short(maxHp))
 		fillGradient.Color = shielded
 				and ColorSequence.new(Color3.fromRGB(140, 80, 255), Color3.fromRGB(200, 150, 255))
 			or KING_FILL
@@ -5450,7 +5708,7 @@ task.spawn(function()
 			{ Size = UDim2.fromScale(math.clamp(hp / maxHp, 0.02, 1), 1) }
 		):Play()
 	end
-	for _, attr in { "Phase", "KingHp", "KingMaxHp", "KingShield" } do
+	for _, attr in { "Phase", "KingHp", "KingMaxHp", "KingShield", "KingShieldMax", "KingStunned" } do
 		state:GetAttributeChangedSignal(attr):Connect(refreshHpBar)
 	end
 	refreshHpBar()
@@ -5490,7 +5748,7 @@ do
 	topLabel.AnchorPoint = Vector2.new(1, 0)
 	topLabel.Position = UDim2.new(1, -16, 0, 150)
 	-- Header + top 3 = 4 lines: scale to fit, capped at the old 22 px.
-	topLabel.Size = UDim2.fromOffset(260, 110)
+	topLabel.Size = UDim2.fromOffset(260, 165)
 	topLabel.TextXAlignment = Enum.TextXAlignment.Right
 	topLabel.TextYAlignment = Enum.TextYAlignment.Top
 	topLabel.TextScaled = true
@@ -5630,7 +5888,17 @@ do
 		drama.token += 1
 		if drama.camera and drama.saved then
 			drama.camera.CameraType = drama.saved.kind
-			drama.camera.CameraSubject = drama.saved.subject
+			if
+				drama.saved.subject
+				and drama.saved.subject.Parent
+				and not (drama.saved.subject:IsA("Humanoid") and drama.saved.subject.Health <= 0)
+			then
+				drama.camera.CameraSubject = drama.saved.subject
+			else
+				drama.camera.CameraType = Enum.CameraType.Custom
+				drama.camera.CameraSubject = player.Character
+					and player.Character:FindFirstChildOfClass("Humanoid")
+			end
 			drama.camera.CFrame = drama.saved.cf
 			drama.camera.FieldOfView = drama.saved.fov
 		end
@@ -6339,5 +6607,185 @@ do
 				end
 			end
 		end
+	end)
+end
+
+-- Zone stamps and quests extend the existing Index book, leaving two HUD pills.
+do
+	local rows = {}
+	for i, id in Config.ZoneOrder do
+		local row = textLabel(indexList, "", Color3.fromRGB(255, 214, 80))
+		row.LayoutOrder = -20 + i
+		row.Size = UDim2.new(1, -10, 0, 70)
+		row.TextWrapped = true
+		row.TextScaled = true
+		rows[id] = row
+	end
+	local function refresh()
+		local ok, d = pcall(function()
+			return HttpService:JSONDecode(player:GetAttribute("ZoneProgress") or "{}")
+		end)
+		if not ok then
+			return
+		end
+		for _, id in Config.ZoneOrder do
+			local zone = Config.Zones[id]
+			local q = d.quests and d.quests[id] or {}
+			local pets = zone.pets
+			local stamp = d.stamps and d.stamps[id]
+			rows[id].Visible = id == "Zone1" or player:GetAttribute("Zone_" .. id) == true
+			-- Zones are published as a comma list, so keep the same source as the gates.
+			rows[id].Visible = id == "Zone1"
+				or string.find(
+						"," .. (player:GetAttribute("Zones") or "") .. ",",
+						"," .. id .. ",",
+						1,
+						true
+					)
+					~= nil
+			rows[id].Text = string.format(
+				"%s %s: %s + %s | %s\n[%s] Smash %d/%d  [%s] Steal  [%s] Own pet",
+				stamp and "STAMP +10%" or "[ ]",
+				zone.title,
+				Config.Pets[seedById[pets[1]].pet].display,
+				Config.Pets[seedById[pets[2]].pet].display,
+				zone.unlock,
+				(q.smash or 0) >= Config.Progression.questSmashes and "x" or " ",
+				q.smash or 0,
+				Config.Progression.questSmashes,
+				(q.steal or 0) >= Config.Progression.questSteals and "x" or " ",
+				q.own and "x" or " "
+			)
+		end
+	end
+	for _, attr in { "ZoneProgress", "Zones" } do
+		player:GetAttributeChangedSignal(attr):Connect(refresh)
+	end
+	refresh()
+end
+-- King join, results and status icons use the existing event/Center queue.
+do
+	local join = button(gui, "JOIN RAID", Color3.fromRGB(220, 50, 60))
+	join.AnchorPoint = Vector2.new(1, 1)
+	join.Position = UDim2.new(1, -16, 1, -105)
+	join.Size = UDim2.fromOffset(190, 46)
+	join.Activated:Connect(function()
+		remotes:WaitForChild("KingJoin"):FireServer()
+	end)
+	local function refreshJoin()
+		join.Visible = state:GetAttribute("KingWarning") == true
+			or state:GetAttribute("Phase") == "BloodMoon"
+	end
+	for _, attr in { "KingWarning", "Phase" } do
+		state:GetAttributeChangedSignal(attr):Connect(refreshJoin)
+	end
+	refreshJoin()
+	local icons = {}
+	local function icon(who)
+		local character = who.Character
+		local head = character and character:FindFirstChild("Head")
+		local text = who:GetAttribute("IdleShield") and "Zzz" or who:GetAttribute("GuardEffectIcon")
+		if icons[who] and (not head or not text or icons[who].Adornee ~= head) then
+			icons[who]:Destroy()
+			icons[who] = nil
+		end
+		if head and text then
+			local bb = icons[who]
+			if not bb then
+				bb = Instance.new("BillboardGui")
+				bb.Name = "StatusIcon"
+				bb.Size = UDim2.fromOffset(90, 32)
+				bb.StudsOffsetWorldSpace = Vector3.yAxis * Config.GuardTwists.iconHeight
+				bb.AlwaysOnTop = true
+				bb.Adornee = head
+				bb.Parent = head
+				local label = textLabel(bb, "", Color3.fromRGB(200, 230, 255))
+				label.Size = UDim2.fromScale(1, 1)
+				icons[who] = bb
+			end
+			bb:FindFirstChildOfClass("TextLabel").Text = text
+		end
+	end
+	local function hook(who)
+		for _, attr in { "IdleShield", "GuardEffectIcon" } do
+			who:GetAttributeChangedSignal(attr):Connect(function()
+				icon(who)
+			end)
+		end
+		who.CharacterAdded:Connect(function()
+			task.delay(1, function()
+				icon(who)
+			end)
+		end)
+		icon(who)
+	end
+	for _, who in Players:GetPlayers() do
+		hook(who)
+	end
+	Players.PlayerAdded:Connect(hook)
+	Players.PlayerRemoving:Connect(function(who)
+		if icons[who] then
+			icons[who]:Destroy()
+			icons[who] = nil
+		end
+	end)
+	remotes:WaitForChild("KingDone").OnClientEvent:Connect(function(kind, data)
+		if kind ~= "results" then
+			return
+		end
+		task.spawn(function()
+			Center.acquire()
+			local resultCard
+			local ok, err = pcall(function()
+				resultCard = Instance.new("Frame")
+				resultCard.Name = "KingResults"
+				resultCard.AnchorPoint = Vector2.new(0.5, 0.5)
+				resultCard.Position = UDim2.fromScale(0.5, 0.5)
+				resultCard.Size = UDim2.fromScale(0.62, 0.42)
+				resultCard.BackgroundColor3 = DARK
+				resultCard.Parent = gui
+				corner(resultCard, 18)
+				Center.register(resultCard)
+				local title = textLabel(
+					resultCard,
+					data.won and "KING NIGHT COMPLETE!" or "King escaped!",
+					Color3.fromRGB(255, 214, 80)
+				)
+				title.Position = UDim2.fromScale(0.05, 0.06)
+				title.Size = UDim2.fromScale(0.9, 0.16)
+				local loot = {}
+				for _, id in data.crates or {} do
+					table.insert(loot, seedById[id].name)
+				end
+				local body = textLabel(
+					resultCard,
+					string.format(
+						"Damage %s | Rank #%d | %d hits\n+%s candy\n%s\nPODIUM\n1. %s  2. %s  3. %s",
+						short(data.damage),
+						data.rank,
+						data.hits,
+						short(data.candy),
+						#loot > 0 and table.concat(loot, " + ")
+							or data.qualified and "25% consolation | no crate"
+							or "15 hits or 3% damage needed",
+						data.podium[1] or "-",
+						data.podium[2] or "-",
+						data.podium[3] or "-"
+					),
+					Color3.new(1, 1, 1)
+				)
+				body.Position = UDim2.fromScale(0.05, 0.25)
+				body.Size = UDim2.fromScale(0.9, 0.65)
+				body.TextWrapped = true
+				task.wait(Config.KingNight.resultsSeconds)
+			end)
+			if resultCard then
+				resultCard:Destroy()
+			end
+			Center.release()
+			if not ok then
+				warn("[Patch] King results:", err)
+			end
+		end)
 	end)
 end
