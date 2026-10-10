@@ -105,6 +105,8 @@ do
 		return r
 	end
 	Remotes = {
+		adminFunction = remote("Admin", "RemoteFunction") :: RemoteFunction,
+		dailyClaimFunction = remote("ClaimDaily", "RemoteFunction") :: RemoteFunction,
 		hintEvent = remote("Hint"),
 		placedEvent = remote("Placed"),
 		harvestedEvent = remote("Harvested"),
@@ -1760,7 +1762,11 @@ do
 			kg = math.floor(size.median * math.exp((math.random() - 0.5) * 3.2) * 10 + 0.5) / 10
 			p:SetAttribute("WeightKg", kg)
 		end
-		local height = size.height * math.clamp((kg / size.median) ^ 0.25, 0.8, 1.6)
+		local height = math.clamp(
+			size.height * math.clamp((kg / size.median) ^ 0.25, 0.8, 1.6),
+			Config.Plots.minPetHeight,
+			Config.Plots.maxPetHeight
+		)
 		p:SetAttribute("PetHeight", height)
 		p:SetAttribute("Pet", pet)
 		if not Looks.attach(p, "PetModels", modelName, height) then
@@ -1938,6 +1944,118 @@ do
 
 	-- Income tags, the shield on the single best plot (it cannot be stolen) and the owner's
 	-- "Income" attribute (candy per second with their Haunt / pass multipliers).
+	function Bases.slotLook(patch, slots)
+		for _, plot in patch:GetChildren() do
+			if plot.Name ~= "Plot" or not plot:IsA("BasePart") then
+				continue
+			end
+			local locked = (plot:GetAttribute("Index") or 1) > slots
+			local was = plot:GetAttribute("SlotLocked")
+			plot:SetAttribute("SlotLocked", locked)
+			plot.Transparency = 0
+			plot.Color = locked and Config.Plots.locked or Config.Plots.wood
+			plot.Material = locked and Enum.Material.Concrete or Enum.Material.Wood
+			local lock = plot:FindFirstChild("SlotLock")
+			if locked and not lock then
+				lock = Instance.new("Model")
+				lock.Name = "SlotLock"
+				lock.Parent = plot
+				local cf = CFrame.new(plot.Position + Vector3.new(0, plot.Size.X / 2 + 1, 0))
+				local function piece(name, size, offset, color)
+					local part = Instance.new("Part")
+					part.Name = name
+					part.Anchored = true
+					part.CanCollide = false
+					part.CanTouch = false
+					part.CanQuery = false
+					part.Size = size
+					part.CFrame = cf * CFrame.new(offset)
+					part.Color = color
+					part.Parent = lock
+					return part
+				end
+				local block =
+					piece("Padlock", Config.Plots.lockSize, Vector3.zero, Config.Plots.lock)
+				for _, entry in
+					{
+						{ Vector3.new(0.25, 1.1, 0.25), Vector3.new(-0.55, 1, 0) },
+						{ Vector3.new(0.25, 1.1, 0.25), Vector3.new(0.55, 1, 0) },
+						{ Vector3.new(1.35, 0.25, 0.25), Vector3.new(0, 1.5, 0) },
+					}
+				do
+					piece("Shackle", entry[1], entry[2], Config.Plots.gold)
+				end
+				local bb = Instance.new("BillboardGui")
+				bb.Name = "Price"
+				bb.Size = UDim2.fromOffset(140, 32)
+				bb.StudsOffsetWorldSpace = Vector3.new(0, 2.5, 0)
+				bb.MaxDistance = 100
+				bb.LightInfluence = 0
+				bb.Parent = block
+				local label = Instance.new("TextLabel")
+				label.Size = UDim2.fromScale(1, 1)
+				label.BackgroundColor3 = Config.Plots.priceBar
+				label.TextColor3 = Color3.new(1, 1, 1)
+				label.Font = Enum.Font.FredokaOne
+				label.TextScaled = true
+				local zone = (plot:GetAttribute("Index") or 1) <= Config.Progression.woodsSlots
+						and "Zone3"
+					or "Zone5"
+				label.Text = utf8.char(128274) .. " $" .. tostring(Config.Zones[zone].cost)
+				label.Parent = bb
+			elseif not locked and lock then
+				lock:Destroy()
+			end
+			if was == true and not locked then
+				local puff = Instance.new("ParticleEmitter")
+				puff.Texture = "rbxasset://textures/particles/smoke_main.dds"
+				puff.Rate = 0
+				puff.Lifetime = NumberRange.new(0.4, 0.7)
+				puff.Speed = NumberRange.new(3, 6)
+				puff.SpreadAngle = Vector2.new(180, 180)
+				puff.Size = NumberSequence.new(2, 0)
+				puff.Parent = plot
+				puff:Emit(20)
+				task.delay(1, function()
+					puff:Destroy()
+				end)
+			end
+		end
+		local post = patch:FindFirstChild("SignPost")
+		local holder = post
+			and (post:IsA("BasePart") and post or post:FindFirstChildWhichIsA("BasePart", true))
+		if holder then
+			local bb = holder:FindFirstChild("PenUpgrade")
+			if not bb then
+				bb = Instance.new("BillboardGui")
+				bb.Name = "PenUpgrade"
+				bb.Size = UDim2.fromOffset(200, 30)
+				bb.StudsOffsetWorldSpace = Vector3.new(0, -1.4, 0)
+				bb.MaxDistance = 100
+				bb.LightInfluence = 0
+				bb.Parent = holder
+				local label = Instance.new("TextLabel")
+				label.Name = "Label"
+				label.Size = UDim2.fromScale(1, 1)
+				label.BackgroundColor3 = Config.Plots.priceBar
+				label.TextColor3 = Color3.new(1, 1, 1)
+				label.Font = Enum.Font.FredokaOne
+				label.TextScaled = true
+				label.Parent = bb
+			end
+			bb.Enabled = (patch:GetAttribute("Owner") or 0) ~= 0
+				and slots < Config.Progression.castleSlots
+			local zone = slots < Config.Progression.woodsSlots and "Zone3" or "Zone5"
+			bb.Label.Text = "Upgrade $" .. tostring(Config.Zones[zone].cost)
+		end
+
+		for _, rim in patch:GetDescendants() do
+			if rim.Name == "DiscRim" and rim:IsA("BasePart") then
+				rim.Color = Config.Plots.rim
+			end
+		end
+	end
+
 	function Bases.refresh(patch: Instance?)
 		if not patch then
 			return
@@ -2003,6 +2121,17 @@ do
 							and string.format(" · %.1f kg", p:GetAttribute("WeightKg"))
 						or ""
 					)
+				local seed = seedById[p:GetAttribute("Seed") or ""]
+				local pet = seed and Config.Pets[seed.pet]
+				if pet then
+					text = pet.rarity
+						.. " "
+						.. pet.display
+						.. "\n$"
+						.. rateText(incomeOf(p) * mult)
+						.. "/s"
+				end
+				tag.Enabled = p:GetAttribute("Jack") == true
 				if p:GetAttribute("Stashed") then
 					text = "STASHED | Return home"
 				end
@@ -2029,7 +2158,7 @@ do
 		local bb = Instance.new("BillboardGui")
 		-- Kept small: the owner sees a green "+X" pop over each pumpkin every second instead.
 		bb.Name = "IncomeTag"
-		bb.Size = UDim2.fromOffset(180, 28)
+		bb.Size = UDim2.fromOffset(230, 55)
 		bb.StudsOffsetWorldSpace = Vector3.new(0, pumpkin.Size.Y / 2 + 1.2, 0)
 		bb.LightInfluence = 0
 		bb.MaxDistance = 45
@@ -2050,14 +2179,54 @@ do
 	end
 
 	local function hatchText(seconds: number): string
-		return string.format("Hatching %d:%02d", math.floor(seconds / 60), seconds % 60)
+		return string.format("Mystery Pumpkin\n%d:%02d", math.floor(seconds / 60), seconds % 60)
 	end
 
 	-- "Hatching 0:20" over a placed pumpkin until it hatches (Bases.tick updates the text).
 	local function carveTag(pumpkin: BasePart, seconds: number)
+		local dome = Instance.new("Model")
+		dome.Name = "HatchDome"
+		dome.Parent = pumpkin
+		local origin = pumpkin.Position - Vector3.yAxis * pumpkin.Size.Y / 2
+		local radius = Config.Plots.domeWidth / 2
+		for band = 1, Config.Plots.domeBands do
+			local lo = (band - 1) / Config.Plots.domeBands * math.pi / 2
+			local hi = band / Config.Plots.domeBands * math.pi / 2
+			local latitude = (lo + hi) / 2
+			for segment = 1, Config.Plots.domeSegments do
+				local angle = segment / Config.Plots.domeSegments * math.pi * 2
+				local normal = Vector3.new(
+					math.cos(angle) * math.cos(latitude),
+					math.sin(latitude),
+					math.sin(angle) * math.cos(latitude)
+				)
+				local glass = Instance.new("Part")
+				glass.Name = "Glass"
+				glass.Anchored = true
+				glass.Size = Vector3.new(
+					2 * radius * math.cos(lo) * math.sin(math.pi / Config.Plots.domeSegments),
+					2 * radius * math.sin((hi - lo) / 2),
+					0.04
+				)
+				glass.CFrame =
+					CFrame.lookAt(origin + normal * radius, origin + normal * (radius + 1))
+				glass.Material = Enum.Material.Glass
+				glass.Color = Config.Plots.domeColor
+				glass.Transparency = Config.Plots.domeTransparency
+				glass.CanCollide = false
+				glass.CanQuery = false
+				glass.CanTouch = false
+				glass.Massless = true
+				glass.Parent = dome
+			end
+		end
+		local sparkle = Instance.new("Sparkles")
+		sparkle.Name = "HatchSparkles"
+		sparkle.SparkleColor = Config.Plots.domeColor
+		sparkle.Parent = pumpkin
 		local bb = Instance.new("BillboardGui")
 		bb.Name = "CarveTag"
-		bb.Size = UDim2.fromOffset(150, 30)
+		bb.Size = UDim2.fromOffset(180, 60)
 		bb.StudsOffsetWorldSpace = Vector3.new(0, pumpkin.Size.Y / 2 + 2.6, 0)
 		bb.LightInfluence = 0
 		bb.MaxDistance = 60
@@ -2111,6 +2280,15 @@ do
 	-- from the pumpkin's attributes). isNew = the first time its owner hatches this type.
 	local function carve(pumpkin: BasePart)
 		pumpkin:SetAttribute("CarveAt", nil)
+		for _, attr in { "GrowthSize", "GrowthStartAt", "GrowthDuration", "GrowthStep" } do
+			pumpkin:SetAttribute(attr, nil)
+		end
+		for _, name in { "HatchDome", "HatchSparkles" } do
+			local item = pumpkin:FindFirstChild(name)
+			if item then
+				item:Destroy()
+			end
+		end
 		local tag = pumpkin:FindFirstChild("CarveTag")
 		if tag then
 			tag:Destroy()
@@ -2203,6 +2381,20 @@ do
 			local seconds = newbie and Config.CarveNewSeconds
 				or seedById[seedId].order <= Config.CarveFastOrder and Config.CarveFastSeconds
 				or Config.CarveSeconds
+			Looks.attach(
+				pumpkin,
+				"PetModels",
+				Config.MysteryModel,
+				math.min(pumpkin.Size.Y, Config.Plots.domeWidth * 0.42)
+			)
+			local final = pumpkin.Size
+			pumpkin:SetAttribute("GrowthSize", final)
+			pumpkin:SetAttribute("GrowthStartAt", now())
+			pumpkin:SetAttribute("GrowthDuration", seconds)
+			pumpkin:SetAttribute("GrowthStep", 0)
+			pumpkin.Size = final * Config.Plots.growthStart
+			pumpkin.CFrame -= Vector3.yAxis * (final.Y - pumpkin.Size.Y) / 2
+			Looks.refit(pumpkin)
 			pumpkin:SetAttribute("CarveAt", now() + seconds)
 			carveTag(pumpkin, seconds)
 		end
@@ -2238,7 +2430,10 @@ do
 		-- Off the plot: no more idling (clients) or hatching (a re-placed one hatches again).
 		p:SetAttribute("JackHome", nil)
 		p:SetAttribute("CarveAt", nil)
-		for _, name in { "IncomeTag", "CarveTag" } do
+		for _, attr in { "GrowthSize", "GrowthStartAt", "GrowthDuration", "GrowthStep" } do
+			p:SetAttribute(attr, nil)
+		end
+		for _, name in { "IncomeTag", "CarveTag", "HatchDome", "HatchSparkles" } do
 			local tag = p:FindFirstChild(name)
 			if tag then
 				tag:Destroy()
@@ -2828,7 +3023,30 @@ do
 			local p = s.pumpkin
 			local carveAt = p and p:GetAttribute("CarveAt")
 			if p and type(carveAt) == "number" then
-				if t >= carveAt then
+				local final = p:GetAttribute("GrowthSize")
+				if typeof(final) == "Vector3" then
+					local fraction = math.clamp(
+						(t - (p:GetAttribute("GrowthStartAt") or t))
+							/ math.max(p:GetAttribute("GrowthDuration") or 1, 1),
+						0,
+						1
+					)
+					local step = math.floor(fraction * Config.Plots.growthSteps)
+					if step ~= p:GetAttribute("GrowthStep") then
+						local size = final
+							* (
+								Config.Plots.growthStart
+								+ (1 - Config.Plots.growthStart)
+									* step
+									/ Config.Plots.growthSteps
+							)
+						p.CFrame += Vector3.yAxis * (size.Y - p.Size.Y) / 2
+						p.Size = size
+						Looks.refit(p)
+						p:SetAttribute("GrowthStep", step)
+					end
+				end
+				if t >= carveAt + Config.Plots.readySeconds then
 					local ok, err = pcall(carve, p)
 					if not ok then
 						warn("[Patch] Hatch failed:", err)
@@ -2838,7 +3056,9 @@ do
 					local label = tag and tag:FindFirstChild("Label") :: TextLabel?
 					local left = math.ceil(carveAt - t)
 					if label then
-						label.Text = hatchText(left)
+						label.Text = left <= 0 and "Mystery Pumpkin\nREADY!" or hatchText(left)
+						label.TextColor3 = left <= 0 and Color3.fromRGB(68, 255, 47)
+							or Config.Plots.domeColor
 					end
 				end
 			end
@@ -2888,8 +3108,11 @@ do
 		)
 	end
 	for _, patch in patchFolder:GetChildren() do
-		setOwnerSign(patch, "Free base", Color3.fromRGB(255, 230, 200))
-		for _, plot in plotsOf(patch) do
+		setOwnerSign(patch, "", Color3.fromRGB(255, 230, 200))
+		for _, plot in patch:GetChildren() do
+			if plot.Name ~= "Plot" or not plot:IsA("BasePart") then
+				continue
+			end
 			plotState[plot] = { pumpkin = nil }
 			for _, child in plot:GetChildren() do
 				if child:IsA("ProximityPrompt") then
@@ -2993,7 +3216,7 @@ do
 		best:SetAttribute("Owner", player.UserId)
 		patchOf[player] = best
 		player:SetAttribute("PatchId", best:GetAttribute("Id"))
-		setOwnerSign(best, player.DisplayName .. "'s base", Color3.fromRGB(255, 200, 90))
+		setOwnerSign(best, player.DisplayName, Color3.fromRGB(255, 200, 90))
 		return true
 	end
 end
@@ -3008,7 +3231,7 @@ local function releasePatch(player: Player)
 	patch:SetAttribute("Owner", 0)
 	patch:SetAttribute("PenSlots", Config.Progression.baseSlots)
 	patch:SetAttribute("RaidPending", nil)
-	setOwnerSign(patch, "Free base", Color3.fromRGB(255, 230, 200))
+	setOwnerSign(patch, "", Color3.fromRGB(255, 230, 200))
 end
 
 local function ownedPatchCount(): number
@@ -4311,6 +4534,18 @@ do
 	function Hoards.debugFight(player: Player)
 		local h = hoards.Zone1
 		return h and Hoards.fight(player, h.guard, true) or false
+	end
+	function Hoards.cancelFight(player)
+		local f = fights[player]
+		if f then
+			fights[player] = nil
+			if f.root.Parent then
+				f.root.Anchored = false
+			end
+			giveUp(f.guard, false)
+		end
+		player:SetAttribute("FightActive", nil)
+		Remotes.fightEvent:FireClient(player, "cancel")
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		local f = fights[player]
@@ -6653,7 +6888,7 @@ end
 -- 1..DailyMaxStreak and starts over; the last day pays x DailyLastMult (the Cursed token is cut).
 -- The very first claim ever is only a toast (no popup on the first visit); later claims open the
 -- panel once the tutorial is done, else they are toasts too.
-local function claimDaily(player: Player)
+local function claimDaily(player: Player, claim: boolean?)
 	if not isLoaded(player) then
 		return
 	end
@@ -6665,8 +6900,14 @@ local function claimDaily(player: Player)
 	local first = dailyOf[player] == nil
 	local last = dailyOf[player] or { day = 0, streak = 0 }
 	if last.day >= today then
-		return
+		player:SetAttribute("DailyClaimable", false)
+		return false
 	end
+	player:SetAttribute("DailyClaimable", true)
+	if not claim then
+		return false
+	end
+	player:SetAttribute("DailyClaimable", false)
 	local streak = if last.day == today - 1
 		then math.max(0, math.floor(last.streak)) % Config.DailyMaxStreak + 1
 		else 1
@@ -6677,6 +6918,10 @@ local function claimDaily(player: Player)
 	addCandy(player, candy)
 	local panel = not first and o ~= nil and o.tut > TUTORIAL_COUNT
 	Remotes.dailyEvent:FireClient(player, streak, candy, false, panel and "panel" or "toast")
+	return true
+end
+Remotes.dailyClaimFunction.OnServerInvoke = function(player)
+	return claimDaily(player, true) == true
 end
 
 -- Global board: lifetime candy, top 10 (needs a published game). -----------------------------
@@ -7113,70 +7358,7 @@ do
 					Bases.setupPlot(p)
 				end
 			end
-			for _, plot in patch:GetChildren() do
-				if plot.Name == "Plot" and plot:IsA("BasePart") then
-					local active = (plot:GetAttribute("Index") or 1) <= d.slots
-					if plot:GetAttribute("SlotTransparency") == nil then
-						plot:SetAttribute("SlotTransparency", plot.Transparency)
-					end
-					plot.Transparency = active and plot:GetAttribute("SlotTransparency") or 1
-					if plot:GetAttribute("SlotCollision") == nil then
-						plot:SetAttribute("SlotCollision", plot.CanCollide)
-					end
-					plot.CanCollide = active and plot:GetAttribute("SlotCollision") or false
-				end
-			end
-			if patch:GetAttribute("LayoutSlots") ~= d.slots then
-				local soil = patch.Soil
-				local all = {}
-				for _, plot in patch:GetChildren() do
-					if plot.Name == "Plot" and plot:IsA("BasePart") then
-						table.insert(all, plot)
-					end
-				end
-				for _, plot in all do
-					local index = plot:GetAttribute("Index") or 1
-					if index <= d.slots then
-						if plot:GetAttribute("OriginalPlotCF") == nil then
-							plot:SetAttribute("OriginalPlotCF", plot.CFrame)
-						end
-						local original = plot:GetAttribute("OriginalPlotCF")
-						local target = original
-						if d.slots > Config.Progression.baseSlots then
-							local columns = math.ceil(d.slots / Config.Progression.slotRows)
-							local column = (index - 1) % columns
-							local row = math.floor((index - 1) / columns)
-							local x = (column / (columns - 1) - 0.5)
-								* (soil.Size.X - Config.Progression.slotMargin * 2)
-							local z = (row / (Config.Progression.slotRows - 1) - 0.5)
-								* (soil.Size.Z - Config.Progression.slotMargin * 2)
-							local pos = soil.CFrame:PointToWorldSpace(
-								Vector3.new(
-									x,
-									soil.CFrame:PointToObjectSpace(original.Position).Y,
-									z
-								)
-							)
-							target = CFrame.new(pos) * original.Rotation
-						end
-						local delta = target.Position - plot.Position
-						local p = plotState[plot] and plotState[plot].pumpkin
-						if p then
-							if p:GetAttribute("Stashed") then
-								Progress.shiftStash(plot, delta)
-							else
-								p.CFrame += delta
-								local home = p:GetAttribute("JackHome")
-								if home then
-									p:SetAttribute("JackHome", home + delta)
-								end
-							end
-						end
-						plot.CFrame = target
-					end
-				end
-				patch:SetAttribute("LayoutSlots", d.slots)
-			end
+			Bases.slotLook(patch, d.slots)
 			patch:SetAttribute("PenSlots", d.slots)
 			player:SetAttribute("PenSlots", d.slots)
 		end
@@ -7875,6 +8057,7 @@ local function onCharacter(player: Player, character: Model)
 end
 
 local function onPlayerAdded(player: Player)
+	player:SetAttribute("IsAdmin", player.UserId == Config.Admin.userId or RunService:IsStudio())
 	local stats = Instance.new("Folder")
 	stats.Name = "leaderstats"
 	stats.Parent = player
@@ -8089,18 +8272,43 @@ task.spawn(function()
 	end
 end)
 
+-- Portraits and initial disc locks follow ownership without changing the map contract.
+do
+	for _, patch in patchFolder:GetChildren() do
+		Bases.slotLook(patch, patch:GetAttribute("PenSlots") or Config.Progression.baseSlots)
+		local soil = patch:FindFirstChild("Soil")
+		if soil then
+			local bb = Instance.new("BillboardGui")
+			bb.Name = "OwnerPortrait"
+			bb.Size = UDim2.fromOffset(80, 80)
+			bb.StudsOffsetWorldSpace = Vector3.yAxis * Config.Plots.markerHeight
+			bb.AlwaysOnTop = true
+			bb.MaxDistance = 300
+			bb.Parent = soil
+			local image = Instance.new("ImageLabel")
+			image.Size = UDim2.fromScale(1, 1)
+			image.BackgroundTransparency = 1
+			image.Parent = bb
+			local function refresh()
+				local owner = patch:GetAttribute("Owner") or 0
+				bb.Enabled = owner ~= 0
+				image.Image = owner ~= 0
+						and ("rbxthumb://type=AvatarHeadShot&id=" .. tostring(owner) .. "&w=150&h=150")
+					or ""
+				if owner == 0 then
+					Bases.slotLook(patch, Config.Progression.baseSlots)
+				end
+			end
+			patch:GetAttributeChangedSignal("Owner"):Connect(refresh)
+			refresh()
+		end
+	end
+end
+
 -- Studio-only test hooks ------------------------------------------------------------------------
 
-if RunService:IsStudio() then
-	local debugFunction = Instance.new("BindableFunction")
-	debugFunction.Name = "PatchDebug"
-	debugFunction.Parent = ServerStorage
-	debugFunction.OnInvoke = function(
-		action: string,
-		player: Player?,
-		amount: number?,
-		typeId: string?
-	)
+do
+	Bases.debugAction = function(action: string, player: Player?, amount: number?, typeId: string?)
 		if action == "midnight" then
 			phaseToken += 1
 			local token = phaseToken
@@ -8172,6 +8380,109 @@ if RunService:IsStudio() then
 		end
 		return nil
 	end
+	if RunService:IsStudio() then
+		local debugFunction = Instance.new("BindableFunction")
+		debugFunction.Name = "PatchDebug"
+		debugFunction.Parent = ServerStorage
+		debugFunction.OnInvoke = Bases.debugAction
+	end
+	local calls = {}
+	local busy = {}
+	Remotes.adminFunction.OnServerInvoke = function(player, action, amount)
+		if
+			not (player.UserId == Config.Admin.userId or RunService:IsStudio())
+			or player:GetAttribute("IsAdmin") ~= true
+			or not isLoaded(player)
+		then
+			return false, "Admin only"
+		end
+		local t = os.clock()
+		if busy[player] or t - (calls[player] or -math.huge) < Config.Admin.interval then
+			return false, "Wait one second"
+		end
+		calls[player] = t
+		if action == "candy" then
+			if
+				amount ~= nil
+				and (type(amount) ~= "number" or amount ~= amount or math.abs(amount) == math.huge)
+			then
+				return false, "Invalid amount"
+			end
+			return Bases.debugAction(
+				"candy",
+				player,
+				math.clamp(math.floor(amount or Config.Admin.candy), 1, Config.Admin.maxCandy)
+			)
+		elseif action == "zone" then
+			return Bases.debugAction("zone", player, #Config.ZoneOrder)
+		elseif action == "king" or action == "spooky" then
+			return Bases.debugAction(action, player)
+		elseif action ~= "reset" then
+			return false, "Unknown action"
+		end
+		busy[player] = true
+		local ok, saved = pcall(function()
+			local patch = patchOf[player]
+			Hoards.cancelFight(player)
+			Progress.pending[player] = nil
+			if patch then
+				Bases.clear(patch)
+			end
+			Bases.dropStolen(player, patch and patch.Soil.Position or Vector3.zero)
+			for _, p in carrying[player] or {} do
+				p:Destroy()
+			end
+			carrying[player] = {}
+			Progress.pending[player] = nil
+			refreshCarry(player)
+			toolsOf[player] = { [Config.StartTool] = true }
+			zonesOf[player] = {}
+			indexOf[player] = {}
+			unlocked[player] = startUnlocked()
+			skillsOf[player] = {}
+			lifetime[player] = 0
+			dailyOf[player] = nil
+			player:SetAttribute("DailyClaimable", false)
+			Bases.carvedOf[player] = {}
+			Bases.incomeCarry[player] = nil
+			Bases.left[player] = nil
+			for id in Config.Upgrades do
+				player:SetAttribute("Up_" .. id, 0)
+			end
+			for _, attr in { "Haunts", "Souls", "CursedTokens", "PlayTime", "LifetimeCandy" } do
+				player:SetAttribute(attr, 0)
+			end
+			for _, attr in { "FirstHoardDone", "FirstSmashCandy", "FirstGrabPets" } do
+				player:SetAttribute(attr, false)
+			end
+			for _, id in Config.ZoneOrder do
+				player:SetAttribute("Wake_" .. id, nil)
+			end
+			player:SetAttribute("Title", nil)
+			player:SetAttribute("Tool", Config.StartTool)
+			local stats = player:FindFirstChild("leaderstats")
+			if stats then
+				stats.Candy.Value = Config.StartCandy
+				stats.Kings.Value = 0
+			end
+			applyData(player, { purchases = receiptsOf[player] })
+			publishIndex(player)
+			Unlock.refresh(player, true)
+			local wrote = savePlayer(player)
+			player:LoadCharacterAsync()
+			return wrote
+		end)
+		busy[player] = nil
+		if not ok then
+			warn("[Patch] Admin reset failed:", saved)
+			return false, "Reset failed; check server output"
+		end
+		return true, saved and "Progress reset and saved" or "Progress reset; save unavailable"
+	end
+	Players.PlayerRemoving:Connect(function(player)
+		calls[player] = nil
+		busy[player] = nil
+	end)
 end
 
 task.spawn(runDay)

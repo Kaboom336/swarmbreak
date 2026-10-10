@@ -351,7 +351,7 @@ local function refreshScale()
 	if size.X <= 1 or size.Y <= 1 then
 		return
 	end
-	uiScale.Scale = math.clamp(math.min(size.X / 800, size.Y / 560), 0.6, 1)
+	uiScale.Scale = math.clamp(size.Y / 720, Config.UI.scaleMin, Config.UI.scaleMax)
 end
 local function watchCamera()
 	if viewportConn then
@@ -370,13 +370,12 @@ watchCamera()
 local DARK = Color3.fromRGB(34, 22, 48)
 -- Halloween skin (refs aspects/halloween 2.5, ui HOWTO 2): charcoal panels with an orange rim, a
 -- lime gradient on buy buttons, purple close / back buttons. HUD numbers: money green, speed yellow.
-local CHARCOAL = Color3.fromRGB(42, 42, 46)
+local CHARCOAL = Config.UI.body
 local ORANGE = Color3.fromRGB(242, 140, 26)
 local BUY = Color3.fromRGB(141, 248, 22)
 local BUY_LOW = Color3.fromRGB(107, 241, 3)
 local PURPLE = Color3.fromRGB(122, 82, 191)
 local MONEY = Color3.fromRGB(68, 255, 47)
-local SPEED_YELLOW = Color3.fromRGB(248, 255, 67)
 local function stroke(parent: Instance, thickness: number)
 	local s = Instance.new("UIStroke")
 	s.Thickness = thickness
@@ -399,8 +398,11 @@ local function textLabel(parent: Instance, text: string, color: Color3, font: En
 	label.Text = text
 	label.Parent = parent
 	local s = Instance.new("UIStroke")
-	s.Thickness = 2.5
-	s.Color = Color3.fromRGB(30, 12, 40)
+	s.Thickness = 3
+	s.Color = Config.UI.ink
+	label:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+		s.Thickness = label.AbsoluteSize.Y < 25 and 2 or 3
+	end)
 	s.Parent = label
 	return label
 end
@@ -602,8 +604,8 @@ do
 	holder.Name = "Toasts"
 	holder.BackgroundTransparency = 1
 	holder.AnchorPoint = Vector2.new(0.5, 1)
-	holder.Position = UDim2.new(0.5, 0, 1, -152)
-	holder.Size = UDim2.fromOffset(620, 96)
+	holder.Position = UDim2.fromScale(0.5, Config.UI.toastY)
+	holder.Size = UDim2.fromScale(0.44, 0.12)
 	holder.Parent = gui
 	local layout = Instance.new("UIListLayout")
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -617,7 +619,7 @@ do
 		local label = textLabel(holder, text, Color3.fromRGB(255, 255, 255))
 		label.RichText = true
 		label.LayoutOrder = count
-		label.Size = UDim2.new(1, 0, 0, 28)
+		label.Size = UDim2.fromScale(1, 0.28)
 		local outline = label:FindFirstChildOfClass("UIStroke") :: UIStroke
 		outline.Thickness = 2.5
 		local pop = Instance.new("UIScale")
@@ -666,89 +668,72 @@ do
 	local chip = Instance.new("Frame")
 	chip.Name = "PhaseChip"
 	chip.BackgroundTransparency = 1
-	chip.Size = UDim2.fromOffset(280, 66)
+	chip.Size = UDim2.fromScale(0.24, 0.075)
 	chip.Parent = gui
 	local function place()
 		local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 		chip.AnchorPoint = touch and Vector2.new(1, 0) or Vector2.new(1, 1)
-		chip.Position = touch and UDim2.new(1, -12, 0, 12) or UDim2.new(1, -16, 1, -12)
+		chip.Position = touch and UDim2.fromScale(0.988, 0.012) or UDim2.fromScale(0.988, 0.975)
 	end
 	place()
 	UserInputService.LastInputTypeChanged:Connect(place)
 	local spookyLine = textLabel(chip, "", Color3.fromRGB(255, 190, 120))
 	spookyLine.Name = "Spooky"
-	spookyLine.Size = UDim2.new(1, 0, 0, 22)
+	spookyLine.Size = UDim2.fromScale(1, 0.028 / 0.075)
 	spookyLine.TextXAlignment = Enum.TextXAlignment.Right
 	local label = textLabel(chip, "", Color3.fromRGB(255, 255, 255))
 	label.Name = "Moon"
-	label.Position = UDim2.fromOffset(0, 24)
-	label.Size = UDim2.new(1, 0, 0, 32)
+	label.Position = UDim2.fromScale(0, 0.035 / 0.075)
+	label.Size = UDim2.fromScale(1, 0.04 / 0.075)
 	label.TextXAlignment = Enum.TextXAlignment.Right
 	local labelStroke = label:FindFirstChildOfClass("UIStroke") :: UIStroke
 	labelStroke.Thickness = 3
-	local fill = Instance.new("Frame")
-	fill.AnchorPoint = Vector2.new(1, 1)
-	fill.Position = UDim2.new(1, 0, 1, 0)
-	fill.Size = UDim2.new(0, 0, 0, 5)
-	fill.BorderSizePixel = 0
-	fill.Visible = false
-	fill.Parent = chip
-	corner(fill)
+	local tray = Instance.new("Frame")
+	tray.Name = "BoostTray"
+	tray.BackgroundTransparency = 1
+	tray.AnchorPoint = Vector2.new(1, 0)
+	tray.Position = UDim2.fromScale(-0.05, 0.15)
+	tray.Size = UDim2.fromScale(0.65, 0.045 / 0.075)
+	tray.Parent = chip
+	local layout = Instance.new("UIListLayout")
+	layout.FillDirection = Enum.FillDirection.Horizontal
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+	layout.Padding = UDim.new(0.05, 0)
+	layout.Parent = tray
+	local boosts = {}
+	for _, info in Config.UI.boosts do
+		local image = Instance.new("ImageLabel")
+		image.BackgroundTransparency = 1
+		image.Image = Config.UI.icons[info.icon]
+		image.Size = UDim2.fromScale(0.28, 1)
+		image.Parent = tray
+		local boostLabel = textLabel(image, info.label, Color3.new(1, 1, 1))
+		boostLabel.Size = UDim2.fromScale(1, 0.4)
+		boostLabel.Position = UDim2.fromScale(0, 0.65)
+		boosts[image] = info
+	end
 	local spookyScale = Instance.new("UIScale")
 	spookyScale.Parent = spookyLine
 	-- One toast 5 s before midnight (once per day phase).
 	local warnedFor = 0
 	local function refreshChip()
+		for image, info in boosts do
+			local value = player:GetAttribute(info.attribute)
+			image.Visible = info.timed
+					and type(value) == "number"
+					and value > workspace:GetServerTimeNow()
+				or (not info.timed and value == true)
+		end
 		local now = workspace:GetServerTimeNow()
 		local phase = state:GetAttribute("Phase") or "Day"
 		local ends = state:GetAttribute("PhaseEnds") or 0
 		local left = math.max(0, ends - now)
-		local locksOff = state:GetAttribute("LocksOff")
-		local king = true
-		local text, color = "", Color3.fromRGB(255, 255, 255)
-		local amount, barColor = 0, nil
+		label.Text = (phase ~= "Day" and utf8.char(9728) .. " in " or utf8.char(9790) .. " in ")
+			.. clockText(left)
+		label.TextColor3 = left <= 10 and Color3.fromRGB(255, 59, 59) or Color3.new(1, 1, 1)
 		if phase == "Day" and left <= 5 and left > 0 and warnedFor ~= ends then
 			warnedFor = ends
 			toast("Midnight in 5s...", "ALL PUMPKINS RESET!")
-		end
-		if phase == "BloodMoon" and not king then
-			-- New players are not sent to the King: just the clock to the next midnight.
-			text = "🌙 in " .. clockText(left + Config.DayLength)
-		elseif phase == "BloodMoon" and locksOff then
-			text = "🔓 LOCKS OFF " .. clockText(locksOff - now)
-			color, amount, barColor = Color3.fromRGB(255, 140, 140), 1, Color3.fromRGB(220, 40, 50)
-		elseif phase == "BloodMoon" then
-			local shield = state:GetAttribute("KingShield")
-			if shield then
-				text = string.format("🛡 Bonk %d lanterns", shield)
-			elseif state:GetAttribute("KingStunned") then
-				text = "💫 STUNNED! x2"
-			else
-				text = "KING NIGHT " .. clockText(left)
-			end
-			color, amount = Color3.fromRGB(255, 150, 140), 0
-			barColor = Color3.fromRGB(230, 50, 50)
-		elseif phase == "Midnight" then
-			text = "☀ in " .. clockText(left)
-			color = Color3.fromRGB(170, 230, 255)
-		else
-			text = "🌙 in " .. clockText(left)
-			if left <= 10 then
-				color = Color3.fromRGB(255, 59, 59)
-			end
-		end
-		if label.Text ~= text then
-			if phase ~= "BloodMoon" then
-				text = "KING NIGHT in "
-					.. clockText(math.max(0, (state:GetAttribute("KingWakesAt") or now) - now))
-			end
-			label.Text = text
-		end
-		label.TextColor3 = color
-		fill.Visible = barColor ~= nil
-		if barColor then
-			fill.BackgroundColor3 = barColor
-			fill.Size = UDim2.new(math.clamp(amount, 0, 1) * 0.6, 0, 0, 5)
 		end
 		-- Spooky Hour line.
 		local spookyEnds = state:GetAttribute("SpookyEnds")
@@ -766,7 +751,7 @@ do
 			spookyText = type(nextAt) == "number"
 					and ("🦇 Spooky Hour in " .. clockText(nextAt - now))
 				or ""
-			spookyLine.TextColor3 = Color3.fromRGB(205, 170, 255)
+			spookyLine.TextColor3 = Color3.fromRGB(197, 155, 255)
 			spookyScale.Scale = 1
 		end
 		if spookyLine.Text ~= spookyText then
@@ -796,19 +781,19 @@ do
 	stats.Name = "Stats"
 	stats.BackgroundTransparency = 1
 	stats.AnchorPoint = Vector2.new(0, 1)
-	stats.Position = UDim2.new(0, 14, 1, -12)
-	stats.Size = UDim2.fromOffset(340, 74)
+	stats.Position = UDim2.fromScale(0.012, 0.975)
+	stats.Size = UDim2.fromScale(0.26, 0.09)
 	stats.Parent = gui
-	carryLabel = textLabel(stats, "", SPEED_YELLOW)
+	carryLabel = textLabel(stats, "", Color3.new(1, 1, 1))
 	carryLabel.Name = "Carry"
-	carryLabel.Position = UDim2.fromOffset(2, 0)
-	carryLabel.Size = UDim2.new(1, -2, 0, 24)
+	carryLabel.Position = UDim2.fromScale(0, 0)
+	carryLabel.Size = UDim2.fromScale(1, 0.028 / 0.09)
 	carryLabel.TextXAlignment = Enum.TextXAlignment.Left
 	local icon = Instance.new("TextLabel")
 	icon.Name = "CandyIcon"
 	icon.BackgroundTransparency = 1
-	icon.Position = UDim2.fromOffset(-2, 28)
-	icon.Size = UDim2.fromOffset(44, 44)
+	icon.Position = UDim2.fromScale(0, 0.035 / 0.09)
+	icon.Size = UDim2.fromScale(0.14, 0.055 / 0.09)
 	icon.TextScaled = true
 	icon.Text = "🍬"
 	icon.Parent = stats
@@ -817,20 +802,25 @@ do
 	-- The money number: 36 px, green with a thick dark stroke.
 	candyBig = textLabel(stats, "", MONEY)
 	candyBig.Name = "Money"
-	candyBig.Position = UDim2.fromOffset(46, 30)
-	candyBig.Size = UDim2.new(1, -46, 0, 40)
-	candyBig.TextScaled = false
+	candyBig.Position = UDim2.fromScale(0.16, 0.035 / 0.09)
+	candyBig.Size = UDim2.fromScale(0.65, 0.055 / 0.09)
+	candyBig.TextScaled = true
+	candyBig.FontFace = Font.new(
+		"rbxasset://fonts/families/FredokaOne.json",
+		Enum.FontWeight.Regular,
+		Enum.FontStyle.Italic
+	)
 	candyBig.TextSize = 36
 	candyBig.TextXAlignment = Enum.TextXAlignment.Left
 	local moneyStroke = candyBig:FindFirstChildOfClass("UIStroke") :: UIStroke
 	moneyStroke.Thickness = 3
-	moneyStroke.Color = Color3.fromRGB(10, 40, 10)
+	moneyStroke.Color = Color3.fromRGB(11, 42, 6)
 	incomeLabel = textLabel(stats, "", MONEY)
 	incomeLabel.Name = "Income"
-	incomeLabel.Size = UDim2.fromOffset(140, 22)
+	incomeLabel.Size = UDim2.fromScale(0.35, 0.30)
 	incomeLabel.TextXAlignment = Enum.TextXAlignment.Left
 	local function placeIncome()
-		incomeLabel.Position = UDim2.fromOffset(46 + math.max(candyBig.TextBounds.X, 16) + 10, 42)
+		incomeLabel.Position = UDim2.fromScale(0.80, 0.58)
 	end
 	candyBig:GetPropertyChangedSignal("TextBounds"):Connect(placeIncome)
 	placeIncome()
@@ -931,8 +921,8 @@ do
 		-- held for ~0.8 s before it fades.
 		plus.Name = "CandyTick"
 		plus.TextXAlignment = Enum.TextXAlignment.Left
-		plus.Position = UDim2.fromOffset(46 + math.max(candyBig.TextBounds.X, 20) + 95, 10) -- past "+X/s"
-		plus.Size = UDim2.fromOffset(170, 30)
+		plus.Position = UDim2.fromScale(1.02, 0.4)
+		plus.Size = UDim2.fromScale(0.45, 0.45)
 		plus.ZIndex = 8
 		local s = plus:FindFirstChildOfClass("UIStroke") :: UIStroke
 		s.Thickness = 3
@@ -1000,13 +990,12 @@ local function refreshCarry()
 	local cap = Config.BaseCarry
 		+ (player:GetAttribute("Up_Stack") or 0)
 		+ (player:GetAttribute("Pass_BigStack") and Config.BigStackCarry or 0)
-	local character = player.Character
-	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local speed = humanoid and math.floor(humanoid.WalkSpeed + 0.5) or Config.WalkSpeed
-	local text = string.format("👟 %d   🎃 %d/%d Carrying", speed, n, cap)
-	if n > 0 then
-		text ..= " · worth " .. short(player:GetAttribute("CarryValue") or 0) .. " 🍬"
-	end
+	local text = string.format(
+		"%s Scythe   Carry %d/%d",
+		player:GetAttribute("Tool") or Config.StartTool,
+		n,
+		cap
+	)
 	if carryLabel.Text ~= text then
 		carryLabel.Text = text
 	end
@@ -1034,19 +1023,44 @@ refreshCarry()
 local leftBar = Instance.new("Frame")
 leftBar.Name = "LeftPills"
 leftBar.BackgroundTransparency = 1
-leftBar.AnchorPoint = Vector2.new(0, 0.5)
-leftBar.Position = UDim2.new(0, 12, 0.47, 0)
-leftBar.Size = UDim2.fromOffset(132, 110)
+leftBar.AnchorPoint = Vector2.zero
+leftBar.Position = UDim2.fromScale(0.012, 0.42)
+leftBar.Size = UDim2.fromScale(0.085, 0.225)
 leftBar.Parent = gui
 do
 	local layout = Instance.new("UIListLayout")
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Padding = UDim.new(0, 9)
+	layout.Padding = UDim.new(0.015 / 0.225, 0)
 	layout.Parent = leftBar
 end
 local function pill(text: string, color: Color3, order: number): TextButton
 	local b = button(leftBar, text, color)
-	b.Size = UDim2.fromOffset(124, 44)
+	b.Size = UDim2.fromScale(1, 0.065 / 0.225)
+	if order > 0 then
+		local name = order == 1 and "Shop" or order == 2 and "Index" or "Daily"
+		local icon = Instance.new("ImageLabel")
+		icon.BackgroundTransparency = 1
+		icon.Image = Config.UI.icons[name]
+		icon.Position = UDim2.fromScale(0.04, 0.15)
+		icon.ZIndex = 5
+		icon.Parent = b
+		local aspect = Instance.new("UIAspectRatioConstraint")
+		aspect.Parent = b
+		local function mobile()
+			local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+			b.Text = touch and "" or name
+			icon.Size = UDim2.fromScale(touch and 0.8 or 0.32, 0.7)
+			aspect.AspectRatio = 1
+			aspect.Parent = touch and b or nil
+			local label = b:FindFirstChild("Label")
+			if label then
+				label.Position = UDim2.fromScale(0.35, 0)
+				label.Size = UDim2.fromScale(0.63, 1)
+			end
+		end
+		mobile()
+		UserInputService.LastInputTypeChanged:Connect(mobile)
+	end
 	b.LayoutOrder = order
 	for _, d in b:GetDescendants() do
 		if d:IsA("UICorner") then
@@ -1113,6 +1127,8 @@ local function anyPanelOpen(): boolean
 	return false
 end
 local function refreshDim()
+	leftBar.Visible = not anyPanelOpen()
+	statsFrame.Visible = not anyPanelOpen()
 	if anyPanelOpen() then
 		panelDim.Visible = true
 		TweenService:Create(panelDim, TweenInfo.new(0.2), { BackgroundTransparency = 0.5 }):Play()
@@ -1126,36 +1142,12 @@ local function refreshDim()
 	end
 end
 
--- Halloween skin corner: a small cobweb on a panel's top-left (two thin white strands, 30 %
--- transparent: one from the corner inward, one across it).
-local function cobweb(frame: GuiObject, z: number)
-	local web = Instance.new("Frame")
-	web.Name = "Cobweb"
-	web.BackgroundTransparency = 1
-	web.Position = UDim2.fromOffset(2, 2)
-	web.Size = UDim2.fromOffset(52, 52)
-	web.ZIndex = z
-	web.Parent = frame
-	for _, s in { { 70, 2, 45, 0.5, 0.5 }, { 50, 2, -45, 0.36, 0.36 } } do
-		local strand = Instance.new("Frame")
-		strand.AnchorPoint = Vector2.new(0.5, 0.5)
-		strand.Position = UDim2.fromScale(s[4], s[5])
-		strand.Size = UDim2.fromOffset(s[1], s[2])
-		strand.Rotation = s[3]
-		strand.BackgroundColor3 = Color3.new(1, 1, 1)
-		strand.BackgroundTransparency = 0.3
-		strand.BorderSizePixel = 0
-		strand.ZIndex = z
-		strand.Parent = web
-	end
-end
-
--- Purple rounded close X over a panel's top-right corner.
+-- Close control stays inside the gradient header.
 local function closeButton(frame: GuiObject): TextButton
-	local close = button(frame, "X", PURPLE)
+	local close = button(frame, "X", Color3.fromRGB(219, 39, 48))
 	close.AnchorPoint = Vector2.new(1, 0)
-	close.Position = UDim2.new(1, 12, 0, -12)
-	close.Size = UDim2.fromOffset(48, 48)
+	close.Position = UDim2.fromScale(0.985, 0.01)
+	close.Size = UDim2.fromScale(0.08, 0.10)
 	close.ZIndex = 14
 	for _, d in close:GetDescendants() do
 		if d:IsA("GuiObject") then
@@ -1171,32 +1163,51 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	local frame = Instance.new("Frame")
 	frame.AnchorPoint = Vector2.new(0.5, 0.5)
 	frame.Position = UDim2.fromScale(0.5, 0.54)
-	frame.Size = UDim2.fromOffset(640, 440)
+	frame.Size = UDim2.fromScale(Config.UI.panelSize.X, Config.UI.panelSize.Y)
+	local aspect = Instance.new("UIAspectRatioConstraint")
+	aspect.AspectRatio = Config.UI.panelAspect
+	aspect.Parent = frame
 	frame.BackgroundColor3 = CHARCOAL
 	frame.Visible = false
 	frame.ZIndex = 10
 	frame.Parent = gui
 	corner(frame, 16)
 	stroke(frame, 3).Color = ORANGE
-	cobweb(frame, 11)
-	local head = textLabel(frame, title, Color3.new(1, 1, 1))
-	head.AnchorPoint = Vector2.new(0, 0.5)
-	head.Position = UDim2.fromOffset(-16, 4)
-	head.Size = UDim2.fromOffset(360, 56)
-	head.Rotation = -4
+	local kind = string.find(title, "Index") and "Index"
+		or (string.find(title, "Haunt") or string.find(title, "Rebirth")) and "Haunt"
+		or string.find(title, "Admin") and "Admin"
+		or string.find(title, "Daily") and "Daily"
+		or "Shop"
+	local header = Instance.new("Frame")
+	header.Name = "Header"
+	header.Size = UDim2.fromScale(1, 0.12)
+	header.BackgroundColor3 = Color3.new(1, 1, 1)
+	header.ZIndex = 11
+	header.Parent = frame
+	corner(header, 12)
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new(Config.UI.headers[kind][1], Config.UI.headers[kind][2])
+	gradient.Parent = header
+	local icon = Instance.new("ImageLabel")
+	icon.BackgroundTransparency = 1
+	icon.Image = Config.UI.icons[kind] or Config.UI.icons.Shop
+	icon.Position = UDim2.fromScale(0.02, 0.1)
+	icon.Size = UDim2.fromScale(0.07, 0.8)
+	icon.ZIndex = 14
+	icon.Parent = header
+	local head = textLabel(header, string.gsub(title, "^[^%a]+", ""), Color3.new(1, 1, 1))
+	head.Position = UDim2.fromScale(0.11, 0.1)
+	head.Size = UDim2.fromScale(0.75, 0.8)
 	head.ZIndex = 14
 	head.TextXAlignment = Enum.TextXAlignment.Left
-	local headStroke = head:FindFirstChildOfClass("UIStroke") :: UIStroke
-	headStroke.Thickness = 4.5
-	headStroke.Color = OUTLINE
 	closeButton(frame).Activated:Connect(function()
 		frame.Visible = false
 	end)
 	local list = Instance.new("ScrollingFrame")
 	list.BackgroundTransparency = 1
 	list.BorderSizePixel = 0
-	list.Position = UDim2.fromOffset(16, 50)
-	list.Size = UDim2.new(1, -32, 1, -64)
+	list.Position = UDim2.fromScale(0.025, 0.15)
+	list.Size = UDim2.fromScale(0.95, 0.82)
 	list.ScrollBarThickness = 8
 	list.ScrollBarImageColor3 = Color3.fromRGB(170, 170, 190)
 	list.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -1238,6 +1249,96 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	return frame, list
 end
 
+-- IsAdmin is replicated by the server; every invocation is independently authorized there.
+do
+	local frame, list = panel("Admin")
+	local gear = Instance.new("ImageButton")
+	gear.Name = "AdminGear"
+	gear.Image = Config.UI.icons.Admin
+	gear.BackgroundColor3 = Color3.fromRGB(138, 138, 138)
+	gear.Position = UDim2.fromScale(0.012, 0.02)
+	gear.Size = UDim2.fromScale(0.045, 0.07)
+	gear.Parent = gui
+	corner(gear, 12)
+	local function refresh()
+		gear.Visible = player:GetAttribute("IsAdmin") == true
+		if not gear.Visible then
+			frame.Visible = false
+		end
+	end
+	gear.Activated:Connect(function()
+		local was = frame.Visible
+		for _, f in panelFrames do
+			f.Visible = false
+		end
+		frame.Visible = not was
+	end)
+	local amount = Instance.new("TextBox")
+	amount.Text = tostring(Config.Admin.candy)
+	amount.PlaceholderText = "Candy amount"
+	amount.Font = Enum.Font.FredokaOne
+	amount.TextScaled = true
+	amount.Size = UDim2.new(1, 0, 0, 40)
+	amount.LayoutOrder = 2
+	amount.Parent = list
+	local confirming, busy = 0, false
+	for i, entry in
+		{
+			{ "Reset my progress", "reset" },
+			{ "Give candy", "candy" },
+			{ "Unlock all zones", "zone" },
+			{ "Start King Night", "king" },
+			{ "Start Spooky Hour", "spooky" },
+		}
+	do
+		local b = button(list, entry[1], i == 1 and Color3.fromRGB(219, 39, 48) or PURPLE)
+		b.Size = UDim2.new(1, 0, 0, 48)
+		b.LayoutOrder = i == 1 and 1 or i + 1
+		if i == 1 then
+			frame:GetPropertyChangedSignal("Visible"):Connect(function()
+				if not frame.Visible then
+					b.Text = entry[1]
+				end
+			end)
+		end
+		b.Activated:Connect(function()
+			if busy then
+				return
+			end
+			if entry[2] == "reset" and os.clock() >= confirming then
+				confirming = os.clock() + Config.Admin.confirmSeconds
+				b.Text = "Sure? Click again"
+				task.delay(Config.Admin.confirmSeconds, function()
+					if os.clock() >= confirming then
+						b.Text = entry[1]
+					end
+				end)
+				return
+			end
+			confirming = 0
+			b.Text = entry[1]
+			busy = true
+			local ok, done, message = pcall(function()
+				return remotes
+					:WaitForChild("Admin")
+					:InvokeServer(entry[2], entry[2] == "candy" and tonumber(amount.Text) or nil)
+			end)
+			busy = false
+			hint(
+				ok and (message or (done and "Admin action complete" or "Admin action rejected"))
+					or "Admin request failed"
+			)
+		end)
+	end
+	frame:GetPropertyChangedSignal("Visible"):Connect(function()
+		if not frame.Visible then
+			confirming = 0
+		end
+	end)
+	player:GetAttributeChangedSignal("IsAdmin"):Connect(refresh)
+	refresh()
+end
+
 -- A full-width row card (Haunt panel): light grey with a coloured icon, name and a dark line.
 local function card(
 	list: Instance,
@@ -1264,7 +1365,7 @@ local function card(
 	name.Position = UDim2.fromOffset(74, 6)
 	name.Size = UDim2.new(1, -330, 0, 32)
 	name.TextXAlignment = Enum.TextXAlignment.Left
-	local info = textLabel(c, text, Color3.fromRGB(80, 70, 100), Enum.Font.GothamBold)
+	local info = textLabel(c, text, Color3.fromRGB(80, 70, 100), Enum.Font.FredokaOne)
 	info:FindFirstChildOfClass("UIStroke"):Destroy()
 	info.Position = UDim2.fromOffset(74, 42)
 	info.Size = UDim2.new(1, -330, 0, 22)
@@ -1321,7 +1422,7 @@ local function gridCard(
 	local name = textLabel(c, title, Color3.new(1, 1, 1))
 	name.Position = UDim2.new(0, 8, 0, 82)
 	name.Size = UDim2.new(1, -16, 0, 26)
-	local info = textLabel(c, text, Color3.fromRGB(80, 70, 100), Enum.Font.GothamBold)
+	local info = textLabel(c, text, Color3.fromRGB(80, 70, 100), Enum.Font.FredokaOne)
 	info:FindFirstChildOfClass("UIStroke"):Destroy()
 	info.Position = UDim2.new(0, 10, 0, 110)
 	info.Size = UDim2.new(1, -20, 0, 40)
@@ -1332,7 +1433,7 @@ local function gridCard(
 	b.Size = UDim2.new(1, -24, 0, 46)
 	local tag = textLabel(c, "Owned!", Color3.new(1, 1, 1))
 	tag.FontFace = Font.new(
-		"rbxasset://fonts/families/GothamSSm.json",
+		"rbxasset://fonts/families/FredokaOne.json",
 		Enum.FontWeight.Heavy,
 		Enum.FontStyle.Italic
 	)
@@ -1472,6 +1573,7 @@ for _, id in UPGRADE_ORDER do
 	player:GetAttributeChangedSignal("Up_" .. id):Connect(refreshUpgradeCards)
 end
 player:GetAttributeChangedSignal("Unlock_LuckySwing"):Connect(refreshUpgradeCards)
+player:GetAttributeChangedSignal("Tool"):Connect(refreshCarry)
 candyValue.Changed:Connect(function()
 	refreshToolCards()
 	refreshUpgradeCards()
@@ -1493,14 +1595,14 @@ for i, seed in Config.Seeds do
 	corner(row, 14)
 	stroke(row, 2.5).Color = OUTLINE
 	local name = textLabel(row, seed.name, Color3.fromRGB(255, 255, 255))
-	name.Size = UDim2.new(0, 124, 1, -12)
-	name.Position = UDim2.fromOffset(10, 6)
+	name.Size = UDim2.fromScale(0.20, 0.8)
+	name.Position = UDim2.fromScale(0.015, 0.1)
 	name.TextXAlignment = Enum.TextXAlignment.Left
 	indexCells[seed.id] = { name = name }
 	for k, finish in FINISHES do
 		local cell = Instance.new("Frame")
-		cell.Size = UDim2.fromOffset(78, 44)
-		cell.Position = UDim2.fromOffset(142 + (k - 1) * 86, 6)
+		cell.Size = UDim2.fromScale(0.14, 0.8)
+		cell.Position = UDim2.fromScale(0.24 + (k - 1) * 0.15, 0.1)
 		cell.BackgroundColor3 = Color3.fromRGB(70, 62, 84)
 		cell.Parent = row
 		corner(cell, 10)
@@ -1513,8 +1615,8 @@ for i, seed in Config.Seeds do
 end
 local indexCount = textLabel(indexPanel, "", Color3.fromRGB(255, 214, 80))
 indexCount.AnchorPoint = Vector2.new(1, 0)
-indexCount.Position = UDim2.new(1, -54, 0, 10)
-indexCount.Size = UDim2.fromOffset(210, 34)
+indexCount.Position = UDim2.fromScale(0.87, 0.125)
+indexCount.Size = UDim2.fromScale(0.4, 0.045)
 local function refreshIndex()
 	local found = {}
 	for key in string.gmatch(player:GetAttribute("Index") or "", "[^,]+") do
@@ -1612,7 +1714,7 @@ local function pillBadge(b: GuiButton): TextLabel
 	badge.AnchorPoint = Vector2.new(0.5, 0.5)
 	badge.Position = UDim2.new(1, -4, 0, 2)
 	badge.Size = UDim2.fromOffset(24, 24)
-	badge.BackgroundColor3 = Color3.fromRGB(230, 40, 40)
+	badge.BackgroundColor3 = Color3.fromRGB(224, 32, 74)
 	badge.BackgroundTransparency = 0
 	badge.ZIndex = b.ZIndex + 5
 	badge.Visible = false
@@ -1672,7 +1774,7 @@ local soulsLabel = textLabel(hauntPanel, "", Color3.fromRGB(200, 160, 255))
 soulsLabel.AnchorPoint = Vector2.new(1, 0)
 soulsLabel.Position = UDim2.new(1, -54, 0, 10)
 soulsLabel.Size = UDim2.fromOffset(200, 34)
-local hauntInfo = textLabel(hauntList, "", Color3.fromRGB(225, 220, 240), Enum.Font.GothamBold)
+local hauntInfo = textLabel(hauntList, "", Color3.fromRGB(225, 220, 240), Enum.Font.FredokaOne)
 hauntInfo:FindFirstChildOfClass("UIStroke"):Destroy()
 hauntInfo.LayoutOrder = 0
 hauntInfo.Size = UDim2.new(1, -10, 0, 64)
@@ -1798,7 +1900,7 @@ for b, branch in Config.SkillBranches do
 		title.Position = UDim2.fromOffset(6, 4)
 		title.Size = UDim2.new(1, -12, 0, 26)
 		local info =
-			textLabel(nodeButton, skill.text, Color3.fromRGB(255, 255, 255), Enum.Font.GothamBold)
+			textLabel(nodeButton, skill.text, Color3.fromRGB(255, 255, 255), Enum.Font.FredokaOne)
 		info.Position = UDim2.fromOffset(6, 32)
 		info.Size = UDim2.new(1, -12, 0, 18)
 		local status = textLabel(nodeButton, "", Color3.fromRGB(255, 255, 255))
@@ -2067,7 +2169,7 @@ end
 -- (the same pill closes it again). Shop is one panel with tabs (Scythes / Upgrades / Haunt once
 -- its gate opens / Robux while any ID is set) and a small speaker (mute) button.
 do
-	local panels = { toolPanel, indexPanel, hauntPanel, shopPanel, upgradePanel }
+	local panels = panelFrames
 	local SHOP_TABS = {
 		{ name = "Scythes", label = "⚒ Scythes", frame = toolPanel },
 		{ name = "Upgrades", label = "⭐ Upgrades", frame = upgradePanel },
@@ -2099,7 +2201,7 @@ do
 			if shown then
 				local k = slot[frame] or 0
 				slot[frame] = k + 1
-				t.button.Position = UDim2.fromOffset(20 + k * 126, 52)
+				t.button.Position = UDim2.fromScale(0.025 + k * 0.21, 0.14)
 			end
 		end
 	end
@@ -2156,12 +2258,12 @@ do
 		local frame = tab.frame
 		local list = frame:FindFirstChildOfClass("ScrollingFrame")
 		if list then
-			list.Position = UDim2.fromOffset(16, 104)
-			list.Size = UDim2.new(1, -32, 1, -118)
+			list.Position = UDim2.fromScale(0.025, 0.28)
+			list.Size = UDim2.fromScale(0.95, 0.69)
 		end
 		for _, other in SHOP_TABS do
 			local b = button(frame, other.label, TAB_OFF)
-			b.Size = UDim2.fromOffset(118, 42)
+			b.Size = UDim2.fromScale(0.20, 0.10)
 			b.Activated:Connect(function()
 				openShop(other.name)
 			end)
@@ -2169,8 +2271,8 @@ do
 		end
 		local mute = button(frame, "🔊", Color3.fromRGB(95, 95, 115))
 		mute.AnchorPoint = Vector2.new(1, 0)
-		mute.Position = UDim2.new(1, -20, 0, 52)
-		mute.Size = UDim2.fromOffset(46, 42)
+		mute.Position = UDim2.fromScale(0.975, 0.14)
+		mute.Size = UDim2.fromScale(0.08, 0.10)
 		mute.Activated:Connect(function()
 			local on = toggleSound()
 			for _, m in muteButtons do
@@ -2564,7 +2666,7 @@ do
 			stroke(tag, 3.5).Color = OUTLINE
 			local newLabel = textLabel(tag, "NEW!", Color3.new(1, 1, 1))
 			newLabel.FontFace = Font.new(
-				"rbxasset://fonts/families/GothamSSm.json",
+				"rbxasset://fonts/families/FredokaOne.json",
 				Enum.FontWeight.Heavy,
 				Enum.FontStyle.Italic
 			)
@@ -3843,8 +3945,8 @@ do
 	local zoneLine = Instance.new("Frame")
 	zoneLine.Name = "ZoneLine"
 	zoneLine.AnchorPoint = Vector2.new(0.5, 0)
-	zoneLine.Position = UDim2.new(0.5, 0, 0, 74)
-	zoneLine.Size = UDim2.fromOffset(420, 30)
+	zoneLine.Position = UDim2.fromScale(0.5, Config.UI.zoneY)
+	zoneLine.Size = UDim2.fromScale(0.30, 0.035)
 	zoneLine.BackgroundColor3 = Color3.new(0, 0, 0)
 	zoneLine.BackgroundTransparency = 0.45
 	zoneLine.BorderSizePixel = 0
@@ -4015,8 +4117,8 @@ do
 	local bar = Instance.new("Frame")
 	bar.Name = "Objective"
 	bar.AnchorPoint = Vector2.new(0.5, 0)
-	bar.Position = UDim2.new(0.5, 0, 0, 8)
-	bar.Size = UDim2.fromOffset(440, 62)
+	bar.Position = UDim2.fromScale(0.5, Config.UI.objectiveY)
+	bar.Size = UDim2.fromScale(0.32, 0.065)
 	-- A solid rounded dark plate, so world signs behind it never show through the text.
 	bar.BackgroundColor3 = Color3.fromRGB(22, 14, 32)
 	bar.BackgroundTransparency = 0.25
@@ -4027,14 +4129,14 @@ do
 	barStroke.Color = Color3.fromRGB(10, 5, 16)
 	barStroke.Transparency = 0.2
 	local title = textLabel(bar, "", Color3.new(1, 1, 1))
-	title.Position = UDim2.fromOffset(0, 4)
-	title.Size = UDim2.new(1, 0, 0, 34)
+	title.Position = UDim2.fromScale(0, 0.05)
+	title.Size = UDim2.fromScale(1, 0.55)
 	local titleStroke = title:FindFirstChildOfClass("UIStroke") :: UIStroke
 	titleStroke.Thickness = 3
 	titleStroke.Color = Color3.fromRGB(15, 8, 20)
 	local progress = textLabel(bar, "", Color3.fromRGB(255, 225, 150))
-	progress.Position = UDim2.fromOffset(0, 39)
-	progress.Size = UDim2.new(1, 0, 0, 16)
+	progress.Position = UDim2.fromScale(0, 0.65)
+	progress.Size = UDim2.fromScale(1, 0.30)
 	local popScale = Instance.new("UIScale")
 	popScale.Parent = bar
 
@@ -4626,14 +4728,14 @@ do
 	local run = Instance.new("Frame")
 	run.Name = "Run"
 	run.AnchorPoint = Vector2.new(0.5, 0)
-	run.Position = UDim2.new(0.5, 0, 0, 110)
-	run.Size = UDim2.fromOffset(150, 40)
+	run.Position = UDim2.fromScale(0.44, Config.UI.actionY)
+	run.Size = UDim2.fromScale(0.10, 0.055)
 	run.BackgroundColor3 = Color3.fromRGB(139, 0, 0)
 	run.Visible = false
 	run.Parent = gui
 	corner(run, 12)
 	stroke(run, 2.5).Color = Color3.new(0, 0, 0)
-	local runLabel = textLabel(run, "RUN!!", Color3.new(1, 1, 1))
+	local runLabel = textLabel(run, "RUN!!", Color3.new(1, 1, 1), Enum.Font.LuckiestGuy)
 	runLabel.Position = UDim2.fromOffset(8, 5)
 	runLabel.Size = UDim2.new(1, -16, 1, -10)
 	local runScale = Instance.new("UIScale")
@@ -4641,9 +4743,9 @@ do
 
 	local drop = pill("🗑 Drop", Color3.fromRGB(225, 40, 40), 0)
 	drop.Parent = gui
-	drop.AnchorPoint = Vector2.new(0.5, 1)
-	drop.Position = UDim2.new(0.5, 0, 1, -98)
-	drop.Size = UDim2.fromOffset(150, 46)
+	drop.AnchorPoint = Vector2.new(0.5, 0)
+	drop.Position = UDim2.fromScale(0.56, Config.UI.actionY)
+	drop.Size = UDim2.fromScale(0.10, 0.055)
 	drop.Visible = false
 	drop.Activated:Connect(function()
 		dropRemote:FireServer()
@@ -4871,27 +4973,8 @@ remotes:WaitForChild("OrderDone").OnClientEvent:Connect(function(text: string, r
 	play(Config.Sounds.Brew, 1.6, 0.5)
 end)
 
--- Daily reward (Pet Sim 99 panel layout, Halloween skin). The server grants the candy on join and
--- fires Daily; this shows a centred charcoal panel with an orange rim and a cobweb: a tilted
--- "🎃 DAILY REWARD!" on the top-left edge, a purple X,
--- a chest, a 7-day strip (past days ticked, today highlighted), the reward and a big green
--- CLAIM! button that closes it with confetti and candies flying into the counter.
--- confetti (declared near the top) is defined here; Hoard deliveries and hatch reveals use it.
+-- Daily: visible only while the server says a reward can be claimed.
 do
-	local dailyGui = Instance.new("ScreenGui")
-	dailyGui.Name = "PatchDaily"
-	dailyGui.ResetOnSpawn = false
-	dailyGui.IgnoreGuiInset = true
-	dailyGui.DisplayOrder = 4
-	dailyGui.Parent = player:WaitForChild("PlayerGui")
-	local INK = Color3.fromRGB(26, 15, 46)
-	local open: Frame? = nil
-	-- Full-screen black at 0.5 behind the panel, dimming the world while it is open.
-	local openDim: Frame? = nil
-
-	-- Confetti bursts out of the middle of the screen (where the panel was) on screen at once,
-	-- flies up and out, then tumbles down past the bottom edge. parentGui = the ScreenGui to draw
-	-- in (default: this panel's, under the reveal card's dim).
 	function confetti(parentGui: ScreenGui?)
 		local colors = {
 			Color3.fromRGB(255, 80, 120),
@@ -4911,7 +4994,7 @@ do
 			bit.Position = UDim2.fromScale(0.5 + (math.random() - 0.5) * 0.1, 0.55)
 			bit.Rotation = math.random(0, 360)
 			bit.ZIndex = 50
-			bit.Parent = parentGui or dailyGui
+			bit.Parent = parentGui or gui
 			local x = 0.5 + (math.random() - 0.5) * 0.9
 			local y = 0.08 + math.random() * 0.4
 			local up = 0.35 + math.random() * 0.2
@@ -4943,269 +5026,46 @@ do
 		end
 	end
 
-	local function close(celebrate: boolean)
-		local dim = openDim
-		openDim = nil
-		if dim then
-			local fadeOut =
-				TweenService:Create(dim, TweenInfo.new(0.25), { BackgroundTransparency = 1 })
-			fadeOut:Play()
-			fadeOut.Completed:Once(function()
-				dim:Destroy()
-			end)
+	local frame, list = panel("Daily Reward")
+	local daily = pill("Daily", BUY, 3)
+	local reward = textLabel(list, "Claim today's candy gift!", Color3.new(1, 1, 1))
+	reward.Size = UDim2.new(1, 0, 0, 60)
+	local claim = button(list, "Claim daily gift", BUY)
+	claim.Size = UDim2.new(1, 0, 0, 60)
+	claim.LayoutOrder = 2
+	local busy = false
+	local function refresh()
+		daily.Visible = player:GetAttribute("DailyClaimable") == true
+		claim.Visible = daily.Visible
+	end
+	daily.Activated:Connect(function()
+		for _, f in panelFrames do
+			f.Visible = false
 		end
-		local frame = open
-		if not frame then
+		frame.Visible = true
+	end)
+	claim.Activated:Connect(function()
+		if busy then
 			return
 		end
-		open = nil
-		task.delay(0.2, Center.release)
-		if celebrate then
-			confetti()
-			candyShower(10)
-			play(Config.Sounds.Coin, 0.9, 1)
-			play(Config.Sounds.Brew, 1.6, 0.5)
-		end
-		local scale = frame:FindFirstChildOfClass("UIScale") :: UIScale
-		local shrink = TweenService:Create(
-			scale,
-			TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.In),
-			{ Scale = 0 }
-		)
-		shrink:Play()
-		shrink.Completed:Once(function()
-			frame:Destroy()
+		busy = true
+		local ok, claimed = pcall(function()
+			return remotes:WaitForChild("ClaimDaily"):InvokeServer()
 		end)
-	end
-
-	local function chestIcon(parent: Instance, z: number): Frame
-		local holder = Instance.new("Frame")
-		holder.BackgroundTransparency = 1
-		holder.Size = UDim2.fromOffset(110, 86)
-		holder.ZIndex = z
-		holder.Parent = parent
-		local body = Instance.new("Frame")
-		body.Position = UDim2.fromOffset(6, 34)
-		body.Size = UDim2.fromOffset(98, 50)
-		body.BackgroundColor3 = Color3.fromRGB(170, 96, 44)
-		body.ZIndex = z
-		body.Parent = holder
-		corner(body, 8)
-		stroke(body, 3).Color = INK
-		local lid = Instance.new("Frame")
-		lid.Position = UDim2.fromOffset(2, 6)
-		lid.Size = UDim2.fromOffset(106, 34)
-		lid.BackgroundColor3 = Color3.fromRGB(200, 120, 56)
-		lid.ZIndex = z + 1
-		lid.Parent = holder
-		corner(lid, 14)
-		stroke(lid, 3).Color = INK
-		for _, x in { 18, 82 } do
-			local band = Instance.new("Frame")
-			band.Position = UDim2.fromOffset(x, 6)
-			band.Size = UDim2.fromOffset(10, 78)
-			band.BackgroundColor3 = Color3.fromRGB(255, 205, 60)
-			band.BorderSizePixel = 0
-			band.ZIndex = z + 2
-			band.Parent = holder
+		busy = false
+		if not ok or not claimed then
+			hint("Daily gift is not ready")
 		end
-		local lock = Instance.new("Frame")
-		lock.Position = UDim2.fromOffset(43, 30)
-		lock.Size = UDim2.fromOffset(24, 26)
-		lock.BackgroundColor3 = Color3.fromRGB(255, 220, 80)
-		lock.ZIndex = z + 3
-		lock.Parent = holder
-		corner(lock, 6)
-		stroke(lock, 2.5).Color = INK
-		return holder
-	end
-
-	local function showDaily(streak: number, candy: number)
-		close(false)
-		Center.acquire()
-		local dim = Instance.new("Frame")
-		dim.Name = "DailyDim"
-		dim.BackgroundColor3 = Color3.new(0, 0, 0)
-		dim.BackgroundTransparency = 1
-		dim.BorderSizePixel = 0
-		dim.Size = UDim2.fromScale(1, 1)
-		dim.ZIndex = 1
-		dim.Active = true
-		dim.Parent = dailyGui
-		openDim = dim
-		Center.register(dim)
-		TweenService:Create(dim, TweenInfo.new(0.25), { BackgroundTransparency = 0.5 }):Play()
-		local frame = Instance.new("Frame")
-		frame.Name = "DailyReward"
-		frame.AnchorPoint = Vector2.new(0.5, 0.5)
-		frame.Position = UDim2.fromScale(0.5, 0.52)
-		frame.Size = UDim2.fromOffset(520, 400)
-		frame.BackgroundColor3 = CHARCOAL
-		frame.ZIndex = 10
-		frame.Parent = dailyGui
-		corner(frame, 16)
-		stroke(frame, 3).Color = ORANGE
-		cobweb(frame, 11)
-		local scale = Instance.new("UIScale")
-		scale.Scale = 0
-		scale.Parent = frame
-		open = frame
-		Center.register(frame)
-		TweenService:Create(
-			scale,
-			TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-			{ Scale = uiScale.Scale }
-		):Play()
-
-		-- Tilted italic title hanging over the top-left edge.
-		local title = textLabel(frame, "🎃 DAILY REWARD!", Color3.fromRGB(255, 200, 40))
-		title.AnchorPoint = Vector2.new(0, 0.5)
-		title.Position = UDim2.fromOffset(-14, 2)
-		title.Size = UDim2.fromOffset(300, 54)
-		title.Rotation = -6
-		title.ZIndex = 14
-		title.TextXAlignment = Enum.TextXAlignment.Left
-		local titleStroke = title:FindFirstChildOfClass("UIStroke") :: UIStroke
-		titleStroke.Thickness = 4
-		titleStroke.Color = INK
-
-		closeButton(frame).Activated:Connect(function()
-			close(false)
-		end)
-
-		local chest = chestIcon(frame, 12)
-		chest.AnchorPoint = Vector2.new(0.5, 0)
-		chest.Position = UDim2.new(0.5, 0, 0, 42)
-		local chestScale = Instance.new("UIScale")
-		chestScale.Parent = chest
-		TweenService:Create(
-			chestScale,
-			TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-			{ Scale = 1.08 }
-		):Play()
-
-		-- 7-day strip.
-		local strip = Instance.new("Frame")
-		strip.BackgroundTransparency = 1
-		strip.AnchorPoint = Vector2.new(0.5, 0)
-		strip.Position = UDim2.new(0.5, 0, 0, 142)
-		strip.Size = UDim2.fromOffset(7 * 62 + 6 * 6, 78)
-		strip.ZIndex = 11
-		strip.Parent = frame
-		local layout = Instance.new("UIListLayout")
-		layout.FillDirection = Enum.FillDirection.Horizontal
-		layout.Padding = UDim.new(0, 6)
-		layout.VerticalAlignment = Enum.VerticalAlignment.Center
-		layout.SortOrder = Enum.SortOrder.LayoutOrder
-		layout.Parent = strip
-		for day = 1, Config.DailyMaxStreak do
-			local past, today = day < streak, day == streak
-			local cell = Instance.new("Frame")
-			cell.LayoutOrder = day
-			cell.Size = UDim2.fromOffset(62, today and 76 or 66)
-			cell.BackgroundColor3 = today and Color3.fromRGB(255, 170, 40)
-				or past and Color3.fromRGB(110, 210, 90)
-				or Color3.fromRGB(225, 222, 235)
-			cell.ZIndex = 11
-			cell.Parent = strip
-			corner(cell, 10)
-			local outline = stroke(cell, today and 4 or 2.5)
-			outline.Color = today and Color3.fromRGB(255, 255, 255) or INK
-			local dayLabel = textLabel(cell, "Day " .. day, Color3.fromRGB(255, 255, 255))
-			dayLabel.Position = UDim2.fromOffset(4, 4)
-			dayLabel.Size = UDim2.new(1, -8, 0, 18)
-			dayLabel.ZIndex = 12
-			local value = short(
-				Config.DailyCandy
-					* day
-					* (day == Config.DailyMaxStreak and Config.DailyLastMult or 1)
-			)
-			local mid = textLabel(
-				cell,
-				past and "✓" or value,
-				past and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(255, 120, 200)
-			)
-			mid.Position = UDim2.new(0, 4, 0, 24)
-			mid.Size = UDim2.new(1, -8, 1, -30)
-			mid.ZIndex = 12
-			if not past then
-				mid.Text = "🍬" .. value
-			end
-		end
-
-		local reward = textLabel(
-			frame,
-			string.format("Day %d: +%s 🍬", streak, short(candy)),
-			Color3.fromRGB(255, 255, 255)
-		)
-		reward.AnchorPoint = Vector2.new(0.5, 0)
-		reward.Position = UDim2.new(0.5, 0, 0, 230)
-		reward.Size = UDim2.fromOffset(400, 40)
-		reward.ZIndex = 12
-		reward:FindFirstChildOfClass("UIStroke").Thickness = 3.5
-		local sub = textLabel(
-			frame,
-			streak == Config.DailyMaxStreak
-					and string.format("Day %d bonus: x%d candy!", streak, Config.DailyLastMult)
-				or "Come back tomorrow for more!",
-			Color3.fromRGB(215, 205, 235),
-			Enum.Font.GothamBold
-		)
-		sub:FindFirstChildOfClass("UIStroke"):Destroy()
-		sub.AnchorPoint = Vector2.new(0.5, 0)
-		sub.Position = UDim2.new(0.5, 0, 0, 272)
-		sub.Size = UDim2.fromOffset(400, 22)
-		sub.ZIndex = 12
-
-		local claim = button(frame, "CLAIM!", BUY)
-		claim.AnchorPoint = Vector2.new(0.5, 1)
-		claim.Position = UDim2.new(0.5, 0, 1, -22)
-		claim.Size = UDim2.fromOffset(240, 64)
-		claim.ZIndex = 12
-		for _, d in claim:GetDescendants() do
-			if d:IsA("GuiObject") then
-				d.ZIndex += 11
-			end
-		end
-		claim.Activated:Connect(function()
-			close(true)
-		end)
-		play(Config.Sounds.Brew, 1.4, 0.6)
-	end
-
-	-- mode "toast": the first visit ever, or the tutorial is still running (no popup then; the
-	-- candy is already granted). "panel": the chest panel, after the HUD has settled.
-	remotes
-		:WaitForChild("Daily").OnClientEvent
-		:Connect(function(streak: number, candy: number, _token: boolean?, mode: string?)
-			if mode ~= "panel" then
-				task.delay(1.5, function()
-					hint(
-						string.format(
-							'🎁 Daily gift: <font color="#FFD23C">+%s 🍬</font> (Day %d)',
-							short(candy),
-							streak
-						)
-					)
-				end)
-				return
-			end
-			task.delay(1.2, function()
-				local ok, err = pcall(showDaily, streak, candy)
-				if not ok then
-					if open then
-						open:Destroy()
-						open = nil
-					end
-					if openDim then
-						openDim:Destroy()
-						openDim = nil
-					end
-					Center.release()
-					warn("[Patch] Daily:", err)
-				end
-			end)
-		end)
+		refresh()
+	end)
+	remotes:WaitForChild("Daily").OnClientEvent:Connect(function(streak, candy)
+		reward.Text = string.format("Day %d: +%s candy!", streak, short(candy))
+		hint(reward.Text)
+		confetti(gui)
+		play(Config.Sounds.Coin, 0.9, 1)
+	end)
+	player:GetAttributeChangedSignal("DailyClaimable"):Connect(refresh)
+	refresh()
 end
 
 -- Movement: faster by default, sprint on Shift or the RUN button, slower per carried pumpkin. --
@@ -5232,7 +5092,7 @@ ContextActionService:BindAction("Sprint", function(_, inputState)
 	return Enum.ContextActionResult.Pass
 end, true, Enum.KeyCode.LeftShift)
 ContextActionService:SetTitle("Sprint", "RUN")
-ContextActionService:SetPosition("Sprint", UDim2.new(1, -170, 1, -150))
+ContextActionService:SetPosition("Sprint", UDim2.fromScale(0.64, 0.52))
 
 RunService.Heartbeat:Connect(function()
 	local character = player.Character
@@ -5635,48 +5495,26 @@ task.spawn(function()
 		)
 	end
 
-	-- HP bar over the King.
-	local hpGui = Instance.new("BillboardGui")
-	hpGui.Name = "KingHpBar"
-	hpGui.Adornee = kingFace
-	hpGui.Size = UDim2.new(16, 0, 2.2, 0)
-	hpGui.StudsOffsetWorldSpace = Vector3.new(0, kingFace.Size.Y / 2 + radius + 4, 0)
-	hpGui.LightInfluence = 0
-	hpGui.MaxDistance = 300
-	hpGui.Enabled = false
-	hpGui.Parent = player:WaitForChild("PlayerGui")
-	local back = Instance.new("Frame")
-	back.Size = UDim2.fromScale(1, 1)
-	back.BackgroundColor3 = DARK
-	back.BorderSizePixel = 0
-	back.Parent = hpGui
-	corner(back)
-	stroke(back, 3).Color = OUTLINE
-	local fill = Instance.new("Frame")
-	fill.Size = UDim2.fromScale(1, 1)
-	fill.BackgroundColor3 = Color3.new(1, 1, 1)
-	fill.BorderSizePixel = 0
-	fill.Parent = back
-	corner(fill)
-	local fillGradient = Instance.new("UIGradient")
-	fillGradient.Color = KING_FILL
-	fillGradient.Parent = fill
-	local hpText = textLabel(back, "", Color3.fromRGB(255, 255, 255))
-	hpText.Size = UDim2.fromScale(1, 0.8)
-	hpText.Position = UDim2.fromScale(0, 0.1)
-	hpText.ZIndex = 2
+	-- Single King HP readout.
 	local wide = Instance.new("Frame")
 	wide.Name = "KingTopHp"
 	wide.AnchorPoint = Vector2.new(0.5, 0)
-	wide.Position = UDim2.fromScale(0.5, 0.15)
-	wide.Size = UDim2.fromScale(0.62, 0.045)
-	wide.BackgroundColor3 = DARK
+	wide.Position = UDim2.fromScale(0.5, Config.UI.bossY)
+	wide.Size = UDim2.fromScale(0.46, 0.04)
+	wide.BackgroundColor3 = Color3.fromRGB(42, 10, 18)
 	wide.Parent = gui
 	corner(wide, 8)
 	local wideFill = Instance.new("Frame")
 	wideFill.Size = UDim2.fromScale(1, 1)
 	wideFill.BackgroundColor3 = Color3.fromRGB(230, 50, 50)
 	wideFill.Parent = wide
+	local fillGradient = Instance.new("UIGradient")
+	fillGradient.Color = KING_FILL
+	fillGradient.Parent = wideFill
+	local cap = textLabel(wide, utf8.char(9819), Color3.fromRGB(242, 193, 46))
+	cap.Position = UDim2.fromScale(-0.06, -0.2)
+	cap.Size = UDim2.fromScale(0.07, 1.4)
+	cap.ZIndex = 4
 	corner(wideFill, 8)
 	local wideText = textLabel(wide, "", Color3.new(1, 1, 1))
 	wideText.Size = UDim2.fromScale(1, 1)
@@ -5692,33 +5530,15 @@ task.spawn(function()
 	local function refreshHpBar()
 		local on = state:GetAttribute("Phase") == "BloodMoon"
 			and state:GetAttribute("KingHp") ~= nil
-		hpGui.Enabled = false
 		wide.Visible = on
 		if not on then
 			return
 		end
 		local hp = state:GetAttribute("KingHp") or 0
 		local maxHp = math.max(state:GetAttribute("KingMaxHp") or 1, 1)
-		local shielded = state:GetAttribute("KingShield") ~= nil
 		wideFill.Size = UDim2.fromScale(math.clamp(hp / maxHp, 0, 1), 1)
-		wideText.Text = shielded
-				and string.format(
-					"SHIELD %d/%d",
-					(state:GetAttribute("KingShieldMax") or state:GetAttribute("KingShield"))
-						- state:GetAttribute("KingShield"),
-					state:GetAttribute("KingShieldMax") or state:GetAttribute("KingShield")
-				)
-			or state:GetAttribute("KingStunned") and "WEAK SPOT x2"
-			or string.format("PUMPKIN KING %s / %s", short(hp), short(maxHp))
-		fillGradient.Color = shielded
-				and ColorSequence.new(Color3.fromRGB(140, 80, 255), Color3.fromRGB(200, 150, 255))
-			or KING_FILL
-		hpText.Text = (shielded and "🛡 " or "👑 ") .. short(hp) .. " / " .. short(maxHp)
-		TweenService:Create(
-			fill,
-			TweenInfo.new(0.2),
-			{ Size = UDim2.fromScale(math.clamp(hp / maxHp, 0.02, 1), 1) }
-		):Play()
+		wideText.Text = string.format("PUMPKIN KING %s/%s", short(hp), short(maxHp))
+		fillGradient.Color = KING_FILL
 	end
 	for _, attr in { "Phase", "KingHp", "KingMaxHp", "KingShield", "KingShieldMax", "KingStunned" } do
 		state:GetAttributeChangedSignal(attr):Connect(refreshHpBar)
@@ -5867,9 +5687,9 @@ do
 	local fight = Instance.new("Frame")
 	fight.Name = "FightBar"
 	fight.AnchorPoint = Vector2.new(0.5, 0.5)
-	fight.Position = UDim2.fromScale(0.5, 0.55)
-	fight.Size = UDim2.fromOffset(400, 250)
-	fight.BackgroundColor3 = CHARCOAL
+	fight.Position = UDim2.fromScale(0.5, Config.UI.fightY)
+	fight.Size = UDim2.fromScale(0.30, 0.035)
+	fight.BackgroundTransparency = 1
 	fight.Visible = false
 	fight.Parent = screen
 	corner(fight, 16)
@@ -5877,12 +5697,12 @@ do
 	local scale = Instance.new("UIScale")
 	scale.Scale = uiScale.Scale
 	scale.Parent = fight
-	local title = textLabel(fight, "FIGHT!", ORANGE)
-	title.Position = UDim2.fromOffset(10, 12)
-	title.Size = UDim2.new(1, -20, 0, 44)
+	local title = textLabel(fight, "TAP!", BUY, Enum.Font.LuckiestGuy)
+	title.Position = UDim2.fromScale(0, -1.7)
+	title.Size = UDim2.fromScale(1, 1.4)
 	local track = Instance.new("Frame")
-	track.Position = UDim2.fromOffset(20, 70)
-	track.Size = UDim2.new(1, -40, 0, 30)
+	track.Position = UDim2.fromScale(0, 0)
+	track.Size = UDim2.fromScale(1, 1)
 	track.BackgroundColor3 = DARK
 	track.Parent = fight
 	corner(track, 10)
@@ -5892,8 +5712,9 @@ do
 	fill.Parent = track
 	corner(fill, 10)
 	local tap = button(fight, "TAP TO FIGHT!", ORANGE)
-	tap.Position = UDim2.fromOffset(20, 118)
-	tap.Size = UDim2.new(1, -40, 0, 104)
+	tap.Position = UDim2.fromScale(0, -1.7)
+	tap.Size = UDim2.fromScale(1, 2.7)
+	tap.Visible = false
 	local remote = remotes:WaitForChild("Fight")
 	local wakeRemote = remotes:WaitForChild("GuardianWake")
 	local function restore()
@@ -5969,9 +5790,18 @@ do
 	end)
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if
-			not processed
-			and drama.fight
-			and (input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.Space)
+			drama.fight
+			and (
+				input.UserInputType == Enum.UserInputType.Touch
+				or (
+					not processed
+					and (
+						input.UserInputType == Enum.UserInputType.MouseButton1
+						or input.KeyCode == Enum.KeyCode.E
+						or input.KeyCode == Enum.KeyCode.Space
+					)
+				)
+			)
 		then
 			remote:FireServer()
 		end
@@ -5985,7 +5815,7 @@ do
 			fight.Visible = true
 			scale.Scale = uiScale.Scale
 			fill.Size = UDim2.fromScale(0, 1)
-			title.Text = "FIGHT! 3.0s"
+			title.Text = "TAP!"
 		elseif kind == "fill" and drama.fight then
 			fill.Size = UDim2.fromScale(math.clamp(value or 0, 0, 1), 1)
 		elseif kind == "win" or kind == "lose" or kind == "cancel" then
@@ -5998,7 +5828,11 @@ do
 	end)
 	RunService.RenderStepped:Connect(function()
 		if drama.fight then
-			title.Text = string.format("FIGHT! %.1fs", math.max(0, drama.ends - os.clock()))
+			title.Text = "TAP!"
+			title.TextTransparency = 0.15 + 0.15 * math.sin(os.clock() * 12)
+			local elapsed = 1 - math.clamp((drama.ends - os.clock()) / Config.Fight.seconds, 0, 1)
+			fill.BackgroundColor3 = fill.Size.X.Scale >= elapsed and BUY
+				or Color3.fromRGB(219, 39, 48)
 		end
 	end)
 	player.CharacterAdded:Connect(restore)
@@ -6128,7 +5962,7 @@ do
 						and carveAt - now > 0.05
 						and (p.Position - camera.CFrame.Position).Magnitude < 150
 					then
-						task.spawn(rock, p, carveAt)
+						task.spawn(rock, p, carveAt + Config.Plots.readySeconds)
 					end
 				end
 			end
@@ -6392,7 +6226,21 @@ do
 				local phase = (home.Position.X * 0.37 + home.Position.Z * 0.61) % (math.pi * 2)
 				local bob = (math.sin(t * 2.2 + phase) + 1) * 0.18
 				local turn = math.sin(t * 0.6 + phase) * math.rad(25)
-				p.CFrame = home * CFrame.new(0, bob, 0) * CFrame.Angles(0, turn, 0)
+				local plot = p.Parent
+				local soil = plot and plot.Parent and plot.Parent:FindFirstChild("Soil")
+				local front = soil
+						and Vector3.new(
+							Config.MapCenterX - soil.Position.X,
+							0,
+							Config.Plots.frontZ - soil.Position.Z
+						)
+					or Vector3.zAxis
+				front = front.Magnitude > 0.01 and front.Unit or Vector3.zAxis
+				local right = soil and soil.CFrame.RightVector or Vector3.xAxis
+				local offset = front
+						* (Config.Plots.wander * (0.6 + 0.2 * math.sin(t * 0.4 + phase)))
+					+ right * (Config.Plots.wander * 0.3 * math.sin(t * 0.65 + phase))
+				p.CFrame = (home + offset + Vector3.yAxis * bob) * CFrame.Angles(0, turn, 0)
 				continue
 			end
 			local plot = p.Parent :: BasePart
@@ -6414,7 +6262,17 @@ do
 			if t >= hop.nextAt then
 				local a = math.random() * math.pi * 2
 				local r = math.sqrt(math.random()) * radius
-				local goal = Vector3.new(math.cos(a) * r, 0, math.sin(a) * r)
+				local soil = plot.Parent and plot.Parent:FindFirstChild("Soil")
+				local front = soil
+						and Vector3.new(
+							Config.MapCenterX - soil.Position.X,
+							0,
+							Config.Plots.frontZ - soil.Position.Z
+						)
+					or Vector3.zAxis
+				front = front.Magnitude > 0.01 and front.Unit or Vector3.zAxis
+				local goal = front * (Config.Plots.wander * 0.55)
+					+ Vector3.new(math.cos(a) * r, 0, math.sin(a) * r) * 0.4
 				local dir = goal - hop.to
 				hop.from = hop.to
 				hop.to = goal
@@ -6679,8 +6537,8 @@ end
 do
 	local join = button(gui, "JOIN RAID", Color3.fromRGB(220, 50, 60))
 	join.AnchorPoint = Vector2.new(1, 1)
-	join.Position = UDim2.new(1, -16, 1, -105)
-	join.Size = UDim2.fromOffset(190, 46)
+	join.Position = UDim2.fromScale(0.68, 0.58)
+	join.Size = UDim2.fromScale(0.13, 0.05)
 	join.Activated:Connect(function()
 		remotes:WaitForChild("KingJoin"):FireServer()
 	end)
@@ -6800,4 +6658,36 @@ do
 			end
 		end)
 	end)
+end
+
+-- Local house marker follows pen ownership, including release/reclaim.
+do
+	local function watch(patch)
+		local soil = patch:FindFirstChild("Soil")
+		if not soil then
+			return
+		end
+		local bb = Instance.new("BillboardGui")
+		bb.Name = "MyPenHouse"
+		bb.Adornee = soil
+		bb.Size = UDim2.fromOffset(70, 60)
+		bb.StudsOffsetWorldSpace = Vector3.new(4, Config.Plots.markerHeight, 0)
+		bb.AlwaysOnTop = true
+		bb.MaxDistance = 300
+		bb.Parent = gui
+		local icon = textLabel(bb, utf8.char(8962), Color3.new(1, 1, 1))
+		icon.Size = UDim2.fromScale(1, 1)
+		local function refresh()
+			bb.Enabled = patch:GetAttribute("Owner") == player.UserId
+		end
+		patch:GetAttributeChangedSignal("Owner"):Connect(refresh)
+		patch.Destroying:Connect(function()
+			bb:Destroy()
+		end)
+		refresh()
+	end
+	for _, patch in patchFolder:GetChildren() do
+		watch(patch)
+	end
+	patchFolder.ChildAdded:Connect(watch)
 end

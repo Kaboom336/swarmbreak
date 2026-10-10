@@ -1,0 +1,4 @@
+# R24 follow-ups (queued while Codex runs R23)
+1. Zion: "The eggs should be way bigger" — mystery pumpkins: on nests 1-1.5 ch (5-7.5 studs) in late zones, 3-4 studs in Zone 1; in the pen they scale with rarity + weight to 3-8 ch (15-40 studs) like Steal an Egg (height ch ≈ 0.6 x kg^(1/4), clamp). Discs/domes scale with them. Carried pumpkin over the head stays capped at 4 studs.
+2. Zion: "pets should be walking around like in Steal an Egg" — hatched pets roam freely inside their pen (random walk targets every 2-4 s within the pen Soil bounds minus 2 studs, speed 4-6 studs/s, hop bob while moving, face the walk direction, pause/idle 1-3 s), client-side animation; the server keeps the pet logically on its plot (income, steal prompt follows the pet).
+3. From arena r23 (pending): speed upgrades, The Purge, bigger lobby, teleport.
