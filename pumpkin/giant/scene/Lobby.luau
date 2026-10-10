@@ -22,6 +22,47 @@ end
 local CYL = Enum.PartType.Cylinder
 local UP = CFrame.Angles(0, 0, math.rad(90)) -- cylinder axis X -> Y
 
+
+-- 0. Resize the hub floor and walls to 340 x 220.
+do
+	local HW, Z0, Z1 = 340, -70, 150
+	local hg = G.Ground:FindFirstChild("Hub")
+	if hg then hg:Destroy() end
+	hg = Instance.new("Folder")
+	hg.Name = "Hub"
+	for ix = 0, HW / 8 - 1 do
+		for iz = 0, (Z1 - Z0) / 8 - 1 do
+			local q = part(hg, Vector3.new(8, 2, 8), CFrame.new(1500 - HW / 2 + 4 + ix * 8, -1, Z0 + 4 + iz * 8), hex(((ix + iz) % 2 == 0) and "#72F70E" or "#68EE0A"))
+			q.TopSurface = Enum.SurfaceType.Studs
+		end
+		if ix % 10 == 0 then task.wait() end
+	end
+	hg.Parent = G.Ground
+	local walls = G.Art.Walls
+	for _, q in walls:GetChildren() do
+		if q.Position.Z < 150 + 4 then q:Destroy() end
+	end
+	local B, H = 6, 30
+	local A1, A2 = hex("#CC7258"), hex("#C2684F")
+	local function brick(pos, k) part(walls, Vector3.new(B, B, B), CFrame.new(pos), (k % 2 == 0) and A1 or A2, nil, "Brick") end
+	for z = Z0 + B / 2, Z1 - B / 2, B do
+		for _, sx in { -1, 1 } do for j = 0, 4 do brick(Vector3.new(1500 + sx * (HW / 2 + B / 2), j * B + B / 2, z), math.floor(z / B) + j) end end
+	end
+	for x = -HW / 2 - B / 2, HW / 2 + B / 2, B do
+		for j = 0, 4 do brick(Vector3.new(1500 + x, j * B + B / 2, Z0 - B / 2), math.floor(x / B) + j) end
+	end
+	for x = 63, HW / 2 + B / 2, B do
+		for _, sx in { -1, 1 } do for j = 0, 4 do brick(Vector3.new(1500 + sx * x, j * B + B / 2, Z1 + B / 2), math.floor(x / B) + j) end end
+	end
+	local cap = hex("#4CFF3A")
+	part(walls, Vector3.new(B, 1.5, Z1 - Z0 + B), CFrame.new(1500 - HW / 2 - B / 2, H + 0.75, (Z0 + Z1) / 2), cap, Enum.Material.Neon, "Cap")
+	part(walls, Vector3.new(B, 1.5, Z1 - Z0 + B), CFrame.new(1500 + HW / 2 + B / 2, H + 0.75, (Z0 + Z1) / 2), cap, Enum.Material.Neon, "Cap")
+	part(walls, Vector3.new(HW + 2 * B, 1.5, B), CFrame.new(1500, H + 0.75, Z0 - B / 2), cap, Enum.Material.Neon, "Cap")
+	for _, sx in { -1, 1 } do
+		part(walls, Vector3.new(HW / 2 - 60, 1.5, B), CFrame.new(1500 + sx * ((60 + HW / 2) / 2 + 3), H + 0.75, Z1 + B / 2), cap, Enum.Material.Neon, "Cap")
+	end
+end
+
 -- 1. Clear old pens and hub clutter.
 G.Patches:ClearAllChildren()
 local hub = G.Art.Decor:FindFirstChild("Hub")
@@ -38,15 +79,16 @@ decor.Name = "LobbyDecor"
 
 -- 2. Pens.
 local W, D = 36, 30
+-- Hub is 340 x 220 (X 1330..1670, Z -70..150). Pens ring the King with >= 50-stud spacing.
 local pens = {
-	{ 1428, 17, 0 }, { 1476, 17, 0 }, { 1524, 17, 0 }, { 1572, 17, 0 },
-	{ 1397, 56, 1 }, { 1603, 56, -1 }, { 1397, 104, 1 }, { 1603, 104, -1 },
+	{ 1360, -42, 0 }, { 1440, -42, 0 }, { 1560, -42, 0 }, { 1640, -42, 0 },
+	{ 1355, 30, 1 }, { 1645, 30, -1 }, { 1355, 95, 1 }, { 1645, 95, -1 },
 }
-local order = { 2, 3, 1, 4, 5, 6, 7, 8 }
+local order = { 3, 1, 2, 4, 5, 6, 7, 8 }
 local RAIL, POST = hex("#8E4312"), hex("#40303A")
 for i, pd in pens do
 	local c = Vector3.new(pd[1], 0, pd[2])
-	local face = pd[3] == 0 and Vector3.new(0, 0, 1) or Vector3.new(pd[3], 0, 0)
+	local face = pd[3] == 0 and Vector3.new(0, 0, 1) or (pd[3] == 2 and Vector3.new(0, 0, -1) or Vector3.new(pd[3], 0, 0))
 	local cf = CFrame.lookAt(c, c + face) -- -Z = toward the centre (front)
 	local function at(x, y, z) return cf * CFrame.new(x, y, -z) end -- z>0 = front
 	local pen = Instance.new("Model", G.Patches)
@@ -131,7 +173,7 @@ end
 -- 3. Centrepiece: King on a 3-tier slate plinth over a purple swirl pool.
 local centre = Instance.new("Folder", G.Art)
 centre.Name = "Centre"
-local KC = Vector3.new(1500, 0, 70)
+local KC = Vector3.new(1500, 0, 40)
 part(centre, Vector3.new(0.3, 40, 40), CFrame.new(KC + Vector3.new(0, 0.15, 0)) * UP, hex("#6A2BC2"), Enum.Material.Neon, "SwirlPool", CYL).Transparency = 0.3
 for t, w in { 34, 26, 18 } do
 	local tier = part(centre, Vector3.new(w, 2, w), CFrame.new(KC + Vector3.new(0, t * 2 - 1, 0)), hex("#4A4458"), Enum.Material.Slate, "Tier" .. t)
@@ -169,14 +211,14 @@ local function strip(a, b, w)
 	local s = part(paths, Vector3.new(w, 0.16, len), CFrame.lookAt(mid + Vector3.new(0, 0.08, 0), b + Vector3.new(0, 0.08, 0)), STONE, Enum.Material.Cobblestone, "Path")
 	s.CanCollide = true
 end
-strip(Vector3.new(1500, 0, 102), Vector3.new(1500, 0, 150), 14)
+strip(Vector3.new(1500, 0, 72), Vector3.new(1500, 0, 150), 14)
 for k = 0, 23 do
 	local a0, a1 = k / 24 * math.pi * 2, (k + 1) / 24 * math.pi * 2
 	strip(KC + Vector3.new(math.cos(a0) * 32, 0, math.sin(a0) * 32), KC + Vector3.new(math.cos(a1) * 32, 0, math.sin(a1) * 32), 10)
 end
 for _, pd in pens do
 	local c = Vector3.new(pd[1], 0, pd[2])
-	local face = pd[3] == 0 and Vector3.new(0, 0, 1) or Vector3.new(pd[3], 0, 0)
+	local face = pd[3] == 0 and Vector3.new(0, 0, 1) or (pd[3] == 2 and Vector3.new(0, 0, -1) or Vector3.new(pd[3], 0, 0))
 	local gate = c + face * (D / 2 + 1)
 	local toward = (Vector3.new(KC.X, 0, KC.Z) - gate).Unit
 	local stop = Vector3.new(KC.X, 0, KC.Z) - toward * 37
@@ -229,7 +271,7 @@ for _, z in { 110, 125, 140 } do
 	placeKit("post_lantern", Vector3.new(1490, 0, z), 9)
 	placeKit("post_lantern", Vector3.new(1510, 0, z), 9)
 end
-for _, p in { { 1385, -2 }, { 1615, -2 }, { 1385, 140 }, { 1615, 140 } } do
+for _, p in { { 1340, -60 }, { 1660, -60 }, { 1340, 140 }, { 1660, 140 } } do
 	placeKit("tree_dead_large", Vector3.new(p[1], 0, p[2]), 20)
 end
 -- Spawn on the path.
