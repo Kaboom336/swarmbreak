@@ -900,7 +900,7 @@ do
 		-- held for ~0.8 s before it fades.
 		plus.Name = "CandyTick"
 		plus.TextXAlignment = Enum.TextXAlignment.Left
-		plus.Position = UDim2.fromOffset(46 + math.max(candyBig.TextBounds.X, 20) + 10, 10)
+		plus.Position = UDim2.fromOffset(46 + math.max(candyBig.TextBounds.X, 20) + 95, 10) -- past "+X/s"
 		plus.Size = UDim2.fromOffset(170, 30)
 		plus.ZIndex = 8
 		local s = plus:FindFirstChildOfClass("UIStroke") :: UIStroke
@@ -911,7 +911,7 @@ do
 		scale.Parent = plus
 		TweenService:Create(scale, TweenInfo.new(0.22, Enum.EasingStyle.Back), { Scale = 1 }):Play()
 		local rise = TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		TweenService:Create(plus, rise, { Position = plus.Position - UDim2.fromOffset(0, 30) })
+		TweenService:Create(plus, rise, { Position = plus.Position + UDim2.fromOffset(24, 0) })
 			:Play()
 		local fade =
 			TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.85)
@@ -3893,16 +3893,16 @@ do
 		RED = Color3.fromRGB(224, 24, 24),
 		HOT = Color3.fromRGB(255, 125, 110),
 		DEEP = Color3.fromRGB(92, 6, 12),
-		ARROWS = 7,
-		SPACING = 2.6,
-		FIRST = 2.5,
-		STOP = 6,
-		LIFT = 0.4,
-		THICK = 0.25,
-		HEAD_W = 2.2,
-		HEAD_L = 1.35,
-		SHAFT_W = 0.85,
-		SHAFT_L = 1.1,
+		ARROWS = 9,
+		SPACING = 4.6,
+		FIRST = 4,
+		STOP = 8,
+		LIFT = 0.5,
+		THICK = 0.35,
+		HEAD_W = 4,
+		HEAD_L = 2.4,
+		SHAFT_W = 1.5,
+		SHAFT_L = 2,
 		HEAD_BASE = 0.15,
 		UNDER = 1.22,
 		UNDER_DROP = 0.1,

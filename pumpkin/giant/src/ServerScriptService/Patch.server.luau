@@ -4295,11 +4295,7 @@ for _, kind in { "Seeds", "Upgrades" } do
 	for _, d in stall:GetDescendants() do
 		if d:IsA("TextLabel") then
 			local up = string.upper(d.Text)
-			if
-				string.find(up, "SEED")
-				or string.find(up, "TOOLS")
-				or string.find(up, "UPGRADES")
-			then
+			if string.find(up, "SEED") or string.find(up, "TOOLS") then
 				d.Text = "🛒 SHOP"
 			end
 		end

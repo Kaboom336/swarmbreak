@@ -151,7 +151,7 @@ return {
 		LavaSlime = { display = "Lava Slime", rarity = "Mythic" },
 		KingCat = { display = "King Cat", rarity = "Mythic" },
 	},
-	PetHeight = 3.5,
+	PetHeight = 5.5,
 	PetRareMult = 1.2,
 	PetRareOrder = 3,
 	MysteryModel = "MysteryPumpkin",
