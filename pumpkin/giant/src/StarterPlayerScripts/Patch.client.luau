@@ -4068,7 +4068,7 @@ do
 		RED = Color3.fromRGB(224, 24, 24),
 		HOT = Color3.fromRGB(255, 125, 110),
 		DEEP = Color3.fromRGB(92, 6, 12),
-		ARROWS = 9,
+		ARROWS = 36,
 		SPACING = 4.6,
 		FIRST = 4,
 		STOP = 8,
@@ -4264,8 +4264,11 @@ do
 		-- and leads the eye round.
 		local dir = flat.Unit
 		local feet = groundY(root.Position, root.Position.Y - 3)
+		-- The chain always reaches the target: spacing stretches when it is far away.
+		local span = dist - AK.FIRST - AK.RING_R - 1
+		local spacing = math.max(AK.SPACING, span / (AK.ARROWS - 1))
 		for i = 1, AK.ARROWS do
-			local d = AK.FIRST + (i - 1) * AK.SPACING
+			local d = AK.FIRST + (i - 1) * spacing
 			-- Stop before the ring around the target.
 			if d > dist - AK.RING_R - 1 then
 				break
@@ -4319,11 +4322,11 @@ do
 			if base then
 				local wave = math.max(0, math.sin(t * 7 - i * 0.9)) ^ 2
 				if arrowUnder[k] then
-					if p.Transparency ~= 0 then
-						p.Transparency = 0
+					if p.Transparency ~= 0.45 then
+						p.Transparency = 0.45
 					end
 				else
-					p.Transparency = 0.1 * (1 - wave)
+					p.Transparency = 0.3 + 0.15 * (1 - wave)
 					p.Color = guide.home and guide.green:Lerp(Color3.new(1, 1, 1), wave * 0.3)
 						or AK.RED:Lerp(AK.HOT, wave)
 				end
