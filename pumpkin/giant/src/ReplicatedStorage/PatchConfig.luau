@@ -605,7 +605,7 @@ local Config = {
 			stat = "penFilled",
 			need = 2,
 			reach = true,
-			text = "Fill your pen %s/6",
+			text = "Fill your pen %s",
 			target = "hoard",
 			reward = { title = "Patch Keeper" },
 		},
@@ -820,8 +820,8 @@ local Config = {
 Config.RemovedOrders =
 	{ sellBrewed = true, sell = true, brewRare = true, sellStackOf5 = true, sellMutation = true }
 
--- R21 tuning. Arrival simulation assumes an active player fills the current pen, average
--- nest size, equal pet rolls, matching scythe, 50% farming uptime, and earns the quest discount.
+-- R21 tuning. The offline sim models equal pet rolls, a successful steal every 90s,
+-- matching scythes, 50% farming uptime, quest discounts, swaps/sales, stamps and Spooky Hour.
 Config.Progression = {
 	stampBonus = 0.1,
 	roundEpsilon = 1e-8,
@@ -838,6 +838,7 @@ Config.Progression = {
 	witchRestock = 300,
 	witchOffers = 3,
 	witchPriceSeconds = 300,
+	witchPriceMult = 1.5,
 	goldOneIn = 12,
 	goldIncome = 2,
 	rebirthCost = 5000000,
@@ -862,6 +863,19 @@ Config.Raid = {
 	tapInterval = 0.15,
 }
 Config.KingNight = {
+	signOffset = Vector3.new(28, 8, 0),
+	look = {
+		tint = Color3.fromRGB(255, 201, 184),
+		brightness = 0,
+		saturation = 0.08,
+		contrast = 0.02,
+		ambient = Color3.fromRGB(130, 130, 170),
+		outdoor = Color3.fromRGB(155, 160, 195),
+		clock = 17,
+		sky = Color3.fromRGB(175, 185, 230),
+		decay = Color3.fromRGB(100, 90, 155),
+		density = 0.25,
+	},
 	minutes = { 0, 20 },
 	warning = 60,
 	hits = 15,
@@ -890,6 +904,8 @@ Config.KingNight = {
 	critMult = 3,
 }
 Config.GuardTwists = {
+	soundRange = 120,
+	volume = 0.7,
 	Zone1 = {
 		kind = "Crow",
 		cooldown = 8,
@@ -917,7 +933,7 @@ Config.GuardTwists = {
 		radius = 8,
 		slow = 0,
 		seconds = 1.5,
-		sound = 99963459517796,
+		sound = Config.Sounds.Whoosh,
 	},
 	Zone4 = {
 		kind = "Tongue",
@@ -934,7 +950,7 @@ Config.GuardTwists = {
 		warn = 1.5,
 		radius = 7,
 		ahead = 18,
-		sound = 140677698800750,
+		sound = Config.Sounds.Whoosh,
 	},
 	Zone6 = {
 		kind = "Sticky",
@@ -960,7 +976,7 @@ Config.GuardTwists = {
 		speed = 50,
 		push = 14,
 		seconds = 1,
-		sound = 128007000574959,
+		sound = Config.Sounds.Bonk,
 	},
 	first = 3,
 	mercy = 1,
@@ -1012,7 +1028,7 @@ do
 		scale = 2,
 	})
 end
--- Retain legacy IDs and incomes; zone nests roll only their own two inhabitants.
+-- Retain legacy IDs; incomes are rebalanced below and older saves receive compensation.
 local ladder = {
 	{ "Orange", "Sunny", "R20 tutorial" },
 	{ "Ghost", "Shadow", "Fuse Machine" },
@@ -1045,10 +1061,20 @@ for _, id in Config.ZoneOrder do
 end
 
 -- Preserve the first gate and calibrate later ones against a transparent active-player model.
--- These are arrival hypotheses, not measured retention/playtest data. The live tools/pets,
--- quest discount, stamps, and acquisition ramp feed the same formula on server and client.
+-- These are arrival hypotheses, not measured retention/playtest data. The offline model
+-- reads these same tables; server and client use the resulting gate costs.
 Config.Economy = {
-	baseGateCosts = { 1000, 25000, 400000, 2500000, 17500000, 140000000 },
+	saveVersion = 2,
+	kingletMult = 1.5,
+	updateBonusSeconds = 1800,
+	legacyIncome = {},
+	rarityRanks = { Common = 1, Rare = 2, Epic = 3, Legendary = 4, Mythic = 5 },
+	sim = {
+		stealSeconds = 90,
+		durationMinutes = 180,
+		tolerance = 0.25,
+		crateMinutes = { 20, 40 },
+	},
 	nestIncome = {
 		Orange = 1,
 		Sunny = 4,
@@ -1064,52 +1090,49 @@ Config.Economy = {
 		GummySeed = 3200,
 		KingSeed = 9000,
 		DragonSeed = 12000,
+		KingletSeed = 18000,
 	},
-	occupied = { 2, 6, 8, 8, 10, 10, 10 },
-	acquisitionShare = 0.65,
-	completedStampShare = 0.5,
 	roundTo = 1000,
-	results = {},
 }
 -- Legacy pet IDs remain unchanged and loadable; future zone economy is tuned here.
-local incomes = {}
+Config.Economy.nestIncome.KingletSeed = Config.Economy.kingletMult
+	* math.max(Config.Economy.nestIncome.KingSeed, Config.Economy.nestIncome.DragonSeed)
 for _, seed in Config.Seeds do
+	Config.Economy.legacyIncome[seed.id] = seed.income
 	seed.income = Config.Economy.nestIncome[seed.id] or seed.income
-	incomes[seed.id] = seed.income
 end
-for i = 2, #Config.ZoneOrder do
-	local previous = Config.Zones[Config.ZoneOrder[i - 1]]
-	local before = i > 2 and Config.Zones[Config.ZoneOrder[i - 2]] or previous
-	local pets, oldPets = previous.pets, before.pets
-	local average = (incomes[pets[1]] + incomes[pets[2]]) / 2
-	local oldAverage = (incomes[oldPets[1]] + incomes[oldPets[2]]) / 2
-	local ramp = oldAverage + (average - oldAverage) * Config.Economy.acquisitionShare
-	local pen = ramp * Config.HoardMult * Config.HoardSize * Config.Economy.occupied[i - 1]
-	local tool = Config.Tools[i - 1]
-	local crit = 1 + Config.Farm.critChance * (Config.Farm.critMult - 1)
-	local swings = math.max(1, math.ceil(previous.hp / (tool.damage * crit)))
-	local farm = previous.candy / (swings * Config.BonkCooldown) * Config.Progression.activity
-	local bonus = 1 + (i - 2) * Config.Progression.stampBonus * Config.Economy.completedStampShare
-	local rate = (pen + farm) * bonus
-	local elapsed = (
-		Config.Progression.arrivalMinutes[i] - Config.Progression.arrivalMinutes[i - 1]
-	) * 60
-	local toolSpend = Config.Tools[i].cost or 0
-	local discounted = math.max(0, rate * elapsed - toolSpend)
-	local price = math.floor(
-		discounted / (1 - Config.Progression.gateDiscount) / Config.Economy.roundTo + 0.5
-	) * Config.Economy.roundTo
-	if i == 2 then
-		price = Config.Economy.baseGateCosts[1]
+-- Calibrated by scene/econ-sim.luau; keep the R20 first gate at 1,000.
+Config.Economy.gateCosts = { 1000, 318000, 3064000, 18507000, 138275000, 785290000 }
+for i, cost in Config.Economy.gateCosts do
+	Config.Zones[Config.ZoneOrder[i + 1]].cost = cost
+end
+function Config.Economy.crateSeed(zoneIndex, tier, pick)
+	if tier == 4 then
+		return Config.KingNight.rewardSeeds[4]
 	end
-	Config.Zones[Config.ZoneOrder[i]].cost = price
-	Config.Economy.results[i] = {
-		rate = rate,
-		cost = price,
-		minutes = i == 2 and Config.Progression.arrivalMinutes[i]
-			or Config.Progression.arrivalMinutes[i - 1]
-				+ (price * (1 - Config.Progression.gateDiscount) + toolSpend) / rate / 60,
-	}
+	local pets = Config.Zones[Config.ZoneOrder[zoneIndex]].pets
+	if tier == 2 or tier == 3 then
+		local current = Config.Economy.rarityRanks[Config.Pets[Config.Seeds[1].pet].rarity]
+		for _, seed in Config.Seeds do
+			if seed.id == pets[pick] then
+				current = Config.Economy.rarityRanks[Config.Pets[seed.pet].rarity]
+			end
+		end
+		for i = zoneIndex + 1, #Config.ZoneOrder do
+			local candidates = Config.Zones[Config.ZoneOrder[i]].pets
+			for _, seed in Config.Seeds do
+				if
+					seed.id == candidates[pick]
+					and Config.Economy.rarityRanks[Config.Pets[seed.pet].rarity] == current + 1
+				then
+					return seed.id
+				end
+			end
+		end
+	end
+	return pets[pick]
 end
-
+for i, id in Config.ZoneOrder do
+	Config.GuardTwists[id].pitch = 0.7 + i * 0.12
+end
 return Config

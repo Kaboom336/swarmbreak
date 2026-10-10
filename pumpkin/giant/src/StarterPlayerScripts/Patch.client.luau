@@ -718,17 +718,15 @@ do
 			text = "🔓 LOCKS OFF " .. clockText(locksOff - now)
 			color, amount, barColor = Color3.fromRGB(255, 140, 140), 1, Color3.fromRGB(220, 40, 50)
 		elseif phase == "BloodMoon" then
-			local hp = state:GetAttribute("KingHp") or 0
-			local maxHp = math.max(state:GetAttribute("KingMaxHp") or 1, 1)
 			local shield = state:GetAttribute("KingShield")
 			if shield then
 				text = string.format("🛡 Bonk %d lanterns", shield)
 			elseif state:GetAttribute("KingStunned") then
 				text = "💫 STUNNED! x2"
 			else
-				text = "👑 King " .. short(hp) .. " / " .. short(maxHp)
+				text = "KING NIGHT " .. clockText(left)
 			end
-			color, amount = Color3.fromRGB(255, 150, 140), hp / maxHp
+			color, amount = Color3.fromRGB(255, 150, 140), 0
 			barColor = Color3.fromRGB(230, 50, 50)
 		elseif phase == "Midnight" then
 			text = "☀ in " .. clockText(left)
@@ -2891,20 +2889,21 @@ do
 		},
 		BloodMoon = {
 			lighting = {
-				Ambient = Color3.fromRGB(110, 60, 70),
-				OutdoorAmbient = Color3.fromRGB(135, 75, 85),
-				Brightness = math.max(1.1, base.Brightness * 0.65),
-				ClockTime = 18.8,
+				Ambient = Config.KingNight.look.ambient,
+				OutdoorAmbient = Config.KingNight.look.outdoor,
+				Brightness = base.Brightness,
+				ClockTime = Config.KingNight.look.clock,
 			},
 			tint = {
-				TintColor = Color3.fromRGB(255, 179, 168),
-				Saturation = 0.15,
-				Contrast = 0.1,
+				TintColor = Config.KingNight.look.tint,
+				Brightness = Config.KingNight.look.brightness,
+				Saturation = Config.KingNight.look.saturation,
+				Contrast = Config.KingNight.look.contrast,
 			},
 			atmosphere = {
-				Color = Color3.fromRGB(122, 16, 32),
-				Decay = Color3.fromRGB(42, 5, 8),
-				Density = 0.4,
+				Color = Config.KingNight.look.sky,
+				Decay = Config.KingNight.look.decay,
+				Density = Config.KingNight.look.density,
 			},
 		},
 	}
@@ -2964,7 +2963,7 @@ do
 		-- The midnight reset keeps its big banner; the other phase news are toasts, and only for
 		-- players whose gate is open (new farmers are never sent to ghosts or the King).
 		if phase == "Midnight" then
-			local hoard = seedById[Config.Hoards.Zone1.type]
+			local hoard = seedById[Config.Zones.Zone1.pets[1]]
 			banner(
 				"ALL PUMPKINS RESET!",
 				string.format(
@@ -3632,6 +3631,9 @@ end)
 remotes
 	:WaitForChild("KingDone").OnClientEvent
 	:Connect(function(kind: string, payouts: { [string]: number }, mvp: Player?)
+		if kind == "results" then
+			return
+		end
 		local mine = kind == "won" and payouts[tostring(player.UserId)] or nil
 		if kind ~= "results" and not unlocked("King") and not mine then
 			return
@@ -3680,7 +3682,7 @@ remotes
 		elseif kind == "phase3" then
 			toast("THE KING IS ANGRY!", "Faster attacks. Finish him!")
 			play(Config.Sounds.Brew, 0.4, 1)
-		else
+		elseif kind == "escaped" then
 			toast(
 				"THE KING ESCAPED",
 				"Qualifiers receive 25% candy. Next King Night is on the clock."
@@ -4545,7 +4547,10 @@ do
 				end
 				return "Place it in your pen!", "Wait for it to hatch", soil.Position
 			end
-			return "Fill your pen " .. (player:GetAttribute("PenFilled") or 0) .. "/6",
+			return "Fill your pen "
+				.. (player:GetAttribute("PenFilled") or 0)
+				.. "/"
+				.. (player:GetAttribute("PenSlots") or Config.Progression.baseSlots),
 				"Steal another glowing pumpkin",
 				hoardSpot("Zone1") or zone
 		end
@@ -5391,124 +5396,128 @@ local function circlePart(pos: Vector3, radius: number, warn: number, color: Col
 	end)
 end
 
-remotes
-	:WaitForChild("Telegraph").OnClientEvent
-	:Connect(
-		function(kind: string, circles: { any }, warn: number, sound: number?, lifetime: number?)
-			if sound then
-				play(sound, 1, 0.7)
-			end
-			for _, c in circles do
-				if c.cf then
-					local lane = Instance.new("Part")
-					lane.Anchored = true
-					lane.CanCollide = false
-					lane.CanQuery = false
-					lane.CanTouch = false
-					lane.Material = Enum.Material.Neon
-					lane.Color = Color3.fromRGB(255, 60, 50)
-					lane.Transparency = 0.65
-					lane.Size = Vector3.new(c.width, 0.2, c.length)
-					lane.CFrame = c.cf
-					lane.Parent = workspace
-					task.delay(warn, function()
-						if kind == "Guard:Boulder" then
-							local rock = Instance.new("Part")
-							rock.Shape = Enum.PartType.Ball
-							rock.Size = Vector3.one * c.width
-							rock.Anchored = true
-							rock.CanCollide = false
-							rock.Color = Color3.fromRGB(80, 45, 30)
-							rock.Position = c.origin + Vector3.yAxis * c.width / 2
-							rock.Parent = workspace
-							local cfg = Config.GuardTwists.Zone7
-							TweenService:Create(
-								rock,
-								TweenInfo.new(cfg.length / cfg.speed, Enum.EasingStyle.Linear),
-								{ Position = rock.Position + c.direction * cfg.length }
-							):Play()
-							task.delay(cfg.length / cfg.speed, function()
-								rock:Destroy()
-							end)
-						end
-						lane:Destroy()
-					end)
-				else
-					circlePart(
-						c.pos,
-						c.radius,
-						warn,
-						kind == "Guard:Bat" and Color3.fromRGB(170, 80, 255)
-							or kind == "Guard:Sticky" and Color3.fromRGB(255, 110, 199)
-							or nil
-					)
-					if kind == "Guard:Sticky" then
-						local puddle = Instance.new("Part")
-						puddle.Shape = Enum.PartType.Cylinder
-						puddle.Anchored = true
-						puddle.CanCollide = false
-						puddle.CanQuery = false
-						puddle.CanTouch = false
-						puddle.Material = Enum.Material.Neon
-						puddle.Color = Color3.fromRGB(255, 110, 199)
-						puddle.Transparency = 0.55
-						puddle.Size = Vector3.new(0.2, c.radius * 2, c.radius * 2)
-						puddle.CFrame = CFrame.new(c.pos) * CFrame.Angles(0, 0, math.pi / 2)
-						puddle.Parent = workspace
-						task.delay(warn + (lifetime or 0), function()
-							puddle:Destroy()
-						end)
-					elseif kind == "Guard:Bat" then
-						local ghost = Instance.new("Part")
-						ghost.Anchored = true
-						ghost.CanCollide = false
-						ghost.CanQuery = false
-						ghost.Size = Vector3.new(3, 6, 3)
-						ghost.Color = Color3.fromRGB(180, 80, 255)
-						ghost.Transparency = 0.65
-						ghost.CFrame = CFrame.new(c.pos + Vector3.yAxis * 3)
-						ghost.Parent = workspace
-						task.delay(warn, function()
-							burst(ghost.Position, ghost.Color, 30, 15)
-							ghost:Destroy()
+remotes:WaitForChild("Telegraph").OnClientEvent:Connect(
+	function(
+		kind: string,
+		circles: { any },
+		warn: number,
+		sound: number?,
+		lifetime: number?,
+		pitch: number?
+	)
+		if sound then
+			play(sound, pitch or 1, Config.GuardTwists.volume)
+		end
+		for _, c in circles do
+			if c.cf then
+				local lane = Instance.new("Part")
+				lane.Anchored = true
+				lane.CanCollide = false
+				lane.CanQuery = false
+				lane.CanTouch = false
+				lane.Material = Enum.Material.Neon
+				lane.Color = Color3.fromRGB(255, 60, 50)
+				lane.Transparency = 0.65
+				lane.Size = Vector3.new(c.width, 0.2, c.length)
+				lane.CFrame = c.cf
+				lane.Parent = workspace
+				task.delay(warn, function()
+					if kind == "Guard:Boulder" then
+						local rock = Instance.new("Part")
+						rock.Shape = Enum.PartType.Ball
+						rock.Size = Vector3.one * c.width
+						rock.Anchored = true
+						rock.CanCollide = false
+						rock.Color = Color3.fromRGB(80, 45, 30)
+						rock.Position = c.origin + Vector3.yAxis * c.width / 2
+						rock.Parent = workspace
+						local cfg = Config.GuardTwists.Zone7
+						TweenService:Create(
+							rock,
+							TweenInfo.new(cfg.length / cfg.speed, Enum.EasingStyle.Linear),
+							{ Position = rock.Position + c.direction * cfg.length }
+						):Play()
+						task.delay(cfg.length / cfg.speed, function()
+							rock:Destroy()
 						end)
 					end
-				end
-				if kind == "Volley" and not c.cf then
-					-- A seed ball arcs from the King onto each circle.
-					task.delay(warn - 0.45, function()
-						local seed = Instance.new("Part")
-						seed.Shape = Enum.PartType.Ball
-						seed.Size = Vector3.new(3, 3, 3)
-						seed.Material = Enum.Material.SmoothPlastic
-						seed.Color = Color3.fromRGB(40, 24, 20)
-						seed.Anchored = true
-						seed.CanCollide = false
-						seed.CanQuery = false
-						seed.Position = kingFace.Position + Vector3.new(0, 6, 0)
-						seed.Parent = workspace
-						local from = seed.Position
-						local to = c.pos + Vector3.new(0, 1.5, 0)
-						local t0 = os.clock()
-						local conn
-						conn = RunService.RenderStepped:Connect(function()
-							local t = math.min(1, (os.clock() - t0) / 0.45)
-							local p = from:Lerp(to, t)
-								+ Vector3.new(0, math.sin(t * math.pi) * 18, 0)
-							seed.Position = p
-							if t >= 1 then
-								conn:Disconnect()
-								seed:Destroy()
-							end
-						end)
+					lane:Destroy()
+				end)
+			else
+				circlePart(
+					c.pos,
+					c.radius,
+					warn,
+					kind == "Guard:Bat" and Color3.fromRGB(170, 80, 255)
+						or kind == "Guard:Sticky" and Color3.fromRGB(255, 110, 199)
+						or nil
+				)
+				if kind == "Guard:Sticky" then
+					local puddle = Instance.new("Part")
+					puddle.Shape = Enum.PartType.Cylinder
+					puddle.Anchored = true
+					puddle.CanCollide = false
+					puddle.CanQuery = false
+					puddle.CanTouch = false
+					puddle.Material = Enum.Material.Neon
+					puddle.Color = Color3.fromRGB(255, 110, 199)
+					puddle.Transparency = 0.55
+					puddle.Size = Vector3.new(0.2, c.radius * 2, c.radius * 2)
+					puddle.CFrame = CFrame.new(c.pos) * CFrame.Angles(0, 0, math.pi / 2)
+					puddle.Parent = workspace
+					task.delay(warn + (lifetime or 0), function()
+						puddle:Destroy()
+					end)
+				elseif kind == "Guard:Bat" then
+					local ghost = Instance.new("Part")
+					ghost.Anchored = true
+					ghost.CanCollide = false
+					ghost.CanQuery = false
+					ghost.Size = Vector3.new(3, 6, 3)
+					ghost.Color = Color3.fromRGB(180, 80, 255)
+					ghost.Transparency = 0.65
+					ghost.CFrame = CFrame.new(c.pos + Vector3.yAxis * 3)
+					ghost.Parent = workspace
+					task.delay(warn, function()
+						burst(ghost.Position, ghost.Color, 30, 15)
+						ghost:Destroy()
 					end)
 				end
 			end
-			if kind == "Slam" then
-				play(Config.Sounds.Brew, 0.35, 0.9)
+			if kind == "Volley" and not c.cf then
+				-- A seed ball arcs from the King onto each circle.
+				task.delay(warn - 0.45, function()
+					local seed = Instance.new("Part")
+					seed.Shape = Enum.PartType.Ball
+					seed.Size = Vector3.new(3, 3, 3)
+					seed.Material = Enum.Material.SmoothPlastic
+					seed.Color = Color3.fromRGB(40, 24, 20)
+					seed.Anchored = true
+					seed.CanCollide = false
+					seed.CanQuery = false
+					seed.Position = kingFace.Position + Vector3.new(0, 6, 0)
+					seed.Parent = workspace
+					local from = seed.Position
+					local to = c.pos + Vector3.new(0, 1.5, 0)
+					local t0 = os.clock()
+					local conn
+					conn = RunService.RenderStepped:Connect(function()
+						local t = math.min(1, (os.clock() - t0) / 0.45)
+						local p = from:Lerp(to, t) + Vector3.new(0, math.sin(t * math.pi) * 18, 0)
+						seed.Position = p
+						if t >= 1 then
+							conn:Disconnect()
+							seed:Destroy()
+						end
+					end)
+				end)
 			end
 		end
-	)
+		if kind == "Slam" then
+			play(Config.Sounds.Brew, 0.35, 0.9)
+		end
+	end
+)
 
 do
 	local shieldBubble: Part? = nil
@@ -5680,7 +5689,7 @@ task.spawn(function()
 	local function refreshHpBar()
 		local on = state:GetAttribute("Phase") == "BloodMoon"
 			and state:GetAttribute("KingHp") ~= nil
-		hpGui.Enabled = on
+		hpGui.Enabled = false
 		wide.Visible = on
 		if not on then
 			return
@@ -5999,7 +6008,7 @@ end
 
 remotes:WaitForChild("Hoard").OnClientEvent:Connect(function(kind: string, seedId: string?)
 	local seed = seedById[seedId or ""]
-	local hoardSeed = seedById[Config.Hoards.Zone1.type]
+	local hoardSeed = seedById[Config.Zones.Zone1.pets[1]]
 	local name = string.upper((seed or hoardSeed or { name = "Hoard" }).name)
 	if kind == "grab" then
 		hint("Glowing pumpkin grabbed!")
