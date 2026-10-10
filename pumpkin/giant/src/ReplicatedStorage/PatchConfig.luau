@@ -1,10 +1,17 @@
--- Tuning for Pumpkin Patch Panic. All values are first guesses to judge on screen.
+-- Tuning for Steal a Pumpkin. All values are first guesses to judge on screen.
 -- Shared by several entries below (one place to change them).
 local SHIELD = 600 -- new-player shield: seconds of a player's total playtime
 local HAUNT_COST = 2500000
-local HOARD1 = "Ghost" -- the Zone1 Hoard's pumpkin type (the tutorial text names it)
+local HOARD1 = "Ghost" -- the Zone1 Hoard's pumpkin type
+local GUARD1 = "Scarecrow" -- the Zone1 Hoard's guardian (the tutorial text names it)
 return {
 	StartCandy = 30,
+
+	-- The map (workspace.Garden): one straight lane along +Z centred on X = MapCenterX. The hub
+	-- (bases, market, spawn) is Z 0..SafeLineZ; the zones follow in a line, each with ZMin / ZMax
+	-- attributes on its folder (the zMin / zMax below are only the fallback). Never hard-code X.
+	MapCenterX = 1500,
+	SafeLineZ = 150,
 
 	-- Unlock gates (Hit Game Bible: learn at most 5 systems in the first 10 minutes). Seconds of a
 	-- player's saved total playtime (player attribute "PlayTime"); the server publishes each gate as
@@ -27,9 +34,11 @@ return {
 	-- Index and saves still work). income = candy per second when placed on a base plot (before
 	-- size, brew and Haunt / pass multipliers); hp = health of a wild one in a zone.
 	-- template is a KayKit pumpkin; color (if set) repaints it flat; scale = look size.
+	-- pet = the Config.Pets entry (and ServerStorage.PetModels model) a placed one hatches into.
 	Seeds = {
 		{
 			id = "Orange",
+			pet = "PumpkinPup",
 			name = "Orange",
 			income = 1,
 			hp = 20,
@@ -38,6 +47,7 @@ return {
 		},
 		{
 			id = "Sunny",
+			pet = "Crow",
 			name = "Sunny",
 			income = 4,
 			hp = 60,
@@ -46,6 +56,7 @@ return {
 		},
 		{
 			id = "Ghost",
+			pet = "Ghosty",
 			name = "Ghost",
 			income = 15,
 			hp = 200,
@@ -55,6 +66,7 @@ return {
 		},
 		{
 			id = "Moon",
+			pet = "BlackCat",
 			name = "Moon",
 			income = 60,
 			hp = 700,
@@ -64,6 +76,7 @@ return {
 		},
 		{
 			id = "CandyCorn",
+			pet = "CandyBat",
 			name = "Candy Corn",
 			income = 200,
 			hp = 2500,
@@ -73,6 +86,7 @@ return {
 		},
 		{
 			id = "Golden",
+			pet = "GoldenPup",
 			name = "Golden",
 			income = 700,
 			hp = 9000,
@@ -82,6 +96,7 @@ return {
 		},
 		{
 			id = "Shadow",
+			pet = "BonePup",
 			name = "Shadow",
 			income = 2500,
 			hp = 30000,
@@ -91,6 +106,7 @@ return {
 		},
 		{
 			id = "Crystal",
+			pet = "FrostOwl",
 			name = "Crystal",
 			income = 9000,
 			hp = 100000,
@@ -100,6 +116,7 @@ return {
 		},
 		{
 			id = "Inferno",
+			pet = "LavaSlime",
 			name = "Inferno",
 			income = 35000,
 			hp = 350000,
@@ -109,6 +126,7 @@ return {
 		},
 		{
 			id = "KingSeed",
+			pet = "KingCat",
 			name = "King's Seed",
 			income = 140000,
 			hp = 1200000,
@@ -117,6 +135,27 @@ return {
 			color = Color3.fromRGB(255, 244, 200),
 		},
 	},
+	-- Pets: a pumpkin placed on a base plot hatches into its type's pet (Seeds[n].pet) after the
+	-- hatch timer. The look is ServerStorage.PetModels.<name> scaled to PetHeight studs tall (x
+	-- PetRareMult from type order PetRareOrder up); a missing model keeps the old living-Jack look.
+	-- ServerStorage.PetModels.MysteryPumpkin (optional) is the look of Hoard pumpkins.
+	Pets = {
+		PumpkinPup = { display = "Pumpkin Pup", rarity = "Common" },
+		Crow = { display = "Crow", rarity = "Uncommon" },
+		Ghosty = { display = "Ghosty", rarity = "Rare" },
+		BlackCat = { display = "Black Cat", rarity = "Rare" },
+		CandyBat = { display = "Candy Bat", rarity = "Epic" },
+		GoldenPup = { display = "Golden Pup", rarity = "Epic" },
+		BonePup = { display = "Bone Pup", rarity = "Legendary" },
+		FrostOwl = { display = "Frost Owl", rarity = "Legendary" },
+		LavaSlime = { display = "Lava Slime", rarity = "Mythic" },
+		KingCat = { display = "King Cat", rarity = "Mythic" },
+	},
+	PetHeight = 3.5,
+	PetRareMult = 1.2,
+	PetRareOrder = 3,
+	MysteryModel = "MysteryPumpkin",
+
 	-- The Witch pays SellPerIncome seconds of a pumpkin's income for it.
 	SellPerIncome = 30,
 	-- Each pumpkin rolls a size; it multiplies income, sell value and the look.
@@ -124,16 +163,18 @@ return {
 	SizeMax = 1.4,
 
 	-- Zones of wild pumpkins (breakables). Each zone is a folder under workspace.Garden.Zones
-	-- holding invisible Parts named "Spawn". weights = chance per pumpkin type; max = wild
-	-- pumpkins alive at once; cost = candy to open its gate (0 = open from the start);
-	-- center = X/Z middle of a gated zone (used by the server's locked-zone check). emoji = the
-	-- difficulty face on its gate sign (Steal an Egg ladder: 🙂 😐 😬 😨).
+	-- holding invisible Parts named "Spawn" and ZMin / ZMax attributes (its stretch of the lane;
+	-- zMin / zMax here are the fallback). weights = chance per pumpkin type; max = wild pumpkins
+	-- alive at once; cost = candy to open its gate (0 = open from the start). emoji = the
+	-- difficulty face on its gate sign (Steal an Egg ladder).
 	Zones = {
 		Zone1 = {
 			title = "Pumpkin Meadow",
 			emoji = "🙂",
 			cost = 0,
 			max = 45,
+			zMin = 150,
+			zMax = 310,
 			weights = { Orange = 70, Sunny = 22, Ghost = 7, Moon = 1 },
 		},
 		Zone2 = {
@@ -141,7 +182,8 @@ return {
 			emoji = "😐",
 			cost = 1000,
 			max = 20,
-			center = Vector3.new(0, 0, -176),
+			zMin = 310,
+			zMax = 470,
 			weights = { Sunny = 50, Ghost = 35, Moon = 13, CandyCorn = 2 },
 		},
 		Zone3 = {
@@ -149,7 +191,8 @@ return {
 			emoji = "😬",
 			cost = 25000,
 			max = 20,
-			center = Vector3.new(176, 0, 0),
+			zMin = 470,
+			zMax = 630,
 			weights = { Ghost = 45, Moon = 35, CandyCorn = 17, Golden = 3 },
 		},
 		Zone4 = {
@@ -157,14 +200,42 @@ return {
 			emoji = "😨",
 			cost = 400000,
 			max = 20,
-			center = Vector3.new(-176, 0, 0),
+			zMin = 630,
+			zMax = 790,
 			weights = { Moon = 30, CandyCorn = 40, Golden = 25, Shadow = 5 },
+		},
+		Zone5 = {
+			title = "Vampire Castle",
+			emoji = "😱",
+			cost = 2500000,
+			max = 20,
+			zMin = 790,
+			zMax = 950,
+			weights = { CandyCorn = 30, Golden = 40, Shadow = 25, Crystal = 5 },
+		},
+		Zone6 = {
+			title = "Candy Kingdom",
+			emoji = "😈",
+			cost = 17500000,
+			max = 20,
+			zMin = 950,
+			zMax = 1110,
+			weights = { Golden = 30, Shadow = 40, Crystal = 25, Inferno = 5 },
+		},
+		Zone7 = {
+			title = "Pumpkin King's Throne",
+			emoji = "👹",
+			cost = 140000000,
+			max = 20,
+			zMin = 1110,
+			zMax = 1270,
+			weights = { Shadow = 30, Crystal = 40, Inferno = 25, KingSeed = 5 },
 		},
 	},
 	-- Zones in unlock order (the "next zone" is the first one not unlocked yet).
-	ZoneOrder = { "Zone1", "Zone2", "Zone3", "Zone4" },
-	-- A player standing within this many studs (X/Z) of a locked zone's center is sent back.
-	ZoneGuardRadius = 40,
+	ZoneOrder = { "Zone1", "Zone2", "Zone3", "Zone4", "Zone5", "Zone6", "Zone7" },
+	-- A player this many studs past a locked zone's ZMin (inside it) is sent back to the spawn.
+	ZoneGuardInset = 2,
 	-- Seconds between respawns (one wild pumpkin each time, while below max).
 	WildRespawn = 1.5,
 	-- HP bars over wild pumpkins show within this many studs, and only on your current target or
@@ -199,21 +270,35 @@ return {
 	LooseSeconds = 30,
 
 	-- Hoards: one per zone, a straw nest of HoardCount big pumpkins of the zone's `type` guarded by a
-	-- sleeping blocky giant (`guardian`). Holding Steal (HoardHold s) on one wakes it: it chases the
-	-- thief at GuardianShare x the thief's speed (never under GuardianMinSpeed; GuardianFirstShare
-	-- for the Zone1 guardian on a player's first hoard steal ever) after GuardianWake s. It gives up
-	-- after GuardianChaseSeconds, when the thief reaches their own base or leaves the zone (Zone1:
-	-- HoardLeash studs from the nest; others: past their gate), then walks back and sleeps. Within
-	-- GuardianCatch studs of its body: BONKED! The Hoard pumpkins fly back to the nest after
-	-- HoardReturnDelay s (no candy lost). A nest refills 1 pumpkin every HoardRefill s. Hoard pumpkins
-	-- roll size HoardSize and earn (and sell) x HoardMult. Zone1's nest sits at the Spawn spot
-	-- farthest from the map centre, the others HoardOutward studs outward from the zone centre
-	-- (a Model or Part named "Hoard" in a zone folder overrides the spot).
+	-- sleeping giant. Holding Steal (HoardHold s) on one wakes it: it chases the thief at
+	-- GuardianShare x the thief's speed (never under GuardianMinSpeed; GuardianFirstShare for the
+	-- Zone1 guardian on a player's first hoard steal ever) after GuardianWake s. It gives up after
+	-- GuardianChaseSeconds, when the thief reaches their own base or leaves the zone's Z range by
+	-- more than HoardLeashPad studs (or crosses the hub's safe line), then walks back and sleeps.
+	-- Within GuardianCatch studs of its body: BONKED! The Hoard pumpkins fly back to the nest after
+	-- HoardReturnDelay s (no candy lost). A nest refills 1 pumpkin every HoardRefill s. Hoard
+	-- pumpkins roll size HoardSize and earn (and sell) x HoardMult. The nest sits on the zone's
+	-- "Hoard" marker part (fallback: HoardOutward studs from the zone centre toward the +X wall).
+	-- The guardian's look is ServerStorage.GuardModels.<guardian> scaled to guardHeight studs;
+	-- without that model it is built from parts (kind `parts`, else `guardian`; also scaled).
 	Hoards = {
-		Zone1 = { type = HOARD1, guardian = "Scarecrow" },
-		Zone2 = { type = "Moon", guardian = "SkeletonKnight" },
-		Zone3 = { type = "Golden", guardian = "TreeEnt" },
-		Zone4 = { type = "Shadow", guardian = "SwampToad" },
+		Zone1 = { type = HOARD1, guardian = GUARD1, guardHeight = 6 },
+		Zone2 = { type = "Moon", guardian = "SkeletonKnight", guardHeight = 9 },
+		Zone3 = { type = "Golden", guardian = "TreeEnt", guardHeight = 13 },
+		Zone4 = { type = "Shadow", guardian = "SwampToad", guardHeight = 16 },
+		Zone5 = {
+			type = "Crystal",
+			guardian = "Vampire",
+			parts = "SkeletonKnight",
+			guardHeight = 18,
+		},
+		Zone6 = { type = "Inferno", guardian = "CandyGolem", parts = "TreeEnt", guardHeight = 20 },
+		Zone7 = {
+			type = "KingSeed",
+			guardian = "PumpkinKing",
+			parts = "Scarecrow",
+			guardHeight = 24,
+		},
 	},
 	HoardCount = 3,
 	HoardSize = 1.4,
@@ -221,8 +306,8 @@ return {
 	HoardHold = 1.5,
 	HoardRefill = 30,
 	HoardReturnDelay = 3,
-	HoardOutward = 24,
-	HoardLeash = 110,
+	HoardOutward = 20,
+	HoardLeashPad = 10,
 	GuardianShare = 0.9,
 	GuardianFirstShare = 0.8,
 	GuardianMinSpeed = 14,
@@ -231,9 +316,10 @@ return {
 	GuardianWake = 1.8, -- a head start: the thief should get a few steps before the chase
 	GuardianCatch = 3.5,
 	GuardianRoarPitch = 0.3,
-	-- Living Jacks: a pumpkin placed on a plot carves for CarveSeconds (types up to CarveFastOrder,
-	-- i.e. Orange: CarveFastSeconds), then comes alive with a face and legs and hops within JackHop
-	-- studs of its plot. It earns the whole time.
+	-- Hatching: a pumpkin placed on a plot hatches for CarveSeconds (types up to CarveFastOrder,
+	-- i.e. Orange: CarveFastSeconds), then turns into its pet (see Pets) that idles on the
+	-- pedestal; without a pet model it comes alive as a living Jack that hops within JackHop
+	-- studs of its plot. It earns the whole time. (The Carve* names are kept from the Jacks.)
 	CarveSeconds = 20,
 	CarveFastSeconds = 8,
 	CarveFastOrder = 1,
@@ -438,7 +524,7 @@ return {
 		{
 			stat = "hoardSteal",
 			need = 1,
-			text = "Steal a " .. HOARD1 .. " Pumpkin from the Hoard",
+			text = "Steal a pumpkin from the " .. GUARD1 .. "!",
 			target = "hoard",
 			reward = { candy = 60 },
 		},

@@ -1,5 +1,7 @@
--- Pumpkin Patch Panic: swing your scythe at wild pumpkins in the zone until they pop, carry
--- them on your head and place them on your base, where they earn candy every second. Brew them
+-- Steal a Pumpkin: swing your scythe at wild pumpkins in the zones until they pop, carry them
+-- on your head and place them on your base, where they hatch into pets that earn candy every
+-- second. The map is one straight lane along +Z (Config.MapCenterX): the hub with the bases and
+-- the market, then Zone1..Zone7, each with a Hoard nest and its guardian. Brew them
 -- in a Magic Cauldron for a multiplier, sell them to the Witch, steal from other bases (and lock
 -- yours). At midnight ghosts raid the bases. Every sale fills the Giant Jack; when it is full the
 -- Blood Moon turns every lock off for a while, then everyone fights the Pumpkin King.
@@ -27,6 +29,25 @@ local spawnFolder = garden:WaitForChild("GhostSpawns")
 local giantJack = market:WaitForChild("GiantJack") :: BasePart
 local kingFace = market:WaitForChild("KingFace") :: BasePart
 local kit = ServerStorage:WaitForChild("KitSource")
+
+-- The straight-lane map: the X of its centre line, the hub's safe line and each zone's Z range
+-- (folder attributes ZMin / ZMax, else Config.Zones[id].zMin / zMax).
+local Lane: { [string]: any } = { x = Config.MapCenterX or 0, safeZ = Config.SafeLineZ or 150 }
+function Lane.zone(zoneId: string): { zMin: number, zMax: number, center: Vector3 }?
+	local def = Config.Zones[zoneId]
+	if not def then
+		return nil
+	end
+	local zones = garden:FindFirstChild("Zones")
+	local folder = zones and zones:FindFirstChild(zoneId)
+	local a = folder and folder:GetAttribute("ZMin") or def.zMin
+	local b = folder and folder:GetAttribute("ZMax") or def.zMax
+	if type(a) ~= "number" or type(b) ~= "number" then
+		return nil
+	end
+	local zMin, zMax = math.min(a, b), math.max(a, b)
+	return { zMin = zMin, zMax = zMax, center = Vector3.new(Lane.x, 0, (zMin + zMax) / 2) }
+end
 
 local loose = Instance.new("Folder")
 loose.Name = "Loose"
@@ -83,7 +104,7 @@ do
 		revealEvent = remote("Reveal"),
 		-- Server -> one client: Hoard drama ("grab" / "bonk" / "safe" / "deliver", seedId).
 		hoardEvent = remote("Hoard"),
-		-- Server -> all clients: a placed pumpkin finished carving (pumpkin, ownerId).
+		-- Server -> all clients: a placed pumpkin finished hatching (pumpkin, ownerId, pet name?).
 		carvedEvent = remote("Carved"),
 		buyToolFunction = remote("BuyTool", "RemoteFunction") :: RemoteFunction,
 		buyUpgradeFunction = remote("BuyUpgrade", "RemoteFunction") :: RemoteFunction,
@@ -695,7 +716,7 @@ local RECEIPTS_KEPT = 50
 
 -- Bases: placed pumpkins, income, stealing and locks. Its functions are filled in further down
 -- (the save code below calls Bases.collect and Bases.restore).
--- carvedOf[player] = pumpkin types that player has carved into a Jack (first carve reveals).
+-- carvedOf[player] = pumpkin types that player has hatched (first hatch reveals; saved "carved").
 local Bases: { [string]: any } = { left = {}, carvedOf = {} }
 -- Hoards and their guardians (one per zone). Filled in further down; Bases and the Drop / Haunt
 -- code call Hoards.giveBack and Hoards.look.
@@ -1168,7 +1189,9 @@ do
 		seenOf[player] = seen
 		seen[seed.id] = true
 		local rate = math.floor(incomeOf(pumpkin) * sellMult(player) * 10 + 0.5) / 10
-		Remotes.revealEvent:FireClient(player, seed.id, mutation, isNew, rate, kind)
+		-- The pet it hatched into (if any): the card shows the pet and its name.
+		local pet = pumpkin:GetAttribute("Pet")
+		Remotes.revealEvent:FireClient(player, seed.id, mutation, isNew, rate, kind, pet)
 	end
 end
 
@@ -1191,7 +1214,16 @@ do
 		sparkle.Speed = NumberRange.new(1, 2)
 		sparkle.Parent = pumpkin
 		if mutationId == "Ghostly" then
-			pumpkin.Transparency = 0.45
+			-- A pet / mystery look (child Model "PetLook") fades instead of its invisible carrier.
+			local look = pumpkin:FindFirstChild("PetLook")
+			for _, d in look and look:GetDescendants() or {} do
+				if d:IsA("BasePart") and d.Transparency < 1 then
+					d.Transparency = math.max(d.Transparency, 0.45)
+				end
+			end
+			if not look then
+				pumpkin.Transparency = 0.45
+			end
 		elseif mutationId == "Cursed" then
 			local fire = Instance.new("Fire")
 			fire.Color = Color3.fromRGB(150, 50, 255)
@@ -1410,6 +1442,159 @@ local function dressJack(pumpkin: BasePart, lift: boolean?)
 	end
 end
 
+-- Model looks (ServerStorage.PetModels: hatched pets and the Hoard's MysteryPumpkin). The pumpkin
+-- part stays the carrier (its attributes, prompts, tags and welds work as before) but turns
+-- invisible and takes the size of a clone of the model (child Model "PetLook", Welds inside its
+-- parts), so plots, stacks, drops and ghosts fit the look. Attribute "Look" = "Folder/Name" (to
+-- rebuild it after a resize), "BaseSize" = the pumpkin's own size (to go back to a pumpkin).
+local Looks: { [string]: any } = {}
+do
+	local function source(folder: string, name: string?): Model?
+		local holder = ServerStorage:FindFirstChild(folder)
+		local m = holder and name and holder:FindFirstChild(name)
+		return if m and m:IsA("Model") then m else nil
+	end
+	Looks.source = source
+
+	-- Re-seats the carrier so its bottom stays where it was, at a new size (yaw kept).
+	local function reseat(p: BasePart, size: Vector3)
+		local bottom = p.Position.Y - p.Size.Y / 2
+		local cf = p.CFrame
+		p.Size = size
+		p.CFrame = CFrame.new(cf.X, bottom + size.Y / 2, cf.Z) * cf.Rotation
+		for name, extra in { IncomeTag = 1.2, CarveTag = 2.6 } do
+			local tag = p:FindFirstChild(name)
+			if tag and tag:IsA("BillboardGui") then
+				tag.StudsOffsetWorldSpace = Vector3.new(0, size.Y / 2 + extra, 0)
+			end
+		end
+	end
+
+	-- Back to the plain pumpkin look (no model).
+	function Looks.clear(p: BasePart)
+		local old = p:FindFirstChild("PetLook")
+		if old then
+			old:Destroy()
+		end
+		local base = p:GetAttribute("BaseSize")
+		if typeof(base) == "Vector3" then
+			reseat(p, base)
+		end
+		p:SetAttribute("Look", nil)
+		p:SetAttribute("Pet", nil)
+		p.Transparency = p:GetAttribute("Mutation") == "Ghostly" and 0.45 or 0
+	end
+
+	-- Puts a clone of ServerStorage.<folder>.<name> on the carrier, height studs tall, standing
+	-- where the carrier's bottom is and facing its front (-Z). glow = a PointLight in the look.
+	-- Replaces an older look; false (nothing changed) when the model is missing or empty.
+	function Looks.attach(p: BasePart, folder: string, name: string?, height: number, glow: Color3?)
+		local src = source(folder, name)
+		if not src then
+			return false
+		end
+		local m = src:Clone()
+		for _, d in m:GetDescendants() do
+			if
+				d:IsA("LuaSourceContainer")
+				or d:IsA("Humanoid")
+				or d:IsA("ProximityPrompt")
+				or d:IsA("ClickDetector")
+				or d:IsA("Sound")
+			then
+				d:Destroy()
+			end
+		end
+		local _, size = m:GetBoundingBox()
+		if size.Y <= 0.01 then
+			m:Destroy()
+			return false
+		end
+		m:ScaleTo(m:GetScale() * height / size.Y)
+		local boxCf, box = m:GetBoundingBox()
+		local old = p:FindFirstChild("PetLook")
+		if old then
+			old:Destroy()
+		end
+		for _, child in p:GetChildren() do
+			if child.Name == "JackPart" then
+				child:Destroy()
+			end
+		end
+		if p:GetAttribute("BaseSize") == nil then
+			p:SetAttribute("BaseSize", p.Size)
+		end
+		reseat(p, box)
+		m:PivotTo(p.CFrame * boxCf:ToObjectSpace(m:GetPivot()))
+		local ghostly = p:GetAttribute("Mutation") == "Ghostly"
+		local first: BasePart? = nil
+		for _, d in m:GetDescendants() do
+			if d:IsA("BasePart") then
+				first = first or d
+				d.Anchored = false
+				d.CanCollide = false
+				d.CanQuery = false
+				d.CanTouch = false
+				d.Massless = true
+				if ghostly and d.Transparency < 1 then
+					d.Transparency = math.max(d.Transparency, 0.45)
+				end
+				-- A Weld (fixed C0) rather than a WeldConstraint: it holds even when the carrier
+				-- is moved before it is in the workspace.
+				local weld = Instance.new("Weld")
+				weld.Name = "LookWeld"
+				weld.Part0 = p
+				weld.Part1 = d
+				weld.C0 = p.CFrame:ToObjectSpace(d.CFrame)
+				weld.Parent = d
+			end
+		end
+		if glow and first then
+			local light = Instance.new("PointLight")
+			light.Name = "LookGlow"
+			light.Color = glow
+			light.Range = 10
+			light.Brightness = 1.4
+			light.Shadows = false
+			light.Parent = first
+		end
+		m.Name = "PetLook"
+		m.Parent = p
+		p.Transparency = 1
+		p:SetAttribute("Look", folder .. "/" .. (name :: string))
+		return true
+	end
+
+	-- Rebuilds the look at the carrier's current height (after it was scaled).
+	function Looks.refit(p: BasePart)
+		local look = p:GetAttribute("Look")
+		local folder, name = string.match(type(look) == "string" and look or "", "^([^/]+)/(.+)$")
+		if folder and name then
+			local glow = p:FindFirstChild("LookGlow", true) :: PointLight?
+			Looks.attach(p, folder, name, p.Size.Y, glow and glow.Color)
+		end
+	end
+
+	-- Hatches a placed pumpkin into its type's pet (Config.Seeds[n].pet). False (and the
+	-- pumpkin unchanged) when that pet has no model in ServerStorage.PetModels.
+	function Looks.hatch(p: BasePart, seed): boolean
+		local pet = seed and seed.pet
+		local rare = seed and seed.order >= Config.PetRareOrder
+		if
+			not Looks.attach(
+				p,
+				"PetModels",
+				pet,
+				Config.PetHeight * (rare and Config.PetRareMult or 1)
+			)
+		then
+			return false
+		end
+		p:SetAttribute("Pet", pet)
+		return true
+	end
+end
+
 -- Puts a pumpkin on top of the player's head stack (no capacity check here).
 local function stackPumpkin(player: Player, pumpkin: BasePart): boolean
 	local character, root = aliveRoot(player)
@@ -1425,14 +1610,19 @@ local function stackPumpkin(player: Player, pumpkin: BasePart): boolean
 	for _, p in stack do
 		height += p.Size.Y
 	end
-	if pumpkin.Size.X > 2.6 then
-		pumpkin.Size *= 2.6 / pumpkin.Size.X
-		-- A carried Jack keeps its face and legs, rebuilt for the smaller size.
-		if pumpkin:GetAttribute("Jack") == true then
+	stripPumpkin(pumpkin)
+	-- A model look (pet, mystery pumpkin) may be taller than wide: its biggest side counts.
+	local hasLook = pumpkin:FindFirstChild("PetLook") ~= nil
+	local big = hasLook and math.max(pumpkin.Size.X, pumpkin.Size.Y) or pumpkin.Size.X
+	if big > 2.6 then
+		pumpkin.Size *= 2.6 / big
+		if hasLook then
+			Looks.refit(pumpkin)
+		elseif pumpkin:GetAttribute("Jack") == true then
+			-- A carried Jack keeps its face and legs, rebuilt for the smaller size.
 			dressJack(pumpkin)
 		end
 	end
-	stripPumpkin(pumpkin)
 	pumpkin:SetAttribute("Placed", nil)
 	pumpkin.Anchored = false
 	pumpkin.Massless = true
@@ -1470,7 +1660,12 @@ local function dropLoose(
 	if not y then
 		local params = RaycastParams.new()
 		params.FilterType = Enum.RaycastFilterType.Include
-		params.FilterDescendantsInstances = { workspace.Terrain, patchFolder, market }
+		local floors: { Instance } = { workspace.Terrain, patchFolder, market }
+		local ground = garden:FindFirstChild("Ground")
+		if ground then
+			table.insert(floors, ground)
+		end
+		params.FilterDescendantsInstances = floors
 		local hit = workspace:Raycast(at + Vector3.new(0, 4, 0), Vector3.new(0, -60, 0), params)
 		y = hit and hit.Position.Y or at.Y - 4
 	end
@@ -1529,7 +1724,7 @@ do
 		return not Bases.locksOff() and (patch:GetAttribute("LockedUntil") or 0) > now()
 	end
 
-	-- Plots of a patch in Index order (1-9).
+	-- Plots of a patch in Index order (1-6 on the lane map's pens).
 	local function plotsOf(patch: Instance): { BasePart }
 		local list = {}
 		for _, plot in patch:GetChildren() do
@@ -1628,7 +1823,11 @@ do
 		bb.Parent = pumpkin
 	end
 
-	-- "Carving 0:20" over a placed pumpkin until it comes alive (Bases.tick updates the text).
+	local function hatchText(seconds: number): string
+		return string.format("Hatching %d:%02d", math.floor(seconds / 60), seconds % 60)
+	end
+
+	-- "Hatching 0:20" over a placed pumpkin until it hatches (Bases.tick updates the text).
 	local function carveTag(pumpkin: BasePart, seconds: number)
 		local bb = Instance.new("BillboardGui")
 		bb.Name = "CarveTag"
@@ -1643,7 +1842,7 @@ do
 		label.Font = Enum.Font.FredokaOne
 		label.TextScaled = true
 		label.TextColor3 = Color3.fromRGB(255, 200, 120)
-		label.Text = string.format("Carving %d:%02d", math.floor(seconds / 60), seconds % 60)
+		label.Text = hatchText(seconds)
 		label.Parent = bb
 		local outline = Instance.new("UIStroke")
 		outline.Thickness = 2
@@ -1652,19 +1851,37 @@ do
 		bb.Parent = pumpkin
 	end
 
-	-- The pumpkin comes alive: white flash (clients), face and legs, the hop home (JackHome) and,
-	-- the first time its owner carves this type, a reveal card.
+	-- Hatched: the pumpkin turns into its type's pet (ServerStorage.PetModels, facing the lane's
+	-- centre line), else a living Jack (face and legs). "Jack" = hatched (kept name, saves and
+	-- moves use it); JackHome = where clients idle / hop it on its plot.
+	local function becomeAlive(pumpkin: BasePart)
+		local seed = seedById[pumpkin:GetAttribute("Seed") or ""]
+		if Looks.hatch(pumpkin, seed) then
+			local pos = pumpkin.Position
+			if math.abs(Lane.x - pos.X) > 1 then
+				pumpkin.CFrame = CFrame.lookAt(pos, Vector3.new(Lane.x, pos.Y, pos.Z))
+			end
+		else
+			if pumpkin:FindFirstChild("PetLook") then
+				Looks.clear(pumpkin)
+			end
+			dressJack(pumpkin, true)
+		end
+		pumpkin:SetAttribute("JackHome", pumpkin.CFrame)
+		pumpkin:SetAttribute("Jack", true)
+	end
+
+	-- The pumpkin hatches: white flash and burst (clients), the pet (or Jack) and, the first time
+	-- its owner hatches this type, a reveal card.
 	local function carve(pumpkin: BasePart)
 		pumpkin:SetAttribute("CarveAt", nil)
 		local tag = pumpkin:FindFirstChild("CarveTag")
 		if tag then
 			tag:Destroy()
 		end
-		dressJack(pumpkin, true)
-		pumpkin:SetAttribute("JackHome", pumpkin.CFrame)
-		pumpkin:SetAttribute("Jack", true)
+		becomeAlive(pumpkin)
 		local ownerId = pumpkin:GetAttribute("Owner") or 0
-		Remotes.carvedEvent:FireAllClients(pumpkin, ownerId)
+		Remotes.carvedEvent:FireAllClients(pumpkin, ownerId, pumpkin:GetAttribute("Pet"))
 		local owner = Players:GetPlayerByUserId(ownerId)
 		local seedId = pumpkin:GetAttribute("Seed")
 		if owner and type(seedId) == "string" then
@@ -1678,7 +1895,7 @@ do
 	end
 
 	-- Puts a new pumpkin on an empty plot, sized to fit it. Returns it (nil when not possible).
-	-- extra.hoard = a Hoard pumpkin (x HoardMult); extra.jack = already a living Jack (no carving).
+	-- extra.hoard = a Hoard pumpkin (x HoardMult); extra.jack = already hatched (no hatching).
 	function Bases.put(
 		plot: BasePart,
 		seedId: string,
@@ -1707,15 +1924,13 @@ do
 		end
 		if extra and extra.hoard then
 			pumpkin:SetAttribute("Hoard", true)
-			Hoards.look(pumpkin)
+			Hoards.look(pumpkin, extra.jack == true)
 		end
 		incomeTag(pumpkin)
 		if extra and extra.jack then
-			dressJack(pumpkin, true)
-			pumpkin:SetAttribute("JackHome", pumpkin.CFrame)
-			pumpkin:SetAttribute("Jack", true)
+			becomeAlive(pumpkin)
 		else
-			-- New players (first CarveNewUntil s of playtime): every type carves fast.
+			-- New players (first CarveNewUntil s of playtime): every type hatches fast.
 			local owner = Players:GetPlayerByUserId(ownerId)
 			local newbie = owner ~= nil
 				and (owner:GetAttribute("PlayTime") or 0) < Config.CarveNewUntil
@@ -1744,7 +1959,7 @@ do
 		end
 		s.pumpkin = nil
 		p:SetAttribute("Placed", nil)
-		-- Off the plot: no more hopping (clients) or carving (a re-placed one carves again).
+		-- Off the plot: no more idling (clients) or hatching (a re-placed one hatches again).
 		p:SetAttribute("JackHome", nil)
 		p:SetAttribute("CarveAt", nil)
 		for _, name in { "IncomeTag", "CarveTag" } do
@@ -1856,6 +2071,32 @@ do
 		if not patch then
 			return
 		end
+		-- Old saves had 9 plots per base, the lane map's pens have 6: pumpkins saved on plots that
+		-- no longer exist are paid out at their sell value instead.
+		local keys: { [string]: boolean } = {}
+		for i, plot in plotsOf(patch) do
+			keys[plotKey(plot, i)] = true
+		end
+		local refund = 0
+		for key, entry in saved do
+			local seed = type(entry) == "table" and seedById[entry.s]
+			if not keys[tostring(key)] and seed then
+				local mutation = mutationById[type(entry.m) == "string" and entry.m or ""]
+				local income = seed.income
+					* math.clamp(tonumber(entry.z) or 1, 0.1, 5)
+					* (mutation and mutation.mult or 1)
+					* (entry.h == true and Config.HoardMult or 1)
+				refund += math.max(1, math.floor(income * Config.SellPerIncome + 0.5))
+			end
+		end
+		if refund > 0 then
+			refund = math.floor(refund * sellMult(player) + 0.5)
+			local candy = candyValue(player)
+			if candy then
+				candy.Value += refund
+			end
+			hint(player, string.format("Your base got smaller, you got %s candy", short(refund)))
+		end
 		for i, plot in plotsOf(patch) do
 			local entry = saved[plotKey(plot, i)]
 			if
@@ -1867,7 +2108,7 @@ do
 			then
 				local size = math.clamp(tonumber(entry.z) or 1, 0.1, 5)
 				local mutation = if type(entry.m) == "string" then entry.m else nil
-				-- Saved pumpkins were placed before: they come back as living Jacks.
+				-- Saved pumpkins were placed before: they come back hatched.
 				Bases.put(
 					plot,
 					entry.s,
@@ -2194,7 +2435,7 @@ do
 				end
 			end
 		end
-		-- Carving countdowns; a finished one comes alive.
+		-- Hatching countdowns; a finished one hatches.
 		for _, s in plotState do
 			local p = s.pumpkin
 			local carveAt = p and p:GetAttribute("CarveAt")
@@ -2202,15 +2443,14 @@ do
 				if t >= carveAt then
 					local ok, err = pcall(carve, p)
 					if not ok then
-						warn("[Patch] Carve failed:", err)
+						warn("[Patch] Hatch failed:", err)
 					end
 				else
 					local tag = p:FindFirstChild("CarveTag")
 					local label = tag and tag:FindFirstChild("Label") :: TextLabel?
 					local left = math.ceil(carveAt - t)
 					if label then
-						label.Text =
-							string.format("Carving %d:%02d", math.floor(left / 60), left % 60)
+						label.Text = hatchText(left)
 					end
 				end
 			end
@@ -2308,27 +2548,17 @@ end
 
 local claimPatch
 do
-	local function patchCenter(patch: Model): Vector3
-		local soil = patch:FindFirstChild("Soil") :: BasePart
-		return soil.Position
-	end
-
+	-- The pens' fill order: their Order attribute (1..8), pens without one last (by name).
 	function claimPatch(player: Player): boolean
-		-- Fill fields evenly: pick the free patch in the field with the fewest owners.
-		local counts = {}
+		local best, bestOrder = nil, math.huge
 		for _, patch in patchFolder:GetChildren() do
-			local center = patchCenter(patch)
-			local key = (center.X > 0 and "E" or "W") .. (center.Z > 0 and "S" or "N")
-			counts[key] = (counts[key] or 0) + ((patch:GetAttribute("Owner") or 0) ~= 0 and 1 or 0)
-		end
-		local best, bestScore = nil, math.huge
-		for _, patch in patchFolder:GetChildren() do
-			if (patch:GetAttribute("Owner") or 0) == 0 then
-				local center = patchCenter(patch)
-				local key = (center.X > 0 and "E" or "W") .. (center.Z > 0 and "S" or "N")
-				local score = counts[key] * 1000 + center.Magnitude
-				if score < bestScore then
-					best, bestScore = patch, score
+			if (patch:GetAttribute("Owner") or 0) == 0 and patch:FindFirstChild("Soil") then
+				local order = tonumber(patch:GetAttribute("Order")) or 1000
+				if
+					order < bestOrder
+					or (order == bestOrder and best and patch.Name < (best :: Instance).Name)
+				then
+					best, bestOrder = patch, order
 				end
 			end
 		end
@@ -2736,7 +2966,7 @@ do
 	end)
 end
 
--- Zone gates: Zone2-4 each have a GateWall (solid on the server; each client opens the walls of
+-- Zone gates: Zone2-7 each have a GateWall (solid on the server; each client opens the walls of
 -- zones it has unlocked), an unlock prompt on the wall and a sign over it. ----------------------
 
 local guardZones -- defined in the block below
@@ -2880,25 +3110,34 @@ do
 		if spawn then
 			return spawn.CFrame + Vector3.new(0, 4, 0)
 		end
+		-- No spawn: the middle of the hub, near its far end from the safe line.
 		local plaza = market:FindFirstChild("Plaza") :: BasePart?
-		return CFrame.new((plaza and plaza.Position or Vector3.zero) + Vector3.new(0, 6, 30))
+		local y = plaza and plaza.Position.Y or 0
+		return CFrame.new(Lane.x, y + 6, Lane.safeZ * 0.8)
 	end
 
-	-- Safety net (every second): a player inside a zone they have not unlocked (over or around
-	-- the wall) goes back to the market.
+	-- Safety net (every second): a player inside the Z range of a zone they have not unlocked
+	-- (over or around the gate wall) goes back to the spawn.
 	function guardZones()
-		local radius = Config.ZoneGuardRadius
+		local inset = Config.ZoneGuardInset or 2
+		local ranges = {}
+		for _, zoneId in Config.ZoneOrder do
+			local def = Config.Zones[zoneId]
+			local z = def and (def.cost or 0) > 0 and Lane.zone(zoneId)
+			if z then
+				ranges[zoneId] = z
+			end
+		end
 		for _, player in Players:GetPlayers() do
 			local character, root = aliveRoot(player)
 			if not character or not root or not isLoaded(player) then
 				continue
 			end
-			for zoneId, def in Config.Zones do
-				local center = def.center
-				if center and not hasZone(player, zoneId) then
-					local flat =
-						Vector3.new(root.Position.X - center.X, 0, root.Position.Z - center.Z)
-					if flat.Magnitude <= radius then
+			local at = root.Position.Z
+			for zoneId, z in ranges do
+				local def = Config.Zones[zoneId]
+				if not hasZone(player, zoneId) then
+					if at >= z.zMin + inset and at <= z.zMax then
 						character:PivotTo(marketSpawn())
 						Remotes.hintEvent:FireClient(
 							player,
@@ -2918,11 +3157,13 @@ end
 
 -- Hoards and Guardians ------------------------------------------------------------------------
 -- Each zone (Config.Hoards) gets a straw nest of big Hoard pumpkins in its zone folder, guarded
--- by a sleeping blocky giant built from studded parts welded to an invisible anchored root that
--- the server moves every Heartbeat (no Humanoid). Stealing a pumpkin wakes it: red "!", a roar,
+-- by a sleeping giant (ServerStorage.GuardModels.<guardian> scaled to the zone's
+-- guardHeight, else built from studded parts) welded to an invisible anchored root that the
+-- server moves every Heartbeat (no Humanoid). Stealing a pumpkin wakes it: red "!", a roar,
 -- then a chase. It bonks the thief within reach (their Hoard pumpkins fly back to the nest) or
--- gives up at the thief's base, past the zone edge or after GuardianChaseSeconds, then walks
--- home and sleeps again. Nests refill one pumpkin every HoardRefill seconds.
+-- gives up at the thief's base, when the thief leaves the zone's Z range (+ HoardLeashPad) or
+-- crosses the hub's safe line, or after GuardianChaseSeconds, then walks home and sleeps again.
+-- Nests refill one pumpkin every HoardRefill seconds.
 
 do
 	type Guardian = {
@@ -2954,8 +3195,9 @@ do
 		slots: { [number]: BasePart? },
 		pending: number,
 		nextRefill: number,
-		leashCenter: Vector3,
-		leashRadius: number,
+		-- The chase leash: the zone's Z range.
+		zMin: number,
+		zMax: number,
 		guard: Guardian,
 	}
 	local hoards: { [string]: Hoard } = {}
@@ -3115,9 +3357,62 @@ do
 		return bb
 	end
 
-	-- Builds a guardian standing at home (a ground-level CFrame facing the nest).
-	local function buildGuardian(zoneId: string, kind: string, home: CFrame): Guardian
-		local def = GUARDIANS[kind] or GUARDIANS.Scarecrow
+	-- A clone of ServerStorage.GuardModels.<name> scaled to height studs, standing at home (front
+	-- -Z = home's front) with every part welded to root. Returns its eyes (parts named "Eye",
+	-- optional) and its reach, or nil when there is no such model.
+	local function guardLook(
+		name: string?,
+		height: number,
+		home: CFrame,
+		root: BasePart,
+		model: Model
+	): ({ [BasePart]: Color3 }?, number)
+		local src = Looks.source("GuardModels", name)
+		if not src then
+			return nil, 0
+		end
+		local look = src:Clone()
+		for _, d in look:GetDescendants() do
+			if d:IsA("LuaSourceContainer") or d:IsA("Humanoid") or d:IsA("ProximityPrompt") then
+				d:Destroy()
+			end
+		end
+		local _, size = look:GetBoundingBox()
+		if size.Y <= 0.01 then
+			look:Destroy()
+			return nil, 0
+		end
+		look:ScaleTo(look:GetScale() * height / size.Y)
+		local boxCf, box = look:GetBoundingBox()
+		look:PivotTo(home * CFrame.new(0, box.Y / 2, 0) * boxCf:ToObjectSpace(look:GetPivot()))
+		local eyes: { [BasePart]: Color3 } = {}
+		for _, d in look:GetDescendants() do
+			if d:IsA("BasePart") then
+				d.Anchored = false
+				d.CanCollide = false
+				d.CanQuery = false
+				d.CanTouch = false
+				d.Massless = true
+				local weld = Instance.new("WeldConstraint")
+				weld.Part0 = root
+				weld.Part1 = d
+				weld.Parent = d
+				if d.Name == "Eye" then
+					eyes[d] = d.Color
+				end
+			end
+		end
+		look.Name = "Look"
+		look.Parent = model
+		return eyes, math.clamp(box.Z / 2, 1.5, 6)
+	end
+
+	-- Builds a guardian standing at home (a ground-level CFrame facing the nest). hoardDef =
+	-- the zone's Config.Hoards entry (guardian = GuardModels name, parts = part-built kind).
+	local function buildGuardian(zoneId: string, hoardDef, home: CFrame): Guardian
+		local kind = hoardDef.guardian or "Scarecrow"
+		local def = GUARDIANS[hoardDef.parts or kind] or GUARDIANS[kind] or GUARDIANS.Scarecrow
+		local height = hoardDef.guardHeight or def.height
 		local model = Instance.new("Model")
 		model.Name = "Guardian"
 		model:SetAttribute("Kind", kind)
@@ -3131,14 +3426,17 @@ do
 		root.CanTouch = false
 		root.CFrame = home * CFrame.new(0, 0.5, 0)
 		root.Parent = model
-		local eyes: { [BasePart]: Color3 } = {}
-		for _, d in def.parts do
+		local modelEyes, modelReach = guardLook(kind, height, home, root, model)
+		local eyes: { [BasePart]: Color3 } = modelEyes or {}
+		-- No model: the part-built kind, scaled to the zone's height.
+		local k = height / def.height
+		for _, d in modelEyes and {} or def.parts do
 			local p = Instance.new("Part")
 			if d[1] == "S" then
 				p.Shape = Enum.PartType.Ball
 			end
 			p.Name = d[5] or "Block"
-			p.Size = d[2]
+			p.Size = d[2] * k
 			-- Classic plastic brick: studs on top, inlets under.
 			p.Material = Enum.Material.Plastic
 			p.TopSurface = Enum.SurfaceType.Studs
@@ -3149,7 +3447,7 @@ do
 			p.CanQuery = false
 			p.CanTouch = false
 			p.Massless = true
-			p.CFrame = home * CFrame.new(d[3]) * CFrame.Angles(0, 0, d[6] or 0)
+			p.CFrame = home * CFrame.new(d[3] * k) * CFrame.Angles(0, 0, d[6] or 0)
 			local weld = Instance.new("WeldConstraint")
 			weld.Part0 = root
 			weld.Part1 = p
@@ -3160,10 +3458,17 @@ do
 			end
 		end
 		-- Root is 0.5 over the ground, so the tags float about 2.5 studs over the head.
-		local sleepTag =
-			tag(root, "SleepTag", "Z z Z", C(80, 230, 255), UDim2.fromScale(9, 4.5), def.height + 2)
+		local t = math.clamp(height / 17, 0.6, 1.4)
+		local sleepTag = tag(
+			root,
+			"SleepTag",
+			"Z z Z",
+			C(80, 230, 255),
+			UDim2.fromScale(9 * t, 4.5 * t),
+			height + 2
+		)
 		local alertTag =
-			tag(root, "AlertTag", "!", C(255, 45, 45), UDim2.fromScale(4, 6), def.height + 3)
+			tag(root, "AlertTag", "!", C(255, 45, 45), UDim2.fromScale(4 * t, 6 * t), height + 3)
 		alertTag.Enabled = false
 		local roar: Sound? = nil
 		if (Config.Sounds.Roar or 0) ~= 0 then
@@ -3187,7 +3492,7 @@ do
 			sleepTag = sleepTag,
 			alertTag = alertTag,
 			roar = roar,
-			reach = def.reach,
+			reach = modelEyes and modelReach or def.reach * k,
 			home = pos,
 			homeLook = look,
 			pos = pos,
@@ -3287,8 +3592,13 @@ do
 		end
 	end
 
-	-- Hoard pumpkins sparkle gold (in the nest, carried and placed).
-	function Hoards.look(p: BasePart)
+	-- Hoard pumpkins sparkle gold (in the nest, carried and placed). Until they hatch they wear
+	-- the glowing ServerStorage.PetModels.MysteryPumpkin look when it exists (hatched = true
+	-- skips it: the pet replaces it at once).
+	function Hoards.look(p: BasePart, hatched: boolean?)
+		if not hatched and p:GetAttribute("Jack") ~= true and not p:FindFirstChild("PetLook") then
+			Looks.attach(p, "PetModels", Config.MysteryModel, p.Size.Y, C(255, 170, 70))
+		end
 		if p:FindFirstChild("HoardSparkle") then
 			return
 		end
@@ -3515,11 +3825,13 @@ do
 					giveUp(g, false)
 				else
 					local at = thiefRoot.Position
-					local leash = V(at.X - h.leashCenter.X, 0, at.Z - h.leashCenter.Z)
+					local pad = Config.HoardLeashPad or 10
 					if
 						now >= g.chaseEnd
 						or inOwnBase(thief, at)
-						or leash.Magnitude > h.leashRadius
+						or at.Z < h.zMin - pad
+						or at.Z > h.zMax + pad
+						or at.Z < Lane.safeZ
 					then
 						giveUp(g, true)
 					else
@@ -3576,37 +3888,19 @@ do
 				table.insert(spawns, d)
 			end
 		end
-		local zoneDef = Config.Zones[zoneId]
-		local center: Vector3? = zoneDef and zoneDef.center
+		local lane = Lane.zone(zoneId)
+		local center: Vector3? = lane and lane.center
 		local spot: Vector3? = nil
 		local marker = zone:FindFirstChild("Hoard")
 		if marker and (marker:IsA("Model") or marker:IsA("BasePart")) then
-			-- A Studio-placed marker picks the spot.
+			-- The map's Hoard marker (the nest cluster centre) picks the spot.
 			spot = (marker :: PVInstance):GetPivot().Position
 			marker:Destroy()
 		elseif center then
-			local flat = V(center.X, 0, center.Z)
-			local out = flat.Magnitude > 0.1 and flat.Unit or V(0, 0, 1)
-			spot = flat + out * Config.HoardOutward
-		else
-			-- The point of the Spawn parts' footprints farthest from the map centre, pulled up to
-			-- 6 studs back toward its part's middle so the nest stands on it.
-			local bestD = -1
-			for _, sp in spawns do
-				local half = sp.Size / 2
-				for sx = -1, 1, 2 do
-					for sz = -1, 1, 2 do
-						local corner = (sp.CFrame * CFrame.new(sx * half.X, 0, sz * half.Z)).Position
-						local d = V(corner.X, 0, corner.Z).Magnitude
-						if d > bestD then
-							bestD = d
-							local back = sp.Position - corner
-							local f = back.Magnitude > 0.01 and math.min(1, 6 / back.Magnitude) or 0
-							spot = corner + back * f
-						end
-					end
-				end
-			end
+			-- No marker: the zone centre, HoardOutward studs toward the +X wall.
+			spot = center + V(Config.HoardOutward, 0, 0)
+		elseif spawns[1] then
+			spot = spawns[1].Position
 		end
 		if not spot then
 			warn("[Patch] No spot for the Hoard in " .. zoneId)
@@ -3679,26 +3973,19 @@ do
 		light.Parent = base
 		tag(base, "HoardSign", "⭐ HOARD ⭐", C(255, 214, 80), UDim2.fromScale(9, 2.2), 7)
 
-		-- The guardian sleeps 9 studs to the side of the nest, facing it.
-		local flat = V(nest.X, 0, nest.Z)
-		local out = flat.Magnitude > 0.1 and flat.Unit or V(0, 0, 1)
-		local side = nest + V(-out.Z, 0, out.X) * 9
+		-- The guardian sleeps beside the nest on the lane's centre side (toward the hub when the
+		-- nest is on the centre line), facing it; bigger guardians stand a little farther off.
+		local dx = Lane.x - nest.X
+		local dir = math.abs(dx) > 4 and V(math.sign(dx), 0, 0) or V(0, 0, -1)
+		local side = nest + dir * (9 + (def.guardHeight or 17) * 0.15)
 		local homePos = V(side.X, groundAt(side.X, side.Z, y), side.Z)
 		local toNest = V(nest.X - homePos.X, 0, nest.Z - homePos.Z).Unit
-		local guard = buildGuardian(zoneId, def.guardian, CFrame.lookAt(homePos, homePos + toNest))
+		local guard = buildGuardian(zoneId, def, CFrame.lookAt(homePos, homePos + toNest))
 		guard.model.Parent = model
 
-		-- Leash: Zone1 HoardLeash studs around the nest; gated zones up to just past their gate.
-		local leashCenter, leashRadius = nest, Config.HoardLeash
-		if center then
-			leashCenter = V(center.X, 0, center.Z)
-			local wall = zone:FindFirstChild("GateWall")
-			local gate = Config.ZoneGuardRadius + 22
-			if wall and wall:IsA("BasePart") then
-				gate = V(wall.Position.X - center.X, 0, wall.Position.Z - center.Z).Magnitude
-			end
-			leashRadius = gate + 8
-		end
+		-- Leash: the zone's Z range (checked with Config.HoardLeashPad in the chase).
+		local zMin = lane and lane.zMin or nest.Z - 80
+		local zMax = lane and lane.zMax or nest.Z + 80
 
 		-- No wild pumpkins under the nest or the guardian.
 		for _, sp in spawns do
@@ -3721,8 +4008,8 @@ do
 			slots = {},
 			pending = 0,
 			nextRefill = os.clock() + Config.HoardRefill,
-			leashCenter = leashCenter,
-			leashRadius = leashRadius,
+			zMin = zMin,
+			zMax = zMax,
 			guard = guard,
 		}
 		for i = 1, Config.HoardCount do
@@ -5035,10 +5322,11 @@ local function rainCandy()
 		drop.Anchored = false
 		drop.CanCollide = true
 		drop.CanTouch = true
+		-- Around the Giant Jack (the King's spot in the hub).
 		drop.CFrame = CFrame.new(
-			math.cos(a) * r,
+			giantJack.Position.X + math.cos(a) * r,
 			giantJack.Position.Y + 20 + math.random() * 20,
-			math.sin(a) * r
+			giantJack.Position.Z + math.sin(a) * r
 		)
 		drop.Parent = loose
 		local taken = false
@@ -5187,11 +5475,14 @@ do
 			for _, player in players do
 				local root = player.Character
 					and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
-				if
-					root
-					and (Vector3.new(root.Position.X, 0, root.Position.Z)).Magnitude < 80
-					and n < 10
-				then
+				local near = root
+					and Vector3.new(
+							root.Position.X - kingFace.Position.X,
+							0,
+							root.Position.Z - kingFace.Position.Z
+						).Magnitude
+						< 80
+				if root and near and n < 10 then
 					n += 1
 					table.insert(circles, {
 						pos = Vector3.new(root.Position.X, kingGround.Y, root.Position.Z),
@@ -5463,14 +5754,14 @@ do
 	do
 		local board = market:FindFirstChild("LifetimeBoard") :: BasePart?
 		if not board then
-			-- Stand it at the plaza edge beside the Upgrades stall, facing the Giant Jack.
+			-- Stand it in the hub beside the Upgrades stall (on its outer side), facing the lane.
 			local stall = market:FindFirstChild("Upgrades")
 			local plaza = market:FindFirstChild("Plaza") :: BasePart?
-			local at = stall and stall:GetPivot().Position or Vector3.new(-27, 0, 0)
+			local at = stall and stall:GetPivot().Position
+				or Vector3.new(Lane.x + 30, 0, Lane.safeZ * 0.5)
 			local y = plaza and plaza.Position.Y + 1 or at.Y
-			local angle = math.atan2(at.Z, at.X) - math.rad(22.5)
-			local r = Vector3.new(at.X, 0, at.Z).Magnitude + 9
-			local pos = Vector3.new(math.cos(angle) * r, y + 6, math.sin(angle) * r)
+			local out = at.X >= Lane.x and 1 or -1
+			local pos = Vector3.new(at.X + out * 9, y + 6, at.Z + 12)
 			local p = Instance.new("Part")
 			p.Name = "LifetimeBoard"
 			p.Anchored = true
@@ -5478,7 +5769,7 @@ do
 			p.Material = Enum.Material.Wood
 			p.Color = Color3.fromRGB(60, 38, 26)
 			p.Size = Vector3.new(10, 10, 0.6)
-			p.CFrame = CFrame.lookAt(pos, Vector3.new(0, pos.Y, 0))
+			p.CFrame = CFrame.lookAt(pos, Vector3.new(Lane.x, pos.Y, pos.Z))
 			p.Parent = market
 			board = p
 		end
@@ -5508,7 +5799,7 @@ do
 			label.Parent = surface
 			return label
 		end
-		row(0, "🍬 TOP FARMERS", Color3.fromRGB(255, 214, 80), 0.14)
+		row(0, "🎃 STEAL A PUMPKIN · TOP 10", Color3.fromRGB(255, 214, 80), 0.14)
 		for i = 1, 10 do
 			table.insert(boardRows, row(i, "", Color3.fromRGB(255, 240, 220), 0.086))
 		end

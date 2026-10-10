@@ -1,4 +1,4 @@
--- Client side of Pumpkin Patch Panic: which base prompts you see (Place / Pick up / Steal / Lock),
+-- Client side of Steal a Pumpkin: which base prompts you see (Place / Pick up / Steal / Lock),
 -- lighting for day / midnight / Blood Moon, scythe swings, hit and pop effects, HUD (candy,
 -- income, carry), the Shop (Scythes / Upgrades / Robux tabs), Index, Haunt, Witch's Orders.
 -- Systems behind an unlock gate (Config.Unlocks, "Unlock_<Name>" attributes) stay hidden.
@@ -2140,14 +2140,18 @@ do
 	end
 
 	-- The pumpkin you just got (on your head stack, or on the ground when your hands were full),
-	-- else any pumpkin of that type around; the same finish is preferred.
-	local function findPumpkin(seedId: string, mutation: string?): BasePart?
+	-- else any pumpkin of that type around; the same finish (and the same pet) is preferred.
+	local function findPumpkin(seedId: string, mutation: string?, pet: string?): BasePart?
 		local fallback: BasePart? = nil
 		local roots = { player.Character, garden:FindFirstChild("Loose"), patchFolder }
 		table.insert(roots, garden:FindFirstChild("Wild"))
 		for _, root in roots do
 			for _, d in root and root:GetDescendants() or {} do
-				if d:IsA("BasePart") and d:GetAttribute("Seed") == seedId then
+				if
+					d:IsA("BasePart")
+					and d:GetAttribute("Seed") == seedId
+					and (pet == nil or d:GetAttribute("Pet") == pet)
+				then
 					if d:GetAttribute("Mutation") == mutation then
 						return d
 					end
@@ -2159,9 +2163,32 @@ do
 	end
 
 	-- A copy for the ViewportFrame (children such as welds, prompts and billboards removed);
-	-- a coloured ball stands in when no pumpkin of that type is around.
-	local function pumpkinCopy(seed, mutation: string?): BasePart
-		local source = findPumpkin(seed.id, mutation)
+	-- a hatched pet (or mystery pumpkin) shows its model look ("PetLook"); a coloured ball
+	-- stands in when no pumpkin of that type is around.
+	local function pumpkinCopy(seed, mutation: string?, pet: string?): PVInstance
+		local source = findPumpkin(seed.id, mutation, pet)
+			or (pet and findPumpkin(seed.id, mutation))
+		local look = source and source:FindFirstChild("PetLook")
+		if look and look:IsA("Model") then
+			look.Archivable = true
+			local m = look:Clone()
+			for _, d in m:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.Anchored = true
+				elseif
+					d:IsA("JointInstance")
+					or d:IsA("WeldConstraint")
+					or d:IsA("Light")
+					or d:IsA("ParticleEmitter")
+					or d:IsA("BillboardGui")
+				then
+					d:Destroy()
+				end
+			end
+			local cf = m:GetBoundingBox()
+			m:PivotTo(cf:ToObjectSpace(m:GetPivot()))
+			return m
+		end
 		local copy: BasePart
 		if source then
 			source.Archivable = true
@@ -2184,13 +2211,15 @@ do
 		return copy
 	end
 
-	-- kind: "jack" (it just came alive as a living Jack) or "hoard" (a Hoard pumpkin delivered).
+	-- kind: "jack" (it just hatched: a pet, or a living Jack without a pet model) or "hoard" (a
+	-- Hoard pumpkin delivered). pet = the pet it hatched into (the card shows the pet's name).
 	local function showCard(
 		seedId: string,
 		mutation: string?,
 		isNew: boolean,
 		rate: number,
-		kind: string?
+		kind: string?,
+		pet: string?
 	)
 		local seed = seedById[seedId]
 		local rarity = rarityOf(seed.order)
@@ -2292,9 +2321,12 @@ do
 		cam.FieldOfView = 40
 		cam.Parent = view
 		view.CurrentCamera = cam
-		local model = pumpkinCopy(seed, mutation)
+		local model = pumpkinCopy(seed, mutation, pet)
 		model.Parent = view
-		local radius = math.max(model.Size.Magnitude / 2, 0.5)
+		local extents = if model:IsA("Model")
+			then model:GetExtentsSize()
+			else (model :: BasePart).Size
+		local radius = math.max(extents.Magnitude / 2, 0.5)
 		local dist = radius / math.tan(math.rad(cam.FieldOfView / 2)) * 1.1
 		cam.CFrame = CFrame.lookAt(Vector3.new(0, radius * 0.45, dist), Vector3.zero)
 
@@ -2305,10 +2337,11 @@ do
 		local rarityStroke = rarityLabel:FindFirstChildOfClass("UIStroke") :: UIStroke
 		rarityStroke.Thickness = 3.5
 		rarityStroke.Color = OUTLINE
+		local petDef = pet and Config.Pets and Config.Pets[pet]
 		local nameText = (mutation and (mutation .. " ") or "")
-			.. seed.name
+			.. (petDef and petDef.display or seed.name)
 			.. (
-				kind == "jack" and " Jack"
+				kind == "jack" and not petDef and " Jack"
 				or kind == "hoard" and " · Hoard x" .. Config.HoardMult
 				or ""
 			)
@@ -2361,7 +2394,7 @@ do
 		local angle = 0
 		local spin = RunService.RenderStepped:Connect(function(dt)
 			angle += dt * 1.1
-			model.CFrame = CFrame.Angles(math.rad(-10), angle, 0)
+			model:PivotTo(CFrame.Angles(math.rad(-10), angle, 0))
 			rays.Rotation += dt * 20
 		end)
 		local closed = false
@@ -2392,11 +2425,18 @@ do
 	end
 
 	remotes:WaitForChild("Reveal").OnClientEvent:Connect(
-		function(seedId: string, mutation: string?, isNew: boolean, rate: number, kind: string?)
+		function(
+			seedId: string,
+			mutation: string?,
+			isNew: boolean,
+			rate: number,
+			kind: string?,
+			pet: string?
+		)
 			if not seedById[seedId] or #queue >= MAX_QUEUE then
 				return
 			end
-			table.insert(queue, { seedId, mutation, isNew == true, tonumber(rate) or 0, kind })
+			table.insert(queue, { seedId, mutation, isNew == true, tonumber(rate) or 0, kind, pet })
 			if busy then
 				return
 			end
@@ -2405,7 +2445,8 @@ do
 				while #queue > 0 do
 					local item = table.remove(queue, 1) :: { any }
 					-- pcall: one bad card must never jam the queue.
-					local ok, err = pcall(showCard, item[1], item[2], item[3], item[4], item[5])
+					local ok, err =
+						pcall(showCard, item[1], item[2], item[3], item[4], item[5], item[6])
 					if not ok then
 						warn("[Patch] Reveal card failed:", err)
 					end
@@ -3149,7 +3190,13 @@ remotes:WaitForChild("Stomp").OnClientEvent:Connect(function(kind: string, circl
 		)
 	end
 	play(Config.Sounds.Bonk, kind == "Slam" and 0.45 or 0.7, 1)
-	if root and (Vector3.new(root.Position.X, 0, root.Position.Z)).Magnitude < 60 then
+	local fromKing = root
+		and Vector3.new(
+			root.Position.X - kingFace.Position.X,
+			0,
+			root.Position.Z - kingFace.Position.Z
+		)
+	if fromKing and fromKing.Magnitude < 60 then
 		task.spawn(shake, kind == "Slam" and 1.4 or 0.6, 10)
 	end
 end)
@@ -3215,8 +3262,9 @@ end)
 local ZoneView: { [string]: any } = {}
 do
 	local folders: { [string]: Instance } = {}
-	-- One X/Z box per Spawn part of each zone: { minX, maxX, minZ, maxZ }. A single box around all
-	-- of a zone's spawns would cover the market between Zone1's strips, so each spawn counts alone.
+	-- X/Z boxes per zone: { minX, maxX, minZ, maxZ, lane? }. On the lane map one box per zone
+	-- covers its Z range (ZMin / ZMax attributes, else Config zMin / zMax; lane = true); without a
+	-- range each Spawn part's footprint is its own box.
 	local boxes: { [string]: { { number } } } = {}
 	local wallLook: { [BasePart]: number } = {}
 
@@ -3300,11 +3348,13 @@ do
 
 	local function inBox(zoneId: string, pos: Vector3, margin: number): boolean
 		for _, box in boxes[zoneId] or {} do
+			-- Lane zones touch each other: entering needs no margin, leaving a small one.
+			local m = box[5] and margin - 6 or margin
 			if
-				pos.X >= box[1] - margin
-				and pos.X <= box[2] + margin
-				and pos.Z >= box[3] - margin
-				and pos.Z <= box[4] + margin
+				pos.X >= box[1] - m
+				and pos.X <= box[2] + m
+				and pos.Z >= box[3] - m
+				and pos.Z <= box[4] + m
 			then
 				return true
 			end
@@ -3381,7 +3431,18 @@ do
 				end)
 			end
 			local list = {}
-			for _, d in folder:GetDescendants() do
+			local zMin = folder:GetAttribute("ZMin") or (def and def.zMin)
+			local zMax = folder:GetAttribute("ZMax") or (def and def.zMax)
+			if type(zMin) == "number" and type(zMax) == "number" then
+				table.insert(list, {
+					-math.huge,
+					math.huge,
+					math.min(zMin, zMax),
+					math.max(zMin, zMax),
+					true,
+				})
+			end
+			for _, d in #list == 0 and folder:GetDescendants() or {} do
 				if d:IsA("BasePart") and d.Name == "Spawn" then
 					-- The part's own footprint (rotation-safe), so big strip parts work too.
 					local cf, size = d.CFrame, d.Size / 2
@@ -5079,36 +5140,45 @@ remotes:WaitForChild("Hoard").OnClientEvent:Connect(function(kind: string, seedI
 	end
 end)
 
--- A placed pumpkin finished carving: a white flash and sparkles as it comes alive.
-remotes:WaitForChild("Carved").OnClientEvent:Connect(function(p: BasePart?, ownerId: number?)
-	local camera = workspace.CurrentCamera
-	if not p or not p.Parent or not camera then
-		return
-	end
-	if (p.Position - camera.CFrame.Position).Magnitude > 150 then
-		return
-	end
-	local flash = Instance.new("Highlight")
-	flash.FillColor = Color3.new(1, 1, 1)
-	flash.FillTransparency = 0
-	flash.OutlineColor = Color3.new(1, 1, 1)
-	flash.OutlineTransparency = 0
-	flash.DepthMode = Enum.HighlightDepthMode.Occluded
-	flash.Parent = p
-	TweenService:Create(
-		flash,
-		TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-		{ FillTransparency = 1, OutlineTransparency = 1 }
-	):Play()
-	task.delay(0.55, function()
-		flash:Destroy()
+-- A placed pumpkin hatched: a white flash and a burst as the pumpkin turns into its pet (or a
+-- living Jack when there is no pet model).
+remotes
+	:WaitForChild("Carved").OnClientEvent
+	:Connect(function(p: BasePart?, ownerId: number?, pet: string?)
+		local camera = workspace.CurrentCamera
+		if not p or not p.Parent or not camera then
+			return
+		end
+		if (p.Position - camera.CFrame.Position).Magnitude > 150 then
+			return
+		end
+		local flash = Instance.new("Highlight")
+		flash.FillColor = Color3.new(1, 1, 1)
+		flash.FillTransparency = 0
+		flash.OutlineColor = Color3.new(1, 1, 1)
+		flash.OutlineTransparency = 0
+		flash.DepthMode = Enum.HighlightDepthMode.Occluded
+		flash.Parent = p
+		TweenService:Create(
+			flash,
+			TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+			{ FillTransparency = 1, OutlineTransparency = 1 }
+		):Play()
+		task.delay(0.55, function()
+			flash:Destroy()
+		end)
+		burst(p.Position + Vector3.new(0, 1, 0), Color3.new(1, 1, 1), 24, 16, SPARKLE, 1)
+		burst(p.Position, Color3.fromRGB(255, 240, 220), 10, 10, nil, 1.4)
+		if ownerId == player.UserId then
+			play(Config.Sounds.Brew, 1.5, 0.7)
+			local def = pet and Config.Pets and Config.Pets[pet]
+			floatText(
+				p.Position + Vector3.new(0, p.Size.Y / 2 + 2.5, 0),
+				def and ("HATCHED! " .. def.display) or "HATCHED!",
+				Color3.fromRGB(255, 200, 90)
+			)
+		end
 	end)
-	burst(p.Position + Vector3.new(0, 1, 0), Color3.new(1, 1, 1), 24, 16, SPARKLE, 1)
-	if ownerId == player.UserId then
-		play(Config.Sounds.Brew, 1.5, 0.7)
-		floatText(p.Position + Vector3.new(0, 4, 0), "IT'S ALIVE!", Color3.fromRGB(255, 200, 90))
-	end
-end)
 
 -- Guardian tags: the cyan "Z z Z" bobs slowly while it sleeps, the red "!" jumps while it is awake
 -- (local only, so nothing replicates every frame).
@@ -5143,10 +5213,11 @@ do
 	end)
 end
 
--- Living Jacks hop gently around their plots: a short arc to a random spot within Config.JackHop
--- studs (and the plot) of their home every second or two, facing where they hop. Local only: the
--- server keeps each Jack at JackHome on its plot, and a Jack that leaves its plot (picked up,
--- stolen, grabbed by a ghost) is never touched again.
+-- Hatched pets idle on their pedestals: a gentle bob and a slow look left and right. Living Jacks
+-- (no pet model) hop gently around their plots: a short arc to a random spot within
+-- Config.JackHop studs (and the plot) of their home every second or two, facing where they hop.
+-- Local only: the server keeps each one at JackHome on its plot, and one that leaves its plot
+-- (picked up, stolen, grabbed by a ghost) is never touched again.
 do
 	type Hop = {
 		from: Vector3,
@@ -5201,6 +5272,14 @@ do
 			end
 			local home = p:GetAttribute("JackHome") :: CFrame
 			if (home.Position - eye).Magnitude > 140 then
+				continue
+			end
+			if p:GetAttribute("Pet") then
+				-- Each pet gets its own phase from its position, so a row never moves in step.
+				local phase = (home.Position.X * 0.37 + home.Position.Z * 0.61) % (math.pi * 2)
+				local bob = (math.sin(t * 2.2 + phase) + 1) * 0.18
+				local turn = math.sin(t * 0.6 + phase) * math.rad(25)
+				p.CFrame = home * CFrame.new(0, bob, 0) * CFrame.Angles(0, turn, 0)
 				continue
 			end
 			local plot = p.Parent :: BasePart
