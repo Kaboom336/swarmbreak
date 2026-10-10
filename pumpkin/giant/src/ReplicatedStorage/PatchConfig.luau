@@ -3,9 +3,8 @@
 local SHIELD = 600 -- new-player shield: seconds of a player's total playtime
 local HAUNT_COST = 2500000
 local HOARD1 = "Ghost" -- the Zone1 Hoard's pumpkin type
-local GUARD1 = "Scarecrow" -- the Zone1 Hoard's guardian (the tutorial text names it)
-return {
-	StartCandy = 30,
+local Config = {
+	StartCandy = 0,
 
 	-- The map (workspace.Garden): one straight lane along +Z centred on X = MapCenterX. The hub
 	-- (bases, market, spawn) is Z 0..SafeLineZ; the zones follow in a line, each with ZMin / ZMax
@@ -23,7 +22,7 @@ return {
 	-- HauntPillAt: lifetime candy that shows the Haunt pill.
 	Unlocks = {
 		PlayerSteal = SHIELD,
-		Sell = 1800,
+		Sell = math.huge, -- opens permanently on the first full pen
 		Brew = 1800,
 		LuckySwing = 1800,
 		King = 1800,
@@ -136,12 +135,11 @@ return {
 		},
 	},
 	-- Pets: a pumpkin placed on a base plot hatches into its type's pet (Seeds[n].pet) after the
-	-- hatch timer. The look is ServerStorage.PetModels.<name> scaled to PetHeight studs tall (x
-	-- PetRareMult from type order PetRareOrder up); a missing model keeps the old living-Jack look.
+	-- hatch timer. Rarity height and persisted weight set its size; missing models use living Jacks.
 	-- ServerStorage.PetModels.MysteryPumpkin (optional) is the look of Hoard pumpkins.
 	Pets = {
 		PumpkinPup = { display = "Pumpkin Pup", rarity = "Common" },
-		Crow = { display = "Crow", rarity = "Uncommon" },
+		Crow = { display = "Crow", rarity = "Common" },
 		Ghosty = { display = "Ghosty", rarity = "Rare" },
 		BlackCat = { display = "Black Cat", rarity = "Rare" },
 		CandyBat = { display = "Candy Bat", rarity = "Epic" },
@@ -154,10 +152,42 @@ return {
 	PetHeight = 5.5,
 	PetRareMult = 1.2,
 	PetRareOrder = 3,
+	PetSizes = {
+		Common = { height = 3.5, median = 5 },
+		Rare = { height = 5, median = 12 },
+		Epic = { height = 7, median = 30 },
+		Legendary = { height = 9, median = 75 },
+		Mythic = { height = 12, median = 180 },
+	},
+	Farm = {
+		firstSwingSeconds = 1.0, -- about 50 candy/min before travel, including golden rolls
+		bigChance = 0.25,
+		bigMult = 6,
+		goldenOneIn = 40,
+		goldenMult = 20,
+		critChance = 0.1,
+		critMult = 3,
+		arcRange = 6,
+		arcTargets = 3,
+	},
+	Fight = {
+		seconds = 3,
+		base = 0.4,
+		tierBonus = 0.15,
+		max = 0.9,
+		tapInterval = 0.08,
+		expectedTaps = 18,
+		stun = 3,
+		repeatWake = 0.4,
+	},
+	World2 = {
+		text = "🌨 WORLD 2: FROST FIELDS — coming soon",
+		color = Color3.fromRGB(130, 225, 255),
+	},
 	MysteryModel = "MysteryPumpkin",
 
 	-- The Witch pays SellPerIncome seconds of a pumpkin's income for it.
-	SellPerIncome = 30,
+	SellPerIncome = 1800, -- 50% of one hour's earnings
 	-- Each pumpkin rolls a size; it multiplies income, sell value and the look.
 	SizeMin = 0.85,
 	SizeMax = 1.4,
@@ -170,71 +200,107 @@ return {
 	-- the top banner on the HUD (Steal an Egg zone label colours).
 	Zones = {
 		Zone1 = {
+			hoard = { type = HOARD1, guardian = "Scarecrow", guardHeight = 6 },
 			color = Color3.fromRGB(255, 179, 71),
 			title = "Pumpkin Meadow",
 			emoji = "🙂",
 			cost = 0,
-			max = 45,
+			max = 40,
+			hp = 10,
+			candy = 1,
 			zMin = 150,
 			zMax = 310,
 			weights = { Orange = 70, Sunny = 22, Ghost = 7, Moon = 1 },
 		},
 		Zone2 = {
+			hoard = { type = "Moon", guardian = "SkeletonKnight", guardHeight = 9 },
 			color = Color3.fromRGB(200, 204, 208),
 			title = "Graveyard",
 			emoji = "😐",
 			cost = 1000,
-			max = 20,
+			max = 40,
+			hp = 30,
+			candy = 3,
 			zMin = 310,
 			zMax = 470,
 			weights = { Sunny = 50, Ghost = 35, Moon = 13, CandyCorn = 2 },
 		},
 		Zone3 = {
+			hoard = { type = "Golden", guardian = "TreeEnt", guardHeight = 13 },
 			color = Color3.fromRGB(155, 234, 58),
 			title = "Haunted Woods",
 			emoji = "😬",
 			cost = 25000,
-			max = 20,
+			max = 40,
+			hp = 90,
+			candy = 9,
 			zMin = 470,
 			zMax = 630,
 			weights = { Ghost = 45, Moon = 35, CandyCorn = 17, Golden = 3 },
 		},
 		Zone4 = {
+			hoard = { type = "Shadow", guardian = "SwampToad", guardHeight = 16 },
 			color = Color3.fromRGB(160, 64, 224),
 			title = "Witch Swamp",
 			emoji = "😨",
 			cost = 400000,
-			max = 20,
+			max = 40,
+			hp = 270,
+			candy = 27,
 			zMin = 630,
 			zMax = 790,
 			weights = { Moon = 30, CandyCorn = 40, Golden = 25, Shadow = 5 },
 		},
 		Zone5 = {
+			hoard = {
+				type = "Crystal",
+				guardian = "Vampire",
+				parts = "SkeletonKnight",
+				guardHeight = 18,
+			},
 			color = Color3.fromRGB(224, 32, 32),
 			title = "Vampire Castle",
 			emoji = "😱",
 			cost = 2500000,
-			max = 20,
+			max = 40,
+			hp = 810,
+			candy = 80,
 			zMin = 790,
 			zMax = 950,
 			weights = { CandyCorn = 30, Golden = 40, Shadow = 25, Crystal = 5 },
 		},
 		Zone6 = {
+			hoard = {
+				type = "Inferno",
+				guardian = "CandyGolem",
+				parts = "TreeEnt",
+				guardHeight = 20,
+			},
 			color = Color3.fromRGB(255, 110, 199),
 			title = "Candy Kingdom",
 			emoji = "😈",
 			cost = 17500000,
-			max = 20,
+			max = 40,
+			hp = 2400,
+			candy = 240,
 			zMin = 950,
 			zMax = 1110,
 			weights = { Golden = 30, Shadow = 40, Crystal = 25, Inferno = 5 },
 		},
 		Zone7 = {
+			hoard = {
+				type = "KingSeed",
+				guardian = "PumpkinKing",
+				parts = "Scarecrow",
+				guardHeight = 24,
+			},
 			color = Color3.fromRGB(240, 208, 32),
 			title = "Pumpkin King's Throne",
 			emoji = "👹",
 			cost = 140000000,
-			max = 20,
+			max = 40,
+			hp = 7300,
+			candy = 720,
 			zMin = 1110,
 			zMax = 1270,
 			weights = { Shadow = 30, Crystal = 40, Inferno = 25, KingSeed = 5 },
@@ -244,8 +310,8 @@ return {
 	ZoneOrder = { "Zone1", "Zone2", "Zone3", "Zone4", "Zone5", "Zone6", "Zone7" },
 	-- A player this many studs past a locked zone's ZMin (inside it) is sent back to the spawn.
 	ZoneGuardInset = 2,
-	-- Seconds between respawns (one wild pumpkin each time, while below max).
-	WildRespawn = 1.5,
+	-- Each popped wild pumpkin reserves its spot for this many seconds.
+	WildRespawn = 8,
 	-- HP bars over wild pumpkins show within this many studs, and only on your current target or
 	-- on a pumpkin you hit in the last HitBarSeconds. Types from RareNameOrder up (3 = Ghost) also
 	-- show their name over the bar.
@@ -266,8 +332,7 @@ return {
 		{ name = "Legendary", upTo = 8, color = Color3.fromRGB(255, 190, 30) },
 		{ name = "Mythic", upTo = 10, color = Color3.fromRGB(255, 60, 90) },
 	},
-	-- A popped wild pumpkin also pays its smasher this many seconds of the type's income in candy
-	-- (the candy burst that flies into the counter).
+	-- Legacy carried farmed pumpkins migrate at their old pop value.
 	PopCandySeconds = 3,
 	-- How the scythe sits in the hand (studs / degrees), in a character-aligned frame at the hand
 	-- (the arm is raised forward while a tool is held): the shaft stands upright with its centre
@@ -289,29 +354,11 @@ return {
 	-- "Hoard" marker part (fallback: HoardOutward studs from the zone centre toward the +X wall).
 	-- The guardian's look is ServerStorage.GuardModels.<guardian> scaled to guardHeight studs;
 	-- without that model it is built from parts (kind `parts`, else `guardian`; also scaled).
-	Hoards = {
-		Zone1 = { type = HOARD1, guardian = GUARD1, guardHeight = 6 },
-		Zone2 = { type = "Moon", guardian = "SkeletonKnight", guardHeight = 9 },
-		Zone3 = { type = "Golden", guardian = "TreeEnt", guardHeight = 13 },
-		Zone4 = { type = "Shadow", guardian = "SwampToad", guardHeight = 16 },
-		Zone5 = {
-			type = "Crystal",
-			guardian = "Vampire",
-			parts = "SkeletonKnight",
-			guardHeight = 18,
-		},
-		Zone6 = { type = "Inferno", guardian = "CandyGolem", parts = "TreeEnt", guardHeight = 20 },
-		Zone7 = {
-			type = "KingSeed",
-			guardian = "PumpkinKing",
-			parts = "Scarecrow",
-			guardHeight = 24,
-		},
-	},
+	Hoards = {}, -- compatibility view filled from Zones below
 	HoardCount = 3,
 	HoardSize = 1.4,
 	HoardMult = 3,
-	HoardHold = 1.5,
+	HoardHold = 1.0,
 	HoardRefill = 30,
 	HoardReturnDelay = 3,
 	HoardOutward = 20,
@@ -321,7 +368,7 @@ return {
 	GuardianMinSpeed = 14,
 	GuardianReturnSpeed = 12,
 	GuardianChaseSeconds = 14,
-	GuardianWake = 1.8, -- a head start: the thief should get a few steps before the chase
+	GuardianWake = 1.2, -- a head start: the thief should get a few steps before the chase
 	GuardianCatch = 3.5,
 	GuardianRoarPitch = 0.3,
 	-- Hatching: a pumpkin placed on a plot hatches for CarveSeconds (types up to CarveFastOrder,
@@ -342,49 +389,57 @@ return {
 	Tools = {
 		{
 			id = "RustySickle",
-			name = "Rusty Sickle",
+			name = "Rusty Scythe",
 			damage = 5,
 			cost = 0,
 			color = Color3.fromRGB(150, 96, 70),
 		},
 		{
 			id = "WoodenScythe",
-			name = "Wooden Scythe",
+			name = "Iron Scythe",
 			damage = 15,
-			cost = 250,
+			cost = 150,
 			color = Color3.fromRGB(196, 150, 96),
 		},
 		{
 			id = "BoneScythe",
 			name = "Bone Scythe",
-			damage = 50,
-			cost = 2500,
+			damage = 40,
+			cost = 1200,
 			color = Color3.fromRGB(240, 235, 215),
 		},
 		{
 			id = "CursedScythe",
-			name = "Cursed Scythe",
-			damage = 150,
-			cost = 25000,
+			name = "Witch Scythe",
+			damage = 110,
+			cost = 9000,
 			color = Color3.fromRGB(170, 60, 255),
 		},
 		{
 			id = "MoonScythe",
-			name = "Moon Scythe",
-			damage = 500,
-			cost = 250000,
+			name = "Vampire Scythe",
+			damage = 300,
+			cost = 60000,
 			color = Color3.fromRGB(110, 170, 255),
 		},
 		{
+			id = "CandyScythe",
+			name = "Candy Scythe",
+			damage = 800,
+			cost = 400000,
+			color = Color3.fromRGB(255, 110, 199),
+		},
+		{
 			id = "PumpkinKingCleaver",
-			name = "Pumpkin King Cleaver",
-			damage = 1500,
+			name = "King Scythe",
+			damage = 2200,
+			cost = 2500000,
 			color = Color3.fromRGB(255, 190, 40),
 		},
 	},
 
 	-- Stealing and locks. Times are seconds.
-	StealHold = 1.5,
+	StealHold = 1.0,
 	-- The robbed owner gets this share of the stolen pumpkin's sell value.
 	StealOwnerShare = 0.25,
 	-- Players with less total playtime than this cannot be robbed (by players or midnight ghosts).
@@ -446,7 +501,7 @@ return {
 	LackeyCandyCap = 0.15,
 
 	BonkRange = 11,
-	BonkCooldown = 0.35,
+	BonkCooldown = 0.55,
 	-- A bonk is ignored when the server-side root moved more than this many studs since a bonk
 	-- less than BonkTeleportWindow seconds ago (stops teleport farming).
 	BonkTeleportStuds = 60,
@@ -523,39 +578,34 @@ return {
 	-- time, only from unlocked systems.
 	TutorialOrders = {
 		{
-			stat = "smash",
-			need = 1,
-			text = "Smash a pumpkin",
+			stat = "farmCandy",
+			need = 30,
+			text = "Smash pumpkins!",
 			target = "zone",
-			reward = { candy = 25 },
-		},
-		{
-			stat = "place",
-			need = 1,
-			text = "Place it on your base",
-			target = "place",
-			reward = { candy = 40 },
-		},
-		{
-			stat = "hoardSteal",
-			need = 1,
-			text = "Steal a pumpkin from the " .. GUARD1 .. "!",
-			target = "hoard",
-			reward = { candy = 60 },
+			reward = { candy = 120 },
 		},
 		{
 			stat = "buyTool",
 			need = 1,
-			text = "Buy the Wooden Scythe",
+			text = "Buy the Iron Scythe!",
 			target = "tools",
-			reward = { candy = 120 },
+			reward = {},
 		},
 		{
-			stat = "upgrade:Stack",
+			stat = "hoardSteal",
 			need = 1,
-			text = "Upgrade your Base: Carry +1",
-			target = "upgrades",
-			reward = { candy = 150, title = "Patch Keeper" },
+			text = "Steal a glowing pumpkin!",
+			target = "hoard",
+			reward = {},
+		},
+		{ stat = "hatch", need = 1, text = "Place it in your pen!", target = "place", reward = {} },
+		{
+			stat = "penFilled",
+			need = 2,
+			reach = true,
+			text = "Fill your pen %s/6",
+			target = "hoard",
+			reward = { title = "Patch Keeper" },
 		},
 	},
 	-- b = reward in multiples of B. reach = need is a level to reach (not a count); its need is
@@ -764,3 +814,9 @@ return {
 		BossMusic = 128007000574959, -- Epic Boss Battle
 	},
 }
+
+-- All world themes, farm tuning and nest inhabitants live in Zones.
+for _, id in Config.ZoneOrder do
+	Config.Hoards[id] = Config.Zones[id].hoard
+end
+return Config
