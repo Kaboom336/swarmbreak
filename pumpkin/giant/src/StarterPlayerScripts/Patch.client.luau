@@ -961,7 +961,7 @@ function UI.box(parent, name, position, size, color, z)
 	local frame = Instance.new("Frame")
 	frame.Name, frame.Position, frame.Size = name, position, size
 	frame.BackgroundColor3, frame.BorderSizePixel = color, 0
-	frame.ZIndex, frame.Parent = z or parent.ZIndex + 1, parent
+	frame.ZIndex, frame.Parent = z or (parent:IsA("GuiObject") and parent.ZIndex + 1 or 1), parent
 	return frame
 end
 function UI.icon(parent, id)
