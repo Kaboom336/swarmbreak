@@ -1,0 +1,244 @@
+{
+  "source": "pumpkin/production/watch3/SECTION-LOOK.md section 2.5; grids copied verbatim",
+  "palette": {
+    "o": "#FF8A1A",
+    "O": "#B8500A",
+    "Y": "#FFD9A0",
+    "y": "#FFD23A",
+    "h": "#FFF3B0",
+    "g": "#5CD13A",
+    "G": "#2E7D1E",
+    "p": "#A13BFF",
+    "P": "#4E1A99",
+    "q": "#D6A8FF",
+    "r": "#FF3B3B",
+    "R": "#9A1414",
+    "w": "#FFFFFF",
+    "s": "#C9D1DC",
+    "S": "#6B7685",
+    "b": "#9A6A35",
+    "B": "#4A2E12",
+    "k": "#1E1030",
+    "c": "#3FD0FF",
+    "C": "#147A9E",
+    "n": "#F5E6C0",
+    "N": "#B89A5E"
+  },
+  "render": {
+    "size": 512,
+    "supersample": 4,
+    "padding": 0.08,
+    "depth": 3,
+    "yaw_degrees": 18,
+    "pitch_degrees": 16,
+    "tilt_degrees": -10,
+    "outline_colour": "#1B1028",
+    "outline_fraction": 0.055
+  },
+  "icons": [
+    {
+      "id": "shop",
+      "grid": [
+        "....BBBB....",
+        "...B....B...",
+        "...B....B...",
+        ".oooooooooo.",
+        ".YoooooooooO",
+        ".oooyyyyoooO",
+        ".ooyyhyyyooO",
+        ".ooyyyyyyooO",
+        ".oooyyyyoooO",
+        ".ooooooooooO",
+        ".OOOOOOOOOO.",
+        "............"
+      ]
+    },
+    {
+      "id": "index",
+      "grid": [
+        "............",
+        ".PPPPPPPPPP.",
+        ".PqpppgpppPy",
+        ".PqppgGgppPy",
+        ".Pqpooooopwy",
+        ".Pqpooooopwy",
+        ".Pqpoooooopw",
+        ".Pqppooooppw",
+        ".Pqpppppppwy",
+        ".PPPPPPPPPP.",
+        "..wwwwwwww..",
+        "............"
+      ]
+    },
+    {
+      "id": "pets",
+      "grid": [
+        "............",
+        "..OO....OO..",
+        ".OooO..OooO.",
+        ".OooooooooO.",
+        "OoYoooooooOO",
+        "OoookkookkoO",
+        "OooooooooooO",
+        "OooookkkkooO",
+        "OooookooykoO",
+        ".OooooooooO.",
+        "..OOOOOOOO..",
+        "............"
+      ]
+    },
+    {
+      "id": "quests",
+      "grid": [
+        "............",
+        ".bbbbbbbbbb.",
+        ".bnnnnnnnnbN",
+        ".bnnnrrnnnbN",
+        ".bnnnrrnnnbN",
+        ".bnnnrrnnnbN",
+        ".bnnnrrnnnbN",
+        ".bnnnnnnnnbN",
+        ".bnnnrrnnnbN",
+        ".bnnnrrnnnbN",
+        ".bbbbbbbbbb.",
+        "............"
+      ]
+    },
+    {
+      "id": "daily",
+      "grid": [
+        "............",
+        "...yy..yy...",
+        "..yyyyyyyy..",
+        "...yyyyyy...",
+        ".pppppyypppp",
+        ".qppppyyppPP",
+        ".pppppyyppPP",
+        ".pppppyyppPP",
+        ".pppppyyppPP",
+        ".pppppyyppPP",
+        ".PPPPPyyPPPP",
+        "............"
+      ]
+    },
+    {
+      "id": "settings",
+      "grid": [
+        "............",
+        ".....ss.....",
+        "..s.ssssss.s",
+        "..ssssSSsss.",
+        "...ssSSSSss.",
+        ".ssssSkkSsss",
+        ".ssssSkkSsss",
+        "...ssSSSSss.",
+        "..ssssSSsss.",
+        "..s.ssssss.s",
+        ".....ss.....",
+        "............"
+      ]
+    },
+    {
+      "id": "candy",
+      "grid": [
+        "............",
+        "............",
+        "....RRRR....",
+        "rr.RwwrrR.rr",
+        "rrrwwrrwRrrr",
+        ".rrwrrwwRrr.",
+        ".rrrrwwrRrr.",
+        "rrrrwwrrRrrr",
+        "rr.wwrrwR.rr",
+        "....RRRR....",
+        "............",
+        "............"
+      ]
+    },
+    {
+      "id": "scythe",
+      "grid": [
+        "..ssssssss..",
+        ".ssSSSSSSSs.",
+        "ssS.....SBS.",
+        "sS......BB..",
+        "s......BB...",
+        "......BB....",
+        ".....BB.....",
+        "....BB......",
+        "...BB.......",
+        "..BB........",
+        ".BB.........",
+        ".B.........."
+      ]
+    },
+    {
+      "id": "king",
+      "grid": [
+        "............",
+        ".y....y....y",
+        ".yy..yyy..yy",
+        ".yyyyyyyyyyy",
+        ".yyhyyrryyyy",
+        ".yyyyyyyyyyy",
+        ".yyyyyyyyyOy",
+        ".yOOOOOOOOOy",
+        ".yyyyyyyyyyy",
+        "............",
+        "............",
+        "............"
+      ]
+    },
+    {
+      "id": "timer",
+      "grid": [
+        ".....ss.....",
+        "....ssss....",
+        "......S.....",
+        "...CCCCCC...",
+        "..CwwwwwwC..",
+        ".CwwwwkwwwC.",
+        ".CwwwwkwwwC.",
+        ".CwwwwkkkwC.",
+        ".CwwwwwwwwC.",
+        "..CwwwwwwC..",
+        "...CCCCCC...",
+        "............"
+      ]
+    },
+    {
+      "id": "carry",
+      "grid": [
+        ".....gg.....",
+        "....gGg.....",
+        "..oooGoooo..",
+        ".oYooGooooO.",
+        "oYoooGoooooO",
+        "oYoooGoooooO",
+        "oooooGoooooO",
+        "oooooGoooooO",
+        ".oooooooooO.",
+        ".ooooGooooO.",
+        "..OOOOOOOO..",
+        "............"
+      ]
+    },
+    {
+      "id": "sprint",
+      "grid": [
+        "......hyyy..",
+        ".....hyyyo..",
+        "....hyyyo...",
+        "...hyyyyyyo.",
+        "..hyyyyyyo..",
+        ".....yyyo...",
+        "....yyyo....",
+        "...yyyo.....",
+        "..yyyo......",
+        "..yyo.......",
+        "..yo........",
+        "............"
+      ]
+    }
+  ]
+}
