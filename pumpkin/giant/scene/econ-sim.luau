@@ -9,6 +9,14 @@ local Config = luau.load(fs.readFile("src/ReplicatedStorage/PatchConfig.luau"), 
 	injectGlobals = true,
 })()
 local E, P, F = Config.Economy, Config.Progression, Config.Farm
+for i, zoneId in Config.ZoneOrder do
+	local zone = Config.Zones[zoneId]
+	local tool = Config.Tools[F.zoneTools[i]]
+	assert(math.ceil(zone.hp / tool.damage) >= 2 and math.ceil(zone.hp / tool.damage) <= 3, "Recommended scythe needs 2-3 hits")
+	if i >= 3 then
+		assert(zone.hp > Config.Tools[3].damage, "Tier 3 cannot one-shot deeper zones")
+	end
+end
 local tune = process.args[1] == "tune"
 for level = 0, Config.Upgrades.Boots.max do
 	assert(Config.walkSpeed(level) == 16 + level * 2, "Boots speed ladder")
@@ -83,9 +91,16 @@ local function run(crateTier, calibrate, sellCrates)
 		rates = {},
 		burst = 0,
 		farmed = 0,
+		farmIncome = 0,
+		lastFarm = 0,
+		lastEarned = 0,
+		earned = 0,
+		shares = {},
+		toolSeconds = {},
+		firstHatch = nil,
 		tutorial = false,
 	}
-	local function stealSeconds()
+	local function stealSeconds(first)
 		local zone = Config.Zones[Config.ZoneOrder[s.zone]]
 		local distance = math.max(0, (zone.zMin + zone.zMax) / 2 - E.sim.penZ)
 		local walk = Config.walkSpeed(s.boots) * Config.Movement.sprintMult
@@ -93,6 +108,10 @@ local function run(crateTier, calibrate, sellCrates)
 		local outbound = walk
 			+ (s.tool >= Config.Dash.tier and Config.Dash.distance / Config.Dash.cooldown or 0)
 		local returning = math.max(Config.MinCarrySpeed, walk - Config.SlowPerPumpkin)
+		if first then
+			-- The initial nest is stocked: no refill or repeat-cycle activity budget.
+			return distance / outbound + distance / returning + Config.HoardHold + Config.GuardianWake
+		end
 		return math.max(
 			Config.HoardRefill,
 			E.sim.stealSeconds
@@ -123,12 +142,12 @@ local function run(crateTier, calibrate, sellCrates)
 		end
 		if #s.pets < slots() then
 			table.insert(s.pets, { income = income, bought = bought })
-		elseif income > s.pets[weakest].income then
-			local old = s.pets[weakest]
-			s.candy += old.income * (old.bought and Config.SellPerIncome or Config.FullPenSellSeconds) * mult()
-			s.pets[weakest] = { income = income, bought = bought }
 		else
-			s.candy += income * (bought and Config.SellPerIncome or Config.FullPenSellSeconds) * mult()
+			local old = s.pets[weakest]
+			local payout = old.income * (old.bought and Config.SellPerIncome or Config.WitchSellSeconds) * mult()
+			s.candy += payout
+			s.earned += payout
+			s.pets[weakest] = { income = income, bought = bought }
 		end
 		s.owned[id] = true
 		for i, zone in Config.ZoneOrder do
@@ -146,6 +165,7 @@ local function run(crateTier, calibrate, sellCrates)
 				and 1 - P.gateDiscount
 			or 1
 	end
+	s.nextSteal = stealSeconds(true) + Config.CarveNewSeconds
 	for t = 1, E.sim.durationMinutes * 60 do
 		if t == 1 then
 			s.candy += Config.DailyCandy
@@ -163,6 +183,7 @@ local function run(crateTier, calibrate, sellCrates)
 			* zone.candy
 			* (1 + F.bigChance * (F.bigMult - 1))
 			* (1 + (F.goldenMult - 1) / F.goldenOneIn)
+		if #s.pets == 0 then farm = 0 end
 		s.rates[s.zone] = farm * 60
 		local pen = 0
 		for _, pet in s.pets do
@@ -171,19 +192,23 @@ local function run(crateTier, calibrate, sellCrates)
 		local spooky = t >= Config.SpookyEvery and t % Config.SpookyEvery < Config.SpookyLength
 		s.candy += (farm + pen * (spooky and Config.SpookyMult or 1)) * mult()
 		s.farmed += farm
-		if not s.tutorial and s.farmed >= Config.TutorialOrders[1].need then
+		s.farmIncome += farm * mult()
+		s.earned += (farm + pen * (spooky and Config.SpookyMult or 1)) * mult()
+		if t % 120 == 0 then
+			table.insert(s.shares, { minute = t / 60, share = (s.farmIncome - s.lastFarm) / math.max(1, s.earned - s.lastEarned) })
+			s.lastFarm, s.lastEarned = s.farmIncome, s.earned
+		end
+		if not s.tutorial and #s.pets > 0 and s.farmed >= Config.TutorialOrders[3].need then
 			s.tutorial = true
-			s.candy += Config.TutorialOrders[1].reward.candy
+			s.candy += math.floor(math.max(1, pen * mult()) * Config.OrderIncomeSeconds * 0.75)
 		end
 		s.smashes[s.zone] = (s.smashes[s.zone] or 0) + breaks
-		-- Buy Iron before stealing; subsequently buy the matching zone scythe.
-		local desired = math.max(2, s.zone)
-		if s.tool < desired and s.candy >= Config.Tools[s.tool + 1].cost then
+		-- Steal and hatch first, then buy the scythe recommended for this zone.
+		local desired = F.zoneTools[s.zone]
+		if s.tutorial and s.tool < desired and s.candy >= Config.Tools[s.tool + 1].cost then
+			s.toolSeconds[s.tool + 1] = Config.Tools[s.tool + 1].cost / math.max(1, (farm + pen) * mult())
 			s.tool += 1
 			s.candy -= Config.Tools[s.tool].cost
-			if s.tool == 2 then
-				s.nextSteal = t + stealSeconds()
-			end
 		end
 		-- Buy each Boots level as soon as affordable, after the required scythe.
 		if s.boots < Config.Upgrades.Boots.max then
@@ -198,6 +223,7 @@ local function run(crateTier, calibrate, sellCrates)
 			s.steals[s.zone] = (s.steals[s.zone] or 0) + 1
 			local pick = 1 + (s.steals[s.zone] - 1) % 2
 			place(zone.pets[pick], false)
+			s.firstHatch = s.firstHatch or t
 		end
 		if crateTier and table.find(E.sim.crateMinutes, t / 60) then
 			local id = E.crateSeed(s.zone, crateTier, 2)
@@ -236,8 +262,10 @@ local function run(crateTier, calibrate, sellCrates)
 end
 
 local base = run(nil, tune)
+print("Modeled first hatch:", base.firstHatch, "seconds (Studio timing still required)")
+assert(base.firstHatch and base.firstHatch < 60, "Modeled first hatch under one minute")
 print(
-	"Expected-value assumptions: 50% farm uptime, equal nest rolls, Boots bought when affordable, outbound dash, distance-based round trips, weakest swap/sell, stamps, Spooky Hour; no teleports/passes/brew/rebirth."
+	"Expected-value assumptions: steal/hatch before farm 50 and Iron, 50% farm uptime, equal nest rolls, Boots bought when affordable, outbound dash, distance-based round trips, weakest replacement pays own Witch sell value (300s nest / 30s bought), stamps, Spooky Hour; no teleports/passes/brew/rebirth."
 )
 for i, rate in base.rates do
 	print(
@@ -248,6 +276,14 @@ for i, rate in base.rates do
 			i >= 5 and P.castleSlots or i >= 3 and P.woodsSlots or P.baseSlots
 		)
 	)
+end
+for _, sample in base.shares do
+	if sample.minute <= 10 or sample.minute % 10 == 0 then
+		print(string.format("Farm share, two minutes ending %d: %.1f%%", sample.minute, sample.share * 100))
+	end
+end
+for i, seconds in base.toolSeconds do
+	print(string.format("%s cost / current earnings: %.1f seconds", Config.Tools[i].name, seconds))
 end
 for i = 2, #Config.ZoneOrder do
 	local arrived = base.arrivals[i]

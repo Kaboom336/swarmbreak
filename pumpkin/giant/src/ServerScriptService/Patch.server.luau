@@ -269,9 +269,7 @@ local function hasPass(player: Player, name: string): boolean
 end
 
 local function carryCapacity(player: Player): number
-	return Config.BaseCarry
-		+ upgradeLevel(player, "Stack")
-		+ (hasPass(player, "BigStack") and Config.BigStackCarry or 0)
+	return Config.BaseCarry + math.min(Config.Upgrades.Stack.max, upgradeLevel(player, "Stack"))
 end
 
 local function isLoaded(player: Player): boolean
@@ -285,6 +283,21 @@ end
 local Unlock: { [string]: any } = {
 	NAMES = { "PlayerSteal", "Sell", "Brew", "LuckySwing", "King", "Haunt" },
 }
+function Unlock.badge(player, name)
+	local id = Config.Badges[name] or 0
+	if id == 0 or player:GetAttribute("Badge_" .. name) then
+		return
+	end
+	player:SetAttribute("Badge_" .. name, true)
+	task.spawn(function()
+		local ok = pcall(function()
+			game:GetService("BadgeService"):AwardBadge(player.UserId, id)
+		end)
+		if not ok and player.Parent then
+			player:SetAttribute("Badge_" .. name, nil)
+		end
+	end)
+end
 function Unlock.has(player: Player?, name: string): boolean
 	return player ~= nil and player:GetAttribute("Unlock_" .. name) == true
 end
@@ -383,20 +396,9 @@ local function startUnlocked(): { [string]: boolean }
 	return { Orange = true }
 end
 
-local function bestUnlocked(player: Player)
-	local best = Config.Seeds[1]
-	for id in unlocked[player] or {} do
-		local seed = seedById[id]
-		if seed and seed.order > best.order then
-			best = seed
-		end
-	end
-	return best
-end
-
 -- B: the value unit for order rewards and ghost bonks.
 local function orderBase(player: Player): number
-	return bestUnlocked(player).income * Config.OrderIncomeSeconds
+	return math.max(1, player:GetAttribute("Income") or 0) * Config.OrderIncomeSeconds
 end
 
 -- Short numbers: 950, 1.2k, 34.5k, 340k, 3.4M, 1.2B (rounded down so 999.96k never shows 1000k).
@@ -490,7 +492,13 @@ local function makeOrder(id: string, base: number?, level: number?): Order?
 	if not def then
 		return nil
 	end
-	local reward = def.reward or { candy = math.max(1, math.floor(def.b * (base or 1) + 0.5)) }
+	local reward = def.reward
+		or {
+			candy = math.max(
+				1,
+				math.floor(math.clamp((def.b or 3) / 4, 0.5, 1) * (base or 1) + 0.5)
+			),
+		}
 	local need = def.need
 	local text = def.text
 	if def.reach and kind == "R" then
@@ -528,11 +536,15 @@ local ORDER_UNLOCK = {
 -- Only retire accepted orders when their permanent/session target is gone.
 function Progress.orderExpired(player, def)
 	return (def.target == "king" and not state:GetAttribute("KingActive"))
+		or (Config.Raid.grace >= 1e9 and (def.stat == "bonkGhost" or def.stat == "rescue"))
 		or (def.target == "gate" and nextLockedZone(player) == nil)
 		or ((def.stat == "steal" or def.stat == "stopThief") and not Purge.active())
 end
 
 function Progress.orderLive(player, def)
+	if Config.Raid.grace >= 1e9 and (def.stat == "bonkGhost" or def.stat == "rescue") then
+		return false
+	end
 	if def.target == "gate" then
 		return nextLockedZone(player) ~= nil
 	end
@@ -629,6 +641,8 @@ local function nextOrders(player: Player)
 			(stat == "buyTool" and bestTool(player).order >= 2)
 			or (stat == "penFilled" and (player:GetAttribute("PenFilled") or 0) >= 2)
 			or (stat == "hatch" and (player:GetAttribute("PenHatched") or 0) >= 1)
+			or (stat == "hoardSteal" and (o.counters.hoardSteal or 0) >= 1)
+			or (stat == "unlockZone" and hasZone(player, "Zone2"))
 		then
 			o.tut += 1
 		else
@@ -636,7 +650,7 @@ local function nextOrders(player: Player)
 		end
 	end
 	if o.tut <= TUTORIAL_COUNT then
-		o.list = { makeOrder("T" .. o.tut) :: Order }
+		o.list = { makeOrder("T" .. o.tut, orderBase(player)) :: Order }
 		return
 	end
 	-- Right after the tutorial: the first gated zone (the Graveyard) is the only goal.
@@ -697,7 +711,7 @@ local function publishOrders(player: Player)
 	if not o then
 		return
 	end
-	player:SetAttribute("LearningFarm", o.tut == 1)
+	player:SetAttribute("LearningFarm", o.tut == 3)
 	local list = {}
 	for _, order in o.list do
 		table.insert(list, {
@@ -726,7 +740,7 @@ end
 
 local function grantReward(player: Player, reward: { [string]: any })
 	if reward.candy then
-		addCandy(player, reward.candy)
+		addCandy(player, reward.candy, true)
 	end
 	if reward.title then
 		player:SetAttribute("Title", reward.title)
@@ -766,6 +780,11 @@ local function track(player: Player?, stat: string, amount: number?, reach: bool
 		return
 	end
 	local step = ONBOARD_STAT[stat]
+	if stat == "hoardSteal" or stat == "steal" then
+		Unlock.badge(player, "FirstSteal")
+	elseif stat == "hatch" then
+		Unlock.badge(player, "FirstHatch")
+	end
 	if step then
 		onboard(player, step)
 	end
@@ -783,6 +802,14 @@ local function track(player: Player?, stat: string, amount: number?, reach: bool
 			if order.have >= order.need then
 				order.done = true
 				finished = true
+				if order.reward.candy then
+					local def = (
+						string.sub(order.id, 1, 1) == "T" and Config.TutorialOrders
+						or Config.RotatingOrders
+					)[tonumber(string.sub(order.id, 2))]
+					order.reward.candy =
+						math.floor(orderBase(player) * math.clamp((def.b or 3) / 4, 0.5, 1) + 0.5)
+				end
 				grantReward(player, order.reward)
 				Remotes.orderDoneEvent:FireClient(player, order.text, rewardText(order.reward))
 			end
@@ -817,7 +844,7 @@ local function loadOrders(player: Player, saved: any)
 	if type(saved) == "table" then
 		if type(saved.tut) == "number" then
 			local tut = math.max(1, math.floor(saved.tut))
-			if saved.v ~= 3 and saved.v ~= 4 then
+			if saved.v ~= 3 and saved.v ~= 4 and saved.v ~= 5 then
 				if saved.v ~= 2 and tut >= 2 then
 					tut += 1
 				end
@@ -827,8 +854,8 @@ local function loadOrders(player: Player, saved: any)
 				-- Re-deal: old rotating lists may hold orders of systems that are locked now.
 				shifted = true
 			end
-			if saved.v ~= 4 then
-				local map = { 1, 3, 3, 2, 5 }
+			if saved.v ~= 5 then
+				local map = { 3, 4, 1, 2, 5 }
 				tut = map[tut] or TUTORIAL_COUNT + 1
 				shifted = true
 			end
@@ -906,7 +933,7 @@ local function saveOrders(player: Player): any
 			reward = string.sub(order.id, 1, 1) == "R" and order.reward or nil,
 		})
 	end
-	return { v = 4, tut = o.tut, refreshAt = o.refreshAt, counters = o.counters, list = list }
+	return { v = 5, tut = o.tut, refreshAt = o.refreshAt, counters = o.counters, list = list }
 end
 
 -- Saving -------------------------------------------------------------------------------------
@@ -3065,8 +3092,14 @@ do
 				return
 			end
 			local sold = Bases.take(weakest)
-			local value =
-				math.floor(pumpkinValue(sold, Config.FullPenSellSeconds) * sellMult(player) + 0.5)
+			if not sold then
+				return
+			end
+			local bonus = rowDone(player, sold:GetAttribute("Seed")) and (1 + Config.IndexRowBonus)
+				or 1
+			local value = math.floor(
+				pumpkinValue(sold, Config.WitchSellSeconds) * bonus * sellMult(player) + 0.5
+			)
 			sold:Destroy()
 			value = addCandy(player, value)
 			track(player, "sell", 1)
@@ -3665,6 +3698,10 @@ function Unlock.refresh(player: Player, reset: boolean?)
 	local gates = Config.Unlocks
 	local played = player:GetAttribute("PlayTime") or 0
 	for _, name in Unlock.NAMES do
+		if name == "King" and played < gates.King then
+			player:SetAttribute("Unlock_King", nil)
+			continue
+		end
 		if not reset and Unlock.has(player, name) then
 			continue
 		end
@@ -3978,7 +4015,10 @@ do
 		local candy = 0
 		if winner and seed then
 			candy = part:GetAttribute("CandyReward") or 1
-			candy = addCandy(winner, candy)
+			candy = addCandy(
+				winner,
+				candy * (hasPass(winner, "DoubleCandy") and Config.DoubleCandyMult or 1)
+			)
 		end
 		Remotes.wildPopEvent:FireAllClients(at, seedId, winner, candy)
 		part:Destroy()
@@ -4165,6 +4205,9 @@ do
 		end
 		local candy = candyValue(player)
 		local previous = Config.ZoneOrder[(table.find(Config.ZoneOrder, zoneId) or 1) - 1]
+		if not previous or not hasZone(player, previous) then
+			return
+		end
 		local cost = math.floor(
 			(def.cost or 0)
 				* (
@@ -4190,6 +4233,7 @@ do
 		owned[zoneId] = true
 		publishZones(player)
 		Progress.arrive(player)
+		player:SetAttribute("ObjectiveZone", zoneId)
 		Remotes.hintEvent:FireClient(player, "🔓 The " .. def.title .. " is open! Go smash!")
 		track(player, "unlockZone", 1)
 	end
@@ -4274,14 +4318,39 @@ do
 				end
 				local prompt = Instance.new("ProximityPrompt")
 				prompt.Name = "UnlockPrompt"
-				prompt.ActionText = string.format("Unlock %s (%s 🍬)", def.title, short(def.cost))
-				prompt.ObjectText = "Zone gate"
-				prompt.HoldDuration = 0.4
+				prompt.ActionText = "Unlock " .. def.title .. ": " .. Config.gateBenefits(zoneId)
+				prompt.ObjectText = short(def.cost) .. " candy"
+				prompt.HoldDuration = 0.6
+				prompt.KeyboardKeyCode = Enum.KeyCode.E
 				prompt.MaxActivationDistance = 14
 				prompt.RequiresLineOfSight = false
 				prompt.Parent = wall
+				local holds = {}
+				local function near(player)
+					local _, root = aliveRoot(player)
+					return root
+						and (root.Position - wall.Position).Magnitude
+							<= prompt.MaxActivationDistance
+				end
+				prompt.PromptButtonHoldBegan:Connect(function(player)
+					if near(player) then
+						holds[player] = workspace:GetServerTimeNow()
+					end
+				end)
 				prompt.Triggered:Connect(function(player)
+					local started = holds[player]
+					holds[player] = nil
+					if
+						not started
+						or workspace:GetServerTimeNow() - started < 0.55
+						or not near(player)
+					then
+						return
+					end
 					unlockZone(player, zoneId)
+				end)
+				prompt.PromptButtonHoldEnded:Connect(function(player)
+					holds[player] = nil
 				end)
 			end
 			local sign = zone:FindFirstChild("GateSign")
@@ -7862,6 +7931,7 @@ do
 			end
 		end
 		player:SetAttribute("ZoneStamps", count)
+		player:SetAttribute("KingCrates", d.crates)
 		player:SetAttribute(
 			"ZoneProgress",
 			HttpService:JSONEncode({ quests = d.quests, stamps = d.stamps, owned = d.owned })
@@ -7936,7 +8006,7 @@ do
 				return (a:GetAttribute("Index") or 0) < (b:GetAttribute("Index") or 0)
 			end)
 			if plots[1] then
-				for i = #plots + 1, d.slots do
+				for i = #plots + 1, Config.Progression.castleSlots do
 					local p = plots[1]:Clone()
 					p:ClearAllChildren()
 					p:SetAttribute("Index", i)
@@ -7947,6 +8017,36 @@ do
 							* ((i - Config.Progression.baseSlots) * Config.Progression.slotSpacing)
 					p.Parent = patch
 					Bases.setupPlot(p)
+					table.insert(plots, p)
+				end
+				if patch:GetAttribute("SlotGeometry") ~= Config.Progression.castleSlots then
+					local soil = patch.Soil
+					local rows = Config.Progression.slotRows
+					local columns = math.ceil(Config.Progression.castleSlots / rows)
+					local footprint = math.max(plots[1].Size.X, plots[1].Size.Y, plots[1].Size.Z)
+					local stepX = math.min(
+						Config.Progression.slotSpacing,
+						(soil.Size.X - 2 * Config.Progression.slotMargin - footprint)
+							/ (columns - 1)
+					)
+					local stepZ = math.min(
+						Config.Progression.slotSpacing,
+						(soil.Size.Z - 2 * Config.Progression.slotMargin - footprint) / (rows - 1)
+					)
+					local height = soil.CFrame:PointToObjectSpace(plots[1].Position).Y
+					local rotation = plots[1].CFrame.Rotation
+					for i, p in plots do
+						p.CFrame = CFrame.new(
+							soil.CFrame:PointToWorldSpace(
+								Vector3.new(
+									(math.floor((i - 1) / rows) - (columns - 1) / 2) * stepX,
+									height,
+									((i - 1) % rows - (rows - 1) / 2) * stepZ
+								)
+							)
+						) * rotation
+					end
+					patch:SetAttribute("SlotGeometry", Config.Progression.castleSlots)
 				end
 			end
 			Bases.slotLook(
@@ -7958,7 +8058,7 @@ do
 			patch:SetAttribute("PenSlots", d.slots)
 			player:SetAttribute("PenSlots", d.slots)
 		end
-		player:SetAttribute("Unlock_Fuse", hasZone(player, "Zone2"))
+		player:SetAttribute("Unlock_Fuse", hasZone(player, "Zone3"))
 		player:SetAttribute("Unlock_Witch", hasZone(player, "Zone4"))
 		player:SetAttribute(
 			"Unlock_Haunt",
@@ -8152,7 +8252,7 @@ do
 		return true
 	end
 	function Progress.fuse(player)
-		if not isLoaded(player) or not hasZone(player, "Zone2") then
+		if not isLoaded(player) or not hasZone(player, "Zone3") then
 			return false
 		end
 		local groups = {}
@@ -8207,7 +8307,7 @@ do
 	Progress.witch = {}
 	Progress.raidWarnings = {}
 	function Progress.raidCheck()
-		if Purge.active() or state:GetAttribute("PurgeWarning") then
+		if Config.Raid.grace >= 1e9 or Purge.active() or state:GetAttribute("PurgeWarning") then
 			return 0
 		end
 		local warned = {}
@@ -8217,10 +8317,6 @@ do
 				warned[player] = true
 				count += 1
 				Progress.raidWarnings[player] = true
-				Remotes.announceEvent:FireClient(
-					player,
-					"Ghosts coming! Go home to protect your pen"
-				)
 			end
 		end
 		if count > 0 then
@@ -8432,7 +8528,7 @@ do
 				* (cfg.rarityWeights[1] + cfg.rarityWeights[2] + cfg.rarityWeights[3])
 			for i = 1, 3 do
 				value -= cfg.rarityWeights[i]
-				if value <= 0 then
+				if cfg.rarityWeights[i] > 0 and value <= 0 then
 					tier = i
 					break
 				end
@@ -8628,7 +8724,7 @@ do
 	label.FontFace = fontFace("title")
 	label.TextScaled = true
 	label.Text =
-		"KING NIGHT :00 / :20\n15 hits OR 3% damage = Boss pumpkin + 8 min candy\nRare 55% / Epic 33% / Legendary 10% / Mythic Kinglet 2%\n10th crate: Kinglet! Top 3: extra crate. MVP: cosmetic skin"
+		"KING FIGHT :00 / :20 / :40\n15 hits OR 3% damage = pet + smash-based candy\nEpic 70% / Legendary 27% / Mythic Kinglet 3%\nEvery 5th crate: Kinglet! Top 3: extra crate. MVP: cosmetic skin"
 	label.Parent = bb
 end
 
@@ -8781,6 +8877,7 @@ local function onPlayerAdded(player: Player)
 	-- Unlock flags before Loaded, so clients never announce a gate a returning player already had.
 	Unlock.refresh(player)
 	player:SetAttribute("Loaded", true)
+	Unlock.badge(player, "Welcome")
 	onboard(player, 1)
 	kingAddPlayer(player)
 	claimDaily(player)
@@ -9015,6 +9112,9 @@ do
 		return false
 	end
 	local function nextSlot(t)
+		if #Config.Purge.minutes == 0 then
+			return nil
+		end
 		local hour = math.floor(t / 3600) * 3600
 		for _, minute in Config.Purge.minutes do
 			if hour + minute * 60 > t then
@@ -9072,6 +9172,9 @@ do
 		entry.at, entry.position = t, root and root.Position
 	end
 	function Purge.start()
+		if #Config.Purge.minutes == 0 then
+			return false, "Purge disabled at launch"
+		end
 		if Purge.active() then
 			return false, "Purge already active"
 		end
@@ -9155,6 +9258,10 @@ do
 		end)
 	end
 	function Purge.tick()
+		if #Config.Purge.minutes == 0 and not Purge.active() then
+			state:SetAttribute("PurgeWarning", nil)
+			return
+		end
 		local t = workspace:GetServerTimeNow()
 		local ends = state:GetAttribute("PurgeEnds")
 		if ends then
@@ -9472,6 +9579,9 @@ do
 		end
 	end)
 	Remotes.teleportFunction.OnServerInvoke = function(player, target)
+		if not hasZone(player, "Zone2") then
+			return false, "Unlock the first gate to teleport"
+		end
 		if target ~= "My Pen" and target ~= "Zone Gate" and target ~= "Shop" then
 			return false, "Unknown target"
 		end

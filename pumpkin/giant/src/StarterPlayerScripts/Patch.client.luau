@@ -804,6 +804,20 @@ do
 		if spookyLine.Text ~= spookyText then
 			spookyLine.Text = spookyText
 		end
+		kingLine.Visible = unlocked("King")
+		kingLine.Text = "KINGLET in "
+			.. (Config.KingNight.pity - (player:GetAttribute("KingCrates") or 0) % Config.KingNight.pity)
+			.. " crates"
+		spookyLine.Visible = false
+		local kingAt = state:GetAttribute("KingWakesAt") or math.huge
+		local nextNest = phase == "Day" and ends or ends + Config.DayLength
+		if unlocked("King") and phase == "BloodMoon" then
+			label.Text = "KING FIGHT " .. clockText(left)
+		elseif unlocked("King") and kingAt < nextNest then
+			label.Text = "KING FIGHT " .. clockText(math.max(0, kingAt - now))
+		else
+			label.Text = "NESTS REFILL " .. clockText(math.max(0, nextNest - now))
+		end
 		meterRing.Transparency = 1
 	end
 	task.spawn(function()
@@ -1046,8 +1060,7 @@ end
 local function refreshCarry()
 	local n = player:GetAttribute("Carry") or 0
 	local cap = Config.BaseCarry
-		+ (player:GetAttribute("Up_Stack") or 0)
-		+ (player:GetAttribute("Pass_BigStack") and Config.BigStackCarry or 0)
+		+ math.min(Config.Upgrades.Stack.max, player:GetAttribute("Up_Stack") or 0)
 	local id = player:GetAttribute("Tool") or Config.StartTool
 	local name = id
 	for _, tool in Config.Tools do
@@ -1072,7 +1085,7 @@ candyValue.Changed:Connect(function()
 		candyTick(gain)
 	end
 end)
-for _, attr in { "Carry", "CarryValue", "Up_Stack", "Pass_BigStack" } do
+for _, attr in { "Carry", "CarryValue", "Up_Stack" } do
 	player:GetAttributeChangedSignal(attr):Connect(refreshCarry)
 end
 refreshCandy(false)
@@ -1594,7 +1607,7 @@ end
 local upgradeCards: { [string]: GridCard } = {}
 local refreshUpgradeCards -- forward: a failed buy shows its reason, then refreshes
 -- Sharp Blade (Mallet) is cut; Lucky Swing shows once its gate opens.
-local UPGRADE_ORDER = { "Boots", "Stack", "Lucky" }
+local UPGRADE_ORDER = { "Boots" }
 local UPGRADE_COLOR = {
 	Boots = Color3.fromRGB(255, 210, 65),
 	Stack = Color3.fromRGB(255, 150, 50),
@@ -1620,7 +1633,7 @@ function refreshUpgradeCards()
 	for id, gc in upgradeCards do
 		local info = Config.Upgrades[id]
 		local level = player:GetAttribute("Up_" .. id) or 0
-		gc.frame.Visible = id ~= "Lucky" or unlocked("LuckySwing")
+		gc.frame.Visible = not info.cut and (id ~= "Lucky" or unlocked("LuckySwing"))
 		gc.info.Text = info.text
 			.. "\n"
 			.. string.rep("●", level)
@@ -1801,21 +1814,6 @@ do
 	local function fresh(): boolean
 		return loadedAt ~= nil and os.clock() - loadedAt > 3
 	end
-	player:GetAttributeChangedSignal("Unlock_PlayerSteal"):Connect(function()
-		if
-			unlocked("PlayerSteal")
-			and fresh()
-			and (state:GetAttribute("PurgeEnds") or 0) > workspace:GetServerTimeNow()
-		then
-			banner(
-				"Ghosts and players can raid you now!",
-				"Lock your Base at its sign post!",
-				3.5,
-				Color3.fromRGB(200, 140, 255)
-			)
-			play(Config.Sounds.Bonk, 0.6, 0.9)
-		end
-	end)
 	for name, text in
 		{
 			Sell = "The Witch buys pumpkins now! Pick some up from your base and sell them.",
@@ -2119,7 +2117,7 @@ local SHOP_ITEMS: { ShopItem } = {
 		kind = "pass",
 		name = "DoubleCandy",
 		title = "2x Candy",
-		text = "Double candy from every sale",
+		text = "Double candy from pets, sales and smashing",
 		color = Color3.fromRGB(255, 120, 210),
 	},
 	{
@@ -2131,13 +2129,6 @@ local SHOP_ITEMS: { ShopItem } = {
 			math.floor(Config.VipSellBonus * 100 + 0.5)
 		),
 		color = Color3.fromRGB(255, 205, 60),
-	},
-	{
-		kind = "pass",
-		name = "BigStack",
-		title = "Big Stack",
-		text = string.format("Carry %d more pumpkins", Config.BigStackCarry),
-		color = Color3.fromRGB(255, 150, 50),
 	},
 	{
 		kind = "product",
@@ -2425,6 +2416,12 @@ remotes:WaitForChild("IndexNew").OnClientEvent:Connect(function(keys: { string }
 end)
 
 remotes:WaitForChild("Announce").OnClientEvent:Connect(function(text: string)
+	if text == "PUMPKIN KING RISES! PET + LOOT!" and not unlocked("King") then
+		return
+	end
+	if string.sub(text, 1, 9) == "THE PURGE" and #Config.Purge.minutes == 0 then
+		return
+	end
 	if string.sub(text, 1, 9) == "THE PURGE" then
 		banner(
 			text,
@@ -2438,10 +2435,7 @@ remotes:WaitForChild("Announce").OnClientEvent:Connect(function(text: string)
 				play(Config.Sounds.Roar, i % 2 == 0 and 1.3 or 0.65, 0.6)
 			end)
 		end
-	elseif
-		text == "Ghosts coming! Lock base or go home"
-		or text == "PUMPKIN KING RISES! PET + LOOT!"
-	then
+	elseif text == "PUMPKIN KING RISES! PET + LOOT!" then
 		banner(text, nil, 3, Color3.fromRGB(255, 80, 70))
 		play(Config.Sounds.Roar, 0.6, 1)
 	else
@@ -3225,10 +3219,10 @@ do
 
 			play(Config.Sounds.Brew, 0.5, 0.8)
 		elseif phase == "BloodMoon" and unlocked("King") then
-			toast("KING NIGHT!", "Pet + loot! Join the raid!")
+			toast("KING FIGHT!", "Pet + loot! Meet the King at the throne!")
 			play(Config.Sounds.Brew, 0.4, 1)
 		elseif previous == "Midnight" and unlocked("PlayerSteal") then
-			toast("Dawn!", "The ghosts flee. Back to farming!")
+			toast("Nests restocked!", "Steal a fresh pumpkin!")
 		end
 	end
 	state:GetAttributeChangedSignal("Phase"):Connect(onPhase)
@@ -3808,7 +3802,9 @@ remotes
 	end)
 
 remotes:WaitForChild("Stolen").OnClientEvent:Connect(function()
-	hint("👻 A ghost got away with your pumpkin. Bonk them before they fly off!")
+	if Config.Raid.grace < 1e9 then
+		hint("Recover your stolen pet!")
+	end
 end)
 
 remotes
@@ -4051,10 +4047,9 @@ do
 				if prompt then
 					prompt.ActionText = "Unlock "
 						.. def.title
-						.. " ("
-						.. short(price)
-						.. " candy)"
-						.. (discount and " -25%" or "")
+						.. ": "
+						.. Config.gateBenefits(zoneId)
+					prompt.ObjectText = short(price) .. " candy" .. (discount and " -25%" or "")
 				end
 				if prompt and prompt.Enabled == open then
 					prompt.Enabled = not open
@@ -4320,8 +4315,9 @@ do
 	end)
 	local function refreshQuests(root)
 		questToggle.Visible = false
-		if anyPanelOpen() then
+		if anyPanelOpen() or not ZoneView.has("Zone3") then
 			questPanel.Visible = false
+			return
 		end
 		local ok, data =
 			pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("ZoneProgress") or "{}")
@@ -4754,6 +4750,7 @@ do
 	end
 
 	-- Carrying always owns the objective; otherwise choose an affordable progression goal.
+	local touredZone = nil
 	local function objective(data, root: BasePart, soil: BasePart): (string, string, Vector3?)
 		if (player:GetAttribute("Carry") or 0) > 0 then
 			local delta = root.Position - soil.Position
@@ -4763,8 +4760,31 @@ do
 				soil.Position
 		end
 		local zone = zoneTarget(root.Position) or soil.Position
-		if data.tutorial and (data.step or 1) == 1 then
-			return "Smash pumpkins!", "Collect candy for your first scythe", zone
+		local arrived = player:GetAttribute("ObjectiveZone")
+		local def = arrived and Config.Zones[arrived]
+		if def and ZoneView.has(arrived) and touredZone ~= arrived then
+			if root.Position.Z < def.zMin + 20 then
+				local nest = hoardSpot(arrived)
+				return "Explore " .. def.title .. "!",
+					"Steal a new pet",
+					nest or ZoneView.gate(arrived)
+			end
+			touredZone = arrived
+		end
+		if data.tutorial then
+			local step = data.step or 1
+			if step <= 2 then
+				local nest = hoardSpot("Zone1")
+				return step == 1 and "Steal a glowing pumpkin!" or "Place it in your pen!",
+					step == 1 and "Hold E at the nest" or "Your pumpkin hatches in 2 seconds",
+					step == 1 and nest or soil.Position
+			elseif step == 3 then
+				return "Smash pumpkins for 50 candy!", "Swing your scythe", zone
+			elseif step == 4 then
+				return "Buy the Iron Scythe!", "150 candy", stallPosition("Seeds")
+			else
+				return "Unlock the Graveyard!", "Hold E at the gate", ZoneView.gate("Zone2")
+			end
 		end
 		local owned = {}
 		for id in string.gmatch(player:GetAttribute("Tools") or "", "[^,]+") do
@@ -6356,6 +6376,37 @@ do
 	end)
 end
 
+-- Economy progress is view-only; prices and pity come from server-authored state.
+do
+	local gateLabel = textLabel(statsFrame, "", Color3.new(1, 1, 1))
+	gateLabel.Name = "NextGate"
+	gateLabel.Position = UDim2.new(0, 0, 0, -30)
+	gateLabel.Size = UDim2.new(1, 0, 0, 20)
+	gateLabel.TextXAlignment = Enum.TextXAlignment.Left
+	local bar = Instance.new("Frame")
+	bar.Name = "GateProgress"
+	bar.Position = UDim2.new(0, 0, 0, -8)
+	bar.Size = UDim2.new(1, 0, 0, 4)
+	bar.BackgroundColor3 = Config.UI.body
+	bar.BorderSizePixel = 0
+	bar.Parent = statsFrame
+	local fill = Instance.new("Frame")
+	fill.BackgroundColor3 = MONEY
+	fill.BorderSizePixel = 0
+	fill.Parent = bar
+	RunService.Heartbeat:Connect(function()
+		local zone = ZoneView.nextLocked()
+		gateLabel.Visible = zone ~= nil
+		bar.Visible = zone ~= nil
+		if zone then
+			local price = ZoneView.gateCost(zone)
+			local progress = math.clamp(candyValue.Value / math.max(1, price), 0, 1)
+			gateLabel.Text = Config.Zones[zone].title .. " " .. math.floor(progress * 100) .. "%"
+			fill.Size = UDim2.fromScale(progress, 1)
+		end
+	end)
+end
+
 -- Zone stamps and quests extend the existing Index book, leaving two HUD pills.
 do
 	local rows = {}
@@ -6409,23 +6460,8 @@ do
 	end
 	refresh()
 end
--- King join, results and status icons use the existing event/Center queue.
+-- King results and status icons use the existing event/Center queue; entry is the throne ring.
 do
-	local join = button(gui, "JOIN RAID", Color3.fromRGB(220, 50, 60))
-	join.AnchorPoint = Vector2.new(1, 1)
-	join.Position = UDim2.fromScale(0.68, 0.58)
-	join.Size = UDim2.fromScale(0.13, 0.05)
-	join.Activated:Connect(function()
-		remotes:WaitForChild("KingJoin"):FireServer()
-	end)
-	local function refreshJoin()
-		join.Visible = state:GetAttribute("KingWarning") == true
-			or state:GetAttribute("Phase") == "BloodMoon"
-	end
-	for _, attr in { "KingWarning", "Phase" } do
-		state:GetAttributeChangedSignal(attr):Connect(refreshJoin)
-	end
-	refreshJoin()
 	local icons = {}
 	local function icon(who)
 		local character = who.Character
@@ -6626,7 +6662,13 @@ do
 		then
 			return Enum.ContextActionResult.Pass
 		end
-		if (player:GetAttribute("Tool") or Config.StartTool) == Config.StartTool then
+		local tier = 1
+		for i, tool in Config.Tools do
+			if tool.id == player:GetAttribute("Tool") then
+				tier = i
+			end
+		end
+		if tier < Config.Dash.tier then
 			return Enum.ContextActionResult.Pass
 		end
 		dashPending = true
@@ -6649,7 +6691,16 @@ do
 	)
 	RunService.Heartbeat:Connect(function()
 		local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-		local unlockedDash = (player:GetAttribute("Tool") or Config.StartTool) ~= Config.StartTool
+		local unlockedDash = false
+		for i, tool in Config.Tools do
+			if tool.id == player:GetAttribute("Tool") then
+				unlockedDash = i >= Config.Dash.tier
+			end
+		end
+		teleport.Visible = ZoneView.has("Zone2")
+		if not teleport.Visible then
+			travel.Visible = false
+		end
 		local dashButton = ContextActionService:GetButton("ScytheDash")
 		if dashButton then
 			dashButton.Visible = touch

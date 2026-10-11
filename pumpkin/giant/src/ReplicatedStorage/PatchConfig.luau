@@ -444,7 +444,7 @@ local Config = {
 	CarveFastSeconds = 8,
 	CarveFastOrder = 1,
 	-- During a player's first CarveNewUntil seconds of playtime every type carves in CarveNewSeconds.
-	CarveNewSeconds = 8,
+	CarveNewSeconds = 2,
 	CarveNewUntil = 1800,
 	JackHop = 3,
 
@@ -506,10 +506,10 @@ local Config = {
 	-- Stealing and locks. Times are seconds.
 	StealHold = 1.0,
 	Purge = {
-		minutes = { 10, 50 },
+		minutes = {},
 		warning = 30,
 		seconds = 120,
-		grace = 900,
+		grace = 1800,
 		idle = 45,
 		hold = 2,
 		returnSeconds = 10,
@@ -632,7 +632,7 @@ local Config = {
 			max = 5,
 			prices = { 750, 7500, 75000, 750000, 7500000 },
 		},
-		Stack = { title = "Upgrade your Base!", text = "Carry +1", base = 40, max = 10 },
+		Stack = { title = "Upgrade your Base!", text = "Carry +1", base = 40, max = 1, cut = true },
 		-- Cut (two ways to buy damage): not sold; its saved level is kept but has no effect.
 		Mallet = {
 			title = "Sharp Blade",
@@ -642,6 +642,7 @@ local Config = {
 			cut = true,
 		},
 		Lucky = {
+			cut = true,
 			title = "Lucky Swing",
 			text = "+5% chance of a rarer pumpkin",
 			base = 120,
@@ -651,7 +652,7 @@ local Config = {
 	SharpBonus = 0.1,
 	LuckyChance = 0.05,
 
-	-- Witch's Orders. B = income of the player's best pumpkin type ever found x OrderIncomeSeconds.
+	-- Witch's Orders. Candy rewards pay 30-60 seconds of current pen income.
 	OrderIncomeSeconds = 60,
 	OrderRefresh = 1200,
 	RotatingCount = 1,
@@ -659,24 +660,10 @@ local Config = {
 	-- ground arrows point: zone (nearest wild pumpkin), patch (your base), place (your base while
 	-- carrying, else the zone), steal (another base), cauldron, witch, tools (the tool stall),
 	-- upgrades (the upgrade stall), king, gate (the next locked zone's gate), hoard (the Zone1 Hoard
-	-- nest). Saved progress counts steps (orders save version 3; older saves are mapped onto these
+	-- nest). Saved progress counts steps (orders save version 5; older saves are mapped onto these
 	-- 5 steps by the server). After the tutorial: the Graveyard gate, then one rotating order at a
 	-- time, only from unlocked systems.
 	TutorialOrders = {
-		{
-			stat = "farmCandy",
-			need = 30,
-			text = "Smash pumpkins!",
-			target = "zone",
-			reward = { candy = 20 },
-		},
-		{
-			stat = "buyTool",
-			need = 1,
-			text = "Buy the Iron Scythe!",
-			target = "tools",
-			reward = {},
-		},
 		{
 			stat = "hoardSteal",
 			need = 1,
@@ -686,11 +673,24 @@ local Config = {
 		},
 		{ stat = "hatch", need = 1, text = "Place it in your pen!", target = "place", reward = {} },
 		{
-			stat = "penFilled",
-			need = 2,
-			reach = true,
-			text = "Fill your pen %s",
-			target = "hoard",
+			stat = "farmCandy",
+			need = 50,
+			text = "Smash pumpkins for 50 candy!",
+			target = "zone",
+			b = 3,
+		},
+		{
+			stat = "buyTool",
+			need = 1,
+			text = "Buy the Iron Scythe!",
+			target = "tools",
+			reward = {},
+		},
+		{
+			stat = "unlockZone",
+			need = 1,
+			text = "Unlock the Graveyard!",
+			target = "gate",
 			reward = { title = "Patch Keeper" },
 		},
 	},
@@ -857,14 +857,12 @@ local Config = {
 	-- turns its effect off (all 0 hides the SHOP button). Prices are set in the dashboard; the
 	-- Robux in the comments are suggestions.
 	GamePasses = {
-		-- x2 candy from every sale to the Witch and from base income. Suggested 199 R$.
+		-- x2 candy from smashing, sales and base income. Suggested 199 R$.
 		DoubleCandy = 0,
 		-- +20% sell value and income, a "VIP" tag over your head and a gold name. Suggested 249 R$.
 		VIP = 0,
-		-- Carry 3 more pumpkins. Suggested 99 R$.
-		BigStack = 0,
 	},
-	-- B = the order value unit (best type's income x OrderIncomeSeconds), so packs grow with the farm.
+	-- B = current pen income x OrderIncomeSeconds, so packs grow with the farm.
 	Products = {
 		-- Candy Bag: CandySmallB x B candy. Suggested 25 R$.
 		CandySmall = 0,
@@ -873,7 +871,7 @@ local Config = {
 	},
 	DoubleCandyMult = 2,
 	VipSellBonus = 0.2,
-	BigStackCarry = 3,
+
 	CandySmallB = 30,
 	CandyBigB = 200,
 
@@ -912,9 +910,9 @@ Config.Progression = {
 	questSmashes = 50,
 	questSteals = 1,
 	gateDiscount = 0.25,
-	baseSlots = 6,
-	woodsSlots = 8,
-	castleSlots = 10,
+	baseSlots = 8,
+	woodsSlots = 10,
+	castleSlots = 12,
 	fuseCount = 3,
 	fuseWeight = 1.5,
 	shinyChance = 0.1,
@@ -929,14 +927,14 @@ Config.Progression = {
 	rebirthBonus = 0.25,
 	rebirthCap = 10,
 	activity = 0.5,
-	arrivalMinutes = { 0, 5, 15, 30, 50, 80, 120 },
+	arrivalMinutes = { 0, 3, 10, 18, 30, 48, 75 },
 	promptRange = 14,
 	slotSpacing = 8,
-	slotRows = 2,
-	slotMargin = 3,
+	slotRows = 3,
+	slotMargin = 1,
 }
 Config.Raid = {
-	grace = 900,
+	grace = 1e9,
 	warning = 30,
 	homeRadius = 60,
 	idle = 45,
@@ -969,11 +967,11 @@ Config.KingNight = {
 	warning = 60,
 	hits = 15,
 	damageShare = 0.03,
-	farmSeconds = 480,
-	pity = 10,
+	farmSeconds = 1800,
+	pity = 5,
 	finisherBonus = 0.05,
 	consolation = 0.25,
-	rarityWeights = { 55, 33, 10, 2 },
+	rarityWeights = { 0, 70, 27, 3 },
 	rewardSeeds = { "Ghost", "CandyCorn", "Inferno", "KingletSeed" },
 	weakEvery = 20,
 	lackeysPerPlayer = 2,
@@ -1123,22 +1121,31 @@ do
 	})
 end
 -- Retain legacy IDs; incomes are rebalanced below and older saves receive compensation.
+-- Small pumpkins take 2-3 normal hits with the recommended zone scythe.
+-- Candy remains the audit ladder; damage upgrades reduce time per reward.
+Config.Farm.zoneTools = { 2, 3, 4, 5, 6, 7, 7 }
 local ladder = {
 	{ "Orange", "Sunny", "R20 tutorial" },
-	{ "Ghost", "Shadow", "Fuse Machine" },
-	{ "Moon", "MothSeed", "Pen slots 7-8" },
+	{ "Ghost", "Shadow", "New pets" },
+	{ "Moon", "MothSeed", "Pen slots 9-10 + Fuse" },
 	{ "Crystal", "ToadSeed", "Witch Merchant" },
-	{ "Golden", "CandyCorn", "Pen slots 9-10" },
+	{ "Golden", "CandyCorn", "Pen slots 11-12" },
 	{ "Inferno", "GummySeed", "Gold mutation" },
 	{ "KingSeed", "DragonSeed", "Rebirth" },
 }
 for i, zoneId in Config.ZoneOrder do
 	local z = Config.Zones[zoneId]
 	z.pets = { ladder[i][1], ladder[i][2] }
+	z.candy = ({ 8, 80, 250, 1200, 6000, 30000, 150000 })[i]
+	z.hp = Config.Tools[Config.Farm.zoneTools[i]].damage * 2.5
 	z.unlock = ladder[i][3]
 	z.arrival = Config.Progression.arrivalMinutes[i]
 end
-Config.Unlocks.King = 0
+Config.Unlocks.King = 600
+Config.Badges = { Welcome = 0, FirstSteal = 0, FirstHatch = 0 }
+function Config.gateBenefits(zoneId)
+	return (zoneId == "Zone3" or zoneId == "Zone5") and "+2 pen slots, new pets" or "new pets"
+end
 Config.KingHpPerDamage = 30
 Config.KingHpPerPlayer = 200
 Config.KingSeconds = 300
@@ -1197,8 +1204,8 @@ for _, seed in Config.Seeds do
 	Config.Economy.legacyIncome[seed.id] = seed.income
 	seed.income = Config.Economy.nestIncome[seed.id] or seed.income
 end
--- Calibrated by scene/econ-sim.luau; keep the R20 first gate at 1,000.
-Config.Economy.gateCosts = { 1000, 318000, 3064000, 18507000, 138275000, 785290000 }
+-- Launch audit gate ladder; scene/econ-sim.luau verifies arrivals without changing these targets.
+Config.Economy.gateCosts = { 2500, 100000, 900000, 9000000, 80000000, 540000000 }
 for i, cost in Config.Economy.gateCosts do
 	Config.Zones[Config.ZoneOrder[i + 1]].cost = cost
 end
@@ -1234,7 +1241,7 @@ end
 -- R24: shared movement/size rules; visual sizes never change income.
 Config.Movement = { sprintMult = 1.25, bootStep = 2, cap = 26, requestInterval = 0.1 }
 Config.Dash = {
-	tier = 2,
+	tier = 3,
 	distance = 16,
 	cooldown = 5,
 	clearance = 2,
