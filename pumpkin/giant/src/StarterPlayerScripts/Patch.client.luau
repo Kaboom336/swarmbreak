@@ -749,10 +749,7 @@ do
 		local ends = state:GetAttribute("PhaseEnds") or 0
 		local left = math.max(0, ends - now)
 		label.Text = phase == "BloodMoon" and ("KING NIGHT " .. clockText(left))
-			or (
-				(phase ~= "Day" and utf8.char(9728) .. " in " or utf8.char(9790) .. " in ")
-				.. clockText(left)
-			)
+			or ((phase ~= "Day" and "Day in " or "Midnight in ") .. clockText(left))
 		if (state:GetAttribute("PurgeEnds") or 0) > now then
 			label.Text = "THE PURGE " .. clockText(state:GetAttribute("PurgeEnds") - now)
 		elseif state:GetAttribute("PurgeWarning") then
@@ -962,7 +959,7 @@ do
 			+ candyBig.TextBounds.X
 			+ 8
 		) / math.max(1, statsFrame.AbsoluteSize.X)
-		plus.Position = UDim2.fromScale(right, 0.1)
+		plus.Position = UDim2.fromScale(right, 0.45) -- on the candy line, below the carry line
 		plus.Size = UDim2.fromScale(0.45, 0.45)
 		plus.ZIndex = 8
 		local s = plus:FindFirstChildOfClass("UIStroke") :: UIStroke
@@ -973,7 +970,7 @@ do
 		scale.Parent = plus
 		TweenService:Create(scale, TweenInfo.new(0.22, Enum.EasingStyle.Back), { Scale = 1 }):Play()
 		local rise = TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		TweenService:Create(plus, rise, { Position = plus.Position - UDim2.fromOffset(0, 18) })
+		TweenService:Create(plus, rise, { Position = plus.Position + UDim2.fromOffset(16, 0) })
 			:Play()
 		local fade =
 			TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.85)
