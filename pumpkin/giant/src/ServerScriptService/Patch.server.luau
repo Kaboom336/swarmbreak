@@ -4641,7 +4641,7 @@ do
 		title.FontFace = Helpers.fontFace("title")
 		title.TextScaled = true
 		title.TextColor3 = def.color
-		title.Text = def.title .. "\n2 new pets + " .. def.unlock
+		title.Text = def.title
 		title.Parent = bb
 		local titleStroke = Instance.new("UIStroke")
 		titleStroke.Thickness = 4
@@ -8245,7 +8245,7 @@ do
 			Remotes.announceEvent:FireClient(
 				player,
 				zone == "Zone7" and "Zone quest complete! Rebirth unlocked"
-					or "Zone quest complete! Next gate -25%"
+					or "Zone quest complete! Next gate 25% off"
 			)
 		end
 	end

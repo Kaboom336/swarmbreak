@@ -220,23 +220,16 @@ local function burst(
 	emitter:Emit(math.max(1, math.floor(count * (mobile and 0.5 or 1))))
 end
 local function floatText(at: Vector3, text: string, color: Color3, big: boolean?)
-	if text:sub(1, 1) == "+" and not text:find("/s") then
-		return
-	end
-	if UI.floatAnchor then
-		UI.floatAnchor:Destroy()
-	end
 	local anchor = Instance.new("Part")
 	anchor.Anchored = true
 	anchor.CanCollide = false
 	anchor.CanQuery = false
 	anchor.Transparency = 1
 	anchor.Size = Vector3.one
-	anchor.CFrame = CFrame.new(at)
+	anchor.CFrame = CFrame.new(at + Vector3.new(math.random() * 1.6 - 0.8, 0, 0))
 	anchor.Parent = workspace
-	UI.floatAnchor = anchor
 	local bb = Instance.new("BillboardGui")
-	bb.Size = UDim2.fromOffset(big and 260 or 200, big and 60 or 46)
+	bb.Size = UDim2.fromOffset(big and 360 or 300, big and 96 or 80)
 	bb.AlwaysOnTop = true
 	bb.LightInfluence = 0
 	bb.MaxDistance = 60
@@ -245,25 +238,40 @@ local function floatText(at: Vector3, text: string, color: Color3, big: boolean?
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.fromScale(1, 1)
 	label.FontFace = fontFace("small")
-	label.TextScaled = true
+	label.TextScaled = false
+	label.TextSize = big and 56 or 40
 	label.TextColor3 = color
 	label.Text = Palette.uiText(text)
 	label.Parent = bb
 	local stroke = Instance.new("UIStroke")
-	stroke.Thickness = 2.5
-	stroke.Color = Color3.fromRGB(30, 12, 40)
+	stroke.Thickness = big and 7 or 5
+	stroke.Color = Color3.new(0, 0, 0)
+	stroke.LineJoinMode = Enum.LineJoinMode.Round
 	stroke.Parent = label
-	local info = TweenInfo.new(1.6, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+	local scale = Instance.new("UIScale")
+	scale.Scale, scale.Parent = 0.5, label
+	local pop = Services.TweenService:Create(
+		scale,
+		TweenInfo.new(0.12, Enum.EasingStyle.Back),
+		{ Scale = 1.25 }
+	)
+	pop:Play()
+	pop.Completed:Once(function()
+		Services.TweenService:Create(scale, TweenInfo.new(0.1), { Scale = 1 }):Play()
+	end)
+	local info = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 	Services.TweenService
 		:Create(
 			anchor,
-			TweenInfo.new(1.6, Enum.EasingStyle.Quad),
-			{ CFrame = anchor.CFrame + Vector3.new(0, 6, 0) }
+			TweenInfo.new(1, Enum.EasingStyle.Quad),
+			{ CFrame = anchor.CFrame + Vector3.new(0, 7, 0) }
 		)
 		:Play()
-	Services.TweenService:Create(label, info, { TextTransparency = 1 }):Play()
-	Services.TweenService:Create(stroke, info, { Transparency = 1 }):Play()
-	task.delay(1.7, function()
+	task.delay(0.6, function()
+		Services.TweenService:Create(label, info, { TextTransparency = 1 }):Play()
+		Services.TweenService:Create(stroke, info, { Transparency = 1 }):Play()
+	end)
+	task.delay(1.05, function()
 		anchor:Destroy()
 	end)
 end
@@ -602,7 +610,8 @@ function UI.fitText(label, fraction)
 		)
 		local outline = label:FindFirstChildOfClass("UIStroke")
 		if outline then
-			outline.Thickness = math.max(1.5 / uiScale.Scale, h * 0.0028)
+			outline.Thickness = math.max(2.5, h * 0.006)
+			outline.LineJoinMode = Enum.LineJoinMode.Round
 		end
 	end
 	local resize = gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
@@ -622,7 +631,7 @@ local function textLabel(parent: Instance, text: string, color: Color3, font: st
 	label.Text = Palette.uiText(text)
 	label.Parent = parent
 	local s = Instance.new("UIStroke")
-	s.Thickness = math.max(1.5, gui.AbsoluteSize.Y * 0.0028)
+	s.Thickness = math.max(2.5, gui.AbsoluteSize.Y / uiScale.Scale * 0.006)
 	s.LineJoinMode = Enum.LineJoinMode.Round
 	s.Color = Config.UI.Tokens.ink
 	s.Parent = label
@@ -643,6 +652,26 @@ function UI.tween(target, seconds, goals, style, direction)
 	return tween
 end
 Palette.OUTLINE = Config.UI.Tokens.ink
+function UI.play(kind)
+	local sounds = Config.Sounds
+	if kind == "hover" then
+		if os.clock() - (UI.hoverAt or 0) < 0.1 then
+			return
+		end
+		UI.hoverAt = os.clock()
+		play(sounds.Click, 1.25, 0.20)
+	elseif kind == "open" or kind == "close" then
+		play(sounds.Whoosh, kind == "open" and 1.25 or 0.85, 0.6)
+	elseif kind == "buy" then
+		play(sounds.Buy, 1, 0.7)
+		play(sounds.Coin, 1.1, 0.6)
+	elseif kind == "error" then
+		play(sounds.Bonk, 0.6, 0.5)
+	else
+		play(sounds.Click, 1 + math.random() * 0.06 - 0.03, 0.7)
+	end
+end
+FarmFX.groups.UI.Volume = 0.7
 local function chunky(b: GuiButton): (Frame, UIStroke)
 	b.AutoButtonColor, b.BackgroundTransparency, b.BorderSizePixel = false, 1, 0
 	local lip = Instance.new("Frame")
@@ -658,7 +687,33 @@ local function chunky(b: GuiButton): (Frame, UIStroke)
 		UDim.new(Config.UI.Tokens.corners.button, 0);
 	(lip:FindFirstChildOfClass("UICorner") :: UICorner).CornerRadius =
 		UDim.new(Config.UI.Tokens.corners.button, 0)
-	local outline = stroke(face, 2.5)
+	local outline = stroke(face, 3)
+	stroke(lip, 3)
+	local shadow = Instance.new("Frame")
+	shadow.Name, shadow.Size, shadow.Position =
+		"ButtonShadow", UDim2.fromScale(1, 1), UDim2.new(0, 0, 0, 6)
+	shadow.BackgroundColor3, shadow.BackgroundTransparency, shadow.BorderSizePixel =
+		Color3.new(0, 0, 0), 0.55, 0
+	shadow.ZIndex, shadow.Parent = b.ZIndex, b
+	corner(shadow, 8)
+	local function fitLip()
+		local h = gui.AbsoluteSize.Y / uiScale.Scale
+		face.Size = UDim2.new(
+			1,
+			0,
+			1,
+			-math.min(
+				b.AbsoluteSize.Y * 0.25,
+				h * (b:GetAttribute("PriceButton") and 0.008 or 0.012)
+			)
+		)
+		shadow.Position = UDim2.fromOffset(0, h * 0.006)
+	end
+	b:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitLip)
+	b:GetAttributeChangedSignal("PriceButton"):Connect(fitLip)
+	fitLip()
+	shadow.LayoutOrder = -1
+	lip.ZIndex, face.ZIndex = b.ZIndex + 1, b.ZIndex + 2
 	local gradient = Instance.new("UIGradient")
 	gradient.Color, gradient.Rotation, gradient.Parent =
 		ColorSequence.new(Color3.new(1, 1, 1), Color3.new(0.8, 0.8, 0.8)), 90, face
@@ -674,6 +729,7 @@ local function chunky(b: GuiButton): (Frame, UIStroke)
 		lip.BackgroundColor3 = b.BackgroundColor3 == tokens.go and tokens.goLip
 			or b.BackgroundColor3 == tokens.info and tokens.infoLip
 			or b.BackgroundColor3 == tokens.stop and tokens.stopLip
+			or b.BackgroundColor3 == tokens.good and tokens.goodLip
 			or tokens.offLip
 	end
 	b:GetPropertyChangedSignal("BackgroundColor3"):Connect(sync)
@@ -681,9 +737,16 @@ local function chunky(b: GuiButton): (Frame, UIStroke)
 	local scale = Instance.new("UIScale")
 	scale.Parent = b
 	b.MouseEnter:Connect(function()
+		UI.play("hover")
+		UI.tween(
+			face,
+			0.1,
+			{ BackgroundColor3 = b.BackgroundColor3:Lerp(Color3.new(1, 1, 1), 0.08) }
+		)
 		UI.tween(scale, 0.12, { Scale = 1.06 }, Enum.EasingStyle.Back)
 	end)
 	b.MouseLeave:Connect(function()
+		UI.tween(face, 0.1, { BackgroundColor3 = b.BackgroundColor3 })
 		UI.tween(scale, 0.20, { Scale = 1 }, Enum.EasingStyle.Back)
 		UI.tween(face, 0.20, { Position = UDim2.new() })
 	end)
@@ -696,14 +759,24 @@ local function chunky(b: GuiButton): (Frame, UIStroke)
 		UI.tween(face, 0.20, { Position = UDim2.new() })
 	end)
 	b.Activated:Connect(function()
-		play(Config.Sounds.Click, 1, 0.35)
+		if b:GetAttribute("CannotAfford") then
+			UI.play("error")
+			UI.tween(b, 0.06, { Rotation = 3 })
+			task.delay(0.06, function()
+				if b.Parent then
+					UI.tween(b, 0.14, { Rotation = 0 })
+				end
+			end)
+		elseif b.Name ~= "Close" then
+			UI.play("click")
+		end
 	end)
 	return face, outline
 end
 local function makeButton(parent: Instance, text: string, color: Color3): TextButton
 	local b = Instance.new("TextButton")
 	b.FontFace = fontFace("button")
-	b.TextScaled = true
+	b.TextScaled = false
 	b.TextColor3 = Color3.fromRGB(255, 255, 255)
 	b.TextTransparency = 1
 	b.BackgroundColor3 = color
@@ -715,7 +788,7 @@ local function makeButton(parent: Instance, text: string, color: Color3): TextBu
 	label.Name = "Label"
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.fromScale(1, 1)
-	label.ZIndex = b.ZIndex + 2
+	label.ZIndex = b.ZIndex + 4
 	label.FontFace = b.FontFace
 	label.TextScaled = true
 	label.Parent = b
@@ -910,12 +983,18 @@ function UI.icon(parent, id)
 		parent.ZIndex + 2
 	)
 	root.BackgroundTransparency = 1
+	root.Size = UDim2.fromScale(1, 1)
+	root.ClipsDescendants = true
 	root.AnchorPoint, root.Position = Vector2.new(0.5, 0.5), UDim2.fromScale(0.5, 0.5)
 	local aspect = Instance.new("UIAspectRatioConstraint")
 	aspect.AspectRatio, aspect.AspectType, aspect.Parent = 1, Enum.AspectType.FitWithinMaxSize, root
 	local function piece(x, y, w, h, color, angle)
 		local part = UI.box(root, "Part", UDim2.fromScale(x, y), UDim2.fromScale(w, h), color)
 		part.Rotation = angle or 0
+		stroke(part, 2)
+		local gloss =
+			UI.box(part, "Highlight", UDim2.new(), UDim2.fromScale(1, 0.20), Color3.new(1, 1, 1))
+		gloss.BackgroundTransparency = 0.80
 		return part
 	end
 	if id == "Candy" then
@@ -923,7 +1002,6 @@ function UI.icon(parent, id)
 		UI.candyGlyph(root)
 	elseif id == "Index" then
 		corner(piece(0.08, 0.08, 0.84, 0.84, t.info), 4)
-		stroke(root:GetChildren()[1], 2)
 		piece(0.22, 0.13, 0.65, 0.70, Color3.new(1, 1, 1))
 		piece(0.13, 0.08, 0.10, 0.84, t.candy)
 		piece(0.37, 0.31, 0.34, 0.08, t.info)
@@ -996,15 +1074,45 @@ function UI.icon(parent, id)
 	return root
 end
 function UI.candyGlyph(parent)
-	for i = -1, 1 do
-		local part = Instance.new("Frame")
-		part.BorderSizePixel, part.BackgroundColor3 =
-			0, i == 0 and Config.UI.Tokens.candy or Config.UI.Tokens.go
-		part.Size, part.Position =
-			UDim2.fromScale(i == 0 and 0.48 or 0.24, i == 0 and 0.72 or 0.52),
-			UDim2.fromScale(i == 0 and 0.26 or i < 0 and 0.01 or 0.75, i == 0 and 0.14 or 0.24)
-		part.Rotation, part.ZIndex, part.Parent = i * 30, parent.ZIndex + 1, parent
+	parent.ClipsDescendants = true
+	for _, x in { 0.04, 0.76 } do
+		local wrapper = UI.box(
+			parent,
+			"Wrapper",
+			UDim2.fromScale(x, 0.30),
+			UDim2.fromScale(0.20, 0.40),
+			Config.UI.Tokens.go
+		)
+		corner(wrapper, 3)
+		stroke(wrapper, 2)
 	end
+	local sweet = UI.box(
+		parent,
+		"Sweet",
+		UDim2.fromScale(0.23, 0.20),
+		UDim2.fromScale(0.54, 0.60),
+		Config.UI.Tokens.candy
+	)
+	corner(sweet, 6)
+	stroke(sweet, 3)
+	for _, x in { 0.25, 0.60 } do
+		local stripe = UI.box(
+			sweet,
+			"Stripe",
+			UDim2.fromScale(x, 0.08),
+			UDim2.fromScale(0.12, 0.84),
+			Color3.new(1, 1, 1)
+		)
+		stripe.Rotation = 18
+	end
+	local gloss = UI.box(
+		sweet,
+		"Gloss",
+		UDim2.fromScale(0.1, 0.08),
+		UDim2.fromScale(0.8, 0.18),
+		Color3.new(1, 1, 1)
+	)
+	gloss.BackgroundTransparency = 0.8
 end
 function Palette.candyIcon(parent, _fitCandy: boolean?)
 	return UI.icon(parent, "Candy")
@@ -1058,20 +1166,51 @@ function showBanner(text: string, sub: string?, seconds: number, color: Color3?)
 	end
 end
 
--- Toasts (Steal an Egg style): small white stroked lines stacked at the bottom centre, newest at
--- the top, at most 2, each gone after 3.5 s. Rich text, so a key word can be coloured.
+-- Three short toast rows below the objective, newest first, with a 2.5-second hold.
 local hint
 do
 	local holder = Instance.new("Frame")
 	holder.Name, holder.BackgroundTransparency, holder.AnchorPoint =
 		"Toasts", 1, Vector2.new(0.5, 0)
 	holder.Position, holder.Size, holder.Parent =
-		UDim2.fromScale(0.5, Config.UI.toastY), UDim2.fromScale(0.76, 0.14), gui
+		UDim2.fromScale(0.5, Palette.mobile() and 0.19 or Config.UI.toastY),
+		UDim2.fromScale(0.50, 0.16),
+		gui
 	Center.toastHolder = holder
-	local rows, count = {}, 0
-	function hint(text: string)
+	local rows, count, recent = {}, 0, {}
+	local function layoutToasts()
+		holder.Position = UDim2.fromScale(0.5, Palette.mobile() and 0.19 or Config.UI.toastY)
+	end
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(layoutToasts)
+	Services.UserInputService.LastInputTypeChanged:Connect(layoutToasts)
+	function hint(text: string, iconId: string?, kind: string?)
 		text = Palette.uiText(text)
+		local lower = text:lower()
+		kind = kind
+			or (
+				(
+						lower:find("unavailable")
+						or lower:find("not enough")
+						or lower:find("cannot")
+						or lower:find("need ")
+					)
+					and "error"
+				or nil
+			)
+		local boundary = utf8.offset(text, 53)
+		if boundary then
+			text = text:sub(1, boundary - 1)
+		end
 		local now = os.clock()
+		for key, at in recent do
+			if now - at > 3 then
+				recent[key] = nil
+			end
+		end
+		if recent[text] then
+			return
+		end
+		recent[text] = now
 		for _, row in rows do
 			if row.text == text and now - row.at <= 3 then
 				-- Ignore duplicate notices within the three-second window.
@@ -1079,21 +1218,42 @@ do
 			end
 		end
 		count += 1
-		local frame = Instance.new("Frame")
+		local frame = Instance.new("CanvasGroup")
 		frame.BackgroundTransparency, frame.Size, frame.Parent = 1, UDim2.fromScale(1, 0.28), holder
+		frame.GroupTransparency = 1
+		UI.tween(frame, 0.18, { GroupTransparency = 0 })
 		local label = textLabel(frame, text, Color3.new(1, 1, 1))
 		label.RichText, label.Position, label.Size =
 			true, UDim2.fromScale(0.06, 0), UDim2.fromScale(0.94, 1)
 		local icon = Instance.new("Frame")
 		icon.BackgroundTransparency, icon.Size, icon.Parent = 1, UDim2.fromScale(0.05, 1), frame
-		UI.icon(icon, text:find("%+") and "Candy" or text:lower():find("king") and "King" or "Pets")
+		UI.icon(icon, iconId or "Pets")
+		UI.fitText(label, Config.UI.Tokens.type.toast)
+		label.TextTruncate = Enum.TextTruncate.AtEnd
+		label.TextColor3 = kind == "error" and Config.UI.Tokens.stop
+			or kind == "reward" and Config.UI.Tokens.candy
+			or Color3.new(1, 1, 1)
+		local scale = Instance.new("UIScale")
+		scale.Scale, scale.Parent = 0.85, frame
+		UI.tween(scale, 0.22, { Scale = 1 }, Enum.EasingStyle.Back)
+		label.TextTransparency = 1
+		local outline = label:FindFirstChildOfClass("UIStroke")
+		outline.Transparency = 1
+		UI.tween(label, 0.18, { TextTransparency = 0 })
+		UI.tween(outline, 0.18, { Transparency = 0 })
 		local row = { text = text, at = now, count = 1, frame = frame, label = label, id = count }
-		table.insert(rows, row)
+		table.insert(rows, 1, row)
 		if #rows > 3 then
-			table.remove(rows, 1).frame:Destroy()
+			table.remove(rows).frame:Destroy()
 		end
 		for i, entry in rows do
-			entry.frame.Position = UDim2.fromScale(0, (i - 1) * 0.32)
+			entry.frame.Position =
+				UDim2.fromScale(0, (i - 1) * 0.30 + (entry == row and -0.125 or 0))
+			UI.tween(entry.frame, 0.18, { Position = UDim2.fromScale(0, (i - 1) * 0.30) })
+		end
+		if kind == "reward" and UI.rewardFlight then
+			UI.rewardFlight(icon)
+			play(Config.Sounds.CandyTick, 2 ^ ((count % 6) / 12), 0.7)
 		end
 		if text:lower():find("stealing") or text:lower():find("unavailable") then
 			UI.tween(frame, 0.08, { Rotation = 2 })
@@ -1103,12 +1263,21 @@ do
 				end
 			end)
 		end
-		task.delay(3.2, function()
+		task.delay(2.5, function()
 			if not frame.Parent then
 				return
 			end
 			UI.tween(label, 0.3, { TextTransparency = 1 })
-			local outline = label:FindFirstChildOfClass("UIStroke")
+			UI.tween(frame, 0.3, { GroupTransparency = 1 })
+			UI.tween(frame, 0.3, { Position = frame.Position - UDim2.fromScale(0, 0.075) })
+			for _, part in icon:GetDescendants() do
+				if part:IsA("Frame") then
+					UI.tween(part, 0.3, { BackgroundTransparency = 1 })
+				end
+				if part:IsA("UIStroke") then
+					UI.tween(part, 0.3, { Transparency = 1 })
+				end
+			end
 			UI.tween(outline, 0.3, { Transparency = 1 })
 			task.delay(0.3, function()
 				frame:Destroy()
@@ -1117,7 +1286,7 @@ do
 					table.remove(rows, i)
 				end
 				for k, entry in rows do
-					entry.frame.Position = UDim2.fromScale(0, (k - 1) * 0.32)
+					UI.tween(entry.frame, 0.18, { Position = UDim2.fromScale(0, (k - 1) * 0.30) })
 				end
 			end)
 		end)
@@ -1132,8 +1301,19 @@ function Center.purchaseBurst()
 		burst(root.Position + Vector3.yAxis * 2, Palette.ORANGE, 18, 8, Palette.SPARKLE, 0.6)
 	end
 end
-local function toast(title: string, sub: string?)
-	hint(title .. (sub and sub ~= "" and (" · " .. sub) or ""))
+local function toast(title: string, sub: string?, iconId: string?, kind: string?)
+	UI.toastKeys = UI.toastKeys or {}
+	local key = Palette.uiText(title)
+	if os.clock() - (UI.toastKeys[key] or -math.huge) < 3 then
+		return
+	end
+	UI.toastKeys[key] = os.clock()
+	local reward = kind == "reward" or (sub and sub:find("%+") ~= nil)
+	hint(
+		title .. (sub and sub ~= "" and (" · " .. sub) or ""),
+		iconId or (reward and "Candy" or "Pets"),
+		kind or (reward and "reward" or nil)
+	)
 end
 
 -- Bottom right (Steal an Egg): the moon timer to midnight ("🌙 in 1:54", red in its last 10 s; a
@@ -1144,33 +1324,18 @@ end
 -- still fills. The top centre belongs to the objective banner; the centre stays clear.
 Palette.KING_FILL = ColorSequence.new(Config.UI.Tokens.stop, Config.UI.Tokens.go)
 do
-	local chips = {}
-	for i, id in { "Clock", "King" } do
-		local chip = Instance.new("Frame")
-		chip.Name, chip.BackgroundTransparency, chip.AnchorPoint, chip.Parent =
-			id .. "Chip", 0.30, Vector2.new(1, 1), gui
-		chip.BackgroundColor3, chip.BorderSizePixel = Config.UI.Tokens.well, 0
-		corner(chip)
-		local icon = Instance.new("Frame")
-		icon.BackgroundTransparency, icon.Size, icon.Parent = 1, UDim2.fromScale(0.16, 0.82), chip
-		UI.icon(icon, id)
-		local label = textLabel(chip, "", Color3.new(1, 1, 1))
-		label.Position, label.Size, label.TextXAlignment =
-			UDim2.fromScale(0.18, 0), UDim2.fromScale(0.82, 1), Enum.TextXAlignment.Right
-		chips[i] = { frame = chip, label = label }
-	end
+	local chip = UI.box(gui, "KingChip", UDim2.new(), UDim2.new(), Config.UI.Tokens.ink)
+	chip.BackgroundTransparency, chip.AnchorPoint = 1, Vector2.new(1, 1)
+	local icon = UI.box(chip, "Icon", UDim2.new(), UDim2.fromScale(0.12, 1), Config.UI.Tokens.ink)
+	icon.BackgroundTransparency = 1
+	UI.icon(icon, "King")
+	local label = textLabel(chip, "", Config.UI.Tokens.candy)
+	label.Position, label.Size, label.TextXAlignment =
+		UDim2.fromScale(0.14, 0), UDim2.fromScale(0.86, 1), Enum.TextXAlignment.Right
 	local function layout()
-		local touch, h = Palette.mobile(), gui.AbsoluteSize.Y / uiScale.Scale
-		for i, chip in chips do
-			chip.frame.Position = UDim2.fromScale(
-				touch and 0.975 or 0.99,
-				touch and (i == 1 and 0.055 or 0.11) or (i == 1 and 0.985 or 0.933)
-			)
-			chip.frame.Size = UDim2.fromOffset(
-				touch and gui.AbsoluteSize.X / uiScale.Scale * 0.53 or h * 0.46,
-				h * 0.040
-			)
-		end
+		local h = gui.AbsoluteSize.Y / uiScale.Scale
+		chip.Position = UDim2.new(1, -h * 0.012, Palette.mobile() and 0.14 or 0.985, 0)
+		chip.Size = UDim2.fromOffset(h * 0.46, h * 0.04)
 	end
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)
 	Services.UserInputService.LastInputTypeChanged:Connect(layout)
@@ -1178,18 +1343,23 @@ do
 	task.spawn(function()
 		while gui.Parent do
 			local now = workspace:GetServerTimeNow()
-			local phase = state:GetAttribute("Phase") or "Day"
-			local ends = state:GetAttribute("PhaseEnds") or now
-			local nests = math.max(0, (phase == "Day" and ends or ends + Config.DayLength) - now)
 			local king = math.max(0, (state:GetAttribute("KingWakesAt") or now) - now)
-			chips[1].label.Text = "Nests respawn in " .. clockText(nests)
-			chips[1].label.TextColor3 = nests <= 10 and Config.UI.Tokens.good or Color3.new(1, 1, 1)
-			chips[2].label.Text = phase == "BloodMoon" and ("King fight " .. clockText(ends - now))
-				or ("King in " .. clockText(king))
-			chips[2].label.TextColor3 = king < 60 and Config.UI.Tokens.stop or Color3.new(1, 1, 1)
-			chips[1].label.TextTransparency = nests <= 10
-					and (0.12 + 0.12 * math.sin(os.clock() * 6))
+			local active = state:GetAttribute("KingActive")
+			label.Text = not unlocked("King")
+					and ("King unlocks " .. clockText(
+						math.max(0, Config.Unlocks.King - (player:GetAttribute("PlayTime") or 0))
+					))
+				or active and ("King fight " .. clockText(
+					math.max(0, (state:GetAttribute("PhaseEnds") or now) - now)
+				))
+				or ("King " .. clockText(king))
+			label.TextColor3 = unlocked("King") and king < 60 and Config.UI.Tokens.stop
+				or Config.UI.Tokens.candy
+			label.TextTransparency = unlocked("King")
+					and king < 60
+					and (0.075 + 0.075 * math.sin(os.clock() * 6))
 				or 0
+			chip.Visible = not UI.panelsOpen
 			meterRing.Transparency = 1
 			task.wait(0.25)
 		end
@@ -1225,7 +1395,7 @@ do
 	icon.BackgroundTransparency = 1
 	icon.Position = UDim2.fromScale(0, 0.18)
 	icon.Size = UDim2.fromScale(0.23, 0.31)
-	icon.TextScaled = true
+	icon.TextScaled = false
 	icon.Text = ""
 	Palette.candyIcon(icon, true)
 	icon.Parent = stats
@@ -1240,19 +1410,19 @@ do
 	candyBig.TextScaled = false
 	candyBig.FontFace = fontFace("number", "Regular", Config.Fonts.numberStyle)
 	local function sizeCandy()
-		candyBig.TextSize = math.max(10, gui.AbsoluteSize.Y * 0.055)
+		candyBig.TextSize = math.max(10, gui.AbsoluteSize.Y / uiScale.Scale * 0.058)
 	end
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(sizeCandy)
 	sizeCandy()
 	candyBig.TextXAlignment = Enum.TextXAlignment.Left
 	local moneyStroke = candyBig:FindFirstChildOfClass("UIStroke") :: UIStroke
-	moneyStroke.Thickness = 3.5
+	moneyStroke.Thickness = math.max(2.5, gui.AbsoluteSize.Y / uiScale.Scale * 0.006)
 	moneyStroke.Color = Color3.new(0, 0, 0)
-	incomeLabel = textLabel(stats, "", Palette.MONEY)
+	incomeLabel = textLabel(stats, "", Config.UI.Tokens.good)
 	incomeLabel.Name = "Income"
-	incomeLabel.Visible = false
+	incomeLabel.Visible = true
 	incomeLabel.Size = UDim2.fromScale(1, 0.16)
-	incomeLabel.Position = UDim2.fromScale(0, 0.52)
+	incomeLabel.Position = UDim2.fromScale(0.10, 0.65)
 	incomeLabel.TextXAlignment = Enum.TextXAlignment.Left
 
 	local shown = Instance.new("NumberValue")
@@ -1342,6 +1512,31 @@ do
 			end)
 		end
 	end
+	function UI.rewardFlight(source)
+		local candy = UI.box(
+			fxGui,
+			"ToastCandy",
+			UDim2.new(),
+			UDim2.fromOffset(40, 40),
+			Config.UI.Tokens.candy
+		)
+		candy.BackgroundTransparency, candy.AnchorPoint = 1, Vector2.new(0.5, 0.5)
+		UI.candyGlyph(candy)
+		local start = source.AbsolutePosition + source.AbsoluteSize / 2
+		local target = icon.AbsolutePosition + icon.AbsoluteSize / 2
+		candy.Position = UDim2.fromOffset(start.X, start.Y)
+		local fly = UI.tween(
+			candy,
+			0.45,
+			{ Position = UDim2.fromOffset(target.X, target.Y), Size = UDim2.fromOffset(20, 20) },
+			Enum.EasingStyle.Quad,
+			Enum.EasingDirection.In
+		)
+		fly.Completed:Once(function()
+			candy:Destroy()
+			punch()
+		end)
+	end
 	-- The counter punches and a green "+N" pops over the end of the number, rises and fades.
 	-- Three separated lanes above the number, queued gains, no lost totals.
 	local tickState = { amount = 0, token = 0 }
@@ -1382,7 +1577,7 @@ do
 			candy.BackgroundTransparency = 1
 			candy.AnchorPoint = Vector2.new(0.5, 0.5)
 			candy.Size = UDim2.fromOffset(40, 40)
-			candy.TextScaled = true
+			candy.TextScaled = false
 			candy.Text = ""
 			UI.candyGlyph(candy)
 			candy.Rotation = math.random(-30, 30)
@@ -1415,7 +1610,11 @@ end
 
 -- The yellow line: walk speed and the carried stack (plus its worth while carrying).
 local function refreshCarry()
-	carryLabel.Text = string.format("%d/%d", player:GetAttribute("Carry") or 0, Config.BaseCarry)
+	carryLabel.Text =
+		string.format("Carry %d/%d", player:GetAttribute("Carry") or 0, Config.BaseCarry)
+	carryLabel.TextColor3 = (player:GetAttribute("Carry") or 0) >= Config.BaseCarry
+			and Config.UI.Tokens.stop
+		or Color3.new(1, 1, 1)
 end
 -- Every gain rolls the counter up and pops a "+N" (not the balance loaded on join).
 local lastCandy = candyValue.Value
@@ -1460,13 +1659,15 @@ local function pill(_text: string, color: Color3, order: number): TextButton
 	local function layout()
 		local touch = Palette.mobile()
 		local h = gui.AbsoluteSize.Y / uiScale.Scale
-		b.Position = UDim2.fromOffset(0, (order - 1) * h * (touch and 0.10 or 0.072))
-		b.Size = UDim2.fromOffset(h * (touch and 0.09 or 0.17), h * (touch and 0.09 or 0.062))
+		b.Position =
+			UDim2.fromOffset(0, (order == 3 and -1 or order - 1) * h * (touch and 0.10 or 0.076))
+		b.Size = UDim2.fromOffset(h * (touch and 0.09 or 0.19), h * (touch and 0.09 or 0.064))
 		b.Text = touch and "" or name
 		icon.Position = UDim2.fromScale(touch and 0.11 or 0.03, 0.10)
 		icon.Size = UDim2.fromScale(touch and 0.78 or 0.30, 0.74)
 		local label = b:FindFirstChild("Label")
-		label.Position, label.Size = UDim2.fromScale(0.33, 0), UDim2.fromScale(0.65, 0.88)
+		label.Position, label.Size = UDim2.fromScale(0.38, 0), UDim2.fromScale(0.60, 0.88)
+		label.TextXAlignment = Enum.TextXAlignment.Left
 	end
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)
 	Services.UserInputService.LastInputTypeChanged:Connect(layout)
@@ -1490,11 +1691,12 @@ end
 -- Card colours are centralized in Config.UI.Tokens.
 local panelFrames: { Frame } = {}
 function UI.closePanel(frame)
+	UI.play("close")
 	local ticket = (frame:GetAttribute("CloseTicket") or 0) + 1
 	frame:SetAttribute("CloseTicket", ticket)
 	local scale = frame:FindFirstChildOfClass("UIScale")
 	if scale then
-		UI.tween(scale, 0.14, { Scale = 0.7 }, nil, Enum.EasingDirection.In)
+		UI.tween(scale, 0.14, { Scale = 0.9 }, nil, Enum.EasingDirection.In)
 	end
 	local content = frame:FindFirstChild("Content")
 	if content then
@@ -1545,6 +1747,14 @@ function UI.sticker(parent, text, color)
 	ribbon.FontFace = fontFace("small", "Heavy", "Italic")
 	ribbon.Position, ribbon.Size, ribbon.Rotation, ribbon.ZIndex =
 		UDim2.fromScale(0.54, 0.10), UDim2.fromScale(0.46, 0.12), 12, parent.ZIndex + 5
+	local pop = Instance.new("UIScale")
+	pop.Parent = ribbon
+	local pulse = Services.RunService.Heartbeat:Connect(function()
+		pop.Scale = ribbon.Visible and text == "NEXT" and (1 + 0.04 * math.sin(os.clock() * 4)) or 1
+	end)
+	ribbon.Destroying:Once(function()
+		pulse:Disconnect()
+	end)
 	return ribbon
 end
 local panelDim: TextButton
@@ -1567,7 +1777,7 @@ do
 	panelDim.Visible = false
 	panelDim.Parent = dimGui
 	panelDim.Activated:Connect(function()
-		play(Config.Sounds.Click, 1, 0.35)
+		-- Click feedback comes from chunky; closing uses UI.closePanel.
 		for _, f in panelFrames do
 			if f.Visible then
 				UI.closePanel(f)
@@ -1584,12 +1794,34 @@ local function anyPanelOpen(): boolean
 	return false
 end
 local function refreshDim()
+	UI.panelsOpen = anyPanelOpen()
+	local h = gui.AbsoluteSize.Y / uiScale.Scale
+	UI.tween(leftBar, 0.2, {
+		Position = UDim2.new(
+			UI.panelsOpen and -0.12 or 0,
+			h * 0.012,
+			Palette.mobile() and 0.30 or 0.40,
+			0
+		),
+	})
+	for _, button in { UI.petsButton, UI.dailyButton } do
+		local slot = button == UI.petsButton and 1 or 2
+		UI.tween(button, 0.2, {
+			Position = UDim2.new(
+				1 + (UI.panelsOpen and 0.10 or 0),
+				-h * 0.012,
+				(Palette.mobile() and 0.30 or 0.36)
+					+ (slot - 1) * (Palette.mobile() and 0.10 or 0.104),
+				0
+			),
+		})
+	end
 	leftBar.Visible = true
 	statsFrame.Visible = true
 	if anyPanelOpen() then
 		panelDim.Visible = true
 		Services.TweenService
-			:Create(panelDim, TweenInfo.new(0.2), { BackgroundTransparency = 0.55 })
+			:Create(panelDim, TweenInfo.new(0.2), { BackgroundTransparency = 0.5 })
 			:Play()
 	elseif panelDim.Visible then
 		local fade = Services.TweenService:Create(
@@ -1608,14 +1840,15 @@ end
 local function closeButton(frame: GuiObject): TextButton
 	local close = makeButton(frame, "X", Config.UI.Tokens.stop)
 	close.Name = "Close"
-	close.AnchorPoint = Vector2.new(0.7, 0.3)
-	close.Position = UDim2.fromScale(1, 0)
+	close.AnchorPoint = Vector2.new(1, 0.5)
+	close.Position = UDim2.fromScale(0.985, 0.5)
 	local function fitClose()
 		local side = gui.AbsoluteSize.Y / uiScale.Scale * Config.UI.Tokens.layout.closeSize
 		close.Size = UDim2.fromOffset(side, side)
 	end
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitClose)
 	fitClose()
+	close:FindFirstChild("Label"):SetAttribute("TypeSize", 0.036)
 	local aspect = Instance.new("UIAspectRatioConstraint")
 	aspect.Parent = close
 	close.ZIndex = 14
@@ -1689,6 +1922,42 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 		UI.box(header, "Gloss", UDim2.new(), UDim2.fromScale(1, 0.38), Color3.new(1, 1, 1), 12)
 	gloss.BackgroundTransparency = 0.82
 	corner(gloss, 12)
+	local headerLip = UI.box(
+		header,
+		"HeaderLip",
+		UDim2.fromScale(0, 0.92),
+		UDim2.fromScale(1, 0.08),
+		kind == "Index" and Config.UI.Tokens.infoLip or Config.UI.Tokens.goLip,
+		12
+	)
+	corner(headerLip, 4)
+	for _, x in { 0.24, 0.68 } do
+		local shine = UI.box(
+			header,
+			"Shine",
+			UDim2.fromScale(x, 0.12),
+			UDim2.fromScale(0.04, 0.72),
+			Color3.new(1, 1, 1),
+			12
+		)
+		shine.Rotation, shine.BackgroundTransparency = 20, 0.88
+	end
+	for _, surface in { frame, header } do
+		for x = 1, 14 do
+			for y = 1, surface == header and 2 or 9 do
+				local stud = UI.box(
+					surface,
+					"Stud",
+					UDim2.fromScale(x / 15 - 0.01, y / (surface == header and 3 or 10) - 0.01),
+					UDim2.fromOffset(5, 5),
+					Color3.new(1, 1, 1),
+					surface.ZIndex
+				)
+				stud.BackgroundTransparency = 0.92
+				corner(stud)
+			end
+		end
+	end
 
 	local head = textLabel(
 		header,
@@ -1696,16 +1965,14 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 		Color3.new(1, 1, 1),
 		"title"
 	)
-	head.Position = UDim2.fromScale(0.05, 0.05)
+	head.AnchorPoint = Vector2.new(0, 0.5)
+	head.Position = UDim2.fromScale(0.035, 0.5)
 	head:SetAttribute("TypeSize", Config.UI.Tokens.type.title)
 	head.Size = UDim2.fromScale(0.75, 0.8)
 	head.ZIndex = 14
 	head.TextXAlignment = Enum.TextXAlignment.Left
-	if kind == "Index" then
-		head.Name, head.Parent = "OverhangTitle", frame
-		head.Position, head.Size = UDim2.fromScale(0.05, -0.035), UDim2.fromScale(0.70, 0.13)
-	end
-	closeButton(frame).Activated:Connect(function()
+
+	closeButton(header).Activated:Connect(function()
 		UI.closePanel(frame)
 	end)
 	local list = Instance.new("ScrollingFrame")
@@ -1751,6 +2018,7 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 			return
 		end
 		if frame.Visible then
+			UI.play("open")
 			frame:SetAttribute("CloseTicket", (frame:GetAttribute("CloseTicket") or 0) + 1)
 			for _, child in frame:GetChildren() do
 				if
@@ -1763,7 +2031,7 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 					child.Parent = content
 				end
 			end
-			pop.Scale = 0.7
+			pop.Scale = 0.6
 			content.GroupTransparency = 1
 			UI.tween(content, 0.12, { GroupTransparency = 0 })
 			local order = 0
@@ -1813,7 +2081,7 @@ do
 		end
 	end
 	gear.Activated:Connect(function()
-		play(Config.Sounds.Click, 1, 0.35)
+		-- Click feedback comes from chunky; closing uses UI.closePanel.
 		local was = frame.Visible
 		for _, f in panelFrames do
 			f.Visible = false
@@ -1828,6 +2096,7 @@ do
 	amount.Size = UDim2.new(1, 0, 0, 40)
 	amount.LayoutOrder = 2
 	amount.Parent = list
+	UI.fitText(amount, Config.UI.Tokens.type.hud)
 	local confirming, busy = 0, false
 	for i, entry in
 		{
@@ -1948,6 +2217,28 @@ local function gridCard(
 	corner(c, 12)
 	stroke(c, 2.5)
 	UI.shadow(c)
+	local rarityBorder = UI.box(
+		c,
+		"RarityBorder",
+		UDim2.fromScale(0.015, 0.015),
+		UDim2.fromScale(0.97, 0.97),
+		color,
+		13
+	)
+	rarityBorder.BackgroundTransparency = 1
+	corner(rarityBorder, 10)
+	stroke(rarityBorder, 2).Color = color
+	local glow =
+		UI.box(c, "RarityGlow", UDim2.fromScale(0.18, 0.16), UDim2.fromScale(0.64, 0.50), color, 13)
+	glow.BackgroundTransparency = 0.65
+	corner(glow)
+	local glowFade = Instance.new("UIGradient")
+	glowFade.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(0.5, 0.2),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	glowFade.Parent = glow
 	local gradient = Instance.new("UIGradient")
 	gradient.Color, gradient.Rotation, gradient.Parent =
 		ColorSequence.new(Color3.new(1, 1, 1), Color3.new(0.48, 0.48, 0.48)), 90, c
@@ -1970,6 +2261,7 @@ local function gridCard(
 	info.BackgroundColor3, info.BackgroundTransparency = Config.UI.Tokens.well, 0.25
 	corner(info, 6)
 	local button = makeButton(c, "", Config.UI.Tokens.go)
+	button:SetAttribute("PriceButton", true)
 	button.AnchorPoint, button.Position, button.Size =
 		Vector2.new(0.5, 1), UDim2.fromScale(0.5, 0.98), UDim2.fromScale(0.94, 0.16)
 	button.ZIndex = 16
@@ -2012,6 +2304,11 @@ local function cardState(gc: GridCard, look: string, text: string)
 		UI.candyGlyph(priceIcon)
 	end
 	priceIcon.Visible = not owned and text:find("%d") ~= nil
+	for _, part in priceIcon:GetDescendants() do
+		if part:IsA("Frame") then
+			part.BackgroundTransparency = locked and 0.6 or (part.Name == "Gloss" and 0.8 or 0)
+		end
+	end
 	local tick = gc.button:FindFirstChild("EquippedCheck")
 	if not tick then
 		tick = UI.box(
@@ -2046,13 +2343,12 @@ local function cardState(gc: GridCard, look: string, text: string)
 	local label = gc.button:FindFirstChild("Label")
 	label.Position = UDim2.fromScale((priceIcon.Visible or tick.Visible) and 0.23 or 0, 0)
 	label.Size = UDim2.fromScale((priceIcon.Visible or tick.Visible) and 0.74 or 1, 0.88)
+	gc.button:SetAttribute("CannotAfford", locked)
 	gc.button.BackgroundColor3 = owned
-			and (text:find("Equipped") and Config.UI.Tokens.info or Config.UI.Tokens.off)
+			and (text:find("Equipped") and Config.UI.Tokens.good or Config.UI.Tokens.off)
 		or locked and Config.UI.Tokens.off
 		or Config.UI.Tokens.go
-	gc.button.TextColor3 = locked and Config.UI.Tokens.stop
-		or priceIcon.Visible and Config.UI.Tokens.candy
-		or Color3.new(1, 1, 1)
+	gc.button.TextColor3 = locked and Config.UI.Tokens.stop or Color3.new(1, 1, 1)
 end
 local buyUpgrade = remotes:WaitForChild("BuyUpgrade") :: RemoteFunction
 -- The one Shop panel has three tabs, each its own frame: Scythes (toolPanel), Upgrades
@@ -2082,15 +2378,15 @@ do
 		gc.icon:FindFirstChildOfClass("UIStroke"):Destroy()
 		gc.icon:FindFirstChild("Frame"):Destroy()
 		gc.icon.Position = UDim2.fromScale(0.5, 0.12)
-		gc.icon.Size = UDim2.fromScale(0.92, 0.55)
+		gc.icon.Size = UDim2.fromScale(0.92, 0.62)
 		for _, child in gc.frame:GetChildren() do
 			if child:IsA("TextLabel") and child ~= gc.tag and child ~= gc.info then
 				child.Position = UDim2.fromScale(0.04, 0.01)
 				child.Size = UDim2.fromScale(0.92, 0.13)
 			end
 		end
-		gc.info.Position = UDim2.fromScale(0.12, 0.69)
-		gc.info.Size = UDim2.fromScale(0.76, 0.10)
+		gc.info.Position = UDim2.fromScale(0.12, 0.75)
+		gc.info.Size = UDim2.fromScale(0.76, 0.08)
 		local statIcon = UI.box(
 			gc.info,
 			"ScytheStat",
@@ -2118,7 +2414,12 @@ do
 			UI.secret(gc.frame)
 		end
 		local b = gc.button
-		b.Size, b.Position = UDim2.fromScale(0.92, 0.16), UDim2.fromScale(0.5, 0.98)
+		b.Size, b.Position =
+			UDim2.new(0.92, 0, 0, gui.AbsoluteSize.Y / uiScale.Scale * 0.052),
+			UDim2.fromScale(0.5, 0.98)
+		gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+			b.Size = UDim2.new(0.92, 0, 0, gui.AbsoluteSize.Y / uiScale.Scale * 0.052)
+		end)
 		b.Activated:Connect(function()
 			if not tool.cost then
 				hint("Only the King Fight MVP gets the " .. tool.name .. "!")
@@ -2685,11 +2986,19 @@ local function pillBadge(b: GuiButton): TextLabel
 	badge.AnchorPoint = Vector2.new(0.5, 0.5)
 	badge.Position = UDim2.new(1, -4, 0, 2)
 	badge.Size = UDim2.fromOffset(24, 24)
-	badge.BackgroundColor3 = Color3.fromRGB(224, 32, 74)
+	badge.BackgroundColor3 = Config.UI.Tokens.stop
 	badge.BackgroundTransparency = 0
 	badge.ZIndex = b.ZIndex + 5
 	badge.Visible = false
 	corner(badge)
+	stroke(badge, 2.5)
+	UI.fitText(badge, 0.020)
+	local function sizeBadge()
+		local side = gui.AbsoluteSize.Y / uiScale.Scale * 0.026
+		badge.Size = UDim2.fromOffset(side, side)
+	end
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(sizeBadge)
+	sizeBadge()
 	return badge
 end
 function UI.tile(id, color, slot)
@@ -2701,19 +3010,49 @@ function UI.tile(id, color, slot)
 	UI.icon(icon, id)
 	local caption = textLabel(b, id, Color3.new(1, 1, 1))
 	caption:SetAttribute("TypeSize", Config.UI.Tokens.type.caption)
+	caption.Visible = false
+	local tooltip = textLabel(gui, id, Color3.new(1, 1, 1))
+	tooltip.Name, tooltip.Visible, tooltip.AnchorPoint = id .. "Tooltip", false, Vector2.new(1, 0.5)
+	tooltip.Size, tooltip.ZIndex = UDim2.fromScale(0.12, 0.04), 8
+	local function showTooltip()
+		if anyPanelOpen() then
+			return
+		end
+		tooltip.Position = UDim2.new(
+			b.Position.X.Scale,
+			b.Position.X.Offset - b.Size.X.Offset - 12,
+			b.Position.Y.Scale + 0.035,
+			0
+		)
+		tooltip.Visible = true
+	end
+	b.MouseEnter:Connect(showTooltip)
+	b.MouseLeave:Connect(function()
+		tooltip.Visible = false
+	end)
+	b.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.Touch then
+			task.delay(0.45, function()
+				if input.UserInputState ~= Enum.UserInputState.End then
+					showTooltip()
+				end
+			end)
+		end
+	end)
+	b.InputEnded:Connect(function()
+		tooltip.Visible = false
+	end)
 	caption.Position, caption.Size, caption.ZIndex =
 		UDim2.fromScale(0, 0.65), UDim2.fromScale(1, 0.25), 7
 	local function layout()
 		local touch, h = Palette.mobile(), gui.AbsoluteSize.Y / uiScale.Scale
 		b.Position = UDim2.fromScale(
-			touch and 0.99 or 0.992,
+			1 - h * 0.012 / (gui.AbsoluteSize.X / uiScale.Scale) + (anyPanelOpen() and 0.10 or 0),
 			(touch and 0.30 or 0.36) + (slot - 1) * (touch and 0.10 or 0.104)
 		)
 		b.Size = UDim2.fromOffset(h * (touch and 0.09 or 0.070), h * (touch and 0.09 or 0.070))
-		icon.Position = UDim2.fromScale(touch and 0.16 or 0.11, 0.04)
-		icon.Size = UDim2.fromScale(touch and 0.68 or 0.78, touch and 0.62 or 0.78)
-		caption.Position = UDim2.fromScale(touch and 0 or -0.35, touch and 0.66 or 1.02)
-		caption.Size = UDim2.fromScale(touch and 1 or 1.35, touch and 0.30 or 0.34)
+		icon.Position = UDim2.fromScale(0.10, 0.04)
+		icon.Size = UDim2.fromScale(0.80, 0.80)
 	end
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)
 	Services.UserInputService.LastInputTypeChanged:Connect(layout)
@@ -2739,12 +3078,12 @@ do
 	top.Name, top.ScreenInsets, top.ResetOnSpawn, top.DisplayOrder =
 		"TopIcons", Enum.ScreenInsets.TopbarSafeInsets, false, 10
 	top.Parent = player:WaitForChild("PlayerGui")
-	local gear = makeButton(top, "", Config.UI.Tokens.ink)
+	local gear = makeButton(top, "", Config.UI.Tokens.off)
 	gear.Name, gear.AnchorPoint, gear.Position, gear.Size =
-		"SettingsGear", Vector2.new(1, 0), UDim2.new(1, -16, 0, 8), UDim2.fromOffset(36, 36)
+		"SettingsGear", Vector2.new(1, 0), UDim2.new(1, -13, 0, 13), UDim2.fromOffset(48, 48)
 	for _, child in gear:GetChildren() do
 		if child:IsA("Frame") then
-			child.BackgroundTransparency = 0.4
+			child.BackgroundTransparency = 0
 			local round = child:FindFirstChildOfClass("UICorner")
 			if round then
 				round.CornerRadius = UDim.new(0.5, 0)
@@ -2965,7 +3304,7 @@ for b, branch in Config.SkillBranches do
 		}
 		table.insert(skillNodes, node)
 		nodeButton.Activated:Connect(function()
-			play(Config.Sounds.Click, 1, 0.35)
+			-- Click feedback comes from chunky; closing uses UI.closePanel.
 			onNodeClicked(node)
 		end)
 	end
@@ -3281,6 +3620,7 @@ do
 			end)
 		end
 	end
+	UI.openShop = openShop
 
 	local function toggle(which: Frame)
 		local open = not which.Visible
@@ -5713,7 +6053,9 @@ do
 						.. def.title
 						.. ": "
 						.. Config.gateBenefits(zoneId)
-					prompt.ObjectText = short(price) .. " candy" .. (discount and " -25%" or "")
+					prompt.ObjectText = short(price)
+						.. " candy"
+						.. (discount and " (25% off)" or "")
 				end
 				if prompt and prompt.Enabled == open then
 					prompt.Enabled = not open
@@ -5724,13 +6066,59 @@ do
 			local sign = folder:FindFirstChild("GateSign")
 			local gateGui = sign and sign:FindFirstChild("GateGui")
 			if gateGui and gateGui:IsA("BillboardGui") then
-				gateGui.Size = UDim2.fromOffset(open and 150 or 300, open and 60 or 120)
-				gateGui.MaxDistance = 60
+				gateGui.MaxDistance, gateGui.AlwaysOnTop = 48, false
+				gateGui.StudsOffsetWorldSpace = Vector3.new(0, 2, 0)
+				local camera = workspace.CurrentCamera
+				local distance = camera and (camera.CFrame.Position - sign.Position).Magnitude or 20
+				local scale = 1 - math.clamp((distance - 20) / 28, 0, 1) * 0.30
+				gateGui.Size =
+					UDim2.fromOffset((open and 150 or 280) * scale, (open and 60 or 110) * scale)
+				local toastHit = false
+				if
+					camera
+					and Center.toastHolder.Visible
+					and #Center.toastHolder:GetChildren() > 0
+				then
+					local point, visible =
+						camera:WorldToViewportPoint(sign.Position + gateGui.StudsOffsetWorldSpace)
+					local pos, size =
+						Center.toastHolder.AbsolutePosition, Center.toastHolder.AbsoluteSize
+					toastHit = visible
+						and point.X + gateGui.Size.X.Offset / 2 > pos.X
+						and point.X - gateGui.Size.X.Offset / 2 < pos.X + size.X
+						and point.Y + gateGui.Size.Y.Offset / 2 > pos.Y
+						and point.Y - gateGui.Size.Y.Offset / 2 < pos.Y + size.Y
+				end
+				gateGui.Enabled = not UI.panelsOpen and not toastHit
+				local gateTitle = gateGui:FindFirstChild("Title")
+				if gateTitle then
+					gateTitle.Text, gateTitle.Size = def.title, UDim2.fromScale(1, 0.40)
+					gateTitle:FindFirstChildOfClass("UIStroke").Color = Config.UI.Tokens.ink
+					gateTitle:FindFirstChildOfClass("UIStroke").Thickness = 5
+					local bounds = gateTitle:FindFirstChildOfClass("UITextSizeConstraint")
+						or Instance.new("UITextSizeConstraint")
+					bounds.Parent = gateTitle
+					bounds.MinTextSize, bounds.MaxTextSize = 12, 40
+				end
+				local benefit = gateGui:FindFirstChild("Benefit")
+				if not benefit then
+					benefit = textLabel(gateGui, "", Color3.fromRGB(255, 233, 168))
+					benefit.Name, benefit.Position, benefit.Size =
+						"Benefit", UDim2.fromScale(0, 0.40), UDim2.fromScale(1, 0.22)
+					local stripe =
+						UI.box(gateGui, "ZoneStripe", UDim2.new(), UDim2.new(1, 0, 0, 4), def.color)
+					stripe.BorderSizePixel = 0
+				end
+				benefit.Text = Config.UI.Tokens.gateBenefit[zoneId] or "New pets"
+				benefit.Visible = not open
+				benefit:FindFirstChildOfClass("UIStroke").Thickness = 3
+				local bounds = benefit:FindFirstChildOfClass("UITextSizeConstraint")
+				bounds.MinTextSize, bounds.MaxTextSize = 10, 22
 			end
 			local costLabel = gateGui and gateGui:FindFirstChild("Cost", true) :: TextLabel?
 			if costLabel then
 				local text = open and "UNLOCKED"
-					or (short(price) .. " candy" .. (discount and " -25%" or ""))
+					or (short(price) .. " candy" .. (discount and " (25% off)" or ""))
 				if costLabel.Text ~= text then
 					costLabel.Text = text
 					local pillFrame = costLabel.Parent
@@ -5740,6 +6128,9 @@ do
 						pillFrame.Size = UDim2.fromOffset(open and 115 or 180, open and 21 or 42)
 					end
 				end
+				local bounds = costLabel:FindFirstChildOfClass("UITextSizeConstraint")
+					or Instance.new("UITextSizeConstraint")
+				bounds.MinTextSize, bounds.MaxTextSize, bounds.Parent = 10, 28, costLabel
 			end
 		end
 	end
@@ -5989,7 +6380,7 @@ do
 	UI.objective = bar
 	local function fitObjective()
 		local touch = Palette.mobile()
-		bar.Position = UDim2.fromScale(0.5, touch and 0.19 or Config.UI.objectiveY)
+		bar.Position = UDim2.fromScale(0.5, touch and 0.04 or Config.UI.objectiveY)
 	end
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
 		UI.objectiveVerb = nil
@@ -5999,7 +6390,7 @@ do
 	fitObjective()
 	-- Only the title has a soft pill; the banner frame leaves world billboards visible.
 	bar.BackgroundColor3 = Color3.fromRGB(22, 14, 32)
-	bar.BackgroundTransparency = 0.30
+	bar.BackgroundTransparency = 1
 	bar.BorderSizePixel = 0
 	bar.Parent = gui
 	corner(bar, 16)
@@ -6012,44 +6403,108 @@ do
 	corner(title, 12)
 	title.AnchorPoint = Vector2.new(0.5, 0)
 	title.Position = UDim2.fromScale(0.5, 0)
-	title.Position = UDim2.fromScale(0.54, 0)
-	title.Size = UDim2.fromScale(0.88, 1)
+	title.Position = UDim2.fromScale(0.5, 0)
+	title.Size = UDim2.fromScale(1, 0.60)
 	title.TextScaled = false
 	local titlePad = Instance.new("UIPadding")
 	titlePad.PaddingLeft = UDim.new(0, 12)
 	titlePad.PaddingRight = UDim.new(0, 12)
 	titlePad.Parent = title
 	local titleStroke = title:FindFirstChildOfClass("UIStroke") :: UIStroke
-	titleStroke.Thickness = 3
+	titleStroke.Thickness = math.max(2.5, gui.AbsoluteSize.Y / uiScale.Scale * 0.006)
 	titleStroke.Color = Color3.new(0, 0, 0)
 	local progress = textLabel(bar, "", Color3.fromRGB(255, 225, 150))
 	progress.Position = UDim2.fromScale(0, 0.65)
 	progress.Size = UDim2.fromScale(1, 0.35)
 	progress.TextColor3 = Color3.new(1, 1, 1)
 	progress.TextScaled = false
-	progress.Visible = false
+	progress.Visible = true
 	local function sizeObjective()
 		title.TextSize = math.max(11, gui.AbsoluteSize.Y * Config.UI.Tokens.type.objective)
 		progress.TextSize = math.max(10, gui.AbsoluteSize.Y * 0.024)
 	end
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(sizeObjective)
 	sizeObjective()
-	local questToggle = UI.tile("Quests", Config.UI.Tokens.rarity[5], 2)
-	UI.questButton = questToggle
-	-- Right tile owns its responsive placement.
-	local questPanel = textLabel(gui, "", Color3.new(1, 1, 1))
-	questPanel.BackgroundColor3 = Config.UI.body
-	questPanel.BackgroundTransparency = 0.1
-	questPanel.Position = UDim2.fromScale(0.67, Config.UI.zoneY + 0.03)
-	questPanel.Size = UDim2.fromScale(0.20, 0.11)
-	questPanel.Visible = false
-	corner(questPanel, 10)
-	questToggle.Activated:Connect(function()
-		questPanel.Visible = not questPanel.Visible
+	local questPanel = Instance.new("CanvasGroup")
+	questPanel.Name, questPanel.BackgroundColor3, questPanel.BackgroundTransparency =
+		"ZoneQuests", Config.UI.body, 0.12
+	questPanel.Parent, questPanel.Visible = gui, false
+	corner(questPanel, 12)
+	local questStroke = stroke(questPanel, 3)
+	local questHead = makeButton(questPanel, "", Config.UI.Tokens.off)
+	questHead.Name, questHead.Size = "QuestChevron", UDim2.fromScale(1, 0.18)
+	local questReward = textLabel(questPanel, "", Config.UI.Tokens.candy)
+	questReward.Position, questReward.Size =
+		UDim2.fromScale(0.02, 0.85), UDim2.fromScale(0.96, 0.14)
+	UI.fitText(questReward, 0.024)
+	local questRows, questState = {}, { collapsed = {}, completed = {}, zone = nil }
+	for i = 1, 3 do
+		local row = UI.box(
+			questPanel,
+			"Task" .. i,
+			UDim2.fromScale(0.03, 0.20 + (i - 1) * 0.21),
+			UDim2.fromScale(0.94, 0.20),
+			Config.UI.Tokens.panel
+		)
+		row.BackgroundTransparency = 1
+		local tick = UI.box(
+			row,
+			"Tick",
+			UDim2.fromScale(0, 0.12),
+			UDim2.fromScale(0.11, 0.55),
+			Config.UI.Tokens.offLip
+		)
+		corner(tick, 4)
+		stroke(tick, 2)
+		local check = UI.box(tick, "Check", UDim2.new(), UDim2.fromScale(1, 1), Color3.new(1, 1, 1))
+		check.BackgroundTransparency = 1
+		local shortArm = UI.box(
+			check,
+			"Short",
+			UDim2.fromScale(0.12, 0.52),
+			UDim2.fromScale(0.40, 0.16),
+			Color3.new(1, 1, 1)
+		)
+		shortArm.Rotation = 45
+		local longArm = UI.box(
+			check,
+			"Long",
+			UDim2.fromScale(0.33, 0.37),
+			UDim2.fromScale(0.60, 0.16),
+			Color3.new(1, 1, 1)
+		)
+		longArm.Rotation = -45
+		local name = textLabel(row, "", Color3.new(1, 1, 1))
+		name.Position, name.Size, name.TextXAlignment =
+			UDim2.fromScale(0.14, 0), UDim2.fromScale(0.64, 0.72), Enum.TextXAlignment.Left
+		UI.fitText(name, 0.026)
+		name.TextTruncate = Enum.TextTruncate.AtEnd
+		local count = textLabel(row, "", Config.UI.Tokens.candy)
+		count.Position, count.Size = UDim2.fromScale(0.78, 0), UDim2.fromScale(0.22, 0.72)
+		UI.fitText(count, 0.026)
+		local track = UI.box(
+			row,
+			"Track",
+			UDim2.fromScale(0.14, 0.72),
+			UDim2.fromScale(0.86, 0.18),
+			Config.UI.Tokens.well
+		)
+		corner(track)
+		stroke(track, 1.5)
+		local fill = UI.box(track, "Fill", UDim2.new(), UDim2.fromScale(0, 1), Config.UI.Tokens.go)
+		corner(fill)
+		questRows[i] =
+			{ frame = row, tick = tick, check = check, name = name, count = count, fill = fill }
+	end
+	local questPop = Instance.new("UIScale")
+	questPop.Parent = questPanel
+	questHead.Activated:Connect(function()
+		if questState.zone then
+			questState.collapsed[questState.zone] = not questState.collapsed[questState.zone]
+		end
 	end)
 	local function refreshQuests(root)
-		questToggle.Visible = false
-		if anyPanelOpen() then
+		if anyPanelOpen() or state:GetAttribute("KingActive") then
 			questPanel.Visible = false
 			return
 		end
@@ -6064,26 +6519,74 @@ do
 				and root.Position.Z < (folder:GetAttribute("ZMax") or z.zMax)
 			then
 				local q = data.quests and data.quests[id] or {}
-				questToggle.Visible = false
-				questPanel.AnchorPoint = Vector2.new(1, 0)
-				questPanel.Position = UDim2.fromScale(0.67, Palette.mobile() and 0.25 or 0.09)
-				questPanel.Size = UDim2.fromScale(Palette.mobile() and 0.48 or 0.28, 0.12)
-				questPanel.Visible = (player:GetAttribute("Carry") or 0) == 0
-				questPanel.Text = string.format(
-					"%s\n[%s] Smash %d/%d\n[%s] Steal  [%s] Own pet\nNext gate -%d%%",
-					z.title,
-					(q.smash or 0) >= Config.Progression.questSmashes and "x" or " ",
-					q.smash or 0,
-					Config.Progression.questSmashes,
-					(q.steal or 0) >= Config.Progression.questSteals and "x" or " ",
-					q.own and "x" or " ",
-					Config.Progression.gateDiscount * 100
+				questState.zone = id
+				local done = (q.smash or 0) >= Config.Progression.questSmashes
+					and (q.steal or 0) >= Config.Progression.questSteals
+					and q.own
+				local h = gui.AbsoluteSize.Y / uiScale.Scale
+				local touch = Palette.mobile()
+				local values = { q.smash or 0, q.steal or 0, q.own and 1 or 0 }
+				local targets =
+					{ Config.Progression.questSmashes, Config.Progression.questSteals, 1 }
+				local names = {
+					"Smash " .. targets[1] .. " pumpkins",
+					"Steal " .. targets[2] .. " pumpkins",
+					"Own a " .. z.title .. " pet",
+				}
+				if questState.collapsed[id] == nil then
+					questState.collapsed[id] = touch or done
+				end
+				if done and not questState.completed[id] then
+					questState.completed[id] = true
+					if not questState.collapsed[id] then
+						questPop.Scale = 1.06
+						UI.tween(questPop, 0.25, { Scale = 1 }, Enum.EasingStyle.Back)
+						task.delay(2, function()
+							questState.collapsed[id] = true
+						end)
+					end
+				end
+				local collapsed = questState.collapsed[id]
+				questPanel.AnchorPoint = Vector2.zero
+				questPanel.Position = UDim2.new(0, h * 0.012, touch and 0.40 or 0.60, 0)
+				questPanel.Size = UDim2.fromOffset(
+					touch and h * 0.27 or math.max(250, gui.AbsoluteSize.X / uiScale.Scale * 0.19),
+					h * (collapsed and 0.07 or 0.18)
 				)
+				questPanel.Visible = true
+				questPanel.GroupTransparency = (player:GetAttribute("Carry") or 0) > 0 and 0.33 or 0
+				questStroke.Color = done and Config.UI.Tokens.good or Config.UI.Tokens.ink
+				questHead.Size = UDim2.fromScale(1, collapsed and 0.50 or 0.18)
+				questHead.Text = (collapsed and "> " or "v ")
+					.. (done and "Zone quest done!" or z.title)
+				questHead.TextColor3 = Config.UI.Tokens.zones[z.title] or Config.UI.Tokens.go
+				questReward.Position = UDim2.fromScale(0.02, collapsed and 0.53 or 0.85)
+				questReward.Size = UDim2.fromScale(0.96, collapsed and 0.44 or 0.14)
+				questReward.Text = id == "Zone7"
+						and (done and "Rebirth ready" or "Complete quests for Rebirth")
+					or string.format(
+						"Next gate %d%% off%s",
+						Config.Progression.gateDiscount * 100,
+						done and " earned" or ""
+					)
+				for i, row in questRows do
+					local complete = values[i] >= targets[i]
+					row.frame.Visible = not collapsed
+					row.name.Text = names[i]
+					row.count.Text = math.min(values[i], targets[i]) .. "/" .. targets[i]
+					row.count.TextColor3 = complete and Config.UI.Tokens.good
+						or Config.UI.Tokens.candy
+					row.tick.BackgroundColor3 = complete and Config.UI.Tokens.good
+						or Config.UI.Tokens.offLip
+					row.check.Visible = complete
+					row.fill.Size = UDim2.fromScale(math.clamp(values[i] / targets[i], 0, 1), 1)
+					row.fill.BackgroundColor3 = complete and Config.UI.Tokens.good
+						or Config.UI.Tokens.go
+				end
 				return
 			end
 		end
 		questPanel.Visible = false
-		questPanel.Text = "Enter a zone to see its quests"
 	end
 	local popScale = Instance.new("UIScale")
 	popScale.Parent = bar
@@ -6092,7 +6595,7 @@ do
 	objectiveIcon.Position, objectiveIcon.Size =
 		UDim2.fromScale(0.015, 0.1), UDim2.fromScale(0.08, 0.8)
 	objectiveIcon.Parent = bar
-	UI.icon(objectiveIcon, "Pets")
+	objectiveIcon.Visible = false
 	title.RichText = true
 	title:SetAttribute("TypeSize", Config.UI.Tokens.type.objective)
 
@@ -6109,7 +6612,7 @@ do
 			)
 			bar.Size = UDim2.fromOffset(
 				math.min(gui.AbsoluteSize.X / uiScale.Scale * 0.80, measured.X + textSize * 2.6),
-				textSize * 1.45
+				textSize * 2.0
 			)
 			title.Text = verb:gsub("Pumpkin", '<font color="#FF8A1A">Pumpkin</font>')
 			popScale.Scale = Palette.mobile() and 1.03 or 1.18
@@ -6452,6 +6955,22 @@ do
 			return Services.HttpService:JSONDecode(raw)
 		end)
 		ordersData = ok and type(data) == "table" and data or nil
+		if ordersData and not ordersData.tutorial then
+			local first, seen = nil, {}
+			for _, order in ordersData.list or {} do
+				-- publishOrders omits internal IDs; older saves still share this stable display key.
+				local key = order.id
+					or table.concat(
+						{ tostring(order.stat), tostring(order.target), tostring(order.text) },
+						":"
+					)
+				if not seen[key] then
+					seen[key] = true
+					first = first or order
+				end
+			end
+			ordersData.list = first and { first } or {}
+		end
 	end
 	player:GetAttributeChangedSignal("Orders"):Connect(readOrders)
 	readOrders()
@@ -6533,6 +7052,20 @@ do
 		if unlocked("King") and state:GetAttribute("KingWarning") then
 			return "Meet the Pumpkin King!", "Follow the arrow to the throne", kingFace.Position
 		end
+		local pen = myPatch()
+		for _, plot in pen and pen:GetChildren() or {} do
+			local pumpkin = plot.Name == "Plot" and plot:FindFirstChild("Pumpkin")
+			local readyAt = pumpkin and pumpkin:GetAttribute("CarveAt")
+			if
+				type(readyAt) == "number"
+				and readyAt > workspace:GetServerTimeNow()
+				and not pumpkin:GetAttribute("Jack")
+			then
+				return "Your pumpkin is hatching!",
+					"Ready in " .. math.ceil(readyAt - workspace:GetServerTimeNow()) .. "s",
+					soil.Position
+			end
+		end
 		local zone = zoneTarget(root.Position) or soil.Position
 		local arrived = player:GetAttribute("ObjectiveZone")
 		local def = arrived and Config.Zones[arrived]
@@ -6555,10 +7088,23 @@ do
 			elseif step == 3 then
 				return "Smash pumpkins for 50 candy!", "Swing your scythe", zone
 			elseif step == 4 then
+				if candyValue.Value < Config.Tools[2].cost then
+					return "Smash pumpkins!",
+						"Need "
+							.. short(Config.Tools[2].cost - candyValue.Value)
+							.. " more for the Iron Scythe",
+						zone
+				end
 				return "Buy the Iron Scythe!",
 					short(Config.Tools[2].cost) .. " candy",
 					stallPosition("Seeds")
 			else
+				local price = ZoneView.gateCost("Zone2")
+				if candyValue.Value < price then
+					return "Smash pumpkins!",
+						"Need " .. short(price - candyValue.Value) .. " more for the Graveyard",
+						zone
+				end
 				return "Unlock the Graveyard!", "Hold E at the gate", ZoneView.gate("Zone2")
 			end
 		end
@@ -6952,7 +7498,7 @@ do
 		Enum.AutomaticSize.None, UDim2.new(), Enum.ScrollingDirection.X
 	list.Position, list.Size, list.ZIndex =
 		UDim2.fromScale(0.025, 0.19), UDim2.fromScale(0.95, 0.60), 12
-	local daily = UI.tile("Daily", Config.UI.Tokens.info, 3)
+	local daily = UI.tile("Daily", Config.UI.Tokens.info, 2)
 	UI.dailyButton = daily
 	local tiles, status = {}, nil
 	local busy, pending = false, false
@@ -8512,6 +9058,46 @@ end
 
 -- U1 HUD: only object icons use viewports; transient candy flights use Frame glyphs.
 do
+	-- Hide only the pose-tester phrases reported in watch3; admin and PatchDebug stay intact.
+	local function inspectOverlay(object)
+		if object:IsA("BillboardGui") and object.Name ~= "GateGui" then
+			for _, label in object:GetDescendants() do
+				if
+					label:IsA("TextLabel")
+					and (label.Text == "SELL" or label.Text == "SHOP" or label.Text == "OP")
+				then
+					object.MaxDistance =
+						math.min(object.MaxDistance > 0 and object.MaxDistance or 60, 60)
+				end
+			end
+		end
+		if not object:IsA("TextLabel") and not object:IsA("TextButton") then
+			return
+		end
+		local function hidePoseText()
+			local text = object.Text:lower()
+			if
+				text:find("swingam", 1, true)
+				or text:find("idle mid swing", 1, true)
+				or text:find("return! harvest!", 1, true)
+			then
+				object.Visible = false
+			end
+		end
+		hidePoseText()
+		local connection = object:GetPropertyChangedSignal("Text"):Connect(hidePoseText)
+		object.Destroying:Once(function()
+			connection:Disconnect()
+		end)
+	end
+	for _, container in { player:WaitForChild("PlayerGui"), workspace } do
+		for _, object in container:GetDescendants() do
+			inspectOverlay(object)
+		end
+		container.DescendantAdded:Connect(inspectOverlay)
+	end
+end
+do
 	local pets = UI.tile("Pets", Config.UI.Tokens.go, 1)
 	UI.petsButton = pets
 	local petsBadge = pillBadge(pets)
@@ -8527,6 +9113,27 @@ do
 	local carryIcon = Instance.new("Frame")
 	carryIcon.Name, carryIcon.BackgroundTransparency, carryIcon.Parent = "CarryIcon", 1, statsFrame
 	UI.icon(carryIcon, "Carry")
+	local plus = makeButton(statsFrame, "+", Config.UI.Tokens.good)
+	plus.Name, plus.AnchorPoint = "CandyShop", Vector2.new(1, 0)
+	plus.Activated:Connect(function()
+		if UI.openShop then
+			UI.openShop("Coins")
+		end
+	end)
+	local gateTrack = UI.box(
+		statsFrame,
+		"GateProgress",
+		UDim2.fromScale(0, 0.215),
+		UDim2.fromScale(1, 0.018),
+		Config.UI.Tokens.well
+	)
+	corner(gateTrack)
+	local gateFill =
+		UI.box(gateTrack, "Fill", UDim2.new(), UDim2.fromScale(0, 1), Config.UI.Tokens.candy)
+	corner(gateFill)
+	local gateLabel = textLabel(statsFrame, "", Config.UI.Tokens.candy)
+	gateLabel.Position, gateLabel.Size = UDim2.fromScale(0.52, 0), UDim2.fromScale(0.48, 0.20)
+	UI.fitText(gateLabel, 0.026)
 	local boosts = Instance.new("Frame")
 	boosts.Name, boosts.BackgroundTransparency, boosts.AnchorPoint, boosts.Parent =
 		"BoostTray", 1, Vector2.new(1, 1), gui
@@ -8544,7 +9151,8 @@ do
 	end
 	local function layout()
 		local touch, h = Palette.mobile(), gui.AbsoluteSize.Y / uiScale.Scale
-		leftBar.Position = UDim2.fromScale(0.012, touch and 0.30 or 0.40)
+		leftBar.Position =
+			UDim2.new(anyPanelOpen() and -0.12 or 0, h * 0.012, touch and 0.30 or 0.40, 0)
 		for _, object in gui:GetDescendants() do
 			if object:IsA("UITextSizeConstraint") then
 				object.MinTextSize = math.max(11, math.ceil(h * Config.UI.Tokens.type.caption))
@@ -8561,27 +9169,27 @@ do
 			end
 		end
 		leftBar.Size = UDim2.fromScale(0.25, 0.25)
-		statsFrame.AnchorPoint = touch and Vector2.zero or Vector2.new(0, 1)
-		statsFrame.Position = UDim2.fromScale(touch and 0.012 or 0.006, touch and 0.06 or 0.985)
+		statsFrame.AnchorPoint = Vector2.new(0, 1)
+		statsFrame.Position = UDim2.new(0, h * 0.012, touch and 0.565 or 0.975, 0)
 		statsFrame.Size = UDim2.fromOffset(
 			touch and gui.AbsoluteSize.X / uiScale.Scale * 0.43 or h * 0.44,
-			h * 0.105
+			h * 0.18
 		)
 		local candy = statsFrame:FindFirstChild("CandyIcon")
-		candy.Position = UDim2.fromScale(0, touch and 0 or 0.42)
-		candy.Size = UDim2.fromOffset(h * 0.055, h * 0.055)
+		plus.Position, plus.Size = UDim2.fromScale(1, 0.30), UDim2.fromOffset(h * 0.030, h * 0.030)
+		candy.Position = UDim2.fromScale(0, 0.24)
+		candy.Size = UDim2.fromOffset(h * 0.058, h * 0.058)
 		candyBig.Position, candyBig.Size =
-			UDim2.new(0, h * 0.078, touch and 0 or 0.34, 0), UDim2.new(1, -h * 0.078, 0.66, 0)
+			UDim2.new(0, h * 0.078, 0.24, 0), UDim2.new(1, -h * 0.115, 0.34, 0)
 		candyBig.TextScaled = false
-		candyBig.TextSize = h * 0.055;
+		candyBig.TextSize = h * 0.058;
 		(candyBig:FindFirstChildOfClass("UITextSizeConstraint") :: UITextSizeConstraint).MaxTextSize =
-			math.max(11, math.floor(h * 0.055))
+			math.max(11, math.floor(h * 0.058))
 		carryIcon.Position, carryIcon.Size =
-			UDim2.fromScale(0, touch and 0.59 or 0), UDim2.fromOffset(h * 0.04, h * 0.04)
-		carryLabel.Position, carryLabel.Size =
-			UDim2.fromScale(0.12, touch and 0.59 or 0), UDim2.fromScale(0.24, 0.38)
-		carryLabel.BackgroundColor3, carryLabel.BackgroundTransparency = Config.UI.Tokens.well, 0.25
-		carryLabel.TextXAlignment = Enum.TextXAlignment.Center
+			UDim2.fromScale(0, 0), UDim2.fromOffset(h * 0.036, h * 0.036)
+		carryLabel.Position, carryLabel.Size = UDim2.fromScale(0.10, 0), UDim2.fromScale(0.40, 0.20)
+		carryLabel.BackgroundColor3, carryLabel.BackgroundTransparency = Config.UI.Tokens.well, 1
+		carryLabel.TextXAlignment = Enum.TextXAlignment.Left
 		if not carryLabel:FindFirstChildOfClass("UICorner") then
 			corner(carryLabel)
 		end
@@ -8640,6 +9248,14 @@ do
 		end
 		elapsed = 0
 		local now = workspace:GetServerTimeNow()
+		local nextZone = ZoneView.nextLocked()
+		local cost = nextZone and ZoneView.gateCost(nextZone)
+		gateTrack.Visible, gateLabel.Visible = nextZone ~= nil, nextZone ~= nil
+		if cost and cost > 0 then
+			local fraction = math.clamp(candyValue.Value / cost, 0, 1)
+			gateFill.Size = UDim2.fromScale(fraction, 1)
+			gateLabel.Text = math.floor(fraction * 100) .. "% to " .. Config.Zones[nextZone].title
+		end
 		dailyBadge.Visible = player:GetAttribute("DailyClaimable") == true
 		-- Roblox's hotbar owns the scythe-name tooltip; it stays out of the carry line.
 		for _, container in { player.Character, player:FindFirstChild("Backpack") } do
