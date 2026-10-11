@@ -137,3 +137,4 @@ Before batch 1, **Claude** does 3 things:
 - Batch 2: Swap/auto-replace must not pay out 91% of the stolen value AND hatch it (+195k in 10 s exploit): replacing the weakest pet pays the weakest pet's normal sell value only; after buying a gate the objective points into the new zone; Carry upgrade hidden (already ruled).
 - Batch 4/7: Black Cat reveal card renders as a black blob (lighting in ViewportFrame); hatching pumpkin covers the whole pen (scale to slot); Haunted Woods looks like the Meadow (per-zone floor/wall colour).
 - LATER: 600-stud return run from Haunted Woods (consider a return portal after gate 2).
+- Claude Studio test after batch 2 (02:58 UTC): steal-first tutorial works, first hatch reveal at ~1:00, one timer chip. Found: 8-slot pen discs OVERLAP each other (layout bug, fix in batch 7 or B2 review); "YOUR BASE" billboard overlaps the objective at the pen (B2 plot cleanup); "+17 +17" pops overlap the candy number (batch 5).
