@@ -111,3 +111,81 @@ Keep studded world, eightpens4perside, throne40stud, threestalls andcolour. Came
 Reference: concepts/hub-perspective.png
 
 Final cleanup: hub-perspective added missing Upgrade stall, then moved it beside Shop to clear centre route; first-5-min recomposed to 16:9; scythes title Wooden renamed Iron. References were each current concept PNG.
+
+
+## Redraw pass — 2026-10-11 (built-in imagegen only)
+
+Shared prompt:
+
+STEAL A PUMPKIN production concept. Landscape 16:9. Match existing cream page/grape title strip, warm peach sunset, orange/grape/bone/gold Halloween palette, actual Roblox studded brick world and chunky voxel models, PS99 glossy bevel rounded bold dark-outlined UI. Big readable text, sparse callouts. Round ribbed stemmed pumpkins with NO faces and NO cube cores; nest pumpkins same shape glowing orange or ghost lavender in Zone1. Pets may have faces; guards and King keep their existing character faces, King weak point ONLY glowing FACE with green 12 / 35 tag, no chest crystal. Pumpkin Pup exact hatch reference: chubby orange studded voxel puppy, wide square head, drooping block ears, green stem, big black eyes with square white highlight, cream muzzle/chest/paws, black square nose, little red tongue, four short legs. Rarity labels/borders: Common #B8B8B8; Rare #3D8BFF; Epic #A64DFF; Legendary #FFC83D; Mythic #FF3B3B; Secret rainbow. Zone1 Pumpkin Meadow,2 Graveyard,3 Haunted Woods,4 Witch Swamp,5 Vampire Castle,6 Candy Kingdom,7 Pumpkin King's Throne. Gameplay launch HUD only Shop Index left, Candy and income/s and Carry1/3 bottom-left, ONE top centre goal banner, ONE glowing ground arrow toward goal, small King timer top-right, two-slot hotbar scythe and faceless carried pumpkin; no quest list/progress bar/Daily/Pets/Settings/Upgrades tiles. At most one small toast. Red danger only except fixed Mythic rarity.
+
+### hud-desktop.png
+
+References: hud-desktop.v1.png, hatch-reveal.png
+
+Redraw image1 desktop launch HUD. Remove entire six-tile cluster, quests, bottom gate progress, extra hotbar slots and cube pets. Use only Shop and Index stacked far left. Bottom-left '1.2K Candy', '+12 Candy/s', 'Carry 1/3'. Top-centre one grape banner 'Carry it to your patch!'; top-right SMALL 'King 04:32' chip. Bottom-centre EXACTLY two hotbar slots numbered1 scythe and2 faceless round pumpkin. Avatar carrying ribbed pumpkin in BOTH hands, centre open around avatar. One single glowing gold ground arrow points to HOME patch, not far progression gate. Inset separate builder strip along outer bottom sheet margin 'UNLOCKS LATER: Upgrades • Daily • Pets' as small grey icons, distinctly outside gameplay. No additional UI. Same scene/art quality as reference, readable 16:9 desktop.
+
+### hud-phone.png
+
+References: hud-phone.v1.png, hatch-reveal.png
+
+Redraw mobile landscape launch HUD. Wide 19.5:9 gameplay frame inside landscape production sheet with narrow outer builder footer. Top-left ONLY Shop and Index tiles. Bottom-left translucent joystick, Candy '+12 Candy/s' Carry1/3 immediately above joystick. Big orange SMASH and purple STEAL buttons plus smaller purple JUMP bottom-right. Top-centre one goal 'Carry it to your patch!', small top-right 'King 04:32'. Exactly two-slot hotbar scythe/pumpkin lower centre. Centre empty of UI and open lane around avatar carrying faceless round ribbed orange pumpkin with both hands. One glowing GOLD ground arrow toward nearby HOME patch. No quests, progress, extra menu tiles. Footer inset 'UNLOCKS LATER: Upgrades • Daily • Pets' clearly outside live screen. Large readable control text.
+
+### panels-shop-index.png
+
+References: panels.v1.png, hatch-reveal.png
+
+Split redesign, ONLY two large panels side by side on cream concept page: SHOP on left and INDEX on right. Shop Scythes tab, EXACTLY FOUR visible tier cards Rusty brown 'FREE', Iron SILVER/GREY '150', Bone cream '1.2K', Witch purple '9K'. Big names and prices, green purchase buttons, chunky blades made3-5 blocks. One small forward chevron suggests later tiers. Index EXACT3 columns x4 rows=12 tiles. First3 revealed Pumpkin Pup Common grey, Ghosty Rare blue, Candy Bat Epic purple. Remaining9 black silhouettes with rarity borders: row2 Common/Rare/Epic; row3 Rare/Epic/Legendary; row4 Legendary/Mythic/Mythic. No extra tile outside grid. No progress bar, no long help text, no upgrades/daily panel. Green Claim button below grid, small '3 / 12' count. Orange Shop header, grape Index header, cream cards thick dark outlines and glossy bevels, big sparse text. Locked Pup identity from image2.
+
+### panels-upgrades-daily.png
+
+References: panels.v1.png
+
+Split redesign ONLY two LARGE later-unlocked modal panels side by side UPGRADES and DAILY. Sheet title 'LATER UNLOCKS'. Upgrades three spacious rows Carry Capacity '1 → 2' example cost50, Swing Power 'x1 → x1.25' cost75, Pen Slots '4 → 6' cost150; green up arrow buttons, final grey locked button. Daily EXACT7 day cards in two rows4+3, Day1 green CLAIM, days2-7 grey LOCKED. Rewards wrapped candy, round faceless orange or gold pumpkins, potion; no invented pets. Huge readable labels minimal text. Footer 'Illustrative values — use live config'. PS99 thick dark outlines cream surfaces grape headers orange accents glossy bevels. Purple close X, not red. No gameplay HUD.
+
+### pets.png
+
+References: pets.v1.png, hatch-reveal.png
+
+Replace catalogue with EXACTLY TWELVE PET CARDS in4 columns3rows: row1 Pumpkin Pup Common, Crow Common, Ghosty Rare, Black Cat Rare; row2 Candy Bat Epic, Golden Pup Epic, Bone Pup Rare, Frost Owl Epic; row3 Lava Slime Legendary, King Cat Mythic, Gummy Bear Legendary, Pumpkin Dragon Mythic. No PROPOSED labels, no extra creatures. Match exact hatch Pup in image2, cream muzzle chest paws tongue and orange body. Big black pet eyes, studs, 2-3 base colours; Gummy Bear chunky translucent gold/orange bear, Pumpkin Dragon orange voxel dragon with purple wings/stem. Rarity pill exact colours locked including blue Rare not cyan. Lower footer SIZE LADDER as simple silhouettes on same baseline vs5.5-stud avatar, Common3.2, Rare3.9, Epic4.7, Legendary5.7, Mythic7. Use silhouettes in ladder so catalogue still exactly12 full pet designs. Scale ladder must visually increase correctly. Small rarity colour legend with Secret rainbow only swatch.
+
+### hub-perspective.png
+
+References: hub-perspective.v1.png, hatch-reveal.png
+
+Redraw hub perspective keep8 pens4 each side, stalls Shop Sell Upgrades alcoves, one Pumpkin Meadow north gate, cream12-stud route, muted green grass purple studded walls orange caps warm sunset. Main correction CENTRAL KING THRONE MONUMENT visibly40studs tall, roughly7.3 times5.5-stud avatar, colossal centre landmark. Put comparison avatar directly at throne foot same depth with vertical scale40 and5.5. Foreground avatar may larger due perspective but provide same-plane inset scale silhouette to remove ambiguity. Thrones purple gold, crowned orange King FACE glowing weak point, no crystal. Pens ONLY roster pets: exact locked orange Pumpkin Pup image2, Crow, Ghosty, Black Cat, Candy Bat, Golden Pup, Bone Pup, Frost Owl, one per pen; no green monster or off-roster dog. Ribbed faceless round pumpkins in pens. Clean main hero view and narrow right scale notes, avoid crowding.
+
+### zones-strip.png
+
+References: zones-strip.v1.png
+
+Redraw SIX panels3columns2rows Zones2-7, same environments and palette. Guards LARGE fill at least half scene panel height, but lane FLOOR clearly occupies lower third with readable studded route either side. Correct headings 2 Graveyard /3 Haunted Woods /4 Witch Swamp /5 Vampire Castle /6 Candy Kingdom /7 Pumpkin King's Throne. Guards Skeleton Knight9, Tree Ent13, Swamp Toad16, Vampire18, Candy Golem20, Pumpkin King GUARD24studs. Guard King face glowing, no chest weak point. Landmarks crypt/hollow tree/cauldron/castle/candy factory/throne behind guard with uncluttered lanes. Faceless ROUND ribbed orange wild pumpkins never cubic. Small5.5-stud avatar at side of each guard for scale. Put sparse palette swatches beneath each scene, no tiny prose. Header 'ZONES 2–7'; footer '1 Pumpkin Meadow • see Zone 1 sheets'. Keep mint Swamp floor, lavender graveyard,green woods,rose castle,pink candy,gold throne.
+
+### scythes.png
+
+References: scythes.v1.png
+
+Redraw seven-tier weapon model sheet EXACT7 scythes Rusty Iron Bone Witch Vampire Candy King. Biggest correction Iron blade entirely SILVER/GREY metal with grey riveted collar and darkgrey handle, distinct from rusty reddishBROWN blade with taped wood handle. Each blade buildable from EXACT3-5 visibly separate large chunky block/wedge segments, stepped crescent not smooth finely-tessellated curve. Show seam lines on blades. 2-3 basecolours per weapon plus1 glow. Bone cream skull, Witch violet mint gem,Vampire burgundy bat,Candy pink cream pinwheel,King gold orange pumpkin medallion faceless motif. Remove facial pumpkin decor in background. Footer one simple exploded blade diagram with4 numbered chunky segments and5.5-stud avatar two-hand pose6studshaft, palette swatches. Large names, sparse callouts, studded actual Roblox parts style.
+
+### collectibles.png
+
+References: collectibles.v1.png
+
+Redraw Zone1ONLY primary catalogue five LARGE examples: 'Wild Orange Pumpkin' round ribbed orange stem NOface no glow; 'Ghost Pumpkin' same ribbed shape pale ghostlavender NOface; 'Glowing Nest Pumpkin' same round ribbed orange/lavender shape gold/lavender glow on straw nest NOface; 'Carried Pumpkin'5.5-stud avatar holding SAMEfaceless round ribbed orange pumpkin in BOTH hands; 'Wrapped Candy' chunky orange/grape/gold wrapper1.5studs. Main page not seven variants. Small footer strip per-zone nest variants EXACT7 faceless ribbed thumbnails labelled1 Ghost,2 Moon,3 Golden,4 Shadow,5 Crystal,6 Inferno,7 King's Seed. Correct number-to-zone mapping. No eyes or mouths anywhere on pumpkins, no cubes or square core. Small hollow curved rind cutaway with cream seeds optional near main nest, sparse labels.
+
+### guards-and-king.png
+
+References: guards-and-king.v1.png
+
+Redraw enemy sheet retain7 guard designs and names/heights: Z1 Scarecrow11 Z2 Skeleton Knight9 Z3 Tree Ent13 Z4 Swamp Toad16 Z5 Vampire18 Z6 Candy Golem20 Z7 Pumpkin King GUARD24. Add prominent ACCURATE same-baseline SIZE LADDER lower/middle row silhouettes: Player5.5 / Zone1Guard11 / Zone7Guard24 / KingBOSS40 STUDS. Height ratios1:2:4.36:7.27 drawn honestly. Boss turnaround frontsideback purple armor gold fists orange crowned head, weak point ONLY GLOWINGFACE highlighted inset green '12 / 35', exact banner 'Hit the glowing face! x2' small note '6 seconds'. Fight inset dullpurple arena, red danger floor disc and attacking fist outline, one segmented boss HPbar40-45% width and one timer. No red environment props/sky. Explicit differentiate24guard and40boss. No chest crystal. Sparse large labels.
+
+### first-5-min.png
+
+References: first-5-min.v1.png, hatch-reveal.png
+
+Redraw6beat storyboard3columns2rows maintain times 0:00 Spawn,0:08 First Smash,0:15 Steal + Chase,0:20 Place in Pen,0:26 First Hatch,3:00–5:00 First Gate. SAME blackclothed orange-haired avatar. Replace ALL pupil designs in panels5and6 with EXACT locked Pumpkin Pup image2 chubbyorange fourlegs cream muzzle chestpaws droopingears blackeyes greenstem tongue; panel6 follows avatar visibly pup not faceless walkingpumpkin. Dropbutton PURPLE or GREY neverred; RUN danger mayred. Wild/nest/carried pumpkin roundribbed NOface, cracked rind hollow seeds no cube. Groundarrow points SOUTH HOME in chase while guard fromnorth. If HUD depicted enforce launch HUD only; no lists/bars. Common taggrey#B8B8B8 '+1 Candy/s'green, one small New toast. Gate heading '2 Graveyard'price1000. Main top goal as needed singlebanner. King's distant throne colossal40studvs5.5 and glowingface only. Large captions limited one perbeat.
+
+### Final targeted revisions
+
+Collectibles: full-shell glow, no facial cutouts or state-based rarity pills; Z1 Ghost lavender. Pets: same-baseline silhouette ladder, remove misleading ruler. Hub: no HUD/stale rarity labels, 40/5.5 comparison, labelled gate and stalls, side-by-side scale inset. Zones: replace cube pumpkins with round ribbed shells. Scythes: four-piece exploded diagrams without world/HUD. Guards: silhouette ladder and face-open6s wording, not stun. Shop/Index: purple close buttons. Storyboard: no partial HUD; spawn toward Meadow and E Hatch prompt. Exact build values are in CONCEPTS.md.
+
