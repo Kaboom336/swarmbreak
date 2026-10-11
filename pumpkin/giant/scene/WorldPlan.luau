@@ -522,22 +522,24 @@ end
 for n, s in state do
 	local folder = Instance.new("Folder", root)
 	folder.Name = s.zone.Name
-	local hero = group(folder, heroNames[n])
-	buildHero(hero, n)
-	-- Local fronts face inward. Z7 faces the arriving player (-Z).
-	if n < 7 then
-		hero:PivotTo(CFrame.Angles(0, (n % 2 == 1 and -1 or 1) * math.pi / 2, 0) * hero:GetPivot())
+	local heroX = n == 7 and s.x or s.x + (n % 2 == 1 and 56 or -56)
+	local heroZ = s.z + (n == 7 and 140 or 136)
+	local heroOk = false
+	for _, dz in { 0, -24, -48, -72, -96, 12 } do
+		local hero = group(folder, heroNames[n])
+		buildHero(hero, n)
+		-- Local fronts face inward. Z7 faces the arriving player (-Z).
+		if n < 7 then
+			hero:PivotTo(CFrame.Angles(0, (n % 2 == 1 and -1 or 1) * math.pi / 2, 0) * hero:GetPivot())
+		end
+		if place(hero, s, heroX, heroZ + dz, n == 7 and "FinalHero" or "Hero") then
+			heroOk = true
+			break
+		end
 	end
-	assert(
-		place(
-			hero,
-			s,
-			n == 7 and s.x or s.x + (n % 2 == 1 and 56 or -56),
-			s.z + (n == 7 and 140 or 136),
-			n == 7 and "FinalHero" or "Hero"
-		),
-		"Hero could not be placed: " .. heroNames[n]
-	)
+	if not heroOk then
+		warn("[WorldPlan] Hero could not be placed, skipped: " .. heroNames[n])
+	end
 	local function support(name, x, z, draw)
 		local m = group(folder, name)
 		draw(m)
