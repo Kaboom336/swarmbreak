@@ -99,7 +99,11 @@ local function build(name, voxel, layers, palette, origin)
 					end
 					local col, mat = look(ch)
 					local p = Instance.new("Part")
-					p.Name = "V"
+					p.Name = ch
+					p:SetAttribute(
+						"FacePart",
+						ch == "k" or ch == "e" or ch == "f" or (name == "BlackCat" and ch == "n")
+					)
 					p.Anchored = true
 					p.Material = mat
 					p.Color = col
@@ -338,7 +342,10 @@ local function E(c, ch, cx, cy, cz, rx, ry, rz, p) -- super-ellipsoid
 	for y = 1, c.H do
 		for z = 1, c.D do
 			for x = 1, c.W do
-				if math.abs((x - cx) / rx) ^ p + math.abs((y - cy) / ry) ^ p + math.abs((z - cz) / rz) ^ p <= 1 then
+				if
+					math.abs((x - cx) / rx) ^ p + math.abs((y - cy) / ry) ^ p + math.abs((z - cz) / rz) ^ p
+					<= 1
+				then
 					c.g[y][z][x] = ch
 				end
 			end
@@ -413,7 +420,13 @@ add("Guards", "Scarecrow", 1.0, SC, SC_PAL)
 -- ===================== PETS (voxel 0.6) =====================
 
 -- GoldenPup: PumpkinPup recolour, gold fur
-add("Pets", "GoldenPup", 0.6, PUP, { o = "FF7A1A", d = "D9530F", g = "3FA535", b = "E8C040", k = "141414" })
+add(
+	"Pets",
+	"GoldenPup",
+	0.6,
+	PUP,
+	{ o = "FF7A1A", d = "D9530F", g = "3FA535", b = "E8C040", k = "141414" }
+)
 
 -- Crow: black crow standing, orange beak + feet, tiny straw hat
 do
@@ -438,7 +451,13 @@ do
 	B(c, "y", 3, 6, 12, 12, 3, 6) -- hat brim
 	B(c, "r", 4, 5, 13, 13, 4, 5) -- hat band
 	B(c, "y", 4, 5, 14, 14, 4, 5) -- hat crown
-	add("Pets", "Crow", 0.6, OUT(c), { k = "1A1A22", w = "34344A", o = "FF8A1A", e = "F2EEDF", y = "E8C040", r = "C8302A" })
+	add(
+		"Pets",
+		"Crow",
+		0.6,
+		OUT(c),
+		{ k = "1A1A22", w = "34344A", o = "FF8A1A", e = "F2EEDF", y = "E8C040", r = "C8302A" }
+	)
 end
 
 -- Ghosty: rounded white sheet ghost, tattered hem, pink cheeks
@@ -486,7 +505,13 @@ end
 do
 	local c = Cv(8, 9, 15)
 	cat(c, 0)
-	add("Pets", "BlackCat", 0.6, OUT(c), { b = "1C1C24", i = "3A3A48", n = "FF8AB0", e = "*FF9A1A" })
+	add(
+		"Pets",
+		"BlackCat",
+		0.6,
+		OUT(c),
+		{ b = "1C1C24", i = "3A3A48", n = "FF8AB0", e = "*FF9A1A" }
+	)
 end
 
 -- KingCat: purple cat with bat wings and a gold crown
@@ -555,7 +580,13 @@ do
 	end)
 	M(c, "k", 6, 6, 11, 11, 1, 1) -- eyes
 	M(c, "d", 7, 7, 1, 1, 3, 4) -- feet
-	add("Pets", "CandyBat", 0.6, OUT(c), { y = "FFD21A", o = "FF7A1A", w = "F4F4F8", k = "141414", d = "3A2A1A" })
+	add(
+		"Pets",
+		"CandyBat",
+		0.6,
+		OUT(c),
+		{ y = "FFD21A", o = "FF7A1A", w = "F4F4F8", k = "141414", d = "3A2A1A" }
+	)
 end
 
 -- BonePup: skeleton dog, rib slices, skull head
@@ -636,7 +667,13 @@ do
 		"..ffff..",
 	})
 	B(c, "g", 4, 5, 8, 8, 4, 5) -- stem
-	add("Pets", "LavaSlime", 0.6, OUT(c), { o = "FF7A1A", d = "D9530F", n = "*FF4A10", f = "*FFE11A", g = "3FA535" })
+	add(
+		"Pets",
+		"LavaSlime",
+		0.6,
+		OUT(c),
+		{ o = "FF7A1A", d = "D9530F", n = "*FF4A10", f = "*FFE11A", g = "3FA535" }
+	)
 end
 
 -- Moth: purple fore-wings with neon eye-spots, orange hind-wings, fuzzy cream head
@@ -731,7 +768,13 @@ do
 	M(c, "k", 3, 3, 10, 10, 2, 2) -- eyes
 	M(c, "p", 1, 2, 12, 12, 3, 4) -- ears
 	M(c, "o", 2, 2, 12, 12, 3, 3)
-	add("Pets", "GummyBear", 0.6, OUT(c), { p = "FF5FB0", o = "FF9A3A", n = "5A2A1A", k = "141414" })
+	add(
+		"Pets",
+		"GummyBear",
+		0.6,
+		OUT(c),
+		{ p = "FF5FB0", o = "FF9A3A", n = "5A2A1A", k = "141414" }
+	)
 end
 
 -- PumpkinDragon: ribbed pumpkin body, orange head + tail, green wings / horns / stem
@@ -770,7 +813,13 @@ do
 	B(c, "o", 7, 7, 3, 4, 13, 13)
 	S(c, "o", 7, 4, 14)
 	S(c, "g", 7, 5, 14)
-	add("Pets", "PumpkinDragon", 0.6, OUT(c), { o = "FF7A1A", d = "D9530F", g = "3FA535", w = "7FD14A", k = "141414" })
+	add(
+		"Pets",
+		"PumpkinDragon",
+		0.6,
+		OUT(c),
+		{ o = "FF7A1A", d = "D9530F", g = "3FA535", w = "7FD14A", k = "141414" }
+	)
 end
 
 -- Kinglet: mini pumpkin king. Pumpkin head with neon carved face, gold crown, purple robe + cape, vine arms
@@ -845,7 +894,13 @@ do
 	B(c, "g", 6, 6, 12, 13, 6, 6) -- stem
 	S(c, "g", 7, 13, 6)
 	B(c, "l", 7, 8, 12, 12, 6, 7) -- leaf
-	add("Pets", "MysteryPumpkin", 0.6, OUT(c), { o = "FF7A1A", d = "D9530F", f = "*FFE11A", g = "3FA535", l = "7FD14A" })
+	add(
+		"Pets",
+		"MysteryPumpkin",
+		0.6,
+		OUT(c),
+		{ o = "FF7A1A", d = "D9530F", f = "*FFE11A", g = "3FA535", l = "7FD14A" }
+	)
 end
 
 -- ===================== GUARDS (voxel 1.0, Pumpkin King 1.2) =====================
@@ -918,7 +973,15 @@ do
 	RC(c, "l", "g", function(_, y)
 		return y <= 14
 	end)
-	local berries = { { 4, 16, 3 }, { 14, 15, 4 }, { 9, 20, 5 }, { 7, 17, 1 }, { 12, 18, 2 }, { 6, 19, 8 }, { 13, 16, 9 } }
+	local berries = {
+		{ 4, 16, 3 },
+		{ 14, 15, 4 },
+		{ 9, 20, 5 },
+		{ 7, 17, 1 },
+		{ 12, 18, 2 },
+		{ 6, 19, 8 },
+		{ 13, 16, 9 },
+	}
 	RC(c, "l", "p", function(x, y, z)
 		for _, b in ipairs(berries) do
 			if math.abs(x - b[1]) <= 1 and math.abs(y - b[2]) <= 1 and math.abs(z - b[3]) <= 1 then
@@ -1082,7 +1145,17 @@ do
 	B(c, "c", 3, 17, 1, 2, 11, 13) -- flared hem
 	B(c, "w", 3, 17, 1, 1, 11, 13) -- ermine hem
 	M(c, "c", 4, 4, 2, 9, 7, 10) -- cape wraps the sides
-	for _, q in ipairs({ { 5, 9, "v" }, { 4, 9, "v" }, { 3, 8, "v" }, { 2, 7, "v" }, { 2, 6, "v" }, { 2, 5, "v" }, { 3, 4, "v" }, { 3, 9, "f" }, { 1, 6, "f" } }) do
+	for _, q in ipairs({
+		{ 5, 9, "v" },
+		{ 4, 9, "v" },
+		{ 3, 8, "v" },
+		{ 2, 7, "v" },
+		{ 2, 6, "v" },
+		{ 2, 5, "v" },
+		{ 3, 4, "v" },
+		{ 3, 9, "f" },
+		{ 1, 6, "f" },
+	}) do
 		M(c, q[3], q[1], q[1], q[2], q[2], 7, 8) -- vine arms with leaves
 	end
 	E(c, "o", 10, 16, 7.5, 9.4, 5.6, 7.3, 4) -- pumpkin head

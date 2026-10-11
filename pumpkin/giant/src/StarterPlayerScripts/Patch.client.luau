@@ -287,14 +287,36 @@ do
 	end)
 end
 
+local shakeState =
+	{ strength = 0, ends = 0, duration = 0.2, camera = nil, offset = CFrame.identity }
 local function shake(strength: number, steps: number)
-	local camera = workspace.CurrentCamera
-	for i = 1, steps do
-		local s = strength * (1 - i / (steps + 1))
-		camera.CFrame *= CFrame.new((math.random() - 0.5) * s, (math.random() - 0.5) * s, 0)
-		task.wait(0.02)
-	end
+	local duration = math.max(0.1, (steps or 10) * 0.02)
+	shakeState.strength = math.max(shakeState.strength, math.min(0.05, strength * 0.025))
+	shakeState.ends = math.max(shakeState.ends, os.clock() + duration)
+	shakeState.duration = math.max(duration, shakeState.ends - os.clock())
 end
+RunService:BindToRenderStep("PatchShakeRestore", Enum.RenderPriority.Camera.Value - 1, function()
+	if shakeState.camera and shakeState.camera == workspace.CurrentCamera then
+		shakeState.camera.CFrame *= shakeState.offset:Inverse()
+	end
+	shakeState.offset = CFrame.identity
+end)
+RunService:BindToRenderStep("PatchShake", Enum.RenderPriority.Camera.Value + 1, function()
+	local t = os.clock()
+	local camera = workspace.CurrentCamera
+	if not camera or t >= shakeState.ends then
+		shakeState.strength = 0
+		return
+	end
+	local k = shakeState.strength * math.clamp((shakeState.ends - t) / shakeState.duration, 0, 1)
+	shakeState.camera = camera
+	shakeState.offset = CFrame.Angles(
+		math.noise(t * 32, 1) * k,
+		math.noise(2, t * 32) * k,
+		math.noise(t * 32, 3) * k * 0.5
+	)
+	camera.CFrame *= shakeState.offset
+end)
 
 local function rootPart(): BasePart?
 	local character = player.Character
@@ -1783,7 +1805,11 @@ do
 		return loadedAt ~= nil and os.clock() - loadedAt > 3
 	end
 	player:GetAttributeChangedSignal("Unlock_PlayerSteal"):Connect(function()
-		if unlocked("PlayerSteal") and fresh() then
+		if
+			unlocked("PlayerSteal")
+			and fresh()
+			and (state:GetAttribute("PurgeEnds") or 0) > workspace:GetServerTimeNow()
+		then
 			banner(
 				"Ghosts and players can raid you now!",
 				"Lock your Base at its sign post!",
@@ -2923,7 +2949,14 @@ do
 					local name = filled and pumpkinName(plot) or nil
 					set(
 						plot:FindFirstChild("PlacePrompt"),
-						active and mine and carrying and not filled,
+						active
+							and mine
+							and carrying
+							and (
+								not filled
+								or (player:GetAttribute("PenFilled") or 0)
+									>= (player:GetAttribute("PenSlots") or Config.Progression.baseSlots)
+							),
 						"Your plot"
 					)
 					set(
@@ -2932,6 +2965,12 @@ do
 							and mine
 							and filled
 							and canSell
+							and (function()
+								local p = plot:FindFirstChild("Pumpkin")
+								return p
+									and not p:GetAttribute("CarveAt")
+									and now >= (p:GetAttribute("PickupReadyAt") or 0)
+							end)()
 							and not (
 								carrying
 								and (player:GetAttribute("PenFilled") or 0)
@@ -2961,38 +3000,6 @@ do
 					and player:GetAttribute("Loaded") == true
 					and player:GetAttribute("PurgeLockUsed") ~= state:GetAttribute("PurgeId")
 			)
-			local count = 0
-			for _, plot in patch:GetChildren() do
-				if
-					plot.Name == "Plot"
-					and plot:IsA("BasePart")
-					and (plot:GetAttribute("Index") or 1)
-						<= (patch:GetAttribute("PenSlots") or Config.Progression.baseSlots)
-				then
-					count += 1
-				end
-			end
-			local full = mine
-				and player:GetAttribute("CarryPet")
-				and carrying
-				and count > 0
-				and (player:GetAttribute("PenFilled") or 0) >= count
-			local soil = patch:FindFirstChild("Soil")
-			local root = rootPart()
-			local inside = false
-			if full and soil and root then
-				local at = soil.CFrame:PointToObjectSpace(root.Position)
-				inside = math.abs(at.X) <= soil.Size.X / 2 + 4
-					and math.abs(at.Z) <= soil.Size.Z / 2 + 4
-			end
-			set(patch:FindFirstChild("SwapPrompt", true), full and inside)
-			local sell = patch:FindFirstChild("SellCarryPrompt", true)
-			set(sell, full and inside)
-			if sell and sell:IsA("ProximityPrompt") then
-				sell.ActionText = "Sell for "
-					.. short(player:GetAttribute("CarryTopValue") or 0)
-					.. " 🍬"
-			end
 		end
 		for _, p in sellPrompt and sellPrompt:GetChildren() or {} do
 			if p:IsA("ProximityPrompt") then
@@ -3433,6 +3440,9 @@ do
 			idleGrip[tool] = tool.Grip
 		end
 		tool.Activated:Connect(function()
+			if (player:GetAttribute("Carry") or 0) > 0 then
+				return
+			end
 			if player:GetAttribute("FightActive") or Center.urgent then
 				return
 			end
@@ -3991,7 +4001,7 @@ do
 		return wall and wall.Position
 	end
 
-	local function gateCost(zoneId)
+	function ZoneView.gateCost(zoneId)
 		local before = Config.ZoneOrder[(table.find(Config.ZoneOrder, zoneId) or 1) - 1]
 		local ok, d = pcall(function()
 			return HttpService:JSONDecode(player:GetAttribute("ZoneProgress") or "{}")
@@ -4014,7 +4024,7 @@ do
 				continue
 			end
 			local open = ZoneView.has(zoneId, owned)
-			local price, discount = gateCost(zoneId)
+			local price, discount = ZoneView.gateCost(zoneId)
 			local wall = folder:FindFirstChild("GateWall")
 			if wall and wall:IsA("BasePart") then
 				if wallLook[wall] == nil then
@@ -4672,20 +4682,6 @@ do
 	player:GetAttributeChangedSignal("Orders"):Connect(readOrders)
 	readOrders()
 
-	local function nearestCauldron(from: Vector3): Vector3?
-		local best, bestDist = nil, math.huge
-		for _, c in cauldronFolder:GetChildren() do
-			local pot = c:FindFirstChild("Pot") :: BasePart?
-			if pot then
-				local d = (pot.Position - from).Magnitude
-				if d < bestDist then
-					best, bestDist = pot.Position, d
-				end
-			end
-		end
-		return best
-	end
-
 	local function stallPosition(name: string): Vector3?
 		local stall = market:FindFirstChild(name)
 		return stall and (stall :: Model):GetPivot().Position
@@ -4720,37 +4716,6 @@ do
 		return nil
 	end
 
-	-- The nearest base of another player (steal orders, Blood Moon).
-	local function otherBase(from: Vector3): Vector3?
-		local best, bestDist = nil, math.huge
-		for _, patch in patchFolder:GetChildren() do
-			local owner = patch:GetAttribute("Owner") or 0
-			local soil = patch:FindFirstChild("Soil") :: BasePart?
-			if soil and owner ~= 0 and owner ~= player.UserId then
-				local d = (soil.Position - from).Magnitude
-				if d < bestDist then
-					best, bestDist = soil.Position, d
-				end
-			end
-		end
-		return best
-	end
-
-	local function nearestGhost(from: Vector3): Vector3?
-		local folder = garden:FindFirstChild("Ghosts")
-		local best, bestDist = nil, math.huge
-		for _, ghost in folder and folder:GetChildren() or {} do
-			local body = ghost:IsA("Model") and ghost.PrimaryPart
-			if body then
-				local d = (body.Position - from).Magnitude
-				if d < bestDist then
-					best, bestDist = body.Position, d
-				end
-			end
-		end
-		return best
-	end
-
 	-- A zone's Hoard nest (the server builds it as Zones.<zone>.Hoard.Nest).
 	local function hoardSpot(zoneId: string): (Vector3?, boolean)
 		local zones = garden:FindFirstChild("Zones")
@@ -4771,136 +4736,64 @@ do
 
 	-- Carrying toward your base: "Go to your Base!" until you stand on it, then "Place it!".
 	local function goHome(root: BasePart, soil: BasePart): string
-		local d =
-			Vector3.new(root.Position.X - soil.Position.X, 0, root.Position.Z - soil.Position.Z)
-		local reach = math.max(soil.Size.X, soil.Size.Z) / 2 + 6
-		return d.Magnitude < reach and "Place in your pen!" or "Run to your pen!"
+		local at = soil.CFrame:PointToObjectSpace(root.Position)
+		return math.abs(at.X) <= soil.Size.X / 2 + 4
+				and math.abs(at.Z) <= soil.Size.Z / 2 + 4
+				and "Place it!"
+			or "Bring it to your pen!"
 	end
 
+	-- Carrying always owns the objective; otherwise choose an affordable progression goal.
 	local function objective(data, root: BasePart, soil: BasePart): (string, string, Vector3?)
-		local carry = player:GetAttribute("Carry") or 0
-		local current = nil
-		for _, order in data.list or {} do
-			if not order.done then
-				current = order
-				break
-			end
-		end
-		local kind = current and current.target or "zone"
-		local stat = current and current.stat or "smash"
-		if kind == "king" and not state:GetAttribute("KingActive") then
-			current = nil
-			kind = "zone"
-			stat = "smash"
-		end
-		local sub = current
-				and string.format(
-					"%s  %s/%s",
-					current.text,
-					short(current.have or 0),
-					short(current.need or 1)
-				)
-			or "Smash for candy"
-		if state:GetAttribute("KingWarning") then
-			return "JOIN KING NIGHT!", "Pet + loot!", kingFace.Position
-		end
-		local zone = zoneTarget(root.Position) or soil.Position
-		local _, nestReady = hoardSpot("Zone1")
-		if
-			carry == 0
-			and (kind == "hoard" or (kind == "place" and (player:GetAttribute("PenFilled") or 0) == 0))
-			and not nestReady
-		then
-			return "Nest refilling...", "Smash for candy while you wait", zone
-		end
-		if carry > 0 then
-			if
-				player:GetAttribute("CarryPet")
-				and (player:GetAttribute("PenFilled") or 0)
-					>= (player:GetAttribute("PenSlots") or 6)
-			then
-				return "Pens full! Swap or Sell", "Choose in your pen", soil.Position
-			end
-			if not data.tutorial and kind == "witch" and unlocked("Sell") then
-				return "Sell to the Witch!", sub, stallPosition("Sell")
-			elseif not data.tutorial and kind == "cauldron" and unlocked("Brew") then
-				return "Brew your pumpkin!", sub, nearestCauldron(root.Position)
-			end
-			local distance = Vector3.new(
-				root.Position.X - soil.Position.X,
-				0,
-				root.Position.Z - soil.Position.Z
-			).Magnitude
+		if (player:GetAttribute("Carry") or 0) > 0 then
+			local delta = root.Position - soil.Position
+			local distance = Vector3.new(delta.X, 0, delta.Z).Magnitude
 			return goHome(root, soil),
 				string.format("%d studs", math.floor(distance + 0.5)),
 				soil.Position
 		end
-		if data.tutorial then
-			local step = data.step or 1
-			if step == 1 then
-				return "Smash pumpkins!",
-					"Collect " .. short(current and current.have or 0) .. "/30 🍬",
-					zone
-			end
-			if step == 2 then
-				return "Buy the Iron Scythe!", "150 🍬 at the Shop", stallPosition("Seeds")
-			end
-			if step == 3 then
-				return "Steal a glowing pumpkin!", "Hold E for pets", hoardSpot("Zone1") or zone
-			end
-			if step == 4 then
-				if (player:GetAttribute("PenFilled") or 0) == 0 then
-					return "Steal a glowing pumpkin!",
-						"Replace your lost pumpkin",
-						hoardSpot("Zone1") or zone
-				end
-				return "Place it in your pen!", "Wait for it to hatch", soil.Position
-			end
-			return "Fill your pen "
-				.. (player:GetAttribute("PenFilled") or 0)
-				.. "/"
-				.. (player:GetAttribute("PenSlots") or Config.Progression.baseSlots),
-				"Steal another glowing pumpkin",
-				hoardSpot("Zone1") or zone
+		local zone = zoneTarget(root.Position) or soil.Position
+		if data.tutorial and (data.step or 1) == 1 then
+			return "Smash pumpkins!", "Collect candy for your first scythe", zone
 		end
-		if kind == "gate" then
-			local id = ZoneView.nextLocked()
-			local def = id and Config.Zones[id]
-			if def then
-				return "Unlock the " .. def.title .. "!",
-					"Costs " .. short(def.cost) .. " 🍬",
-					ZoneView.gate(id) or soil.Position
+		local owned = {}
+		for id in string.gmatch(player:GetAttribute("Tools") or "", "[^,]+") do
+			owned[id] = true
+		end
+		local rank = 0
+		for i, tool in Config.Tools do
+			if owned[tool.id] then
+				rank = math.max(rank, i)
 			end
-		elseif kind == "tools" or kind == "seeds" then
-			return "Buy a better Scythe!", sub, stallPosition("Seeds")
-		elseif kind == "upgrades" then
-			return "Upgrade your Base!", sub, stallPosition("Upgrades")
-		elseif kind == "hoard" or kind == "place" then
-			return "Steal a glowing pumpkin!", sub, hoardSpot("Zone1") or zone
-		elseif kind == "witch" then
-			return "Sell to the Witch!", sub .. " · pick up a pet", soil.Position
-		elseif kind == "cauldron" then
-			return "Brew your pumpkin!", sub .. " · pick up a pet", soil.Position
-		elseif kind == "steal" then
-			return "Steal a Pumpkin!", sub, otherBase(root.Position) or soil.Position
-		elseif
-			kind == "king"
-			and state:GetAttribute("KingActive")
-			and (state:GetAttribute("KingHp") or 0) > 0
+		end
+		for i, tool in Config.Tools do
+			if tool.cost and i > rank and not owned[tool.id] and candyValue.Value >= tool.cost then
+				return "Buy " .. tool.name .. "!",
+					short(tool.cost) .. " candy",
+					stallPosition("Seeds")
+			end
+		end
+		local nextZone = ZoneView.nextLocked()
+		local nextDef = nextZone and Config.Zones[nextZone]
+		local price = nextZone and ZoneView.gateCost(nextZone)
+		if nextDef and price and candyValue.Value >= price then
+			return "Unlock the " .. nextDef.title .. "!",
+				short(price) .. " candy",
+				ZoneView.gate(nextZone)
+		end
+		if
+			(player:GetAttribute("PenFilled") or 0)
+			< (player:GetAttribute("PenSlots") or Config.Progression.baseSlots)
 		then
-			return "Hit the Pumpkin King!", sub, kingFace.Position
-		elseif stat == "bonkGhost" then
-			return "Bonk the Ghosts!", sub, nearestGhost(root.Position) or soil.Position
-		elseif stat == "stopThief" then
-			return "Guard your Base!", sub, soil.Position
-		elseif stat == "rescue" then
-			return "Save your Pumpkins!", sub, soil.Position
-		elseif stat == "income" then
-			return "Earn more candy!", sub, soil.Position
-		elseif stat == "lock" then
-			return "Lock your Base!", sub, soil.Position
+			local nest, ready = hoardSpot("Zone1")
+			if ready then
+				return "Steal a glowing pumpkin!", "Hold E for a pet", nest
+			end
 		end
-		return "Smash pumpkins!", sub, zone
+		return "Smash pumpkins!",
+			nextDef and ("Save " .. short(price) .. " candy for " .. nextDef.title)
+				or "Earn candy for your next upgrade",
+			zone
 	end
 
 	task.spawn(function()
@@ -4965,7 +4858,7 @@ do
 	alarmGui.Name = "PatchAlarm"
 	alarmGui.ResetOnSpawn = false
 	alarmGui.IgnoreGuiInset = true
-	alarmGui.DisplayOrder = 3
+	alarmGui.DisplayOrder = gui.DisplayOrder - 1
 	alarmGui.Parent = player:WaitForChild("PlayerGui")
 	local vignette = Instance.new("Frame")
 	vignette.BackgroundTransparency = 1
@@ -4975,10 +4868,10 @@ do
 	local edges: { Frame } = {}
 	for _, e in
 		{
-			{ Vector2.new(0, 0), UDim2.fromScale(0, 0), UDim2.fromScale(1, 0.18), 90 },
-			{ Vector2.new(0, 1), UDim2.fromScale(0, 1), UDim2.fromScale(1, 0.18), -90 },
-			{ Vector2.new(0, 0), UDim2.fromScale(0, 0), UDim2.fromScale(0.13, 1), 0 },
-			{ Vector2.new(1, 0), UDim2.fromScale(1, 0), UDim2.fromScale(0.13, 1), 180 },
+			{ Vector2.new(0, 0), UDim2.fromScale(0, 0), UDim2.fromScale(1, 0.08), 90 },
+			{ Vector2.new(0, 1), UDim2.fromScale(0, 1), UDim2.fromScale(1, 0.08), -90 },
+			{ Vector2.new(0, 0), UDim2.fromScale(0, 0.08), UDim2.fromScale(0.08, 0.84), 0 },
+			{ Vector2.new(1, 0), UDim2.fromScale(1, 0.08), UDim2.fromScale(0.08, 0.84), 180 },
 		}
 	do
 		local edge = Instance.new("Frame")
@@ -5001,25 +4894,21 @@ do
 	flash.Size = UDim2.fromScale(1, 1)
 	flash.Parent = alarmGui
 
-	-- A Hoard pumpkin fresh from a nest (CarryHoard) gets the same drama: the guardian is coming.
 	local function refresh()
-		local stolen = (player:GetAttribute("CarryStolen") or 0) > 0
-			or (player:GetAttribute("CarryHoard") or 0) > 0
-		run.Visible = stolen
-		drop.Visible = stolen
-		vignette.Visible = stolen
+		local root = rootPart()
+		local safe = not root
+			or root.Position.Z < (state:GetAttribute("SafeLineZ") or Config.SafeLineZ)
+		local danger = player:GetAttribute("GuardChasing") == true
+			or (player:GetAttribute("CarryStolen") or 0) > 0
+		run.Visible = danger and not safe and not anyPanelOpen()
+		drop.Visible = (player:GetAttribute("Carry") or 0) > 0 and not anyPanelOpen()
+		vignette.Visible = danger and not safe and not anyPanelOpen() and not Center.busy
 	end
-	player:GetAttributeChangedSignal("CarryStolen"):Connect(refresh)
-	player:GetAttributeChangedSignal("CarryHoard"):Connect(refresh)
-	refresh()
-
 	RunService.RenderStepped:Connect(function()
-		if not vignette.Visible then
-			return
-		end
+		refresh()
 		local wave = 0.5 + 0.5 * math.sin(os.clock() * 6)
 		for _, edge in edges do
-			edge.BackgroundTransparency = 0.1 + 0.4 * (1 - wave)
+			edge.BackgroundTransparency = 0.65 + 0.1 * (1 - wave)
 		end
 		runScale.Scale = 1 + 0.07 * wave
 	end)
@@ -5244,9 +5133,25 @@ do
 	local busy = false
 	local function refresh()
 		daily.Visible = player:GetAttribute("DailyClaimable") == true
+			and (player:GetAttribute("Carry") or 0) == 0
+			and not player:GetAttribute("GuardChasing")
+			and rootPart() ~= nil
+			and rootPart().Position.Z < Config.SafeLineZ
 		claim.Visible = daily.Visible
+		if not daily.Visible then
+			frame.Visible = false
+		end
 	end
 	daily.Activated:Connect(function()
+		local root = rootPart()
+		if
+			not root
+			or root.Position.Z >= Config.SafeLineZ
+			or (player:GetAttribute("Carry") or 0) > 0
+			or player:GetAttribute("GuardChasing")
+		then
+			return
+		end
 		for _, f in panelFrames do
 			f.Visible = false
 		end
@@ -5272,6 +5177,7 @@ do
 		confetti(gui)
 		play(Config.Sounds.Coin, 0.9, 1)
 	end)
+	RunService.Heartbeat:Connect(refresh)
 	player:GetAttributeChangedSignal("DailyClaimable"):Connect(refresh)
 	refresh()
 end
@@ -5874,187 +5780,10 @@ end)
 -- pumpkin: shake, RUN!!), "bonk" (the guardian caught you), "safe" (it gave up) and "deliver" (you
 -- placed it: confetti; the server also sends a reveal card). -----------------------------------
 
-do
-	local drama = { token = 0, camera = nil, saved = nil, fight = false, ends = 0 }
-	local screen = Instance.new("ScreenGui")
-	screen.Name = "PatchStealBeat"
-	screen.IgnoreGuiInset = true
-	screen.ResetOnSpawn = false
-	screen.DisplayOrder = 9
-	screen.Parent = player:WaitForChild("PlayerGui")
-	local top = Instance.new("Frame")
-	top.BackgroundColor3 = Color3.new(0, 0, 0)
-	top.BorderSizePixel = 0
-	top.Size = UDim2.fromScale(1, 0.12)
-	top.Visible = false
-	top.Parent = screen
-	local bottom = top:Clone()
-	bottom.AnchorPoint = Vector2.new(0, 1)
-	bottom.Position = UDim2.fromScale(0, 1)
-	bottom.Parent = screen
-	local skip = button(screen, "Skip", PURPLE)
-	skip.AnchorPoint = Vector2.new(1, 1)
-	skip.Position = UDim2.new(1, -24, 1, -24)
-	skip.Size = UDim2.fromOffset(120, 52)
-	skip.Visible = false
-	local fight = Instance.new("Frame")
-	fight.Name = "FightBar"
-	fight.AnchorPoint = Vector2.new(0.5, 0.5)
-	fight.Position = UDim2.fromScale(0.5, Config.UI.fightY)
-	fight.Size = UDim2.fromScale(0.30, 0.035)
-	fight.BackgroundTransparency = 1
-	fight.Visible = false
-	fight.Parent = screen
-	corner(fight, 16)
-	stroke(fight, 4).Color = ORANGE
-	local scale = Instance.new("UIScale")
-	scale.Scale = uiScale.Scale
-	scale.Parent = fight
-	local title = textLabel(fight, "TAP!", BUY, "shout")
-	title.Position = UDim2.fromScale(0, -1.7)
-	title.Size = UDim2.fromScale(1, 1.4)
-	local track = Instance.new("Frame")
-	track.Position = UDim2.fromScale(0, 0)
-	track.Size = UDim2.fromScale(1, 1)
-	track.BackgroundColor3 = DARK
-	track.Parent = fight
-	corner(track, 10)
-	local fill = Instance.new("Frame")
-	fill.Size = UDim2.fromScale(0, 1)
-	fill.BackgroundColor3 = BUY
-	fill.Parent = track
-	corner(fill, 10)
-	local tap = button(fight, "TAP TO FIGHT!", ORANGE)
-	tap.Position = UDim2.fromScale(0, -1.7)
-	tap.Size = UDim2.fromScale(1, 2.7)
-	tap.Visible = false
-	local remote = remotes:WaitForChild("Fight")
-	local wakeRemote = remotes:WaitForChild("GuardianWake")
-	local function restore()
-		drama.token += 1
-		if drama.camera and drama.saved then
-			drama.camera.CameraType = drama.saved.kind
-			if
-				drama.saved.subject
-				and drama.saved.subject.Parent
-				and not (drama.saved.subject:IsA("Humanoid") and drama.saved.subject.Health <= 0)
-			then
-				drama.camera.CameraSubject = drama.saved.subject
-			else
-				drama.camera.CameraType = Enum.CameraType.Custom
-				drama.camera.CameraSubject = player.Character
-					and player.Character:FindFirstChildOfClass("Humanoid")
-			end
-			drama.camera.CFrame = drama.saved.cf
-			drama.camera.FieldOfView = drama.saved.fov
-		end
-		drama.camera, drama.saved = nil, nil
-		top.Visible, bottom.Visible, skip.Visible, fight.Visible = false, false, false, false
-		drama.fight = false
-		Center.interrupt(false)
-	end
-	local function finishWake()
-		restore()
-		wakeRemote:FireServer()
-		hint('<font color="#FF3B3B">RUN!!</font> Get it to your pen!')
-	end
-	skip.Activated:Connect(finishWake)
-	wakeRemote.OnClientEvent:Connect(function(guard: Model, full: boolean)
-		restore()
-		if not full then
-			task.spawn(shake, 0.8, 20)
-			hint("RUN!! Get it to your pen!")
-			return
-		end
-		local camera = workspace.CurrentCamera
-		if not camera or not guard or not guard.Parent then
-			return
-		end
-		Center.interrupt(true)
-		drama.camera = camera
-		drama.saved = {
-			kind = camera.CameraType,
-			subject = camera.CameraSubject,
-			cf = camera.CFrame,
-			fov = camera.FieldOfView,
-		}
-		local cf, size = guard:GetBoundingBox()
-		local eye = guard:FindFirstChild("Eye", true)
-		local face = eye and eye:IsA("BasePart") and eye.Position
-			or cf.Position + Vector3.new(0, size.Y * 0.25, 0)
-		local root = guard.PrimaryPart
-		local forward = root and root.CFrame.LookVector or Vector3.new(0, 0, -1)
-		camera.CameraType = Enum.CameraType.Scriptable
-		camera.CFrame =
-			CFrame.lookAt(face + forward * math.max(7, size.Y * 0.6) + Vector3.new(0, 1, 0), face)
-		top.Visible, bottom.Visible, skip.Visible = true, true, true
-		play(Config.Sounds.Roar, Config.GuardianRoarPitch, 0.8)
-		local token = drama.token
-		task.delay(Config.GuardianWake, function()
-			if token == drama.token then
-				finishWake()
-			end
-		end)
-	end)
-	tap.Activated:Connect(function()
-		if drama.fight then
-			remote:FireServer()
-		end
-	end)
-	UserInputService.InputBegan:Connect(function(input, processed)
-		if
-			drama.fight
-			and (
-				input.UserInputType == Enum.UserInputType.Touch
-				or (
-					not processed
-					and (
-						input.UserInputType == Enum.UserInputType.MouseButton1
-						or input.KeyCode == Enum.KeyCode.E
-						or input.KeyCode == Enum.KeyCode.Space
-					)
-				)
-			)
-		then
-			remote:FireServer()
-		end
-	end)
-	remote.OnClientEvent:Connect(function(kind: string, value: number?)
-		if kind == "start" then
-			restore()
-			drama.fight = true
-			drama.ends = os.clock() + (value or Config.Fight.seconds)
-			Center.interrupt(true)
-			fight.Visible = true
-			scale.Scale = uiScale.Scale
-			fill.Size = UDim2.fromScale(0, 1)
-			title.Text = "TAP!"
-		elseif kind == "fill" and drama.fight then
-			fill.Size = UDim2.fromScale(math.clamp(value or 0, 0, 1), 1)
-		elseif kind == "win" or kind == "lose" or kind == "cancel" then
-			restore()
-			if kind == "win" then
-				hint("Guard stunned! RUN!!")
-				play(Config.Sounds.Bonk, 1.4, 0.8)
-			end
-		end
-	end)
-	RunService.RenderStepped:Connect(function()
-		if drama.fight then
-			title.Text = "TAP!"
-			title.TextTransparency = 0.15 + 0.15 * math.sin(os.clock() * 12)
-			local elapsed = 1 - math.clamp((drama.ends - os.clock()) / Config.Fight.seconds, 0, 1)
-			fill.BackgroundColor3 = fill.Size.X.Scale >= elapsed and BUY
-				or Color3.fromRGB(219, 39, 48)
-		end
-	end)
-	player.CharacterAdded:Connect(restore)
-	player:GetAttributeChangedSignal("Carry"):Connect(function()
-		if (player:GetAttribute("Carry") or 0) == 0 and drama.camera then
-			restore()
-		end
-	end)
-end
+remotes:WaitForChild("GuardianWake").OnClientEvent:Connect(function()
+	shake(0.8, 12)
+	hint("The guard woke up! Bring it to your pen!")
+end)
 
 remotes:WaitForChild("Hoard").OnClientEvent:Connect(function(kind: string, seedId: string?)
 	local seed = seedById[seedId or ""]
@@ -6063,14 +5792,16 @@ remotes:WaitForChild("Hoard").OnClientEvent:Connect(function(kind: string, seedI
 	if kind == "grab" then
 		hint("Glowing pumpkin grabbed!")
 		play(Config.Sounds.Coin, 1.4, 0.8)
-		-- GuardianWake owns the first-zone camera and repeat shake.
+		-- Wake feedback keeps the player in control of the camera.
 	elseif kind == "bonk" then
-		hint('<font color="#FF3B3B">BONKED!</font> The guardian took the Hoard pumpkin back.')
+		hint(
+			'<font color="#FF3B3B">DROPPED!</font> Grab your pumpkins before they return to the nest!'
+		)
 		local root = rootPart()
 		if root then
 			floatText(
 				root.Position + Vector3.new(0, 5, 0),
-				"BONKED!",
+				"DROPPED!",
 				Color3.fromRGB(255, 70, 60),
 				true
 			)
@@ -6266,9 +5997,14 @@ do
 		end
 	end
 
-	remotes
-		:WaitForChild("Carved").OnClientEvent
-		:Connect(function(p: BasePart?, ownerId: number?, pet: string?, isNew: boolean?)
+	remotes:WaitForChild("Carved").OnClientEvent:Connect(
+		function(
+			p: BasePart?,
+			ownerId: number?,
+			pet: string?,
+			isNew: boolean?,
+			forceReveal: boolean?
+		)
 			local camera = workspace.CurrentCamera
 			if not p or not p.Parent or not camera then
 				return
@@ -6305,7 +6041,11 @@ do
 			local root = rootPart()
 			local running = (player:GetAttribute("CarryStolen") or 0) > 0
 				or (player:GetAttribute("CarryHoard") or 0) > 0
-			if root and not running and (p.Position - root.Position).Magnitude < 90 then
+			if
+				root
+				and (not running or forceReveal)
+				and (p.Position - root.Position).Magnitude < 90
+			then
 				ownerHatch()
 				task.delay(
 					0.35,
@@ -6337,7 +6077,8 @@ do
 					)
 				end
 			end
-		end)
+		end
+	)
 end
 
 -- Guardian tags: the cyan "Z z Z" bobs slowly while it sleeps, the red "!" jumps while it is awake
@@ -6842,6 +6583,15 @@ do
 	daily.Size = UDim2.new(1, 0, 0, 42)
 	daily.LayoutOrder = 5
 	daily.Activated:Connect(function()
+		local root = rootPart()
+		if
+			not root
+			or root.Position.Z >= Config.SafeLineZ
+			or (player:GetAttribute("Carry") or 0) > 0
+			or player:GetAttribute("GuardChasing")
+		then
+			return
+		end
 		travel.Visible = false
 		for _, f in panelFrames do
 			if f:GetAttribute("PanelTitle") == "Daily Reward" then
@@ -6914,10 +6664,19 @@ do
 		)
 		for _, b in leftBar:GetChildren() do
 			if b:IsA("TextButton") and b.LayoutOrder == 4 then
-				b.Visible = not touch and player:GetAttribute("DailyClaimable") == true
+				b.Visible = not touch
+					and player:GetAttribute("DailyClaimable") == true
+					and (player:GetAttribute("Carry") or 0) == 0
+					and not player:GetAttribute("GuardChasing")
+					and rootPart() ~= nil
+					and rootPart().Position.Z < Config.SafeLineZ
 			end
 		end
 		daily.Visible = player:GetAttribute("DailyClaimable") == true
+			and (player:GetAttribute("Carry") or 0) == 0
+			and not player:GetAttribute("GuardChasing")
+			and rootPart() ~= nil
+			and rootPart().Position.Z < Config.SafeLineZ
 		local remaining = math.max(
 			0,
 			math.ceil((player:GetAttribute("TeleportReadyAt") or 0) - workspace:GetServerTimeNow())
