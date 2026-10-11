@@ -550,11 +550,20 @@ local function chunky(b: GuiButton): (Frame, UIStroke)
 	face.ZIndex = b.ZIndex + 1
 	face.Parent = b
 	corner(face, 8)
-	local outline = stroke(face, 3)
+	local rounding = face:FindFirstChildOfClass("UICorner") :: UICorner
+	rounding.CornerRadius = UDim.new(0.12, 0)
+	local outline = stroke(face, 2.5)
+	local gradient = Instance.new("UIGradient")
+	gradient.Rotation = 90
+	gradient.Parent = face
 	outline.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	local function sync()
 		face.BackgroundColor3 = b.BackgroundColor3
-		outline.Color = b.BackgroundColor3:Lerp(Color3.new(0, 0, 0), 0.7)
+		outline.Color = b.BackgroundColor3:Lerp(Color3.new(0, 0, 0), 0.6)
+		gradient.Color = ColorSequence.new(
+			b.BackgroundColor3:Lerp(Color3.new(1, 1, 1), 0.18),
+			b.BackgroundColor3
+		)
 	end
 	b:GetPropertyChangedSignal("BackgroundColor3"):Connect(sync)
 	sync()
@@ -669,7 +678,7 @@ function Palette.renderModel(parent, source)
 	fit()
 	return view
 end
-function Palette.candyIcon(parent)
+function Palette.candyIcon(parent, fitCandy: boolean?)
 	local source = Instance.new("Model")
 	for i = -1, 1 do
 		local part = Instance.new("Part")
@@ -680,7 +689,25 @@ function Palette.candyIcon(parent)
 		part.Material = Enum.Material.SmoothPlastic
 		part.Parent = source
 	end
-	Palette.renderModel(parent, source)
+	local view = Palette.renderModel(parent, source)
+	if fitCandy then
+		local model = (view:FindFirstChildOfClass("WorldModel") :: WorldModel):FindFirstChildOfClass(
+			"Model"
+		) :: Model
+		local bounds, size = model:GetBoundingBox()
+		local camera = view.CurrentCamera :: Camera
+		local function fit()
+			local aspect = view.AbsoluteSize.X / math.max(1, view.AbsoluteSize.Y)
+			local distance = math.max(size.Y, size.X / math.max(0.1, aspect))
+					/ (2 * math.tan(math.rad(17.5)))
+					* 1.05
+				+ size.Z / 2
+			camera.CFrame =
+				CFrame.lookAt(bounds.Position + Vector3.new(0, 0, distance), bounds.Position)
+		end
+		view:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
+		fit()
+	end
 	source:Destroy()
 end
 
@@ -851,37 +878,41 @@ do
 	stats.AnchorPoint = Vector2.new(0, 1)
 	stats.Position =
 		UDim2.fromScale(0.012, Services.UserInputService.TouchEnabled and 0.565 or 0.975)
-	stats.Size = UDim2.fromScale(Services.UserInputService.TouchEnabled and 0.48 or 0.28, 0.125)
+	stats.Size = UDim2.fromScale(Services.UserInputService.TouchEnabled and 0.48 or 0.28, 0.20)
 	stats.Parent = gui
 	carryLabel = textLabel(stats, "", Color3.new(1, 1, 1))
 	carryLabel.Name = "Carry"
 	carryLabel.Position = UDim2.fromScale(0, 0)
 	carryLabel.Size = UDim2.fromScale(1, 0.15)
-	carryLabel.Visible = false
+	carryLabel.Visible = true
 	carryLabel.TextXAlignment = Enum.TextXAlignment.Left
 	local icon = Instance.new("TextLabel")
 	icon.FontFace = fontFace("small")
 	icon.Name = "CandyIcon"
 	icon.BackgroundTransparency = 1
-	icon.Position = UDim2.fromScale(0, 0)
-	icon.Size = UDim2.fromScale(0.18, 0.40)
+	icon.Position = UDim2.fromScale(0, 0.18)
+	icon.Size = UDim2.fromScale(0.23, 0.31)
 	icon.TextScaled = true
 	icon.Text = ""
-	Palette.candyIcon(icon)
+	Palette.candyIcon(icon, true)
 	icon.Parent = stats
 	local iconScale = Instance.new("UIScale")
 	iconScale.Parent = icon
 	-- Candy gold at 5% of the HUD height, with a black stroke.
 	candyBig = textLabel(stats, "", Palette.MONEY)
 	candyBig.Name = "Money"
-	candyBig.Position = UDim2.fromScale(0.20, 0)
-	candyBig.Size = UDim2.fromScale(0.80, 0.40)
-	candyBig.TextScaled = true
+	candyBig.Position = UDim2.fromScale(0.25, 0.18)
+	candyBig.Size = UDim2.fromScale(0.75, 0.31)
+	candyBig.TextScaled = false
 	candyBig.FontFace = fontFace("number", "Regular", Config.Fonts.numberStyle)
-	candyBig.TextSize = 36
+	local function sizeCandy()
+		candyBig.TextSize = math.max(10, gui.AbsoluteSize.Y * 0.055)
+	end
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(sizeCandy)
+	sizeCandy()
 	candyBig.TextXAlignment = Enum.TextXAlignment.Left
 	local moneyStroke = candyBig:FindFirstChildOfClass("UIStroke") :: UIStroke
-	moneyStroke.Thickness = 3
+	moneyStroke.Thickness = 3.5
 	moneyStroke.Color = Color3.new(0, 0, 0)
 	incomeLabel = textLabel(stats, "", Palette.MONEY)
 	incomeLabel.Name = "Income"
@@ -900,9 +931,7 @@ do
 	function refreshIncome()
 		local income = player:GetAttribute("Income") or 0
 		local mult = spookyOn() and (Config.SpookyMult or 2) or 1
-		local text = income > 0
-				and ("+" .. rateShort(income * mult) .. "/s" .. (mult > 1 and (" x" .. mult) or ""))
-			or ""
+		local text = "+" .. rateShort(income * mult) .. "/s" .. (mult > 1 and (" x" .. mult) or "")
 		if incomeLabel.Text ~= text then
 			incomeLabel.Text = text
 		end
@@ -1086,7 +1115,7 @@ local function refreshCarry()
 			break
 		end
 	end
-	local text = string.format("%s   Carry %d/%d", name, n, cap)
+	local text = string.format("%s | Carry %d/%d", name, n, cap)
 	if carryLabel.Text ~= text then
 		carryLabel.Text = text
 	end
@@ -1116,28 +1145,31 @@ leftBar.Name = "LeftPills"
 leftBar.BackgroundTransparency = 1
 leftBar.AnchorPoint = Vector2.zero
 leftBar.Position = UDim2.fromScale(0.012, Services.UserInputService.TouchEnabled and 0.12 or 0.36)
-leftBar.Size = UDim2.fromScale(Services.UserInputService.TouchEnabled and 0.14 or 0.12, 0.19)
+leftBar.Size = UDim2.fromScale(Services.UserInputService.TouchEnabled and 0.14 or 0.15, 0.2375)
 leftBar.Parent = gui
-do
-	local layout = Instance.new("UIListLayout")
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Padding = UDim.new(0.04, 0)
-	layout.Parent = leftBar
-end
+-- Fixed slots keep the visible face and Activated hit rectangle together, including
+-- when Daily is replaced by Teleport. Do not reflow animated UIScale buttons.
 local function pill(text: string, color: Color3, order: number): TextButton
 	local b = makeButton(leftBar, text, color)
 	b.Size = UDim2.fromScale(1, 0.28)
+	b.Position = UDim2.fromScale(0, (math.max(1, math.min(order, 3)) - 1) * 0.34)
+	if order == 0 then
+		b.Position = UDim2.fromScale(0, 1.02)
+	end
 	if order > 0 then
 		local name = order == 1 and "Shop"
 			or order == 2 and "Index"
 			or order == 3 and "Teleport"
 			or "Daily"
+		b.Name = name .. "Button"
+		b:SetAttribute("PanelTarget", name)
 		local icon = Instance.new("ImageLabel")
 		icon.BackgroundTransparency = 1
 		icon.Image = Config.UI.icons[name]
 		local iconAspect = Instance.new("UIAspectRatioConstraint")
 		iconAspect.Parent = icon
-		icon.Position = UDim2.fromScale(0.04, 0.15)
+		icon.Position = UDim2.fromScale(0.05, 0.2)
+		icon.SizeConstraint = Enum.SizeConstraint.RelativeYY
 		icon.ZIndex = 5
 		icon.Parent = b
 		local aspect = Instance.new("UIAspectRatioConstraint")
@@ -1146,13 +1178,18 @@ local function pill(text: string, color: Color3, order: number): TextButton
 			local touch = Services.UserInputService.TouchEnabled
 
 			b.Text = touch and "" or name
-			icon.Size = UDim2.fromScale(touch and 0.8 or 0.32, 0.7)
+			b.SizeConstraint = touch and Enum.SizeConstraint.RelativeYY
+				or Enum.SizeConstraint.RelativeXY
+			b.Size = UDim2.fromScale(touch and 0.28 or 1, 0.28)
+			icon.Size = UDim2.fromScale(0.6, 0.6)
+			icon.Position = UDim2.fromScale(touch and 0.2 or 0.05, 0.2)
 			aspect.AspectRatio = 1
 			aspect.Parent = touch and b or nil
 			local label = b:FindFirstChild("Label")
 			if label then
 				label.Position = UDim2.fromScale(0.35, 0)
 				label.Size = UDim2.fromScale(0.63, 1)
+				label.TextXAlignment = Enum.TextXAlignment.Left
 			end
 		end
 		mobile()
@@ -1161,15 +1198,15 @@ local function pill(text: string, color: Color3, order: number): TextButton
 	b.LayoutOrder = order
 	for _, d in b:GetDescendants() do
 		if d:IsA("UICorner") then
-			d.CornerRadius = UDim.new(0, 8)
+			d.CornerRadius = UDim.new(0.12, 0)
 		elseif d:IsA("UIStroke") and d.Parent and d.Parent:IsA("Frame") then
-			d.Color = Color3.new(0, 0, 0)
+			d.Color = color:Lerp(Color3.new(0, 0, 0), 0.6)
 			d.Thickness = 2.5
 		elseif d:IsA("UIPadding") then
-			d.PaddingTop = UDim.new(0, 9)
-			d.PaddingBottom = UDim.new(0, 9)
-			d.PaddingLeft = UDim.new(0, 10)
-			d.PaddingRight = UDim.new(0, 10)
+			d.PaddingTop = UDim.new(0, 3)
+			d.PaddingBottom = UDim.new(0, 3)
+			d.PaddingLeft = UDim.new(0, 2)
+			d.PaddingRight = UDim.new(0, 3)
 		end
 	end
 	return b
@@ -1272,7 +1309,9 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	frame.Position = UDim2.fromScale(0.5, 0.5)
 	frame.Size = UDim2.fromScale(Config.UI.panelSize.X, Config.UI.panelSize.Y)
 	local function resize()
-		frame.Size = Services.UserInputService.TouchEnabled and UDim2.fromScale(0.92, 0.85)
+		frame.Size = title == "Daily Reward"
+				and UDim2.fromScale(Services.UserInputService.TouchEnabled and 0.92 or 0.56, 0.42)
+			or Services.UserInputService.TouchEnabled and UDim2.fromScale(0.92, 0.85)
 			or UDim2.fromScale(0.60, 0.70)
 	end
 	resize()
@@ -1370,13 +1409,12 @@ end
 -- IsAdmin is replicated by the server; every invocation is independently authorized there.
 do
 	local frame, list = panel("Admin")
-	local gear = Instance.new("ImageButton")
-	gear.Name = "AdminGear"
-	gear.Image = Config.UI.icons.Admin
+	local gear = makeButton(gui, "ADMIN", Color3.fromRGB(138, 138, 138))
+	gear.Name = "AdminButton"
 	gear.BackgroundColor3 = Color3.fromRGB(138, 138, 138)
 	gear.AnchorPoint = Vector2.new(1, 0)
 	gear.Position = UDim2.fromScale(0.985, 0.09)
-	gear.Size = UDim2.fromOffset(44, 44)
+	gear.Size = UDim2.fromOffset(70, 32)
 	gear.Parent = gui
 	corner(gear, 12)
 	local function refresh()
@@ -4667,7 +4705,7 @@ do
 	zoneLine.Name = "ZoneLine"
 	zoneLine.AnchorPoint = Vector2.new(0.5, 0)
 	zoneLine.Position = UDim2.fromScale(0.5, Config.UI.zoneY)
-	zoneLine.Size = UDim2.fromScale(0.50, 0.028)
+	zoneLine.Size = UDim2.fromScale(0.50, 0.035)
 	zoneLine.BackgroundColor3 = Color3.new(0, 0, 0)
 	zoneLine.BackgroundTransparency = 1
 	zoneLine.BorderSizePixel = 0
@@ -4840,7 +4878,7 @@ do
 	bar.Name = "Objective"
 	bar.AnchorPoint = Vector2.new(0.5, 0)
 	bar.Position = UDim2.fromScale(0.5, Config.UI.objectiveY)
-	bar.Size = UDim2.fromScale(Services.UserInputService.TouchEnabled and 0.68 or 0.40, 0.065)
+	bar.Size = UDim2.fromScale(Services.UserInputService.TouchEnabled and 0.68 or 0.60, 0.075)
 	-- Only the title has a soft pill; the banner frame leaves world billboards visible.
 	bar.BackgroundColor3 = Color3.fromRGB(22, 14, 32)
 	bar.BackgroundTransparency = 1
@@ -4854,14 +4892,29 @@ do
 	title.BackgroundColor3 = Color3.fromRGB(22, 14, 32)
 	title.BackgroundTransparency = 0.4
 	corner(title, 12)
-	title.Position = UDim2.fromScale(0, 0.05)
-	title.Size = UDim2.fromScale(1, 0.55)
+	title.AnchorPoint = Vector2.new(0.5, 0)
+	title.Position = UDim2.fromScale(0.5, 0)
+	title.Size = UDim2.fromScale(0, 0.55)
+	title.AutomaticSize = Enum.AutomaticSize.X
+	title.TextScaled = false
+	local titlePad = Instance.new("UIPadding")
+	titlePad.PaddingLeft = UDim.new(0, 12)
+	titlePad.PaddingRight = UDim.new(0, 12)
+	titlePad.Parent = title
 	local titleStroke = title:FindFirstChildOfClass("UIStroke") :: UIStroke
 	titleStroke.Thickness = 3
 	titleStroke.Color = Color3.new(0, 0, 0)
 	local progress = textLabel(bar, "", Color3.fromRGB(255, 225, 150))
 	progress.Position = UDim2.fromScale(0, 0.65)
-	progress.Size = UDim2.fromScale(1, 0.30)
+	progress.Size = UDim2.fromScale(1, 0.35)
+	progress.TextColor3 = Color3.new(1, 1, 1)
+	progress.TextScaled = false
+	local function sizeObjective()
+		title.TextSize = math.max(10, gui.AbsoluteSize.Y * 0.035)
+		progress.TextSize = math.max(10, gui.AbsoluteSize.Y * 0.024)
+	end
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(sizeObjective)
+	sizeObjective()
 	local questToggle = makeButton(gui, "Zone quests", Color3.fromRGB(100, 70, 150))
 	questToggle.Size = UDim2.fromScale(0.11, 0.04)
 	local function placeQuestToggle()
@@ -5728,11 +5781,61 @@ do
 	end
 
 	local frame, list = panel("Daily Reward")
+	frame.BackgroundColor3 = Config.UI.body
+	list.ZIndex = 12
 	local daily = pill("Daily", Config.UI.candy, 4)
-	local reward = textLabel(list, "Claim today's candy gift!", Color3.new(1, 1, 1))
-	reward.Size = UDim2.new(1, 0, 0, 60)
-	local claim = makeButton(list, "Claim daily gift", Palette.BUY)
-	claim.Size = UDim2.new(1, 0, 0, 60)
+	local reward = textLabel(list, "TODAY: claim to reveal your streak day", Config.UI.candy)
+	reward.BackgroundColor3 = Color3.fromRGB(70, 48, 12)
+	reward.BackgroundTransparency = 0
+	reward.Size = UDim2.new(1, 0, 0, 36)
+	reward.ZIndex = 13
+	corner(reward, 8)
+	local days = Instance.new("Frame")
+	days.Name = "RewardDays"
+	days.BackgroundTransparency = 1
+	days.Size = UDim2.new(1, 0, 0, 128)
+	days.LayoutOrder = 1
+	days.ZIndex = 13
+	days.Parent = list
+	local tiles = {}
+	local today: number? = nil -- Saved streak is not replicated; only Daily confirms it.
+	for day = 1, Config.DailyMaxStreak do
+		local tile = Instance.new("Frame")
+		tile.Name = "Day" .. day
+		tile.BackgroundColor3 = Color3.fromRGB(52, 52, 64)
+		tile.Position = UDim2.fromScale((day - 1) / Config.DailyMaxStreak, 0)
+		tile.Size = UDim2.new(1 / Config.DailyMaxStreak, -5, 1, 0)
+		tile.ZIndex = 13
+		tile.Parent = days
+		corner(tile, 8)
+		local outline = stroke(tile, 2)
+		local amount = Config.DailyCandy
+			* day
+			* (day == Config.DailyMaxStreak and Config.DailyLastMult or 1)
+		local label = textLabel(tile, "Day " .. day, Color3.new(1, 1, 1))
+		label.Size = UDim2.fromScale(1, 0.25)
+		label.ZIndex = 14
+		local icon = Instance.new("Frame")
+		icon.BackgroundTransparency = 1
+		icon.Position = UDim2.fromScale(0.18, 0.25)
+		icon.Size = UDim2.fromScale(0.64, 0.40)
+		icon.ZIndex = 14
+		icon.Parent = tile
+		Palette.candyIcon(icon)
+		local value = textLabel(tile, short(amount), Config.UI.candy)
+		value.Position = UDim2.fromScale(0, 0.68)
+		value.Size = UDim2.fromScale(1, 0.25)
+		value.ZIndex = 14
+		tiles[day] = { tile = tile, outline = outline }
+	end
+	local claim = makeButton(list, "CLAIM", Color3.fromRGB(8, 232, 11))
+	claim.Size = UDim2.new(1, 0, 0, 58)
+	claim.ZIndex = 13
+	for _, child in claim:GetDescendants() do
+		if child:IsA("GuiObject") then
+			child.ZIndex += 13
+		end
+	end
 	claim.LayoutOrder = 2
 	local busy = false
 	local function refresh()
@@ -5741,7 +5844,24 @@ do
 			and not player:GetAttribute("GuardChasing")
 		daily.Visible =
 			not string.find("," .. (player:GetAttribute("Zones") or "") .. ",", ",Zone2,", 1, true)
-		claim.Visible = allowed and player:GetAttribute("DailyClaimable") == true
+		local ready = player:GetAttribute("DailyClaimable") == true
+		claim.Visible = true
+		claim.Active = allowed and ready and not busy
+		claim.Text = ready and "CLAIM"
+			or (
+				"Come back in "
+				.. string.format(
+					"%02d:%02d",
+					math.floor((86400 - os.time() % 86400) / 3600),
+					math.floor((86400 - os.time() % 86400) % 3600 / 60)
+				)
+			)
+		claim.BackgroundColor3 = ready and Color3.fromRGB(8, 232, 11) or Color3.fromRGB(90, 90, 100)
+		for day, entry in tiles do
+			entry.tile.BackgroundColor3 = day == today and Color3.fromRGB(110, 76, 10)
+				or Color3.fromRGB(52, 52, 64)
+			entry.outline.Color = day == today and Config.UI.candy or Color3.new(0, 0, 0)
+		end
 		if not allowed then
 			frame.Visible = false
 		end
@@ -5762,7 +5882,7 @@ do
 		frame.Visible = true
 	end)
 	claim.Activated:Connect(function()
-		if busy then
+		if busy or not claim.Active then
 			return
 		end
 		busy = true
@@ -5776,7 +5896,8 @@ do
 		refresh()
 	end)
 	remotes:WaitForChild("Daily").OnClientEvent:Connect(function(streak, candy)
-		reward.Text = string.format("Day %d: +%s candy!", streak, short(candy))
+		today = streak
+		reward.Text = string.format("TODAY - Day %d: +%s candy!", streak, short(candy))
 		hint(reward.Text)
 		confetti(gui)
 		play(Config.Sounds.Coin, 0.9, 1)
