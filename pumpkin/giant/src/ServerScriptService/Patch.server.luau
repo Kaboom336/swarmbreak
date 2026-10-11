@@ -6907,6 +6907,26 @@ do
 		return tool
 	end
 
+	-- Read-only icon templates reuse the exact held-tool builder; no client purchase authority.
+	do
+		local icons = Instance.new("Folder")
+		icons.Name = "PatchScytheIcons"
+		for _, def in Config.Tools do
+			local tool = buildScythe(def)
+			tool.Name = def.id
+			for _, child in tool:GetDescendants() do
+				if child:IsA("BasePart") then
+					child.Anchored = true
+					child.CanCollide, child.CanTouch, child.CanQuery = false, false, false
+				elseif child:IsA("Trail") or child:IsA("WeldConstraint") then
+					child:Destroy()
+				end
+			end
+			tool.Parent = icons
+		end
+		icons.Parent = Services.ReplicatedStorage
+	end
+
 	for _, name in { "Mallet", "Scythe" } do
 		local old = Services.StarterPack:FindFirstChild(name)
 		if old then
