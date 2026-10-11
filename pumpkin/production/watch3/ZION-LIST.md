@@ -37,3 +37,9 @@ C5 Index panel opens on top of the fight; panels don't close on events.
 C6 At 17:42-17:58 the camera sits still for 16 s showing a giant tilted "PUMPKIN PATCH" banner clipping through a purple tower and "MVP" text floating in the air: world signs placed randomly and overlapping geometry (Z10/Z14/Z16).
 C7 Bright lime floor + white paths + saturated purple: very bright overall (Z11).
 - Z-ICONS: Zion approved (15:14 UTC) uploading a small set of generated icon images to his Roblox account.
+
+## Claude Studio check after round 3 build (16:2x UTC)
+- Studio had OLD scripts (Rojo not connected after Studio reopened); pushed current sources via HTTP + ScriptEditorService. Zion's 14:48 playtest may have been on the older build.
+- Scythe now held in front with the blade up (HRP space blade z -3.3..-4.2, y ~5): fixes Z1.
+- Fixed: UI.box used parent.ZIndex on a BillboardGui (gate sign error).
+- Open: objective sub-line truncated ("Swing or tap at the"); right column shows Pets + Daily only (Quests tile gone because the quest panel moved bottom-left - OK); candy counter still small; WorldPlan v2 pending (props).
