@@ -13,6 +13,14 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 local Config = require(ReplicatedStorage:WaitForChild("PatchConfig"))
+local function fontFace(role: string, weight: string?, style: string?): Font
+	local base = Font.fromEnum(Enum.Font[Config.Fonts[role]])
+	return Font.new(
+		base.Family,
+		Enum.FontWeight[weight or "Regular"],
+		Enum.FontStyle[style or "Normal"]
+	)
+end
 local remotes = ReplicatedStorage:WaitForChild("PatchRemotes")
 local state = ReplicatedStorage:WaitForChild("PatchState")
 local player = Players.LocalPlayer
@@ -132,7 +140,7 @@ local function floatText(at: Vector3, text: string, color: Color3, big: boolean?
 	local label = Instance.new("TextLabel")
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.fromScale(1, 1)
-	label.Font = Enum.Font.FredokaOne
+	label.FontFace = fontFace("small")
 	label.TextScaled = true
 	label.TextColor3 = color
 	label.Text = text
@@ -184,7 +192,7 @@ local function damageText(at: Vector3, damage: number, color: Color3?)
 	label.AnchorPoint = Vector2.new(0, 1)
 	label.Position = UDim2.fromScale(0, 1)
 	label.Size = UDim2.new(1, 0, 0, px)
-	label.Font = Enum.Font.FredokaOne
+	label.FontFace = fontFace("number")
 	label.TextScaled = true
 	label.Text = short(damage)
 	label.TextColor3 = color
@@ -236,7 +244,7 @@ local function pickupPop(amount: number)
 	local label = Instance.new("TextLabel")
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.fromScale(1, 1)
-	label.Font = Enum.Font.FredokaOne
+	label.FontFace = fontFace("number")
 	label.TextScaled = true
 	label.TextColor3 = Color3.new(1, 1, 1)
 	label.Text = "+" .. amount .. " 🎃"
@@ -389,10 +397,10 @@ local function corner(parent: Instance, radius: number?)
 	c.CornerRadius = radius and UDim.new(0, radius) or UDim.new(1, 0)
 	c.Parent = parent
 end
-local function textLabel(parent: Instance, text: string, color: Color3, font: Enum.Font?): TextLabel
+local function textLabel(parent: Instance, text: string, color: Color3, font: string?): TextLabel
 	local label = Instance.new("TextLabel")
 	label.BackgroundTransparency = 1
-	label.Font = font or Enum.Font.FredokaOne
+	label.FontFace = fontFace(font or "small")
 	label.TextScaled = true
 	label.TextColor3 = color
 	label.Text = text
@@ -400,9 +408,6 @@ local function textLabel(parent: Instance, text: string, color: Color3, font: En
 	local s = Instance.new("UIStroke")
 	s.Thickness = 3
 	s.Color = Config.UI.ink
-	label:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-		s.Thickness = label.AbsoluteSize.Y < 25 and 2 or 3
-	end)
 	s.Parent = label
 	return label
 end
@@ -510,7 +515,7 @@ end
 
 local function button(parent: Instance, text: string, color: Color3): TextButton
 	local b = Instance.new("TextButton")
-	b.Font = Enum.Font.FredokaOne
+	b.FontFace = fontFace("button")
 	b.TextScaled = true
 	b.TextColor3 = Color3.fromRGB(255, 255, 255)
 	b.TextTransparency = 1
@@ -524,7 +529,7 @@ local function button(parent: Instance, text: string, color: Color3): TextButton
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.fromScale(1, 1)
 	label.ZIndex = b.ZIndex + 2
-	label.Font = b.Font
+	label.FontFace = b.FontFace
 	label.TextScaled = true
 	label.Parent = b
 	local pad = Instance.new("UIPadding")
@@ -603,13 +608,13 @@ do
 	local holder = Instance.new("Frame")
 	holder.Name = "Toasts"
 	holder.BackgroundTransparency = 1
-	holder.AnchorPoint = Vector2.new(0.5, 1)
+	holder.AnchorPoint = Vector2.new(0.5, 0)
 	holder.Position = UDim2.fromScale(0.5, Config.UI.toastY)
 	holder.Size = UDim2.fromScale(0.44, 0.12)
 	holder.Parent = gui
 	local layout = Instance.new("UIListLayout")
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+	layout.VerticalAlignment = Enum.VerticalAlignment.Top
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	layout.Padding = UDim.new(0, 2)
 	layout.Parent = holder
@@ -668,7 +673,7 @@ do
 	local chip = Instance.new("Frame")
 	chip.Name = "PhaseChip"
 	chip.BackgroundTransparency = 1
-	chip.Size = UDim2.fromScale(0.24, 0.075)
+	chip.Size = UDim2.fromScale(0.24, 0.105)
 	chip.Parent = gui
 	local function place()
 		local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
@@ -679,13 +684,18 @@ do
 	UserInputService.LastInputTypeChanged:Connect(place)
 	local spookyLine = textLabel(chip, "", Color3.fromRGB(255, 190, 120))
 	spookyLine.Name = "Spooky"
-	spookyLine.Size = UDim2.fromScale(1, 0.028 / 0.075)
+	spookyLine.Position = UDim2.fromScale(0, 0.035 / 0.105)
+	spookyLine.Size = UDim2.fromScale(1, 0.028 / 0.105)
 	spookyLine.TextXAlignment = Enum.TextXAlignment.Right
 	local label = textLabel(chip, "", Color3.fromRGB(255, 255, 255))
 	label.Name = "Moon"
-	label.Position = UDim2.fromScale(0, 0.035 / 0.075)
-	label.Size = UDim2.fromScale(1, 0.04 / 0.075)
+	label.Position = UDim2.fromScale(0, 0.065 / 0.105)
+	label.Size = UDim2.fromScale(1, 0.04 / 0.105)
 	label.TextXAlignment = Enum.TextXAlignment.Right
+	local kingLine = textLabel(chip, "", Color3.fromRGB(255, 215, 110))
+	kingLine.Position = UDim2.fromScale(0, 0)
+	kingLine.Size = UDim2.fromScale(1, 0.028 / 0.105)
+	kingLine.TextXAlignment = Enum.TextXAlignment.Right
 	local labelStroke = label:FindFirstChildOfClass("UIStroke") :: UIStroke
 	labelStroke.Thickness = 3
 	local tray = Instance.new("Frame")
@@ -693,7 +703,7 @@ do
 	tray.BackgroundTransparency = 1
 	tray.AnchorPoint = Vector2.new(1, 0)
 	tray.Position = UDim2.fromScale(-0.05, 0.15)
-	tray.Size = UDim2.fromScale(0.65, 0.045 / 0.075)
+	tray.Size = UDim2.fromScale(0.65, 0.045 / 0.105)
 	tray.Parent = chip
 	local layout = Instance.new("UIListLayout")
 	layout.FillDirection = Enum.FillDirection.Horizontal
@@ -728,8 +738,14 @@ do
 		local phase = state:GetAttribute("Phase") or "Day"
 		local ends = state:GetAttribute("PhaseEnds") or 0
 		local left = math.max(0, ends - now)
-		label.Text = (phase ~= "Day" and utf8.char(9728) .. " in " or utf8.char(9790) .. " in ")
-			.. clockText(left)
+		label.Text = phase == "BloodMoon" and ("KING NIGHT " .. clockText(left))
+			or (
+				(phase ~= "Day" and utf8.char(9728) .. " in " or utf8.char(9790) .. " in ")
+				.. clockText(left)
+			)
+		kingLine.Visible = phase ~= "BloodMoon"
+		kingLine.Text = "King in "
+			.. clockText(math.max(0, (state:GetAttribute("KingWakesAt") or now) - now))
 		label.TextColor3 = left <= 10 and Color3.fromRGB(255, 59, 59) or Color3.new(1, 1, 1)
 		if phase == "Day" and left <= 5 and left > 0 and warnedFor ~= ends then
 			warnedFor = ends
@@ -790,6 +806,7 @@ do
 	carryLabel.Size = UDim2.fromScale(1, 0.028 / 0.09)
 	carryLabel.TextXAlignment = Enum.TextXAlignment.Left
 	local icon = Instance.new("TextLabel")
+	icon.FontFace = fontFace("small")
 	icon.Name = "CandyIcon"
 	icon.BackgroundTransparency = 1
 	icon.Position = UDim2.fromScale(0, 0.035 / 0.09)
@@ -805,11 +822,7 @@ do
 	candyBig.Position = UDim2.fromScale(0.16, 0.035 / 0.09)
 	candyBig.Size = UDim2.fromScale(0.65, 0.055 / 0.09)
 	candyBig.TextScaled = true
-	candyBig.FontFace = Font.new(
-		"rbxasset://fonts/families/FredokaOne.json",
-		Enum.FontWeight.Regular,
-		Enum.FontStyle.Italic
-	)
+	candyBig.FontFace = fontFace("number", "Regular", Config.Fonts.numberStyle)
 	candyBig.TextSize = 36
 	candyBig.TextXAlignment = Enum.TextXAlignment.Left
 	local moneyStroke = candyBig:FindFirstChildOfClass("UIStroke") :: UIStroke
@@ -820,9 +833,16 @@ do
 	incomeLabel.Size = UDim2.fromScale(0.35, 0.30)
 	incomeLabel.TextXAlignment = Enum.TextXAlignment.Left
 	local function placeIncome()
-		incomeLabel.Position = UDim2.fromScale(0.80, 0.58)
+		local right = (
+			candyBig.AbsolutePosition.X
+			- stats.AbsolutePosition.X
+			+ candyBig.TextBounds.X
+			+ 8
+		) / math.max(1, stats.AbsoluteSize.X)
+		incomeLabel.Position = UDim2.fromScale(right, 0.58)
 	end
 	candyBig:GetPropertyChangedSignal("TextBounds"):Connect(placeIncome)
+	stats:GetPropertyChangedSignal("AbsoluteSize"):Connect(placeIncome)
 	placeIncome()
 
 	local shown = Instance.new("NumberValue")
@@ -921,7 +941,13 @@ do
 		-- held for ~0.8 s before it fades.
 		plus.Name = "CandyTick"
 		plus.TextXAlignment = Enum.TextXAlignment.Left
-		plus.Position = UDim2.fromScale(1.02, 0.4)
+		local right = (
+			candyBig.AbsolutePosition.X
+			- statsFrame.AbsolutePosition.X
+			+ candyBig.TextBounds.X
+			+ 8
+		) / math.max(1, statsFrame.AbsoluteSize.X)
+		plus.Position = UDim2.fromScale(right, 0.1)
 		plus.Size = UDim2.fromScale(0.45, 0.45)
 		plus.ZIndex = 8
 		local s = plus:FindFirstChildOfClass("UIStroke") :: UIStroke
@@ -932,7 +958,7 @@ do
 		scale.Parent = plus
 		TweenService:Create(scale, TweenInfo.new(0.22, Enum.EasingStyle.Back), { Scale = 1 }):Play()
 		local rise = TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		TweenService:Create(plus, rise, { Position = plus.Position + UDim2.fromOffset(24, 0) })
+		TweenService:Create(plus, rise, { Position = plus.Position - UDim2.fromOffset(0, 18) })
 			:Play()
 		local fade =
 			TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.85)
@@ -951,6 +977,7 @@ do
 		local target = icon.AbsolutePosition + icon.AbsoluteSize / 2
 		for i = 1, count do
 			local candy = Instance.new("TextLabel")
+			candy.FontFace = fontFace("small")
 			candy.BackgroundTransparency = 1
 			candy.AnchorPoint = Vector2.new(0.5, 0.5)
 			candy.Size = UDim2.fromOffset(40, 40)
@@ -990,12 +1017,15 @@ local function refreshCarry()
 	local cap = Config.BaseCarry
 		+ (player:GetAttribute("Up_Stack") or 0)
 		+ (player:GetAttribute("Pass_BigStack") and Config.BigStackCarry or 0)
-	local text = string.format(
-		"%s Scythe   Carry %d/%d",
-		player:GetAttribute("Tool") or Config.StartTool,
-		n,
-		cap
-	)
+	local id = player:GetAttribute("Tool") or Config.StartTool
+	local name = id
+	for _, tool in Config.Tools do
+		if tool.id == id then
+			name = tool.name
+			break
+		end
+	end
+	local text = string.format("%s   Carry %d/%d", name, n, cap)
 	if carryLabel.Text ~= text then
 		carryLabel.Text = text
 	end
@@ -1106,6 +1136,7 @@ do
 	dimGui.DisplayOrder = 0
 	dimGui.Parent = player:WaitForChild("PlayerGui")
 	panelDim = Instance.new("TextButton")
+	panelDim.FontFace = fontFace("button")
 	panelDim.Name = "Dim"
 	panelDim.Text = ""
 	panelDim.AutoButtonColor = false
@@ -1199,7 +1230,7 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	icon.Size = UDim2.fromScale(0.07, 0.8)
 	icon.ZIndex = 14
 	icon.Parent = header
-	local head = textLabel(header, string.gsub(title, "^[^%a]+", ""), Color3.new(1, 1, 1))
+	local head = textLabel(header, string.gsub(title, "^[^%a]+", ""), Color3.new(1, 1, 1), "title")
 	head.Position = UDim2.fromScale(0.11, 0.1)
 	head.Size = UDim2.fromScale(0.75, 0.8)
 	head.ZIndex = 14
@@ -1260,7 +1291,7 @@ do
 	gear.Name = "AdminGear"
 	gear.Image = Config.UI.icons.Admin
 	gear.BackgroundColor3 = Color3.fromRGB(138, 138, 138)
-	gear.Position = UDim2.fromScale(0.012, 0.02)
+	gear.Position = UDim2.fromScale(0.012, 0.68)
 	gear.Size = UDim2.fromScale(0.045, 0.07)
 	gear.Parent = gui
 	corner(gear, 12)
@@ -1280,7 +1311,7 @@ do
 	local amount = Instance.new("TextBox")
 	amount.Text = tostring(Config.Admin.candy)
 	amount.PlaceholderText = "Candy amount"
-	amount.Font = Enum.Font.FredokaOne
+	amount.FontFace = fontFace("small")
 	amount.TextScaled = true
 	amount.Size = UDim2.new(1, 0, 0, 40)
 	amount.LayoutOrder = 2
@@ -1365,11 +1396,11 @@ local function card(
 	dot.Parent = c
 	corner(dot)
 	stroke(dot, 2.5).Color = OUTLINE
-	local name = textLabel(c, title, Color3.fromRGB(255, 255, 255))
+	local name = textLabel(c, title, Color3.fromRGB(255, 255, 255), "title")
 	name.Position = UDim2.fromOffset(74, 6)
 	name.Size = UDim2.new(1, -330, 0, 32)
 	name.TextXAlignment = Enum.TextXAlignment.Left
-	local info = textLabel(c, text, Color3.fromRGB(80, 70, 100), Enum.Font.FredokaOne)
+	local info = textLabel(c, text, Color3.fromRGB(80, 70, 100), "small")
 	info:FindFirstChildOfClass("UIStroke"):Destroy()
 	info.Position = UDim2.fromOffset(74, 42)
 	info.Size = UDim2.new(1, -330, 0, 22)
@@ -1423,10 +1454,10 @@ local function gridCard(
 	local lock = textLabel(icon, "🔒", Color3.new(1, 1, 1))
 	lock.Size = UDim2.fromScale(1, 1)
 	lock.Visible = false
-	local name = textLabel(c, title, Color3.new(1, 1, 1))
+	local name = textLabel(c, title, Color3.new(1, 1, 1), "title")
 	name.Position = UDim2.new(0, 8, 0, 82)
 	name.Size = UDim2.new(1, -16, 0, 26)
-	local info = textLabel(c, text, Color3.fromRGB(80, 70, 100), Enum.Font.FredokaOne)
+	local info = textLabel(c, text, Color3.fromRGB(80, 70, 100), "small")
 	info:FindFirstChildOfClass("UIStroke"):Destroy()
 	info.Position = UDim2.new(0, 10, 0, 110)
 	info.Size = UDim2.new(1, -20, 0, 40)
@@ -1436,11 +1467,7 @@ local function gridCard(
 	b.Position = UDim2.new(0.5, 0, 1, -14)
 	b.Size = UDim2.new(1, -24, 0, 46)
 	local tag = textLabel(c, "Owned!", Color3.new(1, 1, 1))
-	tag.FontFace = Font.new(
-		"rbxasset://fonts/families/FredokaOne.json",
-		Enum.FontWeight.Heavy,
-		Enum.FontStyle.Italic
-	)
+	tag.FontFace = fontFace("title", "Heavy", "Italic")
 	tag.AnchorPoint = Vector2.new(0.5, 1)
 	tag.Position = UDim2.new(0.5, 0, 1, -14)
 	tag.Size = UDim2.new(1, -24, 0, 44)
@@ -1599,7 +1626,7 @@ for i, seed in Config.Seeds do
 	row.Parent = indexList
 	corner(row, 14)
 	stroke(row, 2.5).Color = OUTLINE
-	local name = textLabel(row, seed.name, Color3.fromRGB(255, 255, 255))
+	local name = textLabel(row, seed.name, Color3.fromRGB(255, 255, 255), "title")
 	name.Size = UDim2.fromScale(0.20, 0.8)
 	name.Position = UDim2.fromScale(0.015, 0.1)
 	name.TextXAlignment = Enum.TextXAlignment.Left
@@ -1779,7 +1806,7 @@ local soulsLabel = textLabel(hauntPanel, "", Color3.fromRGB(200, 160, 255))
 soulsLabel.AnchorPoint = Vector2.new(1, 0)
 soulsLabel.Position = UDim2.new(1, -54, 0, 10)
 soulsLabel.Size = UDim2.fromOffset(200, 34)
-local hauntInfo = textLabel(hauntList, "", Color3.fromRGB(225, 220, 240), Enum.Font.FredokaOne)
+local hauntInfo = textLabel(hauntList, "", Color3.fromRGB(225, 220, 240), "small")
 hauntInfo:FindFirstChildOfClass("UIStroke"):Destroy()
 hauntInfo.LayoutOrder = 0
 hauntInfo.Size = UDim2.new(1, -10, 0, 64)
@@ -1873,7 +1900,8 @@ for b, branch in Config.SkillBranches do
 	col.Position = UDim2.new((b - 1) / 3, 4, 0, TREE_TOP)
 	col.Size = UDim2.new(1 / 3, -8, 1, -TREE_TOP)
 	col.Parent = tree
-	local head = textLabel(col, (BRANCH_ICON[branch] or "") .. " " .. string.upper(branch), color)
+	local head =
+		textLabel(col, (BRANCH_ICON[branch] or "") .. " " .. string.upper(branch), color, "title")
 	head.Size = UDim2.new(1, 0, 0, BRANCH_H - 4)
 	for tier = 1, 3 do
 		local skill = skillAt[branch .. ":" .. tier]
@@ -1893,6 +1921,7 @@ for b, branch in Config.SkillBranches do
 			link = l
 		end
 		local nodeButton = Instance.new("TextButton")
+		nodeButton.FontFace = fontFace("button")
 		nodeButton.Text = ""
 		nodeButton.AutoButtonColor = true
 		nodeButton.Position = UDim2.fromOffset(0, y)
@@ -1901,11 +1930,10 @@ for b, branch in Config.SkillBranches do
 		nodeButton.Parent = col
 		corner(nodeButton, 12)
 		local outline = stroke(nodeButton, 2.5)
-		local title = textLabel(nodeButton, skill.title, Color3.fromRGB(255, 255, 255))
+		local title = textLabel(nodeButton, skill.title, Color3.fromRGB(255, 255, 255), "title")
 		title.Position = UDim2.fromOffset(6, 4)
 		title.Size = UDim2.new(1, -12, 0, 26)
-		local info =
-			textLabel(nodeButton, skill.text, Color3.fromRGB(255, 255, 255), Enum.Font.FredokaOne)
+		local info = textLabel(nodeButton, skill.text, Color3.fromRGB(255, 255, 255), "small")
 		info.Position = UDim2.fromOffset(6, 32)
 		info.Size = UDim2.new(1, -12, 0, 18)
 		local status = textLabel(nodeButton, "", Color3.fromRGB(255, 255, 255))
@@ -2529,6 +2557,7 @@ do
 		-- A full-screen button under the card dims the world (black at 0.45) and closes the card
 		-- on a click anywhere.
 		local catcher = Instance.new("TextButton")
+		catcher.FontFace = fontFace("button")
 		catcher.Name = "Reveal"
 		catcher.Text = ""
 		catcher.AutoButtonColor = false
@@ -2670,11 +2699,7 @@ do
 			corner(tag, 12)
 			stroke(tag, 3.5).Color = OUTLINE
 			local newLabel = textLabel(tag, "NEW!", Color3.new(1, 1, 1))
-			newLabel.FontFace = Font.new(
-				"rbxasset://fonts/families/FredokaOne.json",
-				Enum.FontWeight.Heavy,
-				Enum.FontStyle.Italic
-			)
+			newLabel.FontFace = fontFace("title", "Heavy", "Italic")
 			newLabel.Position = UDim2.fromOffset(6, 5)
 			newLabel.Size = UDim2.new(1, -12, 1, -10)
 			newLabel.ZIndex = 5
@@ -4133,7 +4158,7 @@ do
 	local barStroke = stroke(bar, 2.5)
 	barStroke.Color = Color3.fromRGB(10, 5, 16)
 	barStroke.Transparency = 0.2
-	local title = textLabel(bar, "", Color3.new(1, 1, 1))
+	local title = textLabel(bar, "", Color3.new(1, 1, 1), "title")
 	title.Position = UDim2.fromScale(0, 0.05)
 	title.Size = UDim2.fromScale(1, 0.55)
 	local titleStroke = title:FindFirstChildOfClass("UIStroke") :: UIStroke
@@ -4143,8 +4168,14 @@ do
 	progress.Position = UDim2.fromScale(0, 0.65)
 	progress.Size = UDim2.fromScale(1, 0.30)
 	local questToggle = button(gui, "Zone quests", Color3.fromRGB(100, 70, 150))
-	questToggle.Position = UDim2.fromScale(0.67, Config.UI.zoneY)
-	questToggle.Size = UDim2.fromScale(0.11, 0.025)
+	questToggle.Size = UDim2.fromScale(0.11, 0.04)
+	local function placeQuestToggle()
+		local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+		questToggle.Position = touch and UDim2.fromScale(0.878, 0.14)
+			or UDim2.fromScale(0.878, 0.79)
+	end
+	placeQuestToggle()
+	UserInputService.LastInputTypeChanged:Connect(placeQuestToggle)
 	local questPanel = textLabel(gui, "", Color3.new(1, 1, 1))
 	questPanel.BackgroundColor3 = Config.UI.body
 	questPanel.BackgroundTransparency = 0.1
@@ -4156,7 +4187,7 @@ do
 		questPanel.Visible = not questPanel.Visible
 	end)
 	local function refreshQuests(root)
-		questToggle.Visible = not anyPanelOpen()
+		questToggle.Visible = false
 		if anyPanelOpen() then
 			questPanel.Visible = false
 		end
@@ -4174,6 +4205,10 @@ do
 				and root.Position.Z < (folder:GetAttribute("ZMax") or z.zMax)
 			then
 				local q = data.quests and data.quests[id] or {}
+				questToggle.Visible = not anyPanelOpen()
+					and data.quests ~= nil
+					and data.quests[id] ~= nil
+				questPanel.Position = questToggle.Position + UDim2.fromScale(-0.09, -0.12)
 				questPanel.Text = string.format(
 					"%s\n[%s] Smash %d/%d\n[%s] Steal  [%s] Own pet\nNext gate -%d%%",
 					z.title,
@@ -4187,6 +4222,7 @@ do
 				return
 			end
 		end
+		questPanel.Visible = false
 		questPanel.Text = "Enter a zone to see its quests"
 	end
 	local popScale = Instance.new("UIScale")
@@ -4678,7 +4714,14 @@ do
 			elseif not data.tutorial and kind == "cauldron" and unlocked("Brew") then
 				return "Brew your pumpkin!", sub, nearestCauldron(root.Position)
 			end
-			return goHome(root, soil), "Place it in your pen!", soil.Position
+			local distance = Vector3.new(
+				root.Position.X - soil.Position.X,
+				0,
+				root.Position.Z - soil.Position.Z
+			).Magnitude
+			return goHome(root, soil),
+				string.format("%d studs", math.floor(distance + 0.5)),
+				soil.Position
 		end
 		if data.tutorial then
 			local step = data.step or 1
@@ -4789,7 +4832,7 @@ do
 	run.Parent = gui
 	corner(run, 12)
 	stroke(run, 2.5).Color = Color3.new(0, 0, 0)
-	local runLabel = textLabel(run, "RUN!!", Color3.new(1, 1, 1), Enum.Font.LuckiestGuy)
+	local runLabel = textLabel(run, "RUN!!", Color3.new(1, 1, 1), "shout")
 	runLabel.Position = UDim2.fromOffset(8, 5)
 	runLabel.Size = UDim2.new(1, -16, 1, -10)
 	local runScale = Instance.new("UIScale")
@@ -4959,7 +5002,7 @@ do
 		local label = Instance.new("TextLabel")
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
-		label.Font = Enum.Font.FredokaOne
+		label.FontFace = fontFace("small")
 		label.TextScaled = true
 		label.TextColor3 = MONEY
 		label.Text = "+" .. rateShort(rate)
@@ -5145,7 +5188,7 @@ ContextActionService:BindAction("Sprint", function(_, inputState)
 		setSprint(false)
 	end
 	return Enum.ContextActionResult.Pass
-end, false, Enum.KeyCode.LeftShift)
+end, true, Enum.KeyCode.LeftShift)
 ContextActionService:SetTitle("Sprint", "RUN")
 ContextActionService:SetPosition("Sprint", UDim2.fromScale(0.64, 0.52))
 
@@ -5593,7 +5636,10 @@ task.spawn(function()
 		local hp = state:GetAttribute("KingHp") or 0
 		local maxHp = math.max(state:GetAttribute("KingMaxHp") or 1, 1)
 		wideFill.Size = UDim2.fromScale(math.clamp(hp / maxHp, 0, 1), 1)
-		wideText.Text = string.format("PUMPKIN KING %s/%s", short(hp), short(maxHp))
+		local shield = state:GetAttribute("KingShield")
+		wideText.Text = shield and string.format("SHIELD: bonk %d lanterns", shield)
+			or state:GetAttribute("KingStunned") and "WEAK SPOT x2"
+			or string.format("PUMPKIN KING %s/%s", short(hp), short(maxHp))
 		fillGradient.Color = KING_FILL
 	end
 	for _, attr in { "Phase", "KingHp", "KingMaxHp", "KingShield", "KingShieldMax", "KingStunned" } do
@@ -5753,7 +5799,7 @@ do
 	local scale = Instance.new("UIScale")
 	scale.Scale = uiScale.Scale
 	scale.Parent = fight
-	local title = textLabel(fight, "TAP!", BUY, Enum.Font.LuckiestGuy)
+	local title = textLabel(fight, "TAP!", BUY, "shout")
 	title.Position = UDim2.fromScale(0, -1.7)
 	title.Size = UDim2.fromScale(1, 1.4)
 	local track = Instance.new("Frame")
@@ -6628,42 +6674,24 @@ do
 	end)
 end
 
--- Local house marker follows pen ownership, including release/reclaim.
-do
-	local function watch(patch)
-		local soil = patch:FindFirstChild("Soil")
-		if not soil then
-			return
-		end
-		local bb = Instance.new("BillboardGui")
-		bb.Name = "MyPenHouse"
-		bb.Adornee = soil
-		bb.Size = UDim2.fromOffset(70, 60)
-		bb.StudsOffsetWorldSpace = Vector3.new(4, Config.Plots.markerHeight, 0)
-		bb.AlwaysOnTop = true
-		bb.MaxDistance = 300
-		bb.Parent = gui
-		local icon = textLabel(bb, utf8.char(8962), Color3.new(1, 1, 1))
-		icon.Size = UDim2.fromScale(1, 1)
-		local function refresh()
-			bb.Enabled = patch:GetAttribute("Owner") == player.UserId
-		end
-		patch:GetAttributeChangedSignal("Owner"):Connect(refresh)
-		patch.Destroying:Connect(function()
-			bb:Destroy()
-		end)
-		refresh()
-	end
-	for _, patch in patchFolder:GetChildren() do
-		watch(patch)
-	end
-	patchFolder.ChildAdded:Connect(watch)
-end
+-- The existing YOUR BASE billboard is the sole pen marker.
 
 -- Free travel menu and tier-two dash. Only action names leave this client.
 do
 	local travel, list = panel("Teleport")
-	local teleport = pill("Teleport", Color3.fromRGB(135, 90, 225), 3)
+	local teleport = button(leftBar, "", Color3.fromRGB(135, 90, 225))
+	teleport.LayoutOrder = 3
+	teleport.Size = UDim2.fromScale(0.55, 0.055 / 0.225)
+	local travelAspect = Instance.new("UIAspectRatioConstraint")
+	travelAspect.AspectRatio = 1
+	travelAspect.Parent = teleport
+	local travelIcon = Instance.new("ImageLabel")
+	travelIcon.BackgroundTransparency = 1
+	travelIcon.Image = Config.UI.icons.Teleport
+	travelIcon.Position = UDim2.fromScale(0.15, 0.15)
+	travelIcon.Size = UDim2.fromScale(0.7, 0.7)
+	travelIcon.ZIndex = 5
+	travelIcon.Parent = teleport
 	local pending = false
 	teleport.Activated:Connect(function()
 		local open = not travel.Visible
@@ -6783,6 +6811,7 @@ do
 			0,
 			math.ceil((player:GetAttribute("TeleportReadyAt") or 0) - workspace:GetServerTimeNow())
 		)
-		teleport.Text = touch and "" or remaining > 0 and ("Teleport " .. remaining) or "Teleport"
+		teleport.Text = remaining > 0 and tostring(remaining) or ""
+		travelIcon.Visible = remaining == 0
 	end)
 end

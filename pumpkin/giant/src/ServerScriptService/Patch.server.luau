@@ -475,7 +475,13 @@ local ORDER_UNLOCK = {
 	kingHit = "King",
 }
 
--- Live targets only, including solo servers. Rechecked after load and during play.
+-- Live targets filter new deals only, including solo servers.
+-- Only retire accepted orders when their permanent/session target is gone.
+function Progress.orderExpired(player, def)
+	return (def.target == "king" and not state:GetAttribute("KingActive"))
+		or (def.target == "gate" and nextLockedZone(player) == nil)
+end
+
 function Progress.orderLive(player, def)
 	if def.target == "gate" then
 		return nextLockedZone(player) ~= nil
@@ -817,7 +823,7 @@ local function loadOrders(player: Player, saved: any)
 		stale = #o.list == 0 or os.time() >= o.refreshAt
 		for _, order in o.list do
 			if
-				not Progress.orderLive(player, order)
+				Progress.orderExpired(player, order)
 				or Config.RemovedOrders[string.match(order.stat, "^[^:]+") or order.stat]
 			then
 				stale = true
@@ -2035,13 +2041,13 @@ do
 
 	-- Income tags, the shield on the single best plot (it cannot be stolen) and the owner's
 	-- "Income" attribute (candy per second with their Haunt / pass multipliers).
-	function Bases.slotLook(patch, slots)
+	function Bases.slotLook(patch, slots, previousSlots)
 		for _, plot in patch:GetChildren() do
 			if plot.Name ~= "Plot" or not plot:IsA("BasePart") then
 				continue
 			end
 			local locked = (plot:GetAttribute("Index") or 1) > slots
-			local was = plot:GetAttribute("SlotLocked")
+			local index = plot:GetAttribute("Index") or 1
 			plot:SetAttribute("SlotLocked", locked)
 			plot.Transparency = 0
 			plot.Color = locked and Config.Plots.locked or Config.Plots.wood
@@ -2080,7 +2086,7 @@ do
 				bb.Name = "Price"
 				bb.Size = UDim2.fromOffset(140, 32)
 				bb.StudsOffsetWorldSpace = Vector3.new(0, 2.5, 0)
-				bb.MaxDistance = 100
+				bb.MaxDistance = 60
 				bb.LightInfluence = 0
 				bb.Parent = block
 				local label = Instance.new("TextLabel")
@@ -2092,12 +2098,19 @@ do
 				local zone = (plot:GetAttribute("Index") or 1) <= Config.Progression.woodsSlots
 						and "Zone3"
 					or "Zone5"
-				label.Text = utf8.char(128274) .. " $" .. tostring(Config.Zones[zone].cost)
+				label.Text = utf8.char(128274)
+					.. " "
+					.. utf8.char(127852)
+					.. " "
+					.. short(Config.Zones[zone].cost)
 				label.Parent = bb
 			elseif not locked and lock then
 				lock:Destroy()
 			end
-			if was == true and not locked then
+			if locked and lock then
+				lock.Padlock.Price.Enabled = index == slots + 1
+			end
+			if previousSlots and index > previousSlots and not locked then
 				local puff = Instance.new("ParticleEmitter")
 				puff.Texture = "rbxasset://textures/particles/smoke_main.dds"
 				puff.Rate = 0
@@ -2122,7 +2135,7 @@ do
 				bb.Name = "PenUpgrade"
 				bb.Size = UDim2.fromOffset(200, 30)
 				bb.StudsOffsetWorldSpace = Vector3.new(0, -1.4, 0)
-				bb.MaxDistance = 100
+				bb.MaxDistance = 60
 				bb.LightInfluence = 0
 				bb.Parent = holder
 				local label = Instance.new("TextLabel")
@@ -2137,7 +2150,7 @@ do
 			bb.Enabled = (patch:GetAttribute("Owner") or 0) ~= 0
 				and slots < Config.Progression.castleSlots
 			local zone = slots < Config.Progression.woodsSlots and "Zone3" or "Zone5"
-			bb.Label.Text = "Upgrade $" .. tostring(Config.Zones[zone].cost)
+			bb.Label.Text = "Upgrade " .. utf8.char(127852) .. " " .. short(Config.Zones[zone].cost)
 		end
 
 		for _, rim in patch:GetDescendants() do
@@ -2215,7 +2228,9 @@ do
 				local seed = seedById[p:GetAttribute("Seed") or ""]
 				local pet = seed and Config.Pets[seed.pet]
 				if pet then
-					text = pet.rarity
+					text = (protected and utf8.char(128737) .. " " or "")
+						.. (p:GetAttribute("Gold") and "GOLD " or p:GetAttribute("Shiny") and "SHINY " or "")
+						.. pet.rarity
 						.. " "
 						.. pet.display
 						.. "\n$"
@@ -2346,6 +2361,10 @@ do
 	-- centre line), else a living Jack (face and legs). "Jack" = hatched (kept name, saves and
 	-- moves use it); JackHome = where clients idle / hop it on its plot.
 	local function becomeAlive(pumpkin: BasePart)
+		local plot = pumpkin.Parent
+		if plot and plot:GetAttribute("BaseSize") then
+			plot.Size = plot:GetAttribute("BaseSize")
+		end
 		local seed = seedById[pumpkin:GetAttribute("Seed") or ""]
 		if Looks.hatch(pumpkin, seed) then
 			local pos = pumpkin.Position
@@ -2459,11 +2478,6 @@ do
 				Config.MysterySizes.penMax
 			)
 			pumpkin.Size *= height / pumpkin.Size.Y
-			plot.Size = Vector3.new(
-				plot.Size.X,
-				math.max(plot.Size.Y, pumpkin.Size.X),
-				math.max(plot.Size.Z, pumpkin.Size.Z)
-			)
 		end
 		pumpkin.CFrame = CFrame.new(plot.Position + Vector3.new(0, 0.15 + pumpkin.Size.Y / 2, 0))
 			* CFrame.Angles(0, math.random() * math.pi * 2, 0)
@@ -2504,11 +2518,7 @@ do
 			Hoards.look(pumpkin, extra.jack == true)
 		end
 		pumpkin.Parent = plot
-		if not (extra and extra.jack) then
-			local width = math.max(pumpkin.Size.X, pumpkin.Size.Z)
-			plot.Size =
-				Vector3.new(plot.Size.X, math.max(plot.Size.Y, width), math.max(plot.Size.Z, width))
-		end
+		plot.Size = plot:GetAttribute("BaseSize") or plot.Size
 		incomeTag(pumpkin)
 		if extra and extra.jack then
 			becomeAlive(pumpkin)
@@ -2520,7 +2530,13 @@ do
 			local seconds = newbie and Config.CarveNewSeconds
 				or seedById[seedId].order <= Config.CarveFastOrder and Config.CarveFastSeconds
 				or Config.CarveSeconds
-			Looks.attach(pumpkin, "PetModels", Config.MysteryModel, pumpkin.Size.Y)
+			Looks.attach(
+				pumpkin,
+				"PetModels",
+				Config.MysteryModel,
+				pumpkin.Size.Y,
+				extra and extra.hoard and Color3.fromRGB(255, 170, 70) or nil
+			)
 			local final = pumpkin.Size
 			pumpkin:SetAttribute("GrowthSize", final)
 			pumpkin:SetAttribute("GrowthStartAt", now())
@@ -2560,6 +2576,7 @@ do
 			return nil
 		end
 		s.pumpkin = nil
+		plot.Size = plot:GetAttribute("BaseSize") or plot.Size
 		for _, name in { "PickupPrompt", "StealPrompt" } do
 			local prompt = p:FindFirstChild(name, true)
 			if prompt then
@@ -2591,7 +2608,9 @@ do
 			return false
 		end
 		local at = Config.roamPoint(p, now())
-		return (root.Position - at).Magnitude <= 11
+		local base = at - Vector3.yAxis * (p.Size.Y / 2)
+		local delta = root.Position - base
+		return Vector3.new(delta.X, 0, delta.Z).Magnitude <= 11 and math.abs(delta.Y) <= 6
 	end
 
 	-- Every plot of the patch holds a pumpkin (opens the Witch early).
@@ -3241,9 +3260,14 @@ do
 		end
 	end
 
+	local nextRoamUpdate = 0
 	RunService.Heartbeat:Connect(function()
-		-- Pick random Soil-local waypoints; render motion stays client-side.
+		-- Waypoints and prompt anchors need at most 5 Hz; clients interpolate the pets.
 		local t = now()
+		if t < nextRoamUpdate then
+			return
+		end
+		nextRoamUpdate = t + 0.2
 		for plot, s in plotState do
 			local p = s.pumpkin
 			local soil = plot.Parent and plot.Parent:FindFirstChild("Soil")
@@ -3302,6 +3326,7 @@ do
 		return prompt
 	end
 	Bases.setupPlot = function(plot)
+		plot:SetAttribute("BaseSize", plot:GetAttribute("BaseSize") or plot.Size)
 		plotState[plot] = { pumpkin = nil }
 		makePrompt(plot, "PlacePrompt", "Place", 0.2).Triggered:Connect(function(player)
 			place(player, plot)
@@ -3321,6 +3346,7 @@ do
 			if plot.Name ~= "Plot" or not plot:IsA("BasePart") then
 				continue
 			end
+			plot:SetAttribute("BaseSize", plot:GetAttribute("BaseSize") or plot.Size)
 			plotState[plot] = { pumpkin = nil }
 			for _, child in plot:GetChildren() do
 				if child:IsA("ProximityPrompt") then
@@ -3437,6 +3463,7 @@ local function releasePatch(player: Player)
 	end
 	Bases.clear(patch)
 	patch:SetAttribute("Owner", 0)
+	patch:SetAttribute("SlotLookOwner", nil)
 	patch:SetAttribute("PenSlots", Config.Progression.baseSlots)
 	patch:SetAttribute("RaidPending", nil)
 	setOwnerSign(patch, "", Color3.fromRGB(255, 230, 200))
@@ -5155,7 +5182,10 @@ do
 								Config.MinCarrySpeed,
 								top - #(carrying[thief] or {}) * Config.SlowPerPumpkin
 							)
-							local speed = Config.GuardSpeed[g.zone] * running
+							local velocity = thiefRoot.AssemblyLinearVelocity
+							local observed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
+							local speed = Config.GuardSpeed[g.zone]
+								* math.max(running, math.min(observed, running * 1.25 + 6))
 							step(g, to.Unit, math.min(speed * dt, to.Magnitude), dt)
 						end
 					end
@@ -6140,7 +6170,11 @@ RunService.Heartbeat:Connect(function(dt)
 			end
 			ghost.bob += dt
 			ghost.root.CFrame = CFrame.new(
-				ghost.plot.Position + Vector3.new(0, Config.Raid.hover + math.sin(ghost.bob), 0)
+				Vector3.new(
+					ghost.savedCF.Position.X,
+					ghost.plot.Position.Y,
+					ghost.savedCF.Position.Z
+				) + Vector3.new(0, Config.Raid.hover + math.sin(ghost.bob), 0)
 			)
 			p.CFrame = ghost.root.CFrame * CFrame.new(0, p.Size.Y / 2 + 2, 0)
 			continue
@@ -6177,7 +6211,8 @@ RunService.Heartbeat:Connect(function(dt)
 				ghost.target = nil
 				continue
 			end
-			goal = target.Position + Vector3.new(0, target.Size.Y / 2 + 2.4, 0)
+			goal = Config.roamPoint(target, workspace:GetServerTimeNow())
+				+ Vector3.new(0, target.Size.Y / 2 + 2.4, 0)
 		end
 		local flatGoal = Vector3.new(goal.X, 0, goal.Z)
 		local flatPos = Vector3.new(pos.X, 0, pos.Z)
@@ -6199,11 +6234,14 @@ RunService.Heartbeat:Connect(function(dt)
 				local pumpkin = ghost.target :: BasePart
 				pumpkin:SetAttribute("Targeted", nil)
 				pumpkin:SetAttribute("Stashed", true)
+				local grabbedAt = Config.roamPoint(pumpkin, workspace:GetServerTimeNow())
+				ghost.savedCF = CFrame.new(grabbedAt) * pumpkin.CFrame.Rotation
+				pumpkin.CFrame = ghost.savedCF
 				pumpkin:SetAttribute("JackHome", nil)
-				pumpkin:SetAttribute("RoamFrom", pumpkin.Position)
-				pumpkin:SetAttribute("RoamTo", pumpkin.Position)
+				pumpkin:SetAttribute("RoamFrom", grabbedAt)
+				pumpkin:SetAttribute("RoamTo", grabbedAt)
+				pumpkin:SetAttribute("RoamStart", workspace:GetServerTimeNow())
 				pumpkin:SetAttribute("RoamEnd", workspace:GetServerTimeNow())
-				ghost.savedCF = pumpkin.CFrame
 				ghost.carried = pumpkin
 				ghost.target = nil
 				ghost.stash = true
@@ -6860,10 +6898,18 @@ do
 	Progress.landAttack = landAttack
 
 	local function walkKing(dt)
-		if king.phase == 1 or king.attackBusy or os.clock() < king.stunnedUntil then
+		if
+			king.phase == 1
+			or king.attackBusy
+			or os.clock() < king.stunnedUntil
+			or (king.recoverUntil or 0) > os.clock()
+		then
 			return
 		end
 		if not king.moving and os.clock() >= king.plantedUntil then
+			if king.pad == 0 then
+				king.stepDownAt = os.clock()
+			end
 			king.pad = king.pad % 4 + 1
 			local ring = Config.KingNight.ring
 			local pads = {
@@ -6881,7 +6927,11 @@ do
 			if delta.Magnitude > 0.001 then
 				kingGround += delta.Unit * distance
 			end
-			king.faceBase = king.eventBase + (kingGround - king.groundHome)
+			local grounded = CFrame.new(kingGround + Vector3.yAxis * (kingFace.Size.Y / 2 - 1))
+				* king.homeBase.Rotation
+			local drop = math.clamp((os.clock() - (king.stepDownAt or 0)) / 0.6, 0, 1)
+			local raised = king.eventBase + (kingGround - king.groundHome)
+			king.faceBase = raised:Lerp(grounded, drop)
 			kingFace.CFrame = king.faceBase
 			if delta.Magnitude <= distance + 0.001 then
 				king.moving = false
@@ -6890,6 +6940,12 @@ do
 		end
 		state:SetAttribute("KingWalking", king.moving)
 	end
+
+	RunService.Heartbeat:Connect(function(dt)
+		if king.active then
+			walkKing(dt)
+		end
+	end)
 
 	local function attack(token: number, kind: string)
 		if king.moving or king.attackBusy then
@@ -7004,6 +7060,7 @@ do
 			task.delay(Config.StunSeconds, function()
 				state:SetAttribute("KingStunned", nil)
 				if king.active then
+					king.recoverUntil = os.clock() + 0.4
 					TweenService:Create(kingFace, TweenInfo.new(0.4), { CFrame = king.faceBase })
 						:Play()
 				end
@@ -7042,6 +7099,7 @@ do
 		king.phase = 1
 		king.shield = false
 		king.stunnedUntil = 0
+		king.recoverUntil = 0
 		king.lastHitter = nil
 		king.faceSize = king.faceSize or kingFace.Size
 		kingFace.Size = king.faceSize * (Config.KingNight.height / king.faceSize.Y)
@@ -7073,7 +7131,6 @@ do
 			local nextAttack = os.clock() + 4
 			local turn = 0
 			local nextWeak = math.huge
-			local lastWalk = os.clock()
 			while
 				king.active
 				and token == phaseToken
@@ -7084,9 +7141,6 @@ do
 					lastTop = os.clock()
 					publishTopDamage()
 				end
-				local walkNow = os.clock()
-				walkKing(walkNow - lastWalk)
-				lastWalk = walkNow
 				local fraction = king.hp / king.maxHp
 				if king.phase == 1 and fraction <= 0.66 then
 					king.phase = 2
@@ -7606,6 +7660,11 @@ do
 		if not d then
 			return
 		end
+		local ownedPatch = patchOf[player]
+		local previousSlots = ownedPatch
+				and ownedPatch:GetAttribute("SlotLookOwner") == player.UserId
+				and ownedPatch:GetAttribute("PenSlots")
+			or nil
 		if hasZone(player, "Zone3") then
 			d.slots = math.max(d.slots, Config.Progression.woodsSlots)
 		end
@@ -7637,7 +7696,12 @@ do
 					Bases.setupPlot(p)
 				end
 			end
-			Bases.slotLook(patch, d.slots)
+			Bases.slotLook(
+				patch,
+				d.slots,
+				previousSlots and d.slots > previousSlots and previousSlots or nil
+			)
+			patch:SetAttribute("SlotLookOwner", player.UserId)
 			patch:SetAttribute("PenSlots", d.slots)
 			player:SetAttribute("PenSlots", d.slots)
 		end
@@ -8536,7 +8600,7 @@ task.spawn(function()
 					and o.tut > TUTORIAL_COUNT
 					and (
 						os.time() >= o.refreshAt
-						or (o.list[1] and not Progress.orderLive(player, o.list[1]))
+						or (o.list[1] and Progress.orderExpired(player, o.list[1]))
 					)
 				then
 					nextOrders(player)
@@ -8845,18 +8909,28 @@ do
 						)
 				end
 			end
-			offset = Vector3.new(0, 0, -Config.Teleport.standOff)
+			offset = Vector3.new(0, 0, Config.Teleport.standOff)
 		end
 		if not part or not part:IsA("BasePart") then
 			return false, "Target missing from map"
 		end
 		local pos = part.Position + (offset or Vector3.zero)
-		-- Tall gate walls are not a floor. Find the ground beside the named target.
+		-- Only authored ground and pen soil can be landings, never awnings or pennants.
 		local params = RaycastParams.new()
-		params.FilterType = Enum.RaycastFilterType.Exclude
-		params.FilterDescendantsInstances = { r.character, loose, ghostFolder }
+		params.FilterType = Enum.RaycastFilterType.Include
+		local floors = { workspace.Terrain }
+		local ground = garden:FindFirstChild("Ground")
+		if ground then
+			table.insert(floors, ground)
+		end
+		for _, pen in patchFolder:GetChildren() do
+			local soil = pen:FindFirstChild("Soil")
+			if soil then
+				table.insert(floors, soil)
+			end
+		end
+		params.FilterDescendantsInstances = floors
 		params.RespectCanCollide = true
-		params.FilterDescendantsInstances = { r.character, loose, ghostFolder, part }
 		local floor = workspace:Raycast(
 			pos + Vector3.yAxis * Config.Teleport.rayHeight,
 			-Vector3.yAxis * Config.Teleport.rayDepth,
@@ -8892,10 +8966,24 @@ do
 		params.FilterType = Enum.RaycastFilterType.Exclude
 		params.FilterDescendantsInstances = { r.character, loose, ghostFolder }
 		params.RespectCanCollide = true
+		local ignore = { r.character, loose, ghostFolder }
+		local zones = garden:FindFirstChild("Zones")
+		for _, id in Config.ZoneOrder do
+			local zone = zones and zones:FindFirstChild(id)
+			local wall = zone and zone:FindFirstChild("GateWall", true)
+			if wall and hasZone(player, id) then
+				table.insert(ignore, wall)
+			end
+		end
+		params.FilterDescendantsInstances = ignore
 		local distance = Config.Dash.distance
 		-- Sweep the body volume, then raycast its centre. Never cross a wall or locked gate.
-		local hit =
-			workspace:Blockcast(r.root.CFrame, Config.Dash.bodySize, forward * distance, params)
+		local hit = workspace:Blockcast(
+			r.root.CFrame + Vector3.yAxis * Config.Dash.bodyLift,
+			Config.Dash.bodySize,
+			forward * distance,
+			params
+		)
 		local ray = workspace:Raycast(r.root.Position, forward * distance, params)
 		if hit then
 			distance = math.min(distance, math.max(0, hit.Distance - Config.Dash.clearance))

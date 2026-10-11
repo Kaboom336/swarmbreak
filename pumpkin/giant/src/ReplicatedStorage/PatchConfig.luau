@@ -4,6 +4,15 @@ local SHIELD = 600 -- new-player shield: seconds of a player's total playtime
 local HAUNT_COST = 2500000
 local HOARD1 = "Ghost" -- the Zone1 Hoard's pumpkin type
 local Config = {
+	-- Font names stay plain data so offline economy tools can load this module.
+	Fonts = {
+		title = "FredokaOne",
+		number = "FredokaOne",
+		button = "FredokaOne",
+		small = "FredokaOne",
+		shout = "LuckiestGuy",
+		numberStyle = "Italic",
+	},
 	StartCandy = 0,
 	UI = {
 		panelSize = Vector2.new(0.44, 0.54),
@@ -12,7 +21,7 @@ local Config = {
 		zoneY = 0.08,
 		bossY = 0.125,
 		actionY = 0.70,
-		toastY = 0.80,
+		toastY = 0.765,
 		fightY = 0.62,
 		scaleMin = 0.75,
 		scaleMax = 1.15,
@@ -1218,7 +1227,8 @@ Config.Dash = {
 	distance = 16,
 	cooldown = 5,
 	clearance = 2,
-	bodySize = Vector3.new(4, 5, 3),
+	bodySize = Vector3.new(4, 3.5, 3),
+	bodyLift = 1,
 	mobile = Vector2.new(0.70, 0.78),
 }
 Config.Teleport = { cooldown = 10, height = 4, standOff = 8, rayHeight = 60, rayDepth = 200 }
