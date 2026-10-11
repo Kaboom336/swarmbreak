@@ -1268,14 +1268,22 @@ Config.Dash = {
 Config.Teleport = { cooldown = 10, height = 4, standOff = 8, rayHeight = 60, rayDepth = 200 }
 Config.MysterySizes = {
 	nest = { { 3, 4 }, { 3.5, 4.5 }, { 4, 5 }, { 4.5, 5.5 }, { 5, 6 }, { 5.5, 7 }, { 6, 7.5 } },
-	penMin = 15,
-	penMax = 40,
-	weightScale = 0.6,
+	penMin = 3,
+	penMax = 4.5,
+	weightScale = 0.06,
 	characterHeight = 6,
 	nestRadius = 10,
 	nestSlotRadius = 6,
-	heights = { Common = 15, Rare = 20, Epic = 26, Legendary = 33, Mythic = 40 },
+	heights = { Common = 3, Rare = 3.4, Epic = 3.8, Legendary = 4.2, Mythic = 4.5 },
 	carry = 4,
+}
+Config.Payoff = {
+	earlySeconds = 600,
+	petEggRatio = 0.8,
+	petDistance = 80,
+	chestSize = 2.6,
+	stackSize = 1.8,
+	auraRate = 2,
 }
 Config.PetRoam = { inset = 2, minSpeed = 4, maxSpeed = 6, minIdle = 1, maxIdle = 3, bob = 0.25 }
 Config.GuardSpeed = {

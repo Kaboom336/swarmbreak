@@ -28,6 +28,27 @@ do
 	local previews = Instance.new("Folder")
 	previews.Name = "PetPreviews"
 	local models = Services.ServerStorage:WaitForChild("PetModels")
+	local fallback = models:FindFirstChild("PumpkinPup")
+	assert(
+		fallback and fallback:IsA("Model") and fallback:FindFirstChildWhichIsA("BasePart", true),
+		"Batch 7 requires a real PumpkinPup model; Jack fallback is disabled"
+	)
+	for pet in Config.Pets do
+		local model = models:FindFirstChild(pet)
+		if
+			not model
+			or not model:IsA("Model")
+			or not model:FindFirstChildWhichIsA("BasePart", true)
+		then
+			if model then
+				model:Destroy()
+			end
+			local clone = fallback:Clone()
+			clone.Name = pet
+			clone.Parent = models
+			warn("[Patch] Missing pet asset; using voxel PumpkinPup:", pet)
+		end
+	end
 	for _, source in models:GetChildren() do
 		if source:IsA("Model") then
 			local clone = source:Clone()
@@ -65,6 +86,13 @@ local market = garden:WaitForChild("Market")
 local spawnFolder = garden:WaitForChild("GhostSpawns")
 local giantJack = market:WaitForChild("GiantJack") :: BasePart
 local kingFace = market:WaitForChild("KingFace") :: BasePart
+-- ThroneKing is the centrepiece; GiantJack stays only as an event position anchor.
+assert(
+	market:FindFirstChild("ThroneKing", true) or garden:FindFirstChild("ThroneKing", true),
+	"ThroneKing centrepiece missing"
+)
+giantJack.Transparency = 1
+giantJack.CanCollide, giantJack.CanTouch, giantJack.CanQuery = false, false, false
 local kit = Services.ServerStorage:WaitForChild("KitSource")
 
 -- The straight-lane map: the X of its centre line, the hub's safe line and each zone's Z range
@@ -1696,6 +1724,19 @@ local function setOwnerSign(patch: Model, text: string, color: Color3)
 end
 
 local carrying: { [Player]: { BasePart } } = {}
+-- Exact server quote, including Index bonuses and explicit sale rounding.
+function Helpers.sellQuote(player: Player): number
+	local total = 0
+	for _, p in carrying[player] or {} do
+		if p.Parent then
+			local bonus = rowDone(player, p:GetAttribute("Seed")) and (1 + Config.IndexRowBonus)
+				or 1
+			total += pumpkinValue(p, Config.WitchSellSeconds) * bonus
+		end
+	end
+	total = math.floor(total * Helpers.sellMult(player) + 0.5)
+	return math.floor(total * Progress.candyMult(player) + 0.5)
+end
 local function refreshCarry(player: Player)
 	if Bases.drainCarry and Progress.pending[player] and not Progress.draining[player] then
 		task.defer(Bases.drainCarry, player)
@@ -1707,14 +1748,7 @@ local function refreshCarry(player: Player)
 		"CarryPet",
 		top ~= nil and (top:GetAttribute("Hoard") == true or top:GetAttribute("Jack") == true)
 	)
-	local value = 0
-	for _, p in stack do
-		value += pumpkinValue(p, Config.WitchSellSeconds)
-	end
-	player:SetAttribute(
-		"CarryValue",
-		math.floor(value * Helpers.sellMult(player) * Progress.candyMult(player) + 0.5)
-	)
+	player:SetAttribute("CarryValue", Helpers.sellQuote(player))
 	player:SetAttribute(
 		"CarryTopValue",
 		#stack > 0
@@ -1778,87 +1812,7 @@ local function stripPumpkin(pumpkin: BasePart)
 	end
 end
 
--- Living Jack look (blocky "lego" style): two black ball eyes and a V mouth of two wedges on the
--- pumpkin's front (-Z), and two blocky legs with feet under it, all "JackPart"s welded to the
--- pumpkin (their welds sit inside them, so stripPumpkin keeps them). Old JackParts are rebuilt
--- (after a resize). lift = raise the pumpkin so the legs stand where its bottom was.
-local function dressJack(pumpkin: BasePart, lift: boolean?)
-	for _, child in pumpkin:GetChildren() do
-		if child.Name == "JackPart" then
-			child:Destroy()
-		end
-	end
-	local s = pumpkin.Size
-	local legH = s.Y * 0.3
-	if lift then
-		pumpkin.CFrame += Vector3.new(0, legH, 0)
-	end
-	local base = pumpkin.CFrame
-	local black = Color3.fromRGB(26, 16, 22)
-	local function jackPart(p: BasePart, size: Vector3, offset: CFrame, color: Color3)
-		p.Name = "JackPart"
-		p.Size = size
-		p.Material = Enum.Material.SmoothPlastic
-		p.Color = color
-		p.Anchored = false
-		p.CanCollide = false
-		p.CanQuery = false
-		p.CanTouch = false
-		p.Massless = true
-		p.CastShadow = false
-		p.CFrame = base * offset
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = pumpkin
-		weld.Part1 = p
-		weld.Parent = p
-		p.Parent = pumpkin
-	end
-	local eye = s.X * 0.2
-	for side = -1, 1, 2 do
-		local ball = Instance.new("Part")
-		ball.Shape = Enum.PartType.Ball
-		jackPart(
-			ball,
-			Vector3.one * eye,
-			CFrame.new(side * s.X * 0.19, s.Y * 0.12, -s.Z * 0.42),
-			black
-		)
-	end
-	-- Mouth: two right-triangle wedges meeting in a V. A wedge's triangle lies in its local Y/Z
-	-- plane with the right angle at (y -h/2, z +d/2); local X (thickness) points out of the face,
-	-- local Y points down and local Z points away from the centre line, so each right angle sits
-	-- at the top centre and the two hypotenuses form the V.
-	local w, h, t = s.X * 0.46, s.Y * 0.2, s.Z * 0.1
-	for side = -1, 1, 2 do
-		jackPart(
-			Instance.new("WedgePart"),
-			Vector3.new(t, h, w / 2),
-			CFrame.fromMatrix(
-				Vector3.new(side * w / 4, -s.Y * 0.1, -s.Z * 0.43),
-				Vector3.new(0, 0, -side),
-				Vector3.new(0, -1, 0)
-			),
-			black
-		)
-	end
-	local leg = Color3.fromRGB(70, 110, 45)
-	for side = -1, 1, 2 do
-		jackPart(
-			Instance.new("Part"),
-			Vector3.new(s.X * 0.2, legH + s.Y * 0.2, s.Z * 0.2),
-			CFrame.new(side * s.X * 0.2, -s.Y / 2 - legH / 2 + s.Y * 0.1, 0),
-			leg
-		)
-		jackPart(
-			Instance.new("Part"),
-			Vector3.new(s.X * 0.26, s.Y * 0.08, s.Z * 0.34),
-			CFrame.new(side * s.X * 0.2, -s.Y / 2 - legH + s.Y * 0.04, -s.Z * 0.06),
-			leg:Lerp(Color3.new(0, 0, 0), 0.3)
-		)
-	end
-end
-
--- Model looks (ServerStorage.PetModels: hatched pets and the Hoard's MysteryPumpkin). The pumpkin
+-- Model looks (ServerStorage.PetModels: hatched pets only). The pumpkin
 -- part stays the carrier (its attributes, prompts, tags and welds work as before) but turns
 -- invisible and takes the size of a clone of the model (child Model "PetLook", Welds inside its
 -- parts), so plots, stacks, drops and ghosts fit the look. Attribute "Look" = "Folder/Name" (to
@@ -2029,6 +1983,11 @@ do
 			Config.Plots.minPetHeight,
 			Config.Plots.maxPetHeight
 		)
+		local egg = p:GetAttribute("HatchSize")
+		if typeof(egg) == "Vector3" then
+			height =
+				math.max(height, math.max(egg.X, egg.Y, egg.Z) * Config.Payoff.petEggRatio / 0.8)
+		end
 		p:SetAttribute("PetHeight", height)
 		p:SetAttribute("Pet", pet)
 		if not Looks.attach(p, "PetModels", modelName, height) then
@@ -2040,12 +1999,10 @@ do
 		if finish then
 			local look = p:FindFirstChild("PetLook")
 			for _, part in look and look:GetDescendants() or {} do
-				if
-					part:IsA("BasePart")
-					and (not p:GetAttribute("Gold") or (not Looks.isFacePart(part, pet)))
-				then
+				if part:IsA("BasePart") and not Looks.isFacePart(part, pet) then
 					part.Color = finish
-					part.Material = Enum.Material.Neon
+					part.Material = Enum.Material.SmoothPlastic
+					part.Reflectance = p:GetAttribute("Gold") and 0.22 or 0.12
 				end
 			end
 		end
@@ -2064,34 +2021,38 @@ local function stackPumpkin(player: Player, pumpkin: BasePart): boolean
 		stack = {}
 		carrying[player] = stack
 	end
-	local height = 3
-	for _, p in stack do
-		height += p.Size.Y
-	end
 	stripPumpkin(pumpkin)
 	if Hoards.cancelDrop then
 		Hoards.cancelDrop(pumpkin)
 	end
 	pumpkin:SetAttribute("LooseToken", (pumpkin:GetAttribute("LooseToken") or 0) + 1)
 	pumpkin:SetAttribute("GuardDropUntil", nil)
-	-- A model look (pet, mystery pumpkin) may be taller than wide: its biggest side counts.
-	local hasLook = pumpkin:FindFirstChild("PetLook") ~= nil
-	local big = math.max(pumpkin.Size.X, pumpkin.Size.Y, pumpkin.Size.Z)
-	if big > Config.MysterySizes.carry then
-		pumpkin.Size *= Config.MysterySizes.carry / big
-		if hasLook then
-			Looks.refit(pumpkin)
-		elseif pumpkin:GetAttribute("Jack") == true then
-			-- A carried Jack keeps its face and legs, rebuilt for the smaller size.
-			dressJack(pumpkin)
+	Looks.clear(pumpkin)
+	for _, child in pumpkin:GetDescendants() do
+		if
+			child:IsA("ParticleEmitter")
+			or child:IsA("Light")
+			or child.Name == "JackPart"
+			or child:IsA("BillboardGui")
+		then
+			child:Destroy()
 		end
 	end
+	pumpkin.Transparency = 0
+	pumpkin.Material = Enum.Material.SmoothPlastic
+	pumpkin.Size *= (#stack == 0 and Config.Payoff.chestSize or Config.Payoff.stackSize) / math.max(
+		pumpkin.Size.X,
+		pumpkin.Size.Y,
+		pumpkin.Size.Z
+	)
+	local offset = #stack == 0 and Vector3.new(0, 0.6, -1.8)
+		or Vector3.new(0, 3.2 + (#stack - 1) * Config.Payoff.stackSize, 0)
 	pumpkin:SetAttribute("Placed", nil)
 	pumpkin.Anchored = false
 	pumpkin.Massless = true
 	pumpkin.CanCollide = false
 	pumpkin.CanQuery = false
-	pumpkin.CFrame = root.CFrame * CFrame.new(0, height + pumpkin.Size.Y / 2, 0)
+	pumpkin.CFrame = root.CFrame * CFrame.new(offset)
 	local weld = Instance.new("WeldConstraint")
 	weld.Part0 = root
 	weld.Part1 = pumpkin
@@ -2326,7 +2287,7 @@ do
 				bb.Name = "Price"
 				bb.Size = UDim2.fromOffset(140, 32)
 				bb.StudsOffsetWorldSpace = Vector3.new(0, 2.5, 0)
-				bb.MaxDistance = 60
+				bb.MaxDistance = 20
 				bb.LightInfluence = 0
 				bb.Parent = block
 				local label = Instance.new("TextLabel")
@@ -2369,31 +2330,40 @@ do
 		local holder = post
 			and (post:IsA("BasePart") and post or post:FindFirstChildWhichIsA("BasePart", true))
 		if holder then
-			local bb = holder:FindFirstChild("PenUpgrade")
-			if not bb then
-				bb = Instance.new("BillboardGui")
-				bb.Name = "PenUpgrade"
-				bb.Size = UDim2.fromOffset(200, 30)
-				bb.StudsOffsetWorldSpace = Vector3.new(0, -1.4, 0)
-				bb.MaxDistance = 60
-				bb.LightInfluence = 0
-				bb.Parent = holder
-				local label = Instance.new("TextLabel")
-				label.Name = "Label"
-				label.Size = UDim2.fromScale(1, 1)
-				label.BackgroundColor3 = Config.Plots.priceBar
-				label.TextColor3 = Color3.new(1, 1, 1)
-				label.FontFace = Helpers.fontFace("title")
-				label.TextScaled = true
-				label.Parent = bb
+			local old = holder:FindFirstChild("PenUpgrade")
+			if old then
+				old:Destroy()
 			end
-			bb.Enabled = (patch:GetAttribute("Owner") or 0) ~= 0
-				and slots < Config.Progression.castleSlots
+			local prompt = holder:FindFirstChild("UpgradePrompt")
+			if not prompt then
+				prompt = Instance.new("ProximityPrompt")
+				prompt.Name = "UpgradePrompt"
+				prompt.HoldDuration = 0.6
+				prompt.MaxActivationDistance = 12
+				prompt.RequiresLineOfSight = false
+				prompt.UIOffset = Vector2.new(0, 48)
+				prompt.Parent = holder
+				prompt.Triggered:Connect(function(player)
+					local _, root = aliveRoot(player)
+					if not root or (root.Position - holder.Position).Magnitude > 14 then
+						return
+					end
+					if patchOf[player] ~= patch or not Bases.unlockZone then
+						return
+					end
+					local count = patch:GetAttribute("PenSlots") or Config.Progression.baseSlots
+					if count >= Config.Progression.castleSlots then
+						return
+					end
+					Bases.unlockZone(
+						player,
+						count < Config.Progression.woodsSlots and "Zone3" or "Zone5"
+					)
+				end)
+			end
 			local zone = slots < Config.Progression.woodsSlots and "Zone3" or "Zone5"
-			bb.Label.Text = "Upgrade "
-				.. utf8.char(127852)
-				.. " "
-				.. Helpers.short(Config.Zones[zone].cost)
+			prompt.ActionText = "Upgrade pen: " .. Helpers.short(Config.Zones[zone].cost)
+			prompt.ObjectText = Config.Zones[zone].title .. " ? +2 slots"
 		end
 
 		for _, rim in patch:GetDescendants() do
@@ -2432,6 +2402,23 @@ do
 		local weakestSeed = weakestPet and Lookup.seedById[weakestPet:GetAttribute("Seed") or ""]
 		local weakestDef = weakestSeed and Config.Pets[weakestSeed.pet]
 		patch:SetAttribute("SwapWeakestName", weakestDef and weakestDef.display or nil)
+		if owner then
+			local slots = patch:GetAttribute("PenSlots") or Config.Progression.baseSlots
+			local zone = slots < Config.Progression.woodsSlots and "Zone3" or "Zone5"
+			local previous = Config.ZoneOrder[(table.find(Config.ZoneOrder, zone) or 1) - 1]
+			owner:SetAttribute(
+				"PenUpgradeCost",
+				math.floor(
+					Config.Zones[zone].cost
+						* (
+							previous
+								and Progress.complete(owner, previous)
+								and (1 - Config.Progression.gateDiscount)
+							or 1
+						)
+				)
+			)
+		end
 		local mult = owner and Helpers.sellMult(owner) * Progress.candyMult(owner) or 1
 		local plots = plotsOf(patch)
 		local best, bestIncome, total, filled, hatched = nil, -1, 0, 0, 0
@@ -2470,36 +2457,16 @@ do
 			local tag = p and p:FindFirstChild("IncomeTag")
 			local label = tag and tag:FindFirstChild("Label") :: TextLabel?
 			if p and label then
-				local text = (
-					p:GetAttribute("Gold") and "GOLD "
-					or p:GetAttribute("Shiny") and "SHINY "
-					or ""
-				)
-					.. (protected and "🛡 " or "")
-					.. "+"
-					.. Helpers.rateText(incomeOf(p) * mult)
-					.. "/s"
-					.. (
-						p:GetAttribute("WeightKg")
-							and string.format(" · %.1f kg", p:GetAttribute("WeightKg"))
-						or ""
-					)
 				local seed = Lookup.seedById[p:GetAttribute("Seed") or ""]
 				local pet = seed and Config.Pets[seed.pet]
-				if pet then
-					text = (protected and utf8.char(128737) .. " " or "")
-						.. (p:GetAttribute("Gold") and "GOLD " or p:GetAttribute("Shiny") and "SHINY " or "")
-						.. pet.rarity
-						.. " "
-						.. pet.display
-						.. "\n$"
-						.. Helpers.rateText(incomeOf(p) * mult)
-						.. "/s"
-						.. (
-							p:GetAttribute("WeightKg")
-								and string.format(" | %.1f kg", p:GetAttribute("WeightKg"))
-							or ""
-						)
+				local text = (pet and pet.display or "Pumpkin")
+					.. "\n$"
+					.. Helpers.rateText(incomeOf(p) * mult)
+					.. "/s"
+				for _, rarity in Config.Rarities do
+					if pet and rarity.name == pet.rarity then
+						label.TextColor3 = rarity.color
+					end
 				end
 				tag.Enabled = p:GetAttribute("Jack") == true
 				if p:GetAttribute("Stashed") then
@@ -2528,10 +2495,10 @@ do
 		local bb = Instance.new("BillboardGui")
 		-- Kept small: the owner sees a green "+X" pop over each pumpkin every second instead.
 		bb.Name = "IncomeTag"
-		bb.Size = UDim2.fromOffset(230, 55)
+		bb.Size = UDim2.fromOffset(150, 38)
 		bb.StudsOffsetWorldSpace = Vector3.new(0, pumpkin.Size.Y / 2 + 1.2, 0)
 		bb.LightInfluence = 0
-		bb.MaxDistance = 45
+		bb.MaxDistance = 25
 		local label = Instance.new("TextLabel")
 		label.Name = "Label"
 		label.BackgroundTransparency = 1
@@ -2617,7 +2584,7 @@ do
 	end
 
 	-- Hatched: the pumpkin turns into its type's pet (ServerStorage.PetModels, facing the lane's
-	-- centre line), else a living Jack (face and legs). "Jack" = hatched (kept name, saves and
+	-- centre line), with validated voxel assets. "Jack" = hatched (kept name, saves and
 	-- moves use it); JackHome = where clients idle / hop it on its plot.
 	local function becomeAlive(pumpkin: BasePart)
 		local plot = pumpkin.Parent
@@ -2631,19 +2598,7 @@ do
 				pumpkin.CFrame = CFrame.lookAt(pos, Vector3.new(Lane.x, pos.Y, pos.Z))
 			end
 		else
-			if pumpkin:FindFirstChild("PetLook") then
-				Looks.clear(pumpkin)
-			end
-			-- Missing model: retain the existing Jack fallback at the rarity height.
-			local height = pumpkin:GetAttribute("PetHeight") or 3.5
-			local bottom = pumpkin.Position.Y - pumpkin.Size.Y / 2
-			pumpkin.Size *= height / (pumpkin.Size.Y * 1.3)
-			pumpkin.CFrame = CFrame.new(
-				pumpkin.Position.X,
-				bottom + pumpkin.Size.Y / 2,
-				pumpkin.Position.Z
-			) * pumpkin.CFrame.Rotation
-			dressJack(pumpkin, true)
+			error("Validated pet asset failed to attach; Jack fallback is disabled")
 		end
 		pumpkin:SetAttribute("PickupReadyAt", now() + Config.GuardLaunch.pickupGrace)
 		pumpkin:SetAttribute("JackHome", pumpkin.CFrame)
@@ -2655,7 +2610,7 @@ do
 		local anchor = Instance.new("Attachment")
 		anchor.Name = "PetPromptAnchor"
 		anchor.Parent = pumpkin
-		for _, name in { "PickupPrompt", "StealPrompt" } do
+		for _, name in { "PetPrompt" } do
 			local prompt = pumpkin.Parent and pumpkin.Parent:FindFirstChild(name, true)
 			if prompt then
 				prompt.Parent = anchor
@@ -2663,7 +2618,7 @@ do
 		end
 	end
 
-	-- The pumpkin hatches into its pet (or Jack). Clients play the hatch: everyone near sees the
+	-- The pumpkin hatches into its pet. Clients play the hatch: everyone near sees the
 	-- shell burst; the owner gets the flash, camera punch and the reveal card (built on the client
 	-- from the pumpkin's attributes). isNew = the first time its owner hatches this type.
 	local function carve(pumpkin: BasePart, forceReveal: boolean?)
@@ -2672,7 +2627,7 @@ do
 		for _, attr in { "GrowthSize", "GrowthStartAt", "GrowthDuration", "GrowthStep" } do
 			pumpkin:SetAttribute(attr, nil)
 		end
-		for _, name in { "HatchDome", "HatchSparkles" } do
+		for _, name in { "HatchDome", "HatchSparkles", "MysteryTag", "HoardSparkle" } do
 			local item = pumpkin:FindFirstChild(name)
 			if item then
 				item:Destroy()
@@ -2682,6 +2637,7 @@ do
 		if tag then
 			tag:Destroy()
 		end
+		pumpkin:SetAttribute("HatchSize", pumpkin.Size)
 		local hatchOwner = Services.Players:GetPlayerByUserId(pumpkin:GetAttribute("Owner") or 0)
 		Looks.rollGold(hatchOwner, pumpkin)
 		becomeAlive(pumpkin)
@@ -2704,8 +2660,20 @@ do
 			pumpkin:GetAttribute("Pet"),
 			isNew,
 			forceReveal
+				or (
+					owner ~= nil
+					and (owner:GetAttribute("PlayTime") or 0) < Config.Payoff.earlySeconds
+				)
 		)
 		if owner then
+			-- A data-only Reveal remote also works when the owner is too far away to receive the pet instance.
+			if
+				forceReveal
+				or isNew
+				or (owner:GetAttribute("PlayTime") or 0) < Config.Payoff.earlySeconds
+			then
+				Reveal.send(owner, pumpkin, isNew, "jack")
+			end
 			Progress.own(owner, seedId)
 			track(owner, "hatch", 1)
 			track(owner, "penFilled", owner:GetAttribute("PenFilled") or 0, true)
@@ -2744,7 +2712,10 @@ do
 				Config.MysterySizes.penMin,
 				Config.MysterySizes.penMax
 			)
-			pumpkin.Size *= height / pumpkin.Size.Y
+			pumpkin.Size *= math.min(
+				height / pumpkin.Size.Y,
+				5.5 / math.max(pumpkin.Size.X, pumpkin.Size.Z)
+			)
 		end
 		pumpkin.CFrame = CFrame.new(plot.Position + Vector3.new(0, 0.15 + pumpkin.Size.Y / 2, 0))
 			* CFrame.Angles(0, math.random() * math.pi * 2, 0)
@@ -2797,13 +2768,11 @@ do
 			local seconds = newbie and Config.CarveNewSeconds
 				or Lookup.seedById[seedId].order <= Config.CarveFastOrder and Config.CarveFastSeconds
 				or Config.CarveSeconds
-			Looks.attach(
-				pumpkin,
-				"PetModels",
-				Config.MysteryModel,
-				pumpkin.Size.Y,
-				extra and extra.hoard and Color3.fromRGB(255, 170, 70) or nil
-			)
+			Hoards.look(pumpkin)
+			local question = pumpkin:FindFirstChild("MysteryTag")
+			if question then
+				question:Destroy()
+			end
 			local final = pumpkin.Size
 			pumpkin:SetAttribute("GrowthSize", final)
 			pumpkin:SetAttribute("GrowthStartAt", now())
@@ -2844,7 +2813,7 @@ do
 		end
 		s.pumpkin = nil
 		plot.Size = plot:GetAttribute("BaseSize") or plot.Size
-		for _, name in { "PickupPrompt", "StealPrompt" } do
+		for _, name in { "PetPrompt" } do
 			local prompt = p:FindFirstChild(name, true)
 			if prompt then
 				prompt.Parent = plot
@@ -2915,15 +2884,22 @@ do
 		if not root then
 			return
 		end
-		local height = 3
-		for _, p in stack do
+		for i, p in stack do
 			for _, child in p:GetChildren() do
 				if child:IsA("WeldConstraint") then
 					child:Destroy()
 				end
 			end
-			p.CFrame = root.CFrame * CFrame.new(0, height + p.Size.Y / 2, 0)
-			height += p.Size.Y
+			p.Size *= (i == 1 and Config.Payoff.chestSize or Config.Payoff.stackSize) / math.max(
+				p.Size.X,
+				p.Size.Y,
+				p.Size.Z
+			)
+			p.CFrame = root.CFrame
+				* CFrame.new(
+					i == 1 and Vector3.new(0, 0.6, -1.8)
+						or Vector3.new(0, 3.2 + (i - 2) * Config.Payoff.stackSize, 0)
+				)
 			local weld = Instance.new("WeldConstraint")
 			weld.Part0 = root
 			weld.Part1 = p
@@ -3475,7 +3451,7 @@ do
 		bb.StudsOffsetWorldSpace = Vector3.new(0, 8, 0)
 		bb.AlwaysOnTop = true
 		bb.LightInfluence = 0
-		bb.MaxDistance = 140
+		bb.MaxDistance = 60
 		local label = Instance.new("TextLabel")
 		label.Name = "Label"
 		label.BackgroundTransparency = 1
@@ -3616,6 +3592,7 @@ do
 		for player, patch in patchOf do
 			if player.Parent and Helpers.isLoaded(player) then
 				Bases.refresh(patch)
+				refreshCarry(player)
 				local income = player:GetAttribute("Income") or 0
 				-- Spooky Hour pays x SpookyMult (orders still count the plain income).
 				local total = (carry[player] or 0) + income * Spooky.mult()
@@ -3692,12 +3669,13 @@ do
 		prompt.MaxActivationDistance = 9
 		prompt.RequiresLineOfSight = false
 		prompt.Parent = parent
-		if name == "StealPrompt" then
+		if name == "PetPrompt" then
 			prompt.HoldDuration = Config.Purge.hold
 			prompt.KeyboardKeyCode = Enum.KeyCode.E
 			prompt.PromptButtonHoldBegan:Connect(function(player)
 				if
 					Purge.active()
+					and patchOf[player] ~= parent.Parent
 					and not Purge.immune(player)
 					and Helpers.isLoaded(player)
 					and Bases.petReach(player, parent)
@@ -3724,12 +3702,13 @@ do
 		makePrompt(plot, "PlacePrompt", "Place", 0.2).Triggered:Connect(function(player)
 			place(player, plot)
 		end)
-		makePrompt(plot, "PickupPrompt", "Pick up", 0.3).Triggered:Connect(function(player)
-			pickUp(player, plot)
-		end)
-		makePrompt(plot, "StealPrompt", "Steal", Config.StealHold).Triggered:Connect(
+		makePrompt(plot, "PetPrompt", "Pick up", Config.Purge.hold).Triggered:Connect(
 			function(player)
-				steal(player, plot)
+				if patchOf[player] == plot.Parent then
+					pickUp(player, plot)
+				else
+					steal(player, plot)
+				end
 			end
 		)
 	end
@@ -3749,12 +3728,13 @@ do
 			makePrompt(plot, "PlacePrompt", "Place", 0.2).Triggered:Connect(function(player)
 				place(player, plot)
 			end)
-			makePrompt(plot, "PickupPrompt", "Pick up", 0.3).Triggered:Connect(function(player)
-				pickUp(player, plot)
-			end)
-			makePrompt(plot, "StealPrompt", "Steal", Config.StealHold).Triggered:Connect(
+			makePrompt(plot, "PetPrompt", "Pick up", Config.Purge.hold).Triggered:Connect(
 				function(player)
-					steal(player, plot)
+					if patchOf[player] == plot.Parent then
+						pickUp(player, plot)
+					else
+						steal(player, plot)
+					end
 				end
 			)
 		end
@@ -3771,8 +3751,9 @@ do
 		end
 		holder = holder or patch:FindFirstChild("Soil")
 		if holder then
-			local lockPrompt = makePrompt(holder, "LockPrompt", "LOCK", 0.3)
-			lockPrompt.ObjectText = "Your base"
+			local lockPrompt = makePrompt(holder, "LockPrompt", "Lock pen", 0.3)
+			lockPrompt.ObjectText = "Your pen"
+			lockPrompt.UIOffset = Vector2.new(0, -48)
 			lockPrompt.MaxActivationDistance = 12
 			lockPrompt.Triggered:Connect(function(player)
 				if patchOf[player] == patch then
@@ -3821,6 +3802,12 @@ function Bases.layout(patch)
 	if not soil or not plots[1] then
 		return
 	end
+	-- Rebuild locked decorations on the same grid as wooden discs.
+	for _, item in patch:GetDescendants() do
+		if item.Name == "SlotLock" or item.Name == "LockedDisc" then
+			item:Destroy()
+		end
+	end
 	-- Lobby rims are independent anchored parts at the old positions; rebuild as plot children.
 	for _, rim in patch:GetDescendants() do
 		if rim.Name == "DiscRim" then
@@ -3851,6 +3838,7 @@ function Bases.layout(patch)
 	assert(stepX > diameter and stepZ > diameter, "Pen slot discs must fit without overlap")
 	local height = soil.CFrame:PointToObjectSpace(plots[1].Position).Y
 	for i, plot in plots do
+		plot:SetAttribute("Index", i)
 		local old = plot.CFrame
 		local target = CFrame.new(
 			soil.CFrame:PointToWorldSpace(
@@ -4126,7 +4114,7 @@ do
 		icon.Size = UDim2.fromOffset(40, 40)
 		icon.StudsOffsetWorldSpace = Vector3.new(0, part.Size.Y / 2 + 2.4, 0)
 		icon.LightInfluence = 0
-		icon.MaxDistance = 80
+		icon.MaxDistance = 60
 		local label = Instance.new("TextLabel")
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
@@ -4441,6 +4429,7 @@ do
 		Remotes.hintEvent:FireClient(player, "🔓 The " .. def.title .. " is open! Go smash!")
 		track(player, "unlockZone", 1)
 	end
+	Bases.unlockZone = unlockZone
 
 	-- Gate sign (Steal an Egg / Pet Sim 99 style): the zone name with its difficulty emoji in big
 	-- white stroked letters and a yellow price pill ("🍬 1k") under it. Each client turns the pill
@@ -4455,7 +4444,7 @@ do
 		bb.Name = "GateGui"
 		bb.Size = UDim2.fromOffset(300, 120)
 		bb.LightInfluence = 0
-		bb.MaxDistance = 80
+		bb.MaxDistance = 60
 		local title = Instance.new("TextLabel")
 		title.Name = "Title"
 		title.BackgroundTransparency = 1
@@ -4653,7 +4642,7 @@ do
 		bb.Size = UDim2.fromOffset(420, 72)
 		bb.StudsOffsetWorldSpace = Vector3.new(0, 11, 0)
 		bb.LightInfluence = 0
-		bb.MaxDistance = 120
+		bb.MaxDistance = 60
 		local label = Instance.new("TextLabel")
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
@@ -4872,7 +4861,7 @@ do
 		bb.Size = size
 		bb.StudsOffsetWorldSpace = V(0, y, 0)
 		bb.LightInfluence = 0
-		bb.MaxDistance = 220
+		bb.MaxDistance = 60
 		local label = Instance.new("TextLabel")
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
@@ -5142,12 +5131,33 @@ do
 		end
 	end
 
-	-- Hoard pumpkins sparkle gold (in the nest, carried and placed). Until they hatch they wear
-	-- the glowing ServerStorage.PetModels.MysteryPumpkin look when it exists (hatched = true
-	-- skips it: the pet replaces it at once).
+	-- Mystery eggs reuse one opaque MeshPart; the glowing question replaces 168 voxel parts
+	-- and their welds per egg. Hatched pets own their client rarity aura.
 	function Hoards.look(p: BasePart, hatched: boolean?)
+		if hatched or p:GetAttribute("Jack") == true then
+			return
+		end
 		if not hatched and p:GetAttribute("Jack") ~= true and not p:FindFirstChild("PetLook") then
-			Looks.attach(p, "PetModels", Config.MysteryModel, p.Size.Y, C(255, 170, 70))
+			p.Transparency = 0
+			p.Material = Enum.Material.SmoothPlastic
+			if not p:FindFirstChild("MysteryTag") then
+				local question = Instance.new("BillboardGui")
+				question.Name = "MysteryTag"
+				question.Size = UDim2.fromOffset(36, 42)
+				question.StudsOffsetWorldSpace = Vector3.yAxis * (p.Size.Y / 2 + 0.8)
+				question.MaxDistance = 60
+				question.LightInfluence = 0
+				local label = Instance.new("TextLabel")
+				label.Size = UDim2.fromScale(1, 1)
+				label.BackgroundTransparency = 1
+				label.Text = "?"
+				label.TextColor3 = C(255, 227, 128)
+				label.TextStrokeTransparency = 0.3
+				label.TextScaled = true
+				label.Font = Enum.Font.GothamBlack
+				label.Parent = question
+				question.Parent = p
+			end
 		end
 		if p:FindFirstChild("HoardSparkle") then
 			return
@@ -6009,7 +6019,7 @@ do
 				return
 			end
 		end
-		local total, count, raw = 0, 0, 0
+		local total, count, raw = Helpers.sellQuote(player), 0, 0
 		local found = indexOf[player] or {}
 		indexOf[player] = found
 		local news = {}
@@ -6019,8 +6029,7 @@ do
 			if pumpkin.Parent then
 				local seedId = pumpkin:GetAttribute("Seed")
 				local finish = pumpkin:GetAttribute("Mutation") or "Plain"
-				local bonus = rowDone(player, seedId) and (1 + Config.IndexRowBonus) or 1
-				total += pumpkinValue(pumpkin, Config.WitchSellSeconds) * bonus
+				-- Quote computed before Index changes or destruction.
 				local key = seedId .. ":" .. finish
 				if not found[key] then
 					found[key] = true
@@ -6046,10 +6055,9 @@ do
 				pumpkin:Destroy()
 			end
 		end
-		total = math.floor(total * Helpers.sellMult(player) + 0.5)
 		carrying[player] = {}
 		refreshCarry(player)
-		total = addCandy(player, total)
+		total = addCandy(player, total, true)
 		table.insert(incomeLog, { t = os.clock(), amount = total })
 		Remotes.soldEvent:FireAllClients(player, promptPart.Position, total, count, raw)
 		if #news > 0 then
@@ -7347,8 +7355,8 @@ local function endBloodMoon(refill: number)
 	king.active = false
 	state:SetAttribute("KingActive", false)
 	king.shield = false
-	giantJack.Transparency = 0
-	giantJack.CanCollide = true
+	giantJack.Transparency = 1
+	giantJack.CanCollide = false
 	kingFace.Transparency = 1
 	kingFace.Size = king.faceSize or kingFace.Size
 	king.faceBase = king.homeBase
@@ -7969,7 +7977,7 @@ do
 		bb.Size = UDim2.fromOffset(200, 56)
 		bb.StudsOffsetWorldSpace = Vector3.new(0, 2.2, 0)
 		bb.LightInfluence = 0
-		bb.MaxDistance = 90
+		bb.MaxDistance = 60
 		for i, text in { "⭐ VIP", player.DisplayName } do
 			local label = Instance.new("TextLabel")
 			label.BackgroundTransparency = 1
@@ -8930,7 +8938,7 @@ do
 	bb.Name = "KingLoot"
 	bb.Size = UDim2.fromOffset(440, 150)
 	bb.StudsOffsetWorldSpace = Config.KingNight.signOffset
-	bb.MaxDistance = 80
+	bb.MaxDistance = 60
 	bb.Parent = market.Plaza
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
@@ -9542,34 +9550,30 @@ end
 
 do
 	for _, patch in patchFolder:GetChildren() do
-		Bases.slotLook(patch, patch:GetAttribute("PenSlots") or Config.Progression.baseSlots)
-		local soil = patch:FindFirstChild("Soil")
-		if soil then
-			local bb = Instance.new("BillboardGui")
-			bb.Name = "OwnerPortrait"
-			bb.Size = UDim2.fromOffset(80, 80)
-			bb.StudsOffsetWorldSpace = Vector3.yAxis * Config.Plots.markerHeight
-			bb.AlwaysOnTop = true
-			bb.MaxDistance = 300
-			bb.Parent = soil
-			local image = Instance.new("ImageLabel")
-			image.Size = UDim2.fromScale(1, 1)
-			image.BackgroundTransparency = 1
-			image.Parent = bb
-			local function refresh()
-				local owner = patch:GetAttribute("Owner") or 0
-				bb.Enabled = owner ~= 0
-				image.Image = owner ~= 0
-						and ("rbxthumb://type=AvatarHeadShot&id=" .. tostring(owner) .. "&w=150&h=150")
-					or ""
-				if owner == 0 then
-					Bases.slotLook(patch, Config.Progression.baseSlots)
-				end
+		local old = patch:FindFirstChild("OwnerPortrait", true)
+		if old then
+			old:Destroy()
+		end
+		patch:GetAttributeChangedSignal("Owner"):Connect(function()
+			if (patch:GetAttribute("Owner") or 0) == 0 then
+				Bases.slotLook(patch, Config.Progression.baseSlots)
 			end
-			patch:GetAttributeChangedSignal("Owner"):Connect(refresh)
-			refresh()
+		end)
+	end
+end
+
+-- Authored and runtime world billboards share the distance budget.
+do
+	local function cap(d)
+		if d:IsA("BillboardGui") then
+			local limit = d.Name == "OwnerSign" and 100 or 60
+			d.MaxDistance = d.MaxDistance == 0 and limit or math.min(d.MaxDistance, limit)
 		end
 	end
+	for _, d in garden:GetDescendants() do
+		cap(d)
+	end
+	garden.DescendantAdded:Connect(cap)
 end
 
 -- Studio-only test hooks ------------------------------------------------------------------------

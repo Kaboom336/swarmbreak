@@ -214,7 +214,7 @@ local function floatText(at: Vector3, text: string, color: Color3, big: boolean?
 	bb.Size = UDim2.fromOffset(big and 260 or 200, big and 60 or 46)
 	bb.AlwaysOnTop = true
 	bb.LightInfluence = 0
-	bb.MaxDistance = 160
+	bb.MaxDistance = 60
 	bb.Parent = anchor
 	local label = Instance.new("TextLabel")
 	label.BackgroundTransparency = 1
@@ -265,7 +265,7 @@ local function damageText(at: Vector3, damage: number, color: Color3?)
 	bb.Size = UDim2.fromOffset(px * 5, px + 60)
 	bb.AlwaysOnTop = true
 	bb.LightInfluence = 0
-	bb.MaxDistance = 200
+	bb.MaxDistance = 60
 	bb.ResetOnSpawn = false
 	bb.Parent = player:WaitForChild("PlayerGui")
 	local label = Instance.new("TextLabel")
@@ -321,7 +321,7 @@ local function pickupPop(amount: number)
 	bb.StudsOffsetWorldSpace = Vector3.new(0, 3.2, 0)
 	bb.AlwaysOnTop = true
 	bb.LightInfluence = 0
-	bb.MaxDistance = 200
+	bb.MaxDistance = 60
 	bb.ResetOnSpawn = false
 	bb.Parent = player:WaitForChild("PlayerGui")
 	local label = Instance.new("TextLabel")
@@ -425,7 +425,15 @@ local function inHub(): boolean
 	return root ~= nil and root.Position.Z < (state:GetAttribute("SafeLineZ") or Config.SafeLineZ)
 end
 
-local Center = { busy = false, urgent = false, frames = {}, nextTicket = 0, serving = 1 }
+local Center = {
+	busy = false,
+	urgent = false,
+	frames = {},
+	nextTicket = 0,
+	serving = 1,
+	revealBusy = false,
+	toasts = {},
+}
 function Center.acquire()
 	Center.nextTicket += 1
 	local ticket = Center.nextTicket
@@ -766,6 +774,7 @@ local hint
 do
 	local holder = Instance.new("Frame")
 	holder.Name = "Toasts"
+	Center.toastHolder = holder
 	holder.BackgroundTransparency = 1
 	holder.AnchorPoint = Vector2.new(0.5, 0)
 	holder.Position = UDim2.fromScale(0.5, Config.UI.toastY)
@@ -779,6 +788,10 @@ do
 	layout.Parent = holder
 	local count = 0
 	function hint(text: string)
+		if Center.revealBusy then
+			table.insert(Center.toasts, text)
+			return
+		end
 		count += 1
 		local label = textLabel(holder, text, Color3.fromRGB(255, 255, 255))
 		label.RichText = true
@@ -819,6 +832,12 @@ end
 remotes:WaitForChild("Hint").OnClientEvent:Connect(hint)
 
 -- Event news that used to be big banners: one small toast line ("TITLE · sub").
+function Center.purchaseBurst()
+	local root = rootPart()
+	if root then
+		burst(root.Position + Vector3.yAxis * 2, Palette.ORANGE, 18, 8, Palette.SPARKLE, 0.6)
+	end
+end
 local function toast(title: string, sub: string?)
 	hint(title .. (sub and sub ~= "" and (" · " .. sub) or ""))
 end
@@ -1390,6 +1409,10 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	local pop = Instance.new("UIScale")
 	pop.Parent = frame
 	frame:GetPropertyChangedSignal("Visible"):Connect(function()
+		if frame.Visible and Center.revealBusy then
+			frame.Visible = false
+			return
+		end
 		if frame.Visible then
 			pop.Scale = 0
 			Services.TweenService
@@ -1673,6 +1696,7 @@ do
 			local ok, message = buyTool:InvokeServer(tool.id)
 			if ok then
 				play(Config.Sounds.Buy, 1, 0.8)
+				Center.purchaseBurst()
 				toast(string.upper(tool.name) .. "!", short(tool.damage) .. " damage per swing")
 			else
 				b.Text = tostring(message or "?")
@@ -1721,6 +1745,7 @@ for i, id in Palette.UPGRADE_ORDER do
 		local ok, message = buyUpgrade:InvokeServer(id)
 		if ok then
 			play(Config.Sounds.Buy, 1, 0.8)
+			Center.purchaseBurst()
 			toast(info.title, info.text)
 		else
 			b.Text = message
@@ -2198,6 +2223,7 @@ local function onNodeClicked(node: SkillNode)
 	buyingSkill = false
 	if ok then
 		play(Config.Sounds.Buy, 1, 0.8)
+		Center.purchaseBurst()
 		toast(skill.title .. "!", skill.text)
 	else
 		node.status.Text = tostring(message or "?")
@@ -2508,6 +2534,7 @@ for name in Config.GamePasses do
 				end
 			end
 			play(Config.Sounds.Buy, 1, 0.8)
+			Center.purchaseBurst()
 		end
 	end)
 end
@@ -2749,7 +2776,6 @@ do
 	flash.Size = UDim2.fromScale(1, 1)
 	flash.ZIndex = 5
 	flash.Parent = revealGui
-	local MAX_QUEUE = 5
 	local queue: { { any } } = {}
 	local busy = false
 
@@ -2792,6 +2818,8 @@ do
 		local source = findPumpkin(seed.id, mutation, pet)
 			or (pet and findPumpkin(seed.id, mutation))
 		local look = source and source:FindFirstChild("PetLook")
+		local previews = Services.ReplicatedStorage:FindFirstChild("PetPreviews")
+		look = look or (previews and previews:FindFirstChild(pet or seed.pet))
 		if look and look:IsA("Model") then
 			look.Archivable = true
 			local m = look:Clone()
@@ -2965,9 +2993,9 @@ do
 		view.Position = UDim2.new(0.5, 0, 0, 132)
 		view.Size = UDim2.fromOffset(220, 220)
 		view.BackgroundTransparency = 1
-		view.Ambient = Color3.fromRGB(190, 190, 200)
+		view.Ambient = Color3.fromRGB(235, 235, 255)
 		view.LightColor = Color3.new(1, 1, 1)
-		view.LightDirection = Vector3.new(-0.6, -1, -0.8)
+		view.LightDirection = Vector3.new(-1, -0.5, -1)
 		view.ZIndex = 2
 		view.Parent = cardFrame
 		local cam = Instance.new("Camera")
@@ -3094,7 +3122,7 @@ do
 		pet: string?,
 		weight: number?
 	)
-		if not seedById[seedId] or #queue >= MAX_QUEUE then
+		if not seedById[seedId] then
 			return
 		end
 		table.insert(
@@ -3105,6 +3133,12 @@ do
 			return
 		end
 		busy = true
+		Center.revealBusy = true
+		Center.toastHolder.Visible = false
+		for _, frame in panelFrames do
+			frame.Visible = false
+		end
+		refreshDim()
 		task.spawn(function()
 			while #queue > 0 do
 				local item = table.remove(queue, 1) :: { any }
@@ -3121,6 +3155,14 @@ do
 				end
 			end
 			busy = false
+			Center.revealBusy = false
+			Center.toastHolder.Visible = true
+			local pending = Center.toasts
+			Center.toasts = {}
+			for _, text in pending do
+				hint(text)
+				task.wait(0.4)
+			end
 		end)
 	end
 	remotes:WaitForChild("Reveal").OnClientEvent:Connect(queueReveal)
@@ -3253,39 +3295,49 @@ do
 							),
 						full and weakest or "Your plot"
 					)
+					local p = plot:FindFirstChild("Pumpkin")
+					local ready = p
+						and p:GetAttribute("Jack") == true
+						and not p:GetAttribute("CarveAt")
+						and now >= (p:GetAttribute("PickupReadyAt") or 0)
+						and not p:GetAttribute("Stashed")
+					local prompt = plot:FindFirstChild("PetPrompt", true)
+					if prompt and prompt:IsA("ProximityPrompt") then
+						prompt.ActionText = mine and "Pick up" or "Steal"
+						prompt.HoldDuration = mine and 0.3 or Config.Purge.hold
+					end
+					-- While carrying, the full-pen Place prompt owns the interaction.
 					set(
-						plot:FindFirstChild("PickupPrompt", true),
+						prompt,
 						active
-							and mine
 							and filled
-							and canSell
-							and (function()
-								local p = plot:FindFirstChild("Pumpkin")
-								return p
-									and not p:GetAttribute("CarveAt")
-									and now >= (p:GetAttribute("PickupReadyAt") or 0)
-							end)()
-							and not (
-								carrying
-								and (player:GetAttribute("PenFilled") or 0)
-									>= (player:GetAttribute("PenSlots") or 6)
-							),
-						name
-					)
-					set(
-						plot:FindFirstChild("StealPrompt", true),
-						active
-							and robbable
-							and filled
-							and plot:GetAttribute("Protected") ~= true
-							and not (
-								plot:FindFirstChild("Pumpkin")
-								and plot.Pumpkin:GetAttribute("Stashed")
+							and ready
+							and not carrying
+							and (
+								(mine and canSell)
+								or (not mine and robbable and not plot:GetAttribute("Protected"))
 							),
 						name
 					)
 				end
 			end
+			local upgrade = patch:FindFirstChild("UpgradePrompt", true)
+			local slots = patch:GetAttribute("PenSlots") or Config.Progression.baseSlots
+			local zone = slots < Config.Progression.woodsSlots and "Zone3" or "Zone5"
+			local previous = Config.ZoneOrder[(table.find(Config.ZoneOrder, zone) or 1) - 1]
+			local cost = Config.Zones[zone].cost
+			-- The server publishes the same gate quote used by unlockZone.
+			cost = player:GetAttribute("PenUpgradeCost") or cost
+			if upgrade and upgrade:IsA("ProximityPrompt") then
+				upgrade.ActionText = "Upgrade pen: " .. short(cost)
+			end
+			set(
+				upgrade,
+				mine
+					and player:GetAttribute("Loaded") == true
+					and slots < Config.Progression.castleSlots
+					and previous ~= nil
+			)
 			set(
 				patch:FindFirstChild("LockPrompt", true),
 				mine
@@ -3302,7 +3354,8 @@ do
 				elseif string.sub(p.Name, 1, 10) == "WitchOffer" then
 					set(p, unlocked("Witch"))
 				else
-					set(p, canSell)
+					p.ActionText = "Sell for $" .. tostring(player:GetAttribute("CarryValue") or 0)
+					set(p, canSell and carrying)
 				end
 			end
 		end
@@ -3350,7 +3403,7 @@ do
 		marker.Size = UDim2.fromOffset(240, 56)
 		marker.StudsOffsetWorldSpace = Vector3.new(0, 14, 0)
 		marker.LightInfluence = 0
-		marker.MaxDistance = 1000
+		marker.MaxDistance = 100
 		marker.Parent = soil
 		textLabel(marker, "YOUR PEN", Color3.fromRGB(140, 255, 110)).Size = UDim2.fromScale(1, 1)
 	end
@@ -3358,6 +3411,19 @@ do
 		patch:GetAttributeChangedSignal("Owner"):Connect(refreshMarker)
 	end
 	refreshMarker()
+	task.spawn(function()
+		while true do
+			local root = rootPart()
+			local patch = myPatch()
+			local soil = patch and patch:FindFirstChild("Soil")
+			if marker then
+				marker.Enabled = root ~= nil
+					and soil ~= nil
+					and (root.Position - soil.Position).Magnitude > 60
+			end
+			task.wait(0.25)
+		end
+	end)
 end
 
 -- Lighting by phase ----------------------------------------------------------------------------
@@ -4663,7 +4729,7 @@ do
 			local gateGui = sign and sign:FindFirstChild("GateGui")
 			if gateGui and gateGui:IsA("BillboardGui") then
 				gateGui.Size = UDim2.fromOffset(open and 150 or 300, open and 60 or 120)
-				gateGui.MaxDistance = 80
+				gateGui.MaxDistance = 60
 			end
 			local costLabel = gateGui and gateGui:FindFirstChild("Cost", true) :: TextLabel?
 			if costLabel then
@@ -4755,14 +4821,46 @@ do
 
 	player:GetAttributeChangedSignal("ZoneProgress"):Connect(refreshGates)
 	local known = ownedSet()
+	local celebration = { untilAt = 0, income = player:GetAttribute("Income") or 0 }
+	player:GetAttributeChangedSignal("Income"):Connect(function()
+		local income = player:GetAttribute("Income") or 0
+		local gain = income - celebration.income
+		celebration.income = income
+		if os.clock() < celebration.untilAt and gain > 0 then
+			local pen = myPatch()
+			local soil = pen and pen:FindFirstChild("Soil")
+			if soil then
+				floatText(
+					soil.Position + Vector3.yAxis * 6,
+					"+" .. short(gain) .. "/s!",
+					Palette.BUY,
+					true
+				)
+			end
+		end
+	end)
 	player:GetAttributeChangedSignal("Zones"):Connect(function()
 		local now = ownedSet()
 		if player:GetAttribute("Loaded") then
 			for _, zoneId in Config.ZoneOrder do
 				local def = Config.Zones[zoneId]
 				if def and now[zoneId] and not known[zoneId] and (def.cost or 0) > 0 then
-					toast(string.upper(def.title) .. " UNLOCKED!", "New pumpkins to smash inside!")
+					celebration.untilAt = os.clock() + Config.CarveSeconds + 10
+					toast(string.upper(def.title) .. " UNLOCKED!", Config.gateBenefits(zoneId))
+					local pen = myPatch()
+					local soil = pen and pen:FindFirstChild("Soil")
+					if soil then
+						burst(
+							soil.Position + Vector3.yAxis * 3,
+							Palette.ORANGE,
+							36,
+							14,
+							Palette.SPARKLE,
+							1
+						)
+					end
 					play(Config.Sounds.Buy, 1, 0.8)
+					Center.purchaseBurst()
 				end
 			end
 		end
@@ -5568,7 +5666,8 @@ do
 	remotes:WaitForChild("StealAlarm").OnClientEvent:Connect(function(kind: string, a, b)
 		if kind == "stole" then
 			hint('You stole a <font color="#FF3B3B">Pumpkin</font>!')
-			play(Config.Sounds.Coin, 1.4, 0.8)
+			play(Config.Sounds.Pop, 1, 0.8)
+			Center.purchaseBurst()
 			task.spawn(shake, 0.5, 6)
 		elseif kind == "robbed" then
 			hint('⚠ Someone is <font color="#FF3B3B">stealing</font> from your pen!')
@@ -5640,7 +5739,8 @@ end
 do
 	local playerGui = player:WaitForChild("PlayerGui")
 	local function incomePop(p: BasePart, rate: number)
-		if not p.Parent then
+		local root = rootPart()
+		if not root or (root.Position - p.Position).Magnitude <= 60 or not p.Parent then
 			return
 		end
 		local y = p.Size.Y / 2 + 2
@@ -5651,7 +5751,7 @@ do
 		bb.StudsOffsetWorldSpace = Vector3.new((math.random() - 0.5) * 0.8, y, 0)
 		bb.AlwaysOnTop = true
 		bb.LightInfluence = 0
-		bb.MaxDistance = 90
+		bb.MaxDistance = 60
 		local label = Instance.new("TextLabel")
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
@@ -6529,7 +6629,8 @@ remotes
 remotes:WaitForChild("Hoard").OnClientEvent:Connect(function(kind: string, _seedId: string?)
 	if kind == "grab" then
 		hint("Pumpkin grabbed!")
-		play(Config.Sounds.Coin, 1.4, 0.8)
+		play(Config.Sounds.Pop, 1, 0.8)
+		Center.purchaseBurst()
 		-- Wake feedback keeps the player in control of the camera.
 	elseif kind == "bonk" then
 		hint(
@@ -6755,7 +6856,33 @@ do
 				return
 			end
 			local seed = seedById[p:GetAttribute("Seed") or ""]
-			if (p.Position - camera.CFrame.Position).Magnitude <= 150 then
+			if (p.Position - camera.CFrame.Position).Magnitude <= Config.Payoff.petDistance then
+				local look = p:FindFirstChild("PetLook")
+				for _, part in look and look:GetDescendants() or {} do
+					if part:IsA("BasePart") then
+						local size = part.Size
+						local weld = part:FindFirstChild("LookWeld")
+						part.Size = size * 0.8
+						Services.TweenService
+							:Create(
+								part,
+								TweenInfo.new(0.35, Enum.EasingStyle.Back),
+								{ Size = size }
+							)
+							:Play()
+						if weld and weld:IsA("Weld") then
+							local base = weld.C0
+							weld.C0 = CFrame.new(base.Position * 0.8) * base.Rotation
+							Services.TweenService
+								:Create(
+									weld,
+									TweenInfo.new(0.35, Enum.EasingStyle.Back),
+									{ C0 = base }
+								)
+								:Play()
+						end
+					end
+				end
 				local flash = Instance.new("Highlight")
 				flash.FillColor = Color3.new(1, 1, 1)
 				flash.FillTransparency = 0
@@ -6790,46 +6917,14 @@ do
 			end
 			local def = pet and Config.Pets and Config.Pets[pet]
 			local name = def and def.display or (seed.name .. " Jack")
-			local rate = tonumber(p:GetAttribute("Rate")) or 0
-			local mutation = p:GetAttribute("Mutation")
 			local root = rootPart()
-			local running = (player:GetAttribute("CarryStolen") or 0) > 0
-				or (player:GetAttribute("CarryHoard") or 0) > 0
-			if
-				root
-				and (not running or forceReveal)
-				and (p.Position - root.Position).Magnitude < 90
-			then
-				ownerHatch()
-				task.delay(
-					0.35,
-					queueReveal,
-					seed.id,
-					mutation,
-					isNew == true,
-					rate,
-					"jack",
-					pet,
-					p:GetAttribute("WeightKg")
-				)
-			else
-				hint(
-					string.format(
-						'🐣 Your pumpkin hatched: <font color="#44FF2F">%s</font>!',
-						name
-					)
-				)
-				if isNew then
-					queueReveal(
-						seed.id,
-						mutation,
-						true,
-						rate,
-						"jack",
-						pet,
-						p:GetAttribute("WeightKg")
-					)
+			if forceReveal or isNew then
+				if root and (p.Position - root.Position).Magnitude < 80 then
+					ownerHatch()
 				end
+				-- The data-only server Reveal remote owns the card, even for distant hatches.
+			else
+				hint("Your pumpkin hatched: " .. name .. "!")
 			end
 		end
 	)
@@ -6893,11 +6988,17 @@ do
 	end)
 	Services.RunService.RenderStepped:Connect(function()
 		local now = workspace:GetServerTimeNow()
+		local root = rootPart()
 		for _, p in pets do
 			if not p.Parent or not p:GetAttribute("Placed") or not p:GetAttribute("JackHome") then
 				continue
 			end
-			if p:GetAttribute("Stashed") then
+			if
+				p:GetAttribute("Stashed")
+				or not root
+				or (Config.roamPoint(p, now) - root.Position).Magnitude
+					> Config.Payoff.petDistance
+			then
 				continue
 			end
 			local from = p:GetAttribute("RoamFrom")
@@ -6910,8 +7011,10 @@ do
 				rotation = CFrame.lookAt(Vector3.zero, direction).Rotation
 			end
 			local bob = moving and math.abs(math.sin(now * 9)) * Config.PetRoam.bob
-				or math.abs(math.sin(now * 3)) * 0.06
-			p.CFrame = CFrame.new(at + Vector3.yAxis * bob) * rotation
+				or math.abs(math.sin(now * 3)) * 0.18
+			p.CFrame = CFrame.new(at + Vector3.yAxis * bob)
+				* rotation
+				* CFrame.Angles(0, 0, math.sin(now * 2.5 + p.Size.Y) * math.rad(3))
 			local anchor = p:FindFirstChild("PetPromptAnchor")
 			if anchor then
 				anchor.Position = Vector3.zero
@@ -6919,185 +7022,83 @@ do
 		end
 	end)
 end
--- Carry look (Steal an Egg): every pumpkin carried over a head floats inside a soft rainbow halo,
--- a see-through Neon ball (local, anchored, following the pumpkin each frame) whose colour cycles
--- slowly. RUN!!, Drop and the red vignette stay as they are. -----------------------------------
+-- Carry pumpkins use opaque server mesh carriers, with no halo.
+
+-- Soft nest glow and one subtle Epic+ aura, only for nearby objects.
 do
-	local halos: { [BasePart]: Part } = {}
-	local folder = Instance.new("Folder")
-	folder.Name = "CarryHalos"
-	folder.Parent = workspace
+	local effects, candidates = {}, {}
+	local function watch(d)
+		if d:IsA("BasePart") and d:GetAttribute("Seed") then
+			candidates[d] = true
+		end
+	end
+	for _, d in garden:GetDescendants() do
+		watch(d)
+	end
+	garden.DescendantAdded:Connect(watch)
 	task.spawn(function()
 		while true do
-			task.wait(0.25)
-			local want: { [BasePart]: boolean } = {}
-			for _, who in Services.Players:GetPlayers() do
-				local character = who.Character
-				for _, child in character and character:GetChildren() or {} do
-					if child:IsA("BasePart") and child:GetAttribute("Seed") ~= nil then
-						want[child] = true
+			local root = rootPart()
+			local keep = {}
+			for p in candidates do
+				if not p.Parent then
+					candidates[p] = nil
+					continue
+				end
+				if
+					p:IsA("BasePart")
+					and p:GetAttribute("Seed")
+					and root
+					and (p.Position - root.Position).Magnitude <= Config.Payoff.petDistance
+				then
+					local def = Config.Pets[p:GetAttribute("Pet") or ""]
+					local nest = p.Name == "HoardPumpkin"
+						and not p:GetAttribute("Placed")
+						and p:IsDescendantOf(garden.Zones)
+					local epic = def
+						and (Config.Economy.rarityRanks[def.rarity] or 0) >= 3
+						and p:GetAttribute("Placed")
+						and p:GetAttribute("Jack")
+					if nest or epic then
+						keep[p] = true
+						if not effects[p] then
+							if nest then
+								local light = Instance.new("PointLight")
+								light.Name = "NestGlow"
+								light.Color = Palette.ORANGE
+								light.Brightness, light.Range, light.Shadows = 0.6, 7, false
+								light.Parent = p
+								effects[p] = light
+							else
+								local aura = Instance.new("ParticleEmitter")
+								aura.Name = "RarityAura"
+								aura.Texture = Palette.SPARKLE
+								local color = Palette.PURPLE
+								for _, r in Config.Rarities do
+									if r.name == def.rarity then
+										color = r.color
+									end
+								end
+								aura.Color = ColorSequence.new(color)
+								aura.Rate = Config.Payoff.auraRate
+								aura.LightEmission = 0.5
+								aura.Size = NumberSequence.new(0.25, 0)
+								aura.Lifetime, aura.Speed =
+									NumberRange.new(0.6, 1), NumberRange.new(0.2, 0.6)
+								aura.Parent = p
+								effects[p] = aura
+							end
+						end
 					end
 				end
 			end
-			for p, halo in halos do
-				if not want[p] then
-					halo:Destroy()
-					halos[p] = nil
+			for p, fx in effects do
+				if not keep[p] then
+					fx:Destroy()
+					effects[p] = nil
 				end
 			end
-			for p in want do
-				if not halos[p] then
-					local halo = Instance.new("Part")
-					halo.Name = "Halo"
-					halo.Shape = Enum.PartType.Ball
-					halo.Material = Enum.Material.Neon
-					halo.Transparency = 0.8
-					halo.Anchored = true
-					halo.CanCollide = false
-					halo.CanQuery = false
-					halo.CanTouch = false
-					halo.CastShadow = false
-					halo.Parent = folder
-					halos[p] = halo
-				end
-			end
-		end
-	end)
-	Services.RunService.RenderStepped:Connect(function()
-		local t = os.clock()
-		local k = 0
-		for p, halo in halos do
-			k += 1
-			local s = math.max(p.Size.X, p.Size.Y, p.Size.Z) * 1.45
-			if halo.Size.X ~= s then
-				halo.Size = Vector3.one * s
-			end
-			halo.CFrame = CFrame.new(p.Position)
-			halo.Color = Color3.fromHSV((t * 0.12 + k * 0.17) % 1, 0.45, 1)
-		end
-	end)
-end
-
--- Glow. Nest (Hoard) mystery pumpkins pulse: a PointLight 1.5 <-> 3 every 1.2 s (the model's own
--- LookGlow is switched off locally so it is the only light). Rare pets (Rare and up, on a plot)
--- get a Highlight outline in their rarity colour (the 20 nearest: Roblox draws at most 31) and a
--- sparkle emitter (LightEmission 1, LightInfluence 0). ------------------------------------------
-do
-	local pulsed: { [BasePart]: boolean } = setmetatable({}, { __mode = "k" }) :: any
-	local function pulse(d: Instance)
-		if not d:IsA("BasePart") or d.Name ~= "HoardPumpkin" or pulsed[d] then
-			return
-		end
-		pulsed[d] = true
-		local own = d:FindFirstChild("LookGlow", true)
-		if own and own:IsA("PointLight") then
-			own.Enabled = false
-		end
-		local light = Instance.new("PointLight")
-		light.Name = "NestPulse"
-		light.Color = Color3.fromRGB(255, 170, 70)
-		light.Range = 11
-		light.Shadows = false
-		light.Brightness = 1.5
-		light.Parent = d
-		Services.TweenService
-			:Create(
-				light,
-				TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-				{ Brightness = 3 }
-			)
-			:Play()
-	end
-	task.spawn(function()
-		local zones = garden:WaitForChild("Zones", 15)
-		if not zones then
-			return
-		end
-		zones.DescendantAdded:Connect(pulse)
-		for _, d in zones:GetDescendants() do
-			pulse(d)
-		end
-	end)
-
-	local function rarityColor(order: number): Color3
-		for _, r in Config.Rarities do
-			if order <= r.upTo then
-				return r.color
-			end
-		end
-		return Config.Rarities[#Config.Rarities].color
-	end
-	local MAX_OUTLINES = 20
-	type Glow = { outline: Highlight, sparkle: ParticleEmitter }
-	local glows: { [BasePart]: Glow } = {}
-	task.spawn(function()
-		while true do
 			task.wait(0.6)
-			local camera = workspace.CurrentCamera
-			local eye = camera and camera.CFrame.Position or Vector3.zero
-			local list: { BasePart } = {}
-			for _, patch in patchFolder:GetChildren() do
-				for _, plot in patch:GetChildren() do
-					local p = plot.Name == "Plot" and plot:FindFirstChild("Pumpkin")
-					local seed = p and seedById[p:GetAttribute("Seed") or ""]
-					if
-						p
-						and p:IsA("BasePart")
-						and seed
-						and seed.order >= 3
-						and p:GetAttribute("Pet") ~= nil
-						and p:GetAttribute("Placed") == true
-					then
-						table.insert(list, p)
-					end
-				end
-			end
-			local keep: { [BasePart]: boolean } = {}
-			for _, p in list do
-				keep[p] = true
-			end
-			for p, g in glows do
-				if not keep[p] or not p.Parent then
-					g.outline:Destroy()
-					g.sparkle:Destroy()
-					glows[p] = nil
-				end
-			end
-			table.sort(list, function(a, b)
-				return (a.Position - eye).Magnitude < (b.Position - eye).Magnitude
-			end)
-			for i, p in list do
-				local g = glows[p]
-				if not g then
-					local color = rarityColor(seedById[p:GetAttribute("Seed")].order)
-					local outline = Instance.new("Highlight")
-					outline.Name = "RareGlow"
-					outline.FillTransparency = 1
-					outline.OutlineColor = color
-					outline.OutlineTransparency = 0
-					outline.DepthMode = Enum.HighlightDepthMode.Occluded
-					outline.Adornee = p:FindFirstChild("PetLook") or p
-					outline.Parent = p
-					local sparkle = Instance.new("ParticleEmitter")
-					sparkle.Name = "RareSparkle"
-					sparkle.Texture = Palette.SPARKLE
-					sparkle.Color = ColorSequence.new(color:Lerp(Color3.new(1, 1, 1), 0.25))
-					sparkle.LightEmission = 1
-					sparkle.LightInfluence = 0
-					sparkle.Size = NumberSequence.new(0.45, 0)
-					sparkle.Lifetime = NumberRange.new(0.6, 1)
-					sparkle.Rate = 4
-					sparkle.Speed = NumberRange.new(0.5, 1.5)
-					sparkle.SpreadAngle = Vector2.new(180, 180)
-					sparkle.Parent = p
-					g = { outline = outline, sparkle = sparkle }
-					glows[p] = g
-				end
-				local on = i <= MAX_OUTLINES
-				if g.outline.Enabled ~= on then
-					g.outline.Enabled = on
-				end
-			end
 		end
 	end)
 end
