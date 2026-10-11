@@ -1,15 +1,16 @@
 -- Tuning for Steal a Pumpkin. All values are first guesses to judge on screen.
 -- Shared by several entries below (one place to change them).
-local SHIELD = 600 -- new-player shield: seconds of a player's total playtime
+local SHIELD = 900 -- new-player shield: seconds of a player's total playtime
 local HAUNT_COST = 2500000
 local HOARD1 = "Ghost" -- the Zone1 Hoard's pumpkin type
 local Config = {
 	-- Font names stay plain data so offline economy tools can load this module.
 	Fonts = {
-		title = "FredokaOne",
-		number = "FredokaOne",
-		button = "FredokaOne",
-		small = "FredokaOne",
+		-- Zion picked Gotham (2026-10-11): sharp heavy sans like Steal an Egg.
+		title = { family = "rbxasset://fonts/families/GothamSSm.json", weight = "Heavy" },
+		number = { family = "rbxasset://fonts/families/GothamSSm.json", weight = "Heavy" },
+		button = { family = "rbxasset://fonts/families/GothamSSm.json", weight = "Bold" },
+		small = { family = "rbxasset://fonts/families/GothamSSm.json", weight = "Bold" },
 		shout = "LuckiestGuy",
 		numberStyle = "Italic",
 	},
@@ -514,6 +515,17 @@ local Config = {
 
 	-- Stealing and locks. Times are seconds.
 	StealHold = 1.0,
+	Purge = {
+		minutes = { 10, 50 },
+		warning = 30,
+		seconds = 120,
+		grace = 900,
+		idle = 45,
+		hold = 2,
+		returnSeconds = 10,
+		lockSeconds = 60,
+		defenceCandy = 250,
+	},
 	-- The robbed owner gets this share of the stolen pumpkin's sell value.
 	StealOwnerShare = 0.25,
 	-- Players with less total playtime than this cannot be robbed (by players or midnight ghosts).
@@ -553,7 +565,7 @@ local Config = {
 	-- Spooky Hour: every SpookyEvery seconds for SpookyLength seconds the world takes an
 	-- orange-purple tint, SpookyBats bats circle over the lane (client side) and base income pays
 	-- x SpookyMult. Never real night.
-	SpookyEvery = 600,
+	SpookyEvery = 3600,
 	SpookyLength = 90,
 	SpookyMult = 2,
 	SpookyBats = 20,

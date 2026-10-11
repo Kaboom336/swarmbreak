@@ -64,8 +64,23 @@ state.Parent = ReplicatedStorage
 -- Config.SpookyLength seconds base income pays x Config.SpookyMult. State "SpookyEnds" = its end
 -- (server time, nil when off), "SpookyNext" = the next start. Clients tint the world and fly bats.
 local Spooky: { [string]: any } = {}
+local Purge: { [string]: any } =
+	{ id = 0, victims = {}, locks = {}, holds = {}, participants = {}, losses = {}, transit = {} }
+function Purge.active(): boolean
+	return (state:GetAttribute("PurgeEnds") or 0) > workspace:GetServerTimeNow()
+end
+function Purge.immune(player): boolean
+	return (player:GetAttribute("PlayTime") or 0) < Config.Purge.grace
+		or workspace:GetServerTimeNow() - (player:GetAttribute("LastActiveAt") or 0)
+			>= Config.Purge.idle
+end
 do
-	local nextAt = workspace:GetServerTimeNow() + (Config.SpookyEvery or 600)
+	local function nextSpooky(t)
+		-- The old ten-minute cadence collides with both Purge slots: shift to :30.
+		local at = math.floor(t / 3600) * 3600 + 30 * 60
+		return at > t and at or at + 3600
+	end
+	local nextAt = nextSpooky(workspace:GetServerTimeNow())
 	state:SetAttribute("SpookyNext", nextAt)
 	function Spooky.active(): boolean
 		return (state:GetAttribute("SpookyEnds") or 0) > workspace:GetServerTimeNow()
@@ -75,8 +90,11 @@ do
 	end
 	function Spooky.start()
 		local t = workspace:GetServerTimeNow()
+		if Purge.active() or state:GetAttribute("PurgeWarning") then
+			return false
+		end
 		state:SetAttribute("SpookyEnds", t + (Config.SpookyLength or 90))
-		nextAt = t + (Config.SpookyEvery or 600)
+		nextAt = nextSpooky(t)
 		state:SetAttribute("SpookyNext", nextAt)
 	end
 	-- Every second (main loop).
@@ -1516,8 +1534,8 @@ local plotState: { [BasePart]: PlotState } = {}
 
 local function setOwnerSign(patch: Model, text: string, color: Color3)
 	local post = patch:FindFirstChild("SignPost")
-	local sign = post and post:FindFirstChild("OwnerSign")
-	local label = sign and sign:FindFirstChild("Label") :: TextLabel?
+	local sign = post and post:FindFirstChild("OwnerSign", true)
+	local label = sign and sign:FindFirstChild("Label", true) :: TextLabel?
 	if label then
 		local bb = label:FindFirstAncestorWhichIsA("BillboardGui")
 		if bb then
@@ -1533,6 +1551,10 @@ local function setOwnerSign(patch: Model, text: string, color: Color3)
 			end
 		end
 		label.Text = text
+		label.Visible = text ~= ""
+		if sign:IsA("BillboardGui") or sign:IsA("SurfaceGui") then
+			sign.Enabled = text ~= ""
+		end
 		label.TextColor3 = color
 	end
 end
@@ -1973,12 +1995,17 @@ local function dropLoose(
 		if pumpkin.Parent ~= loose then
 			return
 		end
+		local theft = Purge.transit[pumpkin]
+		if theft and player ~= theft.owner and player ~= theft.thief then
+			return
+		end
 		if #(carrying[player] or {}) >= carryCapacity(player) then
 			Remotes.hintEvent:FireClient(player, "Your hands are full!")
 			return
 		end
 		-- A dropped stolen pumpkin picked up by its owner is just theirs again.
 		if pumpkin:GetAttribute("StolenFrom") == player.UserId then
+			Purge.transit[pumpkin] = nil
 			pumpkin:SetAttribute("StolenFrom", nil)
 		end
 		-- stackPumpkin removes the prompt itself; on failure the prompt stays usable.
@@ -2011,6 +2038,10 @@ do
 	end
 
 	function Bases.isLocked(patch: Instance): boolean
+		local owner = Players:GetPlayerByUserId(patch:GetAttribute("Owner") or 0)
+		if Purge.active() and owner and Purge.immune(owner) then
+			return true
+		end
 		return not Bases.locksOff() and (patch:GetAttribute("LockedUntil") or 0) > now()
 	end
 
@@ -2185,8 +2216,8 @@ do
 				end
 				local income = p:GetAttribute("Stashed") and 0 or incomeOf(p)
 				total += income * mult
-				if income > bestIncome then
-					best, bestIncome = plot, income
+				if incomeOf(p) > bestIncome then
+					best, bestIncome = plot, incomeOf(p)
 				end
 			end
 		end
@@ -2667,6 +2698,7 @@ do
 
 	-- A stolen pumpkin goes home: the owner's first empty plot, else their stack, else the ground.
 	local function giveBack(owner: Player, p: BasePart, at: Vector3)
+		Purge.transit[p] = nil
 		p:SetAttribute("StolenFrom", nil)
 		local plot = firstEmptyPlot(patchOf[owner])
 		if plot then
@@ -2813,6 +2845,9 @@ do
 		if type(seedId) ~= "string" or not seedById[seedId] then
 			return
 		end
+		if not Purge.deliveryReady(player, top) then
+			return
+		end
 		table.remove(stack)
 		local stolen = top:GetAttribute("StolenFrom")
 		-- Fresh from a Hoard nest: delivery confetti; reveal waits for hatch.
@@ -2875,6 +2910,9 @@ do
 			return
 		end
 		if top:GetAttribute("Hoard") ~= true and top:GetAttribute("Jack") ~= true then
+			return
+		end
+		if not Purge.deliveryReady(player, top) then
 			return
 		end
 		if swap then
@@ -2957,10 +2995,20 @@ do
 		end
 	end
 
-	-- Victim UserId -> server time of their last robbery.
-	local robbedAt: { [number]: number } = {}
-
 	local function steal(thief: Player, plot: BasePart)
+		local hold = Purge.holds[thief]
+		Purge.holds[thief] = nil
+		thief:SetAttribute("PurgeStealing", nil)
+		if
+			not Purge.active()
+			or Purge.immune(thief)
+			or not hold
+			or hold.plot ~= plot
+			or hold.id ~= Purge.id
+			or now() - hold.at < Config.Purge.hold
+		then
+			return
+		end
 		if not Bases.petReach(thief, plot) then
 			return
 		end
@@ -2990,10 +3038,10 @@ do
 			hint(thief, "🔒 This base is locked!")
 		elseif patchOf[thief] and Bases.isLocked(patchOf[thief]) then
 			hint(thief, "You can't steal while your own base is locked.")
-		elseif not Unlock.has(owner, "PlayerSteal") then
+		elseif Purge.immune(owner) or not Unlock.has(owner, "PlayerSteal") then
 			-- New-player shield: under Config.NewPlayerShield seconds of total playtime.
 			hint(thief, owner.DisplayName .. " is a new farmer and shielded for now.")
-		elseif t - (robbedAt[ownerId] or -math.huge) < Config.VictimCooldown then
+		elseif Purge.victims[ownerId] then
 			hint(thief, owner.DisplayName .. " was robbed a moment ago. Try again later.")
 		elseif #(carrying[thief] or {}) >= carryCapacity(thief) then
 			hint(thief, "Your hands are full!")
@@ -3004,8 +3052,16 @@ do
 				giveBack(owner, p, plot.Position)
 				return
 			end
-			robbedAt[ownerId] = t
-			patch:SetAttribute("RobbedUntil", t + Config.VictimCooldown)
+			Purge.victims[ownerId] = true
+			patch:SetAttribute("PurgeRobbed", Purge.id)
+			patch:SetAttribute("RobbedUntil", state:GetAttribute("PurgeEnds"))
+			Purge.transit[p] = {
+				owner = owner,
+				thief = thief,
+				untilAt = t + Config.Purge.returnSeconds,
+				id = Purge.id,
+				losses = Purge.losses,
+			}
 			local seed = seedById[p:GetAttribute("Seed") or ""]
 			local name = seed and seed.name or "a"
 			local share = math.floor(pumpkinValue(p) * Config.StealOwnerShare + 0.5)
@@ -3034,10 +3090,27 @@ do
 				local back = 0
 				for i = #stack, 1, -1 do
 					local p = stack[i]
+					if
+						Purge.transit[p]
+						and (now() >= Purge.transit[p].untilAt or Purge.inside(thief))
+					then
+						Purge.settle(p)
+					end
 					if p:GetAttribute("StolenFrom") == owner.UserId then
 						table.remove(stack, i)
 						giveBack(owner, p, thiefRoot.Position)
 						back += 1
+					end
+				end
+				-- Dropping the pet cannot remove the owner's bonk recovery window.
+				for p, entry in Purge.transit do
+					if entry.owner == owner and entry.thief == thief and p.Parent == loose then
+						if now() >= entry.untilAt then
+							Purge.settle(p)
+						else
+							giveBack(owner, p, thiefRoot.Position)
+							back += 1
+						end
 					end
 				end
 				if back > 0 then
@@ -3051,6 +3124,7 @@ do
 					hint(owner, "💥 You got your pumpkin back!")
 					Remotes.ghostPopEvent:FireAllClients(thiefRoot.Position, nil, 0)
 					track(owner, "stopThief", 1)
+					Purge.reward(owner)
 				end
 			end
 		end
@@ -3133,24 +3207,23 @@ do
 
 	function Bases.lock(player: Player)
 		local patch = patchOf[player]
-		if not patch or not isLoaded(player) or not Unlock.has(player, "PlayerSteal") then
-			-- Nobody can raid a shielded base, so the lock opens with the shield's end.
+		if not patch or not isLoaded(player) then
 			return
 		end
 		local t = now()
+		if not Purge.active() or Purge.locks[player.UserId] then
+			return
+		end
 		if Bases.locksOff() then
 			hint(player, "🩸 Blood Moon! Every lock is off right now.")
 			return
 		end
-		local ready = patch:GetAttribute("LockCooldownUntil") or 0
-		if t < ready then
-			hint(player, string.format("Your lock recharges in %ds.", math.ceil(ready - t)))
-			return
-		end
-		patch:SetAttribute("LockedUntil", t + Config.LockSeconds)
-		patch:SetAttribute("LockCooldownUntil", t + Config.LockCooldown)
+		player:SetAttribute("PurgeLockUsed", Purge.id)
+		Purge.locks[player.UserId] = true
+		patch:SetAttribute("LockedUntil", t + Config.Purge.lockSeconds)
+		patch:SetAttribute("LockCooldownUntil", state:GetAttribute("PurgeEnds"))
 		setWall(patch, true)
-		hint(player, string.format("🔒 Base locked for %d seconds!", Config.LockSeconds))
+		hint(player, string.format("🔒 Base locked for %d seconds!", Config.Purge.lockSeconds))
 		track(player, "lock", 1)
 	end
 
@@ -3188,14 +3261,21 @@ do
 			local untilAt = patch:GetAttribute("LockedUntil")
 			if untilAt and (t >= untilAt or Bases.locksOff()) then
 				patch:SetAttribute("LockedUntil", nil)
-				setWall(patch, false)
-			elseif untilAt then
-				setWall(patch, true)
+				untilAt = nil
+			end
+			local locked = Bases.isLocked(patch)
+			setWall(patch, locked)
+			if locked then
 				local wall = patch:FindFirstChild("LockWall")
 				local timer = wall and wall:FindFirstChild("LockTimer")
 				local label = timer and timer:FindFirstChild("Label") :: TextLabel?
 				if label then
-					label.Text = string.format("🔒 LOCKED %ds", math.ceil(untilAt - t))
+					local owner = Players:GetPlayerByUserId(patch:GetAttribute("Owner") or 0)
+					label.Text = Purge.active()
+							and owner
+							and Purge.immune(owner)
+							and ((owner:GetAttribute("PlayTime") or 0) < Config.Purge.grace and "NEW FARMER SHIELD" or "AFK AUTO-LOCK")
+						or string.format("🔒 LOCKED %ds", math.ceil((untilAt or t) - t))
 				end
 			end
 		end
@@ -3323,6 +3403,30 @@ do
 		prompt.MaxActivationDistance = 9
 		prompt.RequiresLineOfSight = false
 		prompt.Parent = parent
+		if name == "StealPrompt" then
+			prompt.HoldDuration = Config.Purge.hold
+			prompt.KeyboardKeyCode = Enum.KeyCode.E
+			prompt.PromptButtonHoldBegan:Connect(function(player)
+				if
+					Purge.active()
+					and not Purge.immune(player)
+					and isLoaded(player)
+					and Bases.petReach(player, parent)
+				then
+					Purge.holds[player] = { plot = parent, at = now(), id = Purge.id }
+					player:SetAttribute("PurgeStealing", true)
+				end
+			end)
+			prompt.PromptButtonHoldEnded:Connect(function(player)
+				local pendingHold = Purge.holds[player]
+				task.delay(0.1, function()
+					if pendingHold and Purge.holds[player] == pendingHold then
+						Purge.holds[player] = nil
+						player:SetAttribute("PurgeStealing", nil)
+					end
+				end)
+			end)
+		end
 		return prompt
 	end
 	Bases.setupPlot = function(plot)
@@ -3450,7 +3554,7 @@ do
 		best:SetAttribute("Owner", player.UserId)
 		patchOf[player] = best
 		player:SetAttribute("PatchId", best:GetAttribute("Id"))
-		setOwnerSign(best, player.DisplayName, Color3.fromRGB(255, 200, 90))
+		setOwnerSign(best, player.DisplayName .. "'s Pen", Color3.fromRGB(255, 200, 90))
 		return true
 	end
 end
@@ -5498,6 +5602,11 @@ do
 			Remotes.hintEvent:FireClient(player, "Pick up a pet from your pen to sell it here.")
 			return
 		end
+		for _, p in stack do
+			if not Purge.deliveryReady(player, p) then
+				return
+			end
+		end
 		local total, count, raw = 0, 0, 0
 		local found = indexOf[player] or {}
 		indexOf[player] = found
@@ -6087,6 +6196,7 @@ do
 			fleeing = false,
 			bob = math.random() * 6,
 			bait = pumpkinValue(pumpkin),
+			purgeId = Purge.active() and Purge.id or nil,
 		})
 		return true
 	end
@@ -6147,8 +6257,8 @@ do
 		removeGhost(ghost)
 		local candy = 0
 		if by then
-			candy = ghostCandy(by, ghost)
-			candy = addCandy(by, candy)
+			candy = ghost.purgeId and Purge.rewardAmount(by) or ghostCandy(by, ghost)
+			candy = addCandy(by, candy, ghost.purgeId ~= nil)
 			track(by, "bonkGhost", 1)
 		end
 		Remotes.ghostPopEvent:FireAllClients(at, by, candy)
@@ -7071,7 +7181,11 @@ do
 	-- First every lock is off for LocksOffSeconds (state "LocksOff" = its end time), then the
 	-- Pumpkin King wakes. skipWindow (Studio debug) wakes him at once.
 	function startBloodMoon(_skipWindow: boolean?)
-		if state:GetAttribute("Phase") == "BloodMoon" then
+		if
+			state:GetAttribute("Phase") == "BloodMoon"
+			or Purge.active()
+			or state:GetAttribute("PurgeWarning")
+		then
 			return
 		end
 		phaseToken += 1
@@ -7951,6 +8065,9 @@ do
 	Progress.witch = {}
 	Progress.raidWarnings = {}
 	function Progress.raidCheck()
+		if Purge.active() or state:GetAttribute("PurgeWarning") then
+			return 0
+		end
 		local warned = {}
 		local count = 0
 		for player, patch in patchOf do
@@ -7963,9 +8080,11 @@ do
 		end
 		if count > 0 then
 			task.delay(Config.Raid.warning, function()
-				for _ = 1, count do
-					if not spawnGhost(warned) then
-						break
+				if not Purge.active() and not state:GetAttribute("PurgeWarning") then
+					for _ = 1, count do
+						if not spawnGhost(warned) then
+							break
+						end
 					end
 				end
 				for player in warned do
@@ -8307,7 +8426,7 @@ do
 	function Progress.kingClock()
 		local at = state:GetAttribute("KingWakesAt") or 0
 		local now = workspace:GetServerTimeNow()
-		if king.active then
+		if king.active or Purge.active() or state:GetAttribute("PurgeWarning") then
 			return
 		end
 		if now >= at then
@@ -8497,6 +8616,20 @@ for _, player in Players:GetPlayers() do
 end
 
 Players.PlayerRemoving:Connect(function(player)
+	-- Return unresolved Purge thefts before the victim's save is collected.
+	for p, entry in Purge.transit do
+		if entry.owner == player and p.Parent then
+			local stack = carrying[entry.thief] or {}
+			local i = table.find(stack, p)
+			if i then
+				table.remove(stack, i)
+			end
+			Bases.giveBack(player, p, p.Position)
+			Bases.restack(entry.thief)
+			refreshCarry(entry.thief)
+		end
+	end
+	Purge.holds[player] = nil
 	-- Stolen pumpkins go home; the base is copied for the save before the patch is released.
 	local _, root = aliveRoot(player)
 	Bases.leaveCarry(player, root and root.Position or Vector3.zero)
@@ -8565,6 +8698,7 @@ task.spawn(function()
 		if not spookyOk then
 			warn("[Patch] Spooky Hour tick failed:", spookyErr)
 		end
+		Purge.tick()
 		-- Playtime (session and saved total) and the unlock gates it opens.
 		for _, player in Players:GetPlayers() do
 			if isLoaded(player) then
@@ -8620,6 +8754,203 @@ end)
 
 -- Portraits and initial disc locks follow ownership without changing the map contract.
 do
+	function Purge.inside(player): boolean
+		local patch = patchOf[player]
+		local soil = patch and patch:FindFirstChild("Soil")
+		local _, root = aliveRoot(player)
+		if not soil or not root then
+			return false
+		end
+		local at = soil.CFrame:PointToObjectSpace(root.Position)
+		return math.abs(at.X) <= soil.Size.X / 2
+			and math.abs(at.Z) <= soil.Size.Z / 2
+			and math.abs(at.Y) <= 12
+	end
+	function Purge.rewardAmount(player): number
+		return Config.Purge.defenceCandy
+			* (table.find(Config.ZoneOrder, Purge.bestZone(player)) or 1)
+	end
+	function Purge.bestZone(player): string
+		for i = #Config.ZoneOrder, 1, -1 do
+			if hasZone(player, Config.ZoneOrder[i]) then
+				return Config.ZoneOrder[i]
+			end
+		end
+		return Config.ZoneOrder[1]
+	end
+	function Purge.reward(player)
+		addCandy(player, Purge.rewardAmount(player), true)
+	end
+	function Purge.settle(p)
+		local entry = Purge.transit[p]
+		if not entry then
+			return
+		end
+		entry.losses[entry.owner.UserId] = true
+		Purge.transit[p] = nil
+		if p.Parent then
+			p:SetAttribute("StolenFrom", nil)
+			p:SetAttribute("Owner", entry.thief.UserId)
+		end
+		refreshCarry(entry.thief)
+	end
+	function Purge.deliveryReady(player, p): boolean
+		local entry = Purge.transit[p]
+		if not entry then
+			return true
+		end
+		if workspace:GetServerTimeNow() >= entry.untilAt or Purge.inside(player) then
+			Purge.settle(p)
+			return true
+		end
+		Remotes.hintEvent:FireClient(
+			player,
+			"Reach your pen before placing or selling the stolen pet!"
+		)
+		return false
+	end
+	local function nextSlot(t)
+		local hour = math.floor(t / 3600) * 3600
+		for _, minute in Config.Purge.minutes do
+			if hour + minute * 60 > t then
+				return hour + minute * 60
+			end
+		end
+		return hour + 3600 + Config.Purge.minutes[1] * 60
+	end
+	state:SetAttribute("PurgeNext", nextSlot(workspace:GetServerTimeNow()))
+	local function blocked()
+		return king.active
+			or state:GetAttribute("Phase") == "BloodMoon"
+			or Spooky.active()
+			or (state:GetAttribute("LocksOff") or 0) > workspace:GetServerTimeNow()
+	end
+	function Purge.start()
+		if Purge.active() then
+			return false, "Purge already active"
+		end
+		if blocked() then
+			return false, "Wait for King Night / Spooky Hour to finish"
+		end
+		Purge.id += 1
+		Purge.victims, Purge.locks, Purge.holds, Purge.participants, Purge.losses =
+			{}, {}, {}, {}, {}
+		state:SetAttribute("PurgeId", Purge.id)
+		state:SetAttribute("PurgeWarning", nil)
+		state:SetAttribute("PurgeEnds", workspace:GetServerTimeNow() + Config.Purge.seconds)
+		state:SetAttribute("PurgeNext", nextSlot(workspace:GetServerTimeNow()))
+		for player, patch in patchOf do
+			if isLoaded(player) then
+				Purge.participants[player] = true
+				patch:SetAttribute("PurgeRobbed", nil)
+				player:SetAttribute("PurgeLockUsed", nil)
+				-- One attempt per base, with the existing age, rarity, distance and cooldown rules.
+				spawnGhost({ [player] = true })
+			end
+		end
+		Remotes.announceEvent:FireAllClients("THE PURGE! Lock, steal or defend for 2 minutes")
+		return true
+	end
+	local function finish()
+		local participants, losses, id = Purge.participants, Purge.losses, Purge.id
+		state:SetAttribute("PurgeEnds", nil)
+		for player in Purge.holds do
+			player:SetAttribute("PurgeStealing", nil)
+		end
+		Purge.holds = {}
+		for i = #ghosts, 1, -1 do
+			local ghost = ghosts[i]
+			if ghost.purgeId == id then
+				if ghost.stash then
+					local owner =
+						Players:GetPlayerByUserId(ghost.model:GetAttribute("StashOwner") or 0)
+					if owner then
+						losses[owner.UserId] = true
+					end
+				else
+					removeGhost(ghost)
+				end
+			end
+		end
+		-- Last-second steals retain their full bonk window before the survivor award is decided.
+		task.delay(Config.Purge.returnSeconds + 0.1, function()
+			for p, entry in Purge.transit do
+				if entry.id == id then
+					Purge.settle(p)
+				end
+			end
+			for player in participants do
+				if player.Parent and isLoaded(player) and not losses[player.UserId] then
+					local zone = Config.Zones[Purge.bestZone(player)]
+					Progress.pending[player] = Progress.pending[player] or {}
+					table.insert(Progress.pending[player], {
+						s = zone.pets[math.random(#zone.pets)],
+						z = Config.HoardSize,
+						h = true,
+						j = false,
+					})
+					Bases.drainCarry(player)
+					Remotes.announceEvent:FireClient(player, "Purge Survivor")
+				end
+			end
+		end)
+	end
+	function Purge.tick()
+		local t = workspace:GetServerTimeNow()
+		local ends = state:GetAttribute("PurgeEnds")
+		if ends then
+			for player in patchOf do
+				if isLoaded(player) then
+					Purge.participants[player] = true
+					if Purge.locks[player.UserId] then
+						player:SetAttribute("PurgeLockUsed", Purge.id)
+					end
+				end
+			end
+			if t >= ends then
+				finish()
+			end
+			return
+		end
+		local at = state:GetAttribute("PurgeNext")
+		if blocked() then
+			state:SetAttribute("PurgeWarning", nil)
+			if t >= at then
+				state:SetAttribute("PurgeNext", nextSlot(t))
+			end
+		elseif t >= at then
+			Purge.start()
+		elseif at - t <= Config.Purge.warning and not state:GetAttribute("PurgeWarning") then
+			state:SetAttribute("PurgeWarning", at)
+			Remotes.announceEvent:FireAllClients("THE PURGE IN 30 SECONDS! Lock or defend your pen")
+		end
+	end
+	RunService.Heartbeat:Connect(function()
+		local t = workspace:GetServerTimeNow()
+		for player, hold in Purge.holds do
+			if
+				not Purge.active()
+				or Purge.immune(player)
+				or not Bases.petReach(player, hold.plot)
+				or t - hold.at > Config.Purge.hold + 2
+			then
+				Purge.holds[player] = nil
+				player:SetAttribute("PurgeStealing", nil)
+			end
+		end
+		for p, entry in Purge.transit do
+			if
+				not p.Parent
+				or t >= entry.untilAt
+				or (p.Parent == entry.thief.Character and Purge.inside(entry.thief))
+			then
+				Purge.settle(p)
+			end
+		end
+	end)
+end
+
+do
 	for _, patch in patchFolder:GetChildren() do
 		Bases.slotLook(patch, patch:GetAttribute("PenSlots") or Config.Progression.baseSlots)
 		local soil = patch:FindFirstChild("Soil")
@@ -8655,7 +8986,9 @@ end
 
 do
 	Bases.debugAction = function(action: string, player: Player?, amount: number?, typeId: string?)
-		if action == "midnight" then
+		if action == "purge" then
+			return Purge.start()
+		elseif action == "midnight" then
 			phaseToken += 1
 			local token = phaseToken
 			setPhase("Midnight", Config.MidnightLength)
@@ -8710,7 +9043,7 @@ do
 			return true
 		elseif action == "playtime" and player then
 			-- Set a player's total playtime to N seconds and recompute their unlocks from scratch
-			-- (e.g. 0 = brand-new, 600 = shield over, 1800 = Witch, cauldrons, King, Lucky Swing).
+			-- (e.g. 0 = brand-new, 900 = shield over, 1800 = Witch, cauldrons, Lucky Swing).
 			player:SetAttribute("PlayTime", math.max(0, math.floor(amount or 0)))
 			Unlock.refresh(player, true)
 			return player:GetAttribute("PlayTime")
@@ -8761,7 +9094,7 @@ do
 			)
 		elseif action == "zone" then
 			return Bases.debugAction("zone", player, #Config.ZoneOrder)
-		elseif action == "king" or action == "spooky" then
+		elseif action == "king" or action == "spooky" or action == "purge" then
 			return Bases.debugAction(action, player)
 		elseif action ~= "reset" then
 			return false, "Unknown action"

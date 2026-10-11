@@ -14,7 +14,17 @@ local UserInputService = game:GetService("UserInputService")
 
 local Config = require(ReplicatedStorage:WaitForChild("PatchConfig"))
 local function fontFace(role: string, weight: string?, style: string?): Font
-	local base = Font.fromEnum(Enum.Font[Config.Fonts[role]])
+	-- A role is an Enum.Font name, or { family = "rbxasset://fonts/families/X.json", weight = "Heavy" }
+	-- whose weight overrides the caller's.
+	local spec = Config.Fonts[role]
+	if type(spec) == "table" then
+		return Font.new(
+			spec.family,
+			Enum.FontWeight[spec.weight or weight or "Regular"],
+			Enum.FontStyle[style or "Normal"]
+		)
+	end
+	local base = Font.fromEnum(Enum.Font[spec])
 	return Font.new(
 		base.Family,
 		Enum.FontWeight[weight or "Regular"],
@@ -743,6 +753,11 @@ do
 				(phase ~= "Day" and utf8.char(9728) .. " in " or utf8.char(9790) .. " in ")
 				.. clockText(left)
 			)
+		if (state:GetAttribute("PurgeEnds") or 0) > now then
+			label.Text = "THE PURGE " .. clockText(state:GetAttribute("PurgeEnds") - now)
+		elseif state:GetAttribute("PurgeWarning") then
+			label.Text = "PURGE IN " .. clockText(state:GetAttribute("PurgeWarning") - now)
+		end
 		kingLine.Visible = phase ~= "BloodMoon"
 		kingLine.Text = "King in "
 			.. clockText(math.max(0, (state:GetAttribute("KingWakesAt") or now) - now))
@@ -1324,6 +1339,7 @@ do
 			{ "Unlock all zones", "zone" },
 			{ "Start King Night", "king" },
 			{ "Start Spooky Hour", "spooky" },
+			{ "Start Purge", "purge" },
 		}
 	do
 		local b = button(list, entry[1], i == 1 and Color3.fromRGB(219, 39, 48) or PURPLE)
@@ -2389,7 +2405,20 @@ remotes:WaitForChild("IndexNew").OnClientEvent:Connect(function(keys: { string }
 end)
 
 remotes:WaitForChild("Announce").OnClientEvent:Connect(function(text: string)
-	if
+	if string.sub(text, 1, 9) == "THE PURGE" then
+		banner(
+			text,
+			"Best pet protected · Hold E 2s · One steal per victim",
+			5,
+			Color3.fromRGB(235, 105, 205)
+		)
+		-- Alternate the existing alarm sound's pitch for a siren, using already shipped audio.
+		for i = 1, 6 do
+			task.delay((i - 1) * 0.4, function()
+				play(Config.Sounds.Roar, i % 2 == 0 and 1.3 or 0.65, 0.6)
+			end)
+		end
+	elseif
 		text == "Ghosts coming! Lock base or go home"
 		or text == "PUMPKIN KING RISES! PET + LOOT!"
 	then
@@ -2805,6 +2834,39 @@ local function myPatch(): Model?
 end
 
 -- Base prompts are made by the server; this shows only the ones that apply to you:
+do
+	local lock = pill("LOCK · 60s", Color3.fromRGB(190, 90, 220), 0)
+	lock.Name = "PurgeLock"
+	lock.LayoutOrder = 4
+	lock.Visible = false
+	lock.Activated:Connect(function()
+		remotes:WaitForChild("Lock"):FireServer()
+	end)
+	local function refresh()
+		local patch = myPatch()
+		local active = (state:GetAttribute("PurgeEnds") or 0) > workspace:GetServerTimeNow()
+		lock.Visible = active and patch ~= nil and player:GetAttribute("Loaded") == true
+		local used = player:GetAttribute("PurgeLockUsed") == state:GetAttribute("PurgeId")
+		local left = patch
+				and math.max(
+					0,
+					(patch:GetAttribute("LockedUntil") or 0) - workspace:GetServerTimeNow()
+				)
+			or 0
+		lock.Text = left > 0 and ("LOCKED " .. clockText(left))
+			or used and "LOCK USED"
+			or "LOCK · 60s"
+		lock.Active = not used
+		lock.AutoButtonColor = not used
+	end
+	task.spawn(function()
+		while lock.Parent do
+			refresh()
+			task.wait(0.25)
+		end
+	end)
+end
+
 -- Place (your empty plot, while you carry), Pick up (your filled plot), LOCK (your sign post),
 -- Steal (a filled, unprotected plot on someone else's unlocked base).
 do
@@ -2836,6 +2898,11 @@ do
 		local locksOff = (state:GetAttribute("LocksOff") or 0) > now
 		local carrying = (player:GetAttribute("Carry") or 0) > 0
 		local canSell, canSteal = unlocked("Sell"), unlocked("PlayerSteal")
+		local purge = (state:GetAttribute("PurgeEnds") or 0) > now
+		canSteal = canSteal
+			and purge
+			and (player:GetAttribute("PlayTime") or 0) >= Config.Purge.grace
+			and not player:GetAttribute("IdleShield")
 		for _, patch in patchFolder:GetChildren() do
 			local owner = patch:GetAttribute("Owner") or 0
 			local mine = owner == player.UserId
@@ -2845,6 +2912,9 @@ do
 			local robbable = canSteal
 				and ownerPlayer ~= nil
 				and unlocked("PlayerSteal", ownerPlayer)
+				and (ownerPlayer:GetAttribute("PlayTime") or 0) >= Config.Purge.grace
+				and not ownerPlayer:GetAttribute("IdleShield")
+				and patch:GetAttribute("PurgeRobbed") ~= state:GetAttribute("PurgeId")
 				and not locked
 			for _, plot in patch:GetChildren() do
 				if plot.Name == "Plot" then
@@ -2877,7 +2947,14 @@ do
 					)
 				end
 			end
-			set(patch:FindFirstChild("LockPrompt", true), mine and not locksOff and canSteal)
+			set(
+				patch:FindFirstChild("LockPrompt", true),
+				mine
+					and not locksOff
+					and purge
+					and player:GetAttribute("Loaded") == true
+					and player:GetAttribute("PurgeLockUsed") ~= state:GetAttribute("PurgeId")
+			)
 			local count = 0
 			for _, plot in patch:GetChildren() do
 				if
@@ -3001,6 +3078,25 @@ do
 	-- (TintColor #FFD9B0, Saturation +0.25, an orange haze with a purple decay; same sun), the
 	-- Blood Moon a soft red; then back to base.
 	local EVENT_LOOK = {
+		Purge = {
+			lighting = {
+				Ambient = base.Ambient:Lerp(Color3.fromRGB(210, 160, 220), 0.2),
+				OutdoorAmbient = base.OutdoorAmbient:Lerp(Color3.fromRGB(230, 175, 215), 0.2),
+				Brightness = base.Brightness,
+				ClockTime = base.ClockTime,
+			},
+			tint = {
+				TintColor = Color3.fromRGB(255, 235, 252),
+				Brightness = 0.025,
+				Saturation = 0.1,
+				Contrast = 0.025,
+			},
+			atmosphere = {
+				Color = base.AtmosphereColor,
+				Decay = base.AtmosphereDecay,
+				Density = base.AtmosphereDensity,
+			},
+		},
 		Spooky = {
 			lighting = {
 				Ambient = base.Ambient:Lerp(Color3.fromRGB(170, 110, 160), 0.35),
@@ -3056,13 +3152,11 @@ do
 				Brightness = base.Brightness,
 				ClockTime = base.ClockTime,
 			}):Play()
-			TweenService
-				:Create(
-					tint,
-					info,
-					{ TintColor = Color3.new(1, 1, 1), Saturation = 0, Contrast = 0 }
-				)
-				:Play()
+			TweenService:Create(
+				tint,
+				info,
+				{ TintColor = Color3.new(1, 1, 1), Brightness = 0, Saturation = 0, Contrast = 0 }
+			):Play()
 			if atmosphere then
 				TweenService:Create(atmosphere, info, {
 					Color = base.AtmosphereColor,
@@ -3076,6 +3170,7 @@ do
 	local function refreshLook()
 		local phase = state:GetAttribute("Phase") or "Day"
 		local name = (phase == "BloodMoon" or state:GetAttribute("KingWarning")) and "BloodMoon"
+			or state:GetAttribute("PurgeEnds") ~= nil and "Purge"
 			or state:GetAttribute("SpookyEnds") ~= nil and "Spooky"
 			or nil
 		if name ~= lastLook then
@@ -3239,6 +3334,7 @@ do
 		end
 	end
 	state:GetAttributeChangedSignal("SpookyEnds"):Connect(onSpooky)
+	state:GetAttributeChangedSignal("PurgeEnds"):Connect(refreshLook)
 	onSpooky()
 end
 
