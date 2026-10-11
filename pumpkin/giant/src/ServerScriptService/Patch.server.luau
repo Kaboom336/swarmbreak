@@ -42,6 +42,15 @@ function Helpers.savedHatchSize(value)
 end
 -- Read-only, sanitized assets for client ViewportFrames; never expose ServerStorage itself.
 do
+	-- Correct the existing place's templates before any previews or gameplay clones are made.
+	for _, name in { "PetModels", "GuardModels" } do
+		local folder = Services.ServerStorage:FindFirstChild(name)
+		for _, model in folder and folder:GetChildren() or {} do
+			if model:IsA("Model") then
+				Config.fixModelFront(model)
+			end
+		end
+	end
 	local previews = Instance.new("Folder")
 	previews.Name = "PetPreviews"
 	local models = Services.ServerStorage:FindFirstChild("PetModels")
@@ -137,6 +146,20 @@ local kingFace = market:WaitForChild("KingFace") :: BasePart
 -- ThroneKing is the centrepiece; GiantJack stays only as an event position anchor.
 if not (market:FindFirstChild("ThroneKing", true) or garden:FindFirstChild("ThroneKing", true)) then
 	Helpers.warnOnce("ThroneKing", "ThroneKing centrepiece missing; skipping throne decoration")
+end
+do
+	local statue = garden:FindFirstChild("ThroneKing", true)
+	if statue and statue:IsA("Model") then
+		Config.fixModelFront(statue) -- Honors Launch2ForwardFixed; never double-turn the v2/v3 statue.
+		local spawn = garden:FindFirstChild("SpawnLocation")
+		local at = statue:GetPivot().Position
+		local target = spawn and spawn:IsA("BasePart") and spawn.Position
+			or Vector3.new(1500, at.Y, 130)
+		target = Vector3.new(target.X, at.Y, target.Z)
+		if statue:GetAttribute("FrontFixed") and (target - at).Magnitude > 0.01 then
+			statue:PivotTo(CFrame.lookAt(at, target))
+		end
+	end
 end
 giantJack.Transparency = 1
 giantJack.CanCollide, giantJack.CanTouch, giantJack.CanQuery = false, false, false
@@ -1903,6 +1926,9 @@ do
 	local function source(folder: string, name: string?): Model?
 		local holder = Services.ServerStorage:FindFirstChild(folder)
 		local m = holder and name and holder:FindFirstChild(name)
+		if m and m:IsA("Model") then
+			Config.fixModelFront(m)
+		end
 		return if m and m:IsA("Model") then m else nil
 	end
 	Looks.source = source
@@ -7286,38 +7312,61 @@ local function clearGhosts()
 	end
 end
 
+function Helpers.releaseRainCandy(slot)
+	slot.active = false
+	slot.body.CanTouch, slot.body.CanCollide, slot.body.Anchored = false, false, true
+	slot.body.AssemblyLinearVelocity, slot.body.AssemblyAngularVelocity = Vector3.zero, Vector3.zero
+	slot.model.Parent = nil
+end
+-- Bounded pool built once; a slot's generation makes delayed expiry safe after reuse.
+Helpers.rainCandies = {}
+for _ = 1, Config.RainCount do
+	local model = Config.makeWrappedCandy()
+	local slot = { model = model, body = model.PrimaryPart, active = false, generation = 0 }
+	table.insert(Helpers.rainCandies, slot)
+	slot.body.Touched:Connect(function(hit)
+		local player = Services.Players:GetPlayerFromCharacter(hit.Parent)
+		if not slot.active or not player then
+			return
+		end
+		local at = slot.body.Position
+		Helpers.releaseRainCandy(slot)
+		addCandy(player, Config.RainCandy)
+		Remotes.rainEvent:FireAllClients(player, at)
+	end)
+end
 local function rainCandy()
-	local template = seedTemplate(Lookup.seedById.Golden)
 	for _ = 1, Config.RainCount do
+		local slot
+		for _, candidate in Helpers.rainCandies do
+			if not candidate.active then
+				slot = candidate
+				break
+			end
+		end
+		if not slot then
+			task.wait(Config.KingNight.rain / Config.RainCount)
+			continue
+		end
 		local a = math.random() * math.pi * 2
 		local r = 10 + math.random() * 26
-		local drop = template:Clone()
-		drop.Name = "RainPumpkin"
-		drop.Size *= 1.4 / (drop.Size.X / 2.5)
-		drop.Anchored = false
-		drop.CanCollide = true
-		drop.CanTouch = true
+		slot.generation += 1
+		local generation = slot.generation
+		slot.active = true
 		-- Around the Giant Jack (the King's spot in the hub).
-		drop.CFrame = CFrame.new(
-			giantJack.Position.X + math.cos(a) * r,
-			giantJack.Position.Y + 20 + math.random() * 20,
-			giantJack.Position.Z + math.sin(a) * r
+		slot.model:PivotTo(
+			CFrame.new(
+				giantJack.Position.X + math.cos(a) * r,
+				giantJack.Position.Y + 20 + math.random() * 20,
+				giantJack.Position.Z + math.sin(a) * r
+			) * CFrame.Angles(0, a, math.rad(15))
 		)
-		drop.Parent = loose
-		local taken = false
-		drop.Touched:Connect(function(hit)
-			local player = Services.Players:GetPlayerFromCharacter(hit.Parent)
-			if taken or not player then
-				return
-			end
-			taken = true
-			addCandy(player, Config.RainCandy)
-			Remotes.rainEvent:FireAllClients(player, drop.Position)
-			drop:Destroy()
-		end)
+		slot.model.Parent = loose
+		slot.body.CanCollide, slot.body.CanTouch, slot.body.Anchored = true, true, false
+		slot.body:SetNetworkOwner(nil)
 		task.delay(Config.RainSeconds, function()
-			if drop.Parent then
-				drop:Destroy()
+			if slot.active and slot.generation == generation then
+				Helpers.releaseRainCandy(slot)
 			end
 		end)
 		task.wait(Config.KingNight.rain / Config.RainCount)
@@ -10234,7 +10283,7 @@ do
 				body:PivotTo(
 					CFrame.new(kingFace.Position + Vector3.yAxis * math.abs(stride) * 0.35)
 						* facing
-						* CFrame.Angles(0, math.pi, math.rad(2) * stride)
+						* CFrame.Angles(0, 0, math.rad(2) * stride)
 						* offset
 				)
 			end

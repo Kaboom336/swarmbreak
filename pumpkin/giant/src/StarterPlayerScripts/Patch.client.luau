@@ -773,6 +773,10 @@ function Palette.renderModel(parent, source, silhouette, outlined)
 	for _, part in parts do
 		if part:IsA("BasePart") then
 			local copy = part:Clone()
+			if source:IsA("Model") and source:GetAttribute("FrontFixed") then
+				-- Normalize world/held-pet yaw before the shared camera-facing preview pose.
+				copy.CFrame = source:GetPivot():ToObjectSpace(part.CFrame)
+			end
 			for _, child in copy:GetChildren() do
 				if not child:IsA("DataModelMesh") and not child:IsA("SurfaceAppearance") then
 					child:Destroy()
@@ -786,7 +790,11 @@ function Palette.renderModel(parent, source, silhouette, outlined)
 	local scythe = source:IsA("Tool") or source.Parent and source.Parent.Name == "PatchScytheIcons"
 	model:PivotTo(
 		scythe and CFrame.Angles(0, math.rad(20), math.rad(-35))
-			or CFrame.Angles(0, math.rad(-25), 0)
+			or CFrame.Angles(
+				0,
+				math.rad(-25) + (source:GetAttribute("FrontFixed") and math.pi or 0),
+				0
+			)
 	)
 	-- Project EVERY part corner after posing. GetBoundingBox can retain a rotated pivot,
 	-- and a diagonal fit wastes almost the whole tile on a thin scythe.
@@ -3702,13 +3710,13 @@ do
 			or rarity.name == "Mythic"
 			or rarity.name == "Secret"
 		UI.hatchConfetti(catcher, color, legendary)
-		local shownAt, closed = os.clock(), false
-		local spin = Services.RunService.RenderStepped:Connect(function(dt)
+		local shownAt, closed, previewYaw = os.clock(), false, 0
+		local spin = Services.RunService.RenderStepped:Connect(function()
 			if view then
-				UI.rotatePreview(
-					view,
-					dt * (os.clock() - shownAt < 0.30 and math.pi * 2 / 0.30 or math.rad(25))
-				)
+				-- A small yaw sway keeps the pet's face toward the +Z camera throughout reveal.
+				local yaw = math.sin((os.clock() - shownAt) * 3) * math.rad(8)
+				UI.rotatePreview(view, yaw - previewYaw)
+				previewYaw = yaw
 			end
 		end)
 		local function close()

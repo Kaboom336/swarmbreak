@@ -1335,6 +1335,78 @@ Config.GuardTwists = {
 	iconHeight = 4,
 }
 Config.PetFinishes = { Gold = Color3.fromRGB(255, 200, 60), Shiny = Color3.fromRGB(220, 255, 255) }
+-- VoxelModels originally exported +Z faces. Normalize stored, possibly renamed models once;
+-- keep Root/pivot unchanged so movement, bounding-box placement and cloned welds agree on -Z.
+function Config.fixModelFront(model: Model): boolean
+	if model:GetAttribute("FrontFixed") then
+		return false
+	end
+	local root = model:FindFirstChild("Root") or model.PrimaryPart
+	if not root or not root:IsA("BasePart") or root.Transparency < 1 then
+		return false -- Do not turn unknown meshes or the spherical missing-asset placeholder.
+	end
+	if not model:GetAttribute("Launch2ForwardFixed") then
+		local pivot = root.CFrame
+		for _, part in model:GetDescendants() do
+			if part:IsA("BasePart") and part ~= root then
+				part.CFrame = pivot
+					* CFrame.Angles(0, math.pi, 0)
+					* pivot:ToObjectSpace(part.CFrame)
+			end
+		end
+	end
+	model:SetAttribute("FrontFixed", true)
+	model:SetAttribute("Launch2ForwardFixed", true) -- Old throne installers must also skip a second turn.
+	return true
+end
+-- Eight reusable parts: oval sweet, contrasting band, two pinched necks and folded wrappers.
+-- The visible body is the pickup/physics root; wrappers never create extra touch payouts.
+function Config.makeWrappedCandy(): Model
+	local model = Instance.new("Model")
+	model.Name = "RainCandy"
+	local pink, cream = Color3.fromRGB(255, 80, 155), Color3.fromRGB(255, 232, 170)
+	local function piece(name, size, cf, color, wedge)
+		local part = Instance.new(wedge and "WedgePart" or "Part")
+		part.Name, part.Size, part.CFrame, part.Color = name, size, cf, color
+		if not wedge then
+			part.Shape = Enum.PartType.Ball
+		end
+		part.Material, part.Reflectance = Enum.Material.SmoothPlastic, 0.08
+		part.TopSurface, part.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
+		part.Anchored, part.CanCollide, part.CanTouch, part.CanQuery = false, false, false, false
+		part.Massless = true
+		part.Parent = model
+		return part
+	end
+	local body = piece("Body", Vector3.new(1.6, 0.95, 0.95), CFrame.identity, pink)
+	model.PrimaryPart = body
+	body.Anchored, body.Massless = true, false
+	piece("Band", Vector3.new(0.4, 0.98, 0.98), CFrame.identity, cream)
+	for _, sign in { -1, 1 } do
+		piece("Twist", Vector3.new(0.28, 0.38, 0.38), CFrame.new(sign * 0.85, 0, 0), cream)
+		for _, fold in { -1, 1 } do
+			piece(
+				"WrapperFold",
+				Vector3.new(0.7, 0.48, 0.75),
+				CFrame.new(sign * 1.18, fold * 0.18, 0)
+					* CFrame.Angles(
+						sign * math.rad(30),
+						sign * math.pi / 2,
+						fold == 1 and 0 or math.pi
+					),
+				cream,
+				true
+			)
+		end
+	end
+	for _, part in model:GetChildren() do
+		if part ~= body then
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0, weld.Part1, weld.Parent = body, part, part
+		end
+	end
+	return model
+end
 -- Palette keys checked against VoxelModels: Crow k is its body; Toad f is its hat.
 Config.PetFaceKeys = { Crow = { "e" }, Toad = { "k" }, Kinglet = { "f" } }
 Config.GuardFaceKeys = { TreeEnt = "e", SwampToad = "y", Vampire = "e", PumpkinKing = "f" }

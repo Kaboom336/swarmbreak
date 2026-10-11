@@ -2,7 +2,8 @@
 -- VoxelModels: every pet + guard built with the VoxelKit builder (uniform cubes, flat colours, top studs).
 -- Run in the Studio command bar: builds ServerStorage.VoxelOut/{Pets,Guards} at the origin and returns part counts.
 -- layers: bottom->top. Each entry is a grid string, or {grid, repeatCount}.
--- A grid string = whitespace-separated rows; row 1 is the FRONT (+Z), char 1 is -X.
+-- A grid string = whitespace-separated rows; row 1 authors the FRONT (+Z), char 1 is -X.
+-- build() turns the look around its unchanged Root so the exported front is Roblox forward (-Z).
 -- Each char is a palette key; '.' (or a short row) is empty. Palette: "RRGGBB", "*RRGGBB" = Neon.
 
 local function rows(s)
@@ -117,7 +118,7 @@ local function build(name, voxel, layers, palette, origin)
 					local cx = ((x + x1) / 2 - 0.5 - W / 2) * v
 					local cz = (D / 2 - ((z + z1) / 2 - 0.5)) * v
 					local cy = (y0 + n / 2) * v
-					p.CFrame = base * CFrame.new(cx, cy, cz)
+					p.CFrame = base * CFrame.Angles(0, math.pi, 0) * CFrame.new(cx, cy, cz)
 					p.Parent = model
 					count += 1
 				end
@@ -125,6 +126,8 @@ local function build(name, voxel, layers, palette, origin)
 		end
 		y0 += n
 	end
+	model:SetAttribute("FrontFixed", true)
+	model:SetAttribute("Launch2ForwardFixed", true) -- Compatibility with the existing throne installers.
 	return model, count
 end
 
