@@ -2094,8 +2094,13 @@ do
 		statIcon.BackgroundTransparency = 1
 		UI.icon(statIcon, "Carry")
 		task.spawn(function()
-			local folder = Services.ReplicatedStorage:WaitForChild("PatchScytheIcons")
-			Palette.renderModel(gc.icon, folder:WaitForChild(tool.id))
+			local folder = Services.ReplicatedStorage:WaitForChild("PatchScytheIcons", 10)
+			local model = folder and folder:WaitForChild(tool.id, 10)
+			if model then
+				Palette.renderModel(gc.icon, model)
+			else
+				warn("Missing scythe preview: " .. tool.id)
+			end
 		end)
 		cards[tool.id] = gc
 		gc.tag =
@@ -4407,26 +4412,19 @@ do
 		end
 		return x
 	end
+	local gameSettings = UserSettings():GetService("UserGameSettings")
 	local function carried(character, owner)
-		for _, subject in { character, owner } do
-			if
-				subject
-				and (
-					(subject:GetAttribute("Carry") or 0) > 0
-					or (subject:GetAttribute("Carrying") or 0) > 0
-				)
-			then
-				return true
-			end
-		end
-		return false
+		return (character:GetAttribute("Carry") or 0) > 0
+			or (character:GetAttribute("Carrying") or 0) > 0
+			or owner ~= nil
+				and ((owner:GetAttribute("Carry") or 0) > 0 or (owner:GetAttribute("Carrying") or 0) > 0)
 	end
 	local function trails(st, on)
 		if st.trail then
 			st.trail.Enabled = on
 		end
 		if st.glow then
-			local quality = UserSettings():GetService("UserGameSettings").SavedQualityLevel.Value
+			local quality = gameSettings.SavedQualityLevel.Value
 			st.glow.Enabled = on
 				and not Services.UserInputService.TouchEnabled
 				and (quality == 0 or quality > 3)
@@ -4490,6 +4488,9 @@ do
 			or { RightShoulder = 1, RightElbow = 4, LeftShoulder = 5, LeftElbow = 8, Waist = 9 }
 		for _, j in character:GetDescendants() do
 			if names[j.Name] and (j:IsA("Motor6D") or j:IsA("AnimationConstraint")) then
+				if j:IsA("AnimationConstraint") and not j.Attachment0 then
+					continue
+				end
 				local rot = if j:IsA("Motor6D")
 					then j.C0.Rotation
 					else j.Attachment0.CFrame.Rotation
@@ -4701,7 +4702,7 @@ do
 				and camera
 				and (root.Position - camera.CFrame.Position).Magnitude <= 80
 			then
-				track(tool)
+				pcall(track, tool)
 			end
 		end
 		for tool, st in active do
@@ -6508,9 +6509,12 @@ do
 			or "Bring it to your pen!"
 	end
 
-	-- Carrying always owns the objective; otherwise choose an affordable progression goal.
+	-- An active King Fight owns the objective; otherwise carry home or choose a progression goal.
 	local touredZone = nil
 	local function objective(data, root: BasePart, soil: BasePart): (string, string, Vector3?)
+		if state:GetAttribute("KingActive") then
+			return "Hit the Pumpkin King!", "Follow the arrow to the King", kingFace.Position
+		end
 		if (player:GetAttribute("Carry") or 0) > 0 then
 			local delta = root.Position - soil.Position
 			local distance = Vector3.new(delta.X, 0, delta.Z).Magnitude
@@ -6518,14 +6522,8 @@ do
 				string.format("%d studs", math.floor(distance + 0.5)),
 				soil.Position
 		end
-		if
-			unlocked("King")
-			and (state:GetAttribute("KingActive") or state:GetAttribute("KingWarning"))
-		then
-			return state:GetAttribute("KingActive") and "Fight the Pumpkin King!"
-				or "Meet the Pumpkin King!",
-				"Follow the arrow to the throne",
-				kingFace.Position
+		if unlocked("King") and state:GetAttribute("KingWarning") then
+			return "Meet the Pumpkin King!", "Follow the arrow to the throne", kingFace.Position
 		end
 		local zone = zoneTarget(root.Position) or soil.Position
 		local arrived = player:GetAttribute("ObjectiveZone")
@@ -8563,12 +8561,13 @@ do
 		)
 		local candy = statsFrame:FindFirstChild("CandyIcon")
 		candy.Position = UDim2.fromScale(0, touch and 0 or 0.42)
-		candy.Size = UDim2.fromOffset(h * 0.072, h * 0.072)
+		candy.Size = UDim2.fromOffset(h * 0.055, h * 0.055)
 		candyBig.Position, candyBig.Size =
 			UDim2.new(0, h * 0.078, touch and 0 or 0.34, 0), UDim2.new(1, -h * 0.078, 0.66, 0)
-		candyBig.TextScaled = true;
+		candyBig.TextScaled = false
+		candyBig.TextSize = h * 0.055;
 		(candyBig:FindFirstChildOfClass("UITextSizeConstraint") :: UITextSizeConstraint).MaxTextSize =
-			math.max(11, math.floor(h * 0.070))
+			math.max(11, math.floor(h * 0.055))
 		carryIcon.Position, carryIcon.Size =
 			UDim2.fromScale(0, touch and 0.59 or 0), UDim2.fromOffset(h * 0.04, h * 0.04)
 		carryLabel.Position, carryLabel.Size =
@@ -8595,6 +8594,36 @@ do
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)
 	Services.UserInputService.LastInputTypeChanged:Connect(layout)
 	layout()
+	local cachedPen, penAdded, penRemoving
+	local penParts = {}
+	local function cachePen(pen)
+		if pen == cachedPen then
+			return
+		end
+		if penAdded then
+			penAdded:Disconnect()
+		end
+		if penRemoving then
+			penRemoving:Disconnect()
+		end
+		cachedPen = pen
+		table.clear(penParts)
+		if not pen then
+			return
+		end
+		local function add(object)
+			if object:IsA("BasePart") then
+				penParts[object] = true
+			end
+		end
+		penAdded = pen.DescendantAdded:Connect(add)
+		penRemoving = pen.DescendantRemoving:Connect(function(object)
+			penParts[object] = nil
+		end)
+		for _, object in pen:GetDescendants() do
+			add(object)
+		end
+	end
 	local elapsed = 0
 	Services.RunService.Heartbeat:Connect(function(dt)
 		elapsed += dt
@@ -8606,16 +8635,17 @@ do
 		dailyBadge.Visible = player:GetAttribute("DailyClaimable") == true
 		-- Roblox's hotbar owns the scythe-name tooltip; it stays out of the carry line.
 		for _, container in { player.Character, player:FindFirstChild("Backpack") } do
-			for _, object in container:GetChildren() do
+			for _, object in container and container:GetChildren() or {} do
 				if object:IsA("Tool") then
 					object.ToolTip = object.Name
 				end
 			end
 		end
 		local pen = myPatch()
+		cachePen(pen)
 		local ready = false
 		if pen then
-			for _, object in pen:GetDescendants() do
+			for object in penParts do
 				if
 					object:IsA("BasePart")
 					and type(object:GetAttribute("CarveAt")) == "number"
@@ -8685,15 +8715,26 @@ do
 	end
 end
 
--- P1: reconnect camera ownership on spawn, travel and recovery.
+-- Repair stale subjects on lifecycle/recovery events; Scriptable cameras own cutscenes.
 do
 	local function restoreCamera()
 		local character = player.Character
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 		local camera = workspace.CurrentCamera
-		if camera and humanoid and humanoid.Health > 0 then
+		if
+			not camera
+			or not humanoid
+			or humanoid.Health <= 0
+			or camera.CameraType == Enum.CameraType.Scriptable
+		then
+			return
+		end
+		local subject = camera.CameraSubject
+		local broken = not subject
+			or not subject.Parent
+			or subject:IsA("Humanoid") and subject ~= humanoid
+		if broken then
 			camera.CameraType, camera.CameraSubject = Enum.CameraType.Custom, humanoid
-			player.CameraMaxZoomDistance = 32
 		end
 	end
 	player.CharacterAdded:Connect(function(character)
@@ -8704,14 +8745,6 @@ do
 	end)
 	workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(restoreCamera)
 	player:GetAttributeChangedSignal("CameraReset"):Connect(restoreCamera)
-	local elapsed = 0
-	Services.RunService.Heartbeat:Connect(function(dt)
-		elapsed += dt
-		if elapsed >= 1 then
-			elapsed = 0
-			restoreCamera()
-		end
-	end)
 	restoreCamera()
 end
 

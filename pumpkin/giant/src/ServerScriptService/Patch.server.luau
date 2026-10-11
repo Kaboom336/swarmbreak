@@ -2176,10 +2176,10 @@ end
 -- Loose pumpkins (ghost drops, or a popped pumpkin that did not fit): anyone can pick them up.
 -- rescued = it came from a ghost (counts for "Rescue" orders). groundY skips the raycast.
 function Bases.safeLanding(pos: Vector3, checkClearance: boolean?): Vector3?
-	-- Only authored ground and pen soil can be landings, never awnings or pennants.
+	-- Authored collision floors include the hub, pens, market and zone lanes.
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
-	local floors = { workspace.Terrain }
+	local floors = table.clone(Helpers.playFloors or { workspace.Terrain })
 	local ground = garden:FindFirstChild("Ground")
 	if ground then
 		table.insert(floors, ground)
@@ -6962,7 +6962,11 @@ do
 		local icons = Instance.new("Folder")
 		icons.Name = "PatchScytheIcons"
 		for _, def in Config.Tools do
-			local tool = buildScythe(def)
+			local ok, tool = pcall(buildScythe, def)
+			if not ok then
+				warn("Scythe preview failed for " .. def.id .. ": " .. tostring(tool))
+				continue
+			end
 			tool.Name = def.id
 			for _, child in tool:GetDescendants() do
 				if child:IsA("BasePart") then
@@ -9996,58 +10000,96 @@ Remotes.indexClaimFunction.OnServerInvoke = function(player, request)
 	return { candy = reward, count = count }
 end
 
--- P1: floor envelopes constrain travel and rescue escaped characters without reloading saves.
+-- Rescue below the map or beyond its outer box, never while supported by a valid floor.
 do
-	local regions = {}
+	local lo = Vector3.new(Lane.x - 170, -2, -70)
+	local hi = Vector3.new(Lane.x + 170, 0, Lane.safeZ)
+	for _, id in Config.ZoneOrder do
+		local zone = Lane.zone(id)
+		if zone then
+			lo = lo:Min(Vector3.new(Lane.x - 60, -2, zone.zMin))
+			hi = hi:Max(Vector3.new(Lane.x + 60, 0, zone.zMax))
+		end
+	end
+	local floors, pending = { workspace.Terrain }, {}
 	local ground = garden:FindFirstChild("Ground")
-	for _, group in ground and (ground:IsA("BasePart") and { ground } or ground:GetChildren()) or {} do
-		local lo, hi = Vector3.one * math.huge, Vector3.one * -math.huge
-		for _, part in group:IsA("BasePart") and { group } or group:GetDescendants() do
-			if part:IsA("BasePart") and part.CanCollide then
-				for _, x in { -1, 1 } do
-					for _, y in { -1, 1 } do
-						for _, z in { -1, 1 } do
-							local at =
-								part.CFrame:PointToWorldSpace(part.Size * Vector3.new(x, y, z) / 2)
-							lo, hi = lo:Min(at), hi:Max(at)
-						end
+	for _, part in garden:GetDescendants() do
+		-- Includes Ground, pen Soil, market/throne, lanes, ramps and platforms.
+		if
+			part:IsA("BasePart")
+			and part.Anchored
+			and part.CanCollide
+			and (
+				part.Name == "Soil"
+				or ground and (part == ground or part:IsDescendantOf(ground))
+				or part.Name:lower():find("floor", 1, true)
+				or part.Name == "Plaza"
+				or part.CFrame.UpVector.Y > 0.5
+					and part.Size.X >= 4
+					and part.Size.Z >= 4
+					and part.Size.Y <= math.max(part.Size.X, part.Size.Z) / 2
+			)
+		then
+			table.insert(floors, part)
+			local low, high = Vector3.one * math.huge, Vector3.one * -math.huge
+			for _, x in { -1, 1 } do
+				for _, y in { -1, 1 } do
+					for _, z in { -1, 1 } do
+						local at =
+							part.CFrame:PointToWorldSpace(part.Size * Vector3.new(x, y, z) / 2)
+						low, high = low:Min(at), high:Max(at)
 					end
 				end
 			end
-		end
-		if lo.X < hi.X then
-			table.insert(regions, { lo = lo, hi = hi })
-		end
-	end
-	if #regions == 0 then
-		table.insert(regions, {
-			lo = Vector3.new(Lane.x - 170, -2, -70),
-			hi = Vector3.new(Lane.x + 170, 0, Lane.safeZ),
-		})
-		for _, id in Config.ZoneOrder do
-			local zone = Lane.zone(id)
-			if zone then
-				table.insert(regions, {
-					lo = Vector3.new(Lane.x - 60, -2, zone.zMin),
-					hi = Vector3.new(Lane.x + 60, 0, zone.zMax),
-				})
-			end
-		end
-	end
-	function Helpers.inPlayArea(at)
-		for _, region in regions do
 			if
-				at.X >= region.lo.X - 2
-				and at.X <= region.hi.X + 2
-				and at.Z >= region.lo.Z - 2
-				and at.Z <= region.hi.Z + 2
-				and at.Y >= region.lo.Y - 18
-				and at.Y < region.hi.Y + 100
+				part.Name == "Soil" and part:IsDescendantOf(patchFolder)
+				or part:IsDescendantOf(market)
+					and (part.Name == "Plaza" or part.Name:lower():find("floor", 1, true))
 			then
-				return true
+				lo, hi = lo:Min(low), hi:Max(high)
+			end
+			table.insert(pending, { lo = low, hi = high })
+		end
+	end
+	-- Only adjoining floors enlarge the shell; disconnected stray Ground parts cannot inflate it.
+	local changed = true
+	while changed do
+		changed = false
+		for index = #pending, 1, -1 do
+			local region = pending[index]
+			if
+				region.hi.X >= lo.X - 12
+				and region.lo.X <= hi.X + 12
+				and region.hi.Z >= lo.Z - 12
+				and region.lo.Z <= hi.Z + 12
+			then
+				lo, hi = lo:Min(region.lo), hi:Max(region.hi)
+				table.remove(pending, index)
+				changed = true
 			end
 		end
-		return false
+	end
+	Helpers.playFloors = floors
+	local margin = 20 -- eight studs to the safety wall, then twelve studs of rescue grace.
+	function Helpers.inPlayArea(at)
+		return at.Y >= lo.Y - 18
+			and at.X >= lo.X - margin
+			and at.X <= hi.X + margin
+			and at.Z >= lo.Z - margin
+			and at.Z <= hi.Z + margin
+	end
+	local floorParams = RaycastParams.new()
+	floorParams.FilterType = Enum.RaycastFilterType.Include
+	-- Query the whole Garden so small, rotated or later-added walkable surfaces are protected too.
+	floorParams.FilterDescendantsInstances = { garden, workspace.Terrain }
+	floorParams.RespectCanCollide = true
+	local function supported(root, humanoid)
+		if humanoid.FloorMaterial ~= Enum.Material.Air then
+			return true
+		end
+		local distance = humanoid.HipHeight + root.Size.Y / 2 + 2
+		local hit = workspace:Raycast(root.Position, -Vector3.yAxis * distance, floorParams)
+		return hit ~= nil and hit.Normal.Y > 0.4
 	end
 	function Bases.findLanding(pos)
 		for _, offset in
@@ -10077,6 +10119,7 @@ do
 		local at = spawn and spawn.Position or Vector3.new(Lane.x, 0, Lane.safeZ - 20)
 		local landing = Bases.findLanding(at)
 		if not landing then
+			warn("Play-area rescue has no safe hub landing for " .. player.Name)
 			return
 		end
 		Bases.dropStolen(player, landing)
@@ -10093,10 +10136,6 @@ do
 	end
 	local shell = Instance.new("Folder")
 	shell.Name, shell.Parent = "PlayAreaSafety", garden
-	local lo, hi = Vector3.one * math.huge, Vector3.one * -math.huge
-	for _, region in regions do
-		lo, hi = lo:Min(region.lo), hi:Max(region.hi)
-	end
 	local function barrier(name, size, at)
 		local part = Instance.new("Part")
 		part.Name, part.Size, part.Position = name, size, at
@@ -10105,27 +10144,41 @@ do
 		part.Parent = shell
 	end
 	local mid, size = (lo + hi) / 2, hi - lo
-	barrier("West", Vector3.new(2, 110, size.Z + 4), Vector3.new(lo.X - 2, mid.Y + 35, mid.Z))
-	barrier("East", Vector3.new(2, 110, size.Z + 4), Vector3.new(hi.X + 2, mid.Y + 35, mid.Z))
-	barrier("South", Vector3.new(size.X + 4, 110, 2), Vector3.new(mid.X, mid.Y + 35, lo.Z - 2))
-	barrier("North", Vector3.new(size.X + 4, 110, 2), Vector3.new(mid.X, mid.Y + 35, hi.Z + 2))
-	barrier("Roof", Vector3.new(size.X + 4, 2, size.Z + 4), Vector3.new(mid.X, hi.Y + 100, mid.Z))
+	barrier("West", Vector3.new(2, 110, size.Z + 20), Vector3.new(lo.X - 8, mid.Y + 35, mid.Z))
+	barrier("East", Vector3.new(2, 110, size.Z + 20), Vector3.new(hi.X + 8, mid.Y + 35, mid.Z))
+	barrier("South", Vector3.new(size.X + 20, 110, 2), Vector3.new(mid.X, mid.Y + 35, lo.Z - 8))
+	barrier("North", Vector3.new(size.X + 20, 110, 2), Vector3.new(mid.X, mid.Y + 35, hi.Z + 8))
+	barrier("Roof", Vector3.new(size.X + 20, 2, size.Z + 20), Vector3.new(mid.X, hi.Y + 100, mid.Z))
 	local elapsed = 0
+	local outsideSince = setmetatable({}, { __mode = "k" })
+	local checkedSpawn = setmetatable({}, { __mode = "k" })
 	Services.RunService.Heartbeat:Connect(function(dt)
 		elapsed += dt
 		if elapsed < 0.25 then
 			return
 		end
 		elapsed = 0
+		local now = workspace:GetServerTimeNow()
 		for _, player in Services.Players:GetPlayers() do
 			local character, root = aliveRoot(player)
-			if
-				character
-				and root
-				and Helpers.isLoaded(player)
-				and not Helpers.inPlayArea(root.Position)
-			then
-				Helpers.recover(player, character, root)
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			if character and root and humanoid and Helpers.isLoaded(player) then
+				local inside = Helpers.inPlayArea(root.Position)
+				if not checkedSpawn[character] then
+					checkedSpawn[character] = true
+					if not inside then
+						warn("Character spawned outside play bounds: " .. player.Name)
+					end
+				end
+				if inside or supported(root, humanoid) then
+					outsideSince[character] = nil
+				else
+					outsideSince[character] = outsideSince[character] or now
+					if root.Position.Y < lo.Y - 18 or now - outsideSince[character] >= 1.5 then
+						outsideSince[character] = now
+						Helpers.recover(player, character, root)
+					end
+				end
 			end
 		end
 	end)
