@@ -23,6 +23,33 @@ Services.StarterPack = game:GetService("StarterPack")
 Services.TweenService = game:GetService("TweenService")
 
 local Config = require(Services.ReplicatedStorage:WaitForChild("PatchConfig"))
+-- Read-only, sanitized assets for client ViewportFrames; never expose ServerStorage itself.
+do
+	local previews = Instance.new("Folder")
+	previews.Name = "PetPreviews"
+	local models = Services.ServerStorage:WaitForChild("PetModels")
+	for _, source in models:GetChildren() do
+		if source:IsA("Model") then
+			local clone = source:Clone()
+			for _, item in clone:GetDescendants() do
+				if
+					item:IsA("LuaSourceContainer")
+					or item:IsA("Sound")
+					or item:IsA("ParticleEmitter")
+					or item:IsA("Trail")
+					or item:IsA("Beam")
+				then
+					item:Destroy()
+				elseif item:IsA("BasePart") then
+					item.Anchored = true
+					item.CanCollide, item.CanTouch, item.CanQuery = false, false, false
+				end
+			end
+			clone.Parent = previews
+		end
+	end
+	previews.Parent = Services.ReplicatedStorage
+end
 function Helpers.fontFace(role: string): Font
 	local spec = Config.Fonts[role]
 	if type(spec) == "table" then
@@ -178,6 +205,7 @@ do
 		telegraphEvent = remote("Telegraph"),
 		knockEvent = remote("Knock"),
 		indexEvent = remote("IndexNew"),
+		indexClaimFunction = remote("ClaimIndex", "RemoteFunction"),
 		announceEvent = remote("Announce"),
 		kingDoneEvent = remote("KingDone"),
 		rainEvent = remote("RainCollected"),
@@ -428,6 +456,43 @@ end
 -- Pumpkin Index: every seed x finish a player has sold, kept as "Seed:Finish" keys.
 local FINISHES = { "Plain", "Glowing", "Ghostly", "Candy", "Cursed" }
 local indexOf: { [Player]: { [string]: boolean } } = {}
+Helpers.Index = { claims = {}, milestones = {} }
+function Helpers.Index.discovered(player, seed)
+	for key in indexOf[player] or {} do
+		if string.match(key, "^([^:]+):") == seed.id then
+			return true
+		end
+	end
+	return false
+end
+function Helpers.Index.publish(player)
+	for attribute, data in
+		{ IndexClaims = Helpers.Index.claims, IndexMilestones = Helpers.Index.milestones }
+	do
+		local keys = {}
+		for key, value in data[player] or {} do
+			if value == true then
+				table.insert(keys, key)
+			end
+		end
+		player:SetAttribute(attribute, table.concat(keys, ","))
+	end
+end
+function Helpers.Index.load(player, data)
+	for field, target in
+		{ IndexClaims = Helpers.Index.claims, IndexMilestones = Helpers.Index.milestones }
+	do
+		target[player] = {}
+		if type(data[field]) == "table" then
+			for key, value in data[field] do
+				if type(key) == "string" and value == true then
+					target[player][key] = true
+				end
+			end
+		end
+	end
+	Helpers.Index.publish(player)
+end
 
 local function publishIndex(player: Player)
 	local keys = {}
@@ -1081,6 +1146,7 @@ do
 			indexOf[player] = found
 			publishIndex(player)
 		end
+		Helpers.Index.load(player, data)
 		if type(data.upgrades) == "table" then
 			for id in Config.Upgrades do
 				if type(data.upgrades[id]) == "number" then
@@ -1292,6 +1358,8 @@ do
 			carrying = Bases.collectCarry(player),
 			upgrades = upgrades,
 			index = index,
+			IndexClaims = table.clone(Helpers.Index.claims[player] or {}),
+			IndexMilestones = table.clone(Helpers.Index.milestones[player] or {}),
 			lifetime = math.floor(lifetime[player] or 0),
 			found = unlockedList,
 			haunts = player:GetAttribute("Haunts") or 0,
@@ -8890,6 +8958,7 @@ local function cleanupPlayer(player: Player)
 	saving[player] = nil
 	released[player] = nil
 	indexOf[player] = nil
+	Helpers.Index.claims[player], Helpers.Index.milestones[player] = nil, nil
 	lastBonk[player] = nil
 	bonkSpot[player] = nil
 	kingDropPlayer(player)
@@ -9638,6 +9707,7 @@ do
 			toolsOf[player] = { [Config.StartTool] = true }
 			zonesOf[player] = {}
 			indexOf[player] = {}
+			Helpers.Index.load(player, {})
 			unlocked[player] = startUnlocked()
 			skillsOf[player] = {}
 			lifetime[player] = 0
@@ -9857,4 +9927,57 @@ do
 			end
 		end
 	end)
+end
+
+-- No yields between validation, dedupe and payout; save candy and flags together.
+Remotes.indexClaimFunction.OnServerInvoke = function(player, request)
+	if
+		not Helpers.isLoaded(player)
+		or not Helpers.candyValue(player)
+		or type(request) ~= "string"
+	then
+		return { candy = 0 }
+	end
+	Helpers.Index.claims[player] = Helpers.Index.claims[player] or {}
+	Helpers.Index.milestones[player] = Helpers.Index.milestones[player] or {}
+	local claims, milestones = Helpers.Index.claims[player], Helpers.Index.milestones[player]
+	local total, reward, count = 0, 0, 0
+	local income = math.max(1, player:GetAttribute("Income") or 0)
+	for _, seed in Config.Seeds do
+		if Helpers.Index.discovered(player, seed) then
+			total += 1
+			if (request == "All" or request == seed.pet) and not claims[seed.pet] then
+				claims[seed.pet] = true
+				reward += Config.indexReward(
+					income,
+					Config.IndexRewards.petSeconds,
+					Config.IndexRewards.petBudgetSeconds / #Config.Seeds
+				)
+				count += 1
+			end
+		end
+	end
+	for _, milestone in Config.IndexRewards.milestones do
+		local key = tostring(milestone.percent)
+		if
+			(request == "All" or request == "Milestone:" .. key)
+			and total * 100 >= #Config.Seeds * milestone.percent
+			and not milestones[key]
+		then
+			milestones[key] = true
+			reward += Config.indexReward(income, milestone.seconds, milestone.seconds)
+			count += 1
+			if milestone.percent == 100 then
+				player:SetAttribute("Title", Config.IndexRewards.title)
+			end
+		end
+	end
+	if count > 0 then
+		addCandy(player, reward, true)
+		Helpers.Index.publish(player)
+		task.defer(function()
+			savePlayer(player)
+		end)
+	end
+	return { candy = reward, count = count }
 end

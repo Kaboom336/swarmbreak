@@ -1719,82 +1719,224 @@ end)
 refreshToolCards()
 refreshUpgradeCards()
 
--- Pumpkin Index: a book of every seed x finish. Selling a new kind fills it in. -------------
-
-Palette.FINISHES = { "Plain", "Glowing", "Ghostly", "Candy", "Cursed" }
-local indexPanel, indexList = panel("🎃 Pumpkin Index!")
-local indexCells = {}
-for i, seed in Config.Seeds do
-	local row = Instance.new("Frame")
-	row.Size = UDim2.new(1, -4, 0, 56)
-	row.LayoutOrder = i
-	row.BackgroundColor3 = Palette.CARD_GREY
-	row.Parent = indexList
-	corner(row, 14)
-	stroke(row, 2.5).Color = Palette.OUTLINE
-	local name = textLabel(row, seed.name, Color3.fromRGB(255, 255, 255), "title")
-	name.Size = UDim2.fromScale(0.20, 0.8)
-	name.Position = UDim2.fromScale(0.015, 0.1)
-	name.TextXAlignment = Enum.TextXAlignment.Left
-	indexCells[seed.id] = { name = name }
-	for k, finish in Palette.FINISHES do
-		local cell = Instance.new("Frame")
-		cell.Size = UDim2.fromScale(0.14, 0.8)
-		cell.Position = UDim2.fromScale(0.24 + (k - 1) * 0.15, 0.1)
-		cell.BackgroundColor3 = Color3.fromRGB(70, 62, 84)
-		cell.Parent = row
-		corner(cell, 10)
-		stroke(cell, 2.5).Color = Palette.OUTLINE
-		local label = textLabel(cell, "?", Color3.fromRGB(150, 140, 160))
-		label.Size = UDim2.new(1, -8, 1, -8)
-		label.Position = UDim2.fromOffset(4, 4)
-		indexCells[seed.id][finish] = { cell = cell, label = label }
+-- One plain pet grid, with lazy static previews and server-authoritative claims.
+local indexPanel, indexList = panel("Index")
+local IndexUI: { [string]: any } = { cells = {}, chips = {}, count = 0 }
+function IndexUI.set(attribute)
+	local result = {}
+	for key in string.gmatch(player:GetAttribute(attribute) or "", "[^,]+") do
+		result[key] = true
 	end
+	return result
 end
-local indexCount = textLabel(indexPanel, "", Color3.fromRGB(255, 214, 80))
-indexCount.AnchorPoint = Vector2.new(1, 0)
-indexCount.Position = UDim2.fromScale(0.87, 0.125)
-indexCount.Size = UDim2.fromScale(0.4, 0.045)
-local function refreshIndex()
-	local found = {}
-	for key in string.gmatch(player:GetAttribute("Index") or "", "[^,]+") do
-		found[key] = true
+function IndexUI.claim(key)
+	if IndexUI.busy then
+		return
 	end
-	-- Finishes come with brewing; before that the book is one slot per type.
-	local brew = player:GetAttribute("Unlock_Brew") == true
-	local total = 0
+	IndexUI.busy = true
+	task.spawn(function()
+		local ok, result = pcall(function()
+			return remotes:WaitForChild("ClaimIndex"):InvokeServer(key)
+		end)
+		IndexUI.busy = false
+		if ok and result and result.candy and result.candy > 0 then
+			toast("INDEX REWARD", short(result.candy) .. " candy")
+		end
+		IndexUI.refresh()
+	end)
+end
+function IndexUI.preview(seed, cell)
+	if cell.model then
+		return
+	end
+	local folder = Services.ReplicatedStorage:FindFirstChild("PetPreviews")
+	local source = folder and folder:FindFirstChild(seed.pet)
+	if not source or not source:IsA("Model") then
+		return
+	end
+	local model = source:Clone()
+	model.Parent = cell.view
+	local cf, size = model:GetBoundingBox()
+	model:PivotTo(CFrame.Angles(0, math.rad(-25), 0) * cf:Inverse() * model:GetPivot())
+	local camera = Instance.new("Camera")
+	camera.FieldOfView = 30
+	camera.Parent = cell.view
+	cell.view.CurrentCamera = camera
+	cell.model, cell.camera, cell.radius = model, camera, size.Magnitude / 2
+	local function fit()
+		local aspect = cell.view.AbsoluteSize.X / math.max(1, cell.view.AbsoluteSize.Y)
+		local angle = math.atan(math.tan(math.rad(15)) * math.min(1, aspect))
+		local distance = cell.radius / math.sin(angle) * 1.08
+		camera.CFrame = CFrame.lookAt(Vector3.new(0, cell.radius * 0.25, distance), Vector3.zero)
+	end
+	cell.view:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
+	fit()
+end
+function IndexUI.refresh()
+	local found, claims, milestones =
+		IndexUI.set("Index"), IndexUI.set("IndexClaims"), IndexUI.set("IndexMilestones")
+	local total, count = 0, 0
 	for _, seed in Config.Seeds do
-		local all = true
-		for k, finish in Palette.FINISHES do
-			local parts = indexCells[seed.id][finish]
-			parts.cell.Visible = brew or k == 1
-			if not (brew or k == 1) then
-				continue
-			end
-			if found[seed.id .. ":" .. finish] then
-				total += 1
-				local m = mutationById[finish]
-				parts.cell.BackgroundColor3 = m and m.color or seedColor(seed)
-				parts.label.Text = finish == "Plain" and "✓"
-					or string.upper(string.sub(finish, 1, 4))
-				parts.label.TextColor3 = Color3.fromRGB(255, 255, 255)
-			else
-				all = false
-				-- Not found yet: a dark "?" silhouette (Pet Sim 99 index).
-				parts.cell.BackgroundColor3 = Color3.fromRGB(70, 62, 84)
-				parts.label.Text = "?"
-				parts.label.TextColor3 = Color3.fromRGB(170, 165, 185)
+		local discovered = false
+		for key in found do
+			if string.match(key, "^([^:]+):") == seed.id then
+				discovered = true
+				break
 			end
 		end
-		indexCells[seed.id].name.Text = seed.name .. ((all and brew) and " +10%" or "")
+		if discovered then
+			total += 1
+			if not claims[seed.pet] then
+				count += 1
+			end
+		end
+		local cell = IndexUI.cells[seed.pet]
+		if cell then
+			cell.name.Text = discovered and Config.Pets[seed.pet].display or "???"
+			cell.view.ImageColor3 = discovered and Color3.new(1, 1, 1) or Color3.fromRGB(12, 12, 16)
+			cell.view.Ambient = discovered and Color3.fromRGB(190, 190, 190) or Color3.new(0, 0, 0)
+			cell.claim.Visible = discovered
+			cell.claim.Text = claims[seed.pet] and "CLAIMED" or "CLAIM"
+			cell.claim.Active = discovered and not claims[seed.pet]
+			cell.claim.BackgroundColor3 = claims[seed.pet] and Color3.fromRGB(100, 100, 110)
+				or Color3.fromRGB(8, 210, 30)
+			if indexPanel.Visible then
+				IndexUI.preview(seed, cell)
+			end
+		end
 	end
-	indexCount.Text =
-		string.format("Collected %d/%d", total, #Config.Seeds * (brew and #Palette.FINISHES or 1))
+	for i, milestone in Config.IndexRewards.milestones do
+		local key = tostring(milestone.percent)
+		local reached = total * 100 >= #Config.Seeds * milestone.percent
+		if reached and not milestones[key] then
+			count += 1
+		end
+		local chip = IndexUI.chips[i]
+		chip.Text = key .. "% " .. (milestones[key] and "OK" or reached and "CLAIM" or "Candy")
+		if milestone.percent == 100 and not milestones[key] then
+			chip.Text ..= " + title"
+		end
+		chip.BackgroundColor3 = reached and Color3.fromRGB(8, 180, 35)
+			or Color3.fromRGB(100, 100, 110)
+		chip.Active = reached and not milestones[key]
+	end
+	IndexUI.progress.Text = string.format("Discovered %d/%d", total, #Config.Seeds)
+	IndexUI.fill.Size = UDim2.fromScale(total / #Config.Seeds, 1)
+	IndexUI.count = count
+	IndexUI.all.Text = "CLAIM ALL"
+	IndexUI.all.Active = count > 0
+	IndexUI.badge.Text = tostring(count)
+	IndexUI.badge.Visible = count > 0
+	if IndexUI.hudBadge then
+		IndexUI.hudBadge.Text = "!"
+		IndexUI.hudBadge.Visible = count > 0
+	end
 end
-player:GetAttributeChangedSignal("Index"):Connect(refreshIndex)
-player:GetAttributeChangedSignal("Unlock_Brew"):Connect(refreshIndex)
-refreshIndex()
-
+do
+	indexList:FindFirstChildOfClass("UIListLayout"):Destroy()
+	indexList.Position, indexList.Size = UDim2.fromScale(0.025, 0.36), UDim2.fromScale(0.95, 0.61)
+	local layout = Instance.new("UIGridLayout")
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.CellPadding = UDim2.fromOffset(8, 8)
+	layout.Parent = indexList
+	local function fit()
+		local width = math.max(70, indexList.AbsoluteSize.X - 24)
+		local columns = math.max(1, math.floor((width + 8) / 98))
+		local size = math.max(70, math.floor((width - (columns - 1) * 8) / columns))
+		layout.CellSize = UDim2.fromOffset(size, size + 56)
+	end
+	indexList:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
+	fit()
+	local track = Instance.new("Frame")
+	track.BackgroundColor3 = Color3.fromRGB(60, 55, 75)
+	track.Position, track.Size = UDim2.fromScale(0.025, 0.14), UDim2.fromScale(0.62, 0.075)
+	track.Parent = indexPanel
+	corner(track, 10)
+	IndexUI.fill = Instance.new("Frame")
+	IndexUI.fill.BackgroundColor3 = Color3.fromRGB(8, 210, 30)
+	IndexUI.fill.BorderSizePixel = 0
+	IndexUI.fill.Parent = track
+	corner(IndexUI.fill, 10)
+	IndexUI.progress = textLabel(track, "", Color3.new(1, 1, 1))
+	IndexUI.progress.Size = UDim2.fromScale(1, 1)
+	IndexUI.all = makeButton(indexPanel, "CLAIM ALL", Color3.fromRGB(8, 210, 30))
+	IndexUI.all.Position, IndexUI.all.Size =
+		UDim2.fromScale(0.68, 0.14), UDim2.fromScale(0.29, 0.075)
+	IndexUI.all.Activated:Connect(function()
+		IndexUI.claim("All")
+	end)
+	IndexUI.badge = textLabel(IndexUI.all, "", Color3.new(1, 1, 1))
+	IndexUI.badge.BackgroundColor3 = Color3.fromRGB(255, 30, 30)
+	IndexUI.badge.BackgroundTransparency = 0
+	IndexUI.badge.AnchorPoint = Vector2.new(0.5, 0.5)
+	IndexUI.badge.Position, IndexUI.badge.Size =
+		UDim2.fromScale(0.97, 0.08), UDim2.fromOffset(24, 24)
+	IndexUI.badge.ZIndex = 8
+	corner(IndexUI.badge, 12)
+	for i, milestone in Config.IndexRewards.milestones do
+		local chip = makeButton(indexPanel, "", Color3.fromRGB(100, 100, 110))
+		chip.Position, chip.Size =
+			UDim2.fromScale(0.025 + (i - 1) * 0.24, 0.235), UDim2.fromScale(0.225, 0.085)
+		IndexUI.chips[i] = chip
+		chip.Activated:Connect(function()
+			IndexUI.claim("Milestone:" .. milestone.percent)
+		end)
+	end
+end
+function IndexUI.build()
+	if IndexUI.built then
+		return
+	end
+	IndexUI.built = true
+	for i, seed in Config.Seeds do
+		local color = Config.Rarities[1].color
+		for _, rarity in Config.Rarities do
+			if rarity.name == Config.Pets[seed.pet].rarity then
+				color = rarity.color
+			end
+		end
+		local tile = Instance.new("Frame")
+		tile.Name, tile.LayoutOrder = "Tile_" .. seed.pet, i
+		tile.BackgroundColor3 = color:Lerp(Color3.new(1, 1, 1), 0.3)
+		tile.Parent = indexList
+		corner(tile, 10)
+		stroke(tile, 2.5).Color = color
+		local view = Instance.new("ViewportFrame")
+		view.BackgroundTransparency = 1
+		view.Position, view.Size = UDim2.fromScale(0.04, 0.02), UDim2.new(0.92, 0, 1, -60)
+		view.LightColor, view.LightDirection = Color3.new(1, 1, 1), Vector3.new(-1, -1.5, -1)
+		view.Parent = tile
+		local name = textLabel(tile, "???", Color3.new(1, 1, 1))
+		name.Position, name.Size = UDim2.new(0, 3, 1, -58), UDim2.new(1, -6, 0, 24)
+		local claim = makeButton(tile, "CLAIM", Color3.fromRGB(8, 210, 30))
+		claim.Position, claim.Size = UDim2.new(0, 4, 1, -32), UDim2.new(1, -8, 0, 28)
+		claim.Activated:Connect(function()
+			IndexUI.claim(seed.pet)
+		end)
+		IndexUI.cells[seed.pet] = { view = view, name = name, claim = claim }
+	end
+end
+indexPanel:GetPropertyChangedSignal("Visible"):Connect(function()
+	if indexPanel.Visible then
+		IndexUI.build()
+		IndexUI.refresh()
+	end
+end)
+for _, attribute in { "Index", "IndexClaims", "IndexMilestones", "Loaded" } do
+	player:GetAttributeChangedSignal(attribute):Connect(IndexUI.refresh)
+end
+IndexUI.refresh()
+task.spawn(function()
+	local previews = Services.ReplicatedStorage:WaitForChild("PetPreviews")
+	previews.ChildAdded:Connect(function()
+		if indexPanel.Visible then
+			IndexUI.refresh()
+		end
+	end)
+	if indexPanel.Visible then
+		IndexUI.refresh()
+	end
+end)
 -- Music: a calm day loop, a tense midnight loop and a boss loop that crossfade by phase.
 -- toggleSound (the small speaker button in the Shop panel corner) mutes music and effects.
 local toggleSound: () -> boolean
@@ -1896,6 +2038,8 @@ end
 local indexButton = pill("📖 Index", Config.UI.index, 2)
 -- Red badge: Index entries found since the Index was last opened.
 local indexBadge = pillBadge(indexButton)
+IndexUI.hudBadge = indexBadge
+IndexUI.refresh()
 
 -- Gate news. The base lock has no pill (2 HUD buttons only): the LOCK prompt on your base's sign
 -- post does it. When the new-player shield ends one banner says so; the later gates arrive as one
@@ -2497,17 +2641,12 @@ do
 
 	indexButton.Activated:Connect(function()
 		toggle(indexPanel)
-		indexBadge.Visible = false
-		indexBadge.Text = ""
+		IndexUI.refresh()
 	end)
 end
 
 remotes:WaitForChild("IndexNew").OnClientEvent:Connect(function(keys: { string })
-	if not indexPanel.Visible then
-		local n = (tonumber(indexBadge.Text) or 0) + #keys
-		indexBadge.Text = tostring(math.min(n, 99))
-		indexBadge.Visible = n > 0
-	end
+	IndexUI.refresh()
 	for i, key in keys do
 		local seedId, finish = string.match(key, "([^:]+):(.+)")
 		local seed = seedById[seedId or ""]
@@ -6873,54 +7012,6 @@ do
 	end)
 end
 
--- Zone stamps and quests extend the existing Index book, leaving two HUD pills.
-do
-	local rows = {}
-	for i, id in Config.ZoneOrder do
-		local row = textLabel(indexList, "", Color3.fromRGB(255, 214, 80))
-		row.LayoutOrder = -20 + i
-		row.Size = UDim2.new(1, -10, 0, 70)
-		row.TextWrapped = true
-		row.TextScaled = true
-		rows[id] = row
-	end
-	local function refresh()
-		local d = ZoneView.progress
-		for _, id in Config.ZoneOrder do
-			local zone = Config.Zones[id]
-			local q = d.quests and d.quests[id] or {}
-			local pets = zone.pets
-			local stamp = d.stamps and d.stamps[id]
-			rows[id].Visible = id == "Zone1" or player:GetAttribute("Zone_" .. id) == true
-			-- Zones are published as a comma list, so keep the same source as the gates.
-			rows[id].Visible = id == "Zone1"
-				or string.find(
-						"," .. (player:GetAttribute("Zones") or "") .. ",",
-						"," .. id .. ",",
-						1,
-						true
-					)
-					~= nil
-			rows[id].Text = string.format(
-				"%s %s: %s + %s | %s\n[%s] Smash %d/%d  [%s] Steal  [%s] Own pet",
-				stamp and "STAMP +10%" or "[ ]",
-				zone.title,
-				Config.Pets[seedById[pets[1]].pet].display,
-				Config.Pets[seedById[pets[2]].pet].display,
-				zone.unlock,
-				(q.smash or 0) >= Config.Progression.questSmashes and "x" or " ",
-				q.smash or 0,
-				Config.Progression.questSmashes,
-				(q.steal or 0) >= Config.Progression.questSteals and "x" or " ",
-				q.own and "x" or " "
-			)
-		end
-	end
-	for _, attr in { "ZoneProgress", "Zones" } do
-		player:GetAttributeChangedSignal(attr):Connect(refresh)
-	end
-	refresh()
-end
 -- King results and status icons use the existing event/Center queue; entry is the throne ring.
 do
 	local icons = {}

@@ -1307,4 +1307,25 @@ function Config.roamPoint(p, time)
 	local finish = p:GetAttribute("RoamEnd") or start
 	return from:Lerp(goal, math.clamp((time - start) / math.max(0.001, finish - start), 0, 1))
 end
+-- Candy-only launch Index. Each reward has a share of a 540 income-second budget.
+-- The nominal 600-second pet reward is capped: paying it for every pet exceeds that budget.
+Config.IndexRowBonus = 0
+Config.IndexRewards = {
+	petSeconds = 600,
+	minimum = 200,
+	petBudgetSeconds = 320,
+	title = "Pumpkin Collector",
+	milestones = {
+		{ percent = 25, seconds = 40 },
+		{ percent = 50, seconds = 50 },
+		{ percent = 75, seconds = 60 },
+		{ percent = 100, seconds = 70 },
+	},
+}
+function Config.indexReward(income, seconds, capSeconds)
+	income = math.max(1, income)
+	return math.floor(
+		math.min(math.max(Config.IndexRewards.minimum, income * seconds), income * capSeconds)
+	)
+end
 return Config
