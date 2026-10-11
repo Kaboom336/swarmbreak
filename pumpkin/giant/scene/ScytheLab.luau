@@ -108,10 +108,16 @@ local function sample(step, time)
 	for _, key in Config.ScythePose.swings[step] do
 		if time <= key[1] then
 			local f = math.clamp((time - at) / (key[1] - at), 0, 1)
-			if key[2] == "outCubic" then
+			if key[2] == "outQuad" then
+				f = 1 - (1 - f) ^ 2
+			elseif key[2] == "outCubic" then
 				f = 1 - (1 - f) ^ 3
 			elseif key[2] == "outQuart" then
 				f = 1 - (1 - f) ^ 4
+			elseif key[2] == "inOutSine" then
+				f = (1 - math.cos(math.pi * f)) / 2
+			elseif key[2] == "hold" then
+				f = 0
 			end
 			local result = {}
 			for i = 1, #previousPose do
@@ -140,8 +146,8 @@ local function dummy(name, position, pose)
 		CFrame.new(position + Vector3.new(0, 3, 0))
 	)
 	root.Transparency, rig.PrimaryPart = 1, root
-	-- Standard segmented R15 mannequin. All joints are Motor6Ds; bake the same
-	-- Transform into CFrames because Edit mode does not run the animation/physics batch.
+	-- Standard segmented R15 mannequin. Bake the shared joint Transform into CFrames
+	-- in Edit mode; live rigs use Motor6Ds or AnimationConstraints with the same pose.
 	local function joint(name, parent, childName, size, c0, c1, index)
 		local child = part(rig, childName, size, CFrame.identity)
 		local motor = Instance.new("Motor6D")

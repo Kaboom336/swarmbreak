@@ -3998,6 +3998,18 @@ do
 			end
 		end
 	end
+	local function release(tool, skipJoints)
+		local st = active[tool]
+		if not st then
+			return
+		end
+		active[tool] = nil
+		st.swing = nil
+		restore(st, skipJoints)
+		for _, connection in st.connections do
+			connection:Disconnect()
+		end
+	end
 	local function track(tool)
 		if active[tool] then
 			return active[tool]
@@ -4027,16 +4039,20 @@ do
 			jump = 0,
 			equip = 0,
 			joints = {},
+			connections = {},
 			r6 = humanoid.RigType == Enum.HumanoidRigType.R6,
 		}
 		idleGrip[tool] = st.base
 		local names = st.r6 and { ["Right Shoulder"] = 1, ["Left Shoulder"] = 5, RootJoint = 9 }
 			or { RightShoulder = 1, RightElbow = 4, LeftShoulder = 5, LeftElbow = 8, Waist = 9 }
 		for _, j in character:GetDescendants() do
-			if j:IsA("Motor6D") and names[j.Name] then
+			if names[j.Name] and (j:IsA("Motor6D") or j:IsA("AnimationConstraint")) then
+				local rot = if j:IsA("Motor6D")
+					then j.C0.Rotation
+					else j.Attachment0.CFrame.Rotation
 				table.insert(
 					st.joints,
-					{ motor = j, index = names[j.Name], rot = j.C0.Rotation, anim = j.Transform }
+					{ motor = j, index = names[j.Name], rot = rot, anim = j.Transform }
 				)
 			end
 		end
@@ -4044,6 +4060,28 @@ do
 			tool:FindFirstChild("SwingTrail", true), tool:FindFirstChild("SwingGlow", true)
 		st.width = st.trail and st.trail.WidthScale
 		active[tool] = st
+		table.insert(
+			st.connections,
+			tool.Unequipped:Connect(function()
+				release(tool)
+			end)
+		)
+		table.insert(
+			st.connections,
+			humanoid.Died:Connect(function()
+				release(tool)
+			end)
+		)
+		if st.owner then
+			table.insert(
+				st.connections,
+				st.owner.CharacterRemoving:Connect(function(removing)
+					if removing == character then
+						release(tool)
+					end
+				end)
+			)
+		end
 		if st.owner == player then
 			play(Config.Sounds.Whoosh, 1.25, 0.3)
 		end
@@ -4196,7 +4234,7 @@ do
 		st.pose = p
 	end
 	-- Animator evaluates after PreAnimation and before PreSimulation. Write Transform here
-	-- before the engine batches Motor6D changes for physics; evaluate in this same frame.
+	-- before the engine applies Motor6D/AnimationConstraint changes for physics.
 	Services.RunService.PreAnimation:Connect(function()
 		-- Clear our previous override before Animator evaluates. Untracked joints
 		-- must not feed our own pose back into the next frame's blend.
@@ -4224,19 +4262,16 @@ do
 			end
 		end
 		for tool, st in active do
-			local dead = not st.character.Parent or st.humanoid.Health <= 0
+			local dead = not st.character.Parent
+				or st.humanoid.Health <= 0
+				or (st.owner and st.owner.Character ~= st.character)
 			local carrying = carried(st.character, st.owner)
 			local visible = camera and (st.root.Position - camera.CFrame.Position).Magnitude <= 80
 			local held = tool.Parent == st.character and not dead and not carrying and visible
-			if carrying or dead or not visible then
-				restore(st, carrying)
-				active[tool] = nil
+			if not held then
+				release(tool, carrying and not dead and tool.Parent == st.character)
 			else
-				st.w = math.clamp(st.w + (held and 1 or -1) * dt / 0.12, 0, 1)
-				if not held then
-					st.swing = nil
-					trails(st, false)
-				end
+				st.w = math.clamp(st.w + dt / 0.12, 0, 1)
 				evaluate(st, dt, os.clock())
 				local p = st.pose
 				for _, j in st.joints do
@@ -4268,10 +4303,6 @@ do
 						:Inverse()
 					* HAND
 				tool.Grip = grip
-				if not held and st.w == 0 then
-					restore(st)
-					active[tool] = nil
-				end
 			end
 		end
 	end)
@@ -4320,10 +4351,7 @@ do
 		end)
 		tool.Unequipped:Connect(function()
 			FarmFX.held = false
-			if active[tool] then
-				active[tool].swing = nil
-				trails(active[tool], false)
-			end
+			release(tool)
 		end)
 	end
 	Services.RunService.Heartbeat:Connect(function()

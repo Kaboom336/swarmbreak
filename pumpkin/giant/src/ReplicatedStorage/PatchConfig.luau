@@ -448,7 +448,7 @@ local Config = {
 	-- Low right-hand grip: shaft crosses the body toward the opposite shoulder.
 	-- Degrees in the neutral hand frame; builder compensates RightGrip's -90 X basis.
 	-- The wrap is at -L/4; lean tips behind the shoulder and roll makes it diagonal.
-	ScytheHold = { right = 0.05, forward = 0.35, lean = -12, yaw = 0, roll = 32 }, -- up = style.L / 4
+	ScytheHold = { right = 0.05, forward = 0.35, lean = -20, yaw = 0, roll = 38 }, -- up = scaled style.L / 4
 	ScytheStyles = {
 		RustySickle = {
 			L = 6.0,
@@ -1584,11 +1584,12 @@ do
 		tool:SetAttribute("StyleId", styleId)
 		tool:SetAttribute("VisualTier", tier)
 		local h = Config.ScytheHold
+		local K = 1.15
 		tool.Grip = (CFrame.new(h.right, 0, -h.forward) * CFrame.Angles(
 			math.rad(-h.lean),
 			math.rad(h.yaw),
 			math.rad(h.roll)
-		) * CFrame.new(0, s.L / 4, 0)):Inverse() * CFrame.Angles(math.rad(-90), 0, 0)
+		) * CFrame.new(0, s.L * K / 4, 0)):Inverse() * CFrame.Angles(math.rad(-90), 0, 0)
 		local handle = Instance.new("Part")
 		handle.Name, handle.Size = "Handle", Vector3.new(s.W, s.L, s.W)
 		handle.Material, handle.Color = Enum.Material.SmoothPlastic, Color3.fromHex(s.shaft)
@@ -1645,13 +1646,13 @@ do
 			local t0, t1 = (i - 1) / #s.columns, i / #s.columns
 			local a, b = bladePoint(t0), bladePoint(t1)
 			local delta = b - a
-			local thickness = 0.08 + 0.64 * (1 - t0) ^ 1.2
+			local thickness = 0.128 + 1.024 * (1 - t0) ^ 1.2
 			local cf = B
 				* CFrame.new((a + b) / 2)
 				* CFrame.Angles(0, 0, math.atan2(delta.Y, delta.X))
 			local body = block(
 				"BladeColumn",
-				Vector3.new(delta.Magnitude + 0.06, thickness, 0.3),
+				Vector3.new(delta.Magnitude + 0.06, thickness, 0.5),
 				cf,
 				s.body
 			)
@@ -1661,7 +1662,7 @@ do
 				end
 			end
 			local edge = cf * CFrame.new(0, -thickness / 2, 0)
-			block("Edge", Vector3.new(delta.Magnitude + 0.07, 0.09, 0.34), edge, s.edge, tier >= 4)
+			block("Edge", Vector3.new(delta.Magnitude + 0.07, 0.16, 0.56), edge, s.edge, tier >= 4)
 			if i == 1 then
 				root = cf
 			end
@@ -1874,9 +1875,28 @@ do
 				0.4, Enum.HighlightDepthMode.Occluded, tool
 		end
 		assert(count < 40, "Scythe part budget exceeded")
+		-- Scale the finished geometry, including nested King ornaments. Rebind welds
+		-- afterward so their offsets match the enlarged tool.
+		for _, item in tool:GetDescendants() do
+			if item:IsA("WeldConstraint") then
+				item.Enabled = false
+			end
+		end
+		for _, part in tool:GetDescendants() do
+			if part:IsA("BasePart") then
+				local offset = handle.CFrame:ToObjectSpace(part.CFrame)
+				part.Size *= K
+				part.CFrame = handle.CFrame * (CFrame.new(offset.Position * K) * offset.Rotation)
+			end
+		end
+		for _, item in tool:GetDescendants() do
+			if item:IsA("WeldConstraint") then
+				item.Enabled = true
+			end
+		end
 		local function attachment(name, cf)
 			local a = Instance.new("Attachment")
-			a.Name, a.CFrame, a.Parent = name, cf, handle
+			a.Name, a.CFrame, a.Parent = name, CFrame.new(cf.Position * K) * cf.Rotation, handle
 			return a
 		end
 		local a0, a1 =
@@ -1955,24 +1975,24 @@ do
 	local IDLE = { 12, -8, 6, 15, 4, 0, -6, 12, -3, -8, 0, 0, 0, 0 }
 	local SWINGS = {
 		{
-			{ 0.09, "outQuad", 150, -35, 35, 35, 40, -20, -30, 50, 8, -28, 4, 35, -25, 0 },
-			{ 0.115, "linear", 155, -38, 38, 30, 42, -20, -32, 50, 9, -30, 4, 40, -28, 0 },
-			{ 0.18, "outCubic", 70, 45, 10, 15, 25, 10, -25, 30, -12, 30, -3, -105, 30, 0 },
-			{ 0.25, "outQuad", 45, 65, 5, 20, 15, 15, -35, 25, -15, 38, -4, -115, 38, 0 },
+			{ 0.09, "outQuad", 129, 46, 6, 0, 121, -27, 30, 20, 5, -40, -18, -72, -61, 43 },
+			{ 0.115, "linear", 134, 48, 6, 0, 125, -27, 30, 20, 6, -44, -18, -76, -61, 43 },
+			{ 0.18, "outCubic", 26, 0, -31, 55, 58, -12, 18, 16, -16, 19, -13, 76, 60, 54 },
+			{ 0.25, "outQuad", 33, 29, -32, 52, 34, -2, -27, 24, -13, 45, -12, 56, 61, 47 },
 			{ 0.46, "inOutSine", unpack(IDLE) },
 		},
 		{
-			{ 0.09, "outQuad", 95, 60, -5, 60, 20, -10, -15, 40, 4, 32, 0, 20, 40, 10 },
-			{ 0.11, "linear", 98, 64, -6, 62, 20, -10, -15, 40, 5, 35, 0, 22, 44, 10 },
-			{ 0.18, "outCubic", 75, -45, 30, 10, 30, 15, -20, 35, -10, -30, -3, -95, -32, 0 },
-			{ 0.25, "outQuad", 65, -62, 40, 12, 30, 18, -25, 30, -12, -36, -4, -100, -40, 0 },
+			{ 0.09, "outQuad", 101, 33, -19, -2, 90, -2, 4, 44, 9, 39, 17, -123, -4, -20 },
+			{ 0.11, "linear", 106, 35, -19, -2, 94, -2, 4, 44, 10, 43, 17, -127, -4, -20 },
+			{ 0.18, "outCubic", 27, -13, -32, 2, 48, -21, 30, 7, -20, -21, 1, -107, -60, -30 },
+			{ 0.25, "outQuad", -50, 75, 102, 55, 67, -27, 30, 20, -4, -48, -16, -23, 41, 44 },
 			{ 0.47, "inOutSine", unpack(IDLE) },
 		},
 		{
-			{ 0.14, "outQuad", 170, 0, 15, 25, 165, -15, -5, 30, 14, -8, 0, 30, 0, 0 },
-			{ 0.175, "linear", 175, 0, 16, 22, 170, -16, -5, 28, 16, -8, 0, 35, 0, 0 },
-			{ 0.24, "outQuart", 55, 12, 6, 10, 60, -25, 5, 25, -26, 2, 0, -120, 0, 0 },
-			{ 0.33, "hold", 50, 12, 6, 12, 55, -25, 5, 25, -28, 2, 0, -122, 0, 0 },
+			{ 0.14, "outQuad", 144, -1, -23, 0, 136, -25, 27, 20, 21, -3, -4, -119, -39, 23 },
+			{ 0.175, "linear", 150, -1, -23, 0, 141, -25, 27, 20, 23, -3, -4, -123, -39, 23 },
+			{ 0.24, "outQuart", 63, 12, -29, 0, 67, -14, 18, 13, -28, -28, 2, -110, -68, 4 },
+			{ 0.33, "hold", 56, 12, -25, 0, 62, -11, 23, 11, -31, -29, 10, -105, -69, 9 },
 			{ 0.54, "inOutSine", unpack(IDLE) },
 		},
 	}
