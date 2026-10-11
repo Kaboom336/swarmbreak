@@ -1,18 +1,20 @@
+local Services: { [string]: any } = {}
+local Palette: { [string]: any } = {}
 -- Client side of Steal a Pumpkin: which base prompts you see (Place / Pick up / Steal / Lock),
 -- lighting for day / midnight / Blood Moon, scythe swings, hit and pop effects, HUD (candy,
 -- income, carry), the Shop (Scythes / Upgrades / Robux tabs), Index, Haunt, Witch's Orders.
 -- Systems behind an unlock gate (Config.Unlocks, "Unlock_<Name>" attributes) stay hidden.
-local HttpService = game:GetService("HttpService")
-local Lighting = game:GetService("Lighting")
-local MarketplaceService = game:GetService("MarketplaceService")
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
+Services.HttpService = game:GetService("HttpService")
+Services.Lighting = game:GetService("Lighting")
+Services.MarketplaceService = game:GetService("MarketplaceService")
+Services.Players = game:GetService("Players")
+Services.ReplicatedStorage = game:GetService("ReplicatedStorage")
+Services.RunService = game:GetService("RunService")
+Services.SoundService = game:GetService("SoundService")
+Services.TweenService = game:GetService("TweenService")
+Services.UserInputService = game:GetService("UserInputService")
 
-local Config = require(ReplicatedStorage:WaitForChild("PatchConfig"))
+local Config = require(Services.ReplicatedStorage:WaitForChild("PatchConfig"))
 local function fontFace(role: string, weight: string?, style: string?): Font
 	-- A role is an Enum.Font name, or { family = "rbxasset://fonts/families/X.json", weight = "Heavy" }
 	-- whose weight overrides the caller's.
@@ -31,9 +33,9 @@ local function fontFace(role: string, weight: string?, style: string?): Font
 		Enum.FontStyle[style or "Normal"]
 	)
 end
-local remotes = ReplicatedStorage:WaitForChild("PatchRemotes")
-local state = ReplicatedStorage:WaitForChild("PatchState")
-local player = Players.LocalPlayer
+local remotes = Services.ReplicatedStorage:WaitForChild("PatchRemotes")
+local state = Services.ReplicatedStorage:WaitForChild("PatchState")
+local player = Services.Players.LocalPlayer
 
 local garden = workspace:WaitForChild("Garden")
 local patchFolder = garden:WaitForChild("Patches")
@@ -43,7 +45,7 @@ local kingFace = market:WaitForChild("KingFace") :: BasePart
 local giantJack = market:WaitForChild("GiantJack") :: BasePart
 local meterRing = market:WaitForChild("MeterRing") :: BasePart
 
-local SPARKLE = "rbxasset://textures/particles/sparkles_main.dds"
+Palette.SPARKLE = "rbxasset://textures/particles/sparkles_main.dds"
 local seedById = {}
 for i, seed in Config.Seeds do
 	seed.order = seed.order or i
@@ -63,8 +65,9 @@ do
 	FarmFX.steps = setmetatable({}, { __mode = "k" })
 	local groups, pools = {}, {}
 	for name, volume in Config.SoundMix do
-		local group = SoundService:FindFirstChild("Patch" .. name) or Instance.new("SoundGroup")
-		group.Name, group.Volume, group.Parent = "Patch" .. name, volume, SoundService
+		local group = Services.SoundService:FindFirstChild("Patch" .. name)
+			or Instance.new("SoundGroup")
+		group.Name, group.Volume, group.Parent = "Patch" .. name, volume, Services.SoundService
 		groups[name] = group
 	end
 	FarmFX.groups = groups
@@ -77,7 +80,7 @@ do
 				sound.Name = "Patch" .. cue .. i
 				sound.SoundId = "rbxassetid://" .. id
 				sound.SoundGroup = (cue == "Click" or cue == "Buy") and groups.UI or groups.SFX
-				sound.Parent = SoundService
+				sound.Parent = Services.SoundService
 				pool.voices[i] = { sound = sound, token = 0 }
 			end
 		end
@@ -128,7 +131,7 @@ local function play(id: number, pitch: number?, volume: number?)
 			if voice.token ~= token then
 				return
 			end
-			voice.fade = TweenService:Create(sound, TweenInfo.new(0.25), { Volume = 0 })
+			voice.fade = Services.TweenService:Create(sound, TweenInfo.new(0.25), { Volume = 0 })
 			voice.fade:Play()
 			task.delay(0.25, function()
 				if voice.token == token then
@@ -194,7 +197,8 @@ local function burst(
 	emitter.Acceleration = Vector3.new(0, -35, 0)
 	emitter.Drag = 2
 	emitter.LightEmission = texture and 1 or 0
-	local mobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+	local mobile = Services.UserInputService.TouchEnabled
+		and not Services.UserInputService.KeyboardEnabled
 	emitter:Emit(math.max(1, math.floor(count * (mobile and 0.5 or 1))))
 end
 local function floatText(at: Vector3, text: string, color: Color3, big: boolean?)
@@ -225,13 +229,15 @@ local function floatText(at: Vector3, text: string, color: Color3, big: boolean?
 	stroke.Color = Color3.fromRGB(30, 12, 40)
 	stroke.Parent = label
 	local info = TweenInfo.new(1.6, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-	TweenService:Create(
-		anchor,
-		TweenInfo.new(1.6, Enum.EasingStyle.Quad),
-		{ CFrame = anchor.CFrame + Vector3.new(0, 6, 0) }
-	):Play()
-	TweenService:Create(label, info, { TextTransparency = 1 }):Play()
-	TweenService:Create(stroke, info, { Transparency = 1 }):Play()
+	Services.TweenService
+		:Create(
+			anchor,
+			TweenInfo.new(1.6, Enum.EasingStyle.Quad),
+			{ CFrame = anchor.CFrame + Vector3.new(0, 6, 0) }
+		)
+		:Play()
+	Services.TweenService:Create(label, info, { TextTransparency = 1 }):Play()
+	Services.TweenService:Create(stroke, info, { Transparency = 1 }):Play()
 	task.delay(1.7, function()
 		anchor:Destroy()
 	end)
@@ -284,14 +290,16 @@ local function damageText(at: Vector3, damage: number, color: Color3?)
 	local pop = Instance.new("UIScale")
 	pop.Scale = 1.6
 	pop.Parent = label
-	TweenService:Create(pop, TweenInfo.new(0.12, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+	Services.TweenService
+		:Create(pop, TweenInfo.new(0.12, Enum.EasingStyle.Back), { Scale = 1 })
+		:Play()
 	-- Hold until 0.62 s, then rise and fade over the last 0.48 s.
 	local rise =
 		TweenInfo.new(0.48, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.62)
-	TweenService:Create(label, rise, { Position = UDim2.new(0, 0, 1, -46) }):Play()
+	Services.TweenService:Create(label, rise, { Position = UDim2.new(0, 0, 1, -46) }):Play()
 	local fade = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.7)
-	TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
-	TweenService:Create(outline, fade, { Transparency = 1 }):Play()
+	Services.TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
+	Services.TweenService:Create(outline, fade, { Transparency = 1 }):Play()
 	task.delay(1.12, function()
 		bb:Destroy()
 		holder:Destroy()
@@ -331,12 +339,16 @@ local function pickupPop(amount: number)
 	local pop = Instance.new("UIScale")
 	pop.Scale = 0.3
 	pop.Parent = label
-	TweenService:Create(pop, TweenInfo.new(0.18, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+	Services.TweenService
+		:Create(pop, TweenInfo.new(0.18, Enum.EasingStyle.Back), { Scale = 1 })
+		:Play()
 	local rise = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.7)
-	TweenService:Create(bb, rise, { StudsOffsetWorldSpace = Vector3.new(0, 5.2, 0) }):Play()
+	Services.TweenService
+		:Create(bb, rise, { StudsOffsetWorldSpace = Vector3.new(0, 5.2, 0) })
+		:Play()
 	local fade = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.8)
-	TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
-	TweenService:Create(outline, fade, { Transparency = 1 }):Play()
+	Services.TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
+	Services.TweenService:Create(outline, fade, { Transparency = 1 }):Play()
 	task.delay(1.22, function()
 		bb:Destroy()
 	end)
@@ -360,13 +372,17 @@ local function shake(strength: number, steps: number)
 	shakeState.ends = math.max(shakeState.ends, os.clock() + duration)
 	shakeState.duration = math.max(duration, shakeState.ends - os.clock())
 end
-RunService:BindToRenderStep("PatchShakeRestore", Enum.RenderPriority.Camera.Value - 1, function()
-	if shakeState.camera and shakeState.camera == workspace.CurrentCamera then
-		shakeState.camera.CFrame *= shakeState.offset:Inverse()
+Services.RunService:BindToRenderStep(
+	"PatchShakeRestore",
+	Enum.RenderPriority.Camera.Value - 1,
+	function()
+		if shakeState.camera and shakeState.camera == workspace.CurrentCamera then
+			shakeState.camera.CFrame *= shakeState.offset:Inverse()
+		end
+		shakeState.offset = CFrame.identity
 	end
-	shakeState.offset = CFrame.identity
-end)
-RunService:BindToRenderStep("PatchShake", Enum.RenderPriority.Camera.Value + 1, function()
+)
+Services.RunService:BindToRenderStep("PatchShake", Enum.RenderPriority.Camera.Value + 1, function()
 	local t = os.clock()
 	local camera = workspace.CurrentCamera
 	if not camera or t >= shakeState.ends then
@@ -469,15 +485,15 @@ end
 workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchCamera)
 watchCamera()
 
-local DARK = Color3.fromRGB(34, 22, 48)
+Palette.DARK = Color3.fromRGB(34, 22, 48)
 -- Halloween skin (refs aspects/halloween 2.5, ui HOWTO 2): charcoal panels with an orange rim, a
 -- lime gradient on buy buttons, purple close / back buttons. HUD numbers: money green, speed yellow.
-local CHARCOAL = Config.UI.body
-local ORANGE = Color3.fromRGB(242, 140, 26)
-local BUY = Color3.fromRGB(141, 248, 22)
-local BUY_LOW = Color3.fromRGB(107, 241, 3)
-local PURPLE = Color3.fromRGB(122, 82, 191)
-local MONEY = Color3.fromRGB(68, 255, 47)
+Palette.CHARCOAL = Config.UI.body
+Palette.ORANGE = Color3.fromRGB(242, 140, 26)
+Palette.BUY = Color3.fromRGB(141, 248, 22)
+Palette.BUY_LOW = Color3.fromRGB(107, 241, 3)
+Palette.PURPLE = Color3.fromRGB(122, 82, 191)
+Palette.MONEY = Color3.fromRGB(68, 255, 47)
 local function stroke(parent: Instance, thickness: number)
 	local s = Instance.new("UIStroke")
 	s.Thickness = thickness
@@ -509,7 +525,7 @@ end
 -- and a "Face" with a top-to-bottom gradient and a thick outline sits on top. Both follow the
 -- button's BackgroundColor3, so callers keep setting colors, sizes and positions on the button.
 -- Hover grows 6 %, press shrinks 6 % (a UIScale, so layouts are untouched) with a click tick.
-local OUTLINE = Color3.fromRGB(26, 15, 46)
+Palette.OUTLINE = Color3.fromRGB(26, 15, 46)
 local function chunky(b: GuiButton): (Frame, UIStroke)
 	b.AutoButtonColor = false
 	b.BackgroundTransparency = 1
@@ -521,7 +537,7 @@ local function chunky(b: GuiButton): (Frame, UIStroke)
 	base.BorderSizePixel = 0
 	base.ZIndex = z
 	corner(base, 12)
-	stroke(base, 3).Color = OUTLINE
+	stroke(base, 3).Color = Palette.OUTLINE
 	local face = Instance.new("Frame")
 	face.Name = "Face"
 	face.Size = UDim2.fromScale(1, 1)
@@ -529,7 +545,7 @@ local function chunky(b: GuiButton): (Frame, UIStroke)
 	face.ZIndex = z + 1
 	corner(face, 12)
 	local faceStroke = stroke(face, 3)
-	faceStroke.Color = OUTLINE
+	faceStroke.Color = Palette.OUTLINE
 	local gradient = Instance.new("UIGradient")
 	gradient.Rotation = 90
 	local shade = ColorSequence.new({
@@ -562,9 +578,9 @@ local function chunky(b: GuiButton): (Frame, UIStroke)
 	-- the gradient shows true); every other colour keeps the white-to-grey shading.
 	local function sync()
 		local c = b.BackgroundColor3
-		if c == BUY then
+		if c == Palette.BUY then
 			face.BackgroundColor3 = Color3.new(1, 1, 1)
-			gradient.Color = ColorSequence.new(BUY, BUY_LOW)
+			gradient.Color = ColorSequence.new(Palette.BUY, Palette.BUY_LOW)
 		else
 			face.BackgroundColor3 = c
 			gradient.Color = shade
@@ -578,11 +594,13 @@ local function chunky(b: GuiButton): (Frame, UIStroke)
 	scale.Parent = b
 	local hovered = false
 	local function to(target: number, seconds: number)
-		TweenService:Create(
-			scale,
-			TweenInfo.new(seconds, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-			{ Scale = target }
-		):Play()
+		Services.TweenService
+			:Create(
+				scale,
+				TweenInfo.new(seconds, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+				{ Scale = target }
+			)
+			:Play()
 	end
 	b.MouseEnter:Connect(function()
 		hovered = true
@@ -634,7 +652,7 @@ local function button(parent: Instance, text: string, color: Color3): TextButton
 	pad.Parent = label
 	local textStroke = Instance.new("UIStroke")
 	textStroke.Thickness = 2
-	textStroke.Color = OUTLINE
+	textStroke.Color = Palette.OUTLINE
 	textStroke.Parent = label
 	local function mirror()
 		label.Text = b.Text
@@ -665,7 +683,7 @@ function showBanner(text: string, sub: string?, seconds: number, color: Color3?)
 	title.Position = UDim2.fromScale(0.5, 0.3)
 	title.Size = UDim2.fromScale(0.7, 0)
 	title:FindFirstChildOfClass("UIStroke").Thickness = 4
-	TweenService
+	Services.TweenService
 		:Create(
 			title,
 			TweenInfo.new(0.35, Enum.EasingStyle.Back),
@@ -724,7 +742,9 @@ do
 		local pop = Instance.new("UIScale")
 		pop.Scale = 0.6
 		pop.Parent = label
-		TweenService:Create(pop, TweenInfo.new(0.25, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+		Services.TweenService
+			:Create(pop, TweenInfo.new(0.25, Enum.EasingStyle.Back), { Scale = 1 })
+			:Play()
 		local labels = {}
 		for _, child in holder:GetChildren() do
 			if child:IsA("TextLabel") then
@@ -740,8 +760,8 @@ do
 		task.delay(3.2, function()
 			if label.Parent then
 				local fade = TweenInfo.new(0.3)
-				TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
-				TweenService:Create(outline, fade, { Transparency = 1 }):Play()
+				Services.TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
+				Services.TweenService:Create(outline, fade, { Transparency = 1 }):Play()
 				task.delay(0.3, function()
 					label:Destroy()
 				end)
@@ -762,7 +782,7 @@ end
 -- Blood Moon / King state in the moon line, with a thin bar. On touch screens (jump button
 -- bottom right) the stack sits top right instead. The world MeterRing around the Giant Jack
 -- still fills. The top centre belongs to the objective banner; the centre stays clear.
-local KING_FILL = ColorSequence.new(Color3.fromRGB(200, 25, 45), Color3.fromRGB(255, 120, 60))
+Palette.KING_FILL = ColorSequence.new(Color3.fromRGB(200, 25, 45), Color3.fromRGB(255, 120, 60))
 do
 	local chip = Instance.new("Frame")
 	chip.Name = "PhaseChip"
@@ -770,12 +790,13 @@ do
 	chip.Size = UDim2.fromScale(0.24, 0.105)
 	chip.Parent = gui
 	local function place()
-		local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+		local touch = Services.UserInputService.TouchEnabled
+			and not Services.UserInputService.KeyboardEnabled
 		chip.AnchorPoint = touch and Vector2.new(1, 0) or Vector2.new(1, 1)
 		chip.Position = touch and UDim2.fromScale(0.988, 0.012) or UDim2.fromScale(0.988, 0.975)
 	end
 	place()
-	UserInputService.LastInputTypeChanged:Connect(place)
+	Services.UserInputService.LastInputTypeChanged:Connect(place)
 	local spookyLine = textLabel(chip, "", Color3.fromRGB(255, 190, 120))
 	spookyLine.Name = "Spooky"
 	spookyLine.Position = UDim2.fromScale(0, 0.035 / 0.105)
@@ -832,7 +853,7 @@ do
 		local phase = state:GetAttribute("Phase") or "Day"
 		local ends = state:GetAttribute("PhaseEnds") or 0
 		local left = math.max(0, ends - now)
-		label.Text = phase == "BloodMoon" and ("KING NIGHT " .. clockText(left))
+		label.Text = phase == "BloodMoon" and ("KING FIGHT " .. clockText(left))
 			or ((phase ~= "Day" and "Day in " or "Midnight in ") .. clockText(left))
 		if (state:GetAttribute("PurgeEnds") or 0) > now then
 			label.Text = "THE PURGE " .. clockText(state:GetAttribute("PurgeEnds") - now)
@@ -845,7 +866,7 @@ do
 		label.TextColor3 = left <= 10 and Color3.fromRGB(255, 59, 59) or Color3.new(1, 1, 1)
 		if phase == "Day" and left <= 5 and left > 0 and warnedFor ~= ends then
 			warnedFor = ends
-			toast("Midnight in 5s...", "ALL PUMPKINS RESET!")
+			toast("Midnight in 5s...", "Nests restock soon!")
 		end
 		-- Spooky Hour line.
 		local spookyEnds = state:GetAttribute("SpookyEnds")
@@ -927,7 +948,7 @@ do
 	local iconScale = Instance.new("UIScale")
 	iconScale.Parent = icon
 	-- The money number: 36 px, green with a thick dark stroke.
-	candyBig = textLabel(stats, "", MONEY)
+	candyBig = textLabel(stats, "", Palette.MONEY)
 	candyBig.Name = "Money"
 	candyBig.Position = UDim2.fromScale(0.16, 0.035 / 0.09)
 	candyBig.Size = UDim2.fromScale(0.65, 0.055 / 0.09)
@@ -938,7 +959,7 @@ do
 	local moneyStroke = candyBig:FindFirstChildOfClass("UIStroke") :: UIStroke
 	moneyStroke.Thickness = 3
 	moneyStroke.Color = Color3.fromRGB(11, 42, 6)
-	incomeLabel = textLabel(stats, "", MONEY)
+	incomeLabel = textLabel(stats, "", Palette.MONEY)
 	incomeLabel.Name = "Income"
 	incomeLabel.Size = UDim2.fromScale(0.35, 0.30)
 	incomeLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -985,24 +1006,26 @@ do
 			shown.Value = candyValue.Value
 			return
 		end
-		roll = TweenService:Create(
+		roll = Services.TweenService:Create(
 			shown,
 			TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 			{ Value = candyValue.Value }
 		)
 		roll:Play()
-		local up = TweenService:Create(
+		local up = Services.TweenService:Create(
 			iconScale,
 			TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 			{ Scale = 1.25 }
 		)
 		up:Play()
 		up.Completed:Once(function()
-			TweenService:Create(
-				iconScale,
-				TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-				{ Scale = 1 }
-			):Play()
+			Services.TweenService
+				:Create(
+					iconScale,
+					TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+					{ Scale = 1 }
+				)
+				:Play()
 		end)
 	end
 	player:GetAttributeChangedSignal("Income"):Connect(refreshIncome)
@@ -1025,18 +1048,20 @@ do
 	fxGui.Parent = player:WaitForChild("PlayerGui")
 	local function punch()
 		for target, size in { [punchScale] = 1.1, [iconPunch] = 1.25 } do
-			local up = TweenService:Create(
+			local up = Services.TweenService:Create(
 				target,
 				TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 				{ Scale = size }
 			)
 			up:Play()
 			up.Completed:Once(function()
-				TweenService:Create(
-					target,
-					TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-					{ Scale = 1 }
-				):Play()
+				Services.TweenService
+					:Create(
+						target,
+						TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+						{ Scale = 1 }
+					)
+					:Play()
 			end)
 		end
 	end
@@ -1046,7 +1071,7 @@ do
 		if amount <= 0 then
 			return
 		end
-		local plus = textLabel(statsFrame, "+" .. short(amount), MONEY)
+		local plus = textLabel(statsFrame, "+" .. short(amount), Palette.MONEY)
 		-- Big enough to read at a glance: 30 px tall, a thick dark stroke, drawn over the HUD,
 		-- held for ~0.8 s before it fades.
 		plus.Name = "CandyTick"
@@ -1066,14 +1091,17 @@ do
 		local scale = Instance.new("UIScale")
 		scale.Scale = 0.4
 		scale.Parent = plus
-		TweenService:Create(scale, TweenInfo.new(0.22, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+		Services.TweenService
+			:Create(scale, TweenInfo.new(0.22, Enum.EasingStyle.Back), { Scale = 1 })
+			:Play()
 		local rise = TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		TweenService:Create(plus, rise, { Position = plus.Position + UDim2.fromOffset(16, 0) })
+		Services.TweenService
+			:Create(plus, rise, { Position = plus.Position + UDim2.fromOffset(16, 0) })
 			:Play()
 		local fade =
 			TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.85)
-		TweenService:Create(plus, fade, { TextTransparency = 1 }):Play()
-		TweenService:Create(s, fade, { Transparency = 1 }):Play()
+		Services.TweenService:Create(plus, fade, { TextTransparency = 1 }):Play()
+		Services.TweenService:Create(s, fade, { Transparency = 1 }):Play()
 		task.delay(1.3, function()
 			plus:Destroy()
 		end)
@@ -1102,7 +1130,7 @@ do
 			)
 			candy.Parent = fxGui
 			task.delay((i - 1) * 0.05, function()
-				local fly = TweenService:Create(
+				local fly = Services.TweenService:Create(
 					candy,
 					TweenInfo.new(0.55, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
 					{
@@ -1125,7 +1153,6 @@ end
 local function refreshCarry()
 	local n = player:GetAttribute("Carry") or 0
 	local cap = Config.BaseCarry
-		+ math.min(Config.Upgrades.Stack.max, player:GetAttribute("Up_Stack") or 0)
 	local id = player:GetAttribute("Tool") or Config.StartTool
 	local name = id
 	for _, tool in Config.Tools do
@@ -1189,7 +1216,8 @@ local function pill(text: string, color: Color3, order: number): TextButton
 		local aspect = Instance.new("UIAspectRatioConstraint")
 		aspect.Parent = b
 		local function mobile()
-			local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+			local touch = Services.UserInputService.TouchEnabled
+				and not Services.UserInputService.KeyboardEnabled
 			b.Text = touch and "" or name
 			icon.Size = UDim2.fromScale(touch and 0.8 or 0.32, 0.7)
 			aspect.AspectRatio = 1
@@ -1201,7 +1229,7 @@ local function pill(text: string, color: Color3, order: number): TextButton
 			end
 		end
 		mobile()
-		UserInputService.LastInputTypeChanged:Connect(mobile)
+		Services.UserInputService.LastInputTypeChanged:Connect(mobile)
 	end
 	b.LayoutOrder = order
 	for _, d in b:GetDescendants() do
@@ -1234,7 +1262,7 @@ end
 -- corner, a 0 -> 1 pop-in (0.3 s Back Out), and a dim over the world (its own ScreenGui under
 -- the HUD) while any panel is open. A click on the
 -- dim closes the open panel. grid = the items sit in a 3-column grid of cards (gridCard).
-local CARD_GREY = Color3.fromRGB(236, 238, 244)
+Palette.CARD_GREY = Color3.fromRGB(236, 238, 244)
 local panelFrames: { Frame } = {}
 local panelDim: TextButton
 do
@@ -1275,10 +1303,15 @@ local function refreshDim()
 	statsFrame.Visible = not anyPanelOpen()
 	if anyPanelOpen() then
 		panelDim.Visible = true
-		TweenService:Create(panelDim, TweenInfo.new(0.2), { BackgroundTransparency = 0.5 }):Play()
+		Services.TweenService
+			:Create(panelDim, TweenInfo.new(0.2), { BackgroundTransparency = 0.5 })
+			:Play()
 	elseif panelDim.Visible then
-		local fade =
-			TweenService:Create(panelDim, TweenInfo.new(0.2), { BackgroundTransparency = 1 })
+		local fade = Services.TweenService:Create(
+			panelDim,
+			TweenInfo.new(0.2),
+			{ BackgroundTransparency = 1 }
+		)
 		fade:Play()
 		fade.Completed:Once(function()
 			panelDim.Visible = anyPanelOpen()
@@ -1312,12 +1345,12 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	local aspect = Instance.new("UIAspectRatioConstraint")
 	aspect.AspectRatio = Config.UI.panelAspect
 	aspect.Parent = frame
-	frame.BackgroundColor3 = CHARCOAL
+	frame.BackgroundColor3 = Palette.CHARCOAL
 	frame.Visible = false
 	frame.ZIndex = 10
 	frame.Parent = gui
 	corner(frame, 16)
-	stroke(frame, 3).Color = ORANGE
+	stroke(frame, 3).Color = Palette.ORANGE
 	local kind = string.find(title, "Index") and "Index"
 		or (string.find(title, "Haunt") or string.find(title, "Rebirth")) and "Haunt"
 		or string.find(title, "Admin") and "Admin"
@@ -1382,11 +1415,13 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	frame:GetPropertyChangedSignal("Visible"):Connect(function()
 		if frame.Visible then
 			pop.Scale = 0
-			TweenService:Create(
-				pop,
-				TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-				{ Scale = 1 }
-			):Play()
+			Services.TweenService
+				:Create(
+					pop,
+					TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+					{ Scale = 1 }
+				)
+				:Play()
 		end
 		refreshDim()
 	end)
@@ -1433,12 +1468,12 @@ do
 			{ "Reset my progress", "reset" },
 			{ "Give candy", "candy" },
 			{ "Unlock all zones", "zone" },
-			{ "Start King Night", "king" },
+			{ "Start King Fight", "king" },
 			{ "Start Spooky Hour", "spooky" },
 			{ "Start Purge", "purge" },
 		}
 	do
-		local b = button(list, entry[1], i == 1 and Color3.fromRGB(219, 39, 48) or PURPLE)
+		local b = button(list, entry[1], i == 1 and Color3.fromRGB(219, 39, 48) or Palette.PURPLE)
 		b.Size = UDim2.new(1, 0, 0, 48)
 		b.LayoutOrder = i == 1 and 1 or i + 1
 		if i == 1 then
@@ -1497,17 +1532,17 @@ local function card(
 	local c = Instance.new("Frame")
 	c.Size = UDim2.new(1, -4, 0, 78)
 	c.LayoutOrder = order
-	c.BackgroundColor3 = CARD_GREY
+	c.BackgroundColor3 = Palette.CARD_GREY
 	c.Parent = list
 	corner(c, 14)
-	stroke(c, 2.5).Color = OUTLINE
+	stroke(c, 2.5).Color = Palette.OUTLINE
 	local dot = Instance.new("Frame")
 	dot.Position = UDim2.fromOffset(12, 14)
 	dot.Size = UDim2.fromOffset(50, 50)
 	dot.BackgroundColor3 = color
 	dot.Parent = c
 	corner(dot)
-	stroke(dot, 2.5).Color = OUTLINE
+	stroke(dot, 2.5).Color = Palette.OUTLINE
 	local name = textLabel(c, title, Color3.fromRGB(255, 255, 255), "title")
 	name.Position = UDim2.fromOffset(74, 6)
 	name.Size = UDim2.new(1, -330, 0, 32)
@@ -1543,10 +1578,10 @@ local function gridCard(
 ): GridCard
 	local c = Instance.new("Frame")
 	c.LayoutOrder = order
-	c.BackgroundColor3 = CARD_GREY
+	c.BackgroundColor3 = Palette.CARD_GREY
 	c.Parent = list
 	corner(c, 14)
-	stroke(c, 2.5).Color = OUTLINE
+	stroke(c, 2.5).Color = Palette.OUTLINE
 	local icon = Instance.new("Frame")
 	icon.AnchorPoint = Vector2.new(0.5, 0)
 	icon.Position = UDim2.new(0.5, 0, 0, 12)
@@ -1554,7 +1589,7 @@ local function gridCard(
 	icon.BackgroundColor3 = color
 	icon.Parent = c
 	corner(icon)
-	stroke(icon, 3).Color = OUTLINE
+	stroke(icon, 3).Color = Palette.OUTLINE
 	local shine = Instance.new("Frame")
 	shine.Position = UDim2.fromOffset(14, 9)
 	shine.Size = UDim2.fromOffset(18, 12)
@@ -1574,7 +1609,7 @@ local function gridCard(
 	info.Position = UDim2.new(0, 10, 0, 110)
 	info.Size = UDim2.new(1, -20, 0, 40)
 	info.TextWrapped = true
-	local b = button(c, "", BUY)
+	local b = button(c, "", Palette.BUY)
 	b.AnchorPoint = Vector2.new(0.5, 1)
 	b.Position = UDim2.new(0.5, 0, 1, -14)
 	b.Size = UDim2.new(1, -24, 0, 46)
@@ -1595,7 +1630,7 @@ local function cardState(gc: GridCard, look: string, text: string)
 	local owned, locked = look == "owned", look == "locked"
 	gc.frame.BackgroundColor3 = owned and Color3.fromRGB(110, 215, 80)
 		or locked and Color3.fromRGB(196, 198, 208)
-		or CARD_GREY
+		or Palette.CARD_GREY
 	gc.icon.BackgroundColor3 = locked and gc.color:Lerp(Color3.fromRGB(120, 120, 130), 0.65)
 		or gc.color
 	gc.lock.Visible = locked
@@ -1606,7 +1641,7 @@ local function cardState(gc: GridCard, look: string, text: string)
 		gc.tag.Text = text
 	else
 		gc.button.Text = text
-		gc.button.BackgroundColor3 = locked and Color3.fromRGB(150, 150, 162) or BUY
+		gc.button.BackgroundColor3 = locked and Color3.fromRGB(150, 150, 162) or Palette.BUY
 	end
 end
 
@@ -1635,7 +1670,7 @@ do
 		local b = gc.button
 		b.Activated:Connect(function()
 			if not tool.cost then
-				hint("Only the Blood Moon MVP gets the " .. tool.name .. "!")
+				hint("Only the King Fight MVP gets the " .. tool.name .. "!")
 				return
 			end
 			local ok, message = buyTool:InvokeServer(tool.id)
@@ -1673,16 +1708,16 @@ do
 end
 local upgradeCards: { [string]: GridCard } = {}
 local refreshUpgradeCards -- forward: a failed buy shows its reason, then refreshes
--- Sharp Blade (Mallet) is cut; Lucky Swing shows once its gate opens.
-local UPGRADE_ORDER = { "Boots" }
-local UPGRADE_COLOR = {
+-- Only Boots remains in the upgrade shop.
+Palette.UPGRADE_ORDER = { "Boots" }
+Palette.UPGRADE_COLOR = {
 	Boots = Color3.fromRGB(255, 210, 65),
 	Stack = Color3.fromRGB(255, 150, 50),
 	Lucky = Color3.fromRGB(110, 210, 90),
 }
-for i, id in UPGRADE_ORDER do
+for i, id in Palette.UPGRADE_ORDER do
 	local info = Config.Upgrades[id]
-	local gc = gridCard(upgradeList, i, UPGRADE_COLOR[id], info.title, info.text)
+	local gc = gridCard(upgradeList, i, Palette.UPGRADE_COLOR[id], info.title, info.text)
 	upgradeCards[id] = gc
 	local b = gc.button
 	b.Activated:Connect(function()
@@ -1713,7 +1748,7 @@ function refreshUpgradeCards()
 		end
 	end
 end
-for _, id in UPGRADE_ORDER do
+for _, id in Palette.UPGRADE_ORDER do
 	player:GetAttributeChangedSignal("Up_" .. id):Connect(refreshUpgradeCards)
 end
 player:GetAttributeChangedSignal("Unlock_LuckySwing"):Connect(refreshUpgradeCards)
@@ -1727,30 +1762,30 @@ refreshUpgradeCards()
 
 -- Pumpkin Index: a book of every seed x finish. Selling a new kind fills it in. -------------
 
-local FINISHES = { "Plain", "Glowing", "Ghostly", "Candy", "Cursed" }
+Palette.FINISHES = { "Plain", "Glowing", "Ghostly", "Candy", "Cursed" }
 local indexPanel, indexList = panel("🎃 Pumpkin Index!")
 local indexCells = {}
 for i, seed in Config.Seeds do
 	local row = Instance.new("Frame")
 	row.Size = UDim2.new(1, -4, 0, 56)
 	row.LayoutOrder = i
-	row.BackgroundColor3 = CARD_GREY
+	row.BackgroundColor3 = Palette.CARD_GREY
 	row.Parent = indexList
 	corner(row, 14)
-	stroke(row, 2.5).Color = OUTLINE
+	stroke(row, 2.5).Color = Palette.OUTLINE
 	local name = textLabel(row, seed.name, Color3.fromRGB(255, 255, 255), "title")
 	name.Size = UDim2.fromScale(0.20, 0.8)
 	name.Position = UDim2.fromScale(0.015, 0.1)
 	name.TextXAlignment = Enum.TextXAlignment.Left
 	indexCells[seed.id] = { name = name }
-	for k, finish in FINISHES do
+	for k, finish in Palette.FINISHES do
 		local cell = Instance.new("Frame")
 		cell.Size = UDim2.fromScale(0.14, 0.8)
 		cell.Position = UDim2.fromScale(0.24 + (k - 1) * 0.15, 0.1)
 		cell.BackgroundColor3 = Color3.fromRGB(70, 62, 84)
 		cell.Parent = row
 		corner(cell, 10)
-		stroke(cell, 2.5).Color = OUTLINE
+		stroke(cell, 2.5).Color = Palette.OUTLINE
 		local label = textLabel(cell, "?", Color3.fromRGB(150, 140, 160))
 		label.Size = UDim2.new(1, -8, 1, -8)
 		label.Position = UDim2.fromOffset(4, 4)
@@ -1771,7 +1806,7 @@ local function refreshIndex()
 	local total = 0
 	for _, seed in Config.Seeds do
 		local all = true
-		for k, finish in FINISHES do
+		for k, finish in Palette.FINISHES do
 			local parts = indexCells[seed.id][finish]
 			parts.cell.Visible = brew or k == 1
 			if not (brew or k == 1) then
@@ -1795,7 +1830,7 @@ local function refreshIndex()
 		indexCells[seed.id].name.Text = seed.name .. ((all and brew) and " +10%" or "")
 	end
 	indexCount.Text =
-		string.format("Collected %d/%d", total, #Config.Seeds * (brew and #FINISHES or 1))
+		string.format("Collected %d/%d", total, #Config.Seeds * (brew and #Palette.FINISHES or 1))
 end
 player:GetAttributeChangedSignal("Index"):Connect(refreshIndex)
 player:GetAttributeChangedSignal("Unlock_Brew"):Connect(refreshIndex)
@@ -1819,7 +1854,7 @@ do
 		music.Looped = true
 		music.Volume = 0
 		music.SoundGroup = FarmFX.groups.Music
-		music.Parent = SoundService
+		music.Parent = Services.SoundService
 		music:Play()
 		tracks[phase] = music
 	end
@@ -1828,7 +1863,7 @@ do
 		local phase = state:GetAttribute("Phase") or "Day"
 		for name, music in tracks do
 			local target = (musicOn and name == phase) and Config.MusicVolume or 0
-			TweenService:Create(music, TweenInfo.new(2), { Volume = target }):Play()
+			Services.TweenService:Create(music, TweenInfo.new(2), { Volume = target }):Play()
 		end
 	end
 	state:GetAttributeChangedSignal("Phase"):Connect(refreshMusic)
@@ -1838,7 +1873,9 @@ do
 		local fast = state:GetAttribute("SpookyEnds") ~= nil
 		for name, music in tracks do
 			local speed = (fast and name == "Day") and 1.12 or 1
-			TweenService:Create(music, TweenInfo.new(1.5), { PlaybackSpeed = speed }):Play()
+			Services.TweenService
+				:Create(music, TweenInfo.new(1.5), { PlaybackSpeed = speed })
+				:Play()
 		end
 	end
 	state:GetAttributeChangedSignal("SpookyEnds"):Connect(refreshTempo)
@@ -1886,8 +1923,7 @@ do
 		{
 			Sell = "The Witch buys pumpkins now! Pick some up from your base and sell them.",
 			Brew = "The Magic Cauldrons are open! Brew pumpkins for x2 to x10.",
-			LuckySwing = "New upgrade in the Shop: Lucky Swing!",
-			King = "The Pumpkin King wakes in every Blood Moon. Bonk him for candy!",
+			King = "Join the King Fight at the throne. Bonk him for candy!",
 			Haunt = "Rebirth is open! Finish the Throne quest, own a Legendary and bring 5M candy.",
 		}
 	do
@@ -1923,14 +1959,14 @@ hauntGo.Position = UDim2.new(1, -12, 0.5, 0)
 hauntGo.Size = UDim2.fromOffset(200, 52)
 -- Soul skill tree: a column per branch, three nodes top to bottom joined by short lines.
 -- Node states: owned (bright, check), buyable (pulsing outline, cost), locked (dim, lock).
-local BRANCH_COLOR: { [string]: Color3 } = {
+Palette.BRANCH_COLOR = {
 	Farmer = Color3.fromRGB(255, 140, 40),
 	Witch = Color3.fromRGB(165, 95, 255),
 	Hunter = Color3.fromRGB(235, 60, 60),
 }
-local BRANCH_ICON: { [string]: string } = { Farmer = "🌱", Witch = "🧪", Hunter = "🔨" }
-local DIM_TEXT = Color3.fromRGB(150, 140, 160)
-local NODE_H, LINK_H, TREE_TOP, BRANCH_H = 80, 16, 34, 30
+Palette.BRANCH_ICON = { Farmer = "🌱", Witch = "🧪", Hunter = "🔨" }
+Palette.DIM_TEXT = Color3.fromRGB(150, 140, 160)
+Palette.NODE_H, Palette.LINK_H, Palette.TREE_TOP, Palette.BRANCH_H = 80, 16, 34, 30
 local skillAt: { [string]: any } = {} -- "Branch:tier" -> skill
 for _, skill in Config.Skills do
 	skillAt[skill.branch .. ":" .. skill.tier] = skill
@@ -1954,7 +1990,12 @@ local skillNodes: { SkillNode } = {}
 local tree = Instance.new("Frame")
 tree.LayoutOrder = 2
 tree.BackgroundTransparency = 1
-tree.Size = UDim2.new(1, -10, 0, TREE_TOP + BRANCH_H + 3 * NODE_H + 2 * LINK_H + 6)
+tree.Size = UDim2.new(
+	1,
+	-10,
+	0,
+	Palette.TREE_TOP + Palette.BRANCH_H + 3 * Palette.NODE_H + 2 * Palette.LINK_H + 6
+)
 tree.Parent = hauntList
 local treeHead = textLabel(tree, "", Color3.fromRGB(200, 160, 255))
 treeHead.Size = UDim2.new(1, 0, 0, 28)
@@ -1996,27 +2037,31 @@ local function onNodeClicked(node: SkillNode)
 end
 
 for b, branch in Config.SkillBranches do
-	local color = BRANCH_COLOR[branch] or Color3.fromRGB(200, 200, 200)
+	local color = Palette.BRANCH_COLOR[branch] or Color3.fromRGB(200, 200, 200)
 	local col = Instance.new("Frame")
 	col.BackgroundTransparency = 1
-	col.Position = UDim2.new((b - 1) / 3, 4, 0, TREE_TOP)
-	col.Size = UDim2.new(1 / 3, -8, 1, -TREE_TOP)
+	col.Position = UDim2.new((b - 1) / 3, 4, 0, Palette.TREE_TOP)
+	col.Size = UDim2.new(1 / 3, -8, 1, -Palette.TREE_TOP)
 	col.Parent = tree
-	local head =
-		textLabel(col, (BRANCH_ICON[branch] or "") .. " " .. string.upper(branch), color, "title")
-	head.Size = UDim2.new(1, 0, 0, BRANCH_H - 4)
+	local head = textLabel(
+		col,
+		(Palette.BRANCH_ICON[branch] or "") .. " " .. string.upper(branch),
+		color,
+		"title"
+	)
+	head.Size = UDim2.new(1, 0, 0, Palette.BRANCH_H - 4)
 	for tier = 1, 3 do
 		local skill = skillAt[branch .. ":" .. tier]
 		if not skill then
 			continue
 		end
-		local y = BRANCH_H + (tier - 1) * (NODE_H + LINK_H)
+		local y = Palette.BRANCH_H + (tier - 1) * (Palette.NODE_H + Palette.LINK_H)
 		local link: Frame? = nil
 		if tier > 1 then
 			local l = Instance.new("Frame")
 			l.AnchorPoint = Vector2.new(0.5, 0)
-			l.Position = UDim2.new(0.5, 0, 0, y - LINK_H)
-			l.Size = UDim2.fromOffset(6, LINK_H)
+			l.Position = UDim2.new(0.5, 0, 0, y - Palette.LINK_H)
+			l.Size = UDim2.fromOffset(6, Palette.LINK_H)
 			l.BorderSizePixel = 0
 			l.BackgroundColor3 = Color3.fromRGB(70, 60, 80)
 			l.Parent = col
@@ -2027,7 +2072,7 @@ for b, branch in Config.SkillBranches do
 		nodeButton.Text = ""
 		nodeButton.AutoButtonColor = true
 		nodeButton.Position = UDim2.fromOffset(0, y)
-		nodeButton.Size = UDim2.new(1, 0, 0, NODE_H)
+		nodeButton.Size = UDim2.new(1, 0, 0, Palette.NODE_H)
 		nodeButton.BackgroundColor3 = color
 		nodeButton.Parent = col
 		corner(nodeButton, 12)
@@ -2083,7 +2128,7 @@ function refreshTree()
 			statusText, statusColor = "✓ OWNED", textColor
 		elseif ready then
 			node.state = "buyable"
-			node.button.BackgroundColor3 = node.color:Lerp(DARK, 0.55)
+			node.button.BackgroundColor3 = node.color:Lerp(Palette.DARK, 0.55)
 			node.title.Text = skill.title
 			if souls >= skill.cost then
 				statusText = string.format("BUY · %d 👻", skill.cost)
@@ -2094,12 +2139,12 @@ function refreshTree()
 			end
 		else
 			node.state = "locked"
-			node.button.BackgroundColor3 = node.color:Lerp(DARK, 0.82)
+			node.button.BackgroundColor3 = node.color:Lerp(Palette.DARK, 0.82)
 			node.title.Text = "🔒 " .. skill.title
 			node.outline.Color = Color3.fromRGB(20, 10, 30)
 			node.outline.Thickness = 2.5
-			textColor = DIM_TEXT
-			statusText, statusColor = string.format("🔒 %d 👻", skill.cost), DIM_TEXT
+			textColor = Palette.DIM_TEXT
+			statusText, statusColor = string.format("🔒 %d 👻", skill.cost), Palette.DIM_TEXT
 		end
 		node.title.TextColor3 = textColor
 		node.info.TextColor3 = textColor
@@ -2112,7 +2157,7 @@ function refreshTree()
 end
 
 -- Buyable nodes pulse their outline while the Haunt panel is open.
-RunService.Heartbeat:Connect(function()
+Services.RunService.Heartbeat:Connect(function()
 	if not hauntPanel.Visible then
 		return
 	end
@@ -2203,14 +2248,16 @@ local SHOP_ITEMS: { ShopItem } = {
 		kind = "product",
 		name = "CandySmall",
 		title = "Candy Bag",
-		text = "A bag of candy",
+		text = tostring(Config.CandyPackMinutes.CandySmall)
+			.. " minutes of your income (minimum 300 candy)",
 		color = Color3.fromRGB(255, 150, 210),
 	},
 	{
 		kind = "product",
 		name = "CandyBig",
 		title = "Candy Chest",
-		text = "A chest of candy",
+		text = tostring(Config.CandyPackMinutes.CandyBig)
+			.. " minutes of your income (minimum 1.2k candy)",
 		color = Color3.fromRGB(200, 110, 255),
 	},
 }
@@ -2247,9 +2294,9 @@ local function buyShopItem(entry: ShopCard)
 	lastPromptAt = os.clock()
 	task.spawn(pcall, shopRemote.InvokeServer, shopRemote, "prompt")
 	if item.kind == "pass" then
-		MarketplaceService:PromptGamePassPurchase(player, entry.id)
+		Services.MarketplaceService:PromptGamePassPurchase(player, entry.id)
 	else
-		MarketplaceService:PromptProductPurchase(player, entry.id)
+		Services.MarketplaceService:PromptProductPurchase(player, entry.id)
 	end
 end
 
@@ -2269,7 +2316,7 @@ for i, item in SHOP_ITEMS do
 	task.spawn(function()
 		local infoType = item.kind == "pass" and Enum.InfoType.GamePass or Enum.InfoType.Product
 		local ok, product = pcall(function()
-			return MarketplaceService:GetProductInfo(id, infoType)
+			return Services.MarketplaceService:GetProductInfo(id, infoType)
 		end)
 		if ok and type(product) == "table" and type(product.PriceInRobux) == "number" then
 			entry.price = "R$ " .. product.PriceInRobux
@@ -2305,7 +2352,7 @@ do
 		{ name = "Haunt", label = "Rebirth", frame = hauntPanel },
 		{ name = "Robux", label = "💎 Robux", frame = shopPanel },
 	}
-	local TAB_ON, TAB_OFF = BUY, Color3.fromRGB(150, 150, 162)
+	local TAB_ON, TAB_OFF = Palette.BUY, Color3.fromRGB(150, 150, 162)
 	local hasRobux = #shopCards > 0
 	local lastTab = "Scythes"
 	local tabButtons: { { button: TextButton, name: string } } = {}
@@ -2520,7 +2567,7 @@ do
 	local blur = Instance.new("BlurEffect")
 	blur.Name = "RevealBlur"
 	blur.Size = 0
-	blur.Parent = Lighting
+	blur.Parent = Services.Lighting
 	local revealGui = Instance.new("ScreenGui")
 	revealGui.Name = "PatchReveal"
 	revealGui.ResetOnSpawn = false
@@ -2647,15 +2694,21 @@ do
 		-- White flash first (a hatch already flashed pink).
 		if kind ~= "jack" then
 			flash.BackgroundTransparency = 0
-			TweenService:Create(
-				flash,
-				TweenInfo.new(Config.RevealFlash, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-				{ BackgroundTransparency = 1 }
-			):Play()
+			Services.TweenService
+				:Create(
+					flash,
+					TweenInfo.new(
+						Config.RevealFlash,
+						Enum.EasingStyle.Quad,
+						Enum.EasingDirection.In
+					),
+					{ BackgroundTransparency = 1 }
+				)
+				:Play()
 		end
 		play(Config.Sounds.Reveal, isNew and 1.08 or 1, 0.8)
 		task.wait(Config.RevealFlash)
-		TweenService:Create(blur, TweenInfo.new(0.3), { Size = 18 }):Play()
+		Services.TweenService:Create(blur, TweenInfo.new(0.3), { Size = 18 }):Play()
 		if kind == "jack" and seed.order >= 3 then
 			-- Rare and up: confetti over the card.
 			confetti(revealGui)
@@ -2675,7 +2728,9 @@ do
 		catcher.ZIndex = 2
 		catcher.Parent = revealGui
 		Center.register(catcher)
-		TweenService:Create(catcher, TweenInfo.new(0.2), { BackgroundTransparency = 0.45 }):Play()
+		Services.TweenService
+			:Create(catcher, TweenInfo.new(0.2), { BackgroundTransparency = 0.45 })
+			:Play()
 		local cardFrame = Instance.new("Frame")
 		cardFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 		cardFrame.Position = UDim2.fromScale(0.5, 0.46)
@@ -2694,16 +2749,18 @@ do
 		outer.ZIndex = 0
 		outer.Parent = cardFrame
 		corner(outer, 20)
-		stroke(outer, 3).Color = OUTLINE
+		stroke(outer, 3).Color = Palette.OUTLINE
 		-- Pop-in: 0.6 -> 1 (x the HUD scale) with Back easing (overshoots ~1.05).
 		local scale = Instance.new("UIScale")
 		scale.Scale = 0.6 * uiScale.Scale
 		scale.Parent = cardFrame
-		TweenService:Create(
-			scale,
-			TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-			{ Scale = uiScale.Scale }
-		):Play()
+		Services.TweenService
+			:Create(
+				scale,
+				TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+				{ Scale = uiScale.Scale }
+			)
+			:Play()
 
 		-- Light rays in the rarity colour behind the pumpkin.
 		local rays = Instance.new("Frame")
@@ -2765,7 +2822,7 @@ do
 		rarityLabel.ZIndex = 3
 		local rarityStroke = rarityLabel:FindFirstChildOfClass("UIStroke") :: UIStroke
 		rarityStroke.Thickness = 3.5
-		rarityStroke.Color = OUTLINE
+		rarityStroke.Color = Palette.OUTLINE
 		local petDef = pet and Config.Pets and Config.Pets[pet]
 		local nameText = (mutation and (mutation .. " ") or "")
 			.. (petDef and petDef.display or seed.name)
@@ -2780,12 +2837,12 @@ do
 		nameLabel.ZIndex = 3
 		local nameStroke = nameLabel:FindFirstChildOfClass("UIStroke") :: UIStroke
 		nameStroke.Thickness = 4
-		nameStroke.Color = OUTLINE
+		nameStroke.Color = Palette.OUTLINE
 		local incomeText = "+"
 			.. rateShort(rate)
 			.. "/s"
 			.. (weight and string.format(" · %.1f kg", weight) or "")
-		local income = textLabel(cardFrame, incomeText, MONEY)
+		local income = textLabel(cardFrame, incomeText, Palette.MONEY)
 		income.Position = UDim2.fromOffset(12, 344)
 		income.Size = UDim2.new(1, -24, 0, 42)
 		income.ZIndex = 3
@@ -2804,7 +2861,7 @@ do
 			tag.ZIndex = 4
 			tag.Parent = cardFrame
 			corner(tag, 12)
-			stroke(tag, 3.5).Color = OUTLINE
+			stroke(tag, 3.5).Color = Palette.OUTLINE
 			local newLabel = textLabel(tag, "NEW!", Color3.new(1, 1, 1))
 			newLabel.FontFace = fontFace("title", "Heavy", "Italic")
 			newLabel.Position = UDim2.fromOffset(6, 5)
@@ -2812,15 +2869,17 @@ do
 			newLabel.ZIndex = 5
 			local tagScale = Instance.new("UIScale")
 			tagScale.Parent = tag
-			TweenService:Create(
-				tagScale,
-				TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-				{ Scale = 1.12 }
-			):Play()
+			Services.TweenService
+				:Create(
+					tagScale,
+					TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+					{ Scale = 1.12 }
+				)
+				:Play()
 		end
 
 		local angle = 0
-		local spin = RunService.RenderStepped:Connect(function(dt)
+		local spin = Services.RunService.RenderStepped:Connect(function(dt)
 			angle += dt * 1.1
 			model:PivotTo(CFrame.Angles(math.rad(-10), angle, 0))
 			rays.Rotation += dt * 20
@@ -2832,14 +2891,16 @@ do
 			end
 			closed = true
 			spin:Disconnect()
-			TweenService:Create(blur, TweenInfo.new(0.3), { Size = 0 }):Play()
-			local shrink = TweenService:Create(
+			Services.TweenService:Create(blur, TweenInfo.new(0.3), { Size = 0 }):Play()
+			local shrink = Services.TweenService:Create(
 				scale,
 				TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.In),
 				{ Scale = 0 }
 			)
 			shrink:Play()
-			TweenService:Create(catcher, TweenInfo.new(0.15), { BackgroundTransparency = 1 }):Play()
+			Services.TweenService
+				:Create(catcher, TweenInfo.new(0.15), { BackgroundTransparency = 1 })
+				:Play()
 			shrink.Completed:Once(function()
 				catcher:Destroy()
 			end)
@@ -2989,7 +3050,10 @@ do
 			local mine = owner == player.UserId
 			local locked = not locksOff and (patch:GetAttribute("LockedUntil") or 0) > now
 			-- A shielded owner (new farmer) cannot be robbed.
-			local ownerPlayer = not mine and owner ~= 0 and Players:GetPlayerByUserId(owner) or nil
+			local ownerPlayer = not mine
+					and owner ~= 0
+					and Services.Players:GetPlayerByUserId(owner)
+				or nil
 			local robbable = canSteal
 				and ownerPlayer ~= nil
 				and unlocked("PlayerSteal", ownerPlayer)
@@ -3137,18 +3201,18 @@ end
 -- Lighting by phase ----------------------------------------------------------------------------
 
 do
-	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
-	local correction = Lighting:FindFirstChild("PhaseTint") :: ColorCorrectionEffect?
+	local atmosphere = Services.Lighting:FindFirstChildOfClass("Atmosphere")
+	local correction = Services.Lighting:FindFirstChild("PhaseTint") :: ColorCorrectionEffect?
 	if not correction then
 		correction = Instance.new("ColorCorrectionEffect")
 		correction.Name = "PhaseTint"
-		correction.Parent = Lighting
+		correction.Parent = Services.Lighting
 	end
 	local base = {
-		Ambient = Lighting.Ambient,
-		OutdoorAmbient = Lighting.OutdoorAmbient,
-		Brightness = Lighting.Brightness,
-		ClockTime = Lighting.ClockTime,
+		Ambient = Services.Lighting.Ambient,
+		OutdoorAmbient = Services.Lighting.OutdoorAmbient,
+		Brightness = Services.Lighting.Brightness,
+		ClockTime = Services.Lighting.ClockTime,
 		AtmosphereColor = atmosphere and atmosphere.Color or Color3.new(),
 		AtmosphereDecay = atmosphere and atmosphere.Decay or Color3.new(),
 		AtmosphereDensity = atmosphere and atmosphere.Density or 0.3,
@@ -3220,29 +3284,36 @@ do
 		local tint = correction :: ColorCorrectionEffect
 		local look = name and EVENT_LOOK[name]
 		if look then
-			TweenService:Create(Lighting, info, look.lighting):Play()
-			TweenService:Create(tint, info, look.tint):Play()
+			Services.TweenService:Create(Services.Lighting, info, look.lighting):Play()
+			Services.TweenService:Create(tint, info, look.tint):Play()
 			if atmosphere then
-				TweenService:Create(atmosphere, info, look.atmosphere):Play()
+				Services.TweenService:Create(atmosphere, info, look.atmosphere):Play()
 			end
 		else
-			TweenService:Create(Lighting, info, {
-				Ambient = base.Ambient,
-				OutdoorAmbient = base.OutdoorAmbient,
-				Brightness = base.Brightness,
-				ClockTime = base.ClockTime,
-			}):Play()
-			TweenService:Create(
-				tint,
-				info,
-				{ TintColor = Color3.new(1, 1, 1), Brightness = 0, Saturation = 0, Contrast = 0 }
-			):Play()
+			Services.TweenService
+				:Create(Services.Lighting, info, {
+					Ambient = base.Ambient,
+					OutdoorAmbient = base.OutdoorAmbient,
+					Brightness = base.Brightness,
+					ClockTime = base.ClockTime,
+				})
+				:Play()
+			Services.TweenService
+				:Create(tint, info, {
+					TintColor = Color3.new(1, 1, 1),
+					Brightness = 0,
+					Saturation = 0,
+					Contrast = 0,
+				})
+				:Play()
 			if atmosphere then
-				TweenService:Create(atmosphere, info, {
-					Color = base.AtmosphereColor,
-					Decay = base.AtmosphereDecay,
-					Density = base.AtmosphereDensity,
-				}):Play()
+				Services.TweenService
+					:Create(atmosphere, info, {
+						Color = base.AtmosphereColor,
+						Decay = base.AtmosphereDecay,
+						Density = base.AtmosphereDensity,
+					})
+					:Play()
 			end
 		end
 	end
@@ -3265,29 +3336,13 @@ do
 		if phase == lastPhase then
 			return
 		end
-		local previous = lastPhase
 		lastPhase = phase
-		-- The midnight reset keeps its big banner; the other phase news are toasts, and only for
-		-- players whose gate is open (new farmers are never sent to ghosts or the King).
 		if phase == "Midnight" then
-			local hoard = seedById[Config.Zones.Zone1.pets[1]]
-			banner(
-				"ALL PUMPKINS RESET!",
-				string.format(
-					"Midnight! The %s's nest is full of %s Pumpkins again!",
-					Config.Hoards.Zone1.guardian,
-					hoard and hoard.name or "Hoard"
-				),
-				3,
-				Color3.fromRGB(170, 220, 255)
-			)
-
+			toast("Nests restocked!", "Steal a fresh pumpkin!")
 			play(Config.Sounds.Brew, 0.5, 0.8)
 		elseif phase == "BloodMoon" and unlocked("King") then
 			toast("KING FIGHT!", "Pet + loot! Meet the King at the throne!")
 			play(Config.Sounds.Brew, 0.4, 1)
-		elseif previous == "Midnight" and unlocked("PlayerSteal") then
-			toast("Nests restocked!", "Steal a fresh pumpkin!")
 		end
 	end
 	state:GetAttributeChangedSignal("Phase"):Connect(onPhase)
@@ -3355,7 +3410,7 @@ do
 		end
 		local moved: { BasePart } = {}
 		local frames: { CFrame } = {}
-		batConn = RunService.RenderStepped:Connect(function()
+		batConn = Services.RunService.RenderStepped:Connect(function()
 			local root = rootPart()
 			local t = os.clock()
 			local z = root and root.Position.Z
@@ -3466,7 +3521,7 @@ do
 		local base = idleGrip[tool] or tool.Grip
 		idleGrip[tool] = base
 		local character = tool.Parent
-		local owner = Players:GetPlayerFromCharacter(character)
+		local owner = Services.Players:GetPlayerFromCharacter(character)
 		if owner then
 			FarmFX.steps[owner] = step
 		end
@@ -3515,7 +3570,7 @@ do
 			active[tool] = nil
 		end
 		active[tool] = finish
-		conn = RunService.RenderStepped:Connect(function(dt)
+		conn = Services.RunService.RenderStepped:Connect(function(dt)
 			if tool.Parent ~= character or not character.Parent then
 				finish()
 				return
@@ -3621,7 +3676,7 @@ do
 			end
 		end)
 	end
-	RunService.Heartbeat:Connect(function()
+	Services.RunService.Heartbeat:Connect(function()
 		if not FarmFX.held then
 			return
 		end
@@ -3631,7 +3686,7 @@ do
 			attempt()
 		end
 	end)
-	UserInputService.InputEnded:Connect(function(input)
+	Services.UserInputService.InputEnded:Connect(function(input)
 		if
 			input.UserInputType == Enum.UserInputType.MouseButton1
 			or input.UserInputType == Enum.UserInputType.Touch
@@ -3639,7 +3694,7 @@ do
 			FarmFX.held = false
 		end
 	end)
-	UserInputService.WindowFocusReleased:Connect(function()
+	Services.UserInputService.WindowFocusReleased:Connect(function()
 		FarmFX.held = false
 	end)
 	local function hookCharacter(character: Model)
@@ -3712,7 +3767,14 @@ end
 remotes
 	:WaitForChild("Placed").OnClientEvent
 	:Connect(function(who: Player, at: Vector3, income: number)
-		burst(at + Vector3.new(0, 1, 0), Color3.fromRGB(150, 255, 110), 18, 12, SPARKLE, 0.8)
+		burst(
+			at + Vector3.new(0, 1, 0),
+			Color3.fromRGB(150, 255, 110),
+			18,
+			12,
+			Palette.SPARKLE,
+			0.8
+		)
 		burst(at + Vector3.new(0, 0.5, 0), Color3.fromRGB(110, 80, 50), 10, 8)
 		if who == player then
 			play(Config.Sounds.Pick, 0.8, 0.7)
@@ -3736,7 +3798,8 @@ do
 	local rest = setmetatable({}, { __mode = "k" })
 	local squashes, shards, candies, flashes = {}, {}, {}, {}
 	local shardNext, flashNext, collectAt, collectStep = 0, 0, -math.huge, 0
-	local mobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+	local mobile = Services.UserInputService.TouchEnabled
+		and not Services.UserInputService.KeyboardEnabled
 	local goldWash = Instance.new("Frame")
 	goldWash.Name = "GoldenBreakFlash"
 	goldWash.Size = UDim2.fromScale(1, 1)
@@ -3873,7 +3936,7 @@ do
 		local stop = step == 3 and 0.13 or (breaking and 0.11 or 0.045)
 		FarmFX.freezeUntil = math.max(FarmFX.freezeUntil, os.clock() + stop)
 		play(({ Config.Sounds.HitA, Config.Sounds.HitB, Config.Sounds.HitC })[step], 1, 0.55)
-		burst(at + Vector3.new(0, 1, 0), ORANGE, 6, 10, SPARKLE, 0.5)
+		burst(at + Vector3.new(0, 1, 0), Palette.ORANGE, 6, 10, Palette.SPARKLE, 0.5)
 		shake((step == 3 and 0.6 or 0.12) * (mobile and 0.6 or 1), step == 3 and 6 or 4)
 		if part.Parent then
 			juice(part, step, stop)
@@ -3898,7 +3961,7 @@ do
 					Color3.fromRGB(255, 210, 60),
 					Color3.fromRGB(120, 230, 255),
 					Color3.fromRGB(150, 255, 110),
-					ORANGE,
+					Palette.ORANGE,
 				})[(used - 1) % 5 + 1]
 				slot.label.Position, slot.label.Visible = UDim2.fromOffset(start.X, start.Y), true
 				if used >= (mobile and math.ceil(count / 2) or count) then
@@ -3908,7 +3971,7 @@ do
 		end
 		-- Overflow merges into the candy already flying; never allocates another instance.
 	end
-	RunService.RenderStepped:Connect(function(dt)
+	Services.RunService.RenderStepped:Connect(function(dt)
 		local now = os.clock()
 		goldWash.BackgroundTransparency = goldUntil > now
 				and 1 - 0.3 * math.clamp((goldUntil - now) / 0.12, 0, 1)
@@ -4002,11 +4065,11 @@ do
 					damageText(
 						at + Vector3.new((math.random() - 0.5) * 2.5, 3, 0),
 						damage,
-						crit and ORANGE or Color3.new(1, 1, 1)
+						crit and Palette.ORANGE or Color3.new(1, 1, 1)
 					)
 					countHit(at)
 				else
-					burst(at, ORANGE, 3, 10, SPARKLE, 0.5)
+					burst(at, Palette.ORANGE, 3, 10, Palette.SPARKLE, 0.5)
 					play(
 						({ Config.Sounds.HitA, Config.Sounds.HitB, Config.Sounds.HitC })[step],
 						1,
@@ -4028,15 +4091,15 @@ do
 			local delayFor = winner == player and math.max(0, FarmFX.impactAt - os.clock()) or 0
 			task.delay(delayFor, function()
 				local seed = seedById[seedId or ""]
-				local color = seed and seedColor(seed) or ORANGE
+				local color = seed and seedColor(seed) or Palette.ORANGE
 				if winner == player then
 					if FarmFX.snapshot then
 						FarmFX.impact(FarmFX.snapshot, at, FarmFX.step, true)
 					end
 					FarmFX.hasImpact = true
 				end
-				burst(at, color, winner == player and 26 or 13, 24, SPARKLE, 1.1)
-				burst(at, ORANGE, winner == player and 8 or 4, 16, nil, 0.8)
+				burst(at, color, winner == player and 26 or 13, 24, Palette.SPARKLE, 1.1)
+				burst(at, Palette.ORANGE, winner == player and 8 or 4, 16, nil, 0.8)
 				chunks(at, 6)
 				play(Config.Sounds.Break, 1, 0.7)
 				if seedId == "Golden" then
@@ -4076,8 +4139,8 @@ do
 	end)
 end
 remotes:WaitForChild("Harvested").OnClientEvent:Connect(function(who: Player, at: Vector3)
-	burst(at + Vector3.new(0, 1.5, 0), Color3.fromRGB(255, 200, 90), 20, 14, SPARKLE, 0.8)
-	burst(at + Vector3.new(0, 1, 0), Color3.fromRGB(255, 130, 40), 12, 11, SPARKLE, 0.5)
+	burst(at + Vector3.new(0, 1.5, 0), Color3.fromRGB(255, 200, 90), 20, 14, Palette.SPARKLE, 0.8)
+	burst(at + Vector3.new(0, 1, 0), Color3.fromRGB(255, 130, 40), 12, 11, Palette.SPARKLE, 0.5)
 	if who == player then
 		play(Config.Sounds.Pick, 1.1, 0.8)
 		floatText(at + Vector3.new(0, 3, 0), "+1 🎃", Color3.fromRGB(255, 170, 60))
@@ -4087,7 +4150,14 @@ end)
 remotes
 	:WaitForChild("Brewed").OnClientEvent
 	:Connect(function(who: Player, at: Vector3, results: { any })
-		burst(at + Vector3.new(0, 2, 0), Color3.fromRGB(200, 140, 255), 40, 26, SPARKLE, 1.2)
+		burst(
+			at + Vector3.new(0, 2, 0),
+			Color3.fromRGB(200, 140, 255),
+			40,
+			26,
+			Palette.SPARKLE,
+			1.2
+		)
 		burst(at + Vector3.new(0, 2, 0), Color3.fromRGB(150, 90, 255), 16, 12)
 		if who ~= player then
 			return
@@ -4111,7 +4181,7 @@ remotes
 remotes
 	:WaitForChild("Sold").OnClientEvent
 	:Connect(function(who: Player, at: Vector3, total: number, _count: number, raw: number)
-		burst(at + Vector3.new(0, 3, 0), Color3.fromRGB(255, 150, 210), 30, 22, SPARKLE, 1)
+		burst(at + Vector3.new(0, 3, 0), Color3.fromRGB(255, 150, 210), 30, 22, Palette.SPARKLE, 1)
 		if who == player then
 			floatText(
 				at + Vector3.new(0, 7, 0),
@@ -4138,7 +4208,7 @@ remotes
 	:WaitForChild("GhostPopped").OnClientEvent
 	:Connect(function(at: Vector3, by: Player?, candy: number)
 		if candy > 0 then
-			burst(at, Color3.fromRGB(220, 235, 255), 26, 26, SPARKLE, 1.2)
+			burst(at, Color3.fromRGB(220, 235, 255), 26, 26, Palette.SPARKLE, 1.2)
 			-- White poof: a puffy smoke cloud on top of the sparkles.
 			burst(at, Color3.fromRGB(255, 255, 255), 18, 9, nil, 3)
 			play(Config.Sounds.Bonk, 1.25, 0.9)
@@ -4152,7 +4222,7 @@ remotes
 				task.spawn(shake, 0.6, 7)
 			end
 		elseif by == nil then
-			burst(at, Color3.fromRGB(220, 235, 255), 8, 12, SPARKLE, 0.8)
+			burst(at, Color3.fromRGB(220, 235, 255), 8, 12, Palette.SPARKLE, 0.8)
 			burst(at, Color3.fromRGB(255, 255, 255), 6, 6, nil, 1.6)
 			play(Config.Sounds.Bonk, 1.4, 0.6)
 		end
@@ -4173,7 +4243,7 @@ remotes
 				(math.random() - 0.5) * 6,
 				(math.random() - 0.5) * 10
 			)
-		burst(at, Color3.fromRGB(255, 120, 60), stunned and 18 or 10, 14, SPARKLE, 0.9)
+		burst(at, Color3.fromRGB(255, 120, 60), stunned and 18 or 10, 14, Palette.SPARKLE, 0.9)
 		if who == player then
 			damageText(at, power, stunned and Color3.fromRGB(255, 150, 40) or nil)
 			play(Config.Sounds.Bonk, 0.9 + math.min(combo, 10) * 0.03, 0.8)
@@ -4195,7 +4265,7 @@ remotes:WaitForChild("Stomp").OnClientEvent:Connect(function(kind: string, circl
 			lane.Size = Vector3.new(c.width, 0.3, c.length)
 			lane.CFrame = c.cf
 			lane.Parent = workspace
-			TweenService:Create(lane, TweenInfo.new(0.4), { Transparency = 1 }):Play()
+			Services.TweenService:Create(lane, TweenInfo.new(0.4), { Transparency = 1 }):Play()
 			task.delay(0.4, function()
 				lane:Destroy()
 			end)
@@ -4217,7 +4287,7 @@ remotes:WaitForChild("Stomp").OnClientEvent:Connect(function(kind: string, circl
 		ring.Size = Vector3.new(0.3, 2, 2)
 		ring.CFrame = CFrame.new(c.pos + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90))
 		ring.Parent = workspace
-		TweenService
+		Services.TweenService
 			:Create(ring, TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 				Size = Vector3.new(0.3, c.radius * 2.4, c.radius * 2.4),
 				Transparency = 1,
@@ -4261,20 +4331,20 @@ remotes
 				(mine and ("+" .. mine .. " 🍬 for helping! ") or "")
 					.. (mvp and ("MVP: " .. mvp.DisplayName) or "")
 			)
-			burst(kingFace.Position, Color3.fromRGB(255, 220, 120), 120, 60, SPARKLE, 2.4)
+			burst(kingFace.Position, Color3.fromRGB(255, 220, 120), 120, 60, Palette.SPARKLE, 2.4)
 			burst(kingFace.Position, Color3.fromRGB(255, 140, 40), 40, 30)
 			play(Config.Sounds.Reveal, 1, 0.8)
 			task.spawn(shake, 2, 14)
 			local camera = workspace.CurrentCamera
 			camera.FieldOfView = 90
-			TweenService
+			Services.TweenService
 				:Create(camera, TweenInfo.new(0.6, Enum.EasingStyle.Quad), { FieldOfView = 70 })
 				:Play()
 		elseif kind == "wake" then
 			toast("THE PUMPKIN KING WAKES!", "Everyone bonk him!")
 			play(Config.Sounds.Brew, 0.4, 1)
 		elseif kind == "swell" then
-			for _, who in Players:GetPlayers() do
+			for _, who in Services.Players:GetPlayers() do
 				local humanoid = who.Character and who.Character:FindFirstChildOfClass("Humanoid")
 				local animator = humanoid and humanoid:FindFirstChildOfClass("Animator")
 				for _, track in animator and animator:GetPlayingAnimationTracks() or {} do
@@ -4302,13 +4372,13 @@ remotes
 		elseif kind == "escaped" then
 			toast(
 				"THE KING ESCAPED",
-				"Qualifiers receive 25% candy. Next King Night is on the clock."
+				"Qualifiers receive 25% candy. Next King Fight is on the clock."
 			)
 		end
 	end)
 
 remotes:WaitForChild("RainCollected").OnClientEvent:Connect(function(collector: Player, at: Vector3)
-	burst(at, Color3.fromRGB(255, 210, 80), 14, 14, SPARKLE, 0.8)
+	burst(at, Color3.fromRGB(255, 210, 80), 14, 14, Palette.SPARKLE, 0.8)
 	if collector == player then
 		floatText(
 			at + Vector3.new(0, 3, 0),
@@ -4322,7 +4392,7 @@ end)
 -- Zones: gate walls open locally for zones you unlocked, gate signs say UNLOCKED, and a banner
 -- names each zone you walk into. The server keeps every wall solid for everyone else. --------
 
-local ZoneView: { [string]: any } = {}
+local ZoneView: { [string]: any } = { progress = {}, owned = {} }
 do
 	local folders: { [string]: Instance } = {}
 	-- X/Z boxes per zone: { minX, maxX, minZ, maxZ, lane? }. On the lane map one box per zone
@@ -4331,12 +4401,27 @@ do
 	local boxes: { [string]: { { number } } } = {}
 	local wallLook: { [BasePart]: number } = {}
 
-	local function ownedSet(): { [string]: boolean }
+	local function cacheZones()
 		local owned = {}
 		for id in string.gmatch(player:GetAttribute("Zones") or "", "[^,]+") do
 			owned[id] = true
 		end
-		return owned
+		ZoneView.owned = owned
+	end
+	local function cacheProgress()
+		local ok, data = pcall(
+			Services.HttpService.JSONDecode,
+			Services.HttpService,
+			player:GetAttribute("ZoneProgress") or "{}"
+		)
+		ZoneView.progress = ok and type(data) == "table" and data or {}
+	end
+	player:GetAttributeChangedSignal("Zones"):Connect(cacheZones)
+	player:GetAttributeChangedSignal("ZoneProgress"):Connect(cacheProgress)
+	cacheZones()
+	cacheProgress()
+	local function ownedSet(): { [string]: boolean }
+		return ZoneView.owned
 	end
 
 	function ZoneView.has(zoneId: string, owned: { [string]: boolean }?): boolean
@@ -4366,10 +4451,8 @@ do
 
 	function ZoneView.gateCost(zoneId)
 		local before = Config.ZoneOrder[(table.find(Config.ZoneOrder, zoneId) or 1) - 1]
-		local ok, d = pcall(function()
-			return HttpService:JSONDecode(player:GetAttribute("ZoneProgress") or "{}")
-		end)
-		local q = ok and d.quests and before and d.quests[before]
+		local d = ZoneView.progress
+		local q = d.quests and before and d.quests[before]
 		local complete = q
 			and (q.smash or 0) >= Config.Progression.questSmashes
 			and (q.steal or 0) >= Config.Progression.questSteals
@@ -4484,7 +4567,8 @@ do
 		zoneText.Text = def and ((def.emoji or "") .. " " .. def.title) or "🛡 Safe Zone"
 		zoneText.TextColor3 = def and def.color or Color3.fromRGB(190, 255, 170)
 		zonePop.Scale = 1.2
-		TweenService:Create(zonePop, TweenInfo.new(0.3, Enum.EasingStyle.Back), { Scale = 1 })
+		Services.TweenService
+			:Create(zonePop, TweenInfo.new(0.3, Enum.EasingStyle.Back), { Scale = 1 })
 			:Play()
 	end
 	showZone(nil)
@@ -4654,12 +4738,13 @@ do
 	local questToggle = button(gui, "Zone quests", Color3.fromRGB(100, 70, 150))
 	questToggle.Size = UDim2.fromScale(0.11, 0.04)
 	local function placeQuestToggle()
-		local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+		local touch = Services.UserInputService.TouchEnabled
+			and not Services.UserInputService.KeyboardEnabled
 		questToggle.Position = touch and UDim2.fromScale(0.878, 0.14)
 			or UDim2.fromScale(0.878, 0.79)
 	end
 	placeQuestToggle()
-	UserInputService.LastInputTypeChanged:Connect(placeQuestToggle)
+	Services.UserInputService.LastInputTypeChanged:Connect(placeQuestToggle)
 	local questPanel = textLabel(gui, "", Color3.new(1, 1, 1))
 	questPanel.BackgroundColor3 = Config.UI.body
 	questPanel.BackgroundTransparency = 0.1
@@ -4676,11 +4761,7 @@ do
 			questPanel.Visible = false
 			return
 		end
-		local ok, data =
-			pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("ZoneProgress") or "{}")
-		if not ok then
-			return
-		end
+		local data = ZoneView.progress
 		for _, id in Config.ZoneOrder do
 			local folder = garden.Zones:FindFirstChild(id)
 			local z = Config.Zones[id]
@@ -4717,7 +4798,8 @@ do
 		if title.Text ~= verb then
 			title.Text = verb
 			popScale.Scale = 1.18
-			TweenService:Create(popScale, TweenInfo.new(0.3, Enum.EasingStyle.Back), { Scale = 1 })
+			Services.TweenService
+				:Create(popScale, TweenInfo.new(0.3, Enum.EasingStyle.Back), { Scale = 1 })
 				:Play()
 		end
 		if progress.Text ~= sub then
@@ -4919,7 +5001,7 @@ do
 			end
 		end
 		-- Every character (and the tools and pumpkin stacks they hold), not only yours.
-		for _, other in Players:GetPlayers() do
+		for _, other in Services.Players:GetPlayers() do
 			if other.Character then
 				table.insert(skip, other.Character)
 			end
@@ -4961,7 +5043,7 @@ do
 
 	-- A bright wave runs along the arrows toward the target (the crest moves to higher i as time
 	-- goes on); the ring pulses and pings; the marker bobs.
-	RunService.RenderStepped:Connect(function()
+	Services.RunService.RenderStepped:Connect(function()
 		local t = os.clock()
 		local camera = workspace.CurrentCamera
 		edge.Visible = false
@@ -5038,7 +5120,7 @@ do
 			return
 		end
 		local ok, data = pcall(function()
-			return HttpService:JSONDecode(raw)
+			return Services.HttpService:JSONDecode(raw)
 		end)
 		ordersData = ok and type(data) == "table" and data or nil
 	end
@@ -5138,7 +5220,9 @@ do
 			elseif step == 3 then
 				return "Smash pumpkins for 50 candy!", "Swing your scythe", zone
 			elseif step == 4 then
-				return "Buy the Iron Scythe!", "150 candy", stallPosition("Seeds")
+				return "Buy the Iron Scythe!",
+					short(Config.Tools[2].cost) .. " candy",
+					stallPosition("Seeds")
 			else
 				return "Unlock the Graveyard!", "Hold E at the gate", ZoneView.gate("Zone2")
 			end
@@ -5292,7 +5376,7 @@ do
 		) and not anyPanelOpen()
 		vignette.Visible = danger and not safe and not anyPanelOpen()
 	end
-	RunService.RenderStepped:Connect(function()
+	Services.RunService.RenderStepped:Connect(function()
 		refresh()
 		local wave = 0.5 + 0.5 * math.sin(os.clock() * 6)
 		for _, edge in edges do
@@ -5319,7 +5403,8 @@ do
 			for k = 0, 1 do
 				task.delay(k * 0.45, function()
 					flash.BackgroundTransparency = 0.45
-					TweenService:Create(flash, TweenInfo.new(0.4), { BackgroundTransparency = 1 })
+					Services.TweenService
+						:Create(flash, TweenInfo.new(0.4), { BackgroundTransparency = 1 })
 						:Play()
 				end)
 			end
@@ -5332,7 +5417,7 @@ do
 		while true do
 			task.wait(0.3)
 			local mine = "," .. player.UserId .. ","
-			for _, who in Players:GetPlayers() do
+			for _, who in Services.Players:GetPlayers() do
 				local from = who:GetAttribute("StealingFrom")
 				local character = who.Character
 				local want = who ~= player
@@ -5392,7 +5477,7 @@ do
 		label.Size = UDim2.fromScale(1, 1)
 		label.FontFace = fontFace("small")
 		label.TextScaled = true
-		label.TextColor3 = MONEY
+		label.TextColor3 = Palette.MONEY
 		label.Text = "+" .. rateShort(rate)
 		label.Parent = bb
 		local outline = Instance.new("UIStroke")
@@ -5403,16 +5488,20 @@ do
 		pop.Scale = 0.3
 		pop.Parent = label
 		bb.Parent = playerGui
-		TweenService:Create(pop, TweenInfo.new(0.12, Enum.EasingStyle.Back), { Scale = 1 }):Play()
-		TweenService:Create(
-			bb,
-			TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{ StudsOffsetWorldSpace = bb.StudsOffsetWorldSpace + Vector3.new(0, 3, 0) }
-		):Play()
+		Services.TweenService
+			:Create(pop, TweenInfo.new(0.12, Enum.EasingStyle.Back), { Scale = 1 })
+			:Play()
+		Services.TweenService
+			:Create(
+				bb,
+				TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				{ StudsOffsetWorldSpace = bb.StudsOffsetWorldSpace + Vector3.new(0, 3, 0) }
+			)
+			:Play()
 		local fade =
 			TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.5)
-		TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
-		TweenService:Create(outline, fade, { Transparency = 1 }):Play()
+		Services.TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
+		Services.TweenService:Create(outline, fade, { Transparency = 1 }):Play()
 		task.delay(0.85, function()
 			bb:Destroy()
 		end)
@@ -5484,7 +5573,7 @@ do
 			local y = 0.08 + math.random() * 0.4
 			local up = 0.35 + math.random() * 0.2
 			local fall = 1.2 + math.random() * 0.8
-			local out = TweenService:Create(
+			local out = Services.TweenService:Create(
 				bit,
 				TweenInfo.new(up, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 				{
@@ -5494,7 +5583,7 @@ do
 			)
 			out:Play()
 			out.Completed:Once(function()
-				TweenService
+				Services.TweenService
 					:Create(
 						bit,
 						TweenInfo.new(fall, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
@@ -5512,10 +5601,10 @@ do
 	end
 
 	local frame, list = panel("Daily Reward")
-	local daily = pill("Daily", BUY, 4)
+	local daily = pill("Daily", Palette.BUY, 4)
 	local reward = textLabel(list, "Claim today's candy gift!", Color3.new(1, 1, 1))
 	reward.Size = UDim2.new(1, 0, 0, 60)
-	local claim = button(list, "Claim daily gift", BUY)
+	local claim = button(list, "Claim daily gift", Palette.BUY)
 	claim.Size = UDim2.new(1, 0, 0, 60)
 	claim.LayoutOrder = 2
 	local busy = false
@@ -5567,7 +5656,7 @@ do
 		confetti(gui)
 		play(Config.Sounds.Coin, 0.9, 1)
 	end)
-	RunService.Heartbeat:Connect(refresh)
+	Services.RunService.Heartbeat:Connect(refresh)
 	player:GetAttributeChangedSignal("DailyClaimable"):Connect(refresh)
 	refresh()
 end
@@ -5584,14 +5673,16 @@ local function setSprint(on: boolean)
 	sprinting = on
 	remotes:WaitForChild("Sprint"):FireServer(on)
 	local camera = workspace.CurrentCamera
-	TweenService:Create(camera, TweenInfo.new(on and 0.2 or 0.3, Enum.EasingStyle.Quad), {
-		FieldOfView = on and Config.SprintFov or 70,
-	}):Play()
+	Services.TweenService
+		:Create(camera, TweenInfo.new(on and 0.2 or 0.3, Enum.EasingStyle.Quad), {
+			FieldOfView = on and Config.SprintFov or 70,
+		})
+		:Play()
 end
 ContextActionService:BindAction("Sprint", function(_, inputState)
 	if inputState == Enum.UserInputState.Begin then
-		setSprint(not sprinting or UserInputService.KeyboardEnabled)
-	elseif inputState == Enum.UserInputState.End and UserInputService.KeyboardEnabled then
+		setSprint(not sprinting or Services.UserInputService.KeyboardEnabled)
+	elseif inputState == Enum.UserInputState.End and Services.UserInputService.KeyboardEnabled then
 		setSprint(false)
 	end
 	return Enum.ContextActionResult.Pass
@@ -5599,7 +5690,7 @@ end, true, Enum.KeyCode.LeftShift)
 ContextActionService:SetTitle("Sprint", "RUN")
 ContextActionService:SetPosition("Sprint", UDim2.fromScale(0.64, 0.52))
 
-RunService.Heartbeat:Connect(function()
+Services.RunService.Heartbeat:Connect(function()
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if not humanoid then
@@ -5676,7 +5767,7 @@ do
 						Color3.fromRGB(255, 160, 60),
 						20,
 						18,
-						SPARKLE,
+						Palette.SPARKLE,
 						1
 					)
 				end)
@@ -5754,9 +5845,11 @@ local function circlePart(pos: Vector3, radius: number, warn: number, color: Col
 	ring.Color3 = color or Color3.fromRGB(255, 70, 50)
 	ring.Transparency = 0.4
 	ring.Parent = edge
-	TweenService:Create(disc, TweenInfo.new(warn, Enum.EasingStyle.Linear), {
-		Size = Vector3.new(0.2, radius * 2, radius * 2),
-	}):Play()
+	Services.TweenService
+		:Create(disc, TweenInfo.new(warn, Enum.EasingStyle.Linear), {
+			Size = Vector3.new(0.2, radius * 2, radius * 2),
+		})
+		:Play()
 	task.delay(warn + 0.15, function()
 		disc:Destroy()
 		edge:Destroy()
@@ -5799,11 +5892,13 @@ remotes:WaitForChild("Telegraph").OnClientEvent:Connect(
 						rock.Position = c.origin + Vector3.yAxis * c.width / 2
 						rock.Parent = workspace
 						local cfg = Config.GuardTwists.Zone7
-						TweenService:Create(
-							rock,
-							TweenInfo.new(cfg.length / cfg.speed, Enum.EasingStyle.Linear),
-							{ Position = rock.Position + c.direction * cfg.length }
-						):Play()
+						Services.TweenService
+							:Create(
+								rock,
+								TweenInfo.new(cfg.length / cfg.speed, Enum.EasingStyle.Linear),
+								{ Position = rock.Position + c.direction * cfg.length }
+							)
+							:Play()
 						task.delay(cfg.length / cfg.speed, function()
 							rock:Destroy()
 						end)
@@ -5868,7 +5963,7 @@ remotes:WaitForChild("Telegraph").OnClientEvent:Connect(
 					local to = c.pos + Vector3.new(0, 1.5, 0)
 					local t0 = os.clock()
 					local conn
-					conn = RunService.RenderStepped:Connect(function()
+					conn = Services.RunService.RenderStepped:Connect(function()
 						local t = math.min(1, (os.clock() - t0) / 0.45)
 						local p = from:Lerp(to, t) + Vector3.new(0, math.sin(t * math.pi) * 18, 0)
 						seed.Position = p
@@ -6013,7 +6108,7 @@ task.spawn(function()
 	wideFill.BackgroundColor3 = Color3.fromRGB(230, 50, 50)
 	wideFill.Parent = wide
 	local fillGradient = Instance.new("UIGradient")
-	fillGradient.Color = KING_FILL
+	fillGradient.Color = Palette.KING_FILL
 	fillGradient.Parent = wideFill
 	local cap = textLabel(wide, utf8.char(9819), Color3.fromRGB(242, 193, 46))
 	cap.Position = UDim2.fromScale(-0.06, -0.2)
@@ -6045,7 +6140,7 @@ task.spawn(function()
 		wideText.Text = shield and string.format("SHIELD: bonk %d lanterns", shield)
 			or state:GetAttribute("KingStunned") and "WEAK SPOT x2"
 			or string.format("PUMPKIN KING %s/%s", short(hp), short(maxHp))
-		fillGradient.Color = KING_FILL
+		fillGradient.Color = Palette.KING_FILL
 	end
 	for _, attr in { "Phase", "KingHp", "KingMaxHp", "KingShield", "KingShieldMax", "KingStunned" } do
 		state:GetAttributeChangedSignal(attr):Connect(refreshHpBar)
@@ -6053,7 +6148,7 @@ task.spawn(function()
 	refreshHpBar()
 
 	local shown = false
-	RunService.RenderStepped:Connect(function()
+	Services.RunService.RenderStepped:Connect(function()
 		local want = state:GetAttribute("Phase") == "BloodMoon" and kingFace.Transparency < 1
 		if want ~= shown then
 			shown = want
@@ -6138,11 +6233,11 @@ do
 		end)
 		refreshCrown(who)
 	end
-	for _, who in Players:GetPlayers() do
+	for _, who in Services.Players:GetPlayers() do
 		watchPlayer(who)
 	end
-	Players.PlayerAdded:Connect(watchPlayer)
-	Players.PlayerRemoving:Connect(function(who)
+	Services.Players.PlayerAdded:Connect(watchPlayer)
+	Services.Players.PlayerRemoving:Connect(function(who)
 		local bb = crowns[who]
 		crowns[who] = nil
 		if bb then
@@ -6151,7 +6246,7 @@ do
 	end)
 end
 
-UserInputService.InputBegan:Connect(function(input, processed)
+Services.UserInputService.InputBegan:Connect(function(input, processed)
 	if processed then
 		return
 	end
@@ -6254,7 +6349,7 @@ do
 		glow.Parent = p
 		local t0 = os.clock()
 		local conn: RBXScriptConnection
-		conn = RunService.RenderStepped:Connect(function()
+		conn = Services.RunService.RenderStepped:Connect(function()
 			local t = os.clock() - t0
 			local hatched = p:GetAttribute("CarveAt") == nil or p:GetAttribute("Jack") == true
 			if not p.Parent or hatched or t > dur + LATE then
@@ -6347,7 +6442,9 @@ do
 			)
 			task.delay(2.5 + math.random() * 0.2, function()
 				if slab.Parent then
-					TweenService:Create(slab, TweenInfo.new(0.3), { Transparency = 1 }):Play()
+					Services.TweenService
+						:Create(slab, TweenInfo.new(0.3), { Transparency = 1 })
+						:Play()
 				end
 				task.wait(0.32)
 				slab:Destroy()
@@ -6374,26 +6471,30 @@ do
 		play(Config.Sounds.Reveal, 1, 0.8)
 		screenFlash.BackgroundColor3 = Color3.new(1, 1, 1)
 		screenFlash.BackgroundTransparency = 0.1
-		TweenService:Create(
-			screenFlash,
-			TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{ BackgroundTransparency = 1, BackgroundColor3 = Color3.fromRGB(255, 150, 215) }
-		):Play()
+		Services.TweenService
+			:Create(
+				screenFlash,
+				TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				{ BackgroundTransparency = 1, BackgroundColor3 = Color3.fromRGB(255, 150, 215) }
+			)
+			:Play()
 		task.spawn(shake, 0.5, 8)
 		local camera = workspace.CurrentCamera
 		if camera then
-			local out = TweenService:Create(
+			local out = Services.TweenService:Create(
 				camera,
 				TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
 				{ FieldOfView = 85 }
 			)
 			out:Play()
 			out.Completed:Once(function()
-				TweenService:Create(
-					camera,
-					TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-					{ FieldOfView = sprinting and Config.SprintFov or 70 }
-				):Play()
+				Services.TweenService
+					:Create(
+						camera,
+						TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+						{ FieldOfView = sprinting and Config.SprintFov or 70 }
+					)
+					:Play()
 			end)
 		end
 	end
@@ -6419,17 +6520,26 @@ do
 				flash.OutlineTransparency = 0
 				flash.DepthMode = Enum.HighlightDepthMode.Occluded
 				flash.Parent = p
-				TweenService:Create(
-					flash,
-					TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-					{ FillTransparency = 1, OutlineTransparency = 1 }
-				):Play()
+				Services.TweenService
+					:Create(
+						flash,
+						TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+						{ FillTransparency = 1, OutlineTransparency = 1 }
+					)
+					:Play()
 				task.delay(0.55, function()
 					flash:Destroy()
 				end)
-				burst(p.Position + Vector3.new(0, 1, 0), Color3.new(1, 1, 1), 24, 16, SPARKLE, 1)
+				burst(
+					p.Position + Vector3.new(0, 1, 0),
+					Color3.new(1, 1, 1),
+					24,
+					16,
+					Palette.SPARKLE,
+					1
+				)
 				burst(p.Position, Color3.fromRGB(255, 240, 220), 10, 10, nil, 1.4)
-				slabs(p, seed and seedColor(seed) or ORANGE)
+				slabs(p, seed and seedColor(seed) or Palette.ORANGE)
 				play(Config.Sounds.Pop, 1, 0.6)
 			end
 			if ownerId ~= player.UserId or not seed then
@@ -6503,7 +6613,7 @@ do
 			watch(d)
 		end
 	end)
-	RunService.RenderStepped:Connect(function()
+	Services.RunService.RenderStepped:Connect(function()
 		local t = os.clock()
 		for bb, base in tags do
 			if bb.Enabled and bb.Parent then
@@ -6538,7 +6648,7 @@ do
 			task.wait(0.5)
 		end
 	end)
-	RunService.RenderStepped:Connect(function()
+	Services.RunService.RenderStepped:Connect(function()
 		local now = workspace:GetServerTimeNow()
 		for _, p in pets do
 			if not p.Parent or not p:GetAttribute("Placed") or not p:GetAttribute("JackHome") then
@@ -6578,7 +6688,7 @@ do
 		while true do
 			task.wait(0.25)
 			local want: { [BasePart]: boolean } = {}
-			for _, who in Players:GetPlayers() do
+			for _, who in Services.Players:GetPlayers() do
 				local character = who.Character
 				for _, child in character and character:GetChildren() or {} do
 					if child:IsA("BasePart") and child:GetAttribute("Seed") ~= nil then
@@ -6610,7 +6720,7 @@ do
 			end
 		end
 	end)
-	RunService.RenderStepped:Connect(function()
+	Services.RunService.RenderStepped:Connect(function()
 		local t = os.clock()
 		local k = 0
 		for p, halo in halos do
@@ -6647,11 +6757,13 @@ do
 		light.Shadows = false
 		light.Brightness = 1.5
 		light.Parent = d
-		TweenService:Create(
-			light,
-			TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-			{ Brightness = 3 }
-		):Play()
+		Services.TweenService
+			:Create(
+				light,
+				TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+				{ Brightness = 3 }
+			)
+			:Play()
 	end
 	task.spawn(function()
 		local zones = garden:WaitForChild("Zones", 15)
@@ -6725,7 +6837,7 @@ do
 					outline.Parent = p
 					local sparkle = Instance.new("ParticleEmitter")
 					sparkle.Name = "RareSparkle"
-					sparkle.Texture = SPARKLE
+					sparkle.Texture = Palette.SPARKLE
 					sparkle.Color = ColorSequence.new(color:Lerp(Color3.new(1, 1, 1), 0.25))
 					sparkle.LightEmission = 1
 					sparkle.LightInfluence = 0
@@ -6762,10 +6874,10 @@ do
 	bar.BorderSizePixel = 0
 	bar.Parent = statsFrame
 	local fill = Instance.new("Frame")
-	fill.BackgroundColor3 = MONEY
+	fill.BackgroundColor3 = Palette.MONEY
 	fill.BorderSizePixel = 0
 	fill.Parent = bar
-	RunService.Heartbeat:Connect(function()
+	Services.RunService.Heartbeat:Connect(function()
 		local zone = ZoneView.nextLocked()
 		gateLabel.Visible = zone ~= nil
 		bar.Visible = zone ~= nil
@@ -6790,12 +6902,7 @@ do
 		rows[id] = row
 	end
 	local function refresh()
-		local ok, d = pcall(function()
-			return HttpService:JSONDecode(player:GetAttribute("ZoneProgress") or "{}")
-		end)
-		if not ok then
-			return
-		end
+		local d = ZoneView.progress
 		for _, id in Config.ZoneOrder do
 			local zone = Config.Zones[id]
 			local q = d.quests and d.quests[id] or {}
@@ -6872,11 +6979,11 @@ do
 		end)
 		icon(who)
 	end
-	for _, who in Players:GetPlayers() do
+	for _, who in Services.Players:GetPlayers() do
 		hook(who)
 	end
-	Players.PlayerAdded:Connect(hook)
-	Players.PlayerRemoving:Connect(function(who)
+	Services.Players.PlayerAdded:Connect(hook)
+	Services.Players.PlayerRemoving:Connect(function(who)
 		if icons[who] then
 			icons[who]:Destroy()
 			icons[who] = nil
@@ -6895,13 +7002,13 @@ do
 				resultCard.AnchorPoint = Vector2.new(0.5, 0.5)
 				resultCard.Position = UDim2.fromScale(0.5, 0.5)
 				resultCard.Size = UDim2.fromScale(0.62, 0.42)
-				resultCard.BackgroundColor3 = DARK
+				resultCard.BackgroundColor3 = Palette.DARK
 				resultCard.Parent = gui
 				corner(resultCard, 18)
 				Center.register(resultCard)
 				local title = textLabel(
 					resultCard,
-					data.won and "KING NIGHT COMPLETE!" or "King escaped!",
+					data.won and "KING FIGHT COMPLETE!" or "King escaped!",
 					Color3.fromRGB(255, 214, 80)
 				)
 				title.Position = UDim2.fromScale(0.05, 0.06)
@@ -6970,7 +7077,7 @@ do
 		travel.Visible = open
 	end)
 	for i, target in { "My Pen", "Zone Gate", "Shop" } do
-		local b = button(list, target, BUY)
+		local b = button(list, target, Palette.BUY)
 		b.Size = UDim2.new(1, 0, 0, 48)
 		b.LayoutOrder = i
 		b.Activated:Connect(function()
@@ -6996,7 +7103,7 @@ do
 		travel.Visible = false
 		indexPanel.Visible = true
 	end)
-	local daily = button(list, "Daily gift", BUY)
+	local daily = button(list, "Daily gift", Palette.BUY)
 	daily.Size = UDim2.new(1, 0, 0, 42)
 	daily.LayoutOrder = 5
 	daily.Activated:Connect(function()
@@ -7027,7 +7134,7 @@ do
 	local function dash(_, inputState)
 		if
 			inputState ~= Enum.UserInputState.Begin
-			or UserInputService:GetFocusedTextBox()
+			or Services.UserInputService:GetFocusedTextBox()
 			or anyPanelOpen()
 			or dashPending
 		then
@@ -7060,8 +7167,9 @@ do
 		"ScytheDash",
 		UDim2.fromScale(Config.Dash.mobile.X, Config.Dash.mobile.Y)
 	)
-	RunService.Heartbeat:Connect(function()
-		local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+	Services.RunService.Heartbeat:Connect(function()
+		local touch = Services.UserInputService.TouchEnabled
+			and not Services.UserInputService.KeyboardEnabled
 		local unlockedDash = false
 		for i, tool in Config.Tools do
 			if tool.id == player:GetAttribute("Tool") then

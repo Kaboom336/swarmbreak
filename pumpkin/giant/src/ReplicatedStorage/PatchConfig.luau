@@ -540,7 +540,7 @@ local Config = {
 	-- During the Blood Moon the rare ones are more likely.
 	BloodMoonChances = { Glowing = 0.3, Ghostly = 0.3, Candy = 0.25, Cursed = 0.15 },
 
-	BaseCarry = 2,
+	BaseCarry = 3,
 
 	-- Movement: faster than Roblox's 16, sprint on Shift / RUN, each carried pumpkin slows you a bit.
 	WalkSpeed = 16,
@@ -643,7 +643,7 @@ local Config = {
 		},
 		Lucky = {
 			cut = true,
-			title = "Lucky Swing",
+			title = "Retired upgrade",
 			text = "+5% chance of a rarer pumpkin",
 			base = 120,
 			max = 5,
@@ -825,7 +825,7 @@ local Config = {
 			branch = "Hunter",
 			tier = 2,
 			title = "Ghost Bounty",
-			text = "x2 ghost candy",
+			text = "x2 ghost candy in the Throne zone",
 			cost = 2,
 		},
 		{
@@ -862,18 +862,18 @@ local Config = {
 		-- +20% sell value and income, a "VIP" tag over your head and a gold name. Suggested 249 R$.
 		VIP = 0,
 	},
-	-- B = current pen income x OrderIncomeSeconds, so packs grow with the farm.
+	-- Candy packs pay minutes of receipt-time pen income, with a small income floor.
 	Products = {
-		-- Candy Bag: CandySmallB x B candy. Suggested 25 R$.
+		-- Candy Bag: 5 minutes of current pen income. Suggested 25 R$.
 		CandySmall = 0,
-		-- Candy Chest: CandyBigB x B candy. Suggested 129 R$.
+		-- Candy Chest: 20 minutes of current pen income. Suggested 129 R$.
 		CandyBig = 0,
 	},
 	DoubleCandyMult = 2,
 	VipSellBonus = 0.2,
 
-	CandySmallB = 30,
-	CandyBigB = 200,
+	CandyPackMinutes = { CandySmall = 5, CandyBig = 20 },
+	CandyPackIncomeFloor = 1,
 
 	-- Saving: a session lock older than this many seconds counts as free.
 	SaveLockSeconds = 120,
@@ -1136,7 +1136,7 @@ end
 -- Retain legacy IDs; incomes are rebalanced below and older saves receive compensation.
 -- Small pumpkins take 2-3 normal hits with the recommended zone scythe.
 -- Candy remains the audit ladder; damage upgrades reduce time per reward.
-Config.Farm.zoneTools = { 2, 3, 4, 5, 6, 7, 7 }
+Config.Farm.zoneTools = { 1, 3, 4, 5, 6, 7, 7 }
 local ladder = {
 	{ "Orange", "Sunny", "R20 tutorial" },
 	{ "Ghost", "Shadow", "New pets" },
@@ -1150,7 +1150,7 @@ for i, zoneId in Config.ZoneOrder do
 	local z = Config.Zones[zoneId]
 	z.pets = { ladder[i][1], ladder[i][2] }
 	z.candy = ({ 8, 80, 250, 1200, 6000, 30000, 150000 })[i]
-	z.hp = Config.Tools[Config.Farm.zoneTools[i]].damage * 2.5
+	z.hp = math.ceil(Config.Tools[Config.Farm.zoneTools[i]].damage * 2.5)
 	z.unlock = ladder[i][3]
 	z.arrival = Config.Progression.arrivalMinutes[i]
 end

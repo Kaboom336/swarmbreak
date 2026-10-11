@@ -1,3 +1,6 @@
+local Services: { [string]: any } = {}
+local Helpers: { [string]: any } = {}
+local Lookup: { [string]: any } = {}
 -- Steal a Pumpkin: swing your scythe at wild pumpkins in the zones until they pop, carry them
 -- on your head and place them on your base, where they hatch into pets that earn candy every
 -- second. The map is one straight lane along +Z (Config.MapCenterX): the hub with the bases and
@@ -6,21 +9,21 @@
 -- yours). At midnight ghosts raid the bases. Every sale fills the Giant Jack; when it is full the
 -- Blood Moon turns every lock off for a while, then everyone fights the Pumpkin King.
 -- New players meet only the core loop (smash, place, Hoard steal, Shop, zone gates): stealing,
--- locks and ghost raids open after the new-player shield, Sell / Brew / King / Lucky Swing after
+-- locks and ghost raids open after the new-player shield, Sell / Brew / King / retired upgrades after
 -- about 30 minutes and Haunt at half its cost (Config.Unlocks, see Unlock below).
-local AnalyticsService = game:GetService("AnalyticsService")
-local DataStoreService = game:GetService("DataStoreService")
-local HttpService = game:GetService("HttpService")
-local MarketplaceService = game:GetService("MarketplaceService")
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local ServerStorage = game:GetService("ServerStorage")
-local StarterPack = game:GetService("StarterPack")
-local TweenService = game:GetService("TweenService")
+Services.AnalyticsService = game:GetService("AnalyticsService")
+Services.DataStoreService = game:GetService("DataStoreService")
+Services.HttpService = game:GetService("HttpService")
+Services.MarketplaceService = game:GetService("MarketplaceService")
+Services.Players = game:GetService("Players")
+Services.ReplicatedStorage = game:GetService("ReplicatedStorage")
+Services.RunService = game:GetService("RunService")
+Services.ServerStorage = game:GetService("ServerStorage")
+Services.StarterPack = game:GetService("StarterPack")
+Services.TweenService = game:GetService("TweenService")
 
-local Config = require(ReplicatedStorage:WaitForChild("PatchConfig"))
-local function fontFace(role: string): Font
+local Config = require(Services.ReplicatedStorage:WaitForChild("PatchConfig"))
+function Helpers.fontFace(role: string): Font
 	local spec = Config.Fonts[role]
 	if type(spec) == "table" then
 		return Font.new(spec.family, Enum.FontWeight[spec.weight or "Regular"])
@@ -35,7 +38,7 @@ local market = garden:WaitForChild("Market")
 local spawnFolder = garden:WaitForChild("GhostSpawns")
 local giantJack = market:WaitForChild("GiantJack") :: BasePart
 local kingFace = market:WaitForChild("KingFace") :: BasePart
-local kit = ServerStorage:WaitForChild("KitSource")
+local kit = Services.ServerStorage:WaitForChild("KitSource")
 
 -- The straight-lane map: the X of its centre line, the hub's safe line and each zone's Z range
 -- (folder attributes ZMin / ZMax, else Config.Zones[id].zMin / zMax).
@@ -65,7 +68,7 @@ ghostFolder.Parent = garden
 
 local state = Instance.new("Configuration")
 state.Name = "PatchState"
-state.Parent = ReplicatedStorage
+state.Parent = Services.ReplicatedStorage
 
 -- Spooky Hour (replaces the old dark Midnight look): at Config.SpookyMinutes for
 -- Config.SpookyLength seconds base income pays x Config.SpookyMult. State "SpookyEnds" = its end
@@ -147,7 +150,7 @@ local Remotes
 do
 	local remotes = Instance.new("Folder")
 	remotes.Name = "PatchRemotes"
-	remotes.Parent = ReplicatedStorage
+	remotes.Parent = Services.ReplicatedStorage
 	local function remote(name: string, class: string?)
 		local r = Instance.new(class or "RemoteEvent")
 		r.Name = name
@@ -205,34 +208,34 @@ do
 end
 
 -- Pumpkin types (Config.Seeds keeps its old name and ids).
-local seedById = {}
+Lookup.seedById = {}
 for i, seed in Config.Seeds do
 	seed.order = i
-	seedById[seed.id] = seed
+	Lookup.seedById[seed.id] = seed
 end
-local toolById = {}
+Lookup.toolById = {}
 for i, tool in Config.Tools do
 	tool.order = i
-	toolById[tool.id] = tool
+	Lookup.toolById[tool.id] = tool
 end
-local mutationById = {}
+Lookup.mutationById = {}
 for _, m in Config.Mutations do
-	mutationById[m.id] = m
+	Lookup.mutationById[m.id] = m
 end
-local skillById = {}
-local skillAt: { [string]: any } = {} -- "Branch:tier" -> skill
+Lookup.skillById = {}
+Lookup.skillAt = {} -- "Branch:tier" -> skill
 for _, skill in Config.Skills do
-	skillById[skill.id] = skill
-	skillAt[skill.branch .. ":" .. skill.tier] = skill
+	Lookup.skillById[skill.id] = skill
+	Lookup.skillAt[skill.branch .. ":" .. skill.tier] = skill
 end
 
 -- Player data ------------------------------------------------------------------------------
 
-local function upgradeLevel(player: Player, id: string): number
+function Helpers.upgradeLevel(player: Player, id: string): number
 	return player:GetAttribute("Up_" .. id) or 0
 end
 
-local function candyValue(player: Player): IntValue?
+function Helpers.candyValue(player: Player): IntValue?
 	local stats = player:FindFirstChild("leaderstats")
 	return stats and stats:FindFirstChild("Candy") :: IntValue?
 end
@@ -245,7 +248,7 @@ function Progress.candyMult(player)
 		+ Config.Progression.rebirthBonus * (player:GetAttribute("Rebirths") or 0)
 end
 local function addCandy(player: Player, amount: number, alreadyBoosted: boolean?): number
-	local candy = candyValue(player)
+	local candy = Helpers.candyValue(player)
 	if candy then
 		local d = Progress.data[player]
 		local boosted = amount * (alreadyBoosted and 1 or Progress.candyMult(player))
@@ -264,15 +267,15 @@ local function addCandy(player: Player, amount: number, alreadyBoosted: boolean?
 end
 
 -- Game passes the player owns, cached in "Pass_<Name>" attributes (see Monetization below).
-local function hasPass(player: Player, name: string): boolean
+function Helpers.hasPass(player: Player, name: string): boolean
 	return player:GetAttribute("Pass_" .. name) == true
 end
 
-local function carryCapacity(player: Player): number
-	return Config.BaseCarry + math.min(Config.Upgrades.Stack.max, upgradeLevel(player, "Stack"))
+function Helpers.carryCapacity(_player: Player): number
+	return Config.BaseCarry
 end
 
-local function isLoaded(player: Player): boolean
+function Helpers.isLoaded(player: Player): boolean
 	return player:GetAttribute("Loaded") == true
 end
 
@@ -290,10 +293,10 @@ function Unlock.badge(player, name)
 	end
 	player:SetAttribute("Badge_" .. name, true)
 	task.spawn(function()
-		local ok = pcall(function()
-			game:GetService("BadgeService"):AwardBadge(player.UserId, id)
+		local ok, awarded = pcall(function()
+			return game:GetService("BadgeService"):AwardBadge(player.UserId, id)
 		end)
-		if not ok and player.Parent then
+		if (not ok or not awarded) and player.Parent then
 			player:SetAttribute("Badge_" .. name, nil)
 		end
 	end)
@@ -303,10 +306,10 @@ function Unlock.has(player: Player?, name: string): boolean
 end
 
 -- Haunts add to sell value; VIP and Double Candy multiply on top.
-local function sellMult(player: Player): number
+function Helpers.sellMult(player: Player): number
 	return (1 + Config.HauntSellBonus * (player:GetAttribute("Haunts") or 0))
-		* (hasPass(player, "VIP") and 1 + Config.VipSellBonus or 1)
-		* (hasPass(player, "DoubleCandy") and Config.DoubleCandyMult or 1)
+		* (Helpers.hasPass(player, "VIP") and 1 + Config.VipSellBonus or 1)
+		* (Helpers.hasPass(player, "DoubleCandy") and Config.DoubleCandyMult or 1)
 end
 
 -- Soul skills a player owns; mirrored to the "Skills" attribute as a comma list.
@@ -330,9 +333,9 @@ end
 -- is the one they hold (its id is in the "Tool" attribute).
 local toolsOf: { [Player]: { [string]: boolean } } = {}
 local function bestTool(player: Player)
-	local best = toolById[Config.StartTool]
+	local best = Lookup.toolById[Config.StartTool]
 	for id in toolsOf[player] or {} do
-		local tool = toolById[id]
+		local tool = Lookup.toolById[id]
 		if tool and tool.damage > best.damage then
 			best = tool
 		end
@@ -402,7 +405,7 @@ local function orderBase(player: Player): number
 end
 
 -- Short numbers: 950, 1.2k, 34.5k, 340k, 3.4M, 1.2B (rounded down so 999.96k never shows 1000k).
-local function short(n: number): string
+function Helpers.short(n: number): string
 	for _, unit in { { 1e12, "T" }, { 1e9, "B" }, { 1e6, "M" }, { 1e3, "k" } } do
 		if n >= unit[1] then
 			local v = n / unit[1]
@@ -415,11 +418,11 @@ local function short(n: number): string
 end
 
 -- Candy per second: one decimal below 10.
-local function rateText(n: number): string
+function Helpers.rateText(n: number): string
 	if n < 10 then
 		return (string.gsub(string.format("%.1f", n), "%.0$", ""))
 	end
-	return short(n)
+	return Helpers.short(n)
 end
 
 -- Pumpkin Index: every seed x finish a player has sold, kept as "Seed:Finish" keys.
@@ -473,7 +476,7 @@ local TUTORIAL_COUNT = #Config.TutorialOrders
 local function rewardText(reward: { [string]: any }): string
 	local parts = {}
 	if reward.candy then
-		table.insert(parts, short(reward.candy) .. " candy")
+		table.insert(parts, Helpers.short(reward.candy) .. " candy")
 	end
 	if reward.title then
 		table.insert(parts, string.format('the "%s" title', reward.title))
@@ -503,14 +506,15 @@ local function makeOrder(id: string, base: number?, level: number?): Order?
 	local text = def.text
 	if def.reach and kind == "R" then
 		need = math.max(need, math.ceil((level or 0) * Config.ReachGrowth))
-		text = string.format(def.text, short(need))
+		text = string.format(def.text, Helpers.short(need))
 	end
 	return {
 		id = id,
 		stat = def.stat,
 		need = need,
 		have = 0,
-		text = string.find(text, "%s", 1, true) and string.format(text, short(need)) or text,
+		text = string.find(text, "%s", 1, true) and string.format(text, Helpers.short(need))
+			or text,
 		target = def.target,
 		reward = reward,
 		done = false,
@@ -572,7 +576,7 @@ function Progress.orderLive(player, def)
 		if not Purge.active() or Purge.immune(player) then
 			return false
 		end
-		for _, other in Players:GetPlayers() do
+		for _, other in Services.Players:GetPlayers() do
 			if other ~= player and Unlock.has(other, "PlayerSteal") then
 				if def.stat == "stopThief" then
 					if
@@ -677,7 +681,7 @@ local function nextOrders(player: Player)
 		local n = 0
 		for key in indexOf[player] or {} do
 			local seedId, finish = string.match(key, "^([^:]+):(.+)$")
-			if seedId and seedById[seedId] and table.find(FINISHES, finish) then
+			if seedId and Lookup.seedById[seedId] and table.find(FINISHES, finish) then
 				n += 1
 			end
 		end
@@ -688,7 +692,7 @@ local function nextOrders(player: Player)
 		local gate = ORDER_UNLOCK[def.stat]
 		local impossible = not Progress.orderLive(player, def)
 			or Config.RemovedOrders[string.match(def.stat, "^[^:]+") or def.stat] == true
-			or (def.stat == "sellStackOf5" and carryCapacity(player) < 5)
+			or (def.stat == "sellStackOf5" and Helpers.carryCapacity(player) < 5)
 			or (def.stat == "newIndex" and indexFull)
 			or (def.stat == "unlockZone" and nextLockedZone(player) == nil)
 			or (gate ~= nil and not Unlock.has(player, gate))
@@ -728,7 +732,7 @@ local function publishOrders(player: Player)
 	end
 	player:SetAttribute(
 		"Orders",
-		HttpService:JSONEncode({
+		Services.HttpService:JSONEncode({
 			tutorial = o.tut <= TUTORIAL_COUNT,
 			step = o.tut,
 			steps = TUTORIAL_COUNT,
@@ -764,19 +768,19 @@ local onboardOf: { [Player]: { [number]: boolean } } = {}
 
 local function onboard(player: Player, step: number)
 	local done = onboardOf[player]
-	if not done or done[step] or not isLoaded(player) then
+	if not done or done[step] or not Helpers.isLoaded(player) then
 		return
 	end
 	done[step] = true
 	pcall(function()
-		AnalyticsService:LogOnboardingFunnelStepEvent(player, step, ONBOARD_STEPS[step])
+		Services.AnalyticsService:LogOnboardingFunnelStepEvent(player, step, ONBOARD_STEPS[step])
 	end)
 end
 
 -- reach = amount is a level (orders keep the highest seen) instead of a count to add.
 local function track(player: Player?, stat: string, amount: number?, reach: boolean?)
 	local o = player and orders[player]
-	if not player or not o or not isLoaded(player) then
+	if not player or not o or not Helpers.isLoaded(player) then
 		return
 	end
 	local step = ONBOARD_STAT[stat]
@@ -802,14 +806,6 @@ local function track(player: Player?, stat: string, amount: number?, reach: bool
 			if order.have >= order.need then
 				order.done = true
 				finished = true
-				if order.reward.candy then
-					local def = (
-						string.sub(order.id, 1, 1) == "T" and Config.TutorialOrders
-						or Config.RotatingOrders
-					)[tonumber(string.sub(order.id, 2))]
-					order.reward.candy =
-						math.floor(orderBase(player) * math.clamp((def.b or 3) / 4, 0.5, 1) + 0.5)
-				end
 				grantReward(player, order.reward)
 				Remotes.orderDoneEvent:FireClient(player, order.text, rewardText(order.reward))
 			end
@@ -854,6 +850,11 @@ local function loadOrders(player: Player, saved: any)
 				-- Re-deal: old rotating lists may hold orders of systems that are locked now.
 				shifted = true
 			end
+			if saved.v ~= 4 and saved.v ~= 5 then
+				local V3_TO_V4 = { 1, 3, 3, 2, 5 }
+				tut = V3_TO_V4[tut] or TUTORIAL_COUNT + 1
+				shifted = true
+			end
 			if saved.v ~= 5 then
 				local map = { 3, 4, 1, 2, 5 }
 				tut = map[tut] or TUTORIAL_COUNT + 1
@@ -885,7 +886,7 @@ local function loadOrders(player: Player, saved: any)
 						and type(s.need) == "number"
 					then
 						order.need = s.need
-						order.text = string.format(def.text, short(s.need))
+						order.text = string.format(def.text, Helpers.short(s.need))
 					end
 					if
 						string.sub(s.id, 1, 1) == "R"
@@ -942,11 +943,11 @@ end
 
 local store = nil
 pcall(function()
-	store = DataStoreService:GetDataStore("PumpkinPatchPanic_v1")
+	store = Services.DataStoreService:GetDataStore("PumpkinPatchPanic_v1")
 end)
 local boardStore = nil
 pcall(function()
-	boardStore = DataStoreService:GetOrderedDataStore("LifetimeCandy")
+	boardStore = Services.DataStoreService:GetOrderedDataStore("LifetimeCandy")
 end)
 local loaded: { [Player]: boolean } = {}
 local saving: { [Player]: boolean } = {}
@@ -1020,7 +1021,7 @@ do
 			if status == "ok" or not player.Parent then
 				break
 			end
-			if status == "error" and RunService:IsStudio() then
+			if status == "error" and Services.RunService:IsStudio() then
 				warn("[Patch] DataStore unavailable, progress will not save in this session:", data)
 				store = nil
 				return true, nil
@@ -1036,7 +1037,7 @@ do
 
 	function applyData(player: Player, data: { [string]: any })
 		Progress.load(player, data.progression)
-		local candy = candyValue(player)
+		local candy = Helpers.candyValue(player)
 		if candy and type(data.candy) == "number" then
 			candy.Value = data.candy
 		end
@@ -1050,7 +1051,7 @@ do
 		toolsOf[player] = tools
 		if type(data.tools) == "table" then
 			for _, id in data.tools do
-				if type(id) == "string" and toolById[id] then
+				if type(id) == "string" and Lookup.toolById[id] then
 					tools[id] = true
 				end
 			end
@@ -1097,7 +1098,7 @@ do
 		if type(data.found) == "table" then
 			local found = unlocked[player] or startUnlocked()
 			for _, id in data.found do
-				if type(id) == "string" and seedById[id] then
+				if type(id) == "string" and Lookup.seedById[id] then
 					found[id] = true
 				end
 			end
@@ -1112,7 +1113,7 @@ do
 		skillsOf[player] = owned
 		if type(data.skills) == "table" then
 			for _, id in data.skills do
-				if type(id) == "string" and skillById[id] then
+				if type(id) == "string" and Lookup.skillById[id] then
 					owned[id] = true
 				end
 			end
@@ -1152,7 +1153,7 @@ do
 		Bases.carvedOf[player] = carved
 		if type(data.carved) == "table" then
 			for _, id in data.carved do
-				if type(id) == "string" and seedById[id] then
+				if type(id) == "string" and Lookup.seedById[id] then
 					carved[id] = true
 					Progress.own(player, id)
 				end
@@ -1202,7 +1203,8 @@ do
 		for _, entry in
 			type(data.carrying or data.carry) == "table" and (data.carrying or data.carry) or {}
 		do
-			local seed = type(entry) == "table" and seedById[entry.s or entry.seed or entry.Seed]
+			local seed = type(entry) == "table"
+				and Lookup.seedById[entry.s or entry.seed or entry.Seed]
 			if
 				seed
 				and entry.h ~= true
@@ -1226,14 +1228,14 @@ do
 	end
 
 	local function snapshot(player: Player): { [string]: any }
-		local candy = candyValue(player)
+		local candy = Helpers.candyValue(player)
 		assert(candy, "no leaderstats")
 		local tools, upgrades, skills = {}, {}, {}
 		for id in toolsOf[player] or {} do
 			table.insert(tools, id)
 		end
 		for id in Config.Upgrades do
-			upgrades[id] = upgradeLevel(player, id)
+			upgrades[id] = Helpers.upgradeLevel(player, id)
 		end
 		for _, skill in Config.Skills do
 			if hasSkill(player, skill.id) then
@@ -1271,8 +1273,9 @@ do
 			end
 		end
 		return {
-			progression = Progress.data[player]
-				and HttpService:JSONDecode(HttpService:JSONEncode(Progress.data[player])),
+			progression = Progress.data[player] and Services.HttpService:JSONDecode(
+				Services.HttpService:JSONEncode(Progress.data[player])
+			),
 			saveVersion = Config.Economy.saveVersion,
 			playTime = player:GetAttribute("PlayTime") or 0,
 			unlocks = unlockList,
@@ -1413,7 +1416,7 @@ do
 end
 
 local function makePumpkin(seedId: string, sizeMult: number): MeshPart
-	local seed = seedById[seedId]
+	local seed = Lookup.seedById[seedId]
 	local pumpkin = seedTemplate(seed):Clone()
 	pumpkin.Name = "Pumpkin"
 	pumpkin.Size *= seed.scale * sizeMult / (pumpkin.Size.X / 2.5)
@@ -1425,8 +1428,8 @@ end
 -- Candy per second of a placed pumpkin before the owner's Haunt / pass multipliers. Hoard
 -- pumpkins (attribute Hoard) earn x Config.HoardMult.
 local function incomeOf(pumpkin: Instance): number
-	local seed = seedById[pumpkin:GetAttribute("Seed")]
-	local mutation = mutationById[pumpkin:GetAttribute("Mutation") or ""]
+	local seed = Lookup.seedById[pumpkin:GetAttribute("Seed")]
+	local mutation = Lookup.mutationById[pumpkin:GetAttribute("Mutation") or ""]
 	return (seed and seed.income or 1)
 		* (pumpkin:GetAttribute("SizeMult") or 1)
 		* (mutation and mutation.mult or 1)
@@ -1472,7 +1475,7 @@ do
 
 	-- kind: "jack" (first carve of a type) or "hoard" (a Hoard pumpkin delivered) always shows.
 	function Reveal.send(player: Player, pumpkin: Instance, isNew: boolean, kind: string?)
-		local seed = seedById[pumpkin:GetAttribute("Seed") or ""]
+		local seed = Lookup.seedById[pumpkin:GetAttribute("Seed") or ""]
 		if not seed or not player.Parent then
 			return
 		end
@@ -1484,7 +1487,7 @@ do
 		seenOf[player] = seen
 		seen[seed.id] = true
 		local rate = math.floor(
-			incomeOf(pumpkin) * sellMult(player) * Progress.candyMult(player) * 10 + 0.5
+			incomeOf(pumpkin) * Helpers.sellMult(player) * Progress.candyMult(player) * 10 + 0.5
 		) / 10
 		-- The pet it hatched into (if any): the card shows the pet and its name.
 		local pet = pumpkin:GetAttribute("Pet")
@@ -1505,7 +1508,7 @@ local brewPumpkin, applyMutationLook
 do
 	-- No PointLight here: 24 players x a full stack of lit pumpkins is too heavy on mobile.
 	function applyMutationLook(pumpkin: BasePart, mutationId: string)
-		local mutation = mutationById[mutationId]
+		local mutation = Lookup.mutationById[mutationId]
 		if not mutation then
 			return
 		end
@@ -1576,7 +1579,7 @@ do
 			id = rollMutation(extra)
 			if hasSkill(player, "DoubleBrew") then
 				local again = rollMutation(extra)
-				if mutationById[again].mult > mutationById[id].mult then
+				if Lookup.mutationById[again].mult > Lookup.mutationById[id].mult then
 					id = again
 				end
 			end
@@ -1642,14 +1645,14 @@ local function refreshCarry(player: Player)
 	end
 	player:SetAttribute(
 		"CarryValue",
-		math.floor(value * sellMult(player) * Progress.candyMult(player) + 0.5)
+		math.floor(value * Helpers.sellMult(player) * Progress.candyMult(player) + 0.5)
 	)
 	player:SetAttribute(
 		"CarryTopValue",
 		#stack > 0
 				and math.floor(
 					pumpkinValue(stack[#stack], Config.FullPenSellSeconds)
-							* sellMult(player)
+							* Helpers.sellMult(player)
 							* Progress.candyMult(player)
 						+ 0.5
 				)
@@ -1795,7 +1798,7 @@ end
 local Looks: { [string]: any } = {}
 do
 	local function source(folder: string, name: string?): Model?
-		local holder = ServerStorage:FindFirstChild(folder)
+		local holder = Services.ServerStorage:FindFirstChild(folder)
 		local m = holder and name and holder:FindFirstChild(name)
 		return if m and m:IsA("Model") then m else nil
 	end
@@ -2070,7 +2073,7 @@ function Bases.safeLanding(pos: Vector3, checkClearance: boolean?): Vector3?
 	end
 	local overlap = OverlapParams.new()
 	overlap.FilterType = Enum.RaycastFilterType.Exclude
-	for _, player in Players:GetPlayers() do
+	for _, player in Services.Players:GetPlayers() do
 		if player.Character then
 			table.insert(floors, player.Character)
 		end
@@ -2113,7 +2116,7 @@ local function dropLoose(
 	end
 	pumpkin.CFrame = CFrame.new(at.X, (y :: number) + pumpkin.Size.Y / 2, at.Z)
 	pumpkin.Parent = loose
-	local seed = seedById[pumpkin:GetAttribute("Seed") or ""]
+	local seed = Lookup.seedById[pumpkin:GetAttribute("Seed") or ""]
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.ActionText = "Pick up"
 	prompt.ObjectText = rescued and "Rescued pumpkin" or ((seed and seed.name or "") .. " pumpkin")
@@ -2127,7 +2130,7 @@ local function dropLoose(
 		end
 		local _, root = aliveRoot(player)
 		if
-			not isLoaded(player)
+			not Helpers.isLoaded(player)
 			or not root
 			or (root.Position - pumpkin.Position).Magnitude > 11
 		then
@@ -2137,7 +2140,7 @@ local function dropLoose(
 		if theft and player ~= theft.owner and player ~= theft.thief then
 			return
 		end
-		if #(carrying[player] or {}) >= carryCapacity(player) then
+		if #(carrying[player] or {}) >= Helpers.carryCapacity(player) then
 			Remotes.hintEvent:FireClient(player, "Your hands are full!")
 			return
 		end
@@ -2210,6 +2213,7 @@ do
 	-- Income tags, the shield on the single best plot (it cannot be stolen) and the owner's
 	-- "Income" attribute (candy per second with their Haunt / pass multipliers).
 	function Bases.slotLook(patch, slots, previousSlots)
+		Bases.layout(patch)
 		for _, plot in patch:GetChildren() do
 			if plot.Name ~= "Plot" or not plot:IsA("BasePart") then
 				continue
@@ -2261,7 +2265,7 @@ do
 				label.Size = UDim2.fromScale(1, 1)
 				label.BackgroundColor3 = Config.Plots.priceBar
 				label.TextColor3 = Color3.new(1, 1, 1)
-				label.FontFace = fontFace("title")
+				label.FontFace = Helpers.fontFace("title")
 				label.TextScaled = true
 				local zone = (plot:GetAttribute("Index") or 1) <= Config.Progression.woodsSlots
 						and "Zone3"
@@ -2270,7 +2274,7 @@ do
 					.. " "
 					.. utf8.char(127852)
 					.. " "
-					.. short(Config.Zones[zone].cost)
+					.. Helpers.short(Config.Zones[zone].cost)
 				label.Parent = bb
 			elseif not locked and lock then
 				lock:Destroy()
@@ -2311,14 +2315,17 @@ do
 				label.Size = UDim2.fromScale(1, 1)
 				label.BackgroundColor3 = Config.Plots.priceBar
 				label.TextColor3 = Color3.new(1, 1, 1)
-				label.FontFace = fontFace("title")
+				label.FontFace = Helpers.fontFace("title")
 				label.TextScaled = true
 				label.Parent = bb
 			end
 			bb.Enabled = (patch:GetAttribute("Owner") or 0) ~= 0
 				and slots < Config.Progression.castleSlots
 			local zone = slots < Config.Progression.woodsSlots and "Zone3" or "Zone5"
-			bb.Label.Text = "Upgrade " .. utf8.char(127852) .. " " .. short(Config.Zones[zone].cost)
+			bb.Label.Text = "Upgrade "
+				.. utf8.char(127852)
+				.. " "
+				.. Helpers.short(Config.Zones[zone].cost)
 		end
 
 		for _, rim in patch:GetDescendants() do
@@ -2332,13 +2339,7 @@ do
 		local weakest, rate = nil, math.huge
 		for _, plot in plotsOf(patch) do
 			local p = plotState[plot].pumpkin
-			if
-				p
-				and not p:GetAttribute("Stashed")
-				and not p:GetAttribute("CarveAt")
-				and now() >= (p:GetAttribute("PickupReadyAt") or 0)
-				and incomeOf(p) < rate
-			then
+			if p and incomeOf(p) < rate then
 				weakest, rate = plot, incomeOf(p)
 			end
 		end
@@ -2349,7 +2350,7 @@ do
 		if not patch then
 			return
 		end
-		local owner = Players:GetPlayerByUserId(patch:GetAttribute("Owner") or 0)
+		local owner = Services.Players:GetPlayerByUserId(patch:GetAttribute("Owner") or 0)
 		if
 			owner
 			and Bases.drainCarry
@@ -2360,10 +2361,10 @@ do
 		end
 		local weakest = Bases.weakest(patch)
 		local weakestPet = weakest and plotState[weakest].pumpkin
-		local weakestSeed = weakestPet and seedById[weakestPet:GetAttribute("Seed") or ""]
+		local weakestSeed = weakestPet and Lookup.seedById[weakestPet:GetAttribute("Seed") or ""]
 		local weakestDef = weakestSeed and Config.Pets[weakestSeed.pet]
 		patch:SetAttribute("SwapWeakestName", weakestDef and weakestDef.display or nil)
-		local mult = owner and sellMult(owner) * Progress.candyMult(owner) or 1
+		local mult = owner and Helpers.sellMult(owner) * Progress.candyMult(owner) or 1
 		local plots = plotsOf(patch)
 		local best, bestIncome, total, filled, hatched = nil, -1, 0, 0, 0
 		for _, plot in plots do
@@ -2408,14 +2409,14 @@ do
 				)
 					.. (protected and "🛡 " or "")
 					.. "+"
-					.. rateText(incomeOf(p) * mult)
+					.. Helpers.rateText(incomeOf(p) * mult)
 					.. "/s"
 					.. (
 						p:GetAttribute("WeightKg")
 							and string.format(" · %.1f kg", p:GetAttribute("WeightKg"))
 						or ""
 					)
-				local seed = seedById[p:GetAttribute("Seed") or ""]
+				local seed = Lookup.seedById[p:GetAttribute("Seed") or ""]
 				local pet = seed and Config.Pets[seed.pet]
 				if pet then
 					text = (protected and utf8.char(128737) .. " " or "")
@@ -2424,7 +2425,7 @@ do
 						.. " "
 						.. pet.display
 						.. "\n$"
-						.. rateText(incomeOf(p) * mult)
+						.. Helpers.rateText(incomeOf(p) * mult)
 						.. "/s"
 						.. (
 							p:GetAttribute("WeightKg")
@@ -2467,7 +2468,7 @@ do
 		label.Name = "Label"
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
-		label.FontFace = fontFace("title")
+		label.FontFace = Helpers.fontFace("title")
 		label.TextScaled = true
 		label.TextColor3 = Color3.fromRGB(150, 255, 110)
 		label.Text = ""
@@ -2535,7 +2536,7 @@ do
 		label.Name = "Label"
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
-		label.FontFace = fontFace("title")
+		label.FontFace = Helpers.fontFace("title")
 		label.TextScaled = true
 		label.TextColor3 = Color3.fromRGB(255, 200, 120)
 		label.Text = hatchText(seconds)
@@ -2555,7 +2556,7 @@ do
 		if plot and plot:GetAttribute("BaseSize") then
 			plot.Size = plot:GetAttribute("BaseSize")
 		end
-		local seed = seedById[pumpkin:GetAttribute("Seed") or ""]
+		local seed = Lookup.seedById[pumpkin:GetAttribute("Seed") or ""]
 		if Looks.hatch(pumpkin, seed) then
 			local pos = pumpkin.Position
 			if math.abs(Lane.x - pos.X) > 1 then
@@ -2613,11 +2614,11 @@ do
 		if tag then
 			tag:Destroy()
 		end
-		local hatchOwner = Players:GetPlayerByUserId(pumpkin:GetAttribute("Owner") or 0)
+		local hatchOwner = Services.Players:GetPlayerByUserId(pumpkin:GetAttribute("Owner") or 0)
 		Looks.rollGold(hatchOwner, pumpkin)
 		becomeAlive(pumpkin)
 		local ownerId = pumpkin:GetAttribute("Owner") or 0
-		local owner = Players:GetPlayerByUserId(ownerId)
+		local owner = Services.Players:GetPlayerByUserId(ownerId)
 		local seedId = pumpkin:GetAttribute("Seed")
 		local isNew = false
 		if owner and type(seedId) == "string" then
@@ -2654,18 +2655,18 @@ do
 		extra: { hoard: boolean?, jack: boolean?, weight: number? }?
 	): BasePart?
 		local s = plotState[plot]
-		if not s or s.pumpkin or not seedById[seedId] then
+		if not s or s.pumpkin or not Lookup.seedById[seedId] then
 			return nil
 		end
 		local pumpkin = makePumpkin(seedId, sizeMult)
-		local petSize = Config.PetSizes[Config.Pets[seedById[seedId].pet].rarity]
+		local petSize = Config.PetSizes[Config.Pets[Lookup.seedById[seedId].pet].rarity]
 		local kg = extra and extra.weight
 		if type(kg) ~= "number" or kg ~= kg or kg <= 0 or kg == math.huge then
 			kg = math.floor(petSize.median * math.exp((math.random() - 0.5) * 3.2) * 10 + 0.5) / 10
 		end
 		pumpkin:SetAttribute("WeightKg", kg)
 		if not (extra and extra.jack) then
-			local rarity = Config.Pets[seedById[seedId].pet].rarity
+			local rarity = Config.Pets[Lookup.seedById[seedId].pet].rarity
 			-- Rarity sets the median silhouette; the quarter-power weight term adds size.
 			local height = math.clamp(
 				Config.MysterySizes.heights[rarity]
@@ -2707,7 +2708,7 @@ do
 			pumpkin:SetAttribute("WeightKg", extra.weight)
 		end
 		pumpkin:SetAttribute("Placed", true)
-		if mutation and mutationById[mutation] then
+		if mutation and Lookup.mutationById[mutation] then
 			pumpkin:SetAttribute("Mutation", mutation)
 			applyMutationLook(pumpkin, mutation)
 		end
@@ -2722,11 +2723,11 @@ do
 			becomeAlive(pumpkin)
 		else
 			-- New players (first CarveNewUntil s of playtime): every type hatches fast.
-			local owner = Players:GetPlayerByUserId(ownerId)
+			local owner = Services.Players:GetPlayerByUserId(ownerId)
 			local newbie = owner ~= nil
 				and (owner:GetAttribute("PlayTime") or 0) < Config.CarveNewUntil
 			local seconds = newbie and Config.CarveNewSeconds
-				or seedById[seedId].order <= Config.CarveFastOrder and Config.CarveFastSeconds
+				or Lookup.seedById[seedId].order <= Config.CarveFastOrder and Config.CarveFastSeconds
 				or Config.CarveSeconds
 			Looks.attach(
 				pumpkin,
@@ -2881,7 +2882,9 @@ do
 			p:Destroy()
 			Bases.refresh(plot.Parent)
 			Remotes.placedEvent:FireAllClients(owner, plot.Position, 0)
-		elseif #(carrying[owner] or {}) >= carryCapacity(owner) or not stackPumpkin(owner, p) then
+		elseif
+			#(carrying[owner] or {}) >= Helpers.carryCapacity(owner) or not stackPumpkin(owner, p)
+		then
 			dropLoose(p, at, Config.LooseSeconds, true)
 		end
 	end
@@ -2930,9 +2933,9 @@ do
 		end
 		local refund = 0
 		for key, entry in saved do
-			local seed = type(entry) == "table" and seedById[entry.s]
+			local seed = type(entry) == "table" and Lookup.seedById[entry.s]
 			if not keys[tostring(key)] and seed then
-				local mutation = mutationById[type(entry.m) == "string" and entry.m or ""]
+				local mutation = Lookup.mutationById[type(entry.m) == "string" and entry.m or ""]
 				local income = seed.income
 					* math.clamp(tonumber(entry.z) or 1, 0.1, 5)
 					* (mutation and mutation.mult or 1)
@@ -2941,19 +2944,22 @@ do
 			end
 		end
 		if refund > 0 then
-			refund = math.floor(refund * sellMult(player) + 0.5)
-			local candy = candyValue(player)
+			refund = math.floor(refund * Helpers.sellMult(player) + 0.5)
+			local candy = Helpers.candyValue(player)
 			if candy then
 				candy.Value += refund
 			end
-			hint(player, string.format("Your base got smaller, you got %s candy", short(refund)))
+			hint(
+				player,
+				string.format("Your base got smaller, you got %s candy", Helpers.short(refund))
+			)
 		end
 		for i, plot in plotsOf(patch) do
 			local entry = saved[plotKey(plot, i)]
 			if
 				type(entry) == "table"
 				and type(entry.s) == "string"
-				and seedById[entry.s]
+				and Lookup.seedById[entry.s]
 				and plotState[plot]
 				and not plotState[plot].pumpkin
 			then
@@ -3001,7 +3007,7 @@ do
 		then
 			return
 		end
-		if not isLoaded(player) then
+		if not Helpers.isLoaded(player) then
 			hint(player, "Loading your farm...")
 			return
 		end
@@ -3013,7 +3019,7 @@ do
 		end
 		local seedId = top:GetAttribute("Seed")
 		local finish = top:GetAttribute("Mutation") or "Plain"
-		if type(seedId) ~= "string" or not seedById[seedId] then
+		if type(seedId) ~= "string" or not Lookup.seedById[seedId] then
 			return
 		end
 		if not Purge.deliveryReady(player, top) then
@@ -3046,7 +3052,7 @@ do
 			Remotes.placedEvent:FireAllClients(
 				player,
 				plot.Position,
-				incomeOf(placed) * sellMult(player)
+				incomeOf(placed) * Helpers.sellMult(player)
 			)
 			if fromHoard then
 				Remotes.hoardEvent:FireClient(player, "deliver", seedId)
@@ -3070,7 +3076,13 @@ do
 		local top = stack[#stack]
 		local _, root = aliveRoot(player)
 		local soil = patch and patch:FindFirstChild("Soil")
-		if not isLoaded(player) or not top or not soil or not root or not Bases.full(patch) then
+		if
+			not Helpers.isLoaded(player)
+			or not top
+			or not soil
+			or not root
+			or not Bases.full(patch)
+		then
 			return
 		end
 		local localPos = soil.CFrame:PointToObjectSpace(root.Position)
@@ -3091,6 +3103,17 @@ do
 			if not weakest then
 				return
 			end
+			local pet = plotState[weakest].pumpkin
+			if
+				not pet
+				or pet:GetAttribute("Stashed")
+				or pet:GetAttribute("CarveAt")
+				or now() < (pet:GetAttribute("PickupReadyAt") or 0)
+				or incomeOf(top) <= incomeOf(pet)
+			then
+				hint(player, "Pen full: sell or upgrade")
+				return
+			end
 			local sold = Bases.take(weakest)
 			if not sold then
 				return
@@ -3098,7 +3121,7 @@ do
 			local bonus = rowDone(player, sold:GetAttribute("Seed")) and (1 + Config.IndexRowBonus)
 				or 1
 			local value = math.floor(
-				pumpkinValue(sold, Config.WitchSellSeconds) * bonus * sellMult(player) + 0.5
+				pumpkinValue(sold, Config.WitchSellSeconds) * bonus * Helpers.sellMult(player) + 0.5
 			)
 			sold:Destroy()
 			value = addCandy(player, value)
@@ -3119,7 +3142,7 @@ do
 					)
 				end
 			end
-			hint(player, "Swapped weakest pet! +" .. short(value) .. " 🍬")
+			hint(player, "Swapped weakest pet! +" .. Helpers.short(value) .. " 🍬")
 		end
 	end
 	function Bases.fillPens(player: Player)
@@ -3167,7 +3190,7 @@ do
 		if not Unlock.has(player, "Sell") then
 			return
 		end
-		if #(carrying[player] or {}) >= carryCapacity(player) then
+		if #(carrying[player] or {}) >= Helpers.carryCapacity(player) then
 			hint(player, "Your hands are full! Place, brew or sell what you carry first.")
 			return
 		end
@@ -3206,7 +3229,7 @@ do
 		end
 		local patch = plot.Parent :: Instance
 		local ownerId = patch:GetAttribute("Owner") or 0
-		local owner = Players:GetPlayerByUserId(ownerId)
+		local owner = Services.Players:GetPlayerByUserId(ownerId)
 		local s = plotState[plot]
 		if
 			not s
@@ -3217,7 +3240,7 @@ do
 		then
 			return
 		end
-		if not isLoaded(thief) or not aliveRoot(thief) then
+		if not Helpers.isLoaded(thief) or not aliveRoot(thief) then
 			return
 		end
 		local t = now()
@@ -3234,7 +3257,7 @@ do
 			hint(thief, owner.DisplayName .. " is shielded while new or AFK.")
 		elseif Purge.victims[ownerId] then
 			hint(thief, owner.DisplayName .. " was already robbed this Purge.")
-		elseif #(carrying[thief] or {}) >= carryCapacity(thief) then
+		elseif #(carrying[thief] or {}) >= Helpers.carryCapacity(thief) then
 			hint(thief, "Your hands are full!")
 		else
 			local p = Bases.take(plot) :: BasePart
@@ -3253,7 +3276,7 @@ do
 				id = Purge.id,
 				losses = Purge.losses,
 			}
-			local seed = seedById[p:GetAttribute("Seed") or ""]
+			local seed = Lookup.seedById[p:GetAttribute("Seed") or ""]
 			local name = seed and seed.name or "a"
 			-- The owner's client shows the alarm (toast, red flash, highlighted thief); the thief's
 			-- shows "You stole a PUMPKIN!" plus RUN!!, the red vignette and the Drop button.
@@ -3267,7 +3290,7 @@ do
 	-- The owner's swing reached a thief carrying their pumpkins: those go back home.
 	function Bases.defend(owner: Player, root: BasePart): boolean
 		local got = false
-		for _, thief in Players:GetPlayers() do
+		for _, thief in Services.Players:GetPlayers() do
 			local stack = carrying[thief]
 			local _, thiefRoot = aliveRoot(thief)
 			if
@@ -3332,7 +3355,7 @@ do
 	-- are lost as before).
 	function Bases.dropStolen(player: Player, at: Vector3)
 		for _, p in carrying[player] or {} do
-			local owner = Players:GetPlayerByUserId(p:GetAttribute("StolenFrom") or 0)
+			local owner = Services.Players:GetPlayerByUserId(p:GetAttribute("StolenFrom") or 0)
 			if p:GetAttribute("HoardZone") then
 				Hoards.giveBack(p, at)
 			elseif owner and owner ~= player then
@@ -3389,7 +3412,7 @@ do
 		label.Name = "Label"
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
-		label.FontFace = fontFace("title")
+		label.FontFace = Helpers.fontFace("title")
 		label.TextScaled = true
 		label.TextColor3 = Color3.fromRGB(220, 170, 255)
 		label.Text = "🔒 LOCKED"
@@ -3404,7 +3427,7 @@ do
 
 	function Bases.lock(player: Player)
 		local patch = patchOf[player]
-		if not patch or not isLoaded(player) then
+		if not patch or not Helpers.isLoaded(player) then
 			return
 		end
 		local t = now()
@@ -3467,7 +3490,8 @@ do
 				local timer = wall and wall:FindFirstChild("LockTimer")
 				local label = timer and timer:FindFirstChild("Label") :: TextLabel?
 				if label then
-					local owner = Players:GetPlayerByUserId(patch:GetAttribute("Owner") or 0)
+					local owner =
+						Services.Players:GetPlayerByUserId(patch:GetAttribute("Owner") or 0)
 					label.Text = Purge.active()
 							and owner
 							and Purge.immune(owner)
@@ -3522,7 +3546,7 @@ do
 			end
 		end
 		for player, patch in patchOf do
-			if player.Parent and isLoaded(player) then
+			if player.Parent and Helpers.isLoaded(player) then
 				Bases.refresh(patch)
 				local income = player:GetAttribute("Income") or 0
 				-- Spooky Hour pays x SpookyMult (orders still count the plain income).
@@ -3538,7 +3562,7 @@ do
 	end
 
 	local nextRoamUpdate = 0
-	RunService.Heartbeat:Connect(function()
+	Services.RunService.Heartbeat:Connect(function()
 		-- Waypoints and prompt anchors need at most 5 Hz; clients interpolate the pets.
 		local t = now()
 		if t < nextRoamUpdate then
@@ -3607,7 +3631,7 @@ do
 				if
 					Purge.active()
 					and not Purge.immune(player)
-					and isLoaded(player)
+					and Helpers.isLoaded(player)
 					and Bases.petReach(player, parent)
 				then
 					Purge.holds[player] = { plot = parent, at = now(), id = Purge.id }
@@ -3719,6 +3743,88 @@ function Unlock.refresh(player: Player, reset: boolean?)
 	end
 end
 
+-- Build every pen before ownership/locks, using the same fixed grid at 8/10/12 capacity.
+function Bases.layout(patch)
+	if patch:GetAttribute("SlotGeometry") == Config.Progression.castleSlots then
+		return
+	end
+	local soil = patch:FindFirstChild("Soil")
+	local plots = Bases.plots(patch)
+	if not soil or not plots[1] then
+		return
+	end
+	-- Lobby rims are independent anchored parts at the old positions; rebuild as plot children.
+	for _, rim in patch:GetDescendants() do
+		if rim.Name == "DiscRim" then
+			rim:Destroy()
+		end
+	end
+	for i = #plots + 1, Config.Progression.castleSlots do
+		local p = plots[1]:Clone()
+		p:ClearAllChildren()
+		p:SetAttribute("Index", i)
+		p:SetAttribute("Filled", false)
+		p:SetAttribute("Protected", false)
+		p.Parent = patch
+		Bases.setupPlot(p)
+		table.insert(plots, p)
+	end
+	local rows = Config.Progression.slotRows
+	local columns = math.ceil(Config.Progression.castleSlots / rows)
+	local diameter = 7.4
+	local stepX = math.min(
+		Config.Progression.slotSpacing,
+		(soil.Size.X - 2 * Config.Progression.slotMargin - diameter) / (columns - 1)
+	)
+	local stepZ = math.min(
+		Config.Progression.slotSpacing,
+		(soil.Size.Z - 2 * Config.Progression.slotMargin - diameter) / (rows - 1)
+	)
+	assert(stepX > diameter and stepZ > diameter, "Pen slot discs must fit without overlap")
+	local height = soil.CFrame:PointToObjectSpace(plots[1].Position).Y
+	for i, plot in plots do
+		local old = plot.CFrame
+		local target = CFrame.new(
+			soil.CFrame:PointToWorldSpace(
+				Vector3.new(
+					(math.floor((i - 1) / rows) - (columns - 1) / 2) * stepX,
+					height,
+					((i - 1) % rows - (rows - 1) / 2) * stepZ
+				)
+			)
+		) * old.Rotation
+		local lock = plot:FindFirstChild("SlotLock")
+		if lock then
+			lock:Destroy()
+		end
+		local delta = target * old:Inverse()
+		for _, decoration in plot:GetDescendants() do
+			if decoration:IsA("BasePart") and decoration.Anchored then
+				decoration.CFrame = delta * decoration.CFrame
+			end
+		end
+		plot.CFrame = target
+		local rim = Instance.new("Part")
+		rim.Name = "DiscRim"
+		rim.Shape = Enum.PartType.Cylinder
+		rim.Size = Vector3.new(0.5, diameter, diameter)
+		rim.CFrame = target - soil.CFrame.UpVector * 0.15
+		rim.Color = Config.Plots.rim
+		rim.Material = Enum.Material.Wood
+		rim.Anchored = true
+		rim.CanCollide = false
+		rim.CanTouch = false
+		rim.CanQuery = false
+		rim.Parent = plot
+	end
+	patch:SetAttribute("SlotGeometry", Config.Progression.castleSlots)
+end
+
+for _, patch in patchFolder:GetChildren() do
+	Bases.layout(patch)
+	Bases.slotLook(patch, Config.Progression.baseSlots)
+end
+
 local claimPatch
 do
 	-- The pens' fill order: their Order attribute (1..8), pens without one last (by name).
@@ -3813,7 +3919,7 @@ do
 			local name = Instance.new("TextLabel")
 			name.BackgroundTransparency = 1
 			name.Size = UDim2.new(1, 0, 0, 16)
-			name.FontFace = fontFace("title")
+			name.FontFace = Helpers.fontFace("title")
 			name.TextScaled = true
 			name.TextColor3 = seed.color or Color3.fromRGB(255, 190, 90)
 			name.Text = seed.name
@@ -3853,11 +3959,11 @@ do
 		hp.AnchorPoint = Vector2.new(1, 1)
 		hp.Position = UDim2.fromScale(1, 1)
 		hp.Size = UDim2.fromOffset(28, 14)
-		hp.FontFace = fontFace("title")
+		hp.FontFace = Helpers.fontFace("title")
 		hp.TextScaled = true
 		hp.TextXAlignment = Enum.TextXAlignment.Left
 		hp.TextColor3 = Color3.new(1, 1, 1)
-		hp.Text = short(seed.hp)
+		hp.Text = Helpers.short(part:GetAttribute("Hp") or seed.hp)
 		hp.Parent = bb
 		local hpStroke = Instance.new("UIStroke")
 		hpStroke.Thickness = 1.5
@@ -3880,7 +3986,7 @@ do
 					:Lerp(Color3.fromRGB(110, 230, 80), (fraction - 0.3) / 0.7)
 		end
 		if label then
-			label.Text = short(math.max(0, w.hp))
+			label.Text = Helpers.short(math.max(0, w.hp))
 		end
 		w.part:SetAttribute("Hp", math.max(0, w.hp))
 	end
@@ -3910,13 +4016,13 @@ do
 			-- Cosmetic roll: zone HP, rewards and bonus golden odds stay independent.
 			local total = 0
 			for kind, weight in zoneDef.weights do
-				if kind ~= "Golden" and seedById[kind] then
+				if kind ~= "Golden" and Lookup.seedById[kind] then
 					total += weight
 				end
 			end
 			local roll = math.random() * total
 			for kind, weight in zoneDef.weights do
-				if kind ~= "Golden" and seedById[kind] then
+				if kind ~= "Golden" and Lookup.seedById[kind] then
 					roll -= weight
 					if roll <= 0 then
 						id = kind
@@ -3925,8 +4031,8 @@ do
 				end
 			end
 		end
-		local seed = seedById[id]
-		local hp = zoneDef.hp * (big and Config.Farm.bigMult or 1)
+		local seed = Lookup.seedById[id]
+		local hp = math.ceil(zoneDef.hp * (big and Config.Farm.bigMult or 1))
 		local reward = zoneDef.candy
 			* (big and Config.Farm.bigMult or 1)
 			* (golden and Config.Farm.goldenMult or 1)
@@ -4031,14 +4137,14 @@ do
 		end
 		local at = part.Position
 		local seedId = part:GetAttribute("Seed")
-		local seed = seedById[seedId]
+		local seed = Lookup.seedById[seedId]
 		-- The winner also gets a little candy (the burst that flies into their counter).
 		local candy = 0
 		if winner and seed then
 			candy = part:GetAttribute("CandyReward") or 1
 			candy = addCandy(
 				winner,
-				candy * (hasPass(winner, "DoubleCandy") and Config.DoubleCandyMult or 1)
+				candy * (Helpers.hasPass(winner, "DoubleCandy") and Config.DoubleCandyMult or 1)
 			)
 		end
 		Remotes.wildPopEvent:FireAllClients(at, seedId, winner, candy)
@@ -4139,7 +4245,7 @@ do
 
 	-- Studio debug: N pumpkins of a type straight onto a player's stack (no capacity check).
 	function Wild.give(player: Player, n: number, seedId: string?): number
-		local id = seedId and seedById[seedId] and seedId or Config.Seeds[1].id
+		local id = seedId and Lookup.seedById[seedId] and seedId or Config.Seeds[1].id
 		local given = 0
 		for _ = 1, n do
 			local size = Config.SizeMin + math.random() * (Config.SizeMax - Config.SizeMin)
@@ -4224,7 +4330,7 @@ do
 		if not def then
 			return
 		end
-		if not isLoaded(player) then
+		if not Helpers.isLoaded(player) then
 			Remotes.hintEvent:FireClient(player, "Loading your farm...")
 			return
 		end
@@ -4232,9 +4338,10 @@ do
 			Remotes.hintEvent:FireClient(player, "The " .. def.title .. " is already open for you!")
 			return
 		end
-		local candy = candyValue(player)
+		local candy = Helpers.candyValue(player)
 		local previous = Config.ZoneOrder[(table.find(Config.ZoneOrder, zoneId) or 1) - 1]
 		if not previous or not hasZone(player, previous) then
+			Remotes.hintEvent:FireClient(player, "Gate unlock failed: open the previous zone first")
 			return
 		end
 		local cost = math.floor(
@@ -4250,7 +4357,7 @@ do
 				player,
 				string.format(
 					"You need %s 🍬 to unlock the %s. Place pumpkins on your base to earn more!",
-					short(cost),
+					Helpers.short(cost),
 					def.title
 				)
 			)
@@ -4285,7 +4392,7 @@ do
 		title.Name = "Title"
 		title.BackgroundTransparency = 1
 		title.Size = UDim2.fromScale(1, 0.56)
-		title.FontFace = fontFace("title")
+		title.FontFace = Helpers.fontFace("title")
 		title.TextScaled = true
 		title.TextColor3 = Color3.new(1, 1, 1)
 		title.Text = def.title .. "\n2 new pets + " .. def.unlock
@@ -4314,10 +4421,10 @@ do
 		cost.BackgroundTransparency = 1
 		cost.Position = UDim2.fromOffset(10, 5)
 		cost.Size = UDim2.new(1, -20, 1, -10)
-		cost.FontFace = fontFace("title")
+		cost.FontFace = Helpers.fontFace("title")
 		cost.TextScaled = true
 		cost.TextColor3 = Color3.new(1, 1, 1)
-		cost.Text = "🍬 " .. short(def.cost or 0)
+		cost.Text = "🍬 " .. Helpers.short(def.cost or 0)
 		cost.Parent = pill
 		local costStroke = Instance.new("UIStroke")
 		costStroke.Thickness = 2.5
@@ -4348,13 +4455,16 @@ do
 				local prompt = Instance.new("ProximityPrompt")
 				prompt.Name = "UnlockPrompt"
 				prompt.ActionText = "Unlock " .. def.title .. ": " .. Config.gateBenefits(zoneId)
-				prompt.ObjectText = short(def.cost) .. " candy"
+				prompt.ObjectText = Helpers.short(def.cost) .. " candy"
 				prompt.HoldDuration = 0.6
 				prompt.KeyboardKeyCode = Enum.KeyCode.E
 				prompt.MaxActivationDistance = 14
 				prompt.RequiresLineOfSight = false
 				prompt.Parent = wall
 				local holds = {}
+				Services.Players.PlayerRemoving:Connect(function(player)
+					holds[player] = nil
+				end)
 				local function near(player)
 					local _, root = aliveRoot(player)
 					return root
@@ -4371,15 +4481,25 @@ do
 					holds[player] = nil
 					if
 						not started
-						or workspace:GetServerTimeNow() - started < 0.55
+						or workspace:GetServerTimeNow() - started < 0.3
+						or workspace:GetServerTimeNow() - started > prompt.HoldDuration + 2
 						or not near(player)
 					then
+						Remotes.hintEvent:FireClient(
+							player,
+							"Gate unlock failed: move closer and hold E again"
+						)
 						return
 					end
 					unlockZone(player, zoneId)
 				end)
 				prompt.PromptButtonHoldEnded:Connect(function(player)
-					holds[player] = nil
+					local started = holds[player]
+					task.delay(1, function()
+						if holds[player] == started then
+							holds[player] = nil
+						end
+					end)
 				end)
 			end
 			local sign = zone:FindFirstChild("GateSign")
@@ -4414,9 +4534,9 @@ do
 				ranges[zoneId] = z
 			end
 		end
-		for _, player in Players:GetPlayers() do
+		for _, player in Services.Players:GetPlayers() do
 			local character, root = aliveRoot(player)
-			if not character or not root or not isLoaded(player) then
+			if not character or not root or not Helpers.isLoaded(player) then
 				continue
 			end
 			local at = root.Position.Z
@@ -4430,7 +4550,7 @@ do
 							string.format(
 								"🔒 The %s is locked! Unlock it at its gate for %s 🍬.",
 								def.title,
-								short(def.cost or 0)
+								Helpers.short(def.cost or 0)
 							)
 						)
 						break
@@ -4469,7 +4589,7 @@ do
 		local label = Instance.new("TextLabel")
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
-		label.FontFace = fontFace("title")
+		label.FontFace = Helpers.fontFace("title")
 		label.TextScaled = true
 		label.TextWrapped = true
 		label.TextColor3 = Config.World2.color
@@ -4655,7 +4775,7 @@ do
 	rayParams.RespectCanCollide = true
 	local function refreshRayFilter()
 		local skip = {}
-		for _, p in Players:GetPlayers() do
+		for _, p in Services.Players:GetPlayers() do
 			if p.Character then
 				table.insert(skip, p.Character)
 			end
@@ -4688,7 +4808,7 @@ do
 		local label = Instance.new("TextLabel")
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
-		label.FontFace = fontFace("title")
+		label.FontFace = Helpers.fontFace("title")
 		label.TextScaled = true
 		label.TextColor3 = color
 		label.Text = text
@@ -5061,7 +5181,7 @@ do
 			end
 		end
 	end
-	Players.PlayerRemoving:Connect(Hoards.cancelFight)
+	Services.Players.PlayerRemoving:Connect(Hoards.cancelFight)
 	local seat -- forward: grab and seat refer to each other through the prompt
 
 	function Hoards.wakeLoose(player, p)
@@ -5081,14 +5201,14 @@ do
 		if not i or p.Parent ~= h.model then
 			return
 		end
-		if not isLoaded(player) then
+		if not Helpers.isLoaded(player) then
 			Remotes.hintEvent:FireClient(player, "Loading your farm...")
 			return
 		end
 		if not hasZone(player, h.zone) or not aliveRoot(player) then
 			return
 		end
-		if #(carrying[player] or {}) >= carryCapacity(player) then
+		if #(carrying[player] or {}) >= Helpers.carryCapacity(player) then
 			Remotes.hintEvent:FireClient(
 				player,
 				"Your hands are full! Place what you carry on your base first."
@@ -5122,7 +5242,7 @@ do
 		p.CanCollide = false
 		p.CFrame = slotCFrame(h, i, p)
 		p.Parent = h.model
-		local seed = seedById[p:GetAttribute("Seed") or ""]
+		local seed = Lookup.seedById[p:GetAttribute("Seed") or ""]
 		local prompt = Instance.new("ProximityPrompt")
 		prompt.Name = "StealPrompt"
 		prompt.ActionText = "Steal"
@@ -5266,7 +5386,8 @@ do
 			if cfg.predict then
 				pos += direction * math.min(
 					root.AssemblyLinearVelocity.Magnitude,
-					Config.walkSpeed(upgradeLevel(player, "Boots")) * Config.Movement.sprintMult
+					Config.walkSpeed(Helpers.upgradeLevel(player, "Boots"))
+						* Config.Movement.sprintMult
 				) * cfg.predict
 			end
 			if cfg.ahead then
@@ -5280,7 +5401,7 @@ do
 			end
 		end
 		-- Each nearby client plays its own short effect, separate from the wake roar.
-		for _, nearby in Players:GetPlayers() do
+		for _, nearby in Services.Players:GetPlayers() do
 			local _, nearbyRoot = aliveRoot(nearby)
 			if
 				nearbyRoot
@@ -5391,7 +5512,7 @@ do
 			end
 		end)
 	end
-	RunService.Heartbeat:Connect(function(dt)
+	Services.RunService.Heartbeat:Connect(function(dt)
 		local busy = false
 		for _, h in hoards do
 			if h.guard.state ~= "sleep" then
@@ -5484,7 +5605,7 @@ do
 						then
 							bonk(g, thief, thiefRoot)
 						else
-							local top = Config.walkSpeed(upgradeLevel(thief, "Boots"))
+							local top = Config.walkSpeed(Helpers.upgradeLevel(thief, "Boots"))
 								* (
 									thief:GetAttribute("Sprinting")
 										and Config.Movement.sprintMult
@@ -5672,7 +5793,7 @@ do
 		for _, zoneId in Config.ZoneOrder do
 			local def = Config.Hoards and Config.Hoards[zoneId]
 			local zone = zones:FindFirstChild(zoneId)
-			if def and zone and seedById[def.type] then
+			if def and zone and Lookup.seedById[def.type] then
 				local ok, err = pcall(buildHoard, zoneId, zone, def)
 				if not ok then
 					warn("[Patch] Could not build the Hoard in " .. zoneId .. ":", err)
@@ -5802,7 +5923,7 @@ do
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = promptPart
 	prompt.Triggered:Connect(function(player)
-		if not isLoaded(player) then
+		if not Helpers.isLoaded(player) then
 			Remotes.hintEvent:FireClient(player, "Loading your farm...")
 			return
 		end
@@ -5842,7 +5963,7 @@ do
 						string.format(
 							"%s sold a CURSED %s pumpkin!",
 							player.DisplayName,
-							seedById[seedId].name
+							Lookup.seedById[seedId].name
 						)
 					)
 				end
@@ -5857,7 +5978,7 @@ do
 				pumpkin:Destroy()
 			end
 		end
-		total = math.floor(total * sellMult(player) + 0.5)
+		total = math.floor(total * Helpers.sellMult(player) + 0.5)
 		carrying[player] = {}
 		refreshCarry(player)
 		total = addCandy(player, total)
@@ -5941,11 +6062,11 @@ end
 local giveTool -- defined with the scythe builder below
 
 Remotes.buyToolFunction.OnServerInvoke = function(player: Player, id: unknown)
-	local tool = type(id) == "string" and toolById[id]
+	local tool = type(id) == "string" and Lookup.toolById[id]
 	if not tool or not tool.cost then
 		return false, "?"
 	end
-	if not isLoaded(player) then
+	if not Helpers.isLoaded(player) then
 		return false, "Loading"
 	end
 	local owned = toolsOf[player]
@@ -5956,9 +6077,9 @@ Remotes.buyToolFunction.OnServerInvoke = function(player: Player, id: unknown)
 	elseif tool.damage <= bestTool(player).damage then
 		return false, "Have better"
 	end
-	local candy = candyValue(player)
+	local candy = Helpers.candyValue(player)
 	if not candy or candy.Value < tool.cost then
-		return false, "Need " .. short(tool.cost)
+		return false, "Need " .. Helpers.short(tool.cost)
 	end
 	candy.Value -= tool.cost
 	owned[tool.id] = true
@@ -5976,17 +6097,17 @@ Remotes.buyUpgradeFunction.OnServerInvoke = function(player: Player, id: unknown
 	if id == "Lucky" and not Unlock.has(player, "LuckySwing") then
 		return false, "Locked"
 	end
-	if not isLoaded(player) then
+	if not Helpers.isLoaded(player) then
 		return false, "Loading"
 	end
-	local level = upgradeLevel(player, id :: string)
+	local level = Helpers.upgradeLevel(player, id :: string)
 	if level >= info.max then
 		return false, "MAX"
 	end
 	local cost = Config.upgradeCost(id, level)
-	local candy = candyValue(player)
+	local candy = Helpers.candyValue(player)
 	if not candy or candy.Value < cost then
-		return false, "Need " .. short(cost)
+		return false, "Need " .. Helpers.short(cost)
 	end
 	candy.Value -= cost
 	player:SetAttribute("Up_" .. (id :: string), level + 1)
@@ -6048,17 +6169,17 @@ do
 end
 
 Remotes.buySkillFunction.OnServerInvoke = function(player: Player, id: unknown)
-	local skill = type(id) == "string" and skillById[id]
+	local skill = type(id) == "string" and Lookup.skillById[id]
 	if not skill then
 		return false, "?"
 	end
-	if not isLoaded(player) then
+	if not Helpers.isLoaded(player) then
 		return false, "Loading"
 	end
 	if hasSkill(player, skill.id) then
 		return false, "Owned"
 	end
-	local before = skillAt[skill.branch .. ":" .. (skill.tier - 1)]
+	local before = Lookup.skillAt[skill.branch .. ":" .. (skill.tier - 1)]
 	if before and not hasSkill(player, before.id) then
 		return false, "Locked"
 	end
@@ -6132,7 +6253,7 @@ end
 -- welded to an invisible anchored root named Body that the ghost loop moves each frame.
 -- Returns nil when the asset is missing so the ball ghost below is used instead.
 local function buildMeshGhost(at: Vector3, lackey: boolean?): (Model?, BasePart?)
-	local assets = ServerStorage:FindFirstChild("PolishAssets")
+	local assets = Services.ServerStorage:FindFirstChild("PolishAssets")
 	local source = assets and assets:FindFirstChild("GhostMesh")
 	if not source or not source:IsA("Model") then
 		return nil, nil
@@ -6315,7 +6436,7 @@ do
 	-- Ghosts go for pumpkins placed on bases that are not locked and whose owner is past the
 	-- new-player shield (a ghost must never empty a new farmer's base).
 	function Progress.raidEligible(owner, patch, reserved)
-		if not owner or not isLoaded(owner) or Bases.isLocked(patch) then
+		if not owner or not Helpers.isLoaded(owner) or Bases.isLocked(patch) then
 			return false
 		end
 		for _, plot in Bases.plots(patch) do
@@ -6353,7 +6474,7 @@ do
 				local lowest, rank, rate = nil, math.huge, math.huge
 				for _, plot in Bases.plots(patch) do
 					local p = plotState[plot].pumpkin
-					local seed = p and seedById[p:GetAttribute("Seed")]
+					local seed = p and Lookup.seedById[p:GetAttribute("Seed")]
 					local rarity = seed and Config.Pets[seed.pet].rarity
 					local order = rarity == "Common" and 1 or rarity == "Rare" and 2 or math.huge
 					if
@@ -6389,7 +6510,7 @@ do
 		local pumpkin = plotState[plot].pumpkin :: BasePart
 		pumpkin:SetAttribute("Targeted", true)
 		plot.Parent:SetAttribute("RaidPending", true)
-		local owner = Players:GetPlayerByUserId(plot.Parent:GetAttribute("Owner") or 0)
+		local owner = Services.Players:GetPlayerByUserId(plot.Parent:GetAttribute("Owner") or 0)
 		if owner and Progress.data[owner] then
 			Progress.data[owner].raidAt = os.time()
 		end
@@ -6460,7 +6581,8 @@ do
 				ghost.carried.CFrame = ghost.savedCF
 				ghost.carried:SetAttribute("JackHome", ghost.savedCF)
 				ghost.carried:SetAttribute("RoamNext", 0)
-				local owner = Players:GetPlayerByUserId(ghost.carried:GetAttribute("Owner") or 0)
+				local owner =
+					Services.Players:GetPlayerByUserId(ghost.carried:GetAttribute("Owner") or 0)
 				if owner and owner.Parent then
 					track(owner, "rescue", 1)
 					Remotes.hintEvent:FireClient(owner, "Your pet is back!")
@@ -6482,7 +6604,7 @@ do
 	end
 end
 
-RunService.Heartbeat:Connect(function(dt)
+Services.RunService.Heartbeat:Connect(function(dt)
 	for i = #ghosts, 1, -1 do
 		local ghost = ghosts[i]
 		if not ghost.model.Parent then
@@ -6526,7 +6648,7 @@ RunService.Heartbeat:Connect(function(dt)
 				or not s
 				or s.pumpkin ~= target
 				or not Progress.raidEligible(
-					Players:GetPlayerByUserId(
+					Services.Players:GetPlayerByUserId(
 						(ghost.plot :: BasePart).Parent:GetAttribute("Owner") or 0
 					),
 					(ghost.plot :: BasePart).Parent,
@@ -6549,7 +6671,7 @@ RunService.Heartbeat:Connect(function(dt)
 			if ghost.fleeing then
 				if ghost.carried then
 					local owner =
-						Players:GetPlayerByUserId(ghost.carried:GetAttribute("Owner") or 0)
+						Services.Players:GetPlayerByUserId(ghost.carried:GetAttribute("Owner") or 0)
 					if owner then
 						Remotes.stolenEvent:FireClient(owner, pos)
 					end
@@ -6614,7 +6736,7 @@ RunService.Heartbeat:Connect(function(dt)
 				rescue.Parent = ghost.root
 				rescue.Triggered:Connect(recoverTap)
 				Bases.refresh(plot.Parent)
-				local owner = Players:GetPlayerByUserId(pumpkin:GetAttribute("Owner") or 0)
+				local owner = Services.Players:GetPlayerByUserId(pumpkin:GetAttribute("Owner") or 0)
 				if owner then
 					Remotes.hintEvent:FireClient(
 						owner,
@@ -6786,7 +6908,7 @@ do
 	end
 
 	for _, name in { "Mallet", "Scythe" } do
-		local old = StarterPack:FindFirstChild(name)
+		local old = Services.StarterPack:FindFirstChild(name)
 		if old then
 			old:Destroy()
 		end
@@ -7093,7 +7215,7 @@ local function clearGhosts()
 end
 
 local function rainCandy()
-	local template = seedTemplate(seedById.Golden)
+	local template = seedTemplate(Lookup.seedById.Golden)
 	for _ = 1, Config.RainCount do
 		local a = math.random() * math.pi * 2
 		local r = 10 + math.random() * 26
@@ -7112,7 +7234,7 @@ local function rainCandy()
 		drop.Parent = loose
 		local taken = false
 		drop.Touched:Connect(function(hit)
-			local player = Players:GetPlayerFromCharacter(hit.Parent)
+			local player = Services.Players:GetPlayerFromCharacter(hit.Parent)
 			if taken or not player then
 				return
 			end
@@ -7176,7 +7298,7 @@ function defeatKing()
 		end
 	end
 	Remotes.kingDoneEvent:FireAllClients("swell", {})
-	local grow = TweenService:Create(
+	local grow = Services.TweenService:Create(
 		kingFace,
 		TweenInfo.new(Config.KingNight.finale, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
 		{
@@ -7200,7 +7322,7 @@ end
 do
 	-- Telegraphed attacks: clients draw the red circles; the server checks who is inside when they land.
 	local function landAttack(shapes, victim, effect)
-		for _, player in victim and { victim } or Players:GetPlayers() do
+		for _, player in victim and { victim } or Services.Players:GetPlayers() do
 			local _, root = aliveRoot(player)
 			if root then
 				for _, shape in shapes do
@@ -7271,7 +7393,7 @@ do
 		state:SetAttribute("KingWalking", king.moving)
 	end
 
-	RunService.Heartbeat:Connect(function(dt)
+	Services.RunService.Heartbeat:Connect(function(dt)
 		if king.active then
 			walkKing(dt)
 		end
@@ -7310,7 +7432,7 @@ do
 			return
 		end
 		if kind == "Slam" then
-			local up = TweenService:Create(
+			local up = Services.TweenService:Create(
 				kingFace,
 				TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 				{
@@ -7319,7 +7441,7 @@ do
 			)
 			up:Play()
 			up.Completed:Wait()
-			local down = TweenService:Create(
+			local down = Services.TweenService:Create(
 				kingFace,
 				TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
 				{
@@ -7382,16 +7504,19 @@ do
 			state:SetAttribute("KingShield", nil)
 			state:SetAttribute("KingStunned", true)
 			Remotes.kingDoneEvent:FireAllClients("stun", {})
-			TweenService:Create(kingFace, TweenInfo.new(0.5, Enum.EasingStyle.Bounce), {
-				CFrame = king.faceBase
-					* CFrame.new(0, -2, 0)
-					* CFrame.Angles(math.rad(25), 0, math.rad(12)),
-			}):Play()
+			Services.TweenService
+				:Create(kingFace, TweenInfo.new(0.5, Enum.EasingStyle.Bounce), {
+					CFrame = king.faceBase
+						* CFrame.new(0, -2, 0)
+						* CFrame.Angles(math.rad(25), 0, math.rad(12)),
+				})
+				:Play()
 			task.delay(Config.StunSeconds, function()
 				state:SetAttribute("KingStunned", nil)
 				if king.active then
 					king.recoverUntil = os.clock() + 0.4
-					TweenService:Create(kingFace, TweenInfo.new(0.4), { CFrame = king.faceBase })
+					Services.TweenService
+						:Create(kingFace, TweenInfo.new(0.4), { CFrame = king.faceBase })
 						:Play()
 				end
 			end)
@@ -7416,11 +7541,11 @@ do
 		state:SetAttribute("LocksOff", nil)
 		state:SetAttribute("KingWarning", nil)
 		Remotes.kingDoneEvent:FireAllClients("wake", {})
-		local players = #Players:GetPlayers()
+		local players = #Services.Players:GetPlayers()
 		king.counted = {}
 		king.dps = {}
 		king.maxHp = Config.KingBaseHp
-		for _, player in Players:GetPlayers() do
+		for _, player in Services.Players:GetPlayers() do
 			local add = kingPlayerHp(player)
 			king.counted[player] = add
 			king.maxHp += add
@@ -7449,7 +7574,7 @@ do
 		king.pad = 0
 		king.plantedUntil = os.clock() + Config.KingNight.padPause
 		state:SetAttribute("KingWalking", false)
-		for _, player in Players:GetPlayers() do
+		for _, player in Services.Players:GetPlayers() do
 			player:SetAttribute("MVP", nil)
 		end
 		state:SetAttribute("KingMaxHp", king.maxHp)
@@ -7557,7 +7682,7 @@ end
 -- The very first claim ever is only a toast (no popup on the first visit); later claims open the
 -- panel once the tutorial is done, else they are toasts too.
 local function claimDaily(player: Player, claim: boolean?)
-	if not isLoaded(player) then
+	if not Helpers.isLoaded(player) then
 		return
 	end
 	local o = orders[player]
@@ -7638,7 +7763,7 @@ do
 			label.LayoutOrder = order
 			label.BackgroundTransparency = 1
 			label.Size = UDim2.new(1, 0, height, 0)
-			label.FontFace = fontFace("title")
+			label.FontFace = Helpers.fontFace("title")
 			label.TextScaled = true
 			label.TextColor3 = color
 			label.Text = text
@@ -7657,7 +7782,7 @@ do
 			return nameCache[userId]
 		end
 		local ok, name = pcall(function()
-			return Players:GetNameFromUserIdAsync(userId)
+			return Services.Players:GetNameFromUserIdAsync(userId)
 		end)
 		local result = ok and name or ("Farmer " .. userId)
 		nameCache[userId] = result
@@ -7680,7 +7805,8 @@ do
 			local entry = page[i]
 			if entry then
 				local userId = tonumber(entry.key) or 0
-				label.Text = string.format("%d. %s  %s", i, nameOf(userId), short(entry.value))
+				label.Text =
+					string.format("%d. %s  %s", i, nameOf(userId), Helpers.short(entry.value))
 			else
 				label.Text = ""
 			end
@@ -7717,7 +7843,7 @@ do
 			if session and os.clock() - session.at < 2 then
 				return
 			end
-			session = { id = HttpService:GenerateGUID(false), step = 0, at = os.clock() }
+			session = { id = Services.HttpService:GenerateGUID(false), step = 0, at = os.clock() }
 			shopFunnelOf[player] = session
 		end
 		if not session or step <= session.step then
@@ -7726,7 +7852,7 @@ do
 		session.step = step
 		local id = session.id
 		pcall(function()
-			AnalyticsService:LogFunnelStepEvent(player, "Shop", id, step, SHOP_STEPS[step])
+			Services.AnalyticsService:LogFunnelStepEvent(player, "Shop", id, step, SHOP_STEPS[step])
 		end)
 	end
 
@@ -7740,7 +7866,7 @@ do
 			return
 		end
 		local tag = head:FindFirstChild("VipTag")
-		if not hasPass(player, "VIP") then
+		if not Helpers.hasPass(player, "VIP") then
 			if tag then
 				tag:Destroy()
 			end
@@ -7761,7 +7887,7 @@ do
 			label.BackgroundTransparency = 1
 			label.Position = UDim2.fromScale(0, i == 1 and 0 or 0.42)
 			label.Size = UDim2.fromScale(1, i == 1 and 0.42 or 0.58)
-			label.FontFace = fontFace("title")
+			label.FontFace = Helpers.fontFace("title")
 			label.TextScaled = true
 			label.TextColor3 = VIP_GOLD
 			label.Text = text
@@ -7775,7 +7901,7 @@ do
 	end
 
 	local function grantPass(player: Player, name: string)
-		if hasPass(player, name) then
+		if Helpers.hasPass(player, name) then
 			return
 		end
 		player:SetAttribute("Pass_" .. name, true)
@@ -7790,7 +7916,7 @@ do
 		for name, id in Config.GamePasses do
 			if id ~= 0 and player.Parent then
 				local ok, owns = pcall(function()
-					return MarketplaceService:UserOwnsGamePassAsync(player.UserId, id)
+					return Services.MarketplaceService:UserOwnsGamePassAsync(player.UserId, id)
 				end)
 				if ok and owns then
 					grantPass(player, name)
@@ -7799,40 +7925,43 @@ do
 		end
 	end
 
-	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, passId, purchased)
-		local name = passById[passId]
-		if purchased and name and player.Parent then
-			grantPass(player, name)
-			shopFunnel(player, 3)
+	Services.MarketplaceService.PromptGamePassPurchaseFinished:Connect(
+		function(player, passId, purchased)
+			local name = passById[passId]
+			if purchased and name and player.Parent then
+				grantPass(player, name)
+				shopFunnel(player, 3)
+			end
 		end
-	end)
+	)
 
-	-- Candy products pay a multiple of B (orderBase), so they stay worth it as the farm grows.
+	-- Receipt-time server income determines candy packs; quotes are estimates.
 	local function productCandy(player: Player, name: string): number
-		local mult = name == "CandyBig" and Config.CandyBigB or Config.CandySmallB
-		return math.floor(mult * orderBase(player) + 0.5)
+		Bases.refresh(patchOf[player])
+		local income = math.max(Config.CandyPackIncomeFloor, player:GetAttribute("Income") or 0)
+		return math.floor(Config.CandyPackMinutes[name] * 60 * income + 0.5)
 	end
 
 	-- Gives the product and returns the thank-you hint. Errors on an unknown product.
 	local function grantProduct(player: Player, name: string): string
 		if name == "CandySmall" or name == "CandyBig" then
-			local candy = candyValue(player)
+			local candy = Helpers.candyValue(player)
 			assert(candy, "no leaderstats")
 			local amount = productCandy(player, name)
 			-- Straight to the balance: bought candy stays off the lifetime board.
 			candy.Value += amount
-			return string.format("Thank you! +%s candy", short(amount))
+			return string.format("Thank you! +%s candy", Helpers.short(amount))
 		end
 		error("unknown product " .. name)
 	end
 
 	-- Idempotent: granted PurchaseIds live in the save, and PurchaseGranted is returned only once
 	-- the grant (with its PurchaseId) is saved. Anything else is retried later by Roblox.
-	MarketplaceService.ProcessReceipt = function(receipt)
-		local player = Players:GetPlayerByUserId(receipt.PlayerId)
+	Services.MarketplaceService.ProcessReceipt = function(receipt)
+		local player = Services.Players:GetPlayerByUserId(receipt.PlayerId)
 		local name = productById[receipt.ProductId]
 		local done = player and receiptsOf[player]
-		if not player or not name or not done or not isLoaded(player) then
+		if not player or not name or not done or not Helpers.isLoaded(player) then
 			return Enum.ProductPurchaseDecision.NotProcessedYet
 		end
 		-- Already in the list: granted before (maybe its save failed); only the save is retried.
@@ -7895,7 +8024,7 @@ do
 		Progress.arrive(player)
 	end
 	function Progress.rarityRank(id)
-		local seed = seedById[id]
+		local seed = Lookup.seedById[id]
 		return seed and Config.Economy.rarityRanks[Config.Pets[seed.pet].rarity] or 0
 	end
 	function Progress.updateBonus(player, saved)
@@ -7904,24 +8033,27 @@ do
 		end
 		local bonus = 0
 		for _, entry in type(saved.placed) == "table" and saved.placed or {} do
-			local seed = type(entry) == "table" and seedById[entry.s]
+			local seed = type(entry) == "table" and Lookup.seedById[entry.s]
 			local old = seed and Config.Economy.legacyIncome[seed.id]
 			if old then
-				local mutation = mutationById[entry.m or ""]
+				local mutation = Lookup.mutationById[entry.m or ""]
 				bonus += math.max(0, old - seed.income) * math.clamp(tonumber(entry.z) or 1, 0.1, 5) * (entry.h and Config.HoardMult or 1) * (mutation and mutation.mult or 1) * (entry.g and Config.Progression.goldIncome or 1) * (entry.y and Config.Progression.shinyIncome or 1)
 			end
 		end
 		bonus = math.floor(
 			bonus
 					* Config.Economy.updateBonusSeconds
-					* sellMult(player)
+					* Helpers.sellMult(player)
 					* Progress.candyMult(player)
 				+ 0.5
 		)
 		if bonus > 0 then
-			local candy = candyValue(player)
+			local candy = Helpers.candyValue(player)
 			candy.Value += bonus
-			Remotes.hintEvent:FireClient(player, "Update bonus: +" .. short(bonus) .. " candy")
+			Remotes.hintEvent:FireClient(
+				player,
+				"Update bonus: +" .. Helpers.short(bonus) .. " candy"
+			)
 		end
 	end
 	function Progress.complete(player, zone)
@@ -7947,7 +8079,11 @@ do
 		player:SetAttribute("KingCrates", d.crates)
 		player:SetAttribute(
 			"ZoneProgress",
-			HttpService:JSONEncode({ quests = d.quests, stamps = d.stamps, owned = d.owned })
+			Services.HttpService:JSONEncode({
+				quests = d.quests,
+				stamps = d.stamps,
+				owned = d.owned,
+			})
 		)
 	end
 	function Progress.quest(player, zone, kind, amount)
@@ -7976,7 +8112,7 @@ do
 	end
 	function Progress.own(player, seedId)
 		local d = Progress.data[player]
-		if not d or not seedById[seedId] then
+		if not d or not Lookup.seedById[seedId] then
 			return
 		end
 		d.owned[seedId] = true
@@ -8009,59 +8145,7 @@ do
 		end
 		local patch = patchOf[player]
 		if patch then
-			local plots = {}
-			for _, p in patch:GetChildren() do
-				if p.Name == "Plot" and p:IsA("BasePart") then
-					table.insert(plots, p)
-				end
-			end
-			table.sort(plots, function(a, b)
-				return (a:GetAttribute("Index") or 0) < (b:GetAttribute("Index") or 0)
-			end)
-			if plots[1] then
-				for i = #plots + 1, Config.Progression.castleSlots do
-					local p = plots[1]:Clone()
-					p:ClearAllChildren()
-					p:SetAttribute("Index", i)
-					p:SetAttribute("Filled", false)
-					p:SetAttribute("Protected", false)
-					p.CFrame = plots[1].CFrame
-						+ patch.Soil.CFrame.RightVector
-							* ((i - Config.Progression.baseSlots) * Config.Progression.slotSpacing)
-					p.Parent = patch
-					Bases.setupPlot(p)
-					table.insert(plots, p)
-				end
-				if patch:GetAttribute("SlotGeometry") ~= Config.Progression.castleSlots then
-					local soil = patch.Soil
-					local rows = Config.Progression.slotRows
-					local columns = math.ceil(Config.Progression.castleSlots / rows)
-					local footprint = math.max(plots[1].Size.X, plots[1].Size.Y, plots[1].Size.Z)
-					local stepX = math.min(
-						Config.Progression.slotSpacing,
-						(soil.Size.X - 2 * Config.Progression.slotMargin - footprint)
-							/ (columns - 1)
-					)
-					local stepZ = math.min(
-						Config.Progression.slotSpacing,
-						(soil.Size.Z - 2 * Config.Progression.slotMargin - footprint) / (rows - 1)
-					)
-					local height = soil.CFrame:PointToObjectSpace(plots[1].Position).Y
-					local rotation = plots[1].CFrame.Rotation
-					for i, p in plots do
-						p.CFrame = CFrame.new(
-							soil.CFrame:PointToWorldSpace(
-								Vector3.new(
-									(math.floor((i - 1) / rows) - (columns - 1) / 2) * stepX,
-									height,
-									((i - 1) % rows - (rows - 1) / 2) * stepZ
-								)
-							)
-						) * rotation
-					end
-					patch:SetAttribute("SlotGeometry", Config.Progression.castleSlots)
-				end
-			end
+			Bases.layout(patch)
 			Bases.slotLook(
 				patch,
 				d.slots,
@@ -8115,7 +8199,7 @@ do
 			if
 				p.Parent
 				and not p:GetAttribute("HoardZone")
-				and (not p:GetAttribute("StolenFrom") or not Players:GetPlayerByUserId(
+				and (not p:GetAttribute("StolenFrom") or not Services.Players:GetPlayerByUserId(
 					p:GetAttribute("StolenFrom")
 				) or p:GetAttribute("StolenFrom") == player.UserId)
 				and (p:GetAttribute("Jack") or p:GetAttribute("Hoard"))
@@ -8131,7 +8215,7 @@ do
 			local id = type(e) == "table" and (e.s or e.seed or e.Seed)
 			if
 				id
-				and seedById[id]
+				and Lookup.seedById[id]
 				and (e.h == true or e.j == true or e.hoard == true or e.jack == true)
 			then
 				table.insert(Progress.pending[player], {
@@ -8158,7 +8242,7 @@ do
 		end
 		if
 			not Bases.empty(patchOf[player])
-			and #(carrying[player] or {}) >= carryCapacity(player)
+			and #(carrying[player] or {}) >= Helpers.carryCapacity(player)
 		then
 			return
 		end
@@ -8177,12 +8261,12 @@ do
 			p:SetAttribute("Bought", e.u == true or e.b == true)
 			p:SetAttribute("PlacedAt", e.a)
 			p:SetAttribute("GoldRolled", e.r)
-			if e.m and mutationById[e.m] then
+			if e.m and Lookup.mutationById[e.m] then
 				p:SetAttribute("Mutation", e.m)
 				applyMutationLook(p, e.m)
 			end
 			if e.j then
-				Looks.hatch(p, seedById[e.s])
+				Looks.hatch(p, Lookup.seedById[e.s])
 			else
 				Hoards.look(p)
 			end
@@ -8209,7 +8293,7 @@ do
 	function Bases.leaveCarry(player, at)
 		Progress.pending[player] = Bases.collectCarry(player)
 		for _, p in carrying[player] or {} do
-			local victim = Players:GetPlayerByUserId(p:GetAttribute("StolenFrom") or 0)
+			local victim = Services.Players:GetPlayerByUserId(p:GetAttribute("StolenFrom") or 0)
 			if p:GetAttribute("HoardZone") then
 				Hoards.giveBack(p, at)
 			elseif victim and victim ~= player then
@@ -8222,9 +8306,9 @@ do
 	end
 	function Progress.rebirth(player)
 		local d = Progress.data[player]
-		local candy = candyValue(player)
+		local candy = Helpers.candyValue(player)
 		if
-			not isLoaded(player)
+			not Helpers.isLoaded(player)
 			or not d
 			or not hasZone(player, "Zone7")
 			or not Progress.complete(player, "Zone7")
@@ -8237,7 +8321,7 @@ do
 		local legendary = false
 		for _, plot in Bases.plots(patchOf[player]) do
 			local p = plotState[plot].pumpkin
-			local seed = p and seedById[p:GetAttribute("Seed")]
+			local seed = p and Lookup.seedById[p:GetAttribute("Seed")]
 			if seed and Progress.rarityRank(seed.id) >= Config.Economy.rarityRanks.Legendary then
 				legendary = true
 			end
@@ -8265,7 +8349,7 @@ do
 		return true
 	end
 	function Progress.fuse(player)
-		if not isLoaded(player) or not hasZone(player, "Zone3") then
+		if not Helpers.isLoaded(player) or not hasZone(player, "Zone3") then
 			return false
 		end
 		local groups = {}
@@ -8291,7 +8375,8 @@ do
 				local p = plotState[best].pumpkin
 				local extra = Bases.extraOf(p)
 				extra.weight = (
-					extra.weight or Config.PetSizes[Config.Pets[seedById[id].pet].rarity].median
+					extra.weight
+					or Config.PetSizes[Config.Pets[Lookup.seedById[id].pet].rarity].median
 				) * Config.Progression.fuseWeight
 				extra.shiny = extra.shiny or math.random() < Config.Progression.shinyChance
 				local size, mutation = p:GetAttribute("SizeMult") or 1, p:GetAttribute("Mutation")
@@ -8367,7 +8452,7 @@ do
 			}
 			delivered:Destroy()
 		end
-		state:SetAttribute("WitchOffers", HttpService:JSONEncode(Progress.witch))
+		state:SetAttribute("WitchOffers", Services.HttpService:JSONEncode(Progress.witch))
 		state:SetAttribute(
 			"WitchRestockAt",
 			workspace:GetServerTimeNow() + Config.Progression.witchRestock
@@ -8380,9 +8465,9 @@ do
 			Remotes.hintEvent:FireClient(player, "Sold out for you! Wait for restock")
 			return
 		end
-		local candy = candyValue(player)
+		local candy = Helpers.candyValue(player)
 		if
-			not isLoaded(player)
+			not Helpers.isLoaded(player)
 			or not hasZone(player, "Zone4")
 			or not offer
 			or not hasZone(player, offer.zone)
@@ -8455,7 +8540,10 @@ do
 			p.KeyboardKeyCode = ({ Enum.KeyCode.Z, Enum.KeyCode.X, Enum.KeyCode.C })[i]
 			state:GetAttributeChangedSignal("WitchOffers"):Connect(function()
 				local offer = Progress.witch[i]
-				p.ActionText = seedById[offer.seed].name .. " (" .. short(offer.price) .. " candy)"
+				p.ActionText = Lookup.seedById[offer.seed].name
+					.. " ("
+					.. Helpers.short(offer.price)
+					.. " candy)"
 			end)
 		end
 	end
@@ -8488,7 +8576,7 @@ do
 		local character = player.Character
 		local hum = character and character:FindFirstChildOfClass("Humanoid")
 		if hum then
-			hum.WalkSpeed = Config.walkSpeed(upgradeLevel(player, "Boots")) * mult
+			hum.WalkSpeed = Config.walkSpeed(Helpers.upgradeLevel(player, "Boots")) * mult
 		end
 		task.delay(seconds, function()
 			if player.Parent and player:GetAttribute("GuardEffectUntil") == untilAt then
@@ -8496,7 +8584,7 @@ do
 				player:SetAttribute("GuardEffectIcon", nil)
 				local h = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 				if h then
-					h.WalkSpeed = Config.walkSpeed(upgradeLevel(player, "Boots"))
+					h.WalkSpeed = Config.walkSpeed(Helpers.upgradeLevel(player, "Boots"))
 				end
 			end
 		end)
@@ -8569,7 +8657,7 @@ do
 			p:SetAttribute("Bought", true)
 			p:SetAttribute("Gold", gold)
 			p:SetAttribute("GoldRolled", true)
-			Looks.hatch(p, seedById[seed])
+			Looks.hatch(p, Lookup.seedById[seed])
 			if not stackPumpkin(player, p) then
 				Progress.pending[player] = Progress.pending[player] or {}
 				table.insert(Progress.pending[player], {
@@ -8609,7 +8697,7 @@ do
 	function Progress.kingRewards(won)
 		local list = {}
 		for player, damage in king.damage do
-			if player.Parent and isLoaded(player) then
+			if player.Parent and Helpers.isLoaded(player) then
 				table.insert(list, { player = player, damage = damage })
 			end
 		end
@@ -8631,9 +8719,9 @@ do
 						Progress.bossCandy(player) * (won and 1 or Config.KingNight.consolation)
 					)
 				or 0
-			local before = candyValue(player).Value
+			local before = Helpers.candyValue(player).Value
 			addCandy(player, amount)
-			amount = candyValue(player).Value - before
+			amount = Helpers.candyValue(player).Value - before
 			payouts[tostring(player.UserId)] = amount
 			local crates = {}
 			if won and qualified then
@@ -8662,48 +8750,75 @@ do
 			mvp:SetAttribute("CleaverSkin", true)
 			giveTool(mvp, true)
 		end
-		for _, p in Players:GetPlayers() do
+		for _, p in Services.Players:GetPlayers() do
 			p:SetAttribute("MVP", p == mvp)
 		end
 		return payouts, mvp
 	end
-	Remotes.kingJoinEvent.OnServerEvent:Connect(function(player)
-		if not isLoaded(player) or (not king.active and not state:GetAttribute("KingWarning")) then
+
+	local holder = Instance.new("Part")
+	holder.Name = "KingJoinRing"
+	holder.Size = Vector3.one
+	holder.Anchored = true
+	holder.Transparency = 1
+	holder.CanCollide = false
+	holder.CanTouch = false
+	holder.CanQuery = false
+	holder.CFrame = CFrame.new(king.groundHome + Vector3.new(0, 0.2, 24))
+		* CFrame.Angles(math.pi / 2, 0, 0)
+	holder.Parent = market
+	local ring = Instance.new("CylinderHandleAdornment")
+	ring.Adornee = holder
+	ring.Radius = 6
+	ring.InnerRadius = 5.3
+	ring.Height = 0.2
+	ring.Color3 = Color3.fromRGB(255, 205, 40)
+	ring.Transparency = 0.1
+	ring.Parent = holder
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "KingJoinPrompt"
+	prompt.ActionText = "Join King Fight"
+	prompt.ObjectText = "Pumpkin King throne"
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.MaxActivationDistance = 10
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = holder
+	local function refreshEntry()
+		local open = state:GetAttribute("KingActive") == true
+			or state:GetAttribute("KingWarning") == true
+		prompt.Enabled = open
+		ring.Visible = open
+	end
+	state:GetAttributeChangedSignal("KingWarning"):Connect(refreshEntry)
+	state:GetAttributeChangedSignal("KingActive"):Connect(refreshEntry)
+	refreshEntry()
+	local function joinKing(player)
+		local _, root = aliveRoot(player)
+		if
+			not Helpers.isLoaded(player)
+			or not root
+			or not prompt.Enabled
+			or (root.Position - holder.Position).Magnitude > prompt.MaxActivationDistance + 2
+		then
+			return
+		end
+		if not Unlock.has(player, "King") then
+			Remotes.hintEvent:FireClient(player, "King Fight unlocks after 10 minutes of play")
 			return
 		end
 		if #(carrying[player] or {}) > 0 or Hoards.targets(player) then
 			Remotes.hintEvent:FireClient(player, "Put down your pets and escape the guardian first")
 			return
 		end
-		local character = player.Character
-		if character and aliveRoot(player) then
-			local pos
-			for _, radius in { Config.GuardLaunch.kingSide, Config.GuardLaunch.kingSide + 12 } do
-				for i = 0, 7 do
-					local angle = i * math.pi / 4
-					pos = Bases.safeLanding(
-						market.Plaza.Position
-							+ Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius),
-						true
-					)
-					if pos then
-						break
-					end
-				end
-				if pos then
-					break
-				end
-			end
-			if not pos then
-				Remotes.hintEvent:FireClient(player, "No safe King landing. Try again shortly.")
-				return
-			end
-			character:PivotTo(CFrame.new(pos))
-			local _, root = aliveRoot(player)
-			root.AssemblyLinearVelocity = Vector3.zero
-			root.AssemblyAngularVelocity = Vector3.zero
-		end
-	end)
+		kingAddPlayer(player)
+		Remotes.hintEvent:FireClient(
+			player,
+			king.active and "King Fight: bonk the King with your scythe!"
+				or "King Fight starts soon: wait by the throne!"
+		)
+	end
+	prompt.Triggered:Connect(joinKing)
+	Remotes.kingJoinEvent.OnServerEvent:Connect(joinKing)
 	function Progress.kingClock()
 		local at = state:GetAttribute("KingWakesAt") or 0
 		local now = workspace:GetServerTimeNow()
@@ -8734,7 +8849,7 @@ do
 	label.BackgroundTransparency = 0.25
 	label.BackgroundColor3 = Color3.fromRGB(30, 12, 40)
 	label.TextColor3 = Color3.fromRGB(255, 214, 80)
-	label.FontFace = fontFace("title")
+	label.FontFace = Helpers.fontFace("title")
 	label.TextScaled = true
 	label.Text =
 		"KING FIGHT :00 / :20 / :40\n15 hits OR 3% damage = pet + smash-based candy\nEpic 70% / Legendary 27% / Mythic Kinglet 3%\nEvery 5th crate: Kinglet! Top 3: extra crate. MVP: cosmetic skin"
@@ -8805,7 +8920,10 @@ local function onCharacter(player: Player, character: Model)
 end
 
 local function onPlayerAdded(player: Player)
-	player:SetAttribute("IsAdmin", player.UserId == Config.Admin.userId or RunService:IsStudio())
+	player:SetAttribute(
+		"IsAdmin",
+		player.UserId == Config.Admin.userId or Services.RunService:IsStudio()
+	)
 	local stats = Instance.new("Folder")
 	stats.Name = "leaderstats"
 	stats.Parent = player
@@ -8897,12 +9015,12 @@ local function onPlayerAdded(player: Player)
 	checkPasses(player)
 end
 
-Players.PlayerAdded:Connect(onPlayerAdded)
-for _, player in Players:GetPlayers() do
+Services.Players.PlayerAdded:Connect(onPlayerAdded)
+for _, player in Services.Players:GetPlayers() do
 	task.spawn(onPlayerAdded, player)
 end
 
-Players.PlayerRemoving:Connect(function(player)
+Services.Players.PlayerRemoving:Connect(function(player)
 	-- Return unresolved Purge thefts before the victim's save is collected.
 	for p, entry in Purge.transit do
 		if entry.owner == player and p.Parent then
@@ -8939,7 +9057,7 @@ end)
 
 game:BindToClose(function()
 	local pending = 0
-	for _, player in Players:GetPlayers() do
+	for _, player in Services.Players:GetPlayers() do
 		pending += 1
 		task.spawn(function()
 			pcall(savePlayer, player, true)
@@ -8956,7 +9074,7 @@ end)
 task.spawn(function()
 	while true do
 		task.wait(Config.SaveEvery)
-		for _, player in Players:GetPlayers() do
+		for _, player in Services.Players:GetPlayers() do
 			task.spawn(savePlayer, player)
 		end
 	end
@@ -8997,8 +9115,8 @@ task.spawn(function()
 			warn("[Patch] Purge tick failed:", purgeErr)
 		end
 		-- Playtime (session and saved total) and the unlock gates it opens.
-		for _, player in Players:GetPlayers() do
-			if isLoaded(player) then
+		for _, player in Services.Players:GetPlayers() do
+			if Helpers.isLoaded(player) then
 				local _, root = aliveRoot(player)
 				if root then
 					local last = Progress.effects[player]
@@ -9021,13 +9139,13 @@ task.spawn(function()
 			end
 		end
 		if seconds % 5 == 0 then
-			for _, player in Players:GetPlayers() do
+			for _, player in Services.Players:GetPlayers() do
 				claimDaily(player)
 			end
 			for player, o in orders do
 				if
 					player.Parent
-					and isLoaded(player)
+					and Helpers.isLoaded(player)
 					and o.tut > TUTORIAL_COUNT
 					and (
 						os.time() >= o.refreshAt
@@ -9161,7 +9279,10 @@ do
 		return pets >= Config.Purge.survivorPets and unprotected > 0
 	end
 	function Purge.observe(player, patch, t)
-		if not isLoaded(player) or (player:GetAttribute("PlayTime") or 0) < Config.Purge.grace then
+		if
+			not Helpers.isLoaded(player)
+			or (player:GetAttribute("PlayTime") or 0) < Config.Purge.grace
+		then
 			return
 		end
 		local _, root = aliveRoot(player)
@@ -9204,7 +9325,7 @@ do
 		state:SetAttribute("PurgeEnds", workspace:GetServerTimeNow() + Config.Purge.seconds)
 		state:SetAttribute("PurgeNext", nextSlot(workspace:GetServerTimeNow()))
 		for player, patch in patchOf do
-			if isLoaded(player) then
+			if Helpers.isLoaded(player) then
 				Purge.observe(player, patch, workspace:GetServerTimeNow())
 				patch:SetAttribute("PurgeRobbed", nil)
 				player:SetAttribute("PurgeLockUsed", nil)
@@ -9231,8 +9352,9 @@ do
 			local ghost = ghosts[i]
 			if ghost.purgeId == id then
 				if ghost.stash then
-					local owner =
-						Players:GetPlayerByUserId(ghost.model:GetAttribute("StashOwner") or 0)
+					local owner = Services.Players:GetPlayerByUserId(
+						ghost.model:GetAttribute("StashOwner") or 0
+					)
 					if owner then
 						losses[owner.UserId] = true
 					end
@@ -9252,7 +9374,7 @@ do
 				if
 					entry.eligible
 					and player.Parent
-					and isLoaded(player)
+					and Helpers.isLoaded(player)
 					and not losses[player.UserId]
 					and Purge.penEligible(player)
 				then
@@ -9279,7 +9401,7 @@ do
 		local ends = state:GetAttribute("PurgeEnds")
 		if ends then
 			for player, patch in patchOf do
-				if isLoaded(player) then
+				if Helpers.isLoaded(player) then
 					Purge.observe(player, patch, math.min(t, ends))
 					if Purge.locks[player.UserId] then
 						player:SetAttribute("PurgeLockUsed", Purge.id)
@@ -9304,7 +9426,7 @@ do
 			Remotes.announceEvent:FireAllClients("THE PURGE IN 30 SECONDS! Lock or defend your pen")
 		end
 	end
-	RunService.Heartbeat:Connect(function()
+	Services.RunService.Heartbeat:Connect(function()
 		local t = workspace:GetServerTimeNow()
 		for player, hold in Purge.holds do
 			if
@@ -9414,7 +9536,7 @@ do
 			return true
 		elseif action == "unshield" then
 			-- End the new-farmer steal shield for one player (or everyone) to test stealing.
-			for _, p in player and { player } or Players:GetPlayers() do
+			for _, p in player and { player } or Services.Players:GetPlayers() do
 				local played = p:GetAttribute("PlayTime") or 0
 				p:SetAttribute("PlayTime", math.max(played, Config.NewPlayerShield))
 				Unlock.refresh(p)
@@ -9422,7 +9544,7 @@ do
 			return true
 		elseif action == "playtime" and player then
 			-- Set a player's total playtime to N seconds and recompute their unlocks from scratch
-			-- (e.g. 0 = brand-new, 900 = shield over, 1800 = Witch, cauldrons, Lucky Swing).
+			-- (e.g. 0 = brand-new, 900 = shield over, 1800 = Witch, cauldrons, retired upgrades).
 			player:SetAttribute("PlayTime", math.max(0, math.floor(amount or 0)))
 			Unlock.refresh(player, true)
 			return player:GetAttribute("PlayTime")
@@ -9438,19 +9560,19 @@ do
 		end
 		return nil
 	end
-	if RunService:IsStudio() then
+	if Services.RunService:IsStudio() then
 		local debugFunction = Instance.new("BindableFunction")
 		debugFunction.Name = "PatchDebug"
-		debugFunction.Parent = ServerStorage
+		debugFunction.Parent = Services.ServerStorage
 		debugFunction.OnInvoke = Bases.debugAction
 	end
 	local calls = {}
 	local busy = {}
 	Remotes.adminFunction.OnServerInvoke = function(player, action, amount)
 		if
-			not (player.UserId == Config.Admin.userId or RunService:IsStudio())
+			not (player.UserId == Config.Admin.userId or Services.RunService:IsStudio())
 			or player:GetAttribute("IsAdmin") ~= true
-			or not isLoaded(player)
+			or not Helpers.isLoaded(player)
 		then
 			return false, "Admin only"
 		end
@@ -9537,7 +9659,7 @@ do
 		end
 		return true, saved and "Progress reset and saved" or "Progress reset; save unavailable"
 	end
-	Players.PlayerRemoving:Connect(function(player)
+	Services.Players.PlayerRemoving:Connect(function(player)
 		calls[player] = nil
 		busy[player] = nil
 	end)
@@ -9567,7 +9689,7 @@ do
 			and (player:GetAttribute("WalkSpeedMultiplier") or 1) == 0
 	end
 	local function request(player, action, cooldown)
-		if not isLoaded(player) then
+		if not Helpers.isLoaded(player) then
 			return nil, "Loading"
 		end
 		local character, root = aliveRoot(player)
@@ -9587,7 +9709,7 @@ do
 		return { character = character, root = root, clock = c, time = t, cooldown = cooldown }
 	end
 	Remotes.sprintEvent.OnServerEvent:Connect(function(player, on)
-		if type(on) == "boolean" and isLoaded(player) then
+		if type(on) == "boolean" and Helpers.isLoaded(player) then
 			player:SetAttribute("Sprinting", on)
 		end
 	end)
@@ -9695,12 +9817,12 @@ do
 		return true
 	end
 	-- The client predicts this for responsiveness; the server owns the allowed speed.
-	RunService.Heartbeat:Connect(function()
-		for _, player in Players:GetPlayers() do
+	Services.RunService.Heartbeat:Connect(function()
+		for _, player in Services.Players:GetPlayers() do
 			local character = player.Character
 			local hum = character and character:FindFirstChildOfClass("Humanoid")
-			if hum and isLoaded(player) then
-				local speed = Config.walkSpeed(upgradeLevel(player, "Boots"))
+			if hum and Helpers.isLoaded(player) then
+				local speed = Config.walkSpeed(Helpers.upgradeLevel(player, "Boots"))
 					* (player:GetAttribute("Sprinting") and Config.Movement.sprintMult or 1)
 				speed = math.max(
 					Config.MinCarrySpeed,
