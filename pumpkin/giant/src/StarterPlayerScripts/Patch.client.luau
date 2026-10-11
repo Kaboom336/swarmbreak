@@ -3758,138 +3758,355 @@ do
 	-- The idle Grip of each tool (the server's value) and the swing currently playing on it.
 	local idleGrip: { [Tool]: CFrame } = setmetatable({}, { __mode = "k" }) :: any
 
-	-- The hand frame is the arm frame turned -90 on X; poses rotate the idle hold around the hand
-	-- in the arm frame (pitch < 0 tips the upright scythe's top forward and down; with the arm
-	-- raised forward, roll turns it around the vertical, sweeping the blade across).
 	local HAND = CFrame.Angles(math.rad(-90), 0, 0)
-	local function pose(base: CFrame, pitch: number, roll: number): CFrame
-		local rot = CFrame.Angles(math.rad(pitch), 0, math.rad(roll))
-		return base * HAND:Inverse() * rot:Inverse() * HAND
-	end
-	-- Wind up high and to the right, slash down and across to the left, settle back.
+	-- Flat angle channels: right shoulder, elbow, left shoulder, elbow, waist, wrist.
+	local IDLE = { 20, 8, 10, 70, 8, 0, -8, 18, -3, -8, 0, -4, 0, 12 }
 	local SWINGS = {
-		{ { 0, 0, 0 }, { 0.08, 38, -32 }, { 0.18, -112, 34 }, { 0.27, -88, 20 }, { 0.42, 0, 0 } },
-		{ { 0, 0, 0 }, { 0.08, 38, 32 }, { 0.18, -112, -34 }, { 0.27, -88, -20 }, { 0.42, 0, 0 } },
-		{ { 0, 0, 0 }, { 0.12, -150, 0 }, { 0.22, 20, 0 }, { 0.30, 10, 0 }, { 0.50, 0, 0 } },
+		{
+			{ 0.09, "outQuad", 150, -35, 35, 35, 40, -20, -30, 50, 8, -28, 4, 35, -25, 0 },
+			{ 0.115, "linear", 155, -38, 38, 30, 42, -20, -32, 50, 9, -30, 4, 40, -28, 0 },
+			{ 0.18, "outCubic", 70, 45, 10, 15, 25, 10, -25, 30, -12, 30, -3, -105, 30, 0 },
+			{ 0.25, "outQuad", 45, 65, 5, 20, 15, 15, -35, 25, -15, 38, -4, -115, 38, 0 },
+			{ 0.46, "inOutSine", unpack(IDLE) },
+		},
+		{
+			{ 0.09, "outQuad", 95, 60, -5, 60, 20, -10, -15, 40, 4, 32, 0, 20, 40, 10 },
+			{ 0.11, "linear", 98, 64, -6, 62, 20, -10, -15, 40, 5, 35, 0, 22, 44, 10 },
+			{ 0.18, "outCubic", 75, -45, 30, 10, 30, 15, -20, 35, -10, -30, -3, -95, -32, 0 },
+			{ 0.25, "outQuad", 65, -62, 40, 12, 30, 18, -25, 30, -12, -36, -4, -100, -40, 0 },
+			{ 0.47, "inOutSine", unpack(IDLE) },
+		},
+		{
+			{ 0.14, "outQuad", 170, 0, 15, 25, 165, -15, -5, 30, 14, -8, 0, 30, 0, 0 },
+			{ 0.175, "linear", 175, 0, 16, 22, 170, -16, -5, 28, 16, -8, 0, 35, 0, 0 },
+			{ 0.24, "outQuart", 55, 12, 6, 10, 60, -25, 5, 25, -26, 2, 0, -120, 0, 0 },
+			{ 0.33, "hold", 50, 12, 6, 12, 55, -25, 5, 25, -28, 2, 0, -122, 0, 0 },
+			{ 0.54, "inOutSine", unpack(IDLE) },
+		},
 	}
+	local WINDOWS = { { 0.105, 0.255, 0.115 }, { 0.1, 0.26, 0.11 }, { 0.17, 0.34, 0.175 } }
 	local chains = setmetatable({}, { __mode = "k" })
-	local active = setmetatable({}, { __mode = "k" })
-	local function swingTool(tool: Tool, localSwing: boolean?)
-		if active[tool] then
-			active[tool]()
+	local active = {}
+	local function ease(x, kind)
+		if kind == "outQuad" then
+			return 1 - (1 - x) ^ 2
 		end
-		local now = os.clock()
-		local chain = chains[tool]
-		local step = chain and now - chain.at <= Config.Farm.chainWindow and chain.step % 3 + 1 or 1
-		chains[tool] = { at = now, step = step }
-		local keys = SWINGS[step]
-		local base = idleGrip[tool] or tool.Grip
-		idleGrip[tool] = base
-		local character = tool.Parent
-		local owner = Services.Players:GetPlayerFromCharacter(character)
-		if owner then
-			FarmFX.steps[owner] = step
+		if kind == "outCubic" then
+			return 1 - (1 - x) ^ 3
 		end
-		local shoulder
-		for _, joint in character:GetDescendants() do
+		if kind == "outQuart" then
+			return 1 - (1 - x) ^ 4
+		end
+		if kind == "inOutSine" then
+			return (1 - math.cos(math.pi * x)) / 2
+		end
+		if kind == "hold" then
+			return 0
+		end
+		return x
+	end
+	local function carried(character, owner)
+		for _, subject in { character, owner } do
 			if
-				joint:IsA("Motor6D")
-				and (joint.Name == "RightShoulder" or joint.Name == "Right Shoulder")
+				subject
+				and (
+					(subject:GetAttribute("Carry") or 0) > 0
+					or (subject:GetAttribute("Carrying") or 0) > 0
+				)
 			then
-				shoulder = joint
-				break
+				return true
 			end
 		end
-		local armBase = shoulder and shoulder.C0
-		local trail = tool:FindFirstChild("SwingTrail", true) :: Trail?
-		local width = trail and trail.WidthScale
-		if trail and step == 3 then
-			local points = {}
-			for _, key in width.Keypoints do
+		return false
+	end
+	local function trails(st, on)
+		if st.trail then
+			st.trail.Enabled = on
+		end
+		if st.glow then
+			local quality = UserSettings():GetService("UserGameSettings").SavedQualityLevel.Value
+			st.glow.Enabled = on
+				and not Services.UserInputService.TouchEnabled
+				and (quality == 0 or quality > 3)
+		end
+	end
+	local function restore(st, skipJoints)
+		st.tool.Grip = st.base
+		trails(st, false)
+		for _, j in st.joints do
+			if not skipJoints and j.motor.Parent then
+				j.motor.Transform = j.anim
+			end
+		end
+	end
+	local function track(tool)
+		if active[tool] then
+			return active[tool]
+		end
+		local character = tool.Parent
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if
+			not humanoid
+			or not root
+			or humanoid.Health <= 0
+			or carried(character, Services.Players:GetPlayerFromCharacter(character))
+		then
+			return nil
+		end
+		local st = {
+			tool = tool,
+			character = character,
+			owner = Services.Players:GetPlayerFromCharacter(character),
+			humanoid = humanoid,
+			root = root,
+			base = idleGrip[tool] or tool.Grip,
+			pose = table.clone(IDLE),
+			w = 0,
+			phase = 0,
+			m = 0,
+			jump = 0,
+			equip = 0,
+			joints = {},
+			r6 = humanoid.RigType == Enum.HumanoidRigType.R6,
+		}
+		idleGrip[tool] = st.base
+		local names = st.r6 and { ["Right Shoulder"] = 1, ["Left Shoulder"] = 5, RootJoint = 9 }
+			or { RightShoulder = 1, RightElbow = 4, LeftShoulder = 5, LeftElbow = 8, Waist = 9 }
+		for _, j in character:GetDescendants() do
+			if j:IsA("Motor6D") and names[j.Name] then
 				table.insert(
-					points,
-					NumberSequenceKeypoint.new(key.Time, key.Value * 1.6, key.Envelope * 1.6)
+					st.joints,
+					{ motor = j, index = names[j.Name], rot = j.C0.Rotation, anim = j.Transform }
 				)
 			end
-			trail.WidthScale = NumberSequence.new(points)
 		end
-		local target = localSwing and FarmFX.target and FarmFX.target()
-		local targetAt = target and target.Position
-		local wouldBreak = target and FarmFX.breaks and FarmFX.breaks(target)
-		local hitFrame = step == 3 and 0.22 or 0.16
-		if localSwing then
-			FarmFX.step, FarmFX.impactAt = step, now + hitFrame
-			FarmFX.hasImpact, FarmFX.snapshot = false, target
+		st.trail, st.glow =
+			tool:FindFirstChild("SwingTrail", true), tool:FindFirstChild("SwingGlow", true)
+		st.width = st.trail and st.trail.WidthScale
+		active[tool] = st
+		if st.owner == player then
+			play(Config.Sounds.Whoosh, 1.25, 0.3)
 		end
-		local clock, impacted = 0, false
-		local conn: RBXScriptConnection
-		local function finish()
-			conn:Disconnect()
-			tool.Grip = base
-			if shoulder and shoulder.Parent then
-				shoulder.C0 = armBase
-			end
-			if trail then
-				trail.Enabled, trail.WidthScale = false, width
-			end
-			active[tool] = nil
+		return st
+	end
+	local function swingTool(tool: Tool, localSwing: boolean?)
+		local st = track(tool)
+		if not st then
+			return 1
 		end
-		active[tool] = finish
-		conn = Services.RunService.RenderStepped:Connect(function(dt)
-			if tool.Parent ~= character or not character.Parent then
-				finish()
-				return
-			end
-			local tnow = os.clock()
-			local paused = localSwing and math.clamp(FarmFX.freezeUntil - (tnow - dt), 0, dt) or 0
-			clock += dt - paused
-			if localSwing and FarmFX.hasImpact then
-				impacted = true
-			end
-			if localSwing and not impacted and clock >= hitFrame then
-				impacted = true
-				-- Re-evaluate at impact; retain the start snapshot if the server already broke it.
-				local current = FarmFX.target and FarmFX.target()
-				if target and not target.Parent then
-					current = target
-				end
-				if current and FarmFX.impact then
-					FarmFX.impact(
-						current,
-						current.Parent and current.Position or targetAt,
-						step,
-						current == target and wouldBreak
+		local now, chain = os.clock(), chains[tool]
+		local step = chain and now - chain.at <= Config.Farm.chainWindow and chain.step % 3 + 1 or 1
+		chains[tool] = { at = now, step = step }
+		local fast = st.owner
+			and string.find(st.owner:GetAttribute("Skills") or "", "QuickRoots", 1, true)
+		local speed = fast and 1 + Config.SkillSwingBonus or 1
+		st.swing = {
+			step = step,
+			t = 0,
+			start = table.clone(st.pose),
+			speed = speed,
+			localSwing = localSwing,
+			impacted = false,
+		}
+		if st.owner then
+			FarmFX.steps[st.owner] = step
+		end
+		if st.trail then
+			local points = {}
+			for _, key in st.width.Keypoints do
+				table.insert(
+					points,
+					NumberSequenceKeypoint.new(
+						key.Time,
+						key.Value * (step == 3 and 1.6 or 1),
+						key.Envelope
 					)
-				end
+				)
 			end
-			if clock >= keys[#keys][1] then
-				finish()
-				return
-			end
-			for k = 1, #keys - 1 do
-				local a, b = keys[k], keys[k + 1]
-				if clock < b[1] then
-					local f = math.clamp((clock - a[1]) / (b[1] - a[1]), 0, 1)
-					f = f * f * (3 - 2 * f)
-					local pitch, roll = a[2] + (b[2] - a[2]) * f, a[3] + (b[3] - a[3]) * f
-					tool.Grip = pose(base, pitch, roll)
-					if shoulder then
-						shoulder.C0 = armBase
-							* CFrame.Angles(
-								math.rad(pitch * 0.55),
-								math.rad(roll * 0.35),
-								math.rad(roll * 0.7)
-							)
-					end
-					break
-				end
-			end
-			if trail then
-				trail.Enabled = clock >= 0.07 and clock <= 0.3
+			st.trail.WidthScale, st.trail.Lifetime =
+				NumberSequence.new(points), step == 3 and 0.18 or 0.14
+		end
+		if localSwing then
+			local target = FarmFX.target and FarmFX.target()
+			st.swing.target, st.swing.targetAt = target, target and target.Position
+			st.swing.wouldBreak = target and FarmFX.breaks and FarmFX.breaks(target)
+			FarmFX.step, FarmFX.impactAt = step, now + (step == 3 and 0.24 or 0.17) / speed
+			FarmFX.hasImpact, FarmFX.snapshot, FarmFX.arcDrawn = false, target, false
+		end
+		local swing = st.swing
+		task.delay(WINDOWS[step][3] / speed, function()
+			if
+				active[tool] == st
+				and st.swing == swing
+				and tool.Parent == st.character
+				and st.humanoid.Health > 0
+				and not carried(st.character, st.owner)
+			then
+				play(Config.Sounds.Whoosh, ({ 1, 1.08, 0.85 })[step], localSwing and 0.5 or 0.25)
 			end
 		end)
 		return step
 	end
+	local function evaluate(st, dt, now)
+		st.equip += dt
+		local p = table.clone(IDLE)
+		local sw = st.swing
+		if sw then
+			local paused = sw.localSwing and math.clamp(FarmFX.freezeUntil - (now - dt), 0, dt) or 0
+			sw.t += (dt - paused) * sw.speed
+			local keys = SWINGS[sw.step]
+			local prev, at = sw.start, 0
+			for _, key in keys do
+				if sw.t <= key[1] then
+					local f = ease(math.clamp((sw.t - at) / (key[1] - at), 0, 1), key[2])
+					for i = 1, #IDLE do
+						p[i] = prev[i] + (key[i + 2] - prev[i]) * f
+					end
+					break
+				end
+				prev, at = {}, key[1]
+				for i = 1, #IDLE do
+					prev[i] = key[i + 2]
+				end
+			end
+			if sw.localSwing and FarmFX.hasImpact then
+				sw.impacted = true
+			end
+			if sw.localSwing and not sw.impacted and sw.t >= (sw.step == 3 and 0.24 or 0.17) then
+				sw.impacted = true
+				local target = FarmFX.target and FarmFX.target()
+				if sw.target and not sw.target.Parent then
+					target = sw.target
+				end
+				if target and FarmFX.impact then
+					FarmFX.impact(
+						target,
+						target.Parent and target.Position or sw.targetAt,
+						sw.step,
+						target == sw.target and sw.wouldBreak
+					)
+				end
+			end
+			if sw.localSwing and FarmFX.hasImpact then
+				if now < FarmFX.freezeUntil then
+					p[12] += math.random() * 4 - 2
+				else
+					local recoil = math.clamp(1 - (now - FarmFX.freezeUntil) / 0.08, 0, 1)
+					p[12] += 8 * recoil
+					p[1] -= 4 * recoil
+				end
+			end
+			trails(st, sw.t >= WINDOWS[sw.step][1] and sw.t <= WINDOWS[sw.step][2])
+			if sw.t >= keys[#keys][1] then
+				st.swing = nil
+				trails(st, false)
+			end
+		else
+			if st.equip < 0.28 then
+				local x = st.equip / 0.28
+				local f = 1 + 2.7 * (x - 1) ^ 3 + 1.7 * (x - 1) ^ 2
+				for i = 1, #p do
+					p[i] *= f
+				end
+				p[13] += 360 * (1 - (1 - x) ^ 3)
+			end
+		end
+		local velocity = st.root.AssemblyLinearVelocity
+		local v = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
+		st.m += (math.clamp(v / 16, 0, 1.6) - st.m) * math.min(dt / 0.12, 1)
+		st.phase += dt * 9.4 * math.clamp(v / 16, 0.6, 1.6)
+		local humState = st.humanoid:GetState()
+		local jumping = humState == Enum.HumanoidStateType.Jumping
+			or humState == Enum.HumanoidStateType.Freefall
+		st.jump += ((jumping and 1 or 0) - st.jump) * math.min(dt / 0.1, 1)
+		-- Key zero already includes the previous movement/breathing layer.
+		-- Fade fresh offsets in through anticipation so a chained click cannot add them twice.
+		local overlay = sw and math.clamp(sw.t / SWINGS[sw.step][1][1], 0, 1) or 1
+		local layer = sw and 0.5 * overlay or 1
+		local m, bob = st.m * layer, math.sin(st.phase)
+		p[9] += 1.5 * math.sin(now * math.pi * 0.6) * overlay - 4 * m
+		p[10] += 6 * m * bob
+		p[1] += 4 * m * bob + 15 * st.jump * layer
+		p[3] += 1.2 * math.sin(now * math.pi * 0.6 + 0.6) * overlay
+		p[5] += -14 * m * bob + (60 - IDLE[5]) * st.jump * layer
+		p[7] += (-35 - IDLE[7]) * st.jump * layer
+		p[8] += 10 * m
+		p[12] += -10 * m + 10 * st.jump * layer
+		p[14] += 1.5 * math.sin(now * math.pi * 0.6 + 1.2) * overlay
+		st.pose = p
+	end
+	Services.RunService.RenderStepped:Connect(function(dt)
+		for _, st in active do
+			evaluate(st, dt, os.clock())
+		end
+	end)
+	Services.RunService.Stepped:Connect(function(_, dt)
+		local camera = workspace.CurrentCamera
+		for _, owner in Services.Players:GetPlayers() do
+			local character = owner.Character
+			local tool = character and character:FindFirstChild("Scythe")
+			local root = character and character:FindFirstChild("HumanoidRootPart")
+			if
+				tool
+				and root
+				and camera
+				and (root.Position - camera.CFrame.Position).Magnitude <= 80
+			then
+				track(tool)
+			end
+		end
+		for tool, st in active do
+			local dead = not st.character.Parent or st.humanoid.Health <= 0
+			local carrying = carried(st.character, st.owner)
+			local visible = camera and (st.root.Position - camera.CFrame.Position).Magnitude <= 80
+			local held = tool.Parent == st.character and not dead and not carrying and visible
+			if carrying or dead or not visible then
+				restore(st, carrying)
+				active[tool] = nil
+			else
+				st.w = math.clamp(st.w + (held and 1 or -1) * dt / 0.12, 0, 1)
+				if not held then
+					st.swing = nil
+					trails(st, false)
+				end
+				local p = st.pose
+				for _, j in st.joints do
+					local i = j.index
+					local pitch, yaw, roll = p[i], 0, 0
+					if i ~= 4 and i ~= 8 then
+						yaw, roll = p[i + 1], p[i + 2]
+					end
+					if st.r6 then
+						if i == 1 or i == 5 then
+							pitch += 0.5 * p[i + 3]
+						else
+							pitch, yaw, roll = pitch * 0.5, yaw * 0.5, 0
+						end
+					end
+					j.anim = j.motor.Transform
+					local rotation =
+						CFrame.fromEulerAnglesYXZ(math.rad(pitch), math.rad(yaw), math.rad(roll))
+					j.motor.Transform = j.anim:Lerp(j.rot:Inverse() * rotation * j.rot, st.w)
+				end
+				local pitch = p[12] - (st.r6 and 0.5 * p[4] or 0)
+				local grip = st.base
+					* HAND:Inverse()
+					* CFrame.Angles(
+						math.rad(pitch * st.w),
+						math.rad(p[14] * st.w),
+						math.rad(p[13] * st.w)
+					)
+						:Inverse()
+					* HAND
+				tool.Grip = grip
+				if not held and st.w == 0 then
+					restore(st)
+					active[tool] = nil
+				end
+			end
+		end
+	end)
 	-- Equipping re-parents the tool into the character (ChildAdded again): hook each tool once.
 	local hookedTools: { [Tool]: boolean } = setmetatable({}, { __mode = "k" }) :: any
 	local function hookTool(tool: Instance)
@@ -3901,7 +4118,7 @@ do
 			idleGrip[tool] = tool.Grip
 		end
 		local function attempt()
-			if (player:GetAttribute("Carry") or 0) > 0 then
+			if carried(tool.Parent, player) then
 				return
 			end
 			if Center.urgent then
@@ -3921,8 +4138,7 @@ do
 				return
 			end
 			lastSwing = now
-			local step = swingTool(tool, true)
-			play(Config.Sounds.Whoosh, ({ 1, 1.08, 0.85 })[step], 0.5)
+			swingTool(tool, true)
 			bonkEvent:FireServer()
 		end
 		FarmFX.attempts = FarmFX.attempts or setmetatable({}, { __mode = "k" })
@@ -3937,7 +4153,8 @@ do
 		tool.Unequipped:Connect(function()
 			FarmFX.held = false
 			if active[tool] then
-				active[tool]()
+				active[tool].swing = nil
+				trails(active[tool], false)
 			end
 		end)
 	end
@@ -4005,13 +4222,97 @@ do
 					).Magnitude
 					<= 60
 			then
-				local step = swingTool(tool :: Tool)
-				play(Config.Sounds.Whoosh, ({ 1, 1.08, 0.85 })[step], 0.25)
+				swingTool(tool :: Tool)
 			end
 		end
 	end)
 end
 
+-- Fixed client pool: only server-confirmed local hits acquire a crescent.
+do
+	local rigs = {}
+	for _ = 1, 3 do
+		local part = Instance.new("Part")
+		part.Name, part.Size, part.Anchored, part.Transparency =
+			"ScytheHitArc", Vector3.new(0.2, 0.2, 0.2), true, 1
+		part.CanCollide, part.CanQuery, part.CanTouch, part.Parent = false, false, false, workspace
+		local rig = { part = part, attachments = {}, beams = {} }
+		for i = 1, 3 do
+			local a = Instance.new("Attachment")
+			a.Parent = part
+			rig.attachments[i] = a
+		end
+		for i = 1, 2 do
+			local beam = Instance.new("Beam")
+			beam.Attachment0, beam.Attachment1 = rig.attachments[i], rig.attachments[i + 1]
+			beam.Segments, beam.FaceCamera, beam.LightEmission, beam.LightInfluence, beam.Brightness =
+				12, false, 1, 0, 1.5
+			beam.Width0, beam.Width1 = i == 1 and 0.15 or 1, i == 1 and 1 or 0.1
+			beam.Enabled, beam.Parent = false, part
+			rig.beams[i] = beam
+		end
+		table.insert(rigs, rig)
+	end
+	function FarmFX.arc(step)
+		if FarmFX.arcDrawn then
+			return
+		end
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local tool = character and character:FindFirstChild("Scythe")
+		if not root or not tool then
+			return
+		end
+		local rig
+		for _, slot in rigs do
+			if not slot.started then
+				rig = slot
+				break
+			end
+		end
+		if not rig then
+			return
+		end
+		FarmFX.arcDrawn = true
+		local def = Config.ScytheStyles[tool:GetAttribute("StyleId") or tool:GetAttribute("ToolId")]
+			or Config.ScytheStyles.RustySickle
+		rig.started, rig.step = os.clock(), step
+		rig.part.CFrame = root.CFrame
+			* CFrame.new(0, ({ 1, 0.9, 1.5 })[step], 0)
+			* CFrame.Angles(0, 0, math.rad(({ 30, -20, 90 })[step]))
+		for _, beam in rig.beams do
+			beam.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromHex(def.trail[1]))
+		end
+	end
+	Services.RunService.RenderStepped:Connect(function()
+		for _, rig in rigs do
+			if rig.started then
+				local t = os.clock() - rig.started
+				if t >= 0.16 then
+					rig.started = nil
+					for _, beam in rig.beams do
+						beam.Enabled = false
+					end
+				else
+					local radius = 4.2 + 0.6 * t / 0.16
+					local reverse = rig.step == 2
+					for i, a in rig.attachments do
+						local phi = math.rad((reverse and -1 or 1) * (2 - i) * 80)
+						a.Position = Vector3.new(radius * math.sin(phi), 0, -radius * math.cos(phi))
+						a.Axis, a.SecondaryAxis =
+							Vector3.new(-math.cos(phi), 0, -math.sin(phi)) * (reverse and -1 or 1),
+							Vector3.yAxis
+					end
+					for i, beam in rig.beams do
+						beam.Enabled = i == 1 or t >= 0.035
+						beam.CurveSize0, beam.CurveSize1 = 0.485 * radius, 0.485 * radius
+						beam.Transparency = NumberSequence.new(0.05 + 0.95 * t / 0.16)
+					end
+				end
+			end
+		end
+	end)
+end
 -- Effects ----------------------------------------------------------------------------------------
 
 local combo, comboAt = 0, 0
@@ -4329,6 +4630,7 @@ do
 					crack(part, hp, maxHp)
 				end
 				if who == player then
+					FarmFX.arc(step)
 					if part then
 						FarmFX.impact(part, at, step, hp == 0)
 						hitAt[part] = os.clock()
@@ -4364,6 +4666,7 @@ do
 				local seed = seedById[seedId or ""]
 				local color = seed and seedColor(seed) or Palette.ORANGE
 				if winner == player then
+					FarmFX.arc(FarmFX.step)
 					if FarmFX.snapshot then
 						FarmFX.impact(FarmFX.snapshot, at, FarmFX.step, true)
 					end

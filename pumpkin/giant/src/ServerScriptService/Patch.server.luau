@@ -6982,142 +6982,375 @@ do
 	end
 
 	local function buildScythe(def): Tool
+		local styleId = def.skinStyle or def.id
+		local s = Config.ScytheStyles[styleId] or Config.ScytheStyles.RustySickle
+		local tier = def.order
 		local tool = Instance.new("Tool")
-		tool.Name = "Scythe"
-		tool.ToolTip = def.name
-		tool.CanBeDropped = false
-		-- Held upright like a reaper's scythe: the shaft stands vertical in the right hand, most of
-		-- it above the hand, so the blade at the top clears the head and reads over the shoulder
-		-- from the chase camera; the blade sweeps out to the right and forward and hooks down.
-		-- Roblox welds the handle at hand * C0 * Grip:Inverse(), where C0 (R6 RightGrip / R15
-		-- RightGripAttachment) is the hand turned -90 on X. While a tool is held the default
-		-- animation raises the arm straight forward, which turns the arm +90 on X, so
-		-- hand * C0 is a frame aligned with the character (X right, Y up, -Z forward) at the
-		-- hand. Grip = hold:Inverse() therefore puts the handle at `hold` in that upright frame:
-		-- `up` studs above the hand, top leaning `lean` degrees forward.
-		local h = Config.ScytheHold
-		local hold = CFrame.new(h.right, 0, -h.forward)
-			* CFrame.Angles(math.rad(-h.lean), 0, 0)
-			* CFrame.new(0, h.up, 0)
-		tool.Grip = hold:Inverse()
+		tool.Name, tool.ToolTip, tool.CanBeDropped = "Scythe", def.name, false
 		tool:SetAttribute("ToolId", def.id)
-		local k = 1 + 0.06 * (def.order - 1)
-		local SHAFT = 5.4
+		tool:SetAttribute("StyleId", styleId)
+		tool:SetAttribute("VisualTier", tier)
+		local h = Config.ScytheHold
+		tool.Grip = (
+			CFrame.new(h.right, 0, -h.forward)
+			* CFrame.Angles(math.rad(-h.lean), 0, 0)
+			* CFrame.new(0, s.L / 4, 0)
+		):Inverse()
 		local handle = Instance.new("Part")
-		handle.Name = "Handle"
-		handle.Size = Vector3.new(0.32, SHAFT, 0.32)
-		handle.Material = Enum.Material.Wood
-		handle.Color = Color3.fromRGB(62, 40, 26)
-		handle.Transparency = 0
-		handle.CanCollide = false
-		handle.CanQuery = false
-		handle.CanTouch = true
+		handle.Name, handle.Size = "Handle", Vector3.new(s.W, s.L, s.W)
+		handle.Material, handle.Color = Enum.Material.SmoothPlastic, Color3.fromHex(s.shaft)
+		handle.CanCollide, handle.CanQuery, handle.CanTouch, handle.Massless =
+			false, false, false, true
 		handle.Parent = tool
-		local function metalPart(
-			name: string,
-			size: Vector3,
-			cf: CFrame,
-			color: Color3,
-			neon: boolean?
-		)
+		local count = 1
+		local function block(name, size, cf, color, neon)
 			local p = Instance.new("Part")
-			p.Name = name
-			p.Size = size
-			p.Material = neon and Enum.Material.Neon or Enum.Material.Metal
-			p.Color = color
-			p.CanQuery = false
-			p.CFrame = cf
+			p.Name, p.Size, p.CFrame, p.Color = name, size, cf, Color3.fromHex(color)
+			p.Material = neon and Enum.Material.Neon or Enum.Material.SmoothPlastic
+			p.CanQuery, p.CanTouch, p.Reflectance = false, false, 0
 			weldTo(handle, p)
 			p.Parent = tool
+			count += 1
 			return p
 		end
-		local top = handle.CFrame * CFrame.new(0, SHAFT / 2 - 0.15, 0)
-		-- Collar at the top and a cap at the foot in the tool's tier colour, plus a small grip
-		-- peg sticking out of the shaft (a real scythe's second handle).
-		metalPart("Collar", Vector3.new(0.58, 0.5, 0.58), top, def.color)
-		metalPart(
-			"Pommel",
-			Vector3.new(0.46, 0.36, 0.46),
-			handle.CFrame * CFrame.new(0, -SHAFT / 2, 0),
-			def.color
-		)
-		local peg = metalPart(
-			"Peg",
-			Vector3.new(0.22, 0.22, 0.9),
-			handle.CFrame * CFrame.new(0, SHAFT * 0.12, -0.45),
-			Color3.fromRGB(62, 40, 26)
-		)
-		peg.Material = Enum.Material.Wood
-		-- The blade: a silver arc of flat segments in a plane through the shaft, starting at the
-		-- top and swept 40 degrees forward from the right (so its broad face shows from behind),
-		-- curving from level to hooked down. Each segment has a darker cutting edge along its
-		-- lower (inner) side; tier 4+ blades get a neon edge in the tier colour.
-		-- Steel: Metal material, cool silver, a touch of reflectance; the edge is darker steel.
-		local SILVER = Color3.fromRGB(200, 205, 215)
-		local edgeColor = def.order >= 4 and def.color or Color3.fromRGB(70, 74, 86)
-		local bladeFrame = top * CFrame.new(0, -0.05, 0) * CFrame.Angles(0, math.rad(40), 0)
-		local segments = {
-			{ len = 1.1, angle = 10, width = 0.78 },
-			{ len = 1.0, angle = -4, width = 0.72 },
-			{ len = 0.95, angle = -22, width = 0.62 },
-			{ len = 0.85, angle = -42, width = 0.5 },
-			{ len = 0.7, angle = -64, width = 0.36 },
-		}
-		local at = Vector3.new(0.1, 0, 0)
-		local root: CFrame? = nil
-		local tip = bladeFrame
-		for i, seg in segments do
-			local len, width = seg.len * k, seg.width * k
-			local a = math.rad(seg.angle)
-			local dir = Vector3.new(math.cos(a), math.sin(a), 0)
-			local center = at + dir * (len / 2)
-			local cf = bladeFrame * CFrame.new(center) * CFrame.Angles(0, 0, a)
-			local head = metalPart("Head", Vector3.new(len + 0.06, width, 0.14), cf, SILVER)
-			head.Material = Enum.Material.Metal
-			head.Reflectance = 0.15
-			local edge = metalPart(
-				"Edge",
-				Vector3.new(len + 0.06, 0.13 * k, 0.17),
-				cf * CFrame.new(0, -width / 2, 0),
-				edgeColor,
-				def.order >= 4
-			)
-			if def.order < 4 then
-				edge.Reflectance = 0.1
-			end
-			if i == 1 then
-				root = cf
-			end
-			at += dir * len
-			tip = bladeFrame * CFrame.new(at)
+		-- Flat voxel paint keeps the spine and ornaments within the geometry budget.
+		local function paint(p, color, x, y, w, height, face)
+			local gui = Instance.new("SurfaceGui")
+			gui.Face, gui.SizingMode, gui.CanvasSize =
+				face or Enum.NormalId.Back,
+				Enum.SurfaceGuiSizingMode.FixedSize,
+				Vector2.new(100, 100)
+			gui.LightInfluence, gui.Parent = 1, p
+			local f = Instance.new("Frame")
+			f.BorderSizePixel, f.BackgroundColor3 = 0, Color3.fromHex(color)
+			f.Position, f.Size, f.Parent = UDim2.fromScale(x, y), UDim2.fromScale(w, height), gui
 		end
-		-- Swing trail: a white ribbon from the blade root to its tip. Off until a client swings.
-		local a0 = Instance.new("Attachment")
-		a0.Name = "TrailRoot"
-		a0.CFrame = handle.CFrame:ToObjectSpace(root or top)
-		a0.Parent = handle
-		local a1 = Instance.new("Attachment")
-		a1.Name = "TrailTip"
-		a1.CFrame = handle.CFrame:ToObjectSpace(tip)
-		a1.Parent = handle
-		local trail = Instance.new("Trail")
-		trail.Name = "SwingTrail"
-		trail.Attachment0 = a0
-		trail.Attachment1 = a1
-		trail.Lifetime = 0.2
-		trail.MinLength = 0.05
-		trail.Color = ColorSequence.new(Color3.new(1, 1, 1))
-		trail.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0.1),
-			NumberSequenceKeypoint.new(1, 1),
-		})
-		trail.WidthScale = NumberSequence.new(1, 0.35)
-		trail.LightEmission = 0.7
-		trail.Enabled = false
-		trail.Parent = handle
+		block(
+			"GripWrap",
+			Vector3.new(s.W + 0.1, 0.8, s.W + 0.1),
+			CFrame.new(0, -s.L / 4, 0),
+			s.grip
+		)
+		local pommel =
+			block("Pommel", Vector3.new(0.5, 0.5, 0.5), CFrame.new(0, -s.L / 2, 0), s.collar)
+		local top = s.L / 2 - (s.W + 0.3) / 2
+		local collar = block(
+			"Collar",
+			Vector3.new(s.W + 0.3, s.W + 0.3, s.W + 0.3),
+			CFrame.new(0, top, 0),
+			s.collar,
+			tier == 4
+		)
+		local B = CFrame.new(s.W / 2, s.L / 2 - 0.1, 0) * CFrame.Angles(0, math.rad(25), 0)
+		local root, tip
+		for i, col in s.columns do
+			local body = block(
+				"BladeColumn",
+				Vector3.new(s.V + 0.01, col[2] * s.V, 0.3),
+				B * CFrame.new((i - 0.5) * s.V, (col[1] - col[2] / 2) * s.V, 0),
+				s.body
+			)
+			if s.shade and (tier >= 4 or i <= (tier == 3 and 2 or 1)) then
+				for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
+					paint(body, s.shade, 0, 0, 1, 1 / col[2], face)
+				end
+			end
+			local edge = B * CFrame.new((i - 0.5) * s.V, (col[1] - col[2] - 0.25) * s.V, 0)
+			block(
+				"Edge",
+				Vector3.new(s.V + 0.02, 0.5 * s.V, 0.36),
+				edge,
+				tier == 1 and i == 3 and "8C4A28" or s.edge,
+				tier >= 4
+			)
+			if i == 1 then
+				root = body.CFrame
+			end
+			tip = edge
+		end
+		local function band(y, color, height)
+			block(
+				"Band",
+				Vector3.new(s.W + 0.08, height or 0.2, s.W + 0.08),
+				CFrame.new(0, y, 0),
+				color
+			)
+		end
+		if s.feature == "tape" then
+			band(0.6, s.grip, 0.25)
+		elseif s.feature == "iron" then
+			band(-1, s.collar)
+			band(1, s.collar)
+			for _, x in { -0.2, 0.2 } do
+				block("Rivet", Vector3.new(0.14, 0.14, 0.14), CFrame.new(x, top, 0.4), "2E323A")
+			end
+		elseif s.feature == "skull" then
+			for i = 1, 4 do
+				for _, face in
+					{
+						Enum.NormalId.Front,
+						Enum.NormalId.Back,
+						Enum.NormalId.Left,
+						Enum.NormalId.Right,
+					}
+				do
+					paint(
+						handle,
+						i % 2 == 0 and "E8DCC0" or "FFF6E0",
+						0,
+						(i - 1) / 4,
+						1,
+						0.22,
+						face
+					)
+				end
+			end
+			for _, y in { -1.25, 0, 1.25 } do
+				band(y, "E8DCC0", 0.22)
+			end
+			collar.Size = Vector3.new(0.95, 0.95, 0.95)
+			for _, x in { -0.2, 0.2 } do
+				block(
+					"Eye",
+					Vector3.new(0.24, 0.24, 0.05),
+					CFrame.new(x, top + 0.08, 0.5),
+					"2A2238"
+				)
+			end
+			block("Nose", Vector3.new(0.12, 0.12, 0.05), CFrame.new(0, top - 0.15, 0.5), "2A2238")
+			block("Jaw", Vector3.new(0.7, 0.2, 0.7), CFrame.new(0, top - 0.55, 0), "E8DCC0")
+			block(
+				"BoneKnob",
+				Vector3.new(0.35, 0.35, 0.35),
+				CFrame.new(0, -s.L / 2 - 0.35, 0),
+				s.shaft
+			)
+		elseif s.feature == "gem" then
+			collar.Size, collar.CFrame =
+				Vector3.new(0.7, 0.7, 0.7),
+				CFrame.new(0, top, 0) * CFrame.Angles(0, 0, math.rad(45))
+			block("Cradle", Vector3.new(0.9, 0.3, 0.9), CFrame.new(0, top - 0.6, 0), s.shaft)
+			for i, offset in
+				{
+					Vector3.new(0.3, -1.5, 0),
+					Vector3.new(0, -0.5, 0.3),
+					Vector3.new(-0.3, 0.5, 0),
+					Vector3.new(0, 1.5, -0.3),
+				}
+			do
+				block("Spiral" .. i, Vector3.new(0.22, 0.22, 0.22), CFrame.new(offset), s.body)
+			end
+			pommel.Size, pommel.Material = Vector3.new(0.4, 0.4, 0.4), Enum.Material.Neon
+			pommel.CFrame *= CFrame.Angles(0, 0, math.rad(45))
+		elseif s.feature == "batwings" then
+			for _, sign in { -1, 1 } do
+				for i, d in
+					{ { 0.5, 0.6, 0.6, 0 }, { 0.45, 0.45, 1, 0.25 }, { 0.4, 0.3, 1.35, 0.45 } }
+				do
+					local wing = block(
+						"BatWing",
+						Vector3.new(d[1], d[2], 0.2),
+						CFrame.new(sign * d[3], top + d[4], 0),
+						s.shaft
+					)
+					if i == 1 then
+						paint(wing, s.grip, 0.25, 0.25, 0.5, 0.5)
+					end
+				end
+				block(
+					"Fang",
+					Vector3.new(0.12, 0.28, 0.12),
+					CFrame.new(sign * 0.2, top - 0.5, 0.45),
+					"FFFFFF"
+				)
+			end
+			band(-0.5, "C8102E")
+			band(0.5, "C8102E")
+			block(
+				"RubyTip",
+				Vector3.new(0.2, 0.2, 0.2),
+				CFrame.new(0, -s.L / 2 - 0.35, 0),
+				s.edge,
+				true
+			)
+		elseif s.feature == "pinwheel" then
+			for i = 1, 5 do
+				band((i - 3) * 1.05, "FF3B5C", 0.4)
+			end
+			collar.Size = Vector3.new(1.1, 1.1, 0.25)
+			for i, size in { 0.75, 0.4 } do
+				block(
+					"Pinwheel",
+					Vector3.new(size, size, 0.25),
+					CFrame.new(0, top, 0.15 * i) * CFrame.Angles(0, 0, math.rad(45 * i)),
+					i == 1 and "FFFFFF" or s.body
+				)
+			end
+			for i, color in { "FFD606", "7CFC3A", "4FC3FF", "FFFFFF", "8A3FFC" } do
+				local col = s.columns[i + 1]
+				block(
+					"Sprinkle",
+					Vector3.new(0.13, 0.13, 0.13),
+					B * CFrame.new((i + 0.5) * s.V, (col[1] - 1.5) * s.V, 0.245),
+					color
+				)
+			end
+			pommel.Color = Color3.fromHex("FF3B5C")
+			for _, sign in { -1, 1 } do
+				block(
+					"CandyWrap",
+					Vector3.new(0.3, 0.3, 0.3),
+					CFrame.new(sign * 0.4, -s.L / 2, 0) * CFrame.Angles(0, 0, math.rad(45)),
+					"FFFFFF"
+				)
+			end
+		elseif s.feature == "kingpumpkin" then
+			collar.Size = Vector3.new(1.15, 1.15, 1.15)
+			paint(collar, "E06A00", 0, 0.78, 1, 0.22)
+			for _, x in { -0.28, 0.28 } do
+				block(
+					"KingEye",
+					Vector3.new(0.28, 0.28, 0.05),
+					CFrame.new(x, top + 0.1, 0.6) * CFrame.Angles(0, 0, math.rad(45)),
+					"FFD606",
+					true
+				)
+			end
+			block(
+				"KingMouth",
+				Vector3.new(0.6, 0.18, 0.05),
+				CFrame.new(0, top - 0.25, 0.6),
+				"FFD606",
+				true
+			)
+			block("Stem", Vector3.new(0.25, 0.4, 0.25), CFrame.new(0, top + 0.75, 0), "3DBA3A")
+			block("Crown", Vector3.new(1.25, 0.25, 1.25), CFrame.new(0, top + 1, 0), s.body)
+			for _, x in { -0.5, 0.5 } do
+				for _, z in { -0.5, 0.5 } do
+					block(
+						"CrownPoint",
+						Vector3.new(0.25, 0.45, 0.25),
+						CFrame.new(x, top + 1.3, z),
+						s.body
+					)
+				end
+			end
+			for i, col in { { 1, 3 }, { 0, 2 }, { -1, 1 } } do
+				block(
+					"BackSpike",
+					Vector3.new(s.V + 0.01, col[2] * s.V, 0.3),
+					CFrame.new(
+						-s.W / 2 - (i - 0.5) * s.V,
+						s.L / 2 - 0.1 + (col[1] - col[2] / 2) * s.V,
+						0
+					),
+					s.body
+				)
+			end
+			pommel.Size = Vector3.new(0.6, 0.6, 0.6)
+			paint(pommel, "C8102E", 0.25, 0.25, 0.5, 0.5)
+			for _, y in { -1.8, 0, 1.8 } do
+				for _, face in
+					{
+						Enum.NormalId.Front,
+						Enum.NormalId.Back,
+						Enum.NormalId.Left,
+						Enum.NormalId.Right,
+					}
+				do
+					paint(handle, "FFD606", 0, 0.5 - y / s.L, 1, 0.2 / s.L, face)
+				end
+			end
+			local geometry = Instance.new("Model")
+			geometry.Name, geometry.Parent = "KingOutline", tool
+			for _, part in tool:GetChildren() do
+				if part:IsA("BasePart") and part ~= handle then
+					part.Parent = geometry
+				end
+			end
+			local outline = Instance.new("Highlight")
+			outline.Adornee, outline.FillTransparency, outline.OutlineColor =
+				geometry, 1, Color3.fromHex(s.edge)
+			outline.OutlineTransparency, outline.DepthMode, outline.Parent =
+				0.4, Enum.HighlightDepthMode.Occluded, tool
+		end
+		assert(count < 40, "Scythe part budget exceeded")
+		local function attachment(name, cf)
+			local a = Instance.new("Attachment")
+			a.Name, a.CFrame, a.Parent = name, cf, handle
+			return a
+		end
+		local a0, a1 =
+			attachment("TrailRoot", root * CFrame.new(-0.15, 0, 0)),
+			attachment("TrailTip", tip * CFrame.new(0.25, 0, 0))
+		local colors = {}
+		for i, color in s.trail do
+			table.insert(
+				colors,
+				ColorSequenceKeypoint.new((i - 1) / (#s.trail - 1), Color3.fromHex(color))
+			)
+		end
+		local function trail(name, start, finish, glow)
+			local t = Instance.new("Trail")
+			t.Name, t.Attachment0, t.Attachment1 = name, start, finish
+			t.Lifetime, t.MinLength, t.FaceCamera = glow and 0.22 or 0.14, 0.02, false
+			local ribbonColors = { ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)) }
+			for _, key in colors do
+				table.insert(
+					ribbonColors,
+					ColorSequenceKeypoint.new(0.2 + 0.8 * key.Time, key.Value)
+				)
+			end
+			t.Color = ColorSequence.new(glow and colors or ribbonColors)
+			t.Transparency = glow and NumberSequence.new(0.6, 1)
+				or NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 0),
+					NumberSequenceKeypoint.new(0.25, 0.25),
+					NumberSequenceKeypoint.new(1, 1),
+				})
+			t.WidthScale = NumberSequence.new(s.tw, s.tw * (glow and 0.4 or 0.15))
+			t.LightEmission, t.LightInfluence, t.Brightness, t.Enabled, t.Parent =
+				1, 0, glow and 1 or 1.6, false, handle
+		end
+		trail("SwingTrail", a0, a1, false)
+		if tier >= 4 then
+			trail(
+				"SwingGlow",
+				attachment("GlowRoot", root * CFrame.new(-0.5, 0, 0)),
+				attachment("GlowTip", tip * CFrame.new(0.65, 0, 0)),
+				true
+			)
+			local light = Instance.new("PointLight")
+			light.Color, light.Brightness, light.Range, light.Parent =
+				Color3.fromHex(s.light),
+				tier == 7 and 2 or (tier == 6 and 1 or 1.2),
+				tier == 7 and 10 or (tier == 4 and 7 or 8),
+				collar
+			local particles = Instance.new("ParticleEmitter")
+			particles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+			particles.Color, particles.Rate = ColorSequence.new(colors), tier == 4 and 3 or 4
+			if tier == 4 then
+				particles.Color = ColorSequence.new(Color3.fromHex("E2C2FF"))
+			elseif tier == 5 then
+				particles.Texture = "rbxasset://textures/particles/smoke_main.dds"
+				particles.Color = ColorSequence.new(Color3.fromHex("7F1A33"))
+			end
+			particles.Lifetime, particles.Size = NumberRange.new(0.6), NumberSequence.new(0.15, 0)
+			particles.LightEmission, particles.Speed, particles.Parent =
+				1, NumberRange.new(tier >= 5 and 1 or 0), a1
+			if tier == 7 then
+				local fire = particles:Clone()
+				fire.Texture = "rbxasset://textures/particles/fire_main.dds"
+				fire.Color, fire.Rate, fire.Lifetime, fire.Speed, fire.Parent =
+					ColorSequence.new(Color3.fromHex("FF8A1F"), Color3.fromHex("FFD606")),
+					6,
+					NumberRange.new(0.5),
+					NumberRange.new(2),
+					collar
+			end
+		end
 		return tool
 	end
-
 	-- Read-only icon templates reuse the exact held-tool builder; no client purchase authority.
 	do
 		local icons = Instance.new("Folder")
@@ -7180,6 +7413,8 @@ do
 			local visual = table.clone(def)
 			if player:GetAttribute("CleaverSkin") then
 				visual.order = Config.KingSkin.shapeTier
+				visual.skinStyle =
+					Config.Tools[math.clamp(Config.KingSkin.shapeTier, 1, #Config.Tools)].id
 				visual.color = Config.KingSkin.color
 				visual.name = "Pumpkin King Cleaver skin"
 			end
@@ -7187,13 +7422,6 @@ do
 			tool.Parent = backpack
 		end
 		tool:SetAttribute("CleaverSkin", player:GetAttribute("CleaverSkin") == true)
-		if player:GetAttribute("CleaverSkin") then
-			for _, part in tool:GetDescendants() do
-				if part:IsA("BasePart") and part.Name ~= "Handle" then
-					part.Color = Config.KingSkin.color
-				end
-			end
-		end
 		local holding = character and character:FindFirstChildOfClass("Tool")
 		if
 			(wasHeld or (equip and not holding))
