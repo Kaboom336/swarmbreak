@@ -1908,6 +1908,13 @@ do
 	end
 	-- Hatches a placed pumpkin into its type's pet (Config.Seeds[n].pet). False (and the
 	-- pumpkin unchanged) when that pet has no model in ServerStorage.PetModels.
+	function Looks.isFacePart(part: BasePart, pet: string?): boolean
+		local keys = Config.PetFaceKeys[pet or ""]
+		if keys and #part.Name == 1 then
+			return table.find(keys, part.Name) ~= nil
+		end
+		return part:GetAttribute("FacePart") == true or part.Name == "Eye" or part.Name == "Face"
+	end
 	function Looks.hatch(p: BasePart, seed): boolean
 		local pet = seed and seed.pet
 		local modelName = pet == "Kinglet" and not source("PetModels", "Kinglet") and "KingCat"
@@ -1937,13 +1944,7 @@ do
 			for _, part in look and look:GetDescendants() or {} do
 				if
 					part:IsA("BasePart")
-					and (
-						not p:GetAttribute("Gold")
-						or (
-							not part:GetAttribute("FacePart")
-							and not table.find({ "Eye", "Face", "k", "e", "f" }, part.Name)
-						)
-					)
+					and (not p:GetAttribute("Gold") or (not Looks.isFacePart(part, pet)))
 				then
 					part.Color = finish
 					part.Material = Enum.Material.Neon
@@ -1970,6 +1971,10 @@ local function stackPumpkin(player: Player, pumpkin: BasePart): boolean
 		height += p.Size.Y
 	end
 	stripPumpkin(pumpkin)
+	if Hoards.cancelDrop then
+		Hoards.cancelDrop(pumpkin)
+	end
+	pumpkin:SetAttribute("LooseToken", (pumpkin:GetAttribute("LooseToken") or 0) + 1)
 	pumpkin:SetAttribute("GuardDropUntil", nil)
 	-- A model look (pet, mystery pumpkin) may be taller than wide: its biggest side counts.
 	local hasLook = pumpkin:FindFirstChild("PetLook") ~= nil
@@ -2006,7 +2011,7 @@ end
 
 -- Loose pumpkins (ghost drops, or a popped pumpkin that did not fit): anyone can pick them up.
 -- rescued = it came from a ghost (counts for "Rescue" orders). groundY skips the raycast.
-function Bases.safeLanding(pos: Vector3): Vector3?
+function Bases.safeLanding(pos: Vector3, checkClearance: boolean?): Vector3?
 	-- Only authored ground and pen soil can be landings, never awnings or pennants.
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
@@ -2032,8 +2037,17 @@ function Bases.safeLanding(pos: Vector3): Vector3?
 		return nil
 	end
 	local landing = floor.Position + Vector3.yAxis * Config.Teleport.height
+	-- Pen/shop travel keeps its authored X/Z destination and only corrects the floor height.
+	if not checkClearance then
+		return landing
+	end
 	local overlap = OverlapParams.new()
 	overlap.FilterType = Enum.RaycastFilterType.Exclude
+	for _, player in Players:GetPlayers() do
+		if player.Character then
+			table.insert(floors, player.Character)
+		end
+	end
 	overlap.FilterDescendantsInstances = floors
 	overlap.RespectCanCollide = true
 	for _, obstacle in
@@ -2053,6 +2067,8 @@ local function dropLoose(
 	groundY: number?
 )
 	stripPumpkin(pumpkin)
+	local token = (pumpkin:GetAttribute("LooseToken") or 0) + 1
+	pumpkin:SetAttribute("LooseToken", token)
 	pumpkin.Anchored = true
 	pumpkin.CanQuery = true
 	local y = groundY
@@ -2115,7 +2131,7 @@ local function dropLoose(
 		end
 	end)
 	task.delay(seconds or 60, function()
-		if pumpkin.Parent == loose then
+		if pumpkin.Parent == loose and pumpkin:GetAttribute("LooseToken") == token then
 			pumpkin:Destroy()
 		end
 	end)
@@ -2285,6 +2301,23 @@ do
 		end
 	end
 
+	function Bases.weakest(patch: Instance): BasePart?
+		local weakest, rate = nil, math.huge
+		for _, plot in plotsOf(patch) do
+			local p = plotState[plot].pumpkin
+			if
+				p
+				and not p:GetAttribute("Stashed")
+				and not p:GetAttribute("CarveAt")
+				and now() >= (p:GetAttribute("PickupReadyAt") or 0)
+				and incomeOf(p) < rate
+			then
+				weakest, rate = plot, incomeOf(p)
+			end
+		end
+		return weakest
+	end
+
 	function Bases.refresh(patch: Instance?)
 		if not patch then
 			return
@@ -2298,6 +2331,11 @@ do
 		then
 			task.defer(Bases.drainCarry, owner)
 		end
+		local weakest = Bases.weakest(patch)
+		local weakestPet = weakest and plotState[weakest].pumpkin
+		local weakestSeed = weakestPet and seedById[weakestPet:GetAttribute("Seed") or ""]
+		local weakestDef = weakestSeed and Config.Pets[weakestSeed.pet]
+		patch:SetAttribute("SwapWeakestName", weakestDef and weakestDef.display or nil)
 		local mult = owner and sellMult(owner) * Progress.candyMult(owner) or 1
 		local plots = plotsOf(patch)
 		local best, bestIncome, total, filled, hatched = nil, -1, 0, 0, 0
@@ -2533,6 +2571,7 @@ do
 	-- shell burst; the owner gets the flash, camera punch and the reveal card (built on the client
 	-- from the pumpkin's attributes). isNew = the first time its owner hatches this type.
 	local function carve(pumpkin: BasePart, forceReveal: boolean?)
+		pumpkin:SetAttribute("ForceReveal", nil)
 		pumpkin:SetAttribute("CarveAt", nil)
 		for _, attr in { "GrowthSize", "GrowthStartAt", "GrowthDuration", "GrowthStep" } do
 			pumpkin:SetAttribute(attr, nil)
@@ -3021,25 +3060,13 @@ do
 			return
 		end
 		if swap then
-			local weakest, rate = nil, math.huge
-			for _, plot in plotsOf(patch) do
-				local p = plotState[plot].pumpkin
-				if
-					p
-					and not p:GetAttribute("Stashed")
-					and not p:GetAttribute("CarveAt")
-					and now() >= (p:GetAttribute("PickupReadyAt") or 0)
-					and incomeOf(p) < rate
-				then
-					weakest, rate = plot, incomeOf(p)
-				end
-			end
+			local weakest = Bases.weakest(patch)
 			if not weakest then
 				return
 			end
 			local sold = Bases.take(weakest)
 			local value =
-				math.floor(pumpkinValue(sold, Config.SellPerIncome) * sellMult(player) + 0.5)
+				math.floor(pumpkinValue(sold, Config.FullPenSellSeconds) * sellMult(player) + 0.5)
 			sold:Destroy()
 			value = addCandy(player, value)
 			track(player, "sell", 1)
@@ -3048,7 +3075,7 @@ do
 			if placed then
 				placed:SetAttribute("PickupReadyAt", now() + Config.GuardLaunch.pickupGrace)
 				if not placed:GetAttribute("Jack") then
-					carve(placed, true)
+					placed:SetAttribute("ForceReveal", true)
 				else
 					Remotes.carvedEvent:FireAllClients(
 						placed,
@@ -3120,6 +3147,9 @@ do
 	end
 
 	local function steal(thief: Player, plot: BasePart)
+		local hold = Purge.holds[thief]
+		Purge.holds[thief] = nil
+		thief:SetAttribute("PurgeStealing", nil)
 		local occupant = plotState[plot] and plotState[plot].pumpkin
 		if
 			not occupant
@@ -3128,9 +3158,6 @@ do
 		then
 			return
 		end
-		local hold = Purge.holds[thief]
-		Purge.holds[thief] = nil
-		thief:SetAttribute("PurgeStealing", nil)
 		if
 			not Purge.active()
 			or Purge.immune(thief)
@@ -3445,7 +3472,7 @@ do
 					end
 				end
 				if t >= carveAt + Config.Plots.readySeconds then
-					local ok, err = pcall(carve, p)
+					local ok, err = pcall(carve, p, p:GetAttribute("ForceReveal") == true)
 					if not ok then
 						warn("[Patch] Hatch failed:", err)
 					end
@@ -4405,6 +4432,14 @@ do
 		guard: Guardian,
 	}
 	local hoards: { [string]: Hoard } = {}
+	local guardDrops = {}
+	function Hoards.cancelDrop(p: BasePart)
+		local drop = guardDrops[p]
+		if drop then
+			drop.hoard.pending -= 1
+			guardDrops[p] = nil
+		end
+	end
 	function Hoards.targets(player)
 		for _, h in hoards do
 			if h.guard.target == player then
@@ -4611,15 +4646,13 @@ do
 				weld.Parent = d
 				if
 					d.Name == "Eye"
-					or d.Name == ({
-						TreeEnt = "e",
-						SwampToad = "y",
-						Vampire = "e",
-						PumpkinKing = "f",
-					})[name]
 					or (
-						not table.find({ "TreeEnt", "SwampToad", "Vampire", "PumpkinKing" }, name)
-						and d.Name == "k"
+						d.Name == (Config.GuardFaceKeys[name] or "k")
+						and (
+							not Config.GuardFaceMinHeight[name]
+							or home:PointToObjectSpace(d.Position).Y / box.Y
+								> Config.GuardFaceMinHeight[name]
+						)
 					)
 				then
 					eyes[d] = d.Color
@@ -4783,6 +4816,7 @@ do
 		return flat.Magnitude <= math.max(soil.Size.X, soil.Size.Z) / 2 + 4
 	end
 
+	local giveUp
 	local function wake(g: Guardian, player: Player)
 		-- Already after this thief, or busy with another one who still has the loot.
 		if
@@ -4791,13 +4825,17 @@ do
 		then
 			return
 		end
+		if g.target and g.target ~= player then
+			giveUp(g, false)
+		end
 		g.cosmetic = player:GetAttribute("FirstHoardDone") ~= true
 		player:SetAttribute("FirstHoardDone", true)
 		local full = player:GetAttribute("Wake_" .. g.zone) ~= true
 		player:SetAttribute("Wake_" .. g.zone, true)
 		g.model:SetAttribute("WakeSeconds", Config.GuardianWake)
 		Remotes.wakeEvent:FireClient(player, g.model, full)
-		g.share = g.cosmetic and Config.GuardianFirstShare or Config.GuardSpeed[g.zone]
+		g.share = g.cosmetic and math.min(Config.GuardianFirstShare, Config.GuardSpeed[g.zone])
+			or Config.GuardSpeed[g.zone]
 		g.state = "wake"
 		g.debugTarget = false
 		g.chasedAt = nil
@@ -4814,7 +4852,7 @@ do
 	end
 
 	-- escaped = the thief got away with the loot (base, zone edge or time).
-	local function giveUp(g: Guardian, escaped: boolean)
+	giveUp = function(g: Guardian, escaped: boolean)
 		local thief = g.target
 		g.target = nil
 		if thief then
@@ -4889,9 +4927,11 @@ do
 	local function bonk(g: Guardian, thief: Player, thiefRoot: BasePart)
 		local stack = carrying[thief] or {}
 		for i = #stack, 1, -1 do
-			local p = table.remove(stack, i)
-			Purge.transit[p] = nil
-			p:SetAttribute("HoardZone", p:GetAttribute("HoardZone") or g.zone)
+			local p = stack[i]
+			if p:GetAttribute("HoardZone") ~= g.zone then
+				continue
+			end
+			table.remove(stack, i)
 			local expires = workspace:GetServerTimeNow() + Config.GuardLaunch.dropSeconds
 			p:SetAttribute("GuardDropUntil", expires)
 			dropLoose(
@@ -4899,9 +4939,17 @@ do
 				thiefRoot.Position + V((i % 3 - 1) * 3, 0, 3),
 				Config.GuardLaunch.dropSeconds + 1
 			)
+			local drop = { hoard = hoards[g.zone], token = p:GetAttribute("LooseToken") }
+			guardDrops[p] = drop
+			drop.hoard.pending += 1
 			task.delay(Config.GuardLaunch.dropSeconds, function()
-				if p.Parent == loose and p:GetAttribute("GuardDropUntil") == expires then
-					Hoards.giveBack(p, p.Position)
+				if guardDrops[p] ~= drop then
+					return
+				end
+				if p.Parent == loose and p:GetAttribute("LooseToken") == drop.token then
+					Hoards.giveBack(p, p.Position, true)
+				else
+					Hoards.cancelDrop(p)
 				end
 			end)
 		end
@@ -4918,8 +4966,11 @@ do
 			return false
 		end
 		wake(h.guard, player)
-		h.guard.debugTarget = true
-		return true
+		if h.guard.target == player then
+			h.guard.debugTarget = true
+			return true
+		end
+		return false
 	end
 	function Hoards.cancelFight(player)
 		for _, h in hoards do
@@ -4927,7 +4978,6 @@ do
 				giveUp(h.guard, false)
 			end
 		end
-		player:SetAttribute("FightActive", nil)
 	end
 	Players.PlayerRemoving:Connect(Hoards.cancelFight)
 	local seat -- forward: grab and seat refer to each other through the prompt
@@ -4953,11 +5003,7 @@ do
 			Remotes.hintEvent:FireClient(player, "Loading your farm...")
 			return
 		end
-		if
-			player:GetAttribute("FightActive")
-			or not hasZone(player, h.zone)
-			or not aliveRoot(player)
-		then
+		if not hasZone(player, h.zone) or not aliveRoot(player) then
 			return
 		end
 		if #(carrying[player] or {}) >= carryCapacity(player) then
@@ -5010,14 +5056,15 @@ do
 
 	-- A Hoard pumpkin leaves a player (bonk, drop, death, Haunt): HoardReturnDelay seconds later a
 	-- new one arcs from there back into a free slot of its nest.
-	function Hoards.giveBack(p: BasePart, at: Vector3)
+	function Hoards.giveBack(p: BasePart, at: Vector3, immediate: boolean?)
+		Hoards.cancelDrop(p)
 		local h = hoards[p:GetAttribute("HoardZone") or ""]
 		p:Destroy()
 		if not h then
 			return
 		end
 		h.pending += 1
-		task.delay(Config.HoardReturnDelay, function()
+		task.delay(immediate and 0 or Config.HoardReturnDelay, function()
 			h.pending -= 1
 			local i = freeSlot(h)
 			if not i then
@@ -5073,10 +5120,17 @@ do
 	-- Midnight reset: every nest is filled up at once (Steal an Egg "ALL EGG RESET!").
 	function Hoards.refillAll()
 		for _, h in hoards do
+			local available = Config.HoardCount - h.pending
+			for _, p in h.slots do
+				if p then
+					available -= 1
+				end
+			end
 			for i = 1, Config.HoardCount do
-				if not h.slots[i] then
+				if not h.slots[i] and available > 0 then
 					local p = newPumpkin(h)
 					seat(h, i, p)
+					available -= 1
 					Remotes.harvestedEvent:FireAllClients(nil, p.Position)
 				end
 			end
@@ -5084,6 +5138,177 @@ do
 		end
 	end
 
+	local function twist(g, h, player, root)
+		local cfg = Config.GuardTwists[g.zone]
+		if
+			not cfg
+			or g.twist
+			or os.clock() < (g.nextTwist or math.huge)
+			or g.cosmetic
+			or g.state ~= "chase"
+			or os.clock() - (g.chasedAt or os.clock()) < Config.GuardLaunch.minChase
+			or workspace:GetServerTimeNow() < (player:GetAttribute("GuardMercyUntil") or 0)
+		then
+			return
+		end
+		local token = {}
+		g.twist = token
+		g.warnUntil = os.clock() + cfg.warn
+		g.nextTwist = os.clock() + cfg.cooldown
+		local direction =
+			Vector3.new(root.AssemblyLinearVelocity.X, 0, root.AssemblyLinearVelocity.Z)
+		if direction.Magnitude < 1 then
+			direction = root.CFrame.LookVector
+		end
+		direction = Vector3.new(direction.X, 0, direction.Z).Unit
+		local pos = Vector3.new(root.Position.X, h.top, root.Position.Z)
+		local shapes = {}
+		if cfg.kind == "Bone" or cfg.kind == "Boulder" then
+			local origin = Vector3.new(g.pos.X, h.top, g.pos.Z)
+			local aim = Vector3.new(pos.X - origin.X, 0, pos.Z - origin.Z)
+			aim = aim.Magnitude > 0.1 and aim.Unit or direction
+			for i = 1, cfg.lanes or 1 do
+				local angle = cfg.kind == "Boulder" and (i - 2) * math.rad(cfg.fanAngle) or 0
+				local dir = CFrame.Angles(0, angle, 0):VectorToWorldSpace(aim)
+				local at = origin + dir * cfg.length / 2
+				table.insert(shapes, {
+					pos = at,
+					cf = CFrame.lookAt(at, at + dir),
+					width = cfg.width,
+					length = cfg.length,
+					origin = origin,
+					direction = dir,
+				})
+			end
+		else
+			if cfg.predict then
+				pos += direction * math.min(
+					root.AssemblyLinearVelocity.Magnitude,
+					Config.walkSpeed(upgradeLevel(player, "Boots")) * Config.Movement.sprintMult
+				) * cfg.predict
+			end
+			if cfg.ahead then
+				pos += direction * cfg.ahead
+			end
+			for i = 1, cfg.puddles or 1 do
+				table.insert(
+					shapes,
+					{ pos = pos + direction * ((i - 1) * (cfg.spacing or 0)), radius = cfg.radius }
+				)
+			end
+		end
+		-- Each nearby client plays its own short effect, separate from the wake roar.
+		for _, nearby in Players:GetPlayers() do
+			local _, nearbyRoot = aliveRoot(nearby)
+			if
+				nearbyRoot
+				and (nearbyRoot.Position - g.pos).Magnitude <= Config.GuardTwists.soundRange
+			then
+				Remotes.telegraphEvent:FireClient(
+					nearby,
+					"Guard:" .. cfg.kind,
+					shapes,
+					cfg.warn,
+					cfg.sound,
+					cfg.lifetime,
+					cfg.pitch
+				)
+			end
+		end
+		task.spawn(function()
+			task.wait(cfg.warn)
+			local function valid()
+				return g.twist == token
+					and g.target == player
+					and g.state == "chase"
+					and carriesFrom(player, g.zone)
+					and player.Parent
+					and aliveRoot(player)
+					and not g.cosmetic
+			end
+			local function effect(victim, r)
+				if
+					r.Position.Z < Lane.safeZ
+					or inOwnBase(victim, r.Position)
+					or (
+						cfg.kind ~= "Sticky"
+						and workspace:GetServerTimeNow()
+							< (victim:GetAttribute("GuardMercyUntil") or 0)
+					)
+				then
+					return
+				end
+				victim:SetAttribute(
+					"GuardMercyUntil",
+					workspace:GetServerTimeNow() + Config.GuardTwists.mercy
+				)
+				if cfg.slow then
+					Progress.slow(victim, cfg.slow, cfg.seconds, cfg.slow == 0 and "ROOT" or "SLOW")
+				end
+				if cfg.push then
+					local out = Vector3.new(r.Position.X - g.pos.X, 0, r.Position.Z - g.pos.Z)
+					out = out.Magnitude > 0.1 and out.Unit or direction
+					local at = r.Position + out * cfg.push
+					if at.Z >= Lane.safeZ then
+						r.CFrame += out * cfg.push
+					end
+					if cfg.kind == "Boulder" then
+						Progress.slow(victim, cfg.slow, cfg.seconds, "DIZZY")
+					end
+				elseif cfg.pull then
+					local to = Vector3.new(h.nest.X - r.Position.X, 0, h.nest.Z - r.Position.Z)
+					if to.Magnitude > 0.1 then
+						r.CFrame += to.Unit * math.min(cfg.pull, to.Magnitude)
+					end
+				end
+			end
+			if valid() then
+				if cfg.kind == "Bat" then
+					local at = shapes[1].pos
+					if at.Z >= math.max(Lane.safeZ, h.zMin) and at.Z <= h.zMax then
+						g.pos = Vector3.new(at.X, g.pos.Y, at.Z)
+						pose(g)
+						Remotes.stompEvent:FireAllClients("GuardBat", shapes)
+					end
+				elseif cfg.kind == "Sticky" then
+					local ends = os.clock() + cfg.lifetime
+					while valid() and os.clock() < ends do
+						Progress.landAttack(shapes, player, effect)
+						task.wait(Config.GuardTwists.effectTick)
+					end
+				elseif cfg.kind == "Boulder" then
+					local travelled = 0
+					while valid() and travelled < cfg.length do
+						local moving = {}
+						for _, lane in shapes do
+							local at = lane.origin + lane.direction * travelled
+							table.insert(moving, {
+								pos = at,
+								cf = CFrame.lookAt(at, at + lane.direction),
+								width = cfg.width,
+								length = cfg.width,
+							})
+						end
+						Progress.landAttack(moving, player, effect)
+						travelled += cfg.speed * Config.GuardTwists.effectTick
+						task.wait(Config.GuardTwists.effectTick)
+					end
+				else
+					if cfg.kind == "Tongue" then
+						local at = shapes[1].pos
+						if at.Z >= math.max(Lane.safeZ, h.zMin) and at.Z <= h.zMax then
+							g.pos = Vector3.new(at.X, g.pos.Y, at.Z)
+							pose(g)
+						end
+					end
+					Progress.landAttack(shapes, player, effect)
+				end
+			end
+			if g.twist == token then
+				g.twist = nil
+			end
+		end)
+	end
 	RunService.Heartbeat:Connect(function(dt)
 		local busy = false
 		for _, h in hoards do
@@ -5100,7 +5325,7 @@ do
 		for _, h in hoards do
 			local g = h.guard
 			if
-				(RunService:IsStudio() or workspace:GetAttribute("PatchDebug") == true)
+				workspace:GetAttribute("PatchDebug") == true
 				and (g.loggedState ~= g.state or workspace:GetAttribute("WatchGuard") == true)
 			then
 				print(
@@ -5143,6 +5368,13 @@ do
 					then
 						giveUp(g, true)
 					else
+						if
+							g.state == "chase"
+							and at.Z >= Lane.safeZ
+							and not inOwnBase(thief, at)
+						then
+							twist(g, h, thief, thiefRoot)
+						end
 						local to = V(at.X - g.pos.X, 0, at.Z - g.pos.Z)
 						if to.Magnitude > 0.1 then
 							g.look = to.Unit
@@ -5688,7 +5920,7 @@ Remotes.lockEvent.OnServerEvent:Connect(function(player)
 	Bases.lock(player)
 end)
 
--- Drop button: the whole stack lands around the player as loose pickups (stolen ones keep their
+-- Drop button: only nest/stolen items leave the stack (stolen ones keep their
 -- owner, so the owner picking them up gets them back for free).
 Remotes.dropEvent.OnServerEvent:Connect(function(player)
 	local stack = carrying[player]
@@ -5696,13 +5928,17 @@ Remotes.dropEvent.OnServerEvent:Connect(function(player)
 	if not stack or #stack == 0 or not character or not root then
 		return
 	end
-	carrying[player] = {}
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.FilterDescendantsInstances = { character, loose, ghostFolder }
 	params.RespectCanCollide = true
-	for i, p in stack do
+	for i = #stack, 1, -1 do
+		local p = stack[i]
+		if not p:GetAttribute("HoardZone") and not p:GetAttribute("StolenFrom") then
+			continue
+		end
 		local a = i / #stack * math.pi * 2
+		table.remove(stack, i)
 		local at = root.Position + Vector3.new(math.cos(a) * 3.5, 0, math.sin(a) * 3.5)
 		if p:GetAttribute("HoardZone") then
 			-- A dropped Hoard pumpkin flies back to its nest.
@@ -8241,7 +8477,10 @@ do
 				p:Destroy()
 				p = nil
 			end
-			Remotes.hintEvent:FireClient(player, "Boss pumpkin delivered! Pens full: Swap or Sell")
+			Remotes.hintEvent:FireClient(
+				player,
+				"Boss pumpkin delivered! Pens full: place to swap your weakest pet, or visit the Witch"
+			)
 		end
 		Progress.own(player, seed)
 		local found = indexOf[player] or {}
@@ -8328,11 +8567,26 @@ do
 			return
 		end
 		local character = player.Character
-		if character and aliveRoot(player) and not player:GetAttribute("FightActive") then
-			local pos = Bases.safeLanding(
-				market.Plaza.Position + Vector3.new(Config.GuardLaunch.kingSide, 0, 0)
-			)
+		if character and aliveRoot(player) then
+			local pos
+			for _, radius in { Config.GuardLaunch.kingSide, Config.GuardLaunch.kingSide + 12 } do
+				for i = 0, 7 do
+					local angle = i * math.pi / 4
+					pos = Bases.safeLanding(
+						market.Plaza.Position
+							+ Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius),
+						true
+					)
+					if pos then
+						break
+					end
+				end
+				if pos then
+					break
+				end
+			end
 			if not pos then
+				Remotes.hintEvent:FireClient(player, "No safe King landing. Try again shortly.")
 				return
 			end
 			character:PivotTo(CFrame.new(pos))
@@ -9175,7 +9429,7 @@ task.spawn(runDay)
 do
 	local clocks = setmetatable({}, { __mode = "k" })
 	local function movementBlocked(player, teleport)
-		if player:GetAttribute("FightActive") or player:GetAttribute("PurgeStealing") then
+		if player:GetAttribute("PurgeStealing") then
 			return true
 		end
 		if not teleport and state:GetAttribute("PurgeEnds") then
@@ -9333,9 +9587,6 @@ do
 					(player:GetAttribute("GuardEffectUntil") or 0) > workspace:GetServerTimeNow()
 				then
 					speed *= player:GetAttribute("WalkSpeedMultiplier") or 1
-				end
-				if player:GetAttribute("FightActive") then
-					speed = 0
 				end
 				hum.WalkSpeed = speed
 			end

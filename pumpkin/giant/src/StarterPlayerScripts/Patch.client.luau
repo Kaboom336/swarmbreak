@@ -291,7 +291,7 @@ local shakeState =
 	{ strength = 0, ends = 0, duration = 0.2, camera = nil, offset = CFrame.identity }
 local function shake(strength: number, steps: number)
 	local duration = math.max(0.1, (steps or 10) * 0.02)
-	shakeState.strength = math.max(shakeState.strength, math.min(0.05, strength * 0.025))
+	shakeState.strength = math.max(shakeState.strength, math.min(0.15, strength * 0.075))
 	shakeState.ends = math.max(shakeState.ends, os.clock() + duration)
 	shakeState.duration = math.max(duration, shakeState.ends - os.clock())
 end
@@ -339,6 +339,11 @@ end
 -- kind, pet).
 local confetti: (ScreenGui?) -> ()
 local queueReveal: (string, string?, boolean, number, string?, string?, number?) -> ()
+local function inHub(): boolean
+	local root = rootPart()
+	return root ~= nil and root.Position.Z < (state:GetAttribute("SafeLineZ") or Config.SafeLineZ)
+end
+
 local Center = { busy = false, urgent = false, frames = {}, nextTicket = 0, serving = 1 }
 function Center.acquire()
 	Center.nextTicket += 1
@@ -356,14 +361,6 @@ end
 function Center.register(frame)
 	table.insert(Center.frames, frame)
 	frame.Visible = not Center.urgent
-end
-function Center.interrupt(on: boolean)
-	Center.urgent = on
-	for _, frame in Center.frames do
-		if frame.Parent then
-			frame.Visible = not on
-		end
-	end
 end
 
 -- Screen -----------------------------------------------------------------------------------
@@ -2947,17 +2944,28 @@ do
 						<= (patch:GetAttribute("PenSlots") or Config.Progression.baseSlots)
 					local filled = plot:GetAttribute("Filled") == true
 					local name = filled and pumpkinName(plot) or nil
+					local full = (player:GetAttribute("PenFilled") or 0)
+						>= (player:GetAttribute("PenSlots") or Config.Progression.baseSlots)
+					local weakest = patch:GetAttribute("SwapWeakestName")
+					local placePrompt = plot:FindFirstChild("PlacePrompt")
+					if placePrompt and placePrompt:IsA("ProximityPrompt") then
+						placePrompt.ActionText = full and "Swap weakest: " .. (weakest or "pet")
+							or "Place"
+					end
 					set(
-						plot:FindFirstChild("PlacePrompt"),
+						placePrompt,
 						active
 							and mine
 							and carrying
 							and (
 								not filled
-								or (player:GetAttribute("PenFilled") or 0)
-									>= (player:GetAttribute("PenSlots") or Config.Progression.baseSlots)
+								or (
+									full
+									and weakest ~= nil
+									and player:GetAttribute("CarryPet") == true
+								)
 							),
-						"Your plot"
+						full and weakest or "Your plot"
 					)
 					set(
 						plot:FindFirstChild("PickupPrompt", true),
@@ -3291,7 +3299,9 @@ do
 		batConn = RunService.RenderStepped:Connect(function()
 			local root = rootPart()
 			local t = os.clock()
-			local z = root and root.Position.Z or Config.SafeLineZ or 150
+			local z = root and root.Position.Z
+				or (state:GetAttribute("SafeLineZ") or Config.SafeLineZ)
+				or 150
 			local y = root and root.Position.Y or 0
 			local center = Vector3.new(Config.MapCenterX or 0, y, z)
 			table.clear(moved)
@@ -3443,7 +3453,7 @@ do
 			if (player:GetAttribute("Carry") or 0) > 0 then
 				return
 			end
-			if player:GetAttribute("FightActive") or Center.urgent then
+			if Center.urgent then
 				return
 			end
 			local now = os.clock()
@@ -4858,7 +4868,7 @@ do
 	alarmGui.Name = "PatchAlarm"
 	alarmGui.ResetOnSpawn = false
 	alarmGui.IgnoreGuiInset = true
-	alarmGui.DisplayOrder = gui.DisplayOrder - 1
+	alarmGui.DisplayOrder = -1
 	alarmGui.Parent = player:WaitForChild("PlayerGui")
 	local vignette = Instance.new("Frame")
 	vignette.BackgroundTransparency = 1
@@ -4895,14 +4905,15 @@ do
 	flash.Parent = alarmGui
 
 	local function refresh()
-		local root = rootPart()
-		local safe = not root
-			or root.Position.Z < (state:GetAttribute("SafeLineZ") or Config.SafeLineZ)
+		local safe = not rootPart() or inHub()
 		local danger = player:GetAttribute("GuardChasing") == true
 			or (player:GetAttribute("CarryStolen") or 0) > 0
 		run.Visible = danger and not safe and not anyPanelOpen()
-		drop.Visible = (player:GetAttribute("Carry") or 0) > 0 and not anyPanelOpen()
-		vignette.Visible = danger and not safe and not anyPanelOpen() and not Center.busy
+		drop.Visible = (
+			(player:GetAttribute("CarryStolen") or 0) > 0
+			or (player:GetAttribute("CarryHoard") or 0) > 0
+		) and not anyPanelOpen()
+		vignette.Visible = danger and not safe and not anyPanelOpen()
 	end
 	RunService.RenderStepped:Connect(function()
 		refresh()
@@ -5132,13 +5143,15 @@ do
 	claim.LayoutOrder = 2
 	local busy = false
 	local function refresh()
+		local allowed = inHub()
+			and (player:GetAttribute("Carry") or 0) == 0
+			and not player:GetAttribute("GuardChasing")
 		daily.Visible = player:GetAttribute("DailyClaimable") == true
 			and (player:GetAttribute("Carry") or 0) == 0
 			and not player:GetAttribute("GuardChasing")
-			and rootPart() ~= nil
-			and rootPart().Position.Z < Config.SafeLineZ
+			and inHub()
 		claim.Visible = daily.Visible
-		if not daily.Visible then
+		if not allowed then
 			frame.Visible = false
 		end
 	end
@@ -5146,7 +5159,7 @@ do
 		local root = rootPart()
 		if
 			not root
-			or root.Position.Z >= Config.SafeLineZ
+			or root.Position.Z >= (state:GetAttribute("SafeLineZ") or Config.SafeLineZ)
 			or (player:GetAttribute("Carry") or 0) > 0
 			or player:GetAttribute("GuardChasing")
 		then
@@ -5226,9 +5239,6 @@ RunService.Heartbeat:Connect(function()
 	end
 	if workspace:GetServerTimeNow() < (player:GetAttribute("GuardEffectUntil") or 0) then
 		speed *= player:GetAttribute("WalkSpeedMultiplier") or 1
-	end
-	if player:GetAttribute("FightActive") then
-		speed = 0
 	end
 	if humanoid.WalkSpeed ~= speed then
 		humanoid.WalkSpeed = speed
@@ -6586,7 +6596,7 @@ do
 		local root = rootPart()
 		if
 			not root
-			or root.Position.Z >= Config.SafeLineZ
+			or root.Position.Z >= (state:GetAttribute("SafeLineZ") or Config.SafeLineZ)
 			or (player:GetAttribute("Carry") or 0) > 0
 			or player:GetAttribute("GuardChasing")
 		then
@@ -6647,7 +6657,6 @@ do
 				and not anyPanelOpen()
 				and (player:GetAttribute("CarryHoard") or 0) == 0
 				and (player:GetAttribute("CarryStolen") or 0) == 0
-				and not player:GetAttribute("FightActive")
 				and not state:GetAttribute("PurgeEnds")
 			local remaining = math.max(
 				0,
@@ -6668,15 +6677,13 @@ do
 					and player:GetAttribute("DailyClaimable") == true
 					and (player:GetAttribute("Carry") or 0) == 0
 					and not player:GetAttribute("GuardChasing")
-					and rootPart() ~= nil
-					and rootPart().Position.Z < Config.SafeLineZ
+					and inHub()
 			end
 		end
 		daily.Visible = player:GetAttribute("DailyClaimable") == true
 			and (player:GetAttribute("Carry") or 0) == 0
 			and not player:GetAttribute("GuardChasing")
-			and rootPart() ~= nil
-			and rootPart().Position.Z < Config.SafeLineZ
+			and inHub()
 		local remaining = math.max(
 			0,
 			math.ceil((player:GetAttribute("TeleportReadyAt") or 0) - workspace:GetServerTimeNow())

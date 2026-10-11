@@ -23,7 +23,6 @@ local Config = {
 		bossY = 0.125,
 		actionY = 0.70,
 		toastY = 0.765,
-		fightY = 0.62,
 		scaleMin = 0.75,
 		scaleMax = 1.15,
 		body = Color3.fromRGB(28, 20, 48),
@@ -1075,6 +1074,11 @@ Config.GuardTwists = {
 	iconHeight = 4,
 }
 Config.PetFinishes = { Gold = Color3.fromRGB(255, 200, 60), Shiny = Color3.fromRGB(220, 255, 255) }
+-- Palette keys checked against VoxelModels: Crow k is its body; Toad f is its hat.
+Config.PetFaceKeys = { Crow = { "e" }, Toad = { "k" }, Kinglet = { "f" } }
+Config.GuardFaceKeys = { TreeEnt = "e", SwampToad = "y", Vampire = "e", PumpkinKing = "f" }
+-- Shared keys also paint King vine leaves (below the face) and the Golem nose.
+Config.GuardFaceMinHeight = { PumpkinKing = 0.4, CandyGolem = 13 / 19 }
 Config.KingSkin = { color = Color3.fromRGB(255, 190, 40), shapeTier = 7 }
 Config.Progression.rewardCarry = true
 Config.Pets.BonePup.rarity = "Rare"
