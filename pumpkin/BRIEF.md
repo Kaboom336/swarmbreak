@@ -1,5 +1,7 @@
 # +1 Pumpkin Every Click: overnight build brief (2026-10-05)
 
+> Historical brief. Current authorized work is the [first magic garden slice](production/garden-slice-contract.md): automatic owned crops, harvest/awaken/guide/burst, gold size upgrades and friend burst chains. See [the design proposal](research/MAGIC-DIRECTION-PROPOSAL.md). Prices/timing and final quality remain playtest decisions. Do not apply the old launch deadline, monetization list or verb sequence to the new direction.
+
 Zion picked this game at 02:03Z. **Launch target: 3:15 PM ET today (19:15Z).** Branch `pumpkin/main`, folder `pumpkin/` (Rojo project, Lune tests). Swarm Break (`game/`) is parked; do not touch it.
 
 Reference games (Roblox charts, Oct 2026):

@@ -1,0 +1,342 @@
+[
+  {
+    "path": "assets/PetModels.rbxm",
+    "sha256": "C3A84FAEE85246B5A26E886F1DD84A3F421D8D9C0392E95A2C37D012E64C83C7"
+  },
+  {
+    "path": "assets/PumpkinMap.rbxm",
+    "sha256": "02A2A0E137D60E332F6AA777617D1D1DFF843EE43675B47FCC45D38AAFD75E48"
+  },
+  {
+    "path": "default.project.json",
+    "sha256": "D69095E0A89567B761F0D6E2DBCF2F6D5C78F2DFCF0C80F681CD0A139FA398F8"
+  },
+  {
+    "path": "rokit.toml",
+    "sha256": "36003BC9ED933C111E6514925FA1DDD0744E8060F86AC612A7010BA2F18DEB37"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\CameraFraming.luau",
+    "sha256": "DDC24AFC6428425678C7C6638C283ABCD6A286A70CC7A344922E34FDB857080D"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Catapult.luau",
+    "sha256": "BD5CE14585C576F18D10CFC6F2CD507A0B1876AD5B984DFAB678DFFDDDAE9085"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Challenges.luau",
+    "sha256": "3472046E05445AE565292B043F9E895C9E56A1F21DD7908A5CC2ADFA8CAFFE89"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Codes.luau",
+    "sha256": "EC75C534BF6FDEA0AFCD2327DA7455B8B8FA53C24084A9E0E410079A5A2E5DF3"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Config.luau",
+    "sha256": "850B0AC6B812F95E3AB4D0204C871C4F74E512B00826ACDD8A90A1B8E0522763"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\CoopRules.luau",
+    "sha256": "6F57D3457489A948290E7A023DFB03CB56A07D769DCEB9679AB52A46F0093E0C"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Daily.luau",
+    "sha256": "3998303D858692FD8836145299A187A9F757BF4E070DD96ADD5E1299BC855E2F"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Economy.luau",
+    "sha256": "CB1E772E07EB99E1A35D2D8AF006DC9E035B228432789D9C8BAAF62BAFFD6F86"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\ExperienceRules.luau",
+    "sha256": "63012A772CE3EAB58A51325DBB1201D2E62425E7BE66B720E6DE77839C3A4027"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Format.luau",
+    "sha256": "3DF5041952EB9528F1943748F8D7D15C5AB990CBB96EF0394A976AB1E7A48F62"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\FreeDoubleWins.luau",
+    "sha256": "248CA96BED2C4E72FC8D6BE10C3A95A832FDFCCEE03C82436EF03823A89E6986"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\FriendBoost.luau",
+    "sha256": "4D3CD8D1E3D20EA05037EA989E0AB7CE4B05A49A5B0412C367E10E8ABFE67E66"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\GardenRules.luau",
+    "sha256": "CCFA59A95CD1D3EEEA0D48EA564C081C13BD1C396E1474AE7C975917E40CB9AD"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\GiftSchedule.luau",
+    "sha256": "BB511BAFDBBD632C19B507B1D8EBCCD38C6DC0C4B58ED935D20D77C91EE08B0D"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Grow.luau",
+    "sha256": "CD3000CE0FCB28B4CE825F8DF0FEEF5A55C13313FAED48754B099AF913341CBC"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\HatchEntitlements.luau",
+    "sha256": "D974BE7F48B6D07A51B44E439B49C8A5DE67D5B86E62A9F48DF9FFC522301DC8"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\HudLayout.luau",
+    "sha256": "CDE94C2D9F7082052CD1032F6F5F618E4DB30BAD25BB289D181B4029E56BE995"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Monetization.luau",
+    "sha256": "3C623B93C46F02CEC4D591F328812BF3D451088AA997C64C9F4BB01B6C9C081F"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\PetIndex.luau",
+    "sha256": "CC220E04A617EC60E894A91AEB208FB797011FEADCB07491356A9EE4081BCBD9"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Pets.luau",
+    "sha256": "3B982A5423B07B03E4384229F8FC899D1365C06C5498BF23D3F7EC49A5909557"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\ProfileSchema.luau",
+    "sha256": "C01F671F71EC03F5CF342E561AAFFD3EF56386FE04A6C014EC5C4145343B96EA"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Rebirth.luau",
+    "sha256": "07CE77003065CFC7E48A5F1001DCD6FF711CE66CA05C2B99DC344817D882445D"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\ReceiptLedger.luau",
+    "sha256": "3A87A60BA89E241B7DF2C5DDB9AD6C427F6BE3AD1D268F751EC508F1D59722FE"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Ride.luau",
+    "sha256": "D80B82257F7E335714F75F649BC91A26C7DB907ABBF4347C73340C0DDCAB5C85"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\RideSurface.luau",
+    "sha256": "851774E5BF7D3004E9C3633DDEA7B1BA418C4DBEA9E2CBEF651D576AC9E43E55"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Roll.luau",
+    "sha256": "127545B2E57C867EB998E7B4DC4B50A0B0CB826772AD96E4053592D3125B4F18"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\SessionRules.luau",
+    "sha256": "6D833C79D85DACF68563AAB9BAB9CC967562095CC09993CB0F355481F157744A"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\StarterPack.luau",
+    "sha256": "C6A990BC2747C0BCA663B26DBE53BBB9CE7B44893802326ED20A05AD843D4C6D"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Style.luau",
+    "sha256": "EDC6FE0F7327E778977DFC90BEED5D8FE4D9F6A4A90A8F96C9007F94F298969D"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\Tutorial.luau",
+    "sha256": "233840807E32403B66E5195BB9AA9EC3B5C11830463D4DAF7E687E3DA0AFD305"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\VisualRules.luau",
+    "sha256": "0E1E9AB6AFCC28BCFA550ECF65EC634288D34F35E19406A8B390DEC5FC73A124"
+  },
+  {
+    "path": "src\\ReplicatedStorage\\Shared\\WallProgress.luau",
+    "sha256": "CE3D620AE491AE865BCDF06A7C21086BD98ACA5463200B30E92AD6379A456437"
+  },
+  {
+    "path": "src\\ServerScriptService\\Coop.server.luau",
+    "sha256": "21D84E5A5043AC1C1E00B173D534787868CBA587DA7C834FB6B515F8EF3BEB48"
+  },
+  {
+    "path": "src\\ServerScriptService\\Game.server.luau",
+    "sha256": "C5BE13FF927B4B7CB9DAE14006DC4573B3511B9E9520CE88B23107715E1A600E"
+  },
+  {
+    "path": "src\\ServerScriptService\\Garden.server.luau",
+    "sha256": "05D7BB040FCDEB2B095AE62A624105E533D7EF28E2B7713D3D679EF814F3A7C8"
+  },
+  {
+    "path": "src\\ServerScriptService\\MapFallback.luau",
+    "sha256": "DEEC0F71CF42D99DDF5D85E91E0ED55465A5FF4F14946CDE3A4D14FD175E0114"
+  },
+  {
+    "path": "src\\ServerScriptService\\Pets.server.luau",
+    "sha256": "7F90F3F91946A4D968090BC3DAAB86A141929C6FF76357D7EE7BD6CFEDD5C3C2"
+  },
+  {
+    "path": "src\\ServerStorage\\CoopScene.luau",
+    "sha256": "9270E14F88398B8A5BED9068BF806D0FF6358B8C5B9754ABE44A806D3FD61391"
+  },
+  {
+    "path": "src\\ServerStorage\\Data.luau",
+    "sha256": "AD801F309BD2DDF4C642949677DC84DBDBF89B41828E9A3A0A0268E76C05626A"
+  },
+  {
+    "path": "src\\ServerStorage\\EconomyService.luau",
+    "sha256": "B133F12786AA281430E89F94BC3D3BEB86AF2D2EF452AEB30266D6E24C18BAA9"
+  },
+  {
+    "path": "src\\ServerStorage\\GardenScene.luau",
+    "sha256": "BFA825C6388F23124F8EDFAD235531482070EBC30B833911E14A250BDD7F4FFD"
+  },
+  {
+    "path": "src\\ServerStorage\\Leaderboards.luau",
+    "sha256": "ECD08D8F62F1D9D61605F53C1556452EB7D2274B5A2DAFCDCB8906262DFF3DF3"
+  },
+  {
+    "path": "src\\ServerStorage\\PumpkinVisual.luau",
+    "sha256": "670561FDB7BD0813E280B23C294638E1CCC67291036C0040D4FFE7CBC2143186"
+  },
+  {
+    "path": "src\\ServerStorage\\Remotes.luau",
+    "sha256": "E267D727226110570662BF369A47E220FC2745045A10485B1DBEB3DF973C9CA7"
+  },
+  {
+    "path": "src\\StarterPlayer\\StarterPlayerScripts\\Catapult.client.luau",
+    "sha256": "0B47C52FDEE65B21159657B9EFC84EBCB71C771B26BED4CDE150C93E701FEEBF"
+  },
+  {
+    "path": "src\\StarterPlayer\\StarterPlayerScripts\\Coop.client.luau",
+    "sha256": "BEE5E6703E7BCA9605D9F27EF041A31F4DC5AC85CE04A950261C1E38A057751E"
+  },
+  {
+    "path": "src\\StarterPlayer\\StarterPlayerScripts\\Garden.client.luau",
+    "sha256": "AFB3E6B07D9C6C353ABD8643E524E8EE375F3405ED1B2A57B76A060F421D9F3E"
+  },
+  {
+    "path": "src\\StarterPlayer\\StarterPlayerScripts\\Hud.client.luau",
+    "sha256": "86D4C4D630CB5897BFB324ABC2BDE636E45E412486F94FBEF4E187BBC6CF91B7"
+  },
+  {
+    "path": "src\\StarterPlayer\\StarterPlayerScripts\\Pets.client.luau",
+    "sha256": "4F41FAE0E53AD530E2B1694998B155E6CDCE6C341D3D003E9ECE7344224C83DC"
+  },
+  {
+    "path": "src\\StarterPlayer\\StarterPlayerScripts\\Roll.client.luau",
+    "sha256": "10277E8722C7C22829359889E66A017FA20F25AD78465CFB3D3F2D75C2220193"
+  },
+  {
+    "path": "tests\\camera_framing.spec.luau",
+    "sha256": "A6EA58D61D32322DDB504052B575CBF745176FB02855E9045CAAFA29DF59634B"
+  },
+  {
+    "path": "tests\\catapult.spec.luau",
+    "sha256": "4245D3AA056AEE674DF98534F30D261DFE762EA2C29A54F32757EE83A196EFEF"
+  },
+  {
+    "path": "tests\\challenges.spec.luau",
+    "sha256": "C8DFB52ECAE4AB80068B492C67257C62C7E338AAE2861462C28FA411BC97698F"
+  },
+  {
+    "path": "tests\\codes.spec.luau",
+    "sha256": "64ADB507F7A958E1E48804244F2F2900240D250723DBB11FA23C04FCB6104E0D"
+  },
+  {
+    "path": "tests\\config.spec.luau",
+    "sha256": "0A0153D8FA1080F9C2A31BF360C9B08FDFB0ABAF3C67E8E62B09389C0A5578B2"
+  },
+  {
+    "path": "tests\\coop.spec.luau",
+    "sha256": "5FB60945E74981F64F520978B3BF1BE07AFC14D60F3954D2308D9357F097769B"
+  },
+  {
+    "path": "tests\\daily.spec.luau",
+    "sha256": "F97DC435C0B8B12D6B303D1F6B0C471FD43E06BC75F2AE3483719939AEF51757"
+  },
+  {
+    "path": "tests\\data_session.spec.luau",
+    "sha256": "07FAB5911561F39249E9061BC23B1A976A46A375AF64B6B4D5E8EA517021F9C7"
+  },
+  {
+    "path": "tests\\economy.spec.luau",
+    "sha256": "0CD5136506B0E234CD5B93F73B28E2006D90FE64DDF9314629B82E74844FEF20"
+  },
+  {
+    "path": "tests\\experience_rules.spec.luau",
+    "sha256": "0EED9E6303AE65D7987FEEA164F4E9A3FC3D253758E015A8C4EA74A71023001C"
+  },
+  {
+    "path": "tests\\format.spec.luau",
+    "sha256": "E015608D78F6D5A6DC921B18F60E6D41DFDDA3A0AB6B8A930601415EAAD6FAB2"
+  },
+  {
+    "path": "tests\\free_double_wins.spec.luau",
+    "sha256": "E3D3BFB5A1786F40F12B9D97B02496BFDA46719F52FBF19CD63F5EF11F6BD04C"
+  },
+  {
+    "path": "tests\\free_hatch.spec.luau",
+    "sha256": "70D49F1C8CEF6B2C49D93F9C1F67AE95A3D903996BF4068C06F50E89B4359CD4"
+  },
+  {
+    "path": "tests\\friend_boost.spec.luau",
+    "sha256": "DEE712B56C2F3CBA5F0D290EE303637EBF004826ADB3C84A52BA00C252A86E8B"
+  },
+  {
+    "path": "tests\\garden.spec.luau",
+    "sha256": "0630D0B48FA7206BE6F4822FE7422ADB7D54F498C6D34FD46BD4040518D319B9"
+  },
+  {
+    "path": "tests\\gift_schedule.spec.luau",
+    "sha256": "33DDCD6D8292A616484B24EA2466724BD197FF9BB04688EC715E4EAACADA3D68"
+  },
+  {
+    "path": "tests\\grow.spec.luau",
+    "sha256": "31C8F527EC60933A55EA42EA9018DF24A4C231EFE97F0157B5E9DCCFD09052FE"
+  },
+  {
+    "path": "tests\\hud_layout.spec.luau",
+    "sha256": "5858D6E77299C936236FFC6C59A4A46E0B62257D544392497141BA9733A9B4F7"
+  },
+  {
+    "path": "tests\\monetization.spec.luau",
+    "sha256": "B190E3C4FDC7601592B14ADACE62EE34A7EF01B2B21A50A3E5E50C87A68A6870"
+  },
+  {
+    "path": "tests\\pet_index.spec.luau",
+    "sha256": "168D281019BACA0912D2AD938A6CCA5771EAF376683CD5A3A70A78AA2A96387B"
+  },
+  {
+    "path": "tests\\pets.spec.luau",
+    "sha256": "38C541238BA1CFE26539C40197437C560D22FA95C826F373A70939CF3196D3BE"
+  },
+  {
+    "path": "tests\\rebirth.spec.luau",
+    "sha256": "D81920616D1B0193E64C27D132515522972667AAED3C5088EC928104EED73691"
+  },
+  {
+    "path": "tests\\receipt_ledger.spec.luau",
+    "sha256": "DA44C6DD896AED4070ADD6DDAF1CFA7F31CF27F17D5F66BE352FA77F4D119DB1"
+  },
+  {
+    "path": "tests\\ride.spec.luau",
+    "sha256": "C12432F4410DFA42D5E02108F1964E68821162B48C96A83914759392753E7DB2"
+  },
+  {
+    "path": "tests\\roll.spec.luau",
+    "sha256": "3C085BE0C4605A4C6B7C760D9D3D2596237919D5F9C200A2271B9ADF1CC97832"
+  },
+  {
+    "path": "tests\\run.luau",
+    "sha256": "A1862A56BFED01096F4A16BDB9B537D7FF14BF7A75B9017CCD824B72858F28BB"
+  },
+  {
+    "path": "tests\\starter_pack.spec.luau",
+    "sha256": "C834AF0821A186B34AD204EC6232DF22165690E4AB0C8A3F796636593A038D21"
+  },
+  {
+    "path": "tests\\style.spec.luau",
+    "sha256": "3C0056744FF82D9A52763BC08C3534FA5C4BB144452A78A4D10F2344F5DBF72F"
+  },
+  {
+    "path": "tests\\tutorial.spec.luau",
+    "sha256": "77DBC1A62F224CD028D559DFECD4DF9E2D91922CDEC8F0C30F96BCFA62A44C1D"
+  },
+  {
+    "path": "tests\\visual_rules.spec.luau",
+    "sha256": "DD21F29545FD5C58D4FCB892E3132F2A0E744302AEF1B0F51093E6B805C60C58"
+  },
+  {
+    "path": "tests\\wall_progress.spec.luau",
+    "sha256": "EC34DB0E9253F518F359B14809B224EAEB38225B95E4D252D9368353076E6E75"
+  }
+]

@@ -12,6 +12,10 @@ local playerGui = player:WaitForChild("PlayerGui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CameraFraming = require(Shared:WaitForChild("CameraFraming"))
 local Config = require(Shared:WaitForChild("Config"))
+if Config.GameplayMode == "Coop" or Config.GameplayMode == "Garden" then
+	return
+end
+local Catapult = require(Shared:WaitForChild("Catapult"))
 local Format = require(Shared:WaitForChild("Format"))
 local Grow = require(Shared:WaitForChild("Grow"))
 local HudLayout = require(Shared:WaitForChild("HudLayout"))
@@ -868,7 +872,8 @@ local function playRoll(
 	bonusWalls: number,
 	token: number,
 	seed: number,
-	startedAt: number
+	startedAt: number,
+	launch: any?
 )
 	local winsBefore = (player:GetAttribute("Wins") :: number?) or 0
 	local start = findPart("ZoneStart_" .. zoneName)
@@ -884,6 +889,10 @@ local function playRoll(
 
 	local diameter = Config.PumpkinBaseDiameter * Grow.pumpkinScale(size)
 	local physicalDuration = Ride.physicalDuration(size)
+	local launchSettings = Catapult.settings(
+		if launch then launch.angle else 35,
+		if launch then launch.power else 0.75
+	)
 	local bonusDuration = Ride.bonusDuration(bonusWalls)
 	local bonusDistance = bonusWalls * Config.WallSpacing
 	local physicalDistance = math.max(0, distance - bonusDistance)
@@ -1122,6 +1131,7 @@ local function playRoll(
 				local radius = pumpkin.Size.X * 0.5
 				local position, normal, tangent =
 					RideSurface.sample(surfaces, nominalPosition, radius, pathTangent)
+				position += Vector3.yAxis * Catapult.height(elapsed, launchSettings)
 				local hopStart = physicalDuration * 0.54
 				local hopAlpha = math.clamp((elapsed - hopStart) / 0.65, 0, 1)
 				local hop = if hopAlpha > 0 and hopAlpha < 1

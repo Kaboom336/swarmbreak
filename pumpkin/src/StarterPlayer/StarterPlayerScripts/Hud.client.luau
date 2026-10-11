@@ -14,6 +14,9 @@ local playerGui = player:WaitForChild("PlayerGui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CameraFraming = require(Shared:WaitForChild("CameraFraming"))
 local Config = require(Shared:WaitForChild("Config"))
+if Config.GameplayMode == "Coop" or Config.GameplayMode == "Garden" then
+	return
+end
 local ExperienceRules = require(Shared:WaitForChild("ExperienceRules"))
 local Format = require(Shared:WaitForChild("Format"))
 local FreeDoubleWins = require(Shared:WaitForChild("FreeDoubleWins"))
@@ -2111,7 +2114,11 @@ end)
 
 local lastRequest = -math.huge
 local function requestGrow()
-	if player:GetAttribute("Rolling") == true or modal.Visible then
+	if
+		player:GetAttribute("Rolling") == true
+		or player:GetAttribute("CatapultSetup") == true
+		or modal.Visible
+	then
 		return
 	end
 	local now = os.clock()

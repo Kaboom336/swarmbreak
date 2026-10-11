@@ -1,0 +1,14 @@
+Checking format
+Checking lint
+Results:
+0 errors
+0 warnings
+0 parse errors
+Checking Luau tests and syntax
+Syntax: 50 files checked, 0 errors
+Tests: 127 passed, 0 failed
+Checking Rojo build
+Building project 'PumpkinGame'
+Built project to garden-test.checking.rbxl
+Build passed: C:\dev\codex-lab\pumpkin-loop\pumpkin\garden-test.rbxl
+Runtime, multiplayer, visual and device verification remain pending.

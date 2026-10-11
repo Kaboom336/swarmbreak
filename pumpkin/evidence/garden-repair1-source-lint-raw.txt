@@ -1,0 +1,16 @@
+error[undefined_variable]: `pending` is not defined
+    ┌─ src\ServerScriptService\Garden.server.luau:632:3
+    │
+632 │         pending += 1
+    │         ^^^^^^^
+
+error[undefined_variable]: `pending` is not defined
+    ┌─ src\ServerScriptService\Garden.server.luau:635:4
+    │
+635 │             pending -= 1
+    │             ^^^^^^^
+
+Results:
+2 errors
+0 warnings
+0 parse errors

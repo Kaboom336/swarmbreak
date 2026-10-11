@@ -1,7 +1,8 @@
 --!strict
 -- All gameplay tuning lives here so later systems can share the same source of truth.
 local Config = {
-	GameName = "+1 Pumpkin Every Click",
+	GameName = "Pumpkin Roll",
+	GameplayMode = "Garden",
 	DataStoreName = "PumpkinEveryClick_Profile_v1",
 	DataVersion = 3,
 	AutosaveSeconds = 60,
@@ -58,6 +59,10 @@ local Config = {
 	RollBaseSpeed = 40,
 	RollSizeSpeedFactor = 4,
 	RollCooldownSeconds = 1,
+	CatapultMaxRank = 5,
+	CatapultUpgradeBaseCost = 25,
+	CatapultRewardStep = 0.15,
+	CatapultArcHeight = 16,
 	RideBonusTargetCount = 6,
 	RideMaxPickups = 6,
 	RideCandyWinBonus = 0.1,

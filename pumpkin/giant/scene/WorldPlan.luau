@@ -14,7 +14,7 @@ for _, name in { "LaunchLook", "LaunchLook2", "LaunchLook3", "LaunchLook4" } do
 end
 local lighting = game:GetService("Lighting")
 local V, hex = Vector3.new, Color3.fromHex
-local report, removed, added = {}, {}, {}
+local report, removed, added, placements, skipped = {}, {}, {}, {}, {}
 local function log(s)
 	table.insert(report, s)
 	print("[WorldPlan] " .. s)
@@ -57,25 +57,60 @@ local state = {}
 for n = 1, 7 do
 	local zone = assert(zones:FindFirstChild("Zone" .. n), "Missing Zone" .. n)
 	local hoard = assert(zone:FindFirstChild("Hoard"), "Missing Hoard in " .. zone.Name)
-	local hc = assert(bounds(hoard), "Hoard has no geometry")
+	local hc, hs = bounds(hoard)
+	assert(hc, "Hoard has no geometry")
 	local gate = zone:FindFirstChild("GateWall")
 	local z0 = zone:GetAttribute("ZMin") or (gate and gate.Position.Z) or (hc.Z - 104)
 	local spawns, floor = {}, math.huge
-	for _, d in zone:GetDescendants() do
-		if d:IsA("BasePart") and d.Name == "Spawn" then
+	local spawnFolder = assert(zone:FindFirstChild("Spawns"), "Missing Spawns in " .. zone.Name)
+	for _, d in spawnFolder:GetDescendants() do
+		if d:IsA("BasePart") then
+			if d:GetAttribute("WorldPlanOriginalPosition") == nil then
+				d:SetAttribute("WorldPlanOriginalPosition", d.Position)
+			end
+			if d:GetAttribute("WorldPlanSpawnOrder") == nil then
+				d:SetAttribute("WorldPlanSpawnOrder", #spawns + 1)
+			end
 			table.insert(spawns, d)
 			floor = math.min(floor, d.Position.Y - d.Size.Y / 2)
 		end
 	end
 	assert(#spawns > 0, "No live Spawn parts in " .. zone.Name)
-	-- Contract lane width, translated by the actual gate / spawn centre.
+	-- Use original extents, never the moved grid's average (rerun drift).
 	local x = gate and gate.Position.X or 0
 	if not gate then
+		local lo, hi = math.huge, -math.huge
 		for _, p in spawns do
-			x += p.Position.X / #spawns
+			local original = p:GetAttribute("WorldPlanOriginalPosition")
+			lo, hi = math.min(lo, original.X), math.max(hi, original.X)
 		end
+		x = (lo + hi) / 2
 	end
-	state[n] = { zone = zone, hoard = hoard, hc = hc, x = x, z = z0, y = floor, spawns = spawns }
+	table.sort(spawns, function(a, b)
+		local ap, bp =
+			a:GetAttribute("WorldPlanOriginalPosition"), b:GetAttribute("WorldPlanOriginalPosition")
+		if ap.Z ~= bp.Z then
+			return ap.Z < bp.Z
+		end
+		if ap.X ~= bp.X then
+			return ap.X < bp.X
+		end
+		if a.Name ~= b.Name then
+			return a.Name < b.Name
+		end
+		return a:GetAttribute("WorldPlanSpawnOrder") < b:GetAttribute("WorldPlanSpawnOrder")
+	end)
+	state[n] = {
+		zone = zone,
+		hoard = hoard,
+		hc = hc,
+		hs = hs,
+		x = x,
+		z = z0,
+		zEnd = zone:GetAttribute("ZMax") or z0 + 160,
+		y = floor,
+		spawns = spawns,
+	}
 	log(
 		string.format(
 			"%s actual gate/start Z %.2f, lane X %.2f, floor %.2f, Hoard %s, Spawns %d",
@@ -86,6 +121,94 @@ for n = 1, 7 do
 			tostring(hc),
 			#spawns
 		)
+	)
+end
+-- Distance between a candidate footprint and the Hoard footprint. Ten studs
+-- of walkable floor remain outside the nest, including for the moved spawns.
+local function nestClear(s, x, z, size)
+	local dx = math.max(0, math.abs(x - s.hc.X) - (size.X + s.hs.X) / 2)
+	local dz = math.max(0, math.abs(z - s.hc.Z) - (size.Z + s.hs.Z) / 2)
+	return dx * dx + dz * dz >= 100
+end
+-- Segment against a rectangle expanded by 12: a conservative 24-wide run
+-- corridor from the arriving gate to the nest, independent of nest side.
+local function inRun(s, x, z, size)
+	local t0, t1 = 0, 1
+	for _, axis in { "X", "Z" } do
+		local start = axis == "X" and s.x or s.z + 12
+		local finish = s.hc[axis]
+		local centre = axis == "X" and x or z
+		local half = size[axis] / 2 + 12
+		local delta = finish - start
+		if math.abs(delta) < 0.0001 then
+			if math.abs(start - centre) > half then
+				return false
+			end
+		else
+			local a, b = (centre - half - start) / delta, (centre + half - start) / delta
+			t0, t1 = math.max(t0, math.min(a, b)), math.min(t1, math.max(a, b))
+			if t0 > t1 then
+				return false
+			end
+		end
+	end
+	return true
+end
+-- Compute all grids before moving any parts or cutting decor. Original Y,
+-- rotation, names and gameplay attributes survive; only X/Z are reassigned.
+local spawnLayouts = {}
+for n, s in state do
+	local cells, chosen = {}, {}
+	local extent = V(0, 0, 0)
+	for _, p in s.spawns do
+		local _, ps = bounds(p)
+		extent = extent:Max(ps)
+	end
+	local columns = math.max(2, math.ceil(math.sqrt(#s.spawns * 56 / (s.zEnd - s.z - 24))))
+	local rows = math.ceil(#s.spawns / columns)
+	while #cells < #s.spawns do
+		cells = {}
+		for row = 1, rows do
+			for col = 1, columns do
+				local jitterX = math.sin(row * 73 + col * 37 + n * 11) * 0.18
+				local jitterZ = math.sin(row * 29 + col * 61 + n * 17) * 0.18
+				local x = s.x - 28 + (col - 0.5 + jitterX) * 56 / columns
+				local z = s.z + 12 + (row - 0.5 + jitterZ) * (s.zEnd - s.z - 24) / rows
+				-- Use the largest spawn footprint for every slot.
+				if
+					math.abs(x - s.x) + extent.X / 2 <= 28
+					and z - extent.Z / 2 >= s.z + 12
+					and z + extent.Z / 2 <= s.zEnd - 12
+					and nestClear(s, x, z, extent)
+				then
+					table.insert(cells, V(x, 0, z))
+				end
+			end
+		end
+		assert(rows < #s.spawns * 4, "Cannot fit central spawn grid in " .. s.zone.Name)
+		if #cells < #s.spawns then
+			rows += 1
+		end
+	end
+	-- Spread unused cells through the grid rather than leaving the far end empty.
+	for i, p in s.spawns do
+		local cell = cells[math.floor((i - 0.5) * #cells / #s.spawns) + 1]
+		chosen[i] = V(cell.X, p:GetAttribute("WorldPlanOriginalPosition").Y, cell.Z)
+	end
+	spawnLayouts[n] = chosen
+end
+for n, s in state do
+	s.spawnBounds = {}
+	for i, p in s.spawns do
+		p.CFrame = CFrame.new(spawnLayouts[n][i]) * p.CFrame.Rotation
+		local pc, ps = bounds(p)
+		table.insert(s.spawnBounds, { c = pc, size = ps })
+	end
+	log(
+		s.zone.Name
+			.. " re-laid "
+			.. #s.spawns
+			.. " Spawns; central field +/-30, ends 12, nest clearance 10"
 	)
 end
 local spawn = assert(garden:FindFirstChildOfClass("SpawnLocation"), "Missing hub spawn")
@@ -127,6 +250,7 @@ end
 protect(king)
 for _, s in state do
 	protected[s.zone] = true
+	protect(s.zone:FindFirstChild("Spawns"))
 	for _, d in s.zone:GetDescendants() do
 		local name = d.Name:lower()
 		if
@@ -458,63 +582,136 @@ local function buildHero(m, n)
 		block(m, "Crown", V(12, 3, 4), V(0, 42.5, 5), "FFC83D")
 	end
 end
--- Place whole AABBs inside bands. Spawn footprints +4 always win. Planned
--- coordinates are offsets from measured gates, not assumed world locations.
+-- Search whole footprints in the freed wall bands, then shrink at most 30%.
+-- The centre field and gate-to-nest run stay clear for ALL roles, even Z7.
 local occupied = {}
-local function place(m, s, x, z, role)
-	local c, size = bounds(m)
-	local base = block(m, "AnchorPlate", V(size.X + 2, 2, size.Z + 2), V(c.X, -1, c.Z), "B07A4A")
-	if role == "Hero" then
-		base.Size *= V(0.7, 1, 0.7)
-		base.CanCollide, base.CanQuery = true, true
+local function skip(s, name, reason)
+	skipped[s.zone.Name] = skipped[s.zone.Name] or {}
+	table.insert(skipped[s.zone.Name], name .. " (" .. reason .. ")")
+	log(s.zone.Name .. " SKIPPED " .. name .. ": " .. reason)
+end
+local function fits(s, x, z, size, role)
+	if math.abs(x - s.x) + size.X / 2 > 59 or math.abs(x - s.x) - size.X / 2 < 32 then
+		return false
 	end
-	c, size = bounds(m)
-	local side = x < s.x and -1 or 1
-	-- Tall nest pieces live on the wall-facing half. Low framing may reach the
-	-- nest edge, but candy canes must never obstruct the central run corridor.
-	if role == "Cluster" and size.Y > 5 then
-		local nestSide = s.hc.X < s.x and -1 or 1
-		x = s.x + nestSide * math.max(math.abs(x - s.x), 33 + size.X / 2)
+	local lowZ, highZ = s.z + 16, s.zEnd - 10
+	if role == "Apron" then
+		lowZ, highZ = s.z + 0.5, s.z + 14
 	end
-	if role ~= "FinalHero" and role ~= "Cluster" and role ~= "Ground" then
-		local low, high = side == -1 and s.x - 58 or s.x + 33, side == -1 and s.x - 33 or s.x + 58
-		x = math.clamp(x, low + size.X / 2, high - size.X / 2)
+	if z - size.Z / 2 < lowZ or z + size.Z / 2 > highZ then
+		return false
 	end
-	local originalZ = z
-	for attempt = 1, 60 do
-		local clash = false
-		for _, p in s.spawns do
-			local pc, ps = bounds(p)
-			if
-				math.abs(x - pc.X) < (size.X + ps.X) / 2 + 4
-				and math.abs(z - pc.Z) < (size.Z + ps.Z) / 2 + 4
-			then
-				clash = true
-			end
-		end
-		for _, o in occupied[s.zone] or {} do
-			local gap = role == "Cluster" and 1 or 6
-			if
-				math.abs(x - o.x) < (size.X + o.size.X) / 2 + gap
-				and math.abs(z - o.z) < (size.Z + o.size.Z) / 2 + gap
-			then
-				clash = true
-			end
-		end
-		if not clash then
-			break
-		end
-		z = originalZ + math.ceil(attempt / 2) * 2 * (attempt % 2 == 1 and 1 or -1)
-		if attempt == 60 or z < s.z + 16 or z + size.Z / 2 > s.z + 151 then
-			log("SKIPPED blocked " .. m.Name .. "; protected Spawns/spacing win")
-			m:Destroy()
+	if not nestClear(s, x, z, size) or inRun(s, x, z, size) then
+		return false
+	end
+	for _, p in s.spawnBounds do
+		local pc, ps = p.c, p.size
+		if
+			math.abs(x - pc.X) < (size.X + ps.X) / 2 + 4
+			and math.abs(z - pc.Z) < (size.Z + ps.Z) / 2 + 4
+		then
 			return false
 		end
+	end
+	for _, o in occupied[s.zone] or {} do
+		local gap = (
+			role == "Cluster"
+			or o.role == "Cluster"
+			or role == "Ground"
+			or o.role == "Ground"
+		)
+				and 1
+			or 6
+		if
+			math.abs(x - o.x) < (size.X + o.size.X) / 2 + gap
+			and math.abs(z - o.z) < (size.Z + o.size.Z) / 2 + gap
+		then
+			return false
+		end
+	end
+	return true
+end
+local function place(m, s, x, z, role, retryHero)
+	if role == "Support" then
+		m:PivotTo(CFrame.Angles(0, x < s.x and -math.pi / 2 or math.pi / 2, 0) * m:GetPivot())
+	end
+	local c, size = bounds(m)
+	if role ~= "Ground" then
+		local base =
+			block(m, "AnchorPlate", V(size.X + 2, 2, size.Z + 2), V(c.X, -1, c.Z), "B07A4A")
+		if role == "Hero" or role == "FinalHero" then
+			base.Size *= V(0.7, 1, 0.7)
+			base.CanCollide, base.CanQuery = true, true
+		end
+	end
+	local requestedSide = x < s.x and -1 or 1
+	local selected
+	for _, scale in { 1, 0.9, 0.8, 0.7 } do
+		m:ScaleTo(scale)
+		c, size = bounds(m)
+		local bestScore = math.huge
+		-- Out-of-range candidates are rejected individually, never end a search.
+		for _, side in { requestedSide, -requestedSide } do
+			-- Small inset absorbs world-space float32 rounding after PivotTo.
+			local inner, outer = 32.01 + size.X / 2, 58.99 - size.X / 2
+			if inner > outer then
+				continue
+			end
+			local xs = { math.clamp(math.abs(x - s.x), inner, outer), inner, outer }
+			for offset = inner, outer, 2 do
+				table.insert(xs, offset)
+			end
+			local lowZ = s.z + (role == "Apron" and 0.51 or 16.01) + size.Z / 2
+			local highZ = (role == "Apron" and s.z + 13.99 or s.zEnd - 10.01) - size.Z / 2
+			if lowZ > highZ then
+				continue
+			end
+			local zs = { math.clamp(z, lowZ, highZ), lowZ, highZ }
+			for candidateZ = lowZ, highZ, 2 do
+				table.insert(zs, candidateZ)
+			end
+			for _, offset in xs do
+				for _, candidateZ in zs do
+					-- Validate the same float32 coordinates PivotTo will receive.
+					local candidate = V(s.x + side * offset, 0, candidateZ)
+					local candidateX = candidate.X
+					candidateZ = candidate.Z
+					local score = (candidateX - x) ^ 2 + (candidateZ - z) ^ 2
+					if role == "Cluster" and side ~= (s.hc.X < s.x and -1 or 1) then
+						continue
+					end
+					if score < bestScore and fits(s, candidateX, candidateZ, size, role) then
+						bestScore, selected = score, candidate
+					end
+				end
+			end
+		end
+		if selected then
+			m:SetAttribute("PlacementScale", scale)
+			break
+		end
+	end
+	if not selected then
+		if not retryHero then
+			skip(s, m.Name, "no safe footprint at 70-100% scale")
+		end
+		m:Destroy()
+		return false
+	end
+	x, z = selected.X, selected.Z
+	if (role == "Support" or role == "Hero") and (x < s.x and -1 or 1) ~= requestedSide then
+		m:PivotTo(CFrame.Angles(0, math.pi, 0) * m:GetPivot())
+		c, size = bounds(m)
 	end
 	m:PivotTo(m:GetPivot() + V(x - c.X, s.y + size.Y / 2 - c.Y, z - c.Z))
 	m:SetAttribute("Role", role)
 	occupied[s.zone] = occupied[s.zone] or {}
-	table.insert(occupied[s.zone], { x = x, z = z, size = size })
+	table.insert(occupied[s.zone], { x = x, z = z, size = size, role = role })
+	placements[s.zone.Name] = placements[s.zone.Name] or {}
+	table.insert(
+		placements[s.zone.Name],
+		m.Name .. " [" .. role .. ", " .. tostring(m:GetAttribute("PlacementScale")) .. "]"
+	)
 	added[s.zone.Name] = (added[s.zone.Name] or 0) + 1
 	log(s.zone.Name .. " " .. role .. " " .. m.Name .. " actual " .. tostring(bounds(m)))
 	return true
@@ -522,7 +719,7 @@ end
 for n, s in state do
 	local folder = Instance.new("Folder", root)
 	folder.Name = s.zone.Name
-	local heroX = n == 7 and s.x or s.x + (n % 2 == 1 and 56 or -56)
+	local heroX = s.x + (n % 2 == 1 and 46 or -46)
 	local heroZ = s.z + (n == 7 and 140 or 136)
 	local heroOk = false
 	for _, dz in { 0, -24, -48, -72, -96, 12 } do
@@ -530,20 +727,24 @@ for n, s in state do
 		buildHero(hero, n)
 		-- Local fronts face inward. Z7 faces the arriving player (-Z).
 		if n < 7 then
-			hero:PivotTo(CFrame.Angles(0, (n % 2 == 1 and -1 or 1) * math.pi / 2, 0) * hero:GetPivot())
+			hero:PivotTo(
+				CFrame.Angles(0, (n % 2 == 1 and 1 or -1) * math.pi / 2, 0) * hero:GetPivot()
+			)
 		end
-		if place(hero, s, heroX, heroZ + dz, n == 7 and "FinalHero" or "Hero") then
+		if place(hero, s, heroX, heroZ + dz, n == 7 and "FinalHero" or "Hero", true) then
 			heroOk = true
 			break
 		end
 	end
 	if not heroOk then
+		skip(s, heroNames[n], "all hero offsets blocked")
 		warn("[WorldPlan] Hero could not be placed, skipped: " .. heroNames[n])
 	end
+	local supports = {}
 	local function support(name, x, z, draw)
 		local m = group(folder, name)
 		draw(m)
-		place(m, s, s.x + x, s.z + z, "Support")
+		table.insert(supports, { model = m, x = s.x + x, z = s.z + z })
 	end
 	if n > 1 then
 		for j, x in { -48, 48 } do
@@ -635,6 +836,15 @@ for n, s in state do
 			end)
 		end
 	elseif n == 6 then
+		for j = 1, 6 do
+			support("CandyPost" .. j, 48, 78 + j * 8, function(m)
+				block(m, "Cane", V(1, 8, 1), V(0, 4, 0), "FFF8EC")
+				for k = 1, 4 do
+					block(m, "Stripe", V(1.1, 0.8, 1.1), V(0, k * 1.5, 0), "FF5FA8")
+				end
+				block(m, "Hook", V(3, 1, 1), V(1, 7.5, 0), "FFF8EC")
+			end)
+		end
 		for j = 1, 3 do
 			support("Lollipop" .. j, j % 2 == 1 and 48 or -48, 25 + j * 24, function(m)
 				block(m, "Stick", V(1, 10, 1), V(0, 5, 0), "FFF8EC")
@@ -674,7 +884,7 @@ for n, s in state do
 		end
 	end
 	-- Nest frames follow the actual Hoard. Gate-facing arc is deliberately open.
-	local count = n == 3 and 6 or (n == 6 or n == 7) and 8 or n == 4 and 5 or 3
+	local count = n == 3 and 6 or (n == 6 or n == 7) and 8 or n == 4 and 5 or n == 5 and 2 or 3
 	for j = 1, count do
 		local theta = math.rad(-120 + (j - 1) * 240 / math.max(count - 1, 1))
 		local x, z = s.hc.X + math.sin(theta) * 11, s.hc.Z + math.cos(theta) * 11
@@ -736,6 +946,14 @@ for n, s in state do
 	if detail then
 		place(detail, s, s.hc.X, s.hc.Z + 12, "Cluster")
 	end
+	if n == 3 then
+		local arcs = group(folder, "NestRoots")
+		for j = 1, 3 do
+			local p = block(arcs, "RootArc", V(4, 0.2, 0.6), V((j - 2) * 3, 0.1, j % 2), "8A5A34")
+			p.CFrame *= CFrame.Angles(0, (j - 2) * math.pi / 6, 0)
+		end
+		place(arcs, s, s.hc.X, s.hc.Z + 24, "Ground")
+	end
 	if n == 1 or n == 4 or n == 5 then
 		local m = group(folder, "NestGround")
 		if n == 1 then
@@ -754,15 +972,19 @@ for n, s in state do
 		else
 			block(m, "Carpet", V(6, 0.1, 24), V(0, 0.05, 0), "A8406A")
 		end
-		-- Ground plates are under the existing nest and never move it.
-		m:PivotTo(m:GetPivot() + V(s.hc.X, s.y, s.hc.Z))
+		-- Ground accents also respect the new nest clear ring.
+		place(m, s, s.hc.X, s.hc.Z + 28, "Ground")
+	end
+	for _, item in supports do
+		place(item.model, s, item.x, item.z, "Support")
 	end
 	for _, z in { 22, 148 } do
 		local m = group(folder, "Chevron" .. z)
 		for _, dx in { -1, 1 } do
-			local p = block(m, "Arrow", V(3, 0.05, 1), V(s.x + dx, s.y + 0.05, s.z + z), palette[n])
+			local p = block(m, "Arrow", V(3, 0.05, 1), V(dx, 0.05, 0), palette[n])
 			p.CFrame *= CFrame.Angles(0, dx * math.pi / 4, 0)
 		end
+		place(m, s, s.x + 48, s.z + z, "Ground")
 	end
 	task.wait()
 end
@@ -1072,6 +1294,14 @@ for i, d in garden:GetDescendants() do
 	chunk(i)
 end
 for n, s in state do
+	log(s.zone.Name .. " PLACED: " .. table.concat(placements[s.zone.Name] or {}, ", "))
+	log(
+		s.zone.Name
+			.. " SKIPPED ("
+			.. #(skipped[s.zone.Name] or {})
+			.. "): "
+			.. table.concat(skipped[s.zone.Name] or {}, ", ")
+	)
 	local parts, lights = 0, 0
 	for _, d in root:FindFirstChild("Zone" .. n):GetDescendants() do
 		if d:IsA("BasePart") then

@@ -1,0 +1,12 @@
+Diff in src\ReplicatedStorage\Shared\GardenLayout.luau:
+11  11   | 			{ x = width / 2 - 4 - buttonWidth, y = height - 68, width = buttonWidth, height = 56 }
+12  12   | 		burst = { x = width / 2 + 4, y = height - 68, width = buttonWidth, height = 56 }
+13  13   | 	end
+14       |-	return { hud = { x = 12, y = 12, width = math.min(width - 24, 460), height = 100 }, main = main, burst = burst }
+    14   |+	return {
+    15   |+		hud = { x = 12, y = 12, width = math.min(width - 24, 460), height = 100 },
+    16   |+		main = main,
+    17   |+		burst = burst,
+    18   |+	}
+15  19   | end
+16  20   | return Layout

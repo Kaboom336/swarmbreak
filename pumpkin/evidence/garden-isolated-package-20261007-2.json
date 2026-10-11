@@ -1,0 +1,33 @@
+{
+  "project": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin",
+  "projectFile": "garden.project.json",
+  "startedUtc": "2026-10-07T12:13:05.8490703Z",
+  "sourceRevision": "0ed6086a0fd27703a5aa842db519edf8229bdfd5",
+  "workingTreeDirty": true,
+  "staticBuildStatus": "passed",
+  "checks": [
+    {
+      "name": "format",
+      "exitCode": 0
+    },
+    {
+      "name": "lint",
+      "exitCode": 0
+    },
+    {
+      "name": "Luau tests and syntax",
+      "exitCode": 0
+    },
+    {
+      "name": "Rojo build",
+      "exitCode": 0
+    }
+  ],
+  "artifact": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\garden-isolated.rbxl",
+  "sha256": "AEEECA909F37FBA3C8EE69DC7D7063138D00D8C689E6939B3CAF56D8B63DC999",
+  "runtime": "pending",
+  "multiplayer": "pending",
+  "visual": "pending",
+  "device": "pending",
+  "finishedUtc": "2026-10-07T12:13:08.9876033Z"
+}

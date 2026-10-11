@@ -10,8 +10,12 @@ local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
-local petModels = ReplicatedStorage:WaitForChild("PetModels")
+
 local Config = require(Shared:WaitForChild("Config"))
+if Config.GameplayMode == "Coop" or Config.GameplayMode == "Garden" then
+	return
+end
+local petModels = ReplicatedStorage:WaitForChild("PetModels")
 local HudLayout = require(Shared:WaitForChild("HudLayout"))
 local Style = require(Shared:WaitForChild("Style"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")

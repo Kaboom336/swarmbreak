@@ -1,0 +1,14 @@
+Checking format
+Checking lint
+Results:
+0 errors
+0 warnings
+0 parse errors
+Checking Luau tests and syntax
+Syntax: 51 files checked, 0 errors
+Tests: 132 passed, 0 failed
+Checking Rojo build
+Building project 'PumpkinMagicGarden'
+Built project to garden-isolated.checking.rbxl
+Build passed: C:\dev\codex-lab\pumpkin-loop\pumpkin\garden-isolated.rbxl
+Runtime, multiplayer, visual and device verification remain pending.
