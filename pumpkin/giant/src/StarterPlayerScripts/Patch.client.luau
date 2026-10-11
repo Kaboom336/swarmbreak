@@ -12,6 +12,7 @@ Services.Players = game:GetService("Players")
 Services.ReplicatedStorage = game:GetService("ReplicatedStorage")
 Services.RunService = game:GetService("RunService")
 Services.SoundService = game:GetService("SoundService")
+Services.TextService = game:GetService("TextService")
 Services.TweenService = game:GetService("TweenService")
 Services.UserInputService = game:GetService("UserInputService")
 function Palette.mobile()
@@ -1065,8 +1066,7 @@ do
 		local now = os.clock()
 		for _, row in rows do
 			if row.text == text and now - row.at <= 3 then
-				row.count += 1
-				row.label.Text = text .. " x" .. row.count
+				-- Ignore duplicate notices within the three-second window.
 				return
 			end
 		end
@@ -1159,7 +1159,7 @@ do
 				touch and (i == 1 and 0.055 or 0.11) or (i == 1 and 0.985 or 0.933)
 			)
 			chip.frame.Size = UDim2.fromOffset(
-				touch and gui.AbsoluteSize.X / uiScale.Scale * 0.53 or h * 0.34,
+				touch and gui.AbsoluteSize.X / uiScale.Scale * 0.53 or h * 0.46,
 				h * 0.040
 			)
 		end
@@ -1174,7 +1174,7 @@ do
 			local ends = state:GetAttribute("PhaseEnds") or now
 			local nests = math.max(0, (phase == "Day" and ends or ends + Config.DayLength) - now)
 			local king = math.max(0, (state:GetAttribute("KingWakesAt") or now) - now)
-			chips[1].label.Text = "Nests in " .. clockText(nests)
+			chips[1].label.Text = "Nests respawn in " .. clockText(nests)
 			chips[1].label.TextColor3 = nests <= 10 and Config.UI.Tokens.good or Color3.new(1, 1, 1)
 			chips[2].label.Text = phase == "BloodMoon" and ("King fight " .. clockText(ends - now))
 				or ("King in " .. clockText(king))
@@ -1834,7 +1834,7 @@ do
 		local b =
 			makeButton(list, entry[1], i == 1 and Color3.fromRGB(219, 39, 48) or Palette.PURPLE)
 		b.Size = UDim2.new(1, 0, 0, 48)
-		b.LayoutOrder = i == 1 and 1 or i + 1
+		b.LayoutOrder = i == 1 and 99 or i + 1
 		if i == 1 then
 			frame:GetPropertyChangedSignal("Visible"):Connect(function()
 				if not frame.Visible then
@@ -3589,57 +3589,9 @@ do
 			UDim2.fromScale(1, 1), Config.UI.Tokens.ink, 1
 		catcher.ZIndex, catcher.Parent = 2, revealGui
 		Center.register(catcher)
-		UI.tween(catcher, 0.12, { BackgroundTransparency = 0.55 })
-		-- A pumpkin shell cracks apart before the pet gets its hero moment.
-		local shell = UI.box(
-			catcher,
-			"CrackingPumpkin",
-			UDim2.fromScale(0.5, 0.46),
-			UDim2.fromScale(0.16, 0.18),
-			Config.UI.Tokens.go,
-			3
-		)
-		shell.AnchorPoint, shell.BackgroundTransparency = Vector2.new(0.5, 0.5), 1
-		local halves = {}
-		for i = 1, 2 do
-			local half = UI.box(
-				shell,
-				"Half",
-				UDim2.fromScale((i - 1) * 0.5, 0.10),
-				UDim2.fromScale(0.49, 0.80),
-				Config.UI.Tokens.go,
-				4
-			)
-			corner(half, 14)
-			stroke(half, 3)
-			local eye = UI.box(
-				half,
-				"Eye",
-				UDim2.fromScale(0.35, 0.27),
-				UDim2.fromScale(0.25, 0.17),
-				Config.UI.Tokens.ink,
-				5
-			)
-			eye.Rotation = 45
-			halves[i] = half
-		end
-		UI.box(
-			shell,
-			"Stem",
-			UDim2.fromScale(0.43, -0.05),
-			UDim2.fromScale(0.14, 0.24),
-			Config.UI.Tokens.good,
-			4
-		)
-		for i, half in halves do
-			UI.tween(half, 0.4, {
-				Position = UDim2.fromScale(i == 1 and -0.7 or 1.2, 0.45),
-				Rotation = i == 1 and -35 or 35,
-				BackgroundTransparency = 1,
-			})
-		end
-		task.wait(0.4)
-		shell:Destroy()
+		-- Keep the world visible during the smaller rare-pet reveal.
+		-- World cracking owns the hatch; this side card names rare pets.
+
 		play(Config.Sounds.Reveal, isNew and 1.08 or 1, 0.8)
 		local h = revealGui.AbsoluteSize.Y
 		local height = math.min(
@@ -3649,7 +3601,7 @@ do
 		local cardFrame = UI.box(
 			catcher,
 			"HatchCard",
-			UDim2.fromScale(0.5, 0.46),
+			UDim2.fromScale(0.82, 0.40),
 			UDim2.fromOffset(height * Config.UI.Tokens.layout.hatchAspect, height),
 			Config.UI.Tokens.panel,
 			3
@@ -5584,7 +5536,7 @@ end)
 
 remotes
 	:WaitForChild("KingDone").OnClientEvent
-	:Connect(function(kind: string, payouts: { [string]: number }, mvp: Player?)
+	:Connect(function(kind: string, payouts: { [string]: number }, _mvp: Player?)
 		if kind == "results" then
 			return
 		end
@@ -5593,11 +5545,7 @@ remotes
 			return
 		end
 		if kind == "won" then
-			toast(
-				"THE KING IS DEFEATED!",
-				(mine and ("+" .. mine .. " 🍬 for helping! ") or "")
-					.. (mvp and ("MVP: " .. mvp.DisplayName) or "")
-			)
+			-- The result strip owns the payout message.
 			burst(kingFace.Position, Color3.fromRGB(255, 220, 120), 120, 60, Palette.SPARKLE, 2.4)
 			burst(kingFace.Position, Color3.fromRGB(255, 140, 40), 40, 30)
 			play(Config.Sounds.Reveal, 1, 0.8)
@@ -6033,9 +5981,11 @@ do
 	local function fitObjective()
 		local touch = Palette.mobile()
 		bar.Position = UDim2.fromScale(0.5, touch and 0.19 or Config.UI.objectiveY)
-		bar.Size = UDim2.fromScale(touch and 0.80 or 0.46, 0.042)
 	end
-	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitObjective)
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+		UI.objectiveVerb = nil
+		fitObjective()
+	end)
 	Services.UserInputService.LastInputTypeChanged:Connect(fitObjective)
 	fitObjective()
 	-- Only the title has a soft pill; the banner frame leaves world billboards visible.
@@ -6055,7 +6005,7 @@ do
 	title.Position = UDim2.fromScale(0.5, 0)
 	title.Position = UDim2.fromScale(0.54, 0)
 	title.Size = UDim2.fromScale(0.88, 1)
-	title.TextScaled = true
+	title.TextScaled = false
 	local titlePad = Instance.new("UIPadding")
 	titlePad.PaddingLeft = UDim.new(0, 12)
 	titlePad.PaddingRight = UDim.new(0, 12)
@@ -6089,8 +6039,8 @@ do
 		questPanel.Visible = not questPanel.Visible
 	end)
 	local function refreshQuests(root)
-		questToggle.Visible = true
-		if anyPanelOpen() or not ZoneView.has("Zone3") then
+		questToggle.Visible = false
+		if anyPanelOpen() then
 			questPanel.Visible = false
 			return
 		end
@@ -6105,10 +6055,11 @@ do
 				and root.Position.Z < (folder:GetAttribute("ZMax") or z.zMax)
 			then
 				local q = data.quests and data.quests[id] or {}
-				questToggle.Visible = true
+				questToggle.Visible = false
 				questPanel.AnchorPoint = Vector2.new(1, 0)
-				questPanel.Position = UDim2.fromScale(0.88, 0.30)
-				questPanel.Size = UDim2.fromScale(Palette.mobile() and 0.70 or 0.32, 0.22)
+				questPanel.Position = UDim2.fromScale(0.67, Palette.mobile() and 0.25 or 0.09)
+				questPanel.Size = UDim2.fromScale(Palette.mobile() and 0.48 or 0.28, 0.12)
+				questPanel.Visible = (player:GetAttribute("Carry") or 0) == 0
 				questPanel.Text = string.format(
 					"%s\n[%s] Smash %d/%d\n[%s] Steal  [%s] Own pet\nNext gate -%d%%",
 					z.title,
@@ -6139,6 +6090,18 @@ do
 	local function setObjective(verb: string, sub: string)
 		if UI.objectiveVerb ~= verb then
 			UI.objectiveVerb = verb
+			local textSize =
+				math.max(11, gui.AbsoluteSize.Y / uiScale.Scale * Config.UI.Tokens.type.objective)
+			local measured = Services.TextService:GetTextSize(
+				verb,
+				textSize,
+				Enum.Font.GothamBold,
+				Vector2.new(10000, 10000)
+			)
+			bar.Size = UDim2.fromOffset(
+				math.min(gui.AbsoluteSize.X / uiScale.Scale * 0.80, measured.X + textSize * 2.6),
+				textSize * 1.45
+			)
 			title.Text = verb:gsub("Pumpkin", '<font color="#FF8A1A">Pumpkin</font>')
 			popScale.Scale = Palette.mobile() and 1.03 or 1.18
 			Services.TweenService
@@ -6541,7 +6504,7 @@ do
 		local at = soil.CFrame:PointToObjectSpace(root.Position)
 		return math.abs(at.X) <= soil.Size.X / 2 + 4
 				and math.abs(at.Z) <= soil.Size.Z / 2 + 4
-				and "Place it!"
+				and "Step into the red ring!"
 			or "Bring it to your pen!"
 	end
 
@@ -6554,6 +6517,15 @@ do
 			return goHome(root, soil),
 				string.format("%d studs", math.floor(distance + 0.5)),
 				soil.Position
+		end
+		if
+			unlocked("King")
+			and (state:GetAttribute("KingActive") or state:GetAttribute("KingWarning"))
+		then
+			return state:GetAttribute("KingActive") and "Fight the Pumpkin King!"
+				or "Meet the Pumpkin King!",
+				"Follow the arrow to the throne",
+				kingFace.Position
 		end
 		local zone = zoneTarget(root.Position) or soil.Position
 		local arrived = player:GetAttribute("ObjectiveZone")
@@ -6572,7 +6544,7 @@ do
 			if step <= 2 then
 				local nest = hoardSpot("Zone1")
 				return step == 1 and "Steal a Pumpkin!" or "Place it in your pen!",
-					step == 1 and "Hold E at the nest" or "Your pumpkin hatches in 2 seconds",
+					step == 1 and "Hold E at the nest" or "Your pumpkin cracks open in 6 seconds",
 					step == 1 and nest or soil.Position
 			elseif step == 3 then
 				return "Smash pumpkins for 50 candy!", "Swing your scythe", zone
@@ -6637,13 +6609,17 @@ do
 			local soil = patch and patch:FindFirstChild("Soil") :: BasePart?
 			local data = ordersData
 			if not root or not soil or not data or not player:GetAttribute("Loaded") then
-				setObjective("Loading your farm...", "")
+				setObjective(
+					player:GetAttribute("Loaded") and "Returning to your farm..."
+						or "Loading your farm...",
+					""
+				)
 				placeArrows(nil)
 				continue
 			end
 			refreshQuests(root)
 			local verb, sub, target = objective(data, root, soil)
-			bar.Visible = data.tutorial == true and not anyPanelOpen()
+			bar.Visible = not anyPanelOpen()
 			setObjective(verb, sub)
 			placeArrows(target)
 		end
@@ -6666,6 +6642,7 @@ do
 	run.Parent = gui
 	corner(run, 12)
 	stroke(run, 2.5).Color = Color3.new(0, 0, 0)
+	run.Size = UDim2.fromScale(Palette.mobile() and 0.34 or 0.22, 0.055)
 	local runLabel = textLabel(run, "RUN!!", Color3.new(1, 1, 1), "shout")
 	runLabel.Position = UDim2.fromOffset(8, 5)
 	runLabel.Size = UDim2.new(1, -16, 1, -10)
@@ -6728,6 +6705,9 @@ do
 		local danger = player:GetAttribute("GuardChasing") == true
 			or (player:GetAttribute("CarryStolen") or 0) > 0
 		run.Visible = danger and not safe and not anyPanelOpen()
+		runLabel.Text = player:GetAttribute("GuardChasing")
+				and ("GUARD " .. tostring(player:GetAttribute("GuardGap") or "?") .. " studs - RUN!")
+			or "RUN TO YOUR PEN!"
 		drop.Visible = (
 			(player:GetAttribute("CarryStolen") or 0) > 0
 			or (player:GetAttribute("CarryHoard") or 0) > 0
@@ -7667,7 +7647,8 @@ task.spawn(function()
 
 	local shown = false
 	Services.RunService.RenderStepped:Connect(function()
-		local want = state:GetAttribute("Phase") == "BloodMoon" and kingFace.Transparency < 1
+		local want = state:GetAttribute("Phase") == "BloodMoon"
+			and not kingFace:GetAttribute("VoxelKing")
 		if want ~= shown then
 			shown = want
 			for _, p in crownParts do
@@ -7987,7 +7968,7 @@ do
 	local function ownerHatch()
 		play(Config.Sounds.Reveal, 1, 0.8)
 		screenFlash.BackgroundColor3 = Color3.new(1, 1, 1)
-		screenFlash.BackgroundTransparency = 0.1
+		screenFlash.BackgroundTransparency = 0.92
 		Services.TweenService
 			:Create(
 				screenFlash,
@@ -8092,7 +8073,11 @@ do
 			local name = def and def.display or (seed.name .. " Jack")
 			local root = rootPart()
 			if forceReveal or isNew then
-				if root and (p.Position - root.Position).Magnitude < 80 then
+				if
+					seed.order >= Config.RevealOrder
+					and root
+					and (p.Position - root.Position).Magnitude < 80
+				then
 					ownerHatch()
 				end
 				-- The data-only server Reveal remote owns the card, even for distant hatches.
@@ -8341,8 +8326,8 @@ do
 				resultCard = Instance.new("Frame")
 				resultCard.Name = "KingResults"
 				resultCard.AnchorPoint = Vector2.new(0.5, 0.5)
-				resultCard.Position = UDim2.fromScale(0.5, 0.5)
-				resultCard.Size = UDim2.fromScale(0.62, 0.42)
+				resultCard.Position = UDim2.fromScale(0.5, 0.25)
+				resultCard.Size = UDim2.fromScale(Palette.mobile() and 0.82 or 0.60, 0.12)
 				resultCard.BackgroundColor3 = Palette.DARK
 				resultCard.Parent = gui
 				corner(resultCard, 18)
@@ -8353,30 +8338,31 @@ do
 					Color3.fromRGB(255, 214, 80)
 				)
 				title.Position = UDim2.fromScale(0.05, 0.06)
-				title.Size = UDim2.fromScale(0.9, 0.16)
+				title.Size = UDim2.fromScale(0.9, 0.26)
 				local loot = {}
 				for _, id in data.crates or {} do
 					table.insert(loot, seedById[id].name)
 				end
+				local podium = {}
+				for rank, name in data.podium or {} do
+					if name ~= "" then
+						table.insert(podium, tostring(rank) .. ". " .. name)
+					end
+				end
 				local body = textLabel(
 					resultCard,
 					string.format(
-						"Damage %s | Rank #%d | %d hits\n+%s candy\n%s\nPODIUM\n1. %s  2. %s  3. %s",
+						"Damage %s | Rank #%d | %d hits | +%s candy",
 						short(data.damage),
 						data.rank,
 						data.hits,
-						short(data.candy),
-						#loot > 0 and table.concat(loot, " + ")
-							or data.qualified and "25% consolation | no crate"
-							or "15 hits or 3% damage needed",
-						data.podium[1] or "-",
-						data.podium[2] or "-",
-						data.podium[3] or "-"
-					),
+						short(data.candy)
+					)
+						.. (#loot > 0 and (" | " .. table.concat(loot, " + ")) or "")
+						.. (#podium > 0 and ("\n" .. table.concat(podium, "   ")) or ""),
 					Color3.new(1, 1, 1)
 				)
-				body.Position = UDim2.fromScale(0.05, 0.25)
-				body.Size = UDim2.fromScale(0.9, 0.65)
+				body.Position, body.Size = UDim2.fromScale(0.03, 0.36), UDim2.fromScale(0.94, 0.60)
 				body.TextWrapped = true
 				task.wait(Config.KingNight.resultsSeconds)
 			end)
@@ -8577,12 +8563,12 @@ do
 		)
 		local candy = statsFrame:FindFirstChild("CandyIcon")
 		candy.Position = UDim2.fromScale(0, touch and 0 or 0.42)
-		candy.Size = UDim2.fromOffset(h * 0.058, h * 0.058)
+		candy.Size = UDim2.fromOffset(h * 0.072, h * 0.072)
 		candyBig.Position, candyBig.Size =
-			UDim2.new(0, h * 0.062, touch and 0 or 0.42, 0), UDim2.new(1, -h * 0.062, 0.56, 0)
+			UDim2.new(0, h * 0.078, touch and 0 or 0.34, 0), UDim2.new(1, -h * 0.078, 0.66, 0)
 		candyBig.TextScaled = true;
 		(candyBig:FindFirstChildOfClass("UITextSizeConstraint") :: UITextSizeConstraint).MaxTextSize =
-			math.max(11, math.floor(h * 0.058 * 1.1))
+			math.max(11, math.floor(h * 0.070))
 		carryIcon.Position, carryIcon.Size =
 			UDim2.fromScale(0, touch and 0.59 or 0), UDim2.fromOffset(h * 0.04, h * 0.04)
 		carryLabel.Position, carryLabel.Size =
@@ -8672,7 +8658,8 @@ do
 					label:IsA("TextLabel")
 					and (label.Text == "SHOP" or label.Text == "SELL" or label.Text == "UPGRADES")
 				then
-					object.MaxDistance = 60
+					object.MaxDistance = 45
+					object.Size = UDim2.fromOffset(150, 44)
 				end
 			end
 		end
@@ -8695,5 +8682,113 @@ do
 		end
 		player:GetAttributeChangedSignal("Unlock_Haunt"):Connect(refresh)
 		refresh()
+	end
+end
+
+-- P1: reconnect camera ownership on spawn, travel and recovery.
+do
+	local function restoreCamera()
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local camera = workspace.CurrentCamera
+		if camera and humanoid and humanoid.Health > 0 then
+			camera.CameraType, camera.CameraSubject = Enum.CameraType.Custom, humanoid
+			player.CameraMaxZoomDistance = 32
+		end
+	end
+	player.CharacterAdded:Connect(function(character)
+		character:WaitForChild("Humanoid", 10)
+		if player.Character == character then
+			restoreCamera()
+		end
+	end)
+	workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(restoreCamera)
+	player:GetAttributeChangedSignal("CameraReset"):Connect(restoreCamera)
+	local elapsed = 0
+	Services.RunService.Heartbeat:Connect(function(dt)
+		elapsed += dt
+		if elapsed >= 1 then
+			elapsed = 0
+			restoreCamera()
+		end
+	end)
+	restoreCamera()
+end
+
+-- Fade pet geometry near the camera/avatar; prompts and server outcomes are untouched.
+do
+	local parts = setmetatable({}, { __mode = "k" })
+	local function register(d)
+		if d:IsA("BasePart") and d:FindFirstAncestor("PetLook") then
+			parts[d] = true
+		end
+	end
+	for _, d in garden:GetDescendants() do
+		register(d)
+	end
+	garden.DescendantAdded:Connect(register)
+	local elapsed = 0
+	Services.RunService.Heartbeat:Connect(function(dt)
+		elapsed += dt
+		if elapsed < 0.15 then
+			return
+		end
+		elapsed = 0
+		local camera, root = workspace.CurrentCamera, rootPart()
+		for part in parts do
+			if not part.Parent then
+				parts[part] = nil
+			else
+				local close = camera and (part.Position - camera.CFrame.Position).Magnitude < 7
+					or root and (part.Position - root.Position).Magnitude < 2.5
+				part.LocalTransparencyModifier = close and 0.75 or 0
+			end
+		end
+	end)
+end
+
+-- P1: soften only the walls between the avatar and camera, retaining server collision.
+do
+	local art = garden:FindFirstChild("Art")
+	local walls = art and art:FindFirstChild("Walls")
+	if walls then
+		local params = RaycastParams.new()
+		params.FilterType, params.FilterDescendantsInstances =
+			Enum.RaycastFilterType.Include, { walls }
+		local faded, elapsed = {}, 0
+		Services.RunService.RenderStepped:Connect(function(dt)
+			elapsed += dt
+			if elapsed < 0.1 then
+				return
+			end
+			elapsed = 0
+			for part, alpha in faded do
+				if part.Parent then
+					part.LocalTransparencyModifier = alpha
+				end
+			end
+			table.clear(faded)
+			local camera, root = workspace.CurrentCamera, rootPart()
+			if not camera or not root then
+				return
+			end
+			local origin = root.Position + Vector3.yAxis * 2
+			local direction = camera.CFrame.Position - origin
+			for _ = 1, 4 do
+				if direction.Magnitude < 0.01 then
+					break
+				end
+				local hit = workspace:Raycast(origin, direction, params)
+				if not hit then
+					break
+				end
+				if faded[hit.Instance] == nil then
+					faded[hit.Instance] = hit.Instance.LocalTransparencyModifier
+				end
+				hit.Instance.LocalTransparencyModifier = 0.75
+				origin = hit.Position + direction.Unit * 1
+				direction = camera.CFrame.Position - origin
+			end
+		end)
 	end
 end

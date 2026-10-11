@@ -1567,7 +1567,18 @@ do
 		if cached then
 			return cached
 		end
-		local mesh = kit[seed.template]:FindFirstChildWhichIsA("MeshPart", true):Clone()
+		local body = nil
+		local volume = 0
+		for _, candidate in kit[seed.template]:GetDescendants() do
+			if candidate:IsA("MeshPart") then
+				local v = candidate.Size.X * candidate.Size.Y * candidate.Size.Z
+				if v > volume then
+					body, volume = candidate, v
+				end
+			end
+		end
+		assert(body, "Missing pumpkin body mesh: " .. seed.template)
+		local mesh = body:Clone()
 		mesh.Anchored = true
 		mesh.CanCollide = false
 		mesh.CanTouch = false
@@ -1646,7 +1657,7 @@ do
 			return
 		end
 		local mutation = pumpkin:GetAttribute("Mutation")
-		if not kind and not isNew and seed.order < Config.RevealOrder and mutation ~= "Cursed" then
+		if seed.order < Config.RevealOrder and mutation ~= "Cursed" then
 			return
 		end
 		local seen = seenOf[player] or {}
@@ -2067,12 +2078,17 @@ do
 			Config.Plots.minPetHeight,
 			Config.Plots.maxPetHeight
 		)
-		local egg = p:GetAttribute("HatchSize")
-		if typeof(egg) == "Vector3" then
-			-- The client pop-in begins at 0.8 scale; even that frame must meet the egg floor.
-			height =
-				math.max(height, math.max(egg.X, egg.Y, egg.Z) * Config.Payoff.petEggRatio / 0.8)
+		local visual = source("PetModels", modelName) or source("PetModels", "PumpkinPup")
+		if visual then
+			local _, box = visual:GetBoundingBox()
+			if box.Y > 0 then
+				height = math.min(
+					height,
+					Config.Plots.maxPetWidth * box.Y / math.max(box.X, box.Z, 0.01)
+				)
+			end
 		end
+		-- Weight controls income; the pet visual must fit a pen slot.
 		p:SetAttribute("PetHeight", height)
 		p:SetAttribute("Pet", pet)
 		if not Looks.attach(p, "PetModels", modelName, height) then
@@ -3724,16 +3740,13 @@ do
 			then
 				local from = Config.roamPoint(p, t)
 				local cfg = Config.PetRoam
-				local x = math.max(0, soil.Size.X / 2 - cfg.inset)
-				local z = math.max(0, soil.Size.Z / 2 - cfg.inset)
-				local goal = soil.CFrame:PointToWorldSpace(
-					Vector3.new(
-						(math.random() * 2 - 1) * x,
-						soil.Size.Y / 2,
-						(math.random() * 2 - 1) * z
+				local x = math.min(Config.Plots.wander, math.max(0, plot.Size.Y / 2 - 0.5))
+				local z = math.min(Config.Plots.wander, math.max(0, plot.Size.Z / 2 - 0.5))
+				local goal = plot.Position
+					+ soil.CFrame:VectorToWorldSpace(
+						Vector3.new((math.random() * 2 - 1) * x, 0, (math.random() * 2 - 1) * z)
 					)
-				)
-				goal += Vector3.yAxis * p.Size.Y / 2
+					+ Vector3.yAxis * (0.15 + p.Size.Y / 2)
 				local duration = (goal - from).Magnitude
 					/ (cfg.minSpeed + math.random() * (cfg.maxSpeed - cfg.minSpeed))
 				p:SetAttribute("RoamFrom", from)
@@ -4231,9 +4244,23 @@ do
 		local sizeMult = big and 2 or 1
 		local part = makePumpkin(id, sizeMult)
 		part.Name = "WildPumpkin"
+		local shape = math.random(3)
+		part.Size *= shape == 1 and Vector3.new(1, 1.2, 0.9) or shape == 2 and Vector3.new(
+			1.1,
+			0.85,
+			1.1
+		) or Vector3.one
+		local stem = Instance.new("Part")
+		stem.Name, stem.Size = "PumpkinStem", Vector3.new(0.35, 0.8, 0.35) * sizeMult
+		stem.Color, stem.Material = Color3.fromRGB(76, 92, 32), Enum.Material.Wood
+		stem.CanCollide, stem.CanTouch, stem.CanQuery = false, false, false
+		stem.Massless, stem.Parent = true, part
 		local groundY = sp.Position.Y - sp.Size.Y / 2
 		part.CFrame = CFrame.new(sp.Position.X, groundY + part.Size.Y / 2, sp.Position.Z)
 			* CFrame.Angles(0, math.random() * math.pi * 2, 0)
+		stem.CFrame = part.CFrame * CFrame.new(0, part.Size.Y / 2, 0) * CFrame.Angles(0, 0, 0.2)
+		local stemWeld = Instance.new("WeldConstraint")
+		stemWeld.Part0, stemWeld.Part1, stemWeld.Parent = part, stem, stem
 		part:SetAttribute("Wild", true)
 		part:SetAttribute("Zone", zoneId)
 		part:SetAttribute("Hp", hp)
@@ -4754,48 +4781,7 @@ do
 	end
 end
 
--- Locked World 2 teaser, placed using Zone7's authored lane bounds.
-do
-	local zone = Lane.zone("Zone7")
-	if zone then
-		local portal = Instance.new("Part")
-		portal.Name = "FrostFieldsPortal"
-		portal.Size = Vector3.new(12, 16, 2)
-		portal.CFrame = CFrame.new(Lane.x, 8, zone.zMax - 8)
-		portal.Anchored = true
-		portal.CanCollide = true
-		portal.Material = Enum.Material.Neon
-		portal.Color = Config.World2.color
-		portal.Transparency = 0.25
-		portal:SetAttribute("Locked", true)
-		local glow = Instance.new("PointLight")
-		glow.Color = Config.World2.color
-		glow.Brightness = 2
-		glow.Range = 24
-		glow.Parent = portal
-		local bb = Instance.new("BillboardGui")
-		bb.Name = "PortalSign"
-		bb.Size = UDim2.fromOffset(420, 72)
-		bb.StudsOffsetWorldSpace = Vector3.new(0, 11, 0)
-		bb.LightInfluence = 0
-		bb.MaxDistance = 60
-		local label = Instance.new("TextLabel")
-		label.BackgroundTransparency = 1
-		label.Size = UDim2.fromScale(1, 1)
-		label.FontFace = Helpers.fontFace("title")
-		label.TextScaled = true
-		label.TextWrapped = true
-		label.TextColor3 = Config.World2.color
-		label.Text = "🔒 " .. Config.World2.text
-		label.Parent = bb
-		local outline = Instance.new("UIStroke")
-		outline.Thickness = 3
-		outline.Color = Color3.fromRGB(20, 35, 60)
-		outline.Parent = label
-		bb.Parent = portal
-		portal.Parent = garden
-	end
-end
+-- P1: no unimplemented World 2 teaser at the end of the playable trail.
 
 -- Hoards and Guardians ------------------------------------------------------------------------
 -- Each zone (Config.Hoards) gets a straw nest of big Hoard pumpkins in its zone folder, guarded
@@ -5258,6 +5244,9 @@ do
 				end
 			end
 			thief:SetAttribute("GuardChasing", chasing or nil)
+			if not chasing then
+				thief:SetAttribute("GuardGap", nil)
+			end
 		end
 		g.twist = nil
 		g.state = "return"
@@ -5772,16 +5761,10 @@ do
 					giveUp(g, false)
 				else
 					local at = thiefRoot.Position
-					local pad = Config.HoardLeashPad
+					thief:SetAttribute("GuardGap", math.floor((at - g.pos).Magnitude))
 					if
 						(g.state == "chase" and now - g.chasedAt >= Config.GuardLaunch.minChase)
-						and (
-							now >= g.chaseEnd
-							or inOwnBase(thief, at)
-							or at.Z < h.zMin - pad
-							or at.Z > h.zMax + pad
-							or at.Z < Lane.safeZ
-						)
+						and (now >= g.chaseEnd or inOwnBase(thief, at) or at.Z < Lane.safeZ)
 					then
 						giveUp(g, true)
 					else
@@ -7242,7 +7225,10 @@ Remotes.bonkEvent.OnServerEvent:Connect(function(player)
 			end
 			dealt = math.min(
 				dealt,
-				swingDamage(player) * (stunned and 2 or 1) * Config.KingSwingsPerSecond - window.d,
+				math.min(
+					swingDamage(player) * (stunned and 2 or 1) * Config.KingSwingsPerSecond,
+					(king.counted[player] or kingPlayerHp(player)) / 60
+				) - window.d,
 				king.hp
 			)
 			if dealt <= 0 then
@@ -7666,7 +7652,7 @@ do
 		setPhase("BloodMoon", Config.KingSeconds)
 		giantJack.Transparency = 1
 		giantJack.CanCollide = false
-		kingFace.Transparency = 0
+		kingFace.Transparency = kingFace:GetAttribute("VoxelKing") and 1 or 0
 		task.spawn(function()
 			local started = os.clock()
 			local lastTop = 0
@@ -8955,8 +8941,22 @@ do
 	label.TextColor3 = Color3.fromRGB(255, 214, 80)
 	label.FontFace = Helpers.fontFace("title")
 	label.TextScaled = true
-	label.Text =
-		"KING FIGHT :00 / :20 / :40\n15 hits OR 3% damage = pet + smash-based candy\nEpic 70% / Legendary 27% / Mythic Kinglet 3%\nEvery 5th crate: Kinglet! Top 3: extra crate. MVP: cosmetic skin"
+	label.Parent = bb
+	task.spawn(function()
+		while label.Parent do
+			local fighting = state:GetAttribute("KingActive") == true
+			local ends = state:GetAttribute(fighting and "PhaseEnds" or "KingWakesAt")
+				or workspace:GetServerTimeNow()
+			local left = math.max(0, math.ceil(ends - workspace:GetServerTimeNow()))
+			label.Text = string.format(
+				"PUMPKIN KING\n%s %dm %02ds\nHold E at the throne | Scythe hits earn pets + candy",
+				fighting and "Fight ends in" or "Arrives in",
+				math.floor(left / 60),
+				left % 60
+			)
+			task.wait(0.5)
+		end
+	end)
 	label.Parent = bb
 end
 
@@ -9854,13 +9854,15 @@ do
 			return false, "Target missing from map"
 		end
 		local pos = part.Position + (offset or Vector3.zero)
-		pos = Bases.safeLanding(pos)
+		pos = Bases.findLanding(pos)
 		if not pos then
 			return false, "No safe landing"
 		end
 		r.clock.teleport = r.time + r.cooldown
 		player:SetAttribute("TeleportReadyAt", r.clock.teleport)
 		r.character:PivotTo(CFrame.new(pos) * r.root.CFrame.Rotation)
+		r.root.AssemblyAngularVelocity = Vector3.zero
+		player:SetAttribute("CameraReset", workspace:GetServerTimeNow())
 		r.root.AssemblyLinearVelocity = Vector3.zero
 		return true
 	end
@@ -9992,4 +9994,216 @@ Remotes.indexClaimFunction.OnServerInvoke = function(player, request)
 		end)
 	end
 	return { candy = reward, count = count }
+end
+
+-- P1: floor envelopes constrain travel and rescue escaped characters without reloading saves.
+do
+	local regions = {}
+	local ground = garden:FindFirstChild("Ground")
+	for _, group in ground and (ground:IsA("BasePart") and { ground } or ground:GetChildren()) or {} do
+		local lo, hi = Vector3.one * math.huge, Vector3.one * -math.huge
+		for _, part in group:IsA("BasePart") and { group } or group:GetDescendants() do
+			if part:IsA("BasePart") and part.CanCollide then
+				for _, x in { -1, 1 } do
+					for _, y in { -1, 1 } do
+						for _, z in { -1, 1 } do
+							local at =
+								part.CFrame:PointToWorldSpace(part.Size * Vector3.new(x, y, z) / 2)
+							lo, hi = lo:Min(at), hi:Max(at)
+						end
+					end
+				end
+			end
+		end
+		if lo.X < hi.X then
+			table.insert(regions, { lo = lo, hi = hi })
+		end
+	end
+	if #regions == 0 then
+		table.insert(regions, {
+			lo = Vector3.new(Lane.x - 170, -2, -70),
+			hi = Vector3.new(Lane.x + 170, 0, Lane.safeZ),
+		})
+		for _, id in Config.ZoneOrder do
+			local zone = Lane.zone(id)
+			if zone then
+				table.insert(regions, {
+					lo = Vector3.new(Lane.x - 60, -2, zone.zMin),
+					hi = Vector3.new(Lane.x + 60, 0, zone.zMax),
+				})
+			end
+		end
+	end
+	function Helpers.inPlayArea(at)
+		for _, region in regions do
+			if
+				at.X >= region.lo.X - 2
+				and at.X <= region.hi.X + 2
+				and at.Z >= region.lo.Z - 2
+				and at.Z <= region.hi.Z + 2
+				and at.Y >= region.lo.Y - 18
+				and at.Y < region.hi.Y + 100
+			then
+				return true
+			end
+		end
+		return false
+	end
+	function Bases.findLanding(pos)
+		for _, offset in
+			{
+				Vector3.zero,
+				Vector3.new(6, 0, 0),
+				Vector3.new(-6, 0, 0),
+				Vector3.new(0, 0, 6),
+				Vector3.new(0, 0, -6),
+				Vector3.new(12, 0, 0),
+				Vector3.new(-12, 0, 0),
+			}
+		do
+			local at = pos + offset
+			if Helpers.inPlayArea(at) then
+				local landing = Bases.safeLanding(at, true)
+				if landing and Helpers.inPlayArea(landing) then
+					return landing
+				end
+			end
+		end
+		return nil
+	end
+	function Helpers.recover(player, character, root)
+		local spawn = garden:FindFirstChildOfClass("SpawnLocation")
+			or workspace:FindFirstChildOfClass("SpawnLocation")
+		local at = spawn and spawn.Position or Vector3.new(Lane.x, 0, Lane.safeZ - 20)
+		local landing = Bases.findLanding(at)
+		if not landing then
+			return
+		end
+		Bases.dropStolen(player, landing)
+		refreshCarry(player)
+		character:PivotTo(CFrame.new(landing))
+		root.AssemblyLinearVelocity, root.AssemblyAngularVelocity = Vector3.zero, Vector3.zero
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.Sit = false
+			humanoid.PlatformStand = false
+		end
+		player:SetAttribute("CameraReset", workspace:GetServerTimeNow())
+		Remotes.hintEvent:FireClient(player, "Back in the hub - rescued from the map edge")
+	end
+	local shell = Instance.new("Folder")
+	shell.Name, shell.Parent = "PlayAreaSafety", garden
+	local lo, hi = Vector3.one * math.huge, Vector3.one * -math.huge
+	for _, region in regions do
+		lo, hi = lo:Min(region.lo), hi:Max(region.hi)
+	end
+	local function barrier(name, size, at)
+		local part = Instance.new("Part")
+		part.Name, part.Size, part.Position = name, size, at
+		part.Anchored, part.Transparency = true, 1
+		part.CanCollide, part.CanQuery, part.CanTouch = true, true, false
+		part.Parent = shell
+	end
+	local mid, size = (lo + hi) / 2, hi - lo
+	barrier("West", Vector3.new(2, 110, size.Z + 4), Vector3.new(lo.X - 2, mid.Y + 35, mid.Z))
+	barrier("East", Vector3.new(2, 110, size.Z + 4), Vector3.new(hi.X + 2, mid.Y + 35, mid.Z))
+	barrier("South", Vector3.new(size.X + 4, 110, 2), Vector3.new(mid.X, mid.Y + 35, lo.Z - 2))
+	barrier("North", Vector3.new(size.X + 4, 110, 2), Vector3.new(mid.X, mid.Y + 35, hi.Z + 2))
+	barrier("Roof", Vector3.new(size.X + 4, 2, size.Z + 4), Vector3.new(mid.X, hi.Y + 100, mid.Z))
+	local elapsed = 0
+	Services.RunService.Heartbeat:Connect(function(dt)
+		elapsed += dt
+		if elapsed < 0.25 then
+			return
+		end
+		elapsed = 0
+		for _, player in Services.Players:GetPlayers() do
+			local character, root = aliveRoot(player)
+			if
+				character
+				and root
+				and Helpers.isLoaded(player)
+				and not Helpers.inPlayArea(root.Position)
+			then
+				Helpers.recover(player, character, root)
+			end
+		end
+	end)
+end
+
+-- P1: use the throne's voxel King; KingFace remains an invisible server hit anchor.
+do
+	local guards = Services.ServerStorage:FindFirstChild("GuardModels")
+	local statue = garden:FindFirstChild("ThroneKing", true)
+	local source = guards and guards:FindFirstChild("PumpkinKing") or statue
+	if source and source:IsA("Model") and source:FindFirstChildWhichIsA("BasePart", true) then
+		local body = source:Clone()
+		body.Name = "FightPumpkinKing"
+		for _, d in body:GetDescendants() do
+			if d:IsA("LuaSourceContainer") or d:IsA("Humanoid") or d:IsA("ProximityPrompt") then
+				d:Destroy()
+			elseif d:IsA("BasePart") then
+				d.Anchored = true
+				d.CanCollide, d.CanQuery, d.CanTouch = false, false, false
+			end
+		end
+		local _, box = body:GetBoundingBox()
+		body:ScaleTo(body:GetScale() * Config.KingNight.height / math.max(box.Y, 0.01))
+		local cf = body:GetBoundingBox()
+		local offset = cf:ToObjectSpace(body:GetPivot())
+		body.Parent = market
+		kingFace:SetAttribute("VoxelKing", true)
+		local visible, statueParts = {}, {}
+		for _, d in body:GetDescendants() do
+			if d:IsA("BasePart") then
+				visible[d] = d.Transparency
+				d.Transparency = 1
+			end
+		end
+		for _, d in statue and statue:GetDescendants() or {} do
+			if d:IsA("BasePart") then
+				statueParts[d] = d.Transparency
+			end
+		end
+		local previous = false
+		local lastAt, facing = kingFace.Position, kingFace.CFrame.Rotation
+		Services.RunService.Heartbeat:Connect(function()
+			local active = king.active
+			kingFace.Transparency = 1
+			kingFace.CanCollide = false
+			if active then
+				local delta = (kingFace.Position - lastAt) * Vector3.new(1, 0, 1)
+				if delta.Magnitude > 0.01 then
+					facing = CFrame.lookAt(Vector3.zero, delta).Rotation
+				end
+				local walking = state:GetAttribute("KingWalking")
+				local stride = walking and math.sin(os.clock() * 7) or 0
+				body:PivotTo(
+					CFrame.new(kingFace.Position + Vector3.yAxis * math.abs(stride) * 0.35)
+						* facing
+						* CFrame.Angles(0, math.pi, math.rad(2) * stride)
+						* offset
+				)
+			end
+			lastAt = kingFace.Position
+			if not active then
+				facing = kingFace.CFrame.Rotation
+			end
+			if active ~= previous or not body:GetAttribute("Initialized") then
+				previous = active
+				body:SetAttribute("Initialized", true)
+				for part, alpha in visible do
+					part.Transparency = active and alpha or 1
+				end
+				for part, alpha in statueParts do
+					part.Transparency = active and 1 or alpha
+				end
+			end
+		end)
+	else
+		Helpers.warnOnce(
+			"FightPumpkinKing",
+			"Voxel PumpkinKing missing: restore GuardModels.PumpkinKing before launch"
+		)
+	end
 end

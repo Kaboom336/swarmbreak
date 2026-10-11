@@ -66,7 +66,7 @@ local Config = {
 				dailyAspect = 2.25,
 				headerHeight = 0.095,
 				closeSize = 0.062,
-				hatchHeight = 0.42,
+				hatchHeight = 0.28,
 				hatchAspect = 0.78,
 				shadow = 0.006,
 			},
@@ -136,8 +136,9 @@ local Config = {
 		lockSize = Vector3.new(1.8, 1.6, 0.8),
 		markerHeight = 22,
 		wander = 3,
-		minPetHeight = 3,
-		maxPetHeight = 15,
+		minPetHeight = 2.5,
+		maxPetHeight = 3.8,
+		maxPetWidth = 4.2,
 		readySeconds = 1,
 		growthStart = 0.65,
 		growthSteps = 4,
@@ -309,7 +310,7 @@ local Config = {
 		arcTargets = 3,
 	},
 	World2 = {
-		text = "🌨 WORLD 2: FROST FIELDS — coming soon",
+		text = "FROST FIELDS - sealed beyond this adventure",
 		color = Color3.fromRGB(130, 225, 255),
 	},
 	MysteryModel = "MysteryPumpkin",
@@ -677,11 +678,11 @@ local Config = {
 	HoardOutward = 20,
 	HoardLeashPad = 80,
 	GuardLaunch = { minChase = 3, dropSeconds = 20, pickupGrace = 4, kingSide = 28 },
-	GuardianShare = 0.9,
+	GuardianShare = 0.96,
 	GuardianFirstShare = 0.8,
 	GuardianMinSpeed = 14,
 	GuardianReturnSpeed = 12,
-	GuardianChaseSeconds = 14,
+	GuardianChaseSeconds = 120,
 	GuardianWake = 1.2, -- a head start: the thief should get a few steps before the chase
 	GuardianCatch = 3.5,
 	GuardianRoarPitch = 0.3,
@@ -693,7 +694,7 @@ local Config = {
 	CarveFastSeconds = 8,
 	CarveFastOrder = 1,
 	-- During a player's first CarveNewUntil seconds of playtime every type carves in CarveNewSeconds.
-	CarveNewSeconds = 2,
+	CarveNewSeconds = 6,
 	CarveNewUntil = 1800,
 	JackHop = 3,
 
@@ -1214,7 +1215,7 @@ Config.KingNight = {
 	windup = 1.2,
 	signOffset = Vector3.new(28, 8, 0),
 	look = {
-		tint = Color3.fromRGB(255, 201, 184),
+		tint = Color3.fromRGB(255, 242, 232),
 		brightness = 0,
 		saturation = 0.08,
 		contrast = 0.02,
@@ -1247,7 +1248,7 @@ Config.KingNight = {
 	finale = 1.5,
 	finaleSpeed = 0.15,
 	rain = 3,
-	resultsSeconds = 6,
+	resultsSeconds = 3,
 	topCount = 5,
 	critChance = 0.1,
 	critMult = 3,
@@ -1408,7 +1409,7 @@ Config.Badges = { Welcome = 0, FirstSteal = 0, FirstHatch = 0 }
 function Config.gateBenefits(zoneId)
 	return (zoneId == "Zone3" or zoneId == "Zone5") and "+2 pen slots, new pets" or "new pets"
 end
-Config.KingHpPerDamage = 30
+Config.KingHpPerDamage = 120
 Config.KingHpPerPlayer = 200
 Config.KingSeconds = 300
 Config.AttackEvery = { 6, 4.5, 3.5 }
@@ -1533,13 +1534,13 @@ Config.Payoff = {
 }
 Config.PetRoam = { inset = 2, minSpeed = 4, maxSpeed = 6, minIdle = 1, maxIdle = 3, bob = 0.25 }
 Config.GuardSpeed = {
-	Zone1 = 0.70,
-	Zone2 = 0.75,
-	Zone3 = 0.80,
-	Zone4 = 0.85,
-	Zone5 = 0.90,
-	Zone6 = 0.93,
-	Zone7 = 0.95,
+	Zone1 = 0.88,
+	Zone2 = 0.90,
+	Zone3 = 0.92,
+	Zone4 = 0.94,
+	Zone5 = 0.95,
+	Zone6 = 0.96,
+	Zone7 = 0.97,
 }
 function Config.walkSpeed(level)
 	return math.min(
