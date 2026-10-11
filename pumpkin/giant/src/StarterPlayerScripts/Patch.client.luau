@@ -3760,30 +3760,7 @@ do
 
 	local HAND = CFrame.Angles(math.rad(-90), 0, 0)
 	-- Flat angle channels: right shoulder, elbow, left shoulder, elbow, waist, wrist.
-	local IDLE = { 20, 8, 10, 70, 8, 0, -8, 18, -3, -8, 0, -4, 0, 12 }
-	local SWINGS = {
-		{
-			{ 0.09, "outQuad", 150, -35, 35, 35, 40, -20, -30, 50, 8, -28, 4, 35, -25, 0 },
-			{ 0.115, "linear", 155, -38, 38, 30, 42, -20, -32, 50, 9, -30, 4, 40, -28, 0 },
-			{ 0.18, "outCubic", 70, 45, 10, 15, 25, 10, -25, 30, -12, 30, -3, -105, 30, 0 },
-			{ 0.25, "outQuad", 45, 65, 5, 20, 15, 15, -35, 25, -15, 38, -4, -115, 38, 0 },
-			{ 0.46, "inOutSine", unpack(IDLE) },
-		},
-		{
-			{ 0.09, "outQuad", 95, 60, -5, 60, 20, -10, -15, 40, 4, 32, 0, 20, 40, 10 },
-			{ 0.11, "linear", 98, 64, -6, 62, 20, -10, -15, 40, 5, 35, 0, 22, 44, 10 },
-			{ 0.18, "outCubic", 75, -45, 30, 10, 30, 15, -20, 35, -10, -30, -3, -95, -32, 0 },
-			{ 0.25, "outQuad", 65, -62, 40, 12, 30, 18, -25, 30, -12, -36, -4, -100, -40, 0 },
-			{ 0.47, "inOutSine", unpack(IDLE) },
-		},
-		{
-			{ 0.14, "outQuad", 170, 0, 15, 25, 165, -15, -5, 30, 14, -8, 0, 30, 0, 0 },
-			{ 0.175, "linear", 175, 0, 16, 22, 170, -16, -5, 28, 16, -8, 0, 35, 0, 0 },
-			{ 0.24, "outQuart", 55, 12, 6, 10, 60, -25, 5, 25, -26, 2, 0, -120, 0, 0 },
-			{ 0.33, "hold", 50, 12, 6, 12, 55, -25, 5, 25, -28, 2, 0, -122, 0, 0 },
-			{ 0.54, "inOutSine", unpack(IDLE) },
-		},
-	}
+	local IDLE, SWINGS = Config.ScythePose.idle, Config.ScythePose.swings
 	local WINDOWS = { { 0.105, 0.255, 0.115 }, { 0.1, 0.26, 0.11 }, { 0.17, 0.34, 0.175 } }
 	local chains = setmetatable({}, { __mode = "k" })
 	local active = {}
@@ -3895,6 +3872,7 @@ do
 		if not st then
 			return 1
 		end
+		st.w = 1
 		local now, chain = os.clock(), chains[tool]
 		local step = chain and now - chain.at <= Config.Farm.chainWindow and chain.step % 3 + 1 or 1
 		chains[tool] = { at = now, step = step }
@@ -4009,7 +3987,6 @@ do
 				for i = 1, #p do
 					p[i] *= f
 				end
-				p[13] += 360 * (1 - (1 - x) ^ 3)
 			end
 		end
 		local velocity = st.root.AssemblyLinearVelocity
@@ -4036,12 +4013,20 @@ do
 		p[14] += 1.5 * math.sin(now * math.pi * 0.6 + 1.2) * overlay
 		st.pose = p
 	end
-	Services.RunService.RenderStepped:Connect(function(dt)
+	-- Animator evaluates after PreAnimation and before PreSimulation. Write Transform here
+	-- before the engine batches Motor6D changes for physics; evaluate in this same frame.
+	Services.RunService.PreAnimation:Connect(function()
+		-- Clear our previous override before Animator evaluates. Untracked joints
+		-- must not feed our own pose back into the next frame's blend.
 		for _, st in active do
-			evaluate(st, dt, os.clock())
+			for _, j in st.joints do
+				if j.motor.Parent then
+					j.motor.Transform = j.anim
+				end
+			end
 		end
 	end)
-	Services.RunService.Stepped:Connect(function(_, dt)
+	Services.RunService.PreSimulation:Connect(function(dt)
 		local camera = workspace.CurrentCamera
 		for _, owner in Services.Players:GetPlayers() do
 			local character = owner.Character
@@ -4070,6 +4055,7 @@ do
 					st.swing = nil
 					trails(st, false)
 				end
+				evaluate(st, dt, os.clock())
 				local p = st.pose
 				for _, j in st.joints do
 					local i = j.index
