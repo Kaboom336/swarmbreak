@@ -23,16 +23,60 @@ Services.StarterPack = game:GetService("StarterPack")
 Services.TweenService = game:GetService("TweenService")
 
 local Config = require(Services.ReplicatedStorage:WaitForChild("PatchConfig"))
+Helpers.warned = {}
+function Helpers.warnOnce(key, message)
+	if not Helpers.warned[key] then
+		Helpers.warned[key] = true
+		warn("[Patch] " .. message)
+	end
+end
+function Helpers.savedHatchSize(value)
+	if type(value) ~= "table" then
+		return nil
+	end
+	local x, y, z = tonumber(value[1]), tonumber(value[2]), tonumber(value[3])
+	if x and y and z and x > 0 and y > 0 and z > 0 and x < 10000 and y < 10000 and z < 10000 then
+		return Vector3.new(x, y, z)
+	end
+	return nil
+end
 -- Read-only, sanitized assets for client ViewportFrames; never expose ServerStorage itself.
 do
 	local previews = Instance.new("Folder")
 	previews.Name = "PetPreviews"
-	local models = Services.ServerStorage:WaitForChild("PetModels")
+	local models = Services.ServerStorage:FindFirstChild("PetModels")
+	if not models then
+		models = Instance.new("Folder")
+		models.Name = "PetModels"
+		models.Parent = Services.ServerStorage
+	end
 	local fallback = models:FindFirstChild("PumpkinPup")
-	assert(
-		fallback and fallback:IsA("Model") and fallback:FindFirstChildWhichIsA("BasePart", true),
-		"Batch 7 requires a real PumpkinPup model; Jack fallback is disabled"
-	)
+	if
+		not (
+			fallback
+			and fallback:IsA("Model")
+			and fallback:FindFirstChildWhichIsA("BasePart", true)
+		)
+	then
+		if fallback then
+			fallback:Destroy()
+		end
+		Helpers.warnOnce(
+			"PumpkinPup",
+			"PumpkinPup missing or empty; using a simple placeholder pet"
+		)
+		fallback = Instance.new("Model")
+		fallback.Name = "PumpkinPup"
+		local body = Instance.new("Part")
+		body.Name = "Body"
+		body.Shape = Enum.PartType.Ball
+		body.Size = Vector3.new(3, 3, 3)
+		body.Color = Color3.fromRGB(255, 132, 20)
+		body.Anchored = true
+		body.CanCollide, body.CanTouch, body.CanQuery = false, false, false
+		body.Parent = fallback
+		fallback.Parent = models
+	end
 	for pet in Config.Pets do
 		local model = models:FindFirstChild(pet)
 		if
@@ -44,13 +88,17 @@ do
 				model:Destroy()
 			end
 			local clone = fallback:Clone()
+			if not clone then
+				continue
+			end
 			clone.Name = pet
 			clone.Parent = models
-			warn("[Patch] Missing pet asset; using voxel PumpkinPup:", pet)
+			Helpers.warnOnce(pet, "Missing pet asset; using PumpkinPup: " .. pet)
 		end
 	end
-	for _, source in models:GetChildren() do
-		if source:IsA("Model") then
+	for pet in Config.Pets do
+		local source = models:FindFirstChild(pet)
+		if source and source:IsA("Model") and source.Archivable then
 			local clone = source:Clone()
 			for _, item in clone:GetDescendants() do
 				if
@@ -87,13 +135,29 @@ local spawnFolder = garden:WaitForChild("GhostSpawns")
 local giantJack = market:WaitForChild("GiantJack") :: BasePart
 local kingFace = market:WaitForChild("KingFace") :: BasePart
 -- ThroneKing is the centrepiece; GiantJack stays only as an event position anchor.
-assert(
-	market:FindFirstChild("ThroneKing", true) or garden:FindFirstChild("ThroneKing", true),
-	"ThroneKing centrepiece missing"
-)
+if not (market:FindFirstChild("ThroneKing", true) or garden:FindFirstChild("ThroneKing", true)) then
+	Helpers.warnOnce("ThroneKing", "ThroneKing centrepiece missing; skipping throne decoration")
+end
 giantJack.Transparency = 1
 giantJack.CanCollide, giantJack.CanTouch, giantJack.CanQuery = false, false, false
 local kit = Services.ServerStorage:WaitForChild("KitSource")
+do
+	local function capBillboard(item)
+		if item:IsA("BillboardGui") then
+			item.MaxDistance = item.MaxDistance > 0
+					and math.min(item.MaxDistance, Config.Payoff.petDistance)
+				or Config.Payoff.petDistance
+		end
+	end
+	for _, item in garden:GetDescendants() do
+		capBillboard(item)
+	end
+	garden.DescendantAdded:Connect(function(item)
+		if item:IsA("BillboardGui") then
+			task.defer(capBillboard, item)
+		end
+	end)
+end
 
 -- The straight-lane map: the X of its centre line, the hub's safe line and each zone's Z range
 -- (folder attributes ZMin / ZMax, else Config.Zones[id].zMin / zMax).
@@ -303,14 +367,19 @@ function Progress.candyMult(player)
 		+ Config.Progression.stampBonus * (player:GetAttribute("ZoneStamps") or 0)
 		+ Config.Progression.rebirthBonus * (player:GetAttribute("Rebirths") or 0)
 end
-local function addCandy(player: Player, amount: number, alreadyBoosted: boolean?): number
+local function addCandy(
+	player: Player,
+	amount: number,
+	alreadyBoosted: boolean?,
+	exact: boolean?
+): number
 	local candy = Helpers.candyValue(player)
 	if candy then
 		local d = Progress.data[player]
 		local boosted = amount * (alreadyBoosted and 1 or Progress.candyMult(player))
-			+ (d and d.candyFraction or 0)
+			+ (not exact and d and d.candyFraction or 0)
 		amount = math.floor(boosted + Config.Progression.roundEpsilon)
-		if d then
+		if d and not exact then
 			d.candyFraction = math.max(0, boosted - amount)
 		end
 		candy.Value += amount
@@ -1859,79 +1928,93 @@ do
 	-- where the carrier's bottom is and facing its front (-Z). glow = a PointLight in the look.
 	-- Replaces an older look; false (nothing changed) when the model is missing or empty.
 	function Looks.attach(p: BasePart, folder: string, name: string?, height: number, glow: Color3?)
-		local src = source(folder, name)
-		if not src then
-			return false
-		end
-		local m = src:Clone()
-		for _, d in m:GetDescendants() do
-			if
-				d:IsA("LuaSourceContainer")
-				or d:IsA("Humanoid")
-				or d:IsA("ProximityPrompt")
-				or d:IsA("ClickDetector")
-				or d:IsA("Sound")
-			then
-				d:Destroy()
+		local m: Model? = nil
+		local ok, attached = pcall(function()
+			local src = source(folder, name)
+			if not src then
+				return false
 			end
-		end
-		local _, size = m:GetBoundingBox()
-		if size.Y <= 0.01 then
-			m:Destroy()
-			return false
-		end
-		m:ScaleTo(m:GetScale() * height / size.Y)
-		local boxCf, box = m:GetBoundingBox()
-		local old = p:FindFirstChild("PetLook")
-		if old then
-			old:Destroy()
-		end
-		for _, child in p:GetChildren() do
-			if child.Name == "JackPart" then
-				child:Destroy()
+			m = src:Clone()
+			if not m then
+				return false
 			end
-		end
-		if p:GetAttribute("BaseSize") == nil then
-			p:SetAttribute("BaseSize", p.Size)
-		end
-		reseat(p, box)
-		m:PivotTo(p.CFrame * boxCf:ToObjectSpace(m:GetPivot()))
-		local ghostly = p:GetAttribute("Mutation") == "Ghostly"
-		local first: BasePart? = nil
-		for _, d in m:GetDescendants() do
-			if d:IsA("BasePart") then
-				first = first or d
-				d.Anchored = false
-				d.CanCollide = false
-				d.CanQuery = false
-				d.CanTouch = false
-				d.Massless = true
-				if ghostly and d.Transparency < 1 then
-					d.Transparency = math.max(d.Transparency, 0.45)
+			for _, d in m:GetDescendants() do
+				if
+					d:IsA("LuaSourceContainer")
+					or d:IsA("Humanoid")
+					or d:IsA("ProximityPrompt")
+					or d:IsA("ClickDetector")
+					or d:IsA("Sound")
+				then
+					d:Destroy()
 				end
-				-- A Weld (fixed C0) rather than a WeldConstraint: it holds even when the carrier
-				-- is moved before it is in the workspace.
-				local weld = Instance.new("Weld")
-				weld.Name = "LookWeld"
-				weld.Part0 = p
-				weld.Part1 = d
-				weld.C0 = p.CFrame:ToObjectSpace(d.CFrame)
-				weld.Parent = d
 			end
+			local _, size = m:GetBoundingBox()
+			if size.Y <= 0.01 then
+				m:Destroy()
+				return false
+			end
+			m:ScaleTo(m:GetScale() * height / size.Y)
+			local boxCf, box = m:GetBoundingBox()
+			local old = p:FindFirstChild("PetLook")
+			if old then
+				old:Destroy()
+			end
+			for _, child in p:GetChildren() do
+				if child.Name == "JackPart" then
+					child:Destroy()
+				end
+			end
+			if p:GetAttribute("BaseSize") == nil then
+				p:SetAttribute("BaseSize", p.Size)
+			end
+			reseat(p, box)
+			m:PivotTo(p.CFrame * boxCf:ToObjectSpace(m:GetPivot()))
+			local ghostly = p:GetAttribute("Mutation") == "Ghostly"
+			local first: BasePart? = nil
+			for _, d in m:GetDescendants() do
+				if d:IsA("BasePart") then
+					first = first or d
+					d.Anchored = false
+					d.CanCollide = false
+					d.CanQuery = false
+					d.CanTouch = false
+					d.Massless = true
+					if ghostly and d.Transparency < 1 then
+						d.Transparency = math.max(d.Transparency, 0.45)
+					end
+					-- A Weld (fixed C0) rather than a WeldConstraint: it holds even when the carrier
+					-- is moved before it is in the workspace.
+					local weld = Instance.new("Weld")
+					weld.Name = "LookWeld"
+					weld.Part0 = p
+					weld.Part1 = d
+					weld.C0 = p.CFrame:ToObjectSpace(d.CFrame)
+					weld.Parent = d
+				end
+			end
+			if glow and first then
+				local light = Instance.new("PointLight")
+				light.Name = "LookGlow"
+				light.Color = glow
+				light.Range = 10
+				light.Brightness = 1.4
+				light.Shadows = false
+				light.Parent = first
+			end
+			m.Name = "PetLook"
+			m.Parent = p
+			p.Transparency = 1
+			p:SetAttribute("Look", folder .. "/" .. (name :: string))
+			return true
+		end)
+		if not ok or not attached then
+			if m then
+				m:Destroy()
+			end
+			Helpers.warnOnce(name or folder, "Pet look failed; using fallback: " .. tostring(name))
+			return false
 		end
-		if glow and first then
-			local light = Instance.new("PointLight")
-			light.Name = "LookGlow"
-			light.Color = glow
-			light.Range = 10
-			light.Brightness = 1.4
-			light.Shadows = false
-			light.Parent = first
-		end
-		m.Name = "PetLook"
-		m.Parent = p
-		p.Transparency = 1
-		p:SetAttribute("Look", folder .. "/" .. (name :: string))
 		return true
 	end
 
@@ -1985,13 +2068,18 @@ do
 		)
 		local egg = p:GetAttribute("HatchSize")
 		if typeof(egg) == "Vector3" then
+			-- The client pop-in begins at 0.8 scale; even that frame must meet the egg floor.
 			height =
 				math.max(height, math.max(egg.X, egg.Y, egg.Z) * Config.Payoff.petEggRatio / 0.8)
 		end
 		p:SetAttribute("PetHeight", height)
 		p:SetAttribute("Pet", pet)
 		if not Looks.attach(p, "PetModels", modelName, height) then
-			return false
+			if not Looks.attach(p, "PetModels", "PumpkinPup", height) then
+				Looks.clear(p)
+				reseat(p, Vector3.new(height, height, height))
+				p:SetAttribute("Pet", pet)
+			end
 		end
 		p:SetAttribute("Pet", pet)
 		local finish = p:GetAttribute("Gold") and Config.PetFinishes.Gold
@@ -2363,7 +2451,7 @@ do
 			end
 			local zone = slots < Config.Progression.woodsSlots and "Zone3" or "Zone5"
 			prompt.ActionText = "Upgrade pen: " .. Helpers.short(Config.Zones[zone].cost)
-			prompt.ObjectText = Config.Zones[zone].title .. " ? +2 slots"
+			prompt.ObjectText = Config.Zones[zone].title .. " - +2 slots"
 		end
 
 		for _, rim in patch:GetDescendants() do
@@ -2597,8 +2685,6 @@ do
 			if math.abs(Lane.x - pos.X) > 1 then
 				pumpkin.CFrame = CFrame.lookAt(pos, Vector3.new(Lane.x, pos.Y, pos.Z))
 			end
-		else
-			error("Validated pet asset failed to attach; Jack fallback is disabled")
 		end
 		pumpkin:SetAttribute("PickupReadyAt", now() + Config.GuardLaunch.pickupGrace)
 		pumpkin:SetAttribute("JackHome", pumpkin.CFrame)
@@ -2688,7 +2774,7 @@ do
 		sizeMult: number,
 		mutation: string?,
 		ownerId: number,
-		extra: { hoard: boolean?, jack: boolean?, weight: number? }?
+		extra: { hoard: boolean?, jack: boolean?, weight: number?, hatchSize: Vector3? }?
 	): BasePart?
 		local s = plotState[plot]
 		if not s or s.pumpkin or not Lookup.seedById[seedId] then
@@ -2701,7 +2787,7 @@ do
 			kg = math.floor(petSize.median * math.exp((math.random() - 0.5) * 3.2) * 10 + 0.5) / 10
 		end
 		pumpkin:SetAttribute("WeightKg", kg)
-		if not (extra and extra.jack) then
+		do
 			local rarity = Config.Pets[Lookup.seedById[seedId].pet].rarity
 			-- Rarity sets the median silhouette; the quarter-power weight term adds size.
 			local height = math.clamp(
@@ -2716,6 +2802,11 @@ do
 				height / pumpkin.Size.Y,
 				5.5 / math.max(pumpkin.Size.X, pumpkin.Size.Z)
 			)
+		end
+		-- Reconstruct the full pen egg even for old saves and already-hatched carried pets.
+		pumpkin:SetAttribute("HatchSize", pumpkin.Size)
+		if extra and typeof(extra.hatchSize) == "Vector3" then
+			pumpkin:SetAttribute("HatchSize", extra.hatchSize)
 		end
 		pumpkin.CFrame = CFrame.new(plot.Position + Vector3.new(0, 0.15 + pumpkin.Size.Y / 2, 0))
 			* CFrame.Angles(0, math.random() * math.pi * 2, 0)
@@ -2790,11 +2881,14 @@ do
 	end
 
 	-- What Bases.put needs to rebuild a pumpkin that is moving (hoard bonus, already a Jack).
-	function Bases.extraOf(p: Instance): { hoard: boolean?, jack: boolean?, weight: number? }
+	function Bases.extraOf(
+		p: Instance
+	): { hoard: boolean?, jack: boolean?, weight: number?, hatchSize: Vector3? }
 		return {
 			hoard = p:GetAttribute("Hoard") == true,
 			jack = p:GetAttribute("Jack") == true,
 			weight = p:GetAttribute("WeightKg"),
+			hatchSize = p:GetAttribute("HatchSize"),
 			gold = p:GetAttribute("Gold"),
 			shiny = p:GetAttribute("Shiny"),
 			boss = p:GetAttribute("Boss"),
@@ -2946,6 +3040,7 @@ do
 		for i, plot in plotsOf(patch) do
 			local p = plotState[plot] and plotState[plot].pumpkin
 			if p then
+				local egg = p:GetAttribute("HatchSize") or p:GetAttribute("GrowthSize")
 				out[plotKey(plot, i)] = {
 					s = p:GetAttribute("Seed"),
 					z = p:GetAttribute("SizeMult") or 1,
@@ -2958,6 +3053,7 @@ do
 					u = p:GetAttribute("Bought"),
 					a = p:GetAttribute("PlacedAt"),
 					r = p:GetAttribute("GoldRolled"),
+					e = typeof(egg) == "Vector3" and { egg.X, egg.Y, egg.Z } or nil,
 				}
 			end
 		end
@@ -3014,6 +3110,7 @@ do
 					hoard = entry.h == true,
 					jack = true,
 					weight = tonumber(entry.w),
+					hatchSize = Helpers.savedHatchSize(entry.e),
 					gold = entry.g,
 					shiny = entry.y,
 					boss = entry.b,
@@ -3798,9 +3895,48 @@ function Bases.layout(patch)
 		return
 	end
 	local soil = patch:FindFirstChild("Soil")
-	local plots = Bases.plots(patch)
-	if not soil or not plots[1] then
+	-- Bases.plots filters out locked slots; layout must include EVERY authored disc.
+	local plots = {}
+	for _, plot in patch:GetChildren() do
+		if plot.Name == "Plot" and plot:IsA("BasePart") then
+			table.insert(plots, plot)
+		end
+	end
+	table.sort(plots, function(a, b)
+		return (a:GetAttribute("Index") or 1) < (b:GetAttribute("Index") or 1)
+	end)
+	if not soil or not soil:IsA("BasePart") or not plots[1] then
 		return
+	end
+	-- Project the actual model bounds into the soil's frame (including rotated pens).
+	local boxCF, boxSize = patch:GetBoundingBox()
+	local lo, hi =
+		Vector3.new(math.huge, math.huge, math.huge),
+		Vector3.new(-math.huge, -math.huge, -math.huge)
+	for _, x in { -0.5, 0.5 } do
+		for _, y in { -0.5, 0.5 } do
+			for _, z in { -0.5, 0.5 } do
+				local v = soil.CFrame:PointToObjectSpace(
+					boxCF:PointToWorldSpace(boxSize * Vector3.new(x, y, z))
+				)
+				lo, hi = lo:Min(v), hi:Max(v)
+			end
+		end
+	end
+	lo = lo:Max(-soil.Size / 2)
+	hi = hi:Min(soil.Size / 2)
+	-- Fence posts define the inner envelope; signs/decor must not widen the planting area.
+	local fenceLo, fenceHi, posts =
+		Vector3.new(math.huge, 0, math.huge), Vector3.new(-math.huge, 0, -math.huge), 0
+	for _, part in patch:GetDescendants() do
+		if part:IsA("BasePart") and part.Name == "Post" then
+			local v = soil.CFrame:PointToObjectSpace(part.Position)
+			fenceLo, fenceHi, posts = fenceLo:Min(v), fenceHi:Max(v), posts + 1
+		end
+	end
+	if posts >= 4 and fenceHi.X > fenceLo.X and fenceHi.Z > fenceLo.Z then
+		lo = Vector3.new(math.max(lo.X, fenceLo.X + 0.5), lo.Y, math.max(lo.Z, fenceLo.Z + 0.5))
+		hi = Vector3.new(math.min(hi.X, fenceHi.X - 0.5), hi.Y, math.min(hi.Z, fenceHi.Z - 0.5))
 	end
 	-- Rebuild locked decorations on the same grid as wooden discs.
 	for _, item in patch:GetDescendants() do
@@ -3825,17 +3961,14 @@ function Bases.layout(patch)
 		table.insert(plots, p)
 	end
 	local rows = Config.Progression.slotRows
-	local columns = math.ceil(Config.Progression.castleSlots / rows)
-	local diameter = 7.4
-	local stepX = math.min(
-		Config.Progression.slotSpacing,
-		(soil.Size.X - 2 * Config.Progression.slotMargin - diameter) / (columns - 1)
-	)
-	local stepZ = math.min(
-		Config.Progression.slotSpacing,
-		(soil.Size.Z - 2 * Config.Progression.slotMargin - diameter) / (rows - 1)
-	)
-	assert(stepX > diameter and stepZ > diameter, "Pen slot discs must fit without overlap")
+	local columns = math.ceil(#plots / rows)
+	local width, depth = math.max(0.1, hi.X - lo.X), math.max(0.1, hi.Z - lo.Z)
+	local margin = math.min(Config.Progression.slotMargin, math.min(width, depth) * 0.05)
+	width, depth = width - margin * 2, depth - margin * 2
+	local diameter = math.min(7.4, width / columns * 0.9, depth / rows * 0.9)
+	local stepX = (width - diameter) / math.max(1, columns - 1)
+	local stepZ = (depth - diameter) / math.max(1, rows - 1)
+	local center = (lo + hi) / 2
 	local height = soil.CFrame:PointToObjectSpace(plots[1].Position).Y
 	for i, plot in plots do
 		plot:SetAttribute("Index", i)
@@ -3843,9 +3976,9 @@ function Bases.layout(patch)
 		local target = CFrame.new(
 			soil.CFrame:PointToWorldSpace(
 				Vector3.new(
-					(math.floor((i - 1) / rows) - (columns - 1) / 2) * stepX,
+					center.X + (math.floor((i - 1) / rows) - (columns - 1) / 2) * stepX,
 					height,
-					((i - 1) % rows - (rows - 1) / 2) * stepZ
+					center.Z + ((i - 1) % rows - (rows - 1) / 2) * stepZ
 				)
 			)
 		) * old.Rotation
@@ -3860,6 +3993,8 @@ function Bases.layout(patch)
 			end
 		end
 		plot.CFrame = target
+		plot.Size = Vector3.new(plot.Size.X, diameter * 6.6 / 7.4, diameter * 6.6 / 7.4)
+		plot:SetAttribute("BaseSize", plot.Size)
 		local rim = Instance.new("Part")
 		rim.Name = "DiscRim"
 		rim.Shape = Enum.PartType.Cylinder
@@ -6057,7 +6192,7 @@ do
 		end
 		carrying[player] = {}
 		refreshCarry(player)
-		total = addCandy(player, total, true)
+		total = addCandy(player, total, true, true)
 		table.insert(incomeLog, { t = os.clock(), amount = total })
 		Remotes.soldEvent:FireAllClients(player, promptPart.Position, total, count, raw)
 		if #news > 0 then
@@ -8274,6 +8409,7 @@ do
 		end
 	end
 	function Bases.carryEntry(p)
+		local egg = p:GetAttribute("HatchSize")
 		return {
 			s = p:GetAttribute("Seed"),
 			z = p:GetAttribute("SizeMult"),
@@ -8281,6 +8417,7 @@ do
 			h = p:GetAttribute("Hoard"),
 			j = p:GetAttribute("Jack"),
 			w = p:GetAttribute("WeightKg"),
+			e = typeof(egg) == "Vector3" and { egg.X, egg.Y, egg.Z } or nil,
 			g = p:GetAttribute("Gold"),
 			y = p:GetAttribute("Shiny"),
 			b = p:GetAttribute("Boss"),
@@ -8321,6 +8458,7 @@ do
 					h = e.h == true or e.hoard == true,
 					j = e.j == true or e.jack == true,
 					w = tonumber(e.w or e.weight),
+					e = e.e,
 					g = e.g == true,
 					y = e.y == true,
 					b = e.b == true,
@@ -8351,6 +8489,7 @@ do
 			p:SetAttribute("Hoard", e.h == true)
 			p:SetAttribute("Jack", e.j == true)
 			p:SetAttribute("WeightKg", e.w)
+			p:SetAttribute("HatchSize", Helpers.savedHatchSize(e.e))
 			p:SetAttribute("Gold", e.g)
 			p:SetAttribute("Shiny", e.y)
 			p:SetAttribute("Boss", e.b)

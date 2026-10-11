@@ -22,7 +22,7 @@ local Config = {
 		zoneY = 0.092,
 		bossY = 0.125,
 		actionY = 0.70,
-		toastY = 0.765,
+		toastY = 0.68,
 		scaleMin = 0.75,
 		scaleMax = 1.15,
 		body = Color3.fromRGB(28, 20, 48),
@@ -1333,7 +1333,7 @@ Config.IndexRewards = {
 function Config.indexReward(income, seconds, capSeconds)
 	income = math.max(1, income)
 	return math.floor(
-		math.min(math.max(Config.IndexRewards.minimum, income * seconds), income * capSeconds)
+		math.max(Config.IndexRewards.minimum, math.min(income * seconds, income * capSeconds))
 	)
 end
 return Config

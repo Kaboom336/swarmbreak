@@ -13,6 +13,9 @@ Services.RunService = game:GetService("RunService")
 Services.SoundService = game:GetService("SoundService")
 Services.TweenService = game:GetService("TweenService")
 Services.UserInputService = game:GetService("UserInputService")
+function Palette.mobile()
+	return Services.UserInputService.TouchEnabled and not Services.UserInputService.KeyboardEnabled
+end
 
 local Config = require(Services.ReplicatedStorage:WaitForChild("PatchConfig"))
 local function fontFace(role: string, weight: string?, style: string?): Font
@@ -197,7 +200,7 @@ local function burst(
 	emitter.Acceleration = Vector3.new(0, -35, 0)
 	emitter.Drag = 2
 	emitter.LightEmission = texture and 1 or 0
-	local mobile = Services.UserInputService.TouchEnabled
+	local mobile = Palette.mobile()
 
 	emitter:Emit(math.max(1, math.floor(count * (mobile and 0.5 or 1))))
 end
@@ -769,34 +772,37 @@ function showBanner(text: string, sub: string?, seconds: number, color: Color3?)
 end
 
 -- Toasts (Steal an Egg style): small white stroked lines stacked at the bottom centre, newest at
--- the bottom, at most 3, each gone after 3.5 s. Rich text, so a key word can be coloured.
+-- the top, at most 2, each gone after 3.5 s. Rich text, so a key word can be coloured.
 local hint
 do
 	local holder = Instance.new("Frame")
 	holder.Name = "Toasts"
 	Center.toastHolder = holder
 	holder.BackgroundTransparency = 1
-	holder.AnchorPoint = Vector2.new(0.5, 0)
+	holder.AnchorPoint = Vector2.new(0.5, 1)
 	holder.Position = UDim2.fromScale(0.5, Config.UI.toastY)
-	holder.Size = UDim2.fromScale(0.44, 0.12)
+	holder.Size = UDim2.new(0.60, 0, 0, 68)
 	holder.Parent = gui
 	local layout = Instance.new("UIListLayout")
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.VerticalAlignment = Enum.VerticalAlignment.Top
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	layout.Padding = UDim.new(0, 2)
+	layout.Padding = UDim.new(0, 8)
 	layout.Parent = holder
 	local count = 0
 	function hint(text: string)
 		if Center.revealBusy then
 			table.insert(Center.toasts, text)
+			if #Center.toasts > 2 then
+				table.remove(Center.toasts, 1)
+			end
 			return
 		end
 		count += 1
 		local label = textLabel(holder, text, Color3.fromRGB(255, 255, 255))
 		label.RichText = true
-		label.LayoutOrder = count
-		label.Size = UDim2.fromScale(1, 0.28)
+		label.LayoutOrder = -count
+		label.Size = UDim2.new(1, 0, 0, 30)
 		local outline = label:FindFirstChildOfClass("UIStroke") :: UIStroke
 		outline.Thickness = 2.5
 		local pop = Instance.new("UIScale")
@@ -812,9 +818,9 @@ do
 			end
 		end
 		table.sort(labels, function(a, b)
-			return a.LayoutOrder < b.LayoutOrder
+			return a.LayoutOrder > b.LayoutOrder
 		end)
-		for i = 1, #labels - 3 do
+		for i = 1, #labels - 2 do
 			labels[i]:Destroy()
 		end
 		task.delay(3.2, function()
@@ -853,7 +859,7 @@ do
 	local chip = makeButton(gui, "", Palette.PURPLE)
 	chip.Name = "PhaseChip"
 	local function place()
-		local touch = Services.UserInputService.TouchEnabled
+		local touch = Palette.mobile()
 		chip.AnchorPoint = Vector2.new(1, 1)
 		chip.Position = UDim2.fromScale(0.98, touch and 0.59 or 0.975)
 		chip.Size = UDim2.fromScale(touch and 0.42 or 0.22, 0.045)
@@ -895,9 +901,8 @@ do
 	stats.Name = "Stats"
 	stats.BackgroundTransparency = 1
 	stats.AnchorPoint = Vector2.new(0, 1)
-	stats.Position =
-		UDim2.fromScale(0.012, Services.UserInputService.TouchEnabled and 0.565 or 0.975)
-	stats.Size = UDim2.fromScale(Services.UserInputService.TouchEnabled and 0.48 or 0.28, 0.20)
+	stats.Position = UDim2.fromScale(0.012, Palette.mobile() and 0.565 or 0.975)
+	stats.Size = UDim2.fromScale(Palette.mobile() and 0.48 or 0.28, 0.20)
 	stats.Parent = gui
 	carryLabel = textLabel(stats, "", Color3.new(1, 1, 1))
 	carryLabel.Name = "Carry"
@@ -1030,14 +1035,15 @@ do
 	-- Three separated lanes above the number, queued gains, no lost totals.
 	local pending, lanes = {}, {}
 	local function drain()
-		for lane = 1, 3 do
+		for lane = 1, Palette.mobile() and 2 or 3 do
 			if not lanes[lane] and #pending > 0 then
 				lanes[lane] = true
 				local amount = table.remove(pending, 1)
 				local plus = textLabel(statsFrame, "+" .. short(amount), Palette.MONEY)
 				plus.Name = "CandyTick"
 				plus.Size = UDim2.fromScale(1, 0.20)
-				plus.Position = UDim2.fromScale(0, -lane * 0.30)
+				plus.Position = Palette.mobile() and UDim2.fromScale(0.58, -(lane - 1) * 0.30)
+					or UDim2.fromScale(0, -lane * 0.30)
 				plus.TextXAlignment = Enum.TextXAlignment.Left
 				plus.ZIndex = 8
 				local outline = plus:FindFirstChildOfClass("UIStroke")
@@ -1163,8 +1169,8 @@ local leftBar = Instance.new("Frame")
 leftBar.Name = "LeftPills"
 leftBar.BackgroundTransparency = 1
 leftBar.AnchorPoint = Vector2.zero
-leftBar.Position = UDim2.fromScale(0.012, Services.UserInputService.TouchEnabled and 0.12 or 0.36)
-leftBar.Size = UDim2.fromScale(Services.UserInputService.TouchEnabled and 0.14 or 0.15, 0.2375)
+leftBar.Position = UDim2.fromScale(0.012, Palette.mobile() and 0.12 or 0.36)
+leftBar.Size = UDim2.fromScale(Palette.mobile() and 0.14 or 0.15, 0.2375)
 leftBar.Parent = gui
 -- Fixed slots keep the visible face and Activated hit rectangle together, including
 -- when Daily is replaced by Teleport. Do not reflow animated UIScale buttons.
@@ -1194,7 +1200,7 @@ local function pill(text: string, color: Color3, order: number): TextButton
 		local aspect = Instance.new("UIAspectRatioConstraint")
 		aspect.Parent = b
 		local function mobile()
-			local touch = Services.UserInputService.TouchEnabled
+			local touch = Palette.mobile()
 
 			b.Text = touch and "" or name
 			b.SizeConstraint = touch and Enum.SizeConstraint.RelativeYY
@@ -1329,8 +1335,8 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	frame.Size = UDim2.fromScale(Config.UI.panelSize.X, Config.UI.panelSize.Y)
 	local function resize()
 		frame.Size = title == "Daily Reward"
-				and UDim2.fromScale(Services.UserInputService.TouchEnabled and 0.92 or 0.56, 0.42)
-			or Services.UserInputService.TouchEnabled and UDim2.fromScale(0.92, 0.85)
+				and UDim2.fromScale(Palette.mobile() and 0.92 or 0.56, 0.42)
+			or Palette.mobile() and UDim2.fromScale(0.92, 0.85)
 			or UDim2.fromScale(0.60, 0.70)
 	end
 	resize()
@@ -1391,7 +1397,7 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	if grid then
 		local layout = Instance.new("UIGridLayout")
 		local function fitGrid()
-			local columns = Services.UserInputService.TouchEnabled and 2 or 3
+			local columns = Palette.mobile() and 2 or 3
 			layout.CellSize = UDim2.new(1 / columns, -12, 0, 226)
 		end
 		fitGrid()
@@ -3221,6 +3227,13 @@ do
 		if not prompt or not prompt:IsA("ProximityPrompt") then
 			return
 		end
+		local root = rootPart()
+		local host = prompt.Parent
+		local at = host and host:IsA("Attachment") and host.WorldPosition
+			or host and host:IsA("BasePart") and host.Position
+		if at then
+			on = on and root ~= nil and (at - root.Position).Magnitude <= 60
+		end
 		if prompt.Enabled ~= on then
 			prompt.Enabled = on
 		end
@@ -3312,7 +3325,8 @@ do
 						active
 							and filled
 							and ready
-							and not carrying
+							and (player:GetAttribute("Carry") or 0) < Config.BaseCarry
+							and not (mine and carrying and full)
 							and (
 								(mine and canSell)
 								or (not mine and robbable and not plot:GetAttribute("Protected"))
@@ -3354,7 +3368,9 @@ do
 				elseif string.sub(p.Name, 1, 10) == "WitchOffer" then
 					set(p, unlocked("Witch"))
 				else
-					p.ActionText = "Sell for $" .. tostring(player:GetAttribute("CarryValue") or 0)
+					p.ActionText = "Sell: "
+						.. tostring(player:GetAttribute("CarryValue") or 0)
+						.. " candy"
 					set(p, canSell and carrying)
 				end
 			end
@@ -3403,7 +3419,7 @@ do
 		marker.Size = UDim2.fromOffset(240, 56)
 		marker.StudsOffsetWorldSpace = Vector3.new(0, 14, 0)
 		marker.LightInfluence = 0
-		marker.MaxDistance = 100
+		marker.MaxDistance = Config.Payoff.petDistance
 		marker.Parent = soil
 		textLabel(marker, "YOUR PEN", Color3.fromRGB(140, 255, 110)).Size = UDim2.fromScale(1, 1)
 	end
@@ -4026,14 +4042,20 @@ do
 	local rest = setmetatable({}, { __mode = "k" })
 	local squashes, shards, candies, flashes = {}, {}, {}, {}
 	local shardNext, flashNext, collectAt, collectStep = 0, 0, -math.huge, 0
-	local mobile = Services.UserInputService.TouchEnabled
+	local mobile = Palette.mobile()
 
+	local goldGui = Instance.new("ScreenGui")
+	goldGui.Name = "PatchGoldFlash"
+	goldGui.ResetOnSpawn = false
+	goldGui.IgnoreGuiInset = true
+	goldGui.DisplayOrder = gui.DisplayOrder + 1
+	goldGui.Parent = player:WaitForChild("PlayerGui")
 	local goldWash = Instance.new("Frame")
 	goldWash.Name = "GoldenBreakFlash"
 	goldWash.Size = UDim2.fromScale(1, 1)
 	goldWash.BackgroundColor3 = Color3.fromRGB(255, 220, 60)
 	goldWash.BackgroundTransparency, goldWash.BorderSizePixel = 1, 0
-	goldWash.ZIndex, goldWash.Parent = 10, gui
+	goldWash.ZIndex, goldWash.Parent = 10, goldGui
 	local goldUntil = 0
 	for i = 1, 24 do
 		local part = Instance.new("Part")
@@ -4976,7 +4998,7 @@ do
 	bar.Name = "Objective"
 	bar.AnchorPoint = Vector2.new(0.5, 0)
 	bar.Position = UDim2.fromScale(0.5, Config.UI.objectiveY)
-	bar.Size = UDim2.fromScale(Services.UserInputService.TouchEnabled and 0.68 or 0.60, 0.075)
+	bar.Size = UDim2.fromScale(Palette.mobile() and 0.68 or 0.60, 0.075)
 	-- Only the title has a soft pill; the banner frame leaves world billboards visible.
 	bar.BackgroundColor3 = Color3.fromRGB(22, 14, 32)
 	bar.BackgroundTransparency = 1
@@ -5016,7 +5038,7 @@ do
 	local questToggle = makeButton(gui, "Zone quests", Color3.fromRGB(100, 70, 150))
 	questToggle.Size = UDim2.fromScale(0.11, 0.04)
 	local function placeQuestToggle()
-		local touch = Services.UserInputService.TouchEnabled
+		local touch = Palette.mobile()
 
 		questToggle.Position = touch and UDim2.fromScale(0.878, 0.14)
 			or UDim2.fromScale(0.878, 0.79)
@@ -5040,8 +5062,9 @@ do
 			return
 		end
 		local data = ZoneView.progress
+		local zones = garden:FindFirstChild("Zones")
 		for _, id in Config.ZoneOrder do
-			local folder = garden.Zones:FindFirstChild(id)
+			local folder = zones and zones:FindFirstChild(id)
 			local z = Config.Zones[id]
 			if
 				folder
@@ -5075,7 +5098,7 @@ do
 	local function setObjective(verb: string, sub: string)
 		if title.Text ~= verb then
 			title.Text = verb
-			popScale.Scale = Services.UserInputService.TouchEnabled and 1.03 or 1.18
+			popScale.Scale = Palette.mobile() and 1.03 or 1.18
 			Services.TweenService
 				:Create(popScale, TweenInfo.new(0.3, Enum.EasingStyle.Back), { Scale = 1 })
 				:Play()
@@ -6002,7 +6025,14 @@ do
 		confetti(gui)
 		play(Config.Sounds.Coin, 0.9, 1)
 	end)
-	Services.RunService.Heartbeat:Connect(refresh)
+	local elapsed = 0
+	Services.RunService.Heartbeat:Connect(function(dt)
+		elapsed += dt
+		if elapsed >= 1 then
+			elapsed = 0
+			refresh()
+		end
+	end)
 	player:GetAttributeChangedSignal("DailyClaimable"):Connect(refresh)
 	refresh()
 end
@@ -6560,6 +6590,7 @@ do
 			bb.Size = UDim2.fromOffset(120, 50)
 			bb.StudsOffsetWorldSpace = Vector3.new(0, 5.5, 0)
 			bb.LightInfluence = 0
+			bb.MaxDistance = Config.Payoff.petDistance
 			bb.Parent = head
 			textLabel(bb, "👑 MVP", Color3.fromRGB(255, 214, 80)).Size = UDim2.fromScale(1, 1)
 			crowns[who] = bb
@@ -6969,6 +7000,8 @@ do
 	task.spawn(function()
 		while true do
 			local list = {}
+			local root = rootPart()
+			local now = workspace:GetServerTimeNow()
 			for _, pen in patchFolder:GetChildren() do
 				for _, plot in pen:GetChildren() do
 					local p = plot.Name == "Plot" and plot:FindFirstChild("Pumpkin")
@@ -6977,6 +7010,10 @@ do
 						and p:IsA("BasePart")
 						and p:GetAttribute("Jack")
 						and p:GetAttribute("Placed")
+						and not p:GetAttribute("Stashed")
+						and root
+						and (Config.roamPoint(p, now) - root.Position).Magnitude
+							<= Config.Payoff.petDistance
 					then
 						table.insert(list, p)
 					end
@@ -6988,17 +7025,11 @@ do
 	end)
 	Services.RunService.RenderStepped:Connect(function()
 		local now = workspace:GetServerTimeNow()
-		local root = rootPart()
 		for _, p in pets do
 			if not p.Parent or not p:GetAttribute("Placed") or not p:GetAttribute("JackHome") then
 				continue
 			end
-			if
-				p:GetAttribute("Stashed")
-				or not root
-				or (Config.roamPoint(p, now) - root.Position).Magnitude
-					> Config.Payoff.petDistance
-			then
+			if p:GetAttribute("Stashed") then
 				continue
 			end
 			local from = p:GetAttribute("RoamFrom")
@@ -7040,6 +7071,7 @@ do
 		while true do
 			local root = rootPart()
 			local keep = {}
+			local zones = garden:FindFirstChild("Zones")
 			for p in candidates do
 				if not p.Parent then
 					candidates[p] = nil
@@ -7054,7 +7086,8 @@ do
 					local def = Config.Pets[p:GetAttribute("Pet") or ""]
 					local nest = p.Name == "HoardPumpkin"
 						and not p:GetAttribute("Placed")
-						and p:IsDescendantOf(garden.Zones)
+						and zones
+						and p:IsDescendantOf(zones)
 					local epic = def
 						and (Config.Economy.rarityRanks[def.rarity] or 0) >= 3
 						and p:GetAttribute("Placed")
@@ -7150,6 +7183,7 @@ do
 			if not bb then
 				bb = Instance.new("BillboardGui")
 				bb.Name = "StatusIcon"
+				bb.MaxDistance = Config.Payoff.petDistance
 				bb.Size = UDim2.fromOffset(90, 32)
 				bb.StudsOffsetWorldSpace = Vector3.yAxis * Config.GuardTwists.iconHeight
 				bb.AlwaysOnTop = true
@@ -7350,7 +7384,7 @@ do
 	ContextActionService:SetTitle("ScytheDash", "DASH")
 	ContextActionService:SetPosition("ScytheDash", UDim2.fromScale(0.62, 0.52))
 	Services.RunService.Heartbeat:Connect(function()
-		local touch = Services.UserInputService.TouchEnabled
+		local touch = Palette.mobile()
 
 		local unlockedDash = false
 		for i, tool in Config.Tools do
