@@ -27,3 +27,13 @@ Z19 Swing should hit multiple pumpkins at a time; lucrative and satisfying -> FA
 Z20 Quest panel covers the screen -> UI (in progress)
 Z21 Review all enemies; none walking backwards -> ENEMIES
 Z22 Watch the recording yourself, review everything, organize, plan, use Obsidian -> Claude
+
+## Claude's own review of the recording (rec play_000-004, sheets)
+C1 Zone quest box stacks on top of objective + gate sign + combo text + "Fuse/Witch merchant" signs: 4-5 texts overlap at screen top (4:12-4:28). Same as Z13/Z16.
+C2 Wild pumpkins in zones 2-3 are pastel blobs (pink/blue/white) with a candy-cane icon floating on every one: reads as clouds, not pumpkins (Z6/Z13).
+C3 Guard "ZzZ" and "!" icons fine, but the guards are small blocky trees (TreeEnt) the same size as props; no wind-up before catching.
+C4 King Fight (10:36-10:52): King just stands on the throne; HP bar huge at top while the Index panel is open; "Hold E at ..." text clipped by boss; "TOP BONKERS" leaderboard text tiny; damage numbers "800" repeat; no attacks, no phases (Z8).
+C5 Index panel opens on top of the fight; panels don't close on events.
+C6 At 17:42-17:58 the camera sits still for 16 s showing a giant tilted "PUMPKIN PATCH" banner clipping through a purple tower and "MVP" text floating in the air: world signs placed randomly and overlapping geometry (Z10/Z14/Z16).
+C7 Bright lime floor + white paths + saturated purple: very bright overall (Z11).
+- Z-ICONS: Zion approved (15:14 UTC) uploading a small set of generated icon images to his Roblox account.
