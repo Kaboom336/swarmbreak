@@ -13,7 +13,7 @@ local base = {
 	gold = "FFC83D",
 	grape = "7A4FD0",
 	plum = "3B2766",
-	cream = "F6E8CC",
+	cream = "8CC765",
 	bone = "FFF8EC",
 	leaf = "9ED66A",
 	wood = "B07A4A",
@@ -28,7 +28,7 @@ local palette = {
 	{ "FAD0E6", "F4C4DE", "C79BEA", "D8B0F2", "FF5FA8", "9EF0C8", "7E55A8", "FF7EC0" },
 	{ "FFD98A", "F8CE78", "4A2D7A", "5A3A8E", "FFC83D", "FF8A1F", "2D1F43", "FFD23D" },
 }
-local hub = { "F6E8CC", "EFDFBF", "7A4FD0", "8A63DE", "FF8A1F", "FFF8EC" }
+local hub = { "8CC765", "84BD5E", "7A4FD0", "8A63DE", "FF8A1F", "FFF8EC" }
 local totals, painted = {}, {}
 local function chunk(i)
 	if i % 80 == 0 then

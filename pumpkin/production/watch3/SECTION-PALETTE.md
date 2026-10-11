@@ -43,7 +43,7 @@ Hard rule: no blue, no pure white, no lime above S 60%, no neon green, anywhere 
 
 | Surface | Hex |
 |---|---|
-| Floor checker A / B | F6E8CC / EFDFBF (cream, delta about 4%) |
+| Floor checker A / B | 8CC765 / 84BD5E (muted grass; Claude 2026-10-11: all-cream hub looked washed out) |
 | InnerLawn | 9ED66A |
 | Paths and Plaza | FBF1DC (lighter than floor so paths read) |
 | Curb / RingEdge | FFF8EC |
