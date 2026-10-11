@@ -4777,7 +4777,7 @@ do
 			if wall and wall:IsA("BasePart") then
 				wall.CanCollide = true
 				for _, child in wall:GetChildren() do
-					if child:IsA("ProximityPrompt") then
+					if child:IsA("ProximityPrompt") or child.Name == "UnlockAnchor" then
 						child:Destroy()
 					end
 				end
@@ -4787,20 +4787,36 @@ do
 				prompt.ObjectText = Helpers.short(def.cost) .. " candy"
 				prompt.HoldDuration = 0.6
 				prompt.KeyboardKeyCode = Enum.KeyCode.E
-				prompt.MaxActivationDistance = 14
-				prompt.RequiresLineOfSight = true
-				prompt.Exclusivity = Enum.ProximityPromptExclusivity.OneGlobally
-				prompt.Parent = wall
+				-- Engine checks use the centre on the server; our check below uses the wall surface.
+				prompt.MaxActivationDistance = wall.Size.Magnitude / 2
+					+ Config.Interaction.gateRange
+				prompt.RequiresLineOfSight = false
+				prompt.Exclusivity = Enum.ProximityPromptExclusivity.AlwaysShow
+				local anchor = Instance.new("Attachment")
+				anchor.Name = "UnlockAnchor"
+				anchor.Parent = wall
+				prompt.Parent = anchor
 				prompt.HoldDuration = 0
 				prompt.Triggered:Connect(function(player)
 					local _, root = aliveRoot(player)
-					if
-						root
-						and (root.Position - wall.Position).Magnitude
-							<= prompt.MaxActivationDistance
-					then
-						unlockZone(player, zoneId)
+					if not root then
+						Remotes.hintEvent:FireClient(
+							player,
+							"Gate unlock failed: stand near the gate while alive"
+						)
+						return
 					end
+					if
+						(root.Position - Config.Interaction.closestPoint(wall, root.Position)).Magnitude
+						> Config.Interaction.gateRange
+					then
+						Remotes.hintEvent:FireClient(
+							player,
+							"Gate unlock failed: too far away; move closer to the wall"
+						)
+						return
+					end
+					unlockZone(player, zoneId)
 				end)
 			end
 			local sign = zone:FindFirstChild("GateSign")
@@ -5490,19 +5506,7 @@ do
 	end
 
 	function Hoards.inReach(root: BasePart, p: BasePart): boolean
-		local delta = p.Position - root.Position
-		local flat = Vector3.new(delta.X, 0, delta.Z)
-		if
-			math.abs(delta.Y) >= 8
-			or flat.Magnitude > 9
-			or (flat.Magnitude >= 0.1 and flat.Unit:Dot(root.CFrame.LookVector) < 0.57)
-		then
-			return false
-		end
-		local params = RaycastParams.new()
-		params.FilterType = Enum.RaycastFilterType.Exclude
-		params.FilterDescendantsInstances = { root.Parent, p }
-		return workspace:Raycast(root.Position, delta, params) == nil
+		return (p.Position - root.Position).Magnitude <= Config.Interaction.nestRange(p)
 	end
 
 	local function grab(h: Hoard, p: BasePart, player: Player)
@@ -5512,7 +5516,7 @@ do
 				i = k
 			end
 		end
-		if not i or p.Parent ~= h.model then
+		if not i or p.Parent ~= h.model or not p:FindFirstChild("StealPrompt") then
 			return
 		end
 		if not Helpers.isLoaded(player) then
@@ -5559,7 +5563,15 @@ do
 			end
 			for _, p in h.slots do
 				local d = (p.Position - root.Position).Magnitude
-				if d < distance and Hoards.inReach(root, p) then
+				local delta = p.Position - root.Position
+				local flat = Vector3.new(delta.X, 0, delta.Z)
+				local facing = flat.Magnitude < 0.1 or flat.Unit:Dot(root.CFrame.LookVector) >= -0.1
+				if
+					p:FindFirstChild("StealPrompt")
+					and facing
+					and d < distance
+					and Hoards.inReach(root, p)
+				then
 					nearest, nest, distance = p, h, d
 				end
 			end
@@ -5583,8 +5595,8 @@ do
 		prompt.ActionText = "Steal"
 		prompt.ObjectText = (seed and seed.name or "") .. " pumpkin · Hoard"
 		prompt.HoldDuration = 0
-		prompt.MaxActivationDistance = 9
-		prompt.RequiresLineOfSight = true
+		prompt.MaxActivationDistance = Config.Interaction.nestRange(p) + 2
+		prompt.RequiresLineOfSight = false
 		prompt.Exclusivity = Enum.ProximityPromptExclusivity.OneGlobally
 		prompt.Parent = p
 		prompt.Triggered:Connect(function(player)
@@ -10086,8 +10098,71 @@ end
 -- Studio-only test hooks ------------------------------------------------------------------------
 
 do
+	function Bases.promptCheck(player: Player)
+		local _, root = aliveRoot(player)
+		if not root then
+			print("[PatchDebug promptcheck] No live root for " .. player.Name)
+			return 0
+		end
+		local count = 0
+		for _, prompt in garden:GetDescendants() do
+			if
+				not prompt:IsA("ProximityPrompt")
+				or (prompt.Name ~= "StealPrompt" and prompt.Name ~= "UnlockPrompt")
+			then
+				continue
+			end
+			local part = prompt.Parent
+			if part and part:IsA("Attachment") then
+				part = part.Parent
+			end
+			if not part or not part:IsA("BasePart") then
+				continue
+			end
+			local gate = prompt.Name == "UnlockPrompt"
+			local target = gate and Config.Interaction.closestPoint(part, root.Position)
+				or part.Position
+			local delta = target - root.Position
+			local distance = delta.Magnitude
+			if distance > 30 then
+				continue
+			end
+			local flat = Vector3.new(delta.X, 0, delta.Z)
+			local dot = flat.Magnitude < 0.1 and 1 or flat.Unit:Dot(root.CFrame.LookVector)
+			local range = gate and Config.Interaction.gateRange
+				or Config.Interaction.nestRange(part)
+			local clientEligible = gate and not hasZone(player, part.Parent.Name)
+				or (not gate and distance <= range)
+			count += 1
+			print(
+				string.format(
+					"[PatchDebug promptcheck] %s player=%s enabled(server)=%s clientEligible(inferred)=%s distance=%.2f range=%.2f engineRange=%.2f facingDot=%.3f LoS=%s",
+					prompt:GetFullName(),
+					player.Name,
+					tostring(prompt.Enabled),
+					tostring(clientEligible),
+					distance,
+					range,
+					prompt.MaxActivationDistance,
+					dot,
+					tostring(prompt.RequiresLineOfSight)
+				)
+			)
+		end
+		print(
+			string.format(
+				"[PatchDebug promptcheck] %s: %d prompts within 30 studs",
+				player.Name,
+				count
+			)
+		)
+		return count
+	end
+
 	Bases.debugAction = function(action: string, player: Player?, amount: number?, typeId: string?)
-		if action == "purge" then
+		if action == "promptcheck" and player then
+			return Bases.promptCheck(player)
+		elseif action == "purge" then
 			return Purge.start()
 		elseif action == "midnight" then
 			phaseToken += 1
@@ -10195,7 +10270,12 @@ do
 			)
 		elseif action == "zone" then
 			return Bases.debugAction("zone", player, #Config.ZoneOrder)
-		elseif action == "king" or action == "spooky" or action == "purge" then
+		elseif
+			action == "king"
+			or action == "spooky"
+			or action == "purge"
+			or action == "promptcheck"
+		then
 			return Bases.debugAction(action, player)
 		elseif action ~= "reset" then
 			return false, "Unknown action"

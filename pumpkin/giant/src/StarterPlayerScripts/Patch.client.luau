@@ -6101,8 +6101,15 @@ do
 				if wall.Transparency ~= transparency then
 					wall.Transparency = transparency
 				end
-				local prompt = wall:FindFirstChild("UnlockPrompt") :: ProximityPrompt?
+				local prompt = wall:FindFirstChild("UnlockPrompt", true) :: ProximityPrompt?
 				if prompt then
+					local root = rootPart()
+					local anchor = prompt.Parent
+					if root and anchor and anchor:IsA("Attachment") then
+						anchor.WorldPosition = Config.Interaction.closestPoint(wall, root.Position)
+					end
+					prompt.MaxActivationDistance = Config.Interaction.gateRange
+					prompt.RequiresLineOfSight = false
 					prompt.ActionText = "Unlock "
 						.. def.title
 						.. ": "
@@ -9681,11 +9688,8 @@ do
 			for prompt in nestPrompts do
 				if prompt.Parent and prompt.Parent:IsA("BasePart") then
 					local delta = root and prompt.Parent.Position - root.Position
-					local flat = delta and Vector3.new(delta.X, 0, delta.Z)
 					prompt.Enabled = root ~= nil
-						and math.abs(delta.Y) < 8
-						and flat.Magnitude <= 9
-						and (flat.Magnitude < 0.1 or flat.Unit:Dot(root.CFrame.LookVector) >= 0.57)
+						and delta.Magnitude <= Config.Interaction.nestRange(prompt.Parent)
 				end
 			end
 			task.wait(0.15)

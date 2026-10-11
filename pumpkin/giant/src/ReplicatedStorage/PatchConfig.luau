@@ -2229,4 +2229,23 @@ do
 	Config.Presentation = Presentation
 end
 
+-- Shared prompt geometry; these functions are called only in the live game.
+Config.Interaction = { gateRange = 14 }
+
+function Config.Interaction.nestRange(p)
+	return p.Size.Magnitude / 2 + 6
+end
+
+function Config.Interaction.closestPoint(wall, position)
+	local at = wall.CFrame:PointToObjectSpace(position)
+	local half = wall.Size / 2
+	return wall.CFrame:PointToWorldSpace(
+		Vector3.new(
+			math.clamp(at.X, -half.X, half.X),
+			math.clamp(at.Y, -half.Y, half.Y),
+			math.clamp(at.Z, -half.Z, half.Z)
+		)
+	)
+end
+
 return Config
