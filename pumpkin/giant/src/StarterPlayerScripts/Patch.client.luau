@@ -2899,10 +2899,12 @@ do
 		local carrying = (player:GetAttribute("Carry") or 0) > 0
 		local canSell, canSteal = unlocked("Sell"), unlocked("PlayerSteal")
 		local purge = (state:GetAttribute("PurgeEnds") or 0) > now
+		local ownPatch = myPatch()
 		canSteal = canSteal
 			and purge
 			and (player:GetAttribute("PlayTime") or 0) >= Config.Purge.grace
 			and not player:GetAttribute("IdleShield")
+			and (not ownPatch or (ownPatch:GetAttribute("LockedUntil") or 0) <= now)
 		for _, patch in patchFolder:GetChildren() do
 			local owner = patch:GetAttribute("Owner") or 0
 			local mine = owner == player.UserId
@@ -2942,7 +2944,14 @@ do
 					)
 					set(
 						plot:FindFirstChild("StealPrompt", true),
-						active and robbable and filled and plot:GetAttribute("Protected") ~= true,
+						active
+							and robbable
+							and filled
+							and plot:GetAttribute("Protected") ~= true
+							and not (
+								plot:FindFirstChild("Pumpkin")
+								and plot.Pumpkin:GetAttribute("Stashed")
+							),
 						name
 					)
 				end
@@ -3330,7 +3339,17 @@ do
 			play(Config.Sounds.Brew, 0.6, 0.9)
 		else
 			stopBats()
-			toast("Spooky Hour is over", "See you in " .. clockText(Config.SpookyEvery or 600))
+			toast(
+				"Spooky Hour is over",
+				"See you in "
+					.. clockText(
+						math.max(
+							0,
+							(state:GetAttribute("SpookyNext") or workspace:GetServerTimeNow())
+								- workspace:GetServerTimeNow()
+						)
+					)
+			)
 		end
 	end
 	state:GetAttributeChangedSignal("SpookyEnds"):Connect(onSpooky)
@@ -5008,7 +5027,7 @@ do
 		runScale.Scale = 1 + 0.07 * wave
 	end)
 
-	remotes:WaitForChild("StealAlarm").OnClientEvent:Connect(function(kind: string, a, b, c)
+	remotes:WaitForChild("StealAlarm").OnClientEvent:Connect(function(kind: string, a, b)
 		if kind == "stole" then
 			hint('You stole a <font color="#FF3B3B">PUMPKIN</font>!')
 			play(Config.Sounds.Coin, 1.4, 0.8)
@@ -5017,10 +5036,9 @@ do
 			hint('⚠ Someone is <font color="#FF3B3B">stealing</font> from your base!')
 			hint(
 				string.format(
-					"%s took your %s pumpkin (+%s 🍬). Bonk them to get it back!",
+					"%s took your %s pumpkin. Bonk them to get it back!",
 					tostring(a),
-					tostring(b),
-					short(tonumber(c) or 0)
+					tostring(b)
 				)
 			)
 			play(Config.Sounds.Bonk, 0.5, 1)

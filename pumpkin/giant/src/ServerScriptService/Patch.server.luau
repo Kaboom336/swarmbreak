@@ -20,6 +20,13 @@ local StarterPack = game:GetService("StarterPack")
 local TweenService = game:GetService("TweenService")
 
 local Config = require(ReplicatedStorage:WaitForChild("PatchConfig"))
+local function fontFace(role: string): Font
+	local spec = Config.Fonts[role]
+	if type(spec) == "table" then
+		return Font.new(spec.family, Enum.FontWeight[spec.weight or "Regular"])
+	end
+	return Font.fromEnum(Enum.Font[spec])
+end
 
 local garden = workspace:WaitForChild("Garden")
 local patchFolder = garden:WaitForChild("Patches")
@@ -60,12 +67,20 @@ local state = Instance.new("Configuration")
 state.Name = "PatchState"
 state.Parent = ReplicatedStorage
 
--- Spooky Hour (replaces the old dark Midnight look): every Config.SpookyEvery seconds for
+-- Spooky Hour (replaces the old dark Midnight look): at Config.SpookyMinutes for
 -- Config.SpookyLength seconds base income pays x Config.SpookyMult. State "SpookyEnds" = its end
 -- (server time, nil when off), "SpookyNext" = the next start. Clients tint the world and fly bats.
 local Spooky: { [string]: any } = {}
-local Purge: { [string]: any } =
-	{ id = 0, victims = {}, locks = {}, holds = {}, participants = {}, losses = {}, transit = {} }
+local Purge: { [string]: any } = {
+	id = 0,
+	victims = {},
+	locks = {},
+	holds = {},
+	participants = {},
+	losses = {},
+	transit = {},
+	bonks = {},
+}
 function Purge.active(): boolean
 	return (state:GetAttribute("PurgeEnds") or 0) > workspace:GetServerTimeNow()
 end
@@ -76,9 +91,14 @@ function Purge.immune(player): boolean
 end
 do
 	local function nextSpooky(t)
-		-- The old ten-minute cadence collides with both Purge slots: shift to :30.
-		local at = math.floor(t / 3600) * 3600 + 30 * 60
-		return at > t and at or at + 3600
+		local hour = math.floor(t / 3600) * 3600
+		for _, minute in Config.SpookyMinutes do
+			local at = hour + minute * 60
+			if at > t then
+				return at
+			end
+		end
+		return hour + 3600 + Config.SpookyMinutes[1] * 60
 	end
 	local nextAt = nextSpooky(workspace:GetServerTimeNow())
 	state:SetAttribute("SpookyNext", nextAt)
@@ -90,7 +110,19 @@ do
 	end
 	function Spooky.start()
 		local t = workspace:GetServerTimeNow()
-		if Purge.active() or state:GetAttribute("PurgeWarning") then
+		if
+			Purge.active()
+			or state:GetAttribute("PurgeWarning")
+			or state:GetAttribute("KingActive")
+			or state:GetAttribute("KingWarning")
+			or state:GetAttribute("Phase") == "BloodMoon"
+			or (state:GetAttribute("LocksOff") or 0) > t
+			or (state:GetAttribute("KingWakesAt") or math.huge) <= t + Config.SpookyLength
+			or (state:GetAttribute("PurgeNext") or math.huge)
+				<= t + Config.SpookyLength + Config.Purge.warning
+		then
+			nextAt = nextSpooky(t)
+			state:SetAttribute("SpookyNext", nextAt)
 			return false
 		end
 		state:SetAttribute("SpookyEnds", t + (Config.SpookyLength or 90))
@@ -498,6 +530,7 @@ local ORDER_UNLOCK = {
 function Progress.orderExpired(player, def)
 	return (def.target == "king" and not state:GetAttribute("KingActive"))
 		or (def.target == "gate" and nextLockedZone(player) == nil)
+		or ((def.stat == "steal" or def.stat == "stopThief") and not Purge.active())
 end
 
 function Progress.orderLive(player, def)
@@ -525,6 +558,9 @@ function Progress.orderLive(player, def)
 		return false
 	end
 	if def.stat == "steal" or def.stat == "stopThief" then
+		if not Purge.active() or Purge.immune(player) then
+			return false
+		end
 		for _, other in Players:GetPlayers() do
 			if other ~= player and Unlock.has(other, "PlayerSteal") then
 				if def.stat == "stopThief" then
@@ -540,6 +576,9 @@ function Progress.orderLive(player, def)
 						return true
 					end
 				else
+					if Purge.immune(other) or Purge.victims[other.UserId] then
+						continue
+					end
 					for _, pen in patchFolder:GetChildren() do
 						if
 							pen:GetAttribute("Owner") == other.UserId
@@ -2038,10 +2077,6 @@ do
 	end
 
 	function Bases.isLocked(patch: Instance): boolean
-		local owner = Players:GetPlayerByUserId(patch:GetAttribute("Owner") or 0)
-		if Purge.active() and owner and Purge.immune(owner) then
-			return true
-		end
 		return not Bases.locksOff() and (patch:GetAttribute("LockedUntil") or 0) > now()
 	end
 
@@ -2124,7 +2159,7 @@ do
 				label.Size = UDim2.fromScale(1, 1)
 				label.BackgroundColor3 = Config.Plots.priceBar
 				label.TextColor3 = Color3.new(1, 1, 1)
-				label.Font = Enum.Font.FredokaOne
+				label.FontFace = fontFace("title")
 				label.TextScaled = true
 				local zone = (plot:GetAttribute("Index") or 1) <= Config.Progression.woodsSlots
 						and "Zone3"
@@ -2174,7 +2209,7 @@ do
 				label.Size = UDim2.fromScale(1, 1)
 				label.BackgroundColor3 = Config.Plots.priceBar
 				label.TextColor3 = Color3.new(1, 1, 1)
-				label.Font = Enum.Font.FredokaOne
+				label.FontFace = fontFace("title")
 				label.TextScaled = true
 				label.Parent = bb
 			end
@@ -2308,7 +2343,7 @@ do
 		label.Name = "Label"
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
-		label.Font = Enum.Font.FredokaOne
+		label.FontFace = fontFace("title")
 		label.TextScaled = true
 		label.TextColor3 = Color3.fromRGB(150, 255, 110)
 		label.Text = ""
@@ -2376,7 +2411,7 @@ do
 		label.Name = "Label"
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
-		label.Font = Enum.Font.FredokaOne
+		label.FontFace = fontFace("title")
 		label.TextScaled = true
 		label.TextColor3 = Color3.fromRGB(255, 200, 120)
 		label.Text = hatchText(seconds)
@@ -3039,10 +3074,9 @@ do
 		elseif patchOf[thief] and Bases.isLocked(patchOf[thief]) then
 			hint(thief, "You can't steal while your own base is locked.")
 		elseif Purge.immune(owner) or not Unlock.has(owner, "PlayerSteal") then
-			-- New-player shield: under Config.NewPlayerShield seconds of total playtime.
-			hint(thief, owner.DisplayName .. " is a new farmer and shielded for now.")
+			hint(thief, owner.DisplayName .. " is shielded while new or AFK.")
 		elseif Purge.victims[ownerId] then
-			hint(thief, owner.DisplayName .. " was robbed a moment ago. Try again later.")
+			hint(thief, owner.DisplayName .. " was already robbed this Purge.")
 		elseif #(carrying[thief] or {}) >= carryCapacity(thief) then
 			hint(thief, "Your hands are full!")
 		else
@@ -3064,11 +3098,9 @@ do
 			}
 			local seed = seedById[p:GetAttribute("Seed") or ""]
 			local name = seed and seed.name or "a"
-			local share = math.floor(pumpkinValue(p) * Config.StealOwnerShare + 0.5)
-			addCandy(owner, share)
 			-- The owner's client shows the alarm (toast, red flash, highlighted thief); the thief's
 			-- shows "You stole a PUMPKIN!" plus RUN!!, the red vignette and the Drop button.
-			Remotes.stealAlarmEvent:FireClient(owner, "robbed", thief.DisplayName, name, share)
+			Remotes.stealAlarmEvent:FireClient(owner, "robbed", thief.DisplayName, name, 0)
 			Remotes.stealAlarmEvent:FireClient(thief, "stole", name)
 			Remotes.harvestedEvent:FireAllClients(thief, plot.Position)
 			track(thief, "steal", 1)
@@ -3088,6 +3120,7 @@ do
 				and (thiefRoot.Position - root.Position).Magnitude <= Config.BonkRange + 2
 			then
 				local back = 0
+				local rewardId = nil
 				for i = #stack, 1, -1 do
 					local p = stack[i]
 					if
@@ -3097,6 +3130,10 @@ do
 						Purge.settle(p)
 					end
 					if p:GetAttribute("StolenFrom") == owner.UserId then
+						local theft = Purge.transit[p]
+						if theft then
+							rewardId = theft.id
+						end
 						table.remove(stack, i)
 						giveBack(owner, p, thiefRoot.Position)
 						back += 1
@@ -3108,6 +3145,7 @@ do
 						if now() >= entry.untilAt then
 							Purge.settle(p)
 						else
+							rewardId = entry.id
 							giveBack(owner, p, thiefRoot.Position)
 							back += 1
 						end
@@ -3124,7 +3162,9 @@ do
 					hint(owner, "💥 You got your pumpkin back!")
 					Remotes.ghostPopEvent:FireAllClients(thiefRoot.Position, nil, 0)
 					track(owner, "stopThief", 1)
-					Purge.reward(owner)
+					if rewardId then
+						Purge.reward(owner, rewardId)
+					end
 				end
 			end
 		end
@@ -3192,7 +3232,7 @@ do
 		label.Name = "Label"
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
-		label.Font = Enum.Font.FredokaOne
+		label.FontFace = fontFace("title")
 		label.TextScaled = true
 		label.TextColor3 = Color3.fromRGB(220, 170, 255)
 		label.Text = "🔒 LOCKED"
@@ -3626,7 +3666,7 @@ do
 			local name = Instance.new("TextLabel")
 			name.BackgroundTransparency = 1
 			name.Size = UDim2.new(1, 0, 0, 16)
-			name.Font = Enum.Font.FredokaOne
+			name.FontFace = fontFace("title")
 			name.TextScaled = true
 			name.TextColor3 = seed.color or Color3.fromRGB(255, 190, 90)
 			name.Text = seed.name
@@ -3666,7 +3706,7 @@ do
 		hp.AnchorPoint = Vector2.new(1, 1)
 		hp.Position = UDim2.fromScale(1, 1)
 		hp.Size = UDim2.fromOffset(28, 14)
-		hp.Font = Enum.Font.FredokaOne
+		hp.FontFace = fontFace("title")
 		hp.TextScaled = true
 		hp.TextXAlignment = Enum.TextXAlignment.Left
 		hp.TextColor3 = Color3.new(1, 1, 1)
@@ -4062,7 +4102,7 @@ do
 		title.Name = "Title"
 		title.BackgroundTransparency = 1
 		title.Size = UDim2.fromScale(1, 0.56)
-		title.Font = Enum.Font.FredokaOne
+		title.FontFace = fontFace("title")
 		title.TextScaled = true
 		title.TextColor3 = Color3.new(1, 1, 1)
 		title.Text = def.title .. "\n2 new pets + " .. def.unlock
@@ -4091,7 +4131,7 @@ do
 		cost.BackgroundTransparency = 1
 		cost.Position = UDim2.fromOffset(10, 5)
 		cost.Size = UDim2.new(1, -20, 1, -10)
-		cost.Font = Enum.Font.FredokaOne
+		cost.FontFace = fontFace("title")
 		cost.TextScaled = true
 		cost.TextColor3 = Color3.new(1, 1, 1)
 		cost.Text = "🍬 " .. short(def.cost or 0)
@@ -4221,7 +4261,7 @@ do
 		local label = Instance.new("TextLabel")
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
-		label.Font = Enum.Font.FredokaOne
+		label.FontFace = fontFace("title")
 		label.TextScaled = true
 		label.TextWrapped = true
 		label.TextColor3 = Config.World2.color
@@ -4434,7 +4474,7 @@ do
 		local label = Instance.new("TextLabel")
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
-		label.Font = Enum.Font.FredokaOne
+		label.FontFace = fontFace("title")
 		label.TextScaled = true
 		label.TextColor3 = color
 		label.Text = text
@@ -6257,8 +6297,8 @@ do
 		removeGhost(ghost)
 		local candy = 0
 		if by then
-			candy = ghost.purgeId and Purge.rewardAmount(by) or ghostCandy(by, ghost)
-			candy = addCandy(by, candy, ghost.purgeId ~= nil)
+			candy = ghost.purgeId and Purge.reward(by, ghost.purgeId)
+				or addCandy(by, ghostCandy(by, ghost))
 			track(by, "bonkGhost", 1)
 		end
 		Remotes.ghostPopEvent:FireAllClients(at, by, candy)
@@ -7185,6 +7225,7 @@ do
 			state:GetAttribute("Phase") == "BloodMoon"
 			or Purge.active()
 			or state:GetAttribute("PurgeWarning")
+			or Spooky.active()
 		then
 			return
 		end
@@ -7417,7 +7458,7 @@ do
 			label.LayoutOrder = order
 			label.BackgroundTransparency = 1
 			label.Size = UDim2.new(1, 0, height, 0)
-			label.Font = Enum.Font.FredokaOne
+			label.FontFace = fontFace("title")
 			label.TextScaled = true
 			label.TextColor3 = color
 			label.Text = text
@@ -7540,7 +7581,7 @@ do
 			label.BackgroundTransparency = 1
 			label.Position = UDim2.fromScale(0, i == 1 and 0 or 0.42)
 			label.Size = UDim2.fromScale(1, i == 1 and 0.42 or 0.58)
-			label.Font = Enum.Font.FredokaOne
+			label.FontFace = fontFace("title")
 			label.TextScaled = true
 			label.TextColor3 = VIP_GOLD
 			label.Text = text
@@ -7841,6 +7882,22 @@ do
 			task.defer(Bases.drainCarry, player)
 		end
 	end
+	function Bases.carryEntry(p)
+		return {
+			s = p:GetAttribute("Seed"),
+			z = p:GetAttribute("SizeMult"),
+			m = p:GetAttribute("Mutation"),
+			h = p:GetAttribute("Hoard"),
+			j = p:GetAttribute("Jack"),
+			w = p:GetAttribute("WeightKg"),
+			g = p:GetAttribute("Gold"),
+			y = p:GetAttribute("Shiny"),
+			b = p:GetAttribute("Boss"),
+			u = p:GetAttribute("Bought"),
+			a = p:GetAttribute("PlacedAt"),
+			r = p:GetAttribute("GoldRolled"),
+		}
+	end
 	function Bases.collectCarry(player)
 		local entries = table.clone(Progress.pending[player] or {})
 		for _, p in carrying[player] or {} do
@@ -7852,20 +7909,7 @@ do
 				) or p:GetAttribute("StolenFrom") == player.UserId)
 				and (p:GetAttribute("Jack") or p:GetAttribute("Hoard"))
 			then
-				table.insert(entries, {
-					s = p:GetAttribute("Seed"),
-					z = p:GetAttribute("SizeMult"),
-					m = p:GetAttribute("Mutation"),
-					h = p:GetAttribute("Hoard"),
-					j = p:GetAttribute("Jack"),
-					w = p:GetAttribute("WeightKg"),
-					g = p:GetAttribute("Gold"),
-					y = p:GetAttribute("Shiny"),
-					b = p:GetAttribute("Boss"),
-					u = p:GetAttribute("Bought"),
-					a = p:GetAttribute("PlacedAt"),
-					r = p:GetAttribute("GoldRolled"),
-				})
+				table.insert(entries, Bases.carryEntry(p))
 			end
 		end
 		return entries
@@ -8075,7 +8119,10 @@ do
 				warned[player] = true
 				count += 1
 				Progress.raidWarnings[player] = true
-				Remotes.announceEvent:FireClient(player, "Ghosts coming! Lock base or go home")
+				Remotes.announceEvent:FireClient(
+					player,
+					"Ghosts coming! Go home to protect your pen"
+				)
 			end
 		end
 		if count > 0 then
@@ -8426,7 +8473,12 @@ do
 	function Progress.kingClock()
 		local at = state:GetAttribute("KingWakesAt") or 0
 		local now = workspace:GetServerTimeNow()
-		if king.active or Purge.active() or state:GetAttribute("PurgeWarning") then
+		if
+			king.active
+			or Purge.active()
+			or state:GetAttribute("PurgeWarning")
+			or Spooky.active()
+		then
 			return
 		end
 		if now >= at then
@@ -8448,7 +8500,7 @@ do
 	label.BackgroundTransparency = 0.25
 	label.BackgroundColor3 = Color3.fromRGB(30, 12, 40)
 	label.TextColor3 = Color3.fromRGB(255, 214, 80)
-	label.Font = Enum.Font.FredokaOne
+	label.FontFace = fontFace("title")
 	label.TextScaled = true
 	label.Text =
 		"KING NIGHT :00 / :20\n15 hits OR 3% damage = Boss pumpkin + 8 min candy\nRare 55% / Epic 33% / Legendary 10% / Mythic Kinglet 2%\n10th crate: Kinglet! Top 3: extra crate. MVP: cosmetic skin"
@@ -8624,7 +8676,14 @@ Players.PlayerRemoving:Connect(function(player)
 			if i then
 				table.remove(stack, i)
 			end
-			Bases.giveBack(player, p, p.Position)
+			if Bases.empty(patchOf[player]) then
+				Bases.giveBack(player, p, p.Position)
+			else
+				Progress.pending[player] = Progress.pending[player] or {}
+				table.insert(Progress.pending[player], Bases.carryEntry(p))
+				Purge.transit[p] = nil
+				p:Destroy()
+			end
 			Bases.restack(entry.thief)
 			refreshCarry(entry.thief)
 		end
@@ -8698,7 +8757,10 @@ task.spawn(function()
 		if not spookyOk then
 			warn("[Patch] Spooky Hour tick failed:", spookyErr)
 		end
-		Purge.tick()
+		local purgeOk, purgeErr = pcall(Purge.tick)
+		if not purgeOk then
+			warn("[Patch] Purge tick failed:", purgeErr)
+		end
 		-- Playtime (session and saved total) and the unlock gates it opens.
 		for _, player in Players:GetPlayers() do
 			if isLoaded(player) then
@@ -8778,12 +8840,30 @@ do
 		end
 		return Config.ZoneOrder[1]
 	end
-	function Purge.reward(player)
-		addCandy(player, Purge.rewardAmount(player), true)
+	function Purge.reward(player, id)
+		local counts = Purge.bonks[id or Purge.id]
+		if not counts or (counts[player.UserId] or 0) >= Config.Purge.bonkRewards then
+			return 0
+		end
+		counts[player.UserId] = (counts[player.UserId] or 0) + 1
+		return addCandy(player, Purge.rewardAmount(player), true)
 	end
 	function Purge.settle(p)
 		local entry = Purge.transit[p]
 		if not entry then
+			return
+		end
+		-- A thief who left it on the ground never completed the theft.
+		if p.Parent == loose then
+			if Bases.empty(patchOf[entry.owner]) then
+				Bases.giveBack(entry.owner, p, p.Position)
+			else
+				-- A refilled pen must not turn the refund into an unrestricted loose pet.
+				Progress.pending[entry.owner] = Progress.pending[entry.owner] or {}
+				table.insert(Progress.pending[entry.owner], Bases.carryEntry(p))
+				Purge.transit[p] = nil
+				p:Destroy()
+			end
 			return
 		end
 		entry.losses[entry.owner.UserId] = true
@@ -8825,6 +8905,47 @@ do
 			or Spooky.active()
 			or (state:GetAttribute("LocksOff") or 0) > workspace:GetServerTimeNow()
 	end
+	function Purge.penEligible(player): boolean
+		local patch = patchOf[player]
+		if not patch then
+			return false
+		end
+		local pets, unprotected = 0, 0
+		for _, plot in Bases.plots(patch) do
+			local pet = plotState[plot] and plotState[plot].pumpkin
+			if pet and pet:GetAttribute("Jack") then
+				pets += 1
+				if not plot:GetAttribute("Protected") and not pet:GetAttribute("Stashed") then
+					unprotected += 1
+				end
+			end
+		end
+		return pets >= Config.Purge.survivorPets and unprotected > 0
+	end
+	function Purge.observe(player, patch, t)
+		if not isLoaded(player) or (player:GetAttribute("PlayTime") or 0) < Config.Purge.grace then
+			return
+		end
+		local _, root = aliveRoot(player)
+		local entry = Purge.participants[player]
+		if not entry then
+			entry = { seconds = 0, moved = false, at = t, position = root and root.Position }
+			Purge.participants[player] = entry
+		end
+		if root and entry.position and (root.Position - entry.position).Magnitude > 0.5 then
+			entry.moved = true
+		end
+		-- Count only observed time with a live, stealable pen; no catch-up credit after a stall.
+		if
+			root
+			and not Purge.immune(player)
+			and not Bases.isLocked(patch)
+			and Purge.penEligible(player)
+		then
+			entry.seconds += math.clamp(t - entry.at, 0, 2)
+		end
+		entry.at, entry.position = t, root and root.Position
+	end
 	function Purge.start()
 		if Purge.active() then
 			return false, "Purge already active"
@@ -8833,6 +8954,8 @@ do
 			return false, "Wait for King Night / Spooky Hour to finish"
 		end
 		Purge.id += 1
+		Purge.bonks[Purge.id] = {}
+		Purge.bonks[Purge.id - 2] = nil
 		Purge.victims, Purge.locks, Purge.holds, Purge.participants, Purge.losses =
 			{}, {}, {}, {}, {}
 		state:SetAttribute("PurgeId", Purge.id)
@@ -8841,7 +8964,7 @@ do
 		state:SetAttribute("PurgeNext", nextSlot(workspace:GetServerTimeNow()))
 		for player, patch in patchOf do
 			if isLoaded(player) then
-				Purge.participants[player] = true
+				Purge.observe(player, patch, workspace:GetServerTimeNow())
 				patch:SetAttribute("PurgeRobbed", nil)
 				player:SetAttribute("PurgeLockUsed", nil)
 				-- One attempt per base, with the existing age, rarity, distance and cooldown rules.
@@ -8853,6 +8976,11 @@ do
 	end
 	local function finish()
 		local participants, losses, id = Purge.participants, Purge.losses, Purge.id
+		for player, entry in participants do
+			entry.eligible = entry.moved
+				and entry.seconds >= Config.Purge.survivorSeconds
+				and not Purge.immune(player)
+		end
 		state:SetAttribute("PurgeEnds", nil)
 		for player in Purge.holds do
 			player:SetAttribute("PurgeStealing", nil)
@@ -8879,8 +9007,14 @@ do
 					Purge.settle(p)
 				end
 			end
-			for player in participants do
-				if player.Parent and isLoaded(player) and not losses[player.UserId] then
+			for player, entry in participants do
+				if
+					entry.eligible
+					and player.Parent
+					and isLoaded(player)
+					and not losses[player.UserId]
+					and Purge.penEligible(player)
+				then
 					local zone = Config.Zones[Purge.bestZone(player)]
 					Progress.pending[player] = Progress.pending[player] or {}
 					table.insert(Progress.pending[player], {
@@ -8899,9 +9033,9 @@ do
 		local t = workspace:GetServerTimeNow()
 		local ends = state:GetAttribute("PurgeEnds")
 		if ends then
-			for player in patchOf do
+			for player, patch in patchOf do
 				if isLoaded(player) then
-					Purge.participants[player] = true
+					Purge.observe(player, patch, math.min(t, ends))
 					if Purge.locks[player.UserId] then
 						player:SetAttribute("PurgeLockUsed", Purge.id)
 					end
@@ -9053,7 +9187,7 @@ do
 		elseif action == "ghosts" then
 			return #ghosts
 		elseif action == "spooky" then
-			-- Start a Spooky Hour now (the next one comes SpookyEvery seconds later).
+			-- Start a Spooky Hour now; the next one stays on the :25 / :45 schedule.
 			Spooky.start()
 			return state:GetAttribute("SpookyEnds")
 		end

@@ -6,3 +6,7 @@ Fix:
 3. "Zone quests" button is tiny and empty-looking at top-right; make it a small pill matching Shop style under the timers, or hide until a zone quest exists.
 4. Teleport pill is as big as Shop/Index; make it a smaller square icon button.
 5. Objective "Run to your pen!" shows while standing in the hub with a carried pumpkin: fine, but the sub-line repeats "Place it in your pen!" — make the sub-line the distance ("42 studs").
+
+# R26 Studio notes (Claude, after Gotham + voxel models)
+- Moon timer icon shows as an empty box with Gotham (emoji glyph missing): use an ImageLabel icon or keep emoji text in FredokaOne for icon-only labels.
+- "+8" candy pop still overlaps the carry line ("Rusty Scythe +8 arry 0/2").

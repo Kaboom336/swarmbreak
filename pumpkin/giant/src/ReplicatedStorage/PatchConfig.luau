@@ -525,8 +525,11 @@ local Config = {
 		returnSeconds = 10,
 		lockSeconds = 60,
 		defenceCandy = 250,
+		bonkRewards = 2,
+		survivorSeconds = 90,
+		survivorPets = 2,
 	},
-	-- The robbed owner gets this share of the stolen pumpkin's sell value.
+	-- Legacy share kept for config compatibility; Purge thefts pay victims nothing.
 	StealOwnerShare = 0.25,
 	-- Players with less total playtime than this cannot be robbed (by players or midnight ghosts).
 	NewPlayerShield = SHIELD,
@@ -562,10 +565,11 @@ local Config = {
 	-- Day / midnight cycle (seconds). Midnight keeps the bright day look (ghost raids only).
 	DayLength = 150,
 	MidnightLength = 45,
-	-- Spooky Hour: every SpookyEvery seconds for SpookyLength seconds the world takes an
+	-- Spooky Hour: at :25 and :45 for SpookyLength seconds the world takes an
 	-- orange-purple tint, SpookyBats bats circle over the lane (client side) and base income pays
 	-- x SpookyMult. Never real night.
-	SpookyEvery = 3600,
+	SpookyMinutes = { 25, 45 },
+	SpookyEvery = 1800, -- Average cadence for the offline economy model; runtime uses SpookyMinutes.
 	SpookyLength = 90,
 	SpookyMult = 2,
 	SpookyBats = 20,
