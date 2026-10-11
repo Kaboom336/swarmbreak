@@ -7,7 +7,6 @@ local REMOTE_NAMES = {
 	"StatsChanged",
 	"RollPlayback",
 	"RollControl",
-	"CatapultAction",
 	"PetAction",
 	"PetState",
 	"HatchReveal",

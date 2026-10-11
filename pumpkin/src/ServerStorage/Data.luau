@@ -4,12 +4,10 @@
 local DataStoreService = game:GetService("DataStoreService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local HttpService = game:GetService("HttpService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local ProfileSchema = require(Shared:WaitForChild("ProfileSchema"))
-local SessionRules = require(Shared:WaitForChild("SessionRules"))
 
 type Profile = ProfileSchema.Profile
 type StoredRecord = {
@@ -19,11 +17,9 @@ type StoredRecord = {
 	UpdatedAt: number,
 }
 
-local sessions: { [Player]: string } = {}
-local leases: { [Player]: number } = {}
+local sessionId = if game.JobId ~= "" then game.JobId else "studio-" .. tostring(os.clock())
 local profiles: { [Player]: Profile } = {}
 local dirty: { [Player]: boolean } = {}
-local fenced: { [Player]: boolean } = {}
 
 local function retry(operation: () -> any): (boolean, any)
 	local delaySeconds = Config.FirstRetryDelay
@@ -68,62 +64,42 @@ local function keyFor(player: Player): string
 	return "player_" .. player.UserId
 end
 
-local function makeRecord(profile: Profile, releaseLock: boolean, token: string): StoredRecord
+local function makeRecord(profile: Profile, releaseLock: boolean): StoredRecord
 	return {
 		Data = profile,
-		SessionId = if releaseLock then nil else token,
+		SessionId = if releaseLock then nil else sessionId,
 		SessionExpiresAt = if releaseLock then nil else os.time() + Config.SessionLockSeconds,
 		UpdatedAt = os.time(),
 	}
 end
 
-local function canClaim(record: any, now: number, token: string): boolean
+local function canClaim(record: any, now: number): boolean
 	if type(record) ~= "table" or record.SessionId == nil then
 		return true
 	end
-	return record.SessionId == token or (tonumber(record.SessionExpiresAt) or 0) <= now
-end
-local function deepCopy(value: any): any
-	if type(value) ~= "table" then
-		return value
-	end
-	local copy = {}
-	for key, item in value do
-		copy[key] = deepCopy(item)
-	end
-	return copy
+	return record.SessionId == sessionId or (tonumber(record.SessionExpiresAt) or 0) <= now
 end
 
 function Data.load(player: Player): (Profile?, string?)
-	if fenced[player] then
-		return nil, "Your data session changed. Please rejoin."
-	end
 	if profiles[player] then
-		if store and os.time() >= (leases[player] or 0) then
-			return nil, "Your data lease expired. Please rejoin."
-		end
 		return profiles[player], nil
 	end
 	if not store then
-		if not RunService:IsStudio() then
-			return nil, "Saving is unavailable. Please rejoin shortly."
-		end
 		local profile = ProfileSchema.default()
 		profiles[player] = profile
 		return profile, nil
 	end
 
-	local token = sessions[player] or HttpService:GenerateGUID(false)
-	sessions[player] = token
+	local now = os.time()
 	local ok, result = retry(function()
 		return store:UpdateAsync(keyFor(player), function(oldRecord: any)
-			if not canClaim(oldRecord, os.time(), token) then
+			if not canClaim(oldRecord, now) then
 				return nil
 			end
 			local oldData = if type(oldRecord) == "table" and oldRecord.Data ~= nil
 				then oldRecord.Data
 				else oldRecord
-			return makeRecord(ProfileSchema.fromStored(oldData), false, token)
+			return makeRecord(ProfileSchema.fromStored(oldData), false)
 		end)
 	end)
 	if not ok then
@@ -135,14 +111,11 @@ function Data.load(player: Player): (Profile?, string?)
 
 	local profile = ProfileSchema.fromStored(result.Data)
 	profiles[player] = profile
-	leases[player] = tonumber(result.SessionExpiresAt) or 0
 	return profile, nil
 end
 
 function Data.get(player: Player): Profile?
-	return if fenced[player] or (store and os.time() >= (leases[player] or 0))
-		then nil
-		else profiles[player]
+	return profiles[player]
 end
 
 function Data.markDirty(player: Player)
@@ -153,7 +126,7 @@ end
 
 function Data.save(player: Player, releaseLock: boolean?): boolean
 	local profile = profiles[player]
-	if not profile or fenced[player] then
+	if not profile then
 		return false
 	end
 	if not store then
@@ -164,18 +137,12 @@ function Data.save(player: Player, releaseLock: boolean?): boolean
 	-- Clear dirty before the write so changes made while it is in flight are kept.
 	dirty[player] = nil
 	local shouldRelease = releaseLock == true
-	local token = sessions[player]
-	if not token then
-		return false
-	end
-	local snapshot = deepCopy(ProfileSchema.fromStored(profile))
 	local ok, result = retry(function()
 		return store:UpdateAsync(keyFor(player), function(oldRecord: any)
-			if not SessionRules.canWrite(oldRecord, token) then
-				fenced[player] = true
+			if not canClaim(oldRecord, os.time()) then
 				return nil
 			end
-			return makeRecord(snapshot, shouldRelease, token)
+			return makeRecord(profile, shouldRelease)
 		end)
 	end)
 	if not ok or result == nil then
@@ -185,23 +152,13 @@ function Data.save(player: Player, releaseLock: boolean?): boolean
 		end
 		return false
 	end
-	leases[player] = tonumber(result.SessionExpiresAt) or 0
 	return true
 end
 
-function Data.release(player: Player): boolean
-	if not profiles[player] then
-		sessions[player], leases[player] = nil, nil
-		return true
-	end
-	local saved = Data.save(player, true)
-	if saved then
-		profiles[player] = nil
-		dirty[player] = nil
-		fenced[player] = nil
-		sessions[player], leases[player] = nil, nil
-	end
-	return saved
+function Data.release(player: Player)
+	Data.save(player, true)
+	profiles[player] = nil
+	dirty[player] = nil
 end
 
 function Data.saveAll(releaseLocks: boolean?)

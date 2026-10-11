@@ -1,2 +1,0 @@
-Packaged Garden server/client/Scene/Rules source matches disk; total executable source files: 49
-Bundled map contains no LuaSourceContainers; runtime scene is created only when Studio runs.

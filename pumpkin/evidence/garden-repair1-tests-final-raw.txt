@@ -1,2 +1,0 @@
-Syntax: 50 files checked, 0 errors
-Tests: 127 passed, 0 failed

@@ -7,10 +7,6 @@ local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
-if Config.GameplayMode == "Coop" or Config.GameplayMode == "Garden" then
-	return
-end
-local Catapult = require(Shared:WaitForChild("Catapult"))
 local ExperienceRules = require(Shared:WaitForChild("ExperienceRules"))
 local FriendBoost = require(Shared:WaitForChild("FriendBoost"))
 local Grow = require(Shared:WaitForChild("Grow"))
@@ -32,9 +28,6 @@ local growEffect = remotes:FindFirstChild("GrowEffect") :: RemoteEvent
 local statsChanged = remotes:FindFirstChild("StatsChanged") :: RemoteEvent
 local rollPlayback = remotes:FindFirstChild("RollPlayback") :: RemoteEvent
 local rollControl = remotes:FindFirstChild("RollControl") :: RemoteEvent
-local catapultAction = remotes:FindFirstChild("CatapultAction") :: RemoteEvent
-local catapultRequests: { [Player]: number } = {}
-local catapultOffers: { [Player]: number } = {}
 local limiter = Grow.newRateLimiter()
 local rolling: { [Player]: boolean } = {}
 local zoneParts = MapFallback.build()
@@ -277,7 +270,6 @@ local function equippedPetMultipliers(profile: any): { number }
 end
 
 local function syncPlayer(player: Player, profile: any)
-	player:SetAttribute("CatapultRank", profile.CatapultRank)
 	player:SetAttribute("Size", profile.Size)
 	player:SetAttribute("Wins", profile.Wins)
 	player:SetAttribute("TotalWins", profile.TotalWins)
@@ -480,7 +472,7 @@ rollControl.OnServerEvent:Connect(function(player: Player, action: any, token: a
 	end
 end)
 
-local function beginRoll(player: Player, zone: any, parts: any, launch: any)
+local function beginRoll(player: Player, zone: any, parts: any)
 	local profile = Data.get(player)
 	if rolling[player] or not profile then
 		return
@@ -522,7 +514,6 @@ local function beginRoll(player: Player, zone: any, parts: any, launch: any)
 	local pumpkin, seat, rider = createRidePumpkin(player, rolledSize, parts.start)
 	local hasDoubleWins = profile.DoubleWins or profile.FreeDoubleWinsUntil > os.time()
 	local winMultipliers = {
-		Catapult.rewardMultiplier(profile.CatapultRank),
 		if hasDoubleWins then 2 else 1,
 		if profile.VIP then 1.5 else 1,
 	}
@@ -600,8 +591,7 @@ local function beginRoll(player: Player, zone: any, parts: any, launch: any)
 				result.bonusWalls,
 				token,
 				seed,
-				startedAt,
-				launch
+				startedAt
 			)
 		end
 	end
@@ -694,7 +684,6 @@ local function beginRoll(player: Player, zone: any, parts: any, launch: any)
 				rideWorldSample(parts.start, state.traveled, state.lane)
 			local position, normal, tangent =
 				RideSurface.sample(state.surfaces, nominalPosition, radius, pathTangent)
-			position += Vector3.yAxis * Catapult.height(elapsed, launch)
 			pumpkin.CFrame = CFrame.lookAt(position, position + tangent, normal)
 				* CFrame.Angles(Ride.axleRotation(state.traveled, radius), 0, 0)
 			if seat and rider and seat.Occupant ~= rider.humanoid and rider.humanoid.Health > 0 then
@@ -780,88 +769,12 @@ local function beginRoll(player: Player, zone: any, parts: any, launch: any)
 	end)
 end
 
-local function publishCatapult(player: Player, zoneName: string, message: string?)
-	local profile = Data.get(player)
-	if profile then
-		catapultAction:FireClient(
-			player,
-			"Setup",
-			zoneName,
-			profile.CatapultRank,
-			profile.Wins,
-			message
-		)
-	end
-end
-
-local function nearStart(player: Player, start: BasePart): boolean
-	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-	return root ~= nil
-		and root:IsA("BasePart")
-		and humanoid ~= nil
-		and humanoid.Health > 0
-		and (root.Position - start.Position).Magnitude <= 28
-end
-
-catapultAction.OnServerEvent:Connect(
-	function(player: Player, action: any, zoneName: any, angle: any, power: any)
-		local now = os.clock()
-		if now - (catapultRequests[player] or -math.huge) < 0.25 then
-			return
-		end
-		catapultRequests[player] = now
-		local zone = if type(zoneName) == "string" then Roll.getZone(zoneName) else nil
-		local parts = if zone then zoneParts[zone.Name] else nil
-		local profile = Data.get(player)
-		if rolling[player] or not profile or not zone or not parts then
-			return
-		end
-		if
-			not nearStart(player, parts.start) or not Roll.isZoneUnlocked(profile.TotalWins, zone)
-		then
-			catapultAction:FireClient(player, "Close")
-			return
-		end
-		if action == "Upgrade" then
-			local bought, message = Catapult.buy(profile)
-			if bought then
-				Data.markDirty(player)
-				syncPlayer(player, profile)
-			end
-			publishCatapult(player, zone.Name, message)
-		elseif action == "Launch" then
-			local launch = Catapult.settings(angle, power)
-			if not launch then
-				return
-			end
-			local canLaunch, missing = ExperienceRules.canLaunch(profile.Size)
-			if not canLaunch then
-				publishCatapult(player, zone.Name, "GROW " .. missing .. " MORE SIZE FIRST")
-				return
-			end
-			catapultAction:FireClient(player, "Close")
-			beginRoll(player, zone, parts, launch)
-		end
-	end
-)
-
 for _, zone in Config.Zones do
 	local parts = zoneParts[zone.Name]
 	parts.start.Touched:Connect(function(hit)
 		local player = playerFromHit(hit)
-		local profile = if player then Data.get(player) else nil
-		local now = os.clock()
-		if
-			player
-			and profile
-			and not rolling[player]
-			and nearStart(player, parts.start)
-			and Roll.isZoneUnlocked(profile.TotalWins, zone)
-			and now - (catapultOffers[player] or -math.huge) > 2
-		then
-			catapultOffers[player] = now
-			publishCatapult(player, zone.Name)
+		if player then
+			beginRoll(player, zone, parts)
 		end
 	end)
 	if zone.RequiredWins > 0 then
@@ -912,8 +825,6 @@ Players.PlayerRemoving:Connect(function(player)
 	rolling[player] = nil
 	controlWindows[player] = nil
 	lastBounceAt[player] = nil
-	catapultRequests[player] = nil
-	catapultOffers[player] = nil
 	local ride = rideStates[player]
 	if ride then
 		restoreRider(ride.rider)

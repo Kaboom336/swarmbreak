@@ -6,9 +6,6 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
-if Config.GameplayMode == "Coop" or Config.GameplayMode == "Garden" then
-	return
-end
 local HatchEntitlements = require(Shared:WaitForChild("HatchEntitlements"))
 local PetIndex = require(Shared:WaitForChild("PetIndex"))
 local Pets = require(Shared:WaitForChild("Pets"))

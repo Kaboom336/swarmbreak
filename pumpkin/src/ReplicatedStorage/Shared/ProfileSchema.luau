@@ -1,6 +1,5 @@
 --!strict
 local Config = require(script.Parent.Config)
-local Catapult = require(script.Parent.Catapult)
 
 export type Pet = {
 	id: string,
@@ -11,10 +10,6 @@ export type Pet = {
 
 export type Profile = {
 	Version: number,
-	Gold: number,
-	PumpkinRank: number,
-	LauncherRank: number,
-	CatapultRank: number,
 	Size: number,
 	Wins: number,
 	TotalWins: number,
@@ -62,16 +57,11 @@ export type Profile = {
 	WeeklyChallengeClaimed: boolean,
 }
 
-local CoopRules = require(script.Parent.CoopRules)
 local ProfileSchema = {}
 
 function ProfileSchema.default(): Profile
 	return {
 		Version = Config.DataVersion,
-		Gold = 0,
-		PumpkinRank = 0,
-		LauncherRank = 0,
-		CatapultRank = 0,
 		Size = 0,
 		Wins = 0,
 		TotalWins = 0,
@@ -133,10 +123,6 @@ end
 function ProfileSchema.fromStored(stored: any): Profile
 	local source = if type(stored) == "table" then stored else {}
 	local profile = ProfileSchema.default()
-	profile.Gold = CoopRules.integer(source.Gold, 1000000000)
-	profile.PumpkinRank = CoopRules.integer(source.PumpkinRank, CoopRules.MaxRank)
-	profile.LauncherRank = CoopRules.integer(source.LauncherRank, CoopRules.MaxRank)
-	profile.CatapultRank = Catapult.rank(source.CatapultRank)
 	profile.Size = math.max(0, tonumber(source.Size) or 0)
 	profile.Wins = math.max(0, tonumber(source.Wins) or 0)
 	profile.TotalWins = math.max(profile.Wins, tonumber(source.TotalWins) or 0)
