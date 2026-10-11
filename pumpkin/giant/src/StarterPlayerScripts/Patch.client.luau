@@ -3446,32 +3446,69 @@ end
 
 do
 	local atmosphere = Services.Lighting:FindFirstChildOfClass("Atmosphere")
+	if not atmosphere then
+		atmosphere = Instance.new("Atmosphere")
+		atmosphere.Parent = Services.Lighting
+	end
 	local correction = Services.Lighting:FindFirstChild("PhaseTint") :: ColorCorrectionEffect?
 	if not correction then
 		correction = Instance.new("ColorCorrectionEffect")
 		correction.Name = "PhaseTint"
 		correction.Parent = Services.Lighting
 	end
+	local bloom = Services.Lighting:FindFirstChild("HarvestBloom")
+		or Services.Lighting:FindFirstChildOfClass("BloomEffect")
+	if not bloom then
+		bloom = Instance.new("BloomEffect")
+		bloom.Name = "HarvestBloom"
+		bloom.Parent = Services.Lighting
+	end
+	local function baseValue(attribute, fallback)
+		local value = Services.Lighting:GetAttribute(attribute)
+		return value == nil and fallback or value
+	end
 	local base = {
-		Ambient = Services.Lighting.Ambient,
-		OutdoorAmbient = Services.Lighting.OutdoorAmbient,
-		Brightness = Services.Lighting.Brightness,
-		ClockTime = Services.Lighting.ClockTime,
-		AtmosphereColor = atmosphere and atmosphere.Color or Color3.new(),
-		AtmosphereDecay = atmosphere and atmosphere.Decay or Color3.new(),
-		AtmosphereDensity = atmosphere and atmosphere.Density or 0.3,
+		lighting = {},
+		tint = {},
+		atmosphere = {},
+		bloom = {},
 	}
-	-- The default look is bright daytime (captured above from Studio Lighting), and Midnight keeps
-	-- it (the ghost raid is the event, never real night). Spooky Hour grades the day orange-purple
-	-- (TintColor #FFD9B0, Saturation +0.25, an orange haze with a purple decay; same sun), the
-	-- Blood Moon a soft red; then back to base.
+	for _, key in
+		{
+			"Ambient",
+			"OutdoorAmbient",
+			"Brightness",
+			"ClockTime",
+			"GeographicLatitude",
+			"ColorShift_Top",
+			"ColorShift_Bottom",
+			"ExposureCompensation",
+			"ShadowSoftness",
+			"EnvironmentDiffuseScale",
+			"EnvironmentSpecularScale",
+		}
+	do
+		base.lighting[key] = baseValue("Base" .. key, Services.Lighting[key])
+	end
+	for _, key in { "TintColor", "Brightness", "Saturation", "Contrast" } do
+		base.tint[key] = baseValue("BaseGrade" .. key, correction[key])
+	end
+	for _, key in { "Color", "Decay", "Density", "Offset", "Haze", "Glare" } do
+		base.atmosphere[key] = baseValue("BaseAtmosphere" .. key, atmosphere[key])
+	end
+	for _, key in { "Intensity", "Size", "Threshold" } do
+		base.bloom[key] = baseValue("BaseBloom" .. key, bloom[key])
+	end
+	-- Midnight retains readable daylight. Events override only their named values;
+	-- every transition restores the complete authored base, including grade/haze/bloom.
 	local EVENT_LOOK = {
 		Purge = {
 			lighting = {
-				Ambient = base.Ambient:Lerp(Color3.fromRGB(210, 160, 220), 0.2),
-				OutdoorAmbient = base.OutdoorAmbient:Lerp(Color3.fromRGB(230, 175, 215), 0.2),
-				Brightness = base.Brightness,
-				ClockTime = base.ClockTime,
+				Ambient = base.lighting.Ambient:Lerp(Color3.fromRGB(210, 160, 220), 0.2),
+				OutdoorAmbient = base.lighting.OutdoorAmbient:Lerp(
+					Color3.fromRGB(230, 175, 215),
+					0.2
+				),
 			},
 			tint = {
 				TintColor = Color3.fromRGB(255, 235, 252),
@@ -3480,34 +3517,35 @@ do
 				Contrast = 0.025,
 			},
 			atmosphere = {
-				Color = base.AtmosphereColor,
-				Decay = base.AtmosphereDecay,
-				Density = base.AtmosphereDensity,
+				Color = base.atmosphere.Color,
+				Decay = base.atmosphere.Decay,
+				Density = base.atmosphere.Density,
 			},
 		},
 		Spooky = {
 			lighting = {
-				Ambient = base.Ambient:Lerp(Color3.fromRGB(170, 110, 160), 0.35),
-				OutdoorAmbient = base.OutdoorAmbient:Lerp(Color3.fromRGB(190, 120, 170), 0.35),
-				Brightness = base.Brightness,
-				ClockTime = base.ClockTime,
+				Ambient = base.lighting.Ambient:Lerp(Color3.fromRGB(170, 110, 160), 0.25),
+				OutdoorAmbient = base.lighting.OutdoorAmbient:Lerp(
+					Color3.fromRGB(190, 120, 170),
+					0.25
+				),
 			},
 			tint = {
-				TintColor = Color3.fromRGB(255, 217, 176),
-				Saturation = 0.25,
-				Contrast = 0.05,
+				TintColor = Color3.fromRGB(255, 226, 194),
+				Saturation = 0.18,
+				Contrast = 0.06,
 			},
 			atmosphere = {
-				Color = Color3.fromRGB(242, 163, 94),
-				Decay = Color3.fromRGB(122, 82, 191),
-				Density = base.AtmosphereDensity,
+				Color = Color3.fromRGB(242, 176, 122),
+				Decay = Color3.fromRGB(138, 100, 200),
+				Density = base.atmosphere.Density,
 			},
 		},
 		BloodMoon = {
 			lighting = {
 				Ambient = Config.KingNight.look.ambient,
 				OutdoorAmbient = Config.KingNight.look.outdoor,
-				Brightness = base.Brightness,
+				Brightness = base.lighting.Brightness,
 				ClockTime = Config.KingNight.look.clock,
 			},
 			tint = {
@@ -3525,40 +3563,23 @@ do
 	}
 	local function setLighting(name: string?)
 		local info = TweenInfo.new(name == "Spooky" and 3 or 2.5, Enum.EasingStyle.Sine)
-		local tint = correction :: ColorCorrectionEffect
 		local look = name and EVENT_LOOK[name]
-		if look then
-			Services.TweenService:Create(Services.Lighting, info, look.lighting):Play()
-			Services.TweenService:Create(tint, info, look.tint):Play()
-			if atmosphere then
-				Services.TweenService:Create(atmosphere, info, look.atmosphere):Play()
+		for key, target in
+			{
+				lighting = Services.Lighting,
+				tint = correction,
+				atmosphere = atmosphere,
+				bloom = bloom,
+			}
+		do
+			local values = table.clone(base[key])
+			for property, value in look and look[key] or {} do
+				values[property] = value
 			end
-		else
-			Services.TweenService
-				:Create(Services.Lighting, info, {
-					Ambient = base.Ambient,
-					OutdoorAmbient = base.OutdoorAmbient,
-					Brightness = base.Brightness,
-					ClockTime = base.ClockTime,
-				})
-				:Play()
-			Services.TweenService
-				:Create(tint, info, {
-					TintColor = Color3.new(1, 1, 1),
-					Brightness = 0,
-					Saturation = 0,
-					Contrast = 0,
-				})
-				:Play()
-			if atmosphere then
-				Services.TweenService
-					:Create(atmosphere, info, {
-						Color = base.AtmosphereColor,
-						Decay = base.AtmosphereDecay,
-						Density = base.AtmosphereDensity,
-					})
-					:Play()
+			if key == "bloom" and name == "BloodMoon" then
+				values.Intensity = 0.4
 			end
+			Services.TweenService:Create(target, info, values):Play()
 		end
 	end
 	local lastLook: string? = "none"
