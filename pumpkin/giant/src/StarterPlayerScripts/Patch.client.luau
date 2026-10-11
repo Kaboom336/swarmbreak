@@ -57,21 +57,87 @@ end
 -- Small helpers -----------------------------------------------------------------------------
 
 local sfxOn = true
+-- Prebuilt pools keep farming allocation bounded.
+local FarmFX = { freezeUntil = 0, impactAt = 0, step = 1, held = false }
+do
+	FarmFX.steps = setmetatable({}, { __mode = "k" })
+	local groups, pools = {}, {}
+	for name, volume in Config.SoundMix do
+		local group = SoundService:FindFirstChild("Patch" .. name) or Instance.new("SoundGroup")
+		group.Name, group.Volume, group.Parent = "Patch" .. name, volume, SoundService
+		groups[name] = group
+	end
+	FarmFX.groups = groups
+	for cue, id in Config.Sounds do
+		if id ~= 0 and not pools[id] and not string.find(cue, "Music") then
+			local pool = { next = 0, voices = {} }
+			pools[id] = pool
+			for i = 1, 6 do
+				local sound = Instance.new("Sound")
+				sound.Name = "Patch" .. cue .. i
+				sound.SoundId = "rbxassetid://" .. id
+				sound.SoundGroup = (cue == "Click" or cue == "Buy") and groups.UI or groups.SFX
+				sound.Parent = SoundService
+				pool.voices[i] = { sound = sound, token = 0 }
+			end
+		end
+	end
+	FarmFX.sounds = pools
+	FarmFX.particles, FarmFX.particleNext = {}, 0
+	for i = 1, 8 do
+		local holder = Instance.new("Attachment")
+		holder.Name, holder.Parent = "PatchBurst", workspace.Terrain
+		local emitter = Instance.new("ParticleEmitter")
+		emitter.Enabled, emitter.Rate = false, 0
+		emitter.LightInfluence = 0
+		emitter.Parent = holder
+		FarmFX.particles[i] = { holder = holder, emitter = emitter }
+	end
+end
 local function play(id: number, pitch: number?, volume: number?)
 	if not sfxOn or not id or id == 0 then
 		return
 	end
-	local sound = Instance.new("Sound")
-	sound.SoundId = "rbxassetid://" .. id
-	sound.PlaybackSpeed = pitch or 1
-	sound.Volume = volume or 0.8
-	sound.Parent = SoundService
+	local pool = FarmFX.sounds[id]
+	if not pool then
+		return
+	end
+	local voice
+	for _, candidate in pool.voices do
+		if not candidate.sound.IsPlaying then
+			voice = candidate
+			break
+		end
+	end
+	if not voice then
+		pool.next = pool.next % 6 + 1
+		voice = pool.voices[pool.next]
+	end
+	voice.token += 1
+	if voice.fade then
+		voice.fade:Cancel()
+		voice.fade = nil
+	end
+	local sound = voice.sound
+	sound:Stop()
+	sound.PlaybackSpeed, sound.Volume = pitch or 1, volume or 0.8
 	sound:Play()
-	sound.Ended:Once(function()
-		sound:Destroy()
-	end)
+	if id == Config.Sounds.Growl then
+		local token = voice.token
+		task.delay(1.2, function()
+			if voice.token ~= token then
+				return
+			end
+			voice.fade = TweenService:Create(sound, TweenInfo.new(0.25), { Volume = 0 })
+			voice.fade:Play()
+			task.delay(0.25, function()
+				if voice.token == token then
+					sound:Stop()
+				end
+			end)
+		end)
+	end
 end
-
 -- Short numbers: 950, 1.2k, 34.5k, 340k, 3.4M, 1.2B (rounded down so 999.96k never shows 1000k).
 local function short(n: number): string
 	for _, unit in { { 1e12, "T" }, { 1e9, "B" }, { 1e6, "M" }, { 1e3, "k" } } do
@@ -106,32 +172,31 @@ local function burst(
 	texture: string?,
 	size: number?
 )
-	local holder = Instance.new("Attachment")
-	holder.WorldPosition = at
-	holder.Parent = workspace.Terrain
-	local emitter = Instance.new("ParticleEmitter")
+	FarmFX.particleNext = FarmFX.particleNext % #FarmFX.particles + 1
+	local slot = FarmFX.particles[FarmFX.particleNext]
+	local emitter = slot.emitter
+	emitter:Clear()
+	slot.holder.WorldPosition = at
 	emitter.Texture = texture or "rbxasset://textures/particles/smoke_main.dds"
 	emitter.Color = ColorSequence.new(color)
 	local s = size or 2
 	emitter.Size = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, s),
-		NumberSequenceKeypoint.new(1, s * 2.5),
+		NumberSequenceKeypoint.new(1, 0),
 	})
-	emitter.Transparency =
-		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 1) })
-	emitter.Lifetime = NumberRange.new(0.5, 0.9)
+	emitter.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.2),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	emitter.Lifetime = NumberRange.new(0.4, 0.7)
 	emitter.Speed = NumberRange.new(speed * 0.6, speed)
-	emitter.SpreadAngle = Vector2.new(180, 25)
-	emitter.Drag = 4
+	emitter.SpreadAngle = Vector2.new(180, 180)
+	emitter.Acceleration = Vector3.new(0, -35, 0)
+	emitter.Drag = 2
 	emitter.LightEmission = texture and 1 or 0
-	emitter.Enabled = false
-	emitter.Parent = holder
-	emitter:Emit(count)
-	task.delay(1.5, function()
-		holder:Destroy()
-	end)
+	local mobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+	emitter:Emit(math.max(1, math.floor(count * (mobile and 0.5 or 1))))
 end
-
 local function floatText(at: Vector3, text: string, color: Color3, big: boolean?)
 	local anchor = Instance.new("Part")
 	anchor.Anchored = true
@@ -534,7 +599,7 @@ local function chunky(b: GuiButton): (Frame, UIStroke)
 		to(hovered and 1.08 or 1, 0.18)
 	end)
 	b.Activated:Connect(function()
-		play(Config.Sounds.Pick, 2.2, 0.35)
+		play(Config.Sounds.Click, 1, 0.35)
 		if not hovered then
 			to(1, 0.12)
 		end
@@ -1191,6 +1256,7 @@ do
 	panelDim.Visible = false
 	panelDim.Parent = dimGui
 	panelDim.Activated:Connect(function()
+		play(Config.Sounds.Click, 1, 0.35)
 		for _, f in panelFrames do
 			f.Visible = false
 		end
@@ -1346,6 +1412,7 @@ do
 		end
 	end
 	gear.Activated:Connect(function()
+		play(Config.Sounds.Click, 1, 0.35)
 		local was = frame.Visible
 		for _, f in panelFrames do
 			f.Visible = false
@@ -1573,7 +1640,7 @@ do
 			end
 			local ok, message = buyTool:InvokeServer(tool.id)
 			if ok then
-				play(Config.Sounds.Coin, 0.9, 0.8)
+				play(Config.Sounds.Buy, 1, 0.8)
 				toast(string.upper(tool.name) .. "!", short(tool.damage) .. " damage per swing")
 			else
 				b.Text = tostring(message or "?")
@@ -1621,7 +1688,7 @@ for i, id in UPGRADE_ORDER do
 	b.Activated:Connect(function()
 		local ok, message = buyUpgrade:InvokeServer(id)
 		if ok then
-			play(Config.Sounds.Coin, 0.9, 0.8)
+			play(Config.Sounds.Buy, 1, 0.8)
 			toast(info.title, info.text)
 		else
 			b.Text = message
@@ -1751,6 +1818,7 @@ do
 		music.SoundId = "rbxassetid://" .. id
 		music.Looped = true
 		music.Volume = 0
+		music.SoundGroup = FarmFX.groups.Music
 		music.Parent = SoundService
 		music:Play()
 		tracks[phase] = music
@@ -1917,7 +1985,7 @@ local function onNodeClicked(node: SkillNode)
 	local ok, message = buySkill:InvokeServer(skill.id)
 	buyingSkill = false
 	if ok then
-		play(Config.Sounds.Brew, 1.3, 0.8)
+		play(Config.Sounds.Buy, 1, 0.8)
 		toast(skill.title .. "!", skill.text)
 	else
 		node.status.Text = tostring(message or "?")
@@ -1988,6 +2056,7 @@ for b, branch in Config.SkillBranches do
 		}
 		table.insert(skillNodes, node)
 		nodeButton.Activated:Connect(function()
+			play(Config.Sounds.Click, 1, 0.35)
 			onNodeClicked(node)
 		end)
 	end
@@ -2220,7 +2289,7 @@ for name in Config.GamePasses do
 					toast(item.title .. "!", item.text)
 				end
 			end
-			play(Config.Sounds.Coin, 0.8, 1)
+			play(Config.Sounds.Buy, 1, 0.8)
 		end
 	end)
 end
@@ -2429,15 +2498,10 @@ remotes:WaitForChild("Announce").OnClientEvent:Connect(function(text: string)
 			5,
 			Color3.fromRGB(235, 105, 205)
 		)
-		-- Alternate the existing alarm sound's pitch for a siren, using already shipped audio.
-		for i = 1, 6 do
-			task.delay((i - 1) * 0.4, function()
-				play(Config.Sounds.Roar, i % 2 == 0 and 1.3 or 0.65, 0.6)
-			end)
-		end
+		play(Config.Sounds.Reveal, 1, 0.6)
 	elseif text == "PUMPKIN KING RISES! PET + LOOT!" then
 		banner(text, nil, 3, Color3.fromRGB(255, 80, 70))
-		play(Config.Sounds.Roar, 0.6, 1)
+		play(Config.Sounds.Growl, 1, 0.9)
 	else
 		toast(text)
 	end
@@ -2589,7 +2653,7 @@ do
 				{ BackgroundTransparency = 1 }
 			):Play()
 		end
-		play(Config.Sounds.Brew, isNew and 1.5 or 1.2, 0.8)
+		play(Config.Sounds.Reveal, isNew and 1.08 or 1, 0.8)
 		task.wait(Config.RevealFlash)
 		TweenService:Create(blur, TweenInfo.new(0.3), { Size = 18 }):Play()
 		if kind == "jack" and seed.order >= 3 then
@@ -2782,6 +2846,7 @@ do
 		end
 		local shownAt = os.clock()
 		catcher.Activated:Connect(function()
+			play(Config.Sounds.Click, 1, 0.35)
 			if os.clock() - shownAt >= 1 then
 				close()
 			end
@@ -3372,7 +3437,7 @@ do
 	local lastSwing = 0
 	-- The idle Grip of each tool (the server's value) and the swing currently playing on it.
 	local idleGrip: { [Tool]: CFrame } = setmetatable({}, { __mode = "k" }) :: any
-	local swingId: { [Tool]: number } = setmetatable({}, { __mode = "k" }) :: any
+
 	-- The hand frame is the arm frame turned -90 on X; poses rotate the idle hold around the hand
 	-- in the arm frame (pitch < 0 tips the upright scythe's top forward and down; with the arm
 	-- raised forward, roll turns it around the vertical, sweeping the blade across).
@@ -3382,56 +3447,128 @@ do
 		return base * HAND:Inverse() * rot:Inverse() * HAND
 	end
 	-- Wind up high and to the right, slash down and across to the left, settle back.
-	local KEYS = {
-		{ 0, 0, 0 },
-		{ 0.08, 38, -32 },
-		{ 0.18, -112, 34 },
-		{ 0.27, -88, 20 },
-		{ 0.42, 0, 0 },
+	local SWINGS = {
+		{ { 0, 0, 0 }, { 0.08, 38, -32 }, { 0.18, -112, 34 }, { 0.27, -88, 20 }, { 0.42, 0, 0 } },
+		{ { 0, 0, 0 }, { 0.08, 38, 32 }, { 0.18, -112, -34 }, { 0.27, -88, -20 }, { 0.42, 0, 0 } },
+		{ { 0, 0, 0 }, { 0.12, -150, 0 }, { 0.22, 20, 0 }, { 0.30, 10, 0 }, { 0.50, 0, 0 } },
 	}
-	local function swingTool(tool: Tool)
-		local base = idleGrip[tool]
-		if not base then
-			base = tool.Grip
-			idleGrip[tool] = base
+	local chains = setmetatable({}, { __mode = "k" })
+	local active = setmetatable({}, { __mode = "k" })
+	local function swingTool(tool: Tool, localSwing: boolean?)
+		if active[tool] then
+			active[tool]()
 		end
-		local id = (swingId[tool] or 0) + 1
-		swingId[tool] = id
+		local now = os.clock()
+		local chain = chains[tool]
+		local step = chain and now - chain.at <= Config.Farm.chainWindow and chain.step % 3 + 1 or 1
+		chains[tool] = { at = now, step = step }
+		local keys = SWINGS[step]
+		local base = idleGrip[tool] or tool.Grip
+		idleGrip[tool] = base
+		local character = tool.Parent
+		local owner = Players:GetPlayerFromCharacter(character)
+		if owner then
+			FarmFX.steps[owner] = step
+		end
+		local shoulder
+		for _, joint in character:GetDescendants() do
+			if
+				joint:IsA("Motor6D")
+				and (joint.Name == "RightShoulder" or joint.Name == "Right Shoulder")
+			then
+				shoulder = joint
+				break
+			end
+		end
+		local armBase = shoulder and shoulder.C0
 		local trail = tool:FindFirstChild("SwingTrail", true) :: Trail?
-		local started = os.clock()
+		local width = trail and trail.WidthScale
+		if trail and step == 3 then
+			local points = {}
+			for _, key in width.Keypoints do
+				table.insert(
+					points,
+					NumberSequenceKeypoint.new(key.Time, key.Value * 1.6, key.Envelope * 1.6)
+				)
+			end
+			trail.WidthScale = NumberSequence.new(points)
+		end
+		local target = localSwing and FarmFX.target and FarmFX.target()
+		local targetAt = target and target.Position
+		local wouldBreak = target and FarmFX.breaks and FarmFX.breaks(target)
+		local hitFrame = step == 3 and 0.22 or 0.16
+		if localSwing then
+			FarmFX.step, FarmFX.impactAt = step, now + hitFrame
+			FarmFX.hasImpact, FarmFX.snapshot = false, target
+		end
+		local clock, impacted = 0, false
 		local conn: RBXScriptConnection
-		conn = RunService.RenderStepped:Connect(function()
-			if swingId[tool] ~= id or not tool.Parent then
-				conn:Disconnect()
+		local function finish()
+			conn:Disconnect()
+			tool.Grip = base
+			if shoulder and shoulder.Parent then
+				shoulder.C0 = armBase
+			end
+			if trail then
+				trail.Enabled, trail.WidthScale = false, width
+			end
+			active[tool] = nil
+		end
+		active[tool] = finish
+		conn = RunService.RenderStepped:Connect(function(dt)
+			if tool.Parent ~= character or not character.Parent then
+				finish()
 				return
 			end
-			local t = os.clock() - started
-			local last = KEYS[#KEYS]
-			if t >= last[1] then
-				tool.Grip = base
-				if trail then
-					trail.Enabled = false
+			local tnow = os.clock()
+			local paused = localSwing and math.clamp(FarmFX.freezeUntil - (tnow - dt), 0, dt) or 0
+			clock += dt - paused
+			if localSwing and FarmFX.hasImpact then
+				impacted = true
+			end
+			if localSwing and not impacted and clock >= hitFrame then
+				impacted = true
+				-- Re-evaluate at impact; retain the start snapshot if the server already broke it.
+				local current = FarmFX.target and FarmFX.target()
+				if target and not target.Parent then
+					current = target
 				end
-				conn:Disconnect()
+				if current and FarmFX.impact then
+					FarmFX.impact(
+						current,
+						current.Parent and current.Position or targetAt,
+						step,
+						current == target and wouldBreak
+					)
+				end
+			end
+			if clock >= keys[#keys][1] then
+				finish()
 				return
 			end
-			for k = 1, #KEYS - 1 do
-				local a, b = KEYS[k], KEYS[k + 1]
-				if t < b[1] then
-					local f = (t - a[1]) / (b[1] - a[1])
+			for k = 1, #keys - 1 do
+				local a, b = keys[k], keys[k + 1]
+				if clock < b[1] then
+					local f = math.clamp((clock - a[1]) / (b[1] - a[1]), 0, 1)
 					f = f * f * (3 - 2 * f)
-					tool.Grip = pose(base, a[2] + (b[2] - a[2]) * f, a[3] + (b[3] - a[3]) * f)
+					local pitch, roll = a[2] + (b[2] - a[2]) * f, a[3] + (b[3] - a[3]) * f
+					tool.Grip = pose(base, pitch, roll)
+					if shoulder then
+						shoulder.C0 = armBase
+							* CFrame.Angles(
+								math.rad(pitch * 0.55),
+								math.rad(roll * 0.35),
+								math.rad(roll * 0.7)
+							)
+					end
 					break
 				end
 			end
-			-- The white arc only during the slash itself.
 			if trail then
-				local on = t >= 0.07 and t <= 0.3
-				if trail.Enabled ~= on then
-					trail.Enabled = on
-				end
+				trail.Enabled = clock >= 0.07 and clock <= 0.3
 			end
 		end)
+		return step
 	end
 	-- Equipping re-parents the tool into the character (ChildAdded again): hook each tool once.
 	local hookedTools: { [Tool]: boolean } = setmetatable({}, { __mode = "k" }) :: any
@@ -3443,7 +3580,7 @@ do
 		if not idleGrip[tool] then
 			idleGrip[tool] = tool.Grip
 		end
-		tool.Activated:Connect(function()
+		local function attempt()
 			if (player:GetAttribute("Carry") or 0) > 0 then
 				return
 			end
@@ -3464,12 +3601,49 @@ do
 				return
 			end
 			lastSwing = now
-			swingTool(tool)
-			play(Config.Sounds.Whoosh, 0.9 + math.random() * 0.25, 0.5)
+			local step = swingTool(tool, true)
+			play(Config.Sounds.Whoosh, ({ 1, 1.08, 0.85 })[step], 0.5)
 			bonkEvent:FireServer()
+		end
+		FarmFX.attempts = FarmFX.attempts or setmetatable({}, { __mode = "k" })
+		FarmFX.attempts[tool] = attempt
+		tool.Activated:Connect(function()
+			FarmFX.held = true
+			attempt()
+		end)
+		tool.Deactivated:Connect(function()
+			FarmFX.held = false
+		end)
+		tool.Unequipped:Connect(function()
+			FarmFX.held = false
+			if active[tool] then
+				active[tool]()
+			end
 		end)
 	end
+	RunService.Heartbeat:Connect(function()
+		if not FarmFX.held then
+			return
+		end
+		local tool = player.Character and player.Character:FindFirstChild("Scythe")
+		local attempt = tool and FarmFX.attempts and FarmFX.attempts[tool]
+		if attempt then
+			attempt()
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if
+			input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch
+		then
+			FarmFX.held = false
+		end
+	end)
+	UserInputService.WindowFocusReleased:Connect(function()
+		FarmFX.held = false
+	end)
 	local function hookCharacter(character: Model)
+		FarmFX.held = false
 		character.ChildAdded:Connect(hookTool)
 		for _, child in character:GetChildren() do
 			hookTool(child)
@@ -3499,8 +3673,20 @@ do
 	remotes:WaitForChild("Swing").OnClientEvent:Connect(function(who: Player)
 		if who ~= player then
 			local tool = who.Character and who.Character:FindFirstChild("Scythe")
-			if tool then
-				swingTool(tool :: Tool)
+			if
+				tool
+				and who.Character
+				and (
+						who.Character:GetPivot().Position
+						- (
+							workspace.CurrentCamera and workspace.CurrentCamera.CFrame.Position
+							or Vector3.zero
+						)
+					).Magnitude
+					<= 60
+			then
+				local step = swingTool(tool :: Tool)
+				play(Config.Sounds.Whoosh, ({ 1, 1.08, 0.85 })[step], 0.25)
 			end
 		end
 	end)
@@ -3541,155 +3727,119 @@ remotes
 		end
 	end)
 
--- Wild pumpkins (Pet Sim 99 farming feel). Each hit: a white flash (Highlight, 0.08 s), a
--- squash to 90 % and back, sparkles and, for the hitter, a damage number. A pop bursts 8 candy
--- pieces that magnet into the hitter in 0.4 s, then the candy counter punches with "+N".
--- HP bars (made hidden by the server) show only on your target or on what you hit lately.
+-- Pet Sim 99 impact timing: predict visuals, reconcile HP from the server, pool farming FX.
+-- Candy flies in screen space to the scaled HUD counter; only server pop events show rewards.
 do
 	local wildFolder = garden:WaitForChild("Wild", 10)
-	local hitAt: { [Instance]: number } = setmetatable({}, { __mode = "k" }) :: any
-	local rest: { [BasePart]: { size: Vector3, cf: CFrame } } = setmetatable({}, { __mode = "k" }) :: any
-
-	local function juice(part: BasePart)
+	local hitAt = setmetatable({}, { __mode = "k" })
+	local predicted = setmetatable({}, { __mode = "k" })
+	local rest = setmetatable({}, { __mode = "k" })
+	local squashes, shards, candies, flashes = {}, {}, {}, {}
+	local shardNext, flashNext, collectAt, collectStep = 0, 0, -math.huge, 0
+	local mobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+	local goldWash = Instance.new("Frame")
+	goldWash.Name = "GoldenBreakFlash"
+	goldWash.Size = UDim2.fromScale(1, 1)
+	goldWash.BackgroundColor3 = Color3.fromRGB(255, 220, 60)
+	goldWash.BackgroundTransparency, goldWash.BorderSizePixel = 1, 0
+	goldWash.ZIndex, goldWash.Parent = 10, gui
+	local goldUntil = 0
+	for i = 1, 24 do
+		local part = Instance.new("Part")
+		part.Name, part.Size = "PumpkinChunk", Vector3.one * 0.5
+		part.Anchored, part.CanCollide, part.CanQuery, part.CanTouch = true, false, false, false
+		part.CastShadow, part.Transparency = false, 1
+		part.Color = Color3.fromRGB(255, 122, 26)
+		part.Parent = workspace
+		shards[i] = { part = part }
+	end
+	for i = 1, 60 do
+		local label = Instance.new("Frame")
+		label.Name = "FlyingCandy"
+		label.AnchorPoint = Vector2.new(0.5, 0.5)
+		label.Size = UDim2.fromOffset(9, 9)
+		label.BorderSizePixel, label.Visible = 0, false
+		label.ZIndex, label.Parent = 20, gui
+		candies[i] = { label = label }
+	end
+	for i = 1, 4 do
 		local flash = Instance.new("Highlight")
-		flash.FillColor = Color3.new(1, 1, 1)
-		flash.FillTransparency = 0
-		flash.OutlineColor = Color3.new(1, 1, 1)
-		flash.OutlineTransparency = 0
-		flash.DepthMode = Enum.HighlightDepthMode.Occluded
-		flash.Parent = part
-		task.delay(0.08, function()
-			flash:Destroy()
-		end)
-		-- The server never resizes a wild pumpkin, so the local squash is safe.
+		flash.Name, flash.Enabled = "PumpkinHitFlash", false
+		flash.FillColor, flash.OutlineColor = Color3.new(1, 1, 1), Color3.new(1, 1, 1)
+		flash.FillTransparency, flash.OutlineTransparency = 0, 1
+		flash.DepthMode, flash.Parent = Enum.HighlightDepthMode.Occluded, workspace
+		flashes[i] = { flash = flash }
+	end
+	local function nearby(who: Player?, at: Vector3): boolean
+		local camera = workspace.CurrentCamera
+		return who == player or (camera ~= nil and (camera.CFrame.Position - at).Magnitude <= 60)
+	end
+	local function chunks(at: Vector3, count: number)
+		for _ = 1, mobile and math.ceil(count / 2) or count do
+			shardNext = shardNext % #shards + 1
+			local slot = shards[shardNext]
+			local angle = math.random() * math.pi * 2
+			slot.at, slot.started = at, os.clock()
+			slot.velocity =
+				Vector3.new(math.cos(angle) * 9, 8 + math.random() * 5, math.sin(angle) * 9)
+			slot.part.Transparency = 0
+			slot.part.CFrame = CFrame.new(at)
+		end
+	end
+	local function baseline(part: BasePart)
 		local r = rest[part]
 		if not r then
-			r = { size = part.Size, cf = part.CFrame }
+			r = { size = part.Size, cf = part.CFrame, color = part.Color, stage = 0 }
 			rest[part] = r
 		end
-		part.Size, part.CFrame = r.size, r.cf
-		local info = TweenInfo.new(0.07, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, true)
-		TweenService:Create(part, info, {
-			Size = r.size * Vector3.new(1.08, 0.9, 1.08),
-			CFrame = r.cf * CFrame.new(0, -r.size.Y * 0.05, 0),
-		}):Play()
+		return r
 	end
-
-	remotes
-		:WaitForChild("WildHit").OnClientEvent
-		:Connect(function(who: Player, at: Vector3, damage: number, part: BasePart?, crit: boolean?)
-			burst(at + Vector3.new(0, 1, 0), Color3.fromRGB(255, 160, 60), 6, 10, SPARKLE, 0.5)
-			if part and part.Parent then
-				juice(part)
-			end
-			if who == player then
-				if part then
-					hitAt[part] = os.clock()
-				end
-				local top = part and part.Parent and part.Size.Y / 2 or 1.5
-				local jitter =
-					Vector3.new((math.random() - 0.5) * 2.5, top + 1, (math.random() - 0.5) * 2.5)
-				damageText(at + jitter, damage, crit and ORANGE or Color3.new(1, 1, 1))
-				play(Config.Sounds.Bonk, 1.1 + math.min(combo, 10) * 0.03, 0.55)
-				countHit(at)
-			end
-		end)
-
-	local CANDY_COLORS = {
-		Color3.fromRGB(255, 90, 170),
-		Color3.fromRGB(255, 210, 60),
-		Color3.fromRGB(120, 230, 255),
-		Color3.fromRGB(150, 255, 110),
-		Color3.fromRGB(255, 140, 40),
-	}
-	-- Small neon candies jump out of the pumpkin, then home in on the player's chest.
-	local function candyBurst(at: Vector3, count: number)
-		local landed = 0
-		for i = 1, count do
-			local candy = Instance.new("Part")
-			candy.Name = "CandyBit"
-			candy.Shape = i % 2 == 0 and Enum.PartType.Ball or Enum.PartType.Block
-			candy.Size = Vector3.one * (0.45 + math.random() * 0.2)
-			candy.Material = Enum.Material.Neon
-			candy.Color = CANDY_COLORS[(i - 1) % #CANDY_COLORS + 1]
-			candy.Anchored = true
-			candy.CanCollide = false
-			candy.CanQuery = false
-			candy.CanTouch = false
-			candy.CastShadow = false
-			candy.CFrame = CFrame.new(at)
-			candy.Parent = workspace
-			local a = (i / count) * math.pi * 2 + math.random() * 0.5
-			local out = at
-				+ Vector3.new(math.cos(a) * 3, 2.5 + math.random() * 1.5, math.sin(a) * 3)
-			local spin = CFrame.Angles(math.random() * 6, math.random() * 6, math.random() * 6)
-			local t0 = os.clock()
-			local conn: RBXScriptConnection
-			conn = RunService.RenderStepped:Connect(function()
-				local t = os.clock() - t0
-				local root = rootPart()
-				local goal = root and root.Position + Vector3.new(0, 1, 0) or at
-				local p: Vector3
-				if t < 0.15 then
-					-- Pop out (ease out).
-					local f = t / 0.15
-					p = at:Lerp(out, 1 - (1 - f) * (1 - f))
-				else
-					-- Magnet in over 0.4 s (ease in).
-					local f = math.min(1, (t - 0.15) / 0.4)
-					p = out:Lerp(goal, f * f)
-				end
-				candy.CFrame = CFrame.new(p) * spin * CFrame.Angles(t * 9, t * 7, 0)
-				if t >= 0.55 then
-					conn:Disconnect()
-					candy:Destroy()
-					landed += 1
-					if landed == 1 then
-						play(Config.Sounds.Coin, 1.3 + math.random() * 0.2, 0.45)
-					end
-					if landed == count then
-						-- The "+N" already popped when the candy arrived; just punch the counter.
-						candyTick(0)
-					end
-				end
-			end)
+	local function crack(part: BasePart, hp: number?, maxHp: number?)
+		local r = baseline(part)
+		local fraction = (hp or part:GetAttribute("Hp") or 1)
+			/ math.max(1, maxHp or part:GetAttribute("MaxHp") or 1)
+		r.stage = fraction <= 0.33 and 2 or (fraction <= 0.66 and 1 or 0)
+		part.Color = r.color:Lerp(Color3.new(0, 0, 0), r.stage * 0.15)
+	end
+	local function juice(part: BasePart, step: number, stop: number)
+		local r = baseline(part)
+		flashNext = flashNext % #flashes + 1
+		local slot = flashes[flashNext]
+		slot.flash.Adornee, slot.flash.Enabled, slot.ends = part, true, os.clock() + 0.08 + stop
+		squashes[part] = { clock = 0, untilAt = os.clock() + stop, step = step }
+		part.Size = r.size * Vector3.new(1.08, step == 3 and 0.85 or 0.9, 1.08)
+		if r.stage == 2 then
+			chunks(r.cf.Position, 2)
 		end
 	end
-
-	remotes
-		:WaitForChild("WildPopped").OnClientEvent
-		:Connect(function(at: Vector3, seedId: string, winner: Player?, candy: number?)
-			local seed = seedById[seedId or ""]
-			local color = seed and seedColor(seed) or Color3.fromRGB(255, 130, 40)
-			burst(at, color, 26, 24, SPARKLE, 1.1)
-			burst(at, color, 14, 10, nil, 2.2)
-			play(Config.Sounds.Pick, 1.3, 0.7)
-			if winner == player and seed then
-				candyBurst(at + Vector3.new(0, 1, 0), math.random(6, 10))
-				floatText(
-					at + Vector3.new(0, 4, 0),
-					"+" .. short(candy or 0) .. " 🍬",
-					color,
-					seed.order >= 3
-				)
-				task.spawn(shake, 0.4, 5)
-			end
-		end)
-
-	-- The pumpkin your next swing would hit: same reach and facing rule as the server.
-	local function currentTarget(root: BasePart): Instance?
-		local look = root.CFrame.LookVector
-		local best, bestDist = nil, math.huge
+	local function currentTarget(): BasePart?
+		local root = rootPart()
+		if not root then
+			return nil
+		end
+		local look, best, bestDist = root.CFrame.LookVector, nil, math.huge
 		for _, part in wildFolder and wildFolder:GetChildren() or {} do
 			if part:IsA("BasePart") then
-				local offset = part.Position - root.Position
+				local r = rest[part]
+				local offset = (r and r.cf.Position or part.Position) - root.Position
 				local flat = Vector3.new(offset.X, 0, offset.Z)
-				local dist = math.max(0, flat.Magnitude - part.Size.X / 2)
+				local dist = math.max(0, flat.Magnitude - (r and r.size.X or part.Size.X) / 2)
+				local zone = part:GetAttribute("Zone")
+				local ownsZone = zone == "Zone1"
+					or string.find(
+							"," .. (player:GetAttribute("Zones") or "") .. ",",
+							"," .. tostring(zone) .. ",",
+							1,
+							true
+						)
+						~= nil
+				-- The server still validates access, reach, damage and all rewards.
 				if
-					math.abs(offset.Y) < 12
+					ownsZone
+					and math.abs(offset.Y) < 12
 					and dist <= Config.BonkRange
 					and dist < bestDist
-					and (flat.Magnitude < 3 or flat.Unit:Dot(look) > -0.2)
+					and (flat.Magnitude < 0.1 or flat.Unit:Dot(look) > -0.2)
 				then
 					best, bestDist = part, dist
 				end
@@ -3697,27 +3847,234 @@ do
 		end
 		return best
 	end
-
+	FarmFX.target = currentTarget
+	function FarmFX.breaks(part: BasePart): boolean
+		local damage = 1
+		for _, tool in Config.Tools do
+			if tool.id == player:GetAttribute("Tool") then
+				damage = tool.damage
+				break
+			end
+		end
+		if string.find(player:GetAttribute("Skills") or "", "HeavyMallet", 1, true) then
+			damage = math.max(1, math.floor(damage * Config.SkillDamageMult + 0.5))
+		end
+		return (part:GetAttribute("Hp") or math.huge) <= damage
+	end
+	function FarmFX.impact(part: BasePart, at: Vector3?, step: number, breaking: boolean?)
+		if not at or os.clock() - (predicted[part] or -math.huge) < 0.3 then
+			return
+		end
+		predicted[part], hitAt[part] = os.clock(), os.clock()
+		FarmFX.hasImpact = true
+		if breaking == nil and part.Parent then
+			breaking = FarmFX.breaks(part)
+		end
+		local stop = step == 3 and 0.13 or (breaking and 0.11 or 0.045)
+		FarmFX.freezeUntil = math.max(FarmFX.freezeUntil, os.clock() + stop)
+		play(({ Config.Sounds.HitA, Config.Sounds.HitB, Config.Sounds.HitC })[step], 1, 0.55)
+		burst(at + Vector3.new(0, 1, 0), ORANGE, 6, 10, SPARKLE, 0.5)
+		shake((step == 3 and 0.6 or 0.12) * (mobile and 0.6 or 1), step == 3 and 6 or 4)
+		if part.Parent then
+			juice(part, step, stop)
+		end
+	end
+	local function candyBurst(at: Vector3, count: number)
+		local camera = workspace.CurrentCamera
+		if not camera then
+			return
+		end
+		local projected = camera:WorldToViewportPoint(at)
+		local start = Vector2.new(projected.X, projected.Y) / uiScale.Scale
+		local used = 0
+		for _, slot in candies do
+			if not slot.started then
+				used += 1
+				slot.started, slot.at = os.clock() + (used - 1) * 0.035, start
+				slot.out = start
+					+ Vector2.new((math.random() - 0.5) * 130, -45 - math.random() * 45)
+				slot.label.BackgroundColor3 = ({
+					Color3.fromRGB(255, 90, 170),
+					Color3.fromRGB(255, 210, 60),
+					Color3.fromRGB(120, 230, 255),
+					Color3.fromRGB(150, 255, 110),
+					ORANGE,
+				})[(used - 1) % 5 + 1]
+				slot.label.Position, slot.label.Visible = UDim2.fromOffset(start.X, start.Y), true
+				if used >= (mobile and math.ceil(count / 2) or count) then
+					break
+				end
+			end
+		end
+		-- Overflow merges into the candy already flying; never allocates another instance.
+	end
+	RunService.RenderStepped:Connect(function(dt)
+		local now = os.clock()
+		goldWash.BackgroundTransparency = goldUntil > now
+				and 1 - 0.3 * math.clamp((goldUntil - now) / 0.12, 0, 1)
+			or 1
+		for part, anim in squashes do
+			local r = rest[part]
+			if not part.Parent then
+				squashes[part] = nil
+			else
+				local hold = math.max(anim.untilAt, FarmFX.freezeUntil)
+				anim.clock += dt - math.clamp(hold - (now - dt), 0, dt)
+				local f = math.clamp(anim.clock / 0.18, 0, 1)
+				local k = math.sin((1 - f) * math.pi * 0.5)
+				part.Size = r.size
+					* Vector3.new(
+						1 + 0.08 * k,
+						1 - (anim.step == 3 and 0.15 or 0.1) * k,
+						1 + 0.08 * k
+					)
+				local wobble = r.stage > 0 and math.sin(f * (r.stage == 2 and 45 or 24)) * (1 - f)
+					or 0
+				part.CFrame = r.cf
+					* CFrame.new(wobble * (r.stage == 2 and 0.25 or 0.12), -r.size.Y * 0.05 * k, 0)
+					* CFrame.Angles(0, 0, wobble * 0.12)
+				if f >= 1 then
+					part.Size, part.CFrame = r.size, r.cf
+					squashes[part] = nil
+				end
+			end
+		end
+		for _, slot in flashes do
+			if slot.ends and now >= slot.ends then
+				slot.flash.Enabled, slot.flash.Adornee, slot.ends = false, nil, nil
+			end
+		end
+		for _, slot in shards do
+			if slot.started then
+				local t = now - slot.started
+				slot.part.CFrame = CFrame.new(
+					slot.at + slot.velocity * t + Vector3.new(0, -25 * t * t, 0)
+				) * CFrame.Angles(t * 8, t * 6, t * 4)
+				slot.part.Transparency = math.clamp((t - 0.3) / 0.2, 0, 1)
+				if t >= 0.5 then
+					slot.started = nil
+					slot.part.Transparency = 1
+				end
+			end
+		end
+		for _, slot in candies do
+			if slot.started then
+				local t = math.max(0, now - slot.started)
+				local goal = (candyBig.AbsolutePosition + candyBig.AbsoluteSize / 2) / uiScale.Scale
+				local p = t < 0.15 and slot.at:Lerp(slot.out, 1 - (1 - t / 0.15) ^ 2)
+					or slot.out:Lerp(goal, math.clamp((t - 0.15) / 0.4, 0, 1) ^ 2)
+				slot.label.Position = UDim2.fromOffset(p.X, p.Y)
+				slot.label.Rotation = t * 540
+				if t >= 0.55 then
+					slot.started, slot.label.Visible = nil, false
+					collectStep = now - collectAt <= 1 and math.min(7, collectStep + 1) or 0
+					collectAt = now
+					play(Config.Sounds.CandyTick, 2 ^ (collectStep / 12), 0.45)
+					candyTick(0)
+				end
+			end
+		end
+	end)
+	remotes:WaitForChild("WildHit").OnClientEvent:Connect(
+		function(
+			who: Player,
+			at: Vector3,
+			damage: number,
+			part: BasePart?,
+			crit: boolean?,
+			hp: number?,
+			maxHp: number?
+		)
+			if not nearby(who, at) then
+				return
+			end
+			local step = who == player and FarmFX.step or (FarmFX.steps[who] or 1)
+			local delayFor = who == player and math.max(0, FarmFX.impactAt - os.clock()) or 0
+			task.delay(delayFor, function()
+				if part and part.Parent then
+					crack(part, hp, maxHp)
+				end
+				if who == player then
+					if part then
+						FarmFX.impact(part, at, step, hp == 0)
+						hitAt[part] = os.clock()
+					end
+					damageText(
+						at + Vector3.new((math.random() - 0.5) * 2.5, 3, 0),
+						damage,
+						crit and ORANGE or Color3.new(1, 1, 1)
+					)
+					countHit(at)
+				else
+					burst(at, ORANGE, 3, 10, SPARKLE, 0.5)
+					play(
+						({ Config.Sounds.HitA, Config.Sounds.HitB, Config.Sounds.HitC })[step],
+						1,
+						0.3
+					)
+					if part and part.Parent then
+						juice(part, step, step == 3 and 0.13 or 0.045)
+					end
+				end
+			end)
+		end
+	)
+	remotes
+		:WaitForChild("WildPopped").OnClientEvent
+		:Connect(function(at: Vector3, seedId: string, winner: Player?, candy: number?)
+			if not nearby(winner, at) then
+				return
+			end
+			local delayFor = winner == player and math.max(0, FarmFX.impactAt - os.clock()) or 0
+			task.delay(delayFor, function()
+				local seed = seedById[seedId or ""]
+				local color = seed and seedColor(seed) or ORANGE
+				if winner == player then
+					if FarmFX.snapshot then
+						FarmFX.impact(FarmFX.snapshot, at, FarmFX.step, true)
+					end
+					FarmFX.hasImpact = true
+				end
+				burst(at, color, winner == player and 26 or 13, 24, SPARKLE, 1.1)
+				burst(at, ORANGE, winner == player and 8 or 4, 16, nil, 0.8)
+				chunks(at, 6)
+				play(Config.Sounds.Break, 1, 0.7)
+				if seedId == "Golden" then
+					play(Config.Sounds.Reveal, 1.2, 0.4)
+					if winner == player then
+						goldUntil = os.clock() + 0.12
+					end
+				end
+				if winner == player then
+					FarmFX.freezeUntil = math.max(
+						FarmFX.freezeUntil,
+						os.clock() + (FarmFX.step == 3 and 0.13 or 0.11)
+					)
+					candyBurst(at + Vector3.new(0, 1, 0), 8)
+					floatText(
+						at + Vector3.new(0, 4, 0),
+						"+" .. short(candy or 0) .. " 🍬",
+						color,
+						seed and seed.order >= 3
+					)
+					shake(0.4 * (mobile and 0.6 or 1), 5)
+				end
+			end)
+		end)
 	task.spawn(function()
 		while true do
 			task.wait(0.1)
-			local root = rootPart()
-			local target = root and currentTarget(root)
-			local now = os.clock()
+			local target, now = currentTarget(), os.clock()
 			for _, part in wildFolder and wildFolder:GetChildren() or {} do
 				local bar = part:FindFirstChild("HpBar")
 				if bar and bar:IsA("BillboardGui") then
-					local want = part == target
+					bar.Enabled = part == target
 						or now - (hitAt[part] or -math.huge) < Config.HitBarSeconds
-					if bar.Enabled ~= want then
-						bar.Enabled = want
-					end
 				end
 			end
 		end
 	end)
 end
-
 remotes:WaitForChild("Harvested").OnClientEvent:Connect(function(who: Player, at: Vector3)
 	burst(at + Vector3.new(0, 1.5, 0), Color3.fromRGB(255, 200, 90), 20, 14, SPARKLE, 0.8)
 	burst(at + Vector3.new(0, 1, 0), Color3.fromRGB(255, 130, 40), 12, 11, SPARKLE, 0.5)
@@ -3876,7 +4233,7 @@ remotes:WaitForChild("Stomp").OnClientEvent:Connect(function(kind: string, circl
 			20
 		)
 	end
-	play(Config.Sounds.Bonk, kind == "Slam" and 0.45 or 0.7, 1)
+	play(Config.Sounds.HitC, kind == "Slam" and 0.85 or 1, 1)
 	local fromKing = root
 		and Vector3.new(
 			root.Position.X - kingFace.Position.X,
@@ -3906,7 +4263,7 @@ remotes
 			)
 			burst(kingFace.Position, Color3.fromRGB(255, 220, 120), 120, 60, SPARKLE, 2.4)
 			burst(kingFace.Position, Color3.fromRGB(255, 140, 40), 40, 30)
-			play(Config.Sounds.Coin, 0.8, 1)
+			play(Config.Sounds.Reveal, 1, 0.8)
 			task.spawn(shake, 2, 14)
 			local camera = workspace.CurrentCamera
 			camera.FieldOfView = 90
@@ -3937,7 +4294,7 @@ remotes
 			play(Config.Sounds.Brew, 0.6, 1)
 		elseif kind == "stun" then
 			toast("HE'S STUNNED! SMASH HIM!", "Double damage!")
-			play(Config.Sounds.Bonk, 0.5, 1)
+			play(Config.Sounds.Growl, 1, 0.9)
 			task.spawn(shake, 1, 8)
 		elseif kind == "phase3" then
 			toast("THE KING IS ANGRY!", "Faster attacks. Finish him!")
@@ -4159,7 +4516,7 @@ do
 				local def = Config.Zones[zoneId]
 				if def and now[zoneId] and not known[zoneId] and (def.cost or 0) > 0 then
 					toast(string.upper(def.title) .. " UNLOCKED!", "New pumpkins to smash inside!")
-					play(Config.Sounds.Coin, 0.8, 1)
+					play(Config.Sounds.Buy, 1, 0.8)
 				end
 			end
 		end
@@ -4958,7 +5315,7 @@ do
 					tostring(b)
 				)
 			)
-			play(Config.Sounds.Bonk, 0.5, 1)
+			play(Config.Sounds.Growl, 1, 0.9)
 			for k = 0, 1 do
 				task.delay(k * 0.45, function()
 					flash.BackgroundTransparency = 0.45
@@ -5343,6 +5700,7 @@ end)
 
 -- Mobile SWING button that swings the scythe you hold.
 ContextActionService:BindAction("Bonk", function(_, inputState)
+	FarmFX.held = inputState == Enum.UserInputState.Begin
 	if inputState == Enum.UserInputState.Begin then
 		local character = player.Character
 		local tool = character and character:FindFirstChild("Scythe") :: Tool?
@@ -5810,10 +6168,22 @@ end)
 -- pumpkin: shake, RUN!!), "bonk" (the guardian caught you), "safe" (it gave up) and "deliver" (you
 -- placed it: confetti; the server also sends a reveal card). -----------------------------------
 
-remotes:WaitForChild("GuardianWake").OnClientEvent:Connect(function()
-	shake(0.8, 12)
-	hint("The guard woke up! Bring it to your pen!")
-end)
+remotes
+	:WaitForChild("GuardianWake").OnClientEvent
+	:Connect(function(model: Model?, _full: boolean?, thief: Player?)
+		local camera = workspace.CurrentCamera
+		if
+			model
+			and camera
+			and (model:GetPivot().Position - camera.CFrame.Position).Magnitude <= 60
+		then
+			play(Config.Sounds.Growl, 1, 0.9)
+		end
+		if thief == player then
+			shake(0.8, 12)
+			hint("The guard woke up! Bring it to your pen!")
+		end
+	end)
 
 remotes:WaitForChild("Hoard").OnClientEvent:Connect(function(kind: string, seedId: string?)
 	local seed = seedById[seedId or ""]
@@ -5836,15 +6206,15 @@ remotes:WaitForChild("Hoard").OnClientEvent:Connect(function(kind: string, seedI
 				true
 			)
 		end
-		play(Config.Sounds.Bonk, 0.6, 1)
+		play(Config.Sounds.HitC, 0.85, 1)
 		task.spawn(shake, 1.6, 12)
 	elseif kind == "safe" then
 		hint("You got away! The guardian gives up. Place it on your base!")
 	elseif kind == "deliver" then
 		hint(string.format('You stole a <font color="#FFD23C">%s PUMPKIN</font>!', name))
 		confetti()
-		play(Config.Sounds.Coin, 0.8, 1)
-		play(Config.Sounds.Brew, 1.6, 0.6)
+		play(Config.Sounds.Reveal, 1, 0.8)
+		play(Config.Sounds.Pop, 1, 0.6)
 	end
 end)
 
@@ -6001,6 +6371,7 @@ do
 	screenFlash.Parent = hatchGui
 
 	local function ownerHatch()
+		play(Config.Sounds.Reveal, 1, 0.8)
 		screenFlash.BackgroundColor3 = Color3.new(1, 1, 1)
 		screenFlash.BackgroundTransparency = 0.1
 		TweenService:Create(
@@ -6059,7 +6430,7 @@ do
 				burst(p.Position + Vector3.new(0, 1, 0), Color3.new(1, 1, 1), 24, 16, SPARKLE, 1)
 				burst(p.Position, Color3.fromRGB(255, 240, 220), 10, 10, nil, 1.4)
 				slabs(p, seed and seedColor(seed) or ORANGE)
-				play(Config.Sounds.Bonk, 1.5, 0.6)
+				play(Config.Sounds.Pop, 1, 0.6)
 			end
 			if ownerId ~= player.UserId or not seed then
 				return

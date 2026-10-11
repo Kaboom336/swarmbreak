@@ -3903,7 +3903,28 @@ do
 		local sp = free[math.random(#free)]
 		local golden = math.random(Config.Farm.goldenOneIn) == 1
 		local big = math.random() < Config.Farm.bigChance
-		local id = golden and "Golden" or "Orange"
+		local id = "Orange"
+		if golden then
+			id = "Golden"
+		else
+			-- Cosmetic roll: zone HP, rewards and bonus golden odds stay independent.
+			local total = 0
+			for kind, weight in zoneDef.weights do
+				if kind ~= "Golden" and seedById[kind] then
+					total += weight
+				end
+			end
+			local roll = math.random() * total
+			for kind, weight in zoneDef.weights do
+				if kind ~= "Golden" and seedById[kind] then
+					roll -= weight
+					if roll <= 0 then
+						id = kind
+						break
+					end
+				end
+			end
+		end
 		local seed = seedById[id]
 		local hp = zoneDef.hp * (big and Config.Farm.bigMult or 1)
 		local reward = zoneDef.candy
@@ -4098,7 +4119,15 @@ do
 			w.damage[player] = (w.damage[player] or 0) + math.min(damage, w.hp)
 			w.last = player
 			w.hp -= damage
-			Remotes.wildHitEvent:FireAllClients(player, w.part.Position, damage, w.part, crit)
+			Remotes.wildHitEvent:FireAllClients(
+				player,
+				w.part.Position,
+				damage,
+				w.part,
+				crit,
+				math.max(0, w.hp),
+				w.maxHp
+			)
 			if w.hp <= 0 then
 				pop(w)
 			else
@@ -4473,7 +4502,6 @@ do
 		eyes: { [BasePart]: Color3 },
 		sleepTag: BillboardGui,
 		alertTag: BillboardGui,
-		roar: Sound?,
 		reach: number,
 		home: Vector3,
 		homeLook: Vector3,
@@ -4796,17 +4824,6 @@ do
 		local alertTag =
 			tag(root, "AlertTag", "!", C(255, 45, 45), UDim2.fromScale(4 * t, 6 * t), height + 3)
 		alertTag.Enabled = false
-		local roar: Sound? = nil
-		if (Config.Sounds.Roar or 0) ~= 0 then
-			local s = Instance.new("Sound")
-			s.Name = "Roar"
-			s.SoundId = "rbxassetid://" .. Config.Sounds.Roar
-			s.PlaybackSpeed = Config.GuardianRoarPitch
-			s.Volume = 1
-			s.RollOffMaxDistance = 160
-			s.Parent = root
-			roar = s
-		end
 		model.PrimaryPart = root
 		local pos = home.Position
 		local look = home.LookVector
@@ -4817,7 +4834,6 @@ do
 			eyes = eyes,
 			sleepTag = sleepTag,
 			alertTag = alertTag,
-			roar = roar,
 			reach = modelEyes and modelReach or def.reach * k,
 			home = pos,
 			homeLook = look,
@@ -4902,7 +4918,7 @@ do
 		local full = player:GetAttribute("Wake_" .. g.zone) ~= true
 		player:SetAttribute("Wake_" .. g.zone, true)
 		g.model:SetAttribute("WakeSeconds", Config.GuardianWake)
-		Remotes.wakeEvent:FireClient(player, g.model, full)
+		Remotes.wakeEvent:FireAllClients(g.model, full, player)
 		g.share = g.cosmetic and math.min(Config.GuardianFirstShare, Config.GuardSpeed[g.zone])
 			or Config.GuardSpeed[g.zone]
 		g.state = "wake"
@@ -4915,9 +4931,6 @@ do
 		g.chaseEnd = os.clock() + Config.GuardianChaseSeconds
 		g.seen = 0
 		setAwake(g, true)
-		if g.roar then
-			g.roar:Play()
-		end
 	end
 
 	-- escaped = the thief got away with the loot (base, zone edge or time).

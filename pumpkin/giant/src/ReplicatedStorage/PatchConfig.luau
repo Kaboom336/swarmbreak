@@ -886,18 +886,31 @@ local Config = {
 	MusicVolume = 0.3,
 	Sounds = {
 		Pick = 9113730784,
-		Bonk = 9116488438,
+		Bonk = 71589018126132,
+		HitA = 71589018126132,
+		HitB = 120939342937662,
+		HitC = 85745022889572,
+		Break = 85841544161801,
+		CandyTick = 4612374807,
+		Pop = 109359226723492,
+		Growl = 9113980319,
+		Reveal = 1840076509,
+		Buy = 134810204798705,
+		Click = 127036696152728,
 		Brew = 99963459517796,
 		Coin = 1169806635,
 		Whoosh = 9120972321, -- Wood Whoosh (ProSoundEffects)
-		-- Guardian wake roar: the Bonk sound played at GuardianRoarPitch until a real roar is picked.
-		Roar = 9116488438,
+		-- Legacy roar call sites use the selected creature growl.
+		Roar = 9113980319,
 		-- Free licensed tracks (DistrokidOfficial): day, midnight, boss.
 		DayMusic = 115131430600747, -- CandyMenu
 		NightMusic = 140677698800750, -- Stasis Basis (loopable)
 		BossMusic = 128007000574959, -- Epic Boss Battle
 	},
 }
+
+Config.Farm.chainWindow = 1.2
+Config.SoundMix = { SFX = 0.6, UI = 0.5, Music = 0.35 }
 
 Config.RemovedOrders =
 	{ sellBrewed = true, sell = true, brewRare = true, sellStackOf5 = true, sellMutation = true }
