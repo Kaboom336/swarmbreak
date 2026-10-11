@@ -956,7 +956,7 @@ function Palette.renderModel(parent, source, silhouette, outlined)
 	fit()
 	return view
 end
--- Small HUD symbols use Frames: readable at phone size and leave viewports for game objects.
+-- Uploaded HUD images; viewports remain for Shop cards and Index game objects.
 function UI.box(parent, name, position, size, color, z)
 	local frame = Instance.new("Frame")
 	frame.Name, frame.Position, frame.Size = name, position, size
@@ -965,104 +965,16 @@ function UI.box(parent, name, position, size, color, z)
 	return frame
 end
 function UI.icon(parent, id)
-	local t = Config.UI.Tokens
-	local root = UI.box(
-		parent,
-		"Glyph_" .. id,
-		UDim2.fromScale(0.1, 0.1),
-		UDim2.fromScale(0.8, 0.8),
-		t.ink,
-		parent.ZIndex + 2
-	)
+	local aliases = { Gear = "settings", Clock = "timer" }
+	local image = Config.UiIcons[aliases[id] or string.lower(id)] or Config.UiIcons.pets
+	local root = Instance.new("ImageLabel")
+	root.Name = "Glyph_" .. id
 	root.BackgroundTransparency = 1
+	root.Image, root.ScaleType = image, Enum.ScaleType.Fit
+	root.ImageColor3 = Color3.new(1, 1, 1)
 	root.Size = UDim2.fromScale(1, 1)
-	root.ClipsDescendants = true
 	root.AnchorPoint, root.Position = Vector2.new(0.5, 0.5), UDim2.fromScale(0.5, 0.5)
-	local aspect = Instance.new("UIAspectRatioConstraint")
-	aspect.AspectRatio, aspect.AspectType, aspect.Parent = 1, Enum.AspectType.FitWithinMaxSize, root
-	local function piece(x, y, w, h, color, angle)
-		local part = UI.box(root, "Part", UDim2.fromScale(x, y), UDim2.fromScale(w, h), color)
-		part.Rotation = angle or 0
-		stroke(part, 2)
-		local gloss =
-			UI.box(part, "Highlight", UDim2.new(), UDim2.fromScale(1, 0.20), Color3.new(1, 1, 1))
-		gloss.BackgroundTransparency = 0.80
-		return part
-	end
-	if id == "Candy" then
-		root.Size = UDim2.fromScale(1, 1)
-		UI.candyGlyph(root)
-	elseif id == "Index" then
-		corner(piece(0.08, 0.08, 0.84, 0.84, t.info), 4)
-		piece(0.22, 0.13, 0.65, 0.70, Color3.new(1, 1, 1))
-		piece(0.13, 0.08, 0.10, 0.84, t.candy)
-		piece(0.37, 0.31, 0.34, 0.08, t.info)
-		piece(0.37, 0.51, 0.34, 0.08, t.info)
-	elseif id == "Quests" then
-		piece(0.19, 0.15, 0.62, 0.70, Color3.fromRGB(255, 237, 186))
-		for _, y in { 0.10, 0.78 } do
-			corner(piece(0.10, y, 0.80, 0.12, t.candy), 4)
-		end
-		for _, y in { 0.30, 0.48, 0.66 } do
-			piece(0.30, y, 0.40, 0.06, t.goLip)
-		end
-	elseif id == "Daily" then
-		piece(0.12, 0.34, 0.76, 0.60, t.info)
-		piece(0.06, 0.29, 0.88, 0.16, t.candy)
-		piece(0.43, 0.29, 0.14, 0.65, t.candy)
-		piece(0.23, 0.10, 0.30, 0.15, t.candy, 30)
-		piece(0.47, 0.10, 0.30, 0.15, t.candy, -30)
-	elseif id == "Clock" or id == "Gear" then
-		local ring = piece(0.12, 0.12, 0.76, 0.76, Color3.new(1, 1, 1))
-		corner(ring)
-		corner(piece(0.25, 0.25, 0.50, 0.50, t.well))
-		if id == "Clock" then
-			piece(0.46, 0.28, 0.09, 0.28, t.candy)
-			piece(0.47, 0.47, 0.27, 0.09, t.candy)
-		else
-			for i = 1, 8 do
-				local a = i * math.pi / 4
-				piece(
-					0.43 + math.cos(a) * 0.40,
-					0.43 + math.sin(a) * 0.40,
-					0.14,
-					0.14,
-					Color3.new(1, 1, 1),
-					i * 45
-				)
-			end
-		end
-	elseif id == "King" then
-		piece(0.12, 0.63, 0.76, 0.25, t.candy)
-		for _, x in { 0.12, 0.43, 0.74 } do
-			piece(x, 0.20, 0.14, 0.55, t.candy)
-		end
-	elseif id == "Carry" or id == "Sprint" then
-		if id == "Carry" then
-			piece(0.43, 0.18, 0.10, 0.76, Color3.new(1, 1, 1), -25)
-			piece(0.39, 0.10, 0.52, 0.13, t.candy, 15)
-		else
-			piece(0.25, 0.28, 0.34, 0.10, Color3.new(1, 1, 1), -45)
-			piece(0.45, 0.28, 0.34, 0.10, Color3.new(1, 1, 1), 45)
-			piece(0.45, 0.35, 0.10, 0.50, Color3.new(1, 1, 1))
-		end
-	else
-		local pumpkin = piece(0.08, 0.35, 0.84, 0.55, t.go)
-		corner(pumpkin, 6)
-		stroke(pumpkin, 2)
-		piece(0.44, 0.14, 0.13, 0.23, t.good)
-		piece(0.28, 0.52, 0.12, 0.12, t.ink, 45)
-		piece(0.61, 0.52, 0.12, 0.12, t.ink, 45)
-		piece(0.38, 0.75, 0.28, 0.06, t.ink)
-		if id == "Shop" then
-			local handle = piece(0.20, 0.06, 0.60, 0.62, t.goLip)
-			handle.BackgroundTransparency = 1
-			corner(handle, 7)
-			stroke(handle, 3)
-		elseif id == "Pets" then
-			piece(0.03, 0.25, 0.94, 0.10, t.candy, -12)
-		end
-	end
+	root.ZIndex, root.Parent = parent.ZIndex + 2, parent
 	return root
 end
 function UI.candyGlyph(parent)
@@ -1321,6 +1233,15 @@ do
 	local icon = UI.box(chip, "Icon", UDim2.new(), UDim2.fromScale(0.12, 1), Config.UI.Tokens.ink)
 	icon.BackgroundTransparency = 1
 	UI.icon(icon, "King")
+	local nests = UI.box(gui, "NestsChip", UDim2.new(), UDim2.new(), Config.UI.Tokens.ink)
+	nests.BackgroundTransparency, nests.AnchorPoint = 1, Vector2.new(1, 1)
+	local nestsIcon =
+		UI.box(nests, "Icon", UDim2.new(), UDim2.fromScale(0.12, 1), Config.UI.Tokens.ink)
+	nestsIcon.BackgroundTransparency = 1
+	UI.icon(nestsIcon, "Timer")
+	local nestsLabel = textLabel(nests, "", Color3.new(1, 1, 1))
+	nestsLabel.Position, nestsLabel.Size, nestsLabel.TextXAlignment =
+		UDim2.fromScale(0.14, 0), UDim2.fromScale(0.86, 1), Enum.TextXAlignment.Right
 	local label = textLabel(chip, "", Config.UI.Tokens.candy)
 	label.Position, label.Size, label.TextXAlignment =
 		UDim2.fromScale(0.14, 0), UDim2.fromScale(0.86, 1), Enum.TextXAlignment.Right
@@ -1328,6 +1249,8 @@ do
 		local h = gui.AbsoluteSize.Y / uiScale.Scale
 		chip.Position = UDim2.new(1, -h * 0.012, Palette.mobile() and 0.14 or 0.985, 0)
 		chip.Size = UDim2.fromOffset(h * 0.46, h * 0.04)
+		nests.Position = UDim2.new(1, -h * 0.012, Palette.mobile() and 0.19 or 0.935, 0)
+		nests.Size = chip.Size
 	end
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)
 	Services.UserInputService.LastInputTypeChanged:Connect(layout)
@@ -1352,6 +1275,15 @@ do
 					and (0.075 + 0.075 * math.sin(os.clock() * 6))
 				or 0
 			chip.Visible = not UI.panelsOpen
+			-- Midnight restocks all nests; individual refill deadlines stay server-owned.
+			local phase = state:GetAttribute("Phase")
+			nestsLabel.Text = phase == "Day"
+					and ("Nests " .. clockText(
+						math.max(0, (state:GetAttribute("PhaseEnds") or now) - now)
+					))
+				or phase == "Midnight" and "Nests restocked"
+				or "Nests after King"
+			nests.Visible = chip.Visible
 			meterRing.Transparency = 1
 			task.wait(0.25)
 		end
@@ -2394,7 +2326,7 @@ do
 			18
 		)
 		statIcon.BackgroundTransparency = 1
-		UI.icon(statIcon, "Carry")
+		UI.icon(statIcon, "Scythe")
 		task.spawn(function()
 			local folder = Services.ReplicatedStorage:WaitForChild("PatchScytheIcons", 10)
 			local model = folder and folder:WaitForChild(tool.id, 10)
@@ -4741,6 +4673,44 @@ do
 	local WINDOWS = { { 0.105, 0.255, 0.115 }, { 0.1, 0.26, 0.11 }, { 0.17, 0.34, 0.175 } }
 	local chains = setmetatable({}, { __mode = "k" })
 	local active = {}
+	-- Client Command Bar: enable workspace.PatchDebug, then invoke
+	-- Players.LocalPlayer.PlayerGui.PatchHud.PatchDebugScythe:Invoke().
+	local debugScythe = Instance.new("BindableFunction")
+	debugScythe.Name, debugScythe.Parent = "PatchDebugScythe", UI.screen
+	debugScythe.OnInvoke = function()
+		if workspace:GetAttribute("PatchDebug") ~= true then
+			return nil
+		end
+		local character = player.Character
+		local tool = character and character:FindFirstChild("Scythe")
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local bladeRoot = tool and tool:FindFirstChild("BladeRoot", true)
+		local bladeTip = tool and tool:FindFirstChild("BladeTip", true)
+		if not root or not bladeRoot or not bladeTip then
+			warn("[PatchDebug] Equip a scythe before sampling its blade.")
+			return nil
+		end
+		local positions = {
+			root = root.CFrame:PointToObjectSpace(bladeRoot.WorldPosition),
+			tip = root.CFrame:PointToObjectSpace(bladeTip.WorldPosition),
+		}
+		local st = active[tool]
+		print(
+			string.format(
+				"[PatchDebug] Scythe %s %s t=%.3f HRP blade root=(%.3f, %.3f, %.3f) tip=(%.3f, %.3f, %.3f)",
+				tostring(tool:GetAttribute("StyleId")),
+				st and st.swing and ({ "REAP", "RETURN", "HARVEST" })[st.swing.step] or "IDLE/EQUIP",
+				st and st.swing and st.swing.t or 0,
+				positions.root.X,
+				positions.root.Y,
+				positions.root.Z,
+				positions.tip.X,
+				positions.tip.Y,
+				positions.tip.Z
+			)
+		)
+		return positions
+	end
 	local function ease(x, kind)
 		if kind == "outQuad" then
 			return 1 - (1 - x) ^ 2
@@ -4999,7 +4969,8 @@ do
 				local x = st.equip / 0.28
 				local f = 1 + 2.7 * (x - 1) ^ 3 + 1.7 * (x - 1) ^ 2
 				for i = 1, #p do
-					p[i] *= f
+					p[i] = Config.ScythePose.equipFrom[i]
+						+ (p[i] - Config.ScythePose.equipFrom[i]) * f
 				end
 			end
 		end
@@ -5086,7 +5057,7 @@ do
 						CFrame.fromEulerAnglesYXZ(math.rad(pitch), math.rad(yaw), math.rad(roll))
 					j.motor.Transform = j.anim:Lerp(j.rot:Inverse() * rotation * j.rot, st.w)
 				end
-				local pitch = p[12] - (st.r6 and 0.5 * p[4] or 0)
+				local pitch = p[12] + (st.r6 and 0.5 * p[4] or 0)
 				local grip = st.base
 					* HAND:Inverse()
 					* CFrame.Angles(
@@ -6511,6 +6482,10 @@ do
 	local questStroke = stroke(questPanel, 3)
 	local questHead = makeButton(questPanel, "", Config.UI.Tokens.off)
 	questHead.Name, questHead.Size = "QuestChevron", UDim2.fromScale(1, 0.18)
+	local questIcon = UI.icon(questHead, "Quests")
+	questIcon.Position, questIcon.Size = UDim2.fromScale(0.08, 0.5), UDim2.fromScale(0.12, 0.8)
+	local questCaption = questHead:FindFirstChild("Label")
+	questCaption.Position, questCaption.Size = UDim2.fromScale(0.16, 0), UDim2.fromScale(0.82, 1)
 	local questReward = textLabel(questPanel, "", Config.UI.Tokens.candy)
 	questReward.Position, questReward.Size =
 		UDim2.fromScale(0.02, 0.85), UDim2.fromScale(0.96, 0.14)
@@ -9292,7 +9267,7 @@ do
 	end)
 end
 
--- U1 HUD: only object icons use viewports; transient candy flights use Frame glyphs.
+-- U1 HUD: uploaded icons; transient candy flights keep their Frame glyphs.
 do
 	-- Hide only the pose-tester phrases reported in watch3; admin and PatchDebug stay intact.
 	local function inspectOverlay(object)

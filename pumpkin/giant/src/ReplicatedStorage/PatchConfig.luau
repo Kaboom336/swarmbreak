@@ -478,10 +478,10 @@ local Config = {
 	},
 	-- Legacy carried farmed pumpkins migrate at their old pop value.
 	PopCandySeconds = 3,
-	-- Low right-hand grip: shaft crosses the body toward the opposite shoulder.
+	-- Raised front hold; the shared builder derives each style Grip from its scaled shaft length.
 	-- Degrees in the neutral hand frame; builder compensates RightGrip's -90 X basis.
-	-- The wrap is at -L/4; lean tips behind the shoulder and roll makes it diagonal.
-	ScytheHold = { right = 0.05, forward = 0.35, lean = -20, yaw = 0, roll = 38 }, -- up = scaled style.L / 4
+	-- The wrap is at -L/4; yaw/roll keep the raised blade ahead of the avatar.
+	ScytheHold = { right = 0.05, forward = 0.35, lean = -22, yaw = 74, roll = -162 }, -- up = scaled style.L / 4
 	ScytheStyles = {
 		RustySickle = {
 			L = 6.0,
@@ -1680,6 +1680,20 @@ function Config.indexReward(income, seconds, capSeconds)
 		math.max(Config.IndexRewards.minimum, math.min(income * seconds, income * capSeconds))
 	)
 end
+Config.UiIcons = {
+	shop = "rbxassetid://86790940714481",
+	index = "rbxassetid://82825778836105",
+	pets = "rbxassetid://94339020277062",
+	quests = "rbxassetid://121675152342227",
+	daily = "rbxassetid://81549821384931",
+	settings = "rbxassetid://97348655967950",
+	candy = "rbxassetid://123026558215831",
+	scythe = "rbxassetid://93283102437714",
+	king = "rbxassetid://90633290160924",
+	timer = "rbxassetid://134209356568805",
+	carry = "rbxassetid://79429510710346",
+	sprint = "rbxassetid://123438962066416",
+}
 -- Shared construction and animation data, also used by the Edit-mode ScytheLab.
 do
 	local function weldTo(handle: BasePart, part: BasePart)
@@ -2016,6 +2030,8 @@ do
 			a.Name, a.CFrame, a.Parent = name, CFrame.new(cf.Position * K) * cf.Rotation, handle
 			return a
 		end
+		attachment("BladeRoot", CFrame.new(0, s.L / 2, 0))
+		attachment("BladeTip", tip)
 		local a0, a1 =
 			attachment("TrailRoot", root * CFrame.new(-0.15, 0, 0)),
 			attachment("TrailTip", tip * CFrame.new(0.25, 0, 0))
@@ -2089,31 +2105,35 @@ do
 	end
 end
 do
-	local IDLE = { 12, -8, 6, 15, 4, 0, -6, 12, -3, -8, 0, 0, 0, 0 }
+	local IDLE = { 30, 16, 6, 90, 10, 0, -6, 15, -2, 0, 0, 0, 0, 0 }
 	local SWINGS = {
-		{
-			{ 0.09, "outQuad", 129, 46, 6, 0, 121, -27, 30, 20, 5, -40, -18, -72, -61, 43 },
-			{ 0.115, "linear", 134, 48, 6, 0, 125, -27, 30, 20, 6, -44, -18, -76, -61, 43 },
-			{ 0.18, "outCubic", 26, 0, -31, 55, 58, -12, 18, 16, -16, 19, -13, 76, 60, 54 },
-			{ 0.25, "outQuad", 33, 29, -32, 52, 34, -2, -27, 24, -13, 45, -12, 56, 61, 47 },
+		{ -- REAP: high right, cut diagonally down across to low front-left, follow left
+			{ 0.09, "outQuad", 24, 21, -20, 97, 84, -24, 19, 29, 16, -41, -12, -2, 31, 17 },
+			{ 0.115, "linear", 28, 21, -20, 97, 84, -24, 19, 29, 16, -45, -12, -5, 31, 17 },
+			{ 0.18, "outCubic", 4, 48, 32, 90, 51, -13, 5, 12, 24, -5, 12, -60, 4, 46 },
+			{ 0.25, "outQuad", -13, 60, 50, 96, 57, -11, 3, 15, 25, 32, 12, -86, 62, 33 },
 			{ 0.46, "inOutSine", unpack(IDLE) },
 		},
-		{
-			{ 0.09, "outQuad", 101, 33, -19, -2, 90, -2, 4, 44, 9, 39, 17, -123, -4, -20 },
-			{ 0.11, "linear", 106, 35, -19, -2, 94, -2, 4, 44, 10, 43, 17, -127, -4, -20 },
-			{ 0.18, "outCubic", 27, -13, -32, 2, 48, -21, 30, 7, -20, -21, 1, -107, -60, -30 },
-			{ 0.25, "outQuad", -50, 75, 102, 55, 67, -27, 30, 20, -4, -48, -16, -23, 41, 44 },
+		{ -- RETURN: low left, backhand up through front-right, follow high right
+			{ 0.09, "outQuad", 10, 33, -20, 77, 41, -3, -6, 35, 4, 13, -11, -45, -23, -8 },
+			{ 0.11, "linear", 14, 33, -20, 77, 41, -3, -6, 35, 4, 14, -11, -48, -23, -8 },
+			{ 0.18, "outCubic", 41, 29, -20, 63, 63, -13, 6, 23, -7, -32, 12, -44, 34, -32 },
+			{ 0.25, "outQuad", 38, 29, -20, 93, 93, -24, 17, 25, -12, -41, -12, 14, 18, -28 },
 			{ 0.47, "inOutSine", unpack(IDLE) },
 		},
-		{
-			{ 0.14, "outQuad", 144, -1, -23, 0, 136, -25, 27, 20, 21, -3, -4, -119, -39, 23 },
-			{ 0.175, "linear", 150, -1, -23, 0, 141, -25, 27, 20, 23, -3, -4, -123, -39, 23 },
-			{ 0.24, "outQuart", 63, 12, -29, 0, 67, -14, 18, 13, -28, -28, 2, -110, -68, 4 },
-			{ 0.33, "hold", 56, 12, -25, 0, 62, -11, 23, 11, -31, -29, 10, -105, -69, 9 },
+		{ -- HARVEST: blade overhead, slam down in front, hold in the ground
+			{ 0.14, "outQuad", 39, 23, -7, 96, 96, -24, 17, 33, 25, -33, -9, -11, 24, 26 },
+			{ 0.175, "linear", 43, 23, -7, 96, 96, -24, 17, 33, 25, -36, -9, -14, 24, 26 },
+			{ 0.24, "outQuart", -13, 60, 50, 85, 49, -22, 9, 3, 25, -12, 12, -60, 11, 60 },
+			{ 0.33, "hold", -17, 60, 50, 85, 47, -24, 10, 1, 25, -5, 12, -61, 8, 60 },
 			{ 0.54, "inOutSine", unpack(IDLE) },
 		},
 	}
-	Config.ScythePose = { idle = IDLE, swings = SWINGS }
+	Config.ScythePose = {
+		idle = IDLE,
+		equipFrom = { 24, 21, -20, 97, 84, -24, 19, 29, 16, -41, -12, -2, 31, 17 },
+		swings = SWINGS,
+	}
 end
 do
 	-- Shared presentation policy; no gameplay or saved data lives here.
