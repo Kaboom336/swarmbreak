@@ -282,6 +282,7 @@ do
 		dashFunction = remote("Dash", "RemoteFunction") :: RemoteFunction,
 		sprintEvent = remote("Sprint"),
 		dailyClaimFunction = remote("ClaimDaily", "RemoteFunction") :: RemoteFunction,
+		dailyStatusFunction = remote("DailyStatus", "RemoteFunction") :: RemoteFunction,
 		hintEvent = remote("Hint"),
 		placedEvent = remote("Placed"),
 		harvestedEvent = remote("Harvested"),
@@ -7793,6 +7794,24 @@ local function claimDaily(player: Player, claim: boolean?)
 	local panel = not first and o ~= nil and o.tut > TUTORIAL_COUNT
 	Remotes.dailyEvent:FireClient(player, streak, candy, false, panel and "panel" or "toast")
 	return true
+end
+-- Read-only UI remote: saved daily state stays private; claims still use claimDaily.
+Remotes.dailyStatusFunction.OnServerInvoke = function(player)
+	if not Helpers.isLoaded(player) then
+		return nil
+	end
+	local today = math.floor(os.time() / 86400)
+	local last = dailyOf[player] or { day = 0, streak = 0 }
+	local ready = player:GetAttribute("DailyClaimable") == true
+	local current = last.day >= today and last.streak
+		or last.day == today - 1 and last.streak % Config.DailyMaxStreak + 1
+		or 1
+	return {
+		day = current,
+		claimedThrough = last.day >= today and last.streak or current > 1 and current - 1 or 0,
+		ready = ready,
+		nextAt = (today + 1) * 86400,
+	}
 end
 Remotes.dailyClaimFunction.OnServerInvoke = function(player)
 	return claimDaily(player, true) == true

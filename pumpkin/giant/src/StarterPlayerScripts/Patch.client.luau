@@ -583,6 +583,35 @@ function Palette.uiText(text: string): string
 			:gsub("Blood Moon", "King Fight")
 	)
 end
+function UI.fitText(label, fraction)
+	label:SetAttribute("TypeSize", fraction)
+	local bounds = label:FindFirstChildOfClass("UITextSizeConstraint")
+		or Instance.new("UITextSizeConstraint")
+	bounds.Parent = label
+	local function fit()
+		local h = gui.AbsoluteSize.Y / uiScale.Scale
+		bounds.MinTextSize = math.max(
+			11,
+			math.ceil(11 / uiScale.Scale),
+			math.ceil(h * Config.UI.Tokens.type.caption)
+		)
+		bounds.MaxTextSize = math.max(
+			bounds.MinTextSize,
+			math.floor(h * (label:GetAttribute("TypeSize") or fraction) * 1.1)
+		)
+		local outline = label:FindFirstChildOfClass("UIStroke")
+		if outline then
+			outline.Thickness = math.max(1.5 / uiScale.Scale, h * 0.0028)
+		end
+	end
+	local resize = gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
+	local role = label:GetAttributeChangedSignal("TypeSize"):Connect(fit)
+	label.Destroying:Connect(function()
+		resize:Disconnect()
+		role:Disconnect()
+	end)
+	fit()
+end
 local function textLabel(parent: Instance, text: string, color: Color3, font: string?): TextLabel
 	local label = Instance.new("TextLabel")
 	label.BackgroundTransparency = 1
@@ -591,24 +620,12 @@ local function textLabel(parent: Instance, text: string, color: Color3, font: st
 	label.TextColor3 = color
 	label.Text = Palette.uiText(text)
 	label.Parent = parent
-	local bounds = Instance.new("UITextSizeConstraint")
-	bounds.MinTextSize =
-		math.max(11, math.ceil(gui.AbsoluteSize.Y * Config.UI.Tokens.type.caption / uiScale.Scale))
-	bounds.MaxTextSize = math.max(
-		bounds.MinTextSize,
-		11,
-		math.floor(
-			gui.AbsoluteSize.Y
-				* (font == "title" and Config.UI.Tokens.type.title or Config.UI.Tokens.type.hud)
-				* 1.1
-		)
-	)
-	bounds.Parent = label
 	local s = Instance.new("UIStroke")
 	s.Thickness = math.max(1.5, gui.AbsoluteSize.Y * 0.0028)
 	s.LineJoinMode = Enum.LineJoinMode.Round
 	s.Color = Config.UI.Tokens.ink
 	s.Parent = label
+	UI.fitText(label, font == "title" and Config.UI.Tokens.type.title or Config.UI.Tokens.type.hud)
 	return label
 end
 function UI.tween(target, seconds, goals, style, direction)
@@ -712,12 +729,7 @@ local function makeButton(parent: Instance, text: string, color: Color3): TextBu
 	textStroke.Color = Palette.OUTLINE
 	textStroke.LineJoinMode = Enum.LineJoinMode.Round
 	textStroke.Parent = label
-	local textBounds = Instance.new("UITextSizeConstraint")
-	textBounds.MinTextSize, textBounds.MaxTextSize, textBounds.Parent =
-		11, math.max(11, math.floor(gui.AbsoluteSize.Y * 0.030 * 1.1)), label
-	textBounds.MinTextSize =
-		math.max(11, math.ceil(gui.AbsoluteSize.Y * Config.UI.Tokens.type.caption / uiScale.Scale))
-	textBounds.MaxTextSize = math.max(textBounds.MinTextSize, textBounds.MaxTextSize)
+	UI.fitText(label, Config.UI.Tokens.type.hud)
 	local function mirror()
 		label.Text = Palette.uiText(b.Text)
 		label.TextColor3 = b.TextColor3
@@ -730,13 +742,14 @@ end
 
 -- File-table builders keep the client below the top-level register limit.
 function Palette.renderModel(parent, source, silhouette, outlined)
+	outlined = outlined ~= false and not silhouette
 	local live = 0
 	for _, object in player.PlayerGui:GetDescendants() do
 		if object:IsA("ViewportFrame") then
 			live += 1
 		end
 	end
-	if live >= 39 - (UI.indexBuilt and 0 or #Config.Seeds) then
+	if live >= 40 then
 		return nil
 	end
 	UI.views += 1
@@ -807,7 +820,7 @@ function Palette.renderModel(parent, source, silhouette, outlined)
 	local camera = Instance.new("Camera")
 	camera.FieldOfView, camera.Parent, view.CurrentCamera = 20, view, camera
 	local outline
-	if outlined and live + 1 < 39 - (UI.indexBuilt and 0 or #Config.Seeds) then
+	if outlined and live + 1 < 40 then
 		outline = view:Clone()
 		outline.Name, outline.ImageColor3 = "IconOutline", Config.UI.Tokens.ink
 		outline.AnchorPoint, outline.Position, outline.Size =
@@ -823,90 +836,155 @@ function Palette.renderModel(parent, source, silhouette, outlined)
 		end)
 	end
 	local function fit()
+		low, high =
+			Vector3.new(math.huge, math.huge, math.huge),
+			Vector3.new(-math.huge, -math.huge, -math.huge)
+		for _, part in model:GetChildren() do
+			for x = -1, 1, 2 do
+				for y = -1, 1, 2 do
+					for z = -1, 1, 2 do
+						local point =
+							part.CFrame:PointToWorldSpace(part.Size * Vector3.new(x, y, z) * 0.5)
+						low = Vector3.new(
+							math.min(low.X, point.X),
+							math.min(low.Y, point.Y),
+							math.min(low.Z, point.Z)
+						)
+						high = Vector3.new(
+							math.max(high.X, point.X),
+							math.max(high.Y, point.Y),
+							math.max(high.Z, point.Z)
+						)
+					end
+				end
+			end
+		end
+		size, centre = high - low, (high + low) * 0.5
 		local aspect = math.max(0.1, view.AbsoluteSize.X / math.max(1, view.AbsoluteSize.Y))
 		local distance = math.max(size.X / aspect, size.Y) * 0.5 / math.tan(math.rad(10)) * 1.06
 			+ size.Z / 2
 		camera.CFrame = CFrame.lookAt(centre + Vector3.new(0, 0, distance), centre)
 		if outline then
 			outline.CurrentCamera.CFrame = camera.CFrame
+			local outlineWorld = outline:FindFirstChildOfClass("WorldModel")
+			local outlineModel = outlineWorld and outlineWorld:FindFirstChildOfClass("Model")
+			if outlineModel then
+				outlineModel:PivotTo(model:GetPivot())
+			end
 		end
 	end
+	UI.fitters = UI.fitters or setmetatable({}, { __mode = "k" })
+	UI.fitters[view] = fit
+	view.Destroying:Connect(function()
+		UI.fitters[view] = nil
+	end)
 	view:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
 	fit()
 	return view
 end
+-- Small HUD symbols use Frames: readable at phone size and leave viewports for game objects.
+function UI.box(parent, name, position, size, color, z)
+	local frame = Instance.new("Frame")
+	frame.Name, frame.Position, frame.Size = name, position, size
+	frame.BackgroundColor3, frame.BorderSizePixel = color, 0
+	frame.ZIndex, frame.Parent = z or parent.ZIndex + 1, parent
+	return frame
+end
 function UI.icon(parent, id)
-	local source = UI.icons[id]
-	if not source then
-		source = Instance.new("Model")
-		source.Name = id
-		if not UI.models then
-			UI.models = Instance.new("Folder")
-			UI.models.Name, UI.models.Parent = "UIIconModels", Services.ReplicatedStorage
+	local t = Config.UI.Tokens
+	local root = UI.box(
+		parent,
+		"Glyph_" .. id,
+		UDim2.fromScale(0.1, 0.1),
+		UDim2.fromScale(0.8, 0.8),
+		t.ink,
+		parent.ZIndex + 2
+	)
+	root.BackgroundTransparency = 1
+	root.AnchorPoint, root.Position = Vector2.new(0.5, 0.5), UDim2.fromScale(0.5, 0.5)
+	local aspect = Instance.new("UIAspectRatioConstraint")
+	aspect.AspectRatio, aspect.AspectType, aspect.Parent = 1, Enum.AspectType.FitWithinMaxSize, root
+	local function piece(x, y, w, h, color, angle)
+		local part = UI.box(root, "Part", UDim2.fromScale(x, y), UDim2.fromScale(w, h), color)
+		part.Rotation = angle or 0
+		return part
+	end
+	if id == "Candy" then
+		root.Size = UDim2.fromScale(1, 1)
+		UI.candyGlyph(root)
+	elseif id == "Index" then
+		corner(piece(0.08, 0.08, 0.84, 0.84, t.info), 4)
+		stroke(root:GetChildren()[1], 2)
+		piece(0.22, 0.13, 0.65, 0.70, Color3.new(1, 1, 1))
+		piece(0.13, 0.08, 0.10, 0.84, t.candy)
+		piece(0.37, 0.31, 0.34, 0.08, t.info)
+		piece(0.37, 0.51, 0.34, 0.08, t.info)
+	elseif id == "Quests" then
+		piece(0.19, 0.15, 0.62, 0.70, Color3.fromRGB(255, 237, 186))
+		for _, y in { 0.10, 0.78 } do
+			corner(piece(0.10, y, 0.80, 0.12, t.candy), 4)
 		end
-		source.Parent = UI.models
-		local function part(size, position, color, rotation)
-			local p = Instance.new("Part")
-			p.Size, p.CFrame =
-				size, CFrame.new(position) * CFrame.Angles(0, 0, math.rad(rotation or 0))
-			p.Color, p.Material, p.Anchored, p.Parent =
-				color, Enum.Material.SmoothPlastic, true, source
+		for _, y in { 0.30, 0.48, 0.66 } do
+			piece(0.30, y, 0.40, 0.06, t.goLip)
 		end
-		local t = Config.UI.Tokens
-		if id == "Candy" then
-			part(Vector3.new(1.4, 1, 0.7), Vector3.zero, t.candy)
-			for _, x in { -1, 1 } do
-				part(Vector3.new(0.6, 0.8, 0.6), Vector3.new(x, 0, 0), t.go, x * 30)
-			end
-		elseif id == "Index" or id == "Quests" then
-			part(Vector3.new(1.5, 1.8, 0.3), Vector3.zero, id == "Index" and t.info or t.candy)
-			for i = -1, 1 do
-				part(
-					Vector3.new(0.9, 0.10, 0.12),
-					Vector3.new(0, i * 0.4, -0.22),
-					Color3.new(1, 1, 1)
-				)
-			end
-		elseif id == "Daily" then
-			part(Vector3.new(1.6, 1.3, 1), Vector3.zero, t.info)
-			part(Vector3.new(0.25, 1.7, 1.1), Vector3.zero, t.candy)
-			for _, x in { -1, 1 } do
-				part(Vector3.new(0.65, 0.25, 0.3), Vector3.new(x * 0.3, 0.9, 0), t.candy, x * 30)
-			end
-		elseif id == "King" then
-			part(Vector3.new(1.8, 0.5, 0.5), Vector3.zero, t.candy)
-			for x = -1, 1 do
-				part(Vector3.new(0.3, 0.8, 0.4), Vector3.new(x * 0.65, 0.5, 0), t.candy)
-			end
-		elseif id == "Clock" or id == "Gear" then
+	elseif id == "Daily" then
+		piece(0.12, 0.34, 0.76, 0.60, t.info)
+		piece(0.06, 0.29, 0.88, 0.16, t.candy)
+		piece(0.43, 0.29, 0.14, 0.65, t.candy)
+		piece(0.23, 0.10, 0.30, 0.15, t.candy, 30)
+		piece(0.47, 0.10, 0.30, 0.15, t.candy, -30)
+	elseif id == "Clock" or id == "Gear" then
+		local ring = piece(0.12, 0.12, 0.76, 0.76, Color3.new(1, 1, 1))
+		corner(ring)
+		corner(piece(0.25, 0.25, 0.50, 0.50, t.well))
+		if id == "Clock" then
+			piece(0.46, 0.28, 0.09, 0.28, t.candy)
+			piece(0.47, 0.47, 0.27, 0.09, t.candy)
+		else
 			for i = 1, 8 do
 				local a = i * math.pi / 4
-				part(
-					Vector3.new(0.35, 0.35, 0.3),
-					Vector3.new(math.cos(a) * 0.7, math.sin(a) * 0.7, 0),
+				piece(
+					0.43 + math.cos(a) * 0.40,
+					0.43 + math.sin(a) * 0.40,
+					0.14,
+					0.14,
 					Color3.new(1, 1, 1),
 					i * 45
 				)
 			end
-			if id == "Clock" then
-				part(Vector3.new(0.12, 0.65, 0.2), Vector3.new(0, 0.2, 0), t.candy)
-			end
-		elseif id == "Carry" then
-			part(Vector3.new(0.14, 2, 0.14), Vector3.zero, t.cardStroke, -35)
-			part(Vector3.new(1.3, 0.18, 0.25), Vector3.new(0.4, 0.8, 0), t.candy, -15)
-		else
-			part(Vector3.new(1.6, 1.2, 1.2), Vector3.zero, t.go)
-			part(Vector3.new(0.25, 0.5, 0.25), Vector3.new(0, 0.85, 0), t.good)
-			for _, x in { -1, 1 } do
-				part(Vector3.new(0.25, 0.25, 0.12), Vector3.new(x * 0.38, 0.15, -0.65), t.ink)
-			end
-			if id == "Pets" then
-				part(Vector3.new(1.7, 0.25, 1.2), Vector3.new(0, 0.75, 0), t.candy, -20)
-			end
 		end
-		UI.icons[id] = source
+	elseif id == "King" then
+		piece(0.12, 0.63, 0.76, 0.25, t.candy)
+		for _, x in { 0.12, 0.43, 0.74 } do
+			piece(x, 0.20, 0.14, 0.55, t.candy)
+		end
+	elseif id == "Carry" or id == "Sprint" then
+		if id == "Carry" then
+			piece(0.43, 0.18, 0.10, 0.76, Color3.new(1, 1, 1), -25)
+			piece(0.39, 0.10, 0.52, 0.13, t.candy, 15)
+		else
+			piece(0.25, 0.28, 0.34, 0.10, Color3.new(1, 1, 1), -45)
+			piece(0.45, 0.28, 0.34, 0.10, Color3.new(1, 1, 1), 45)
+			piece(0.45, 0.35, 0.10, 0.50, Color3.new(1, 1, 1))
+		end
+	else
+		local pumpkin = piece(0.08, 0.35, 0.84, 0.55, t.go)
+		corner(pumpkin, 6)
+		stroke(pumpkin, 2)
+		piece(0.44, 0.14, 0.13, 0.23, t.good)
+		piece(0.28, 0.52, 0.12, 0.12, t.ink, 45)
+		piece(0.61, 0.52, 0.12, 0.12, t.ink, 45)
+		piece(0.38, 0.75, 0.28, 0.06, t.ink)
+		if id == "Shop" then
+			local handle = piece(0.20, 0.06, 0.60, 0.62, t.goLip)
+			handle.BackgroundTransparency = 1
+			corner(handle, 7)
+			stroke(handle, 3)
+		elseif id == "Pets" then
+			piece(0.03, 0.25, 0.94, 0.10, t.candy, -12)
+		end
 	end
-	return Palette.renderModel(parent, source, false, id == "Shop" or id == "Index")
+	return root
 end
 function UI.candyGlyph(parent)
 	for i = -1, 1 do
@@ -914,9 +992,9 @@ function UI.candyGlyph(parent)
 		part.BorderSizePixel, part.BackgroundColor3 =
 			0, i == 0 and Config.UI.Tokens.candy or Config.UI.Tokens.go
 		part.Size, part.Position =
-			UDim2.fromScale(i == 0 and 0.48 or 0.24, i == 0 and 0.50 or 0.35),
-			UDim2.fromScale(0.27 + i * 0.26, 0.25)
-		part.Rotation, part.Parent = i * 30, parent
+			UDim2.fromScale(i == 0 and 0.48 or 0.24, i == 0 and 0.72 or 0.52),
+			UDim2.fromScale(i == 0 and 0.26 or i < 0 and 0.01 or 0.75, i == 0 and 0.14 or 0.24)
+		part.Rotation, part.ZIndex, part.Parent = i * 30, parent.ZIndex + 1, parent
 	end
 end
 function Palette.candyIcon(parent, _fitCandy: boolean?)
@@ -1062,9 +1140,11 @@ do
 	for i, id in { "Clock", "King" } do
 		local chip = Instance.new("Frame")
 		chip.Name, chip.BackgroundTransparency, chip.AnchorPoint, chip.Parent =
-			id .. "Chip", 1, Vector2.new(1, 1), gui
+			id .. "Chip", 0.30, Vector2.new(1, 1), gui
+		chip.BackgroundColor3, chip.BorderSizePixel = Config.UI.Tokens.well, 0
+		corner(chip)
 		local icon = Instance.new("Frame")
-		icon.BackgroundTransparency, icon.Size, icon.Parent = 1, UDim2.fromScale(0.16, 1), chip
+		icon.BackgroundTransparency, icon.Size, icon.Parent = 1, UDim2.fromScale(0.16, 0.82), chip
 		UI.icon(icon, id)
 		local label = textLabel(chip, "", Color3.new(1, 1, 1))
 		label.Position, label.Size, label.TextXAlignment =
@@ -1075,12 +1155,12 @@ do
 		local touch, h = Palette.mobile(), gui.AbsoluteSize.Y / uiScale.Scale
 		for i, chip in chips do
 			chip.frame.Position = UDim2.fromScale(
-				touch and 0.87 or 0.99,
-				touch and (i == 1 and 0.04 or 0.10) or (i == 1 and 0.985 or 0.94)
+				touch and 0.975 or 0.99,
+				touch and (i == 1 and 0.055 or 0.11) or (i == 1 and 0.985 or 0.933)
 			)
 			chip.frame.Size = UDim2.fromOffset(
-				touch and gui.AbsoluteSize.X / uiScale.Scale * 0.44 or h * 0.30,
-				h * 0.030
+				touch and gui.AbsoluteSize.X / uiScale.Scale * 0.53 or h * 0.34,
+				h * 0.040
 			)
 		end
 	end
@@ -1094,7 +1174,7 @@ do
 			local ends = state:GetAttribute("PhaseEnds") or now
 			local nests = math.max(0, (phase == "Day" and ends or ends + Config.DayLength) - now)
 			local king = math.max(0, (state:GetAttribute("KingWakesAt") or now) - now)
-			chips[1].label.Text = "in " .. clockText(nests)
+			chips[1].label.Text = "Nests in " .. clockText(nests)
 			chips[1].label.TextColor3 = nests <= 10 and Config.UI.Tokens.good or Color3.new(1, 1, 1)
 			chips[2].label.Text = phase == "BloodMoon" and ("King fight " .. clockText(ends - now))
 				or ("King in " .. clockText(king))
@@ -1126,6 +1206,7 @@ do
 	stats.Parent = gui
 	carryLabel = textLabel(stats, "", Color3.new(1, 1, 1))
 	carryLabel.Name = "Carry"
+	carryLabel:SetAttribute("TypeSize", 0.040)
 	carryLabel.Position = UDim2.fromScale(0, 0)
 	carryLabel.Size = UDim2.fromScale(1, 0.15)
 	carryLabel.Visible = true
@@ -1145,6 +1226,7 @@ do
 	-- Candy gold at 5% of the HUD height, with a black stroke.
 	candyBig = textLabel(stats, "", Palette.MONEY)
 	candyBig.Name = "Money"
+	candyBig:SetAttribute("TypeSize", Config.UI.Tokens.type.currency)
 	candyBig.Position = UDim2.fromScale(0.25, 0.18)
 	candyBig.Size = UDim2.fromScale(0.75, 0.31)
 	candyBig.TextScaled = false
@@ -1399,6 +1481,64 @@ end
 -- dim closes the open panel. grid = the items sit in a 3-column grid of cards (gridCard).
 -- Card colours are centralized in Config.UI.Tokens.
 local panelFrames: { Frame } = {}
+function UI.closePanel(frame)
+	local ticket = (frame:GetAttribute("CloseTicket") or 0) + 1
+	frame:SetAttribute("CloseTicket", ticket)
+	local scale = frame:FindFirstChildOfClass("UIScale")
+	if scale then
+		UI.tween(scale, 0.14, { Scale = 0.7 }, nil, Enum.EasingDirection.In)
+	end
+	local content = frame:FindFirstChild("Content")
+	if content then
+		UI.tween(content, 0.14, { GroupTransparency = 1 })
+	end
+	task.delay(0.14, function()
+		if frame:GetAttribute("CloseTicket") == ticket then
+			frame.Visible = false
+		end
+	end)
+end
+function UI.shadow(parent)
+	local offset = gui.AbsoluteSize.Y / uiScale.Scale * Config.UI.Tokens.layout.shadow
+	local shadow = UI.box(
+		parent,
+		"Shadow",
+		UDim2.fromOffset(offset, offset),
+		UDim2.fromScale(1, 1),
+		Config.UI.Tokens.ink,
+		math.max(1, parent.ZIndex - 1)
+	)
+	shadow.BackgroundTransparency = 0.55
+	corner(shadow, 12)
+	return shadow
+end
+function UI.secret(parent)
+	local gradient = parent:FindFirstChildOfClass("UIGradient") or Instance.new("UIGradient")
+	local keys = {}
+	for i, color in Config.UI.Tokens.secret do
+		table.insert(
+			keys,
+			ColorSequenceKeypoint.new((i - 1) / (#Config.UI.Tokens.secret - 1), color)
+		)
+	end
+	parent.BackgroundColor3 = Color3.new(1, 1, 1)
+	gradient.Color, gradient.Parent = ColorSequence.new(keys), parent
+	local spin = Services.RunService.RenderStepped:Connect(function(dt)
+		if parent:IsDescendantOf(gui) then
+			gradient.Rotation = (gradient.Rotation + dt * 25) % 360
+		end
+	end)
+	parent.Destroying:Connect(function()
+		spin:Disconnect()
+	end)
+end
+function UI.sticker(parent, text, color)
+	local ribbon = textLabel(parent, text, color)
+	ribbon.FontFace = fontFace("small", "Heavy", "Italic")
+	ribbon.Position, ribbon.Size, ribbon.Rotation, ribbon.ZIndex =
+		UDim2.fromScale(0.54, 0.10), UDim2.fromScale(0.46, 0.12), 12, parent.ZIndex + 5
+	return ribbon
+end
 local panelDim: TextButton
 do
 	local dimGui = Instance.new("ScreenGui")
@@ -1421,7 +1561,9 @@ do
 	panelDim.Activated:Connect(function()
 		play(Config.Sounds.Click, 1, 0.35)
 		for _, f in panelFrames do
-			f.Visible = false
+			if f.Visible then
+				UI.closePanel(f)
+			end
 		end
 	end)
 end
@@ -1434,12 +1576,12 @@ local function anyPanelOpen(): boolean
 	return false
 end
 local function refreshDim()
-	leftBar.Visible = not anyPanelOpen()
-	statsFrame.Visible = not anyPanelOpen()
+	leftBar.Visible = true
+	statsFrame.Visible = true
 	if anyPanelOpen() then
 		panelDim.Visible = true
 		Services.TweenService
-			:Create(panelDim, TweenInfo.new(0.2), { BackgroundTransparency = 0.5 })
+			:Create(panelDim, TweenInfo.new(0.2), { BackgroundTransparency = 0.55 })
 			:Play()
 	elseif panelDim.Visible then
 		local fade = Services.TweenService:Create(
@@ -1457,9 +1599,15 @@ end
 -- Close control stays inside the gradient header.
 local function closeButton(frame: GuiObject): TextButton
 	local close = makeButton(frame, "X", Config.UI.Tokens.stop)
-	close.AnchorPoint = Vector2.new(1, 0)
-	close.Position = UDim2.fromScale(0.985, 0.01)
-	close.Size = UDim2.fromOffset(44, 44)
+	close.Name = "Close"
+	close.AnchorPoint = Vector2.new(0.7, 0.3)
+	close.Position = UDim2.fromScale(1, 0)
+	local function fitClose()
+		local side = gui.AbsoluteSize.Y / uiScale.Scale * Config.UI.Tokens.layout.closeSize
+		close.Size = UDim2.fromOffset(side, side)
+	end
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitClose)
+	fitClose()
 	local aspect = Instance.new("UIAspectRatioConstraint")
 	aspect.Parent = close
 	close.ZIndex = 14
@@ -1480,10 +1628,23 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	frame.Position = UDim2.fromScale(0.5, 0.5)
 	frame.Size = UDim2.fromScale(Config.UI.panelSize.X, Config.UI.panelSize.Y)
 	local function resize()
-		frame.Size = title == "Daily Reward"
-				and UDim2.fromScale(Palette.mobile() and 0.92 or 0.56, 0.42)
-			or Palette.mobile() and UDim2.fromScale(0.86, 0.80)
-			or UDim2.fromScale(0.60, 0.70)
+		local h = gui.AbsoluteSize.Y / uiScale.Scale
+		local daily = string.find(title, "Daily") ~= nil
+		frame.Size = Palette.mobile() and UDim2.fromScale(0.86, 0.80)
+			or UDim2.fromOffset(
+				h
+					* (
+						daily
+							and Config.UI.Tokens.layout.dailyHeight * Config.UI.Tokens.layout.dailyAspect
+						or Config.UI.Tokens.layout.panelHeight
+							* Config.UI.Tokens.layout.panelAspect
+					),
+				h
+					* (
+						daily and Config.UI.Tokens.layout.dailyHeight
+						or Config.UI.Tokens.layout.panelHeight
+					)
+			)
 	end
 	resize()
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(resize)
@@ -1492,7 +1653,13 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	frame.Visible = false
 	frame.ZIndex = 10
 	frame.Parent = gui
-	corner(frame, 16)
+	corner(frame, 16);
+	(frame:FindFirstChildOfClass("UICorner") :: UICorner).CornerRadius =
+		UDim.new(Config.UI.Tokens.corners.panel, 0)
+	UI.shadow(frame)
+	local content = Instance.new("CanvasGroup")
+	content.Name, content.Size, content.BackgroundTransparency, content.ZIndex, content.Parent =
+		"Content", UDim2.fromScale(1, 1), 1, 10, frame
 	stroke(frame, 3).Color = Config.UI.Tokens.ink
 	local kind = string.find(title, "Index") and "Index"
 		or (string.find(title, "Haunt") or string.find(title, "Rebirth")) and "Haunt"
@@ -1501,14 +1668,19 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 		or "Shop"
 	local header = Instance.new("Frame")
 	header.Name = "Header"
-	header.Size = UDim2.fromScale(1, 0.12)
-	header.BackgroundColor3 = Color3.new(1, 1, 1)
+	header.Size = UDim2.fromScale(1, string.find(title, "Daily") and 0.17 or 0.148)
+	header.BackgroundColor3 = kind == "Index" and Config.UI.Tokens.info or Config.UI.Tokens.go
 	header.ZIndex = 11
-	header.Parent = frame
+	header.Parent = content
 	corner(header, 12)
 	local gradient = Instance.new("UIGradient")
-	gradient.Color = ColorSequence.new(Config.UI.headers[kind][1], Config.UI.headers[kind][2])
+	gradient.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.new(0.8, 0.8, 0.8))
+	gradient.Rotation = 90
 	gradient.Parent = header
+	local gloss =
+		UI.box(header, "Gloss", UDim2.new(), UDim2.fromScale(1, 0.38), Color3.new(1, 1, 1), 12)
+	gloss.BackgroundTransparency = 0.82
+	corner(gloss, 12)
 
 	local head = textLabel(
 		header,
@@ -1516,12 +1688,17 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 		Color3.new(1, 1, 1),
 		"title"
 	)
-	head.Position = UDim2.fromScale(0.11, 0.1)
+	head.Position = UDim2.fromScale(0.05, 0.05)
+	head:SetAttribute("TypeSize", Config.UI.Tokens.type.title)
 	head.Size = UDim2.fromScale(0.75, 0.8)
 	head.ZIndex = 14
 	head.TextXAlignment = Enum.TextXAlignment.Left
+	if kind == "Index" then
+		head.Name, head.Parent = "OverhangTitle", frame
+		head.Position, head.Size = UDim2.fromScale(0.05, -0.035), UDim2.fromScale(0.70, 0.13)
+	end
 	closeButton(frame).Activated:Connect(function()
-		frame.Visible = false
+		UI.closePanel(frame)
 	end)
 	local list = Instance.new("ScrollingFrame")
 	list.BackgroundTransparency = 1
@@ -1532,7 +1709,7 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	list.ScrollBarImageColor3 = Color3.fromRGB(170, 170, 190)
 	list.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	list.CanvasSize = UDim2.new()
-	list.Parent = frame
+	list.Parent = content
 	local pad = Instance.new("UIPadding")
 	pad.PaddingTop = UDim.new(0, 3)
 	pad.PaddingBottom = UDim.new(0, 8)
@@ -1542,8 +1719,8 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 	if grid then
 		local layout = Instance.new("UIGridLayout")
 		local function fitGrid()
-			local columns = Palette.mobile() and 2 or 3
-			local width = math.max(90, list.AbsoluteSize.X / columns - 12)
+			local columns = Palette.mobile() and gui.AbsoluteSize.X < gui.AbsoluteSize.Y and 2 or 3
+			local width = math.max(90, list.AbsoluteSize.X / uiScale.Scale / columns - 12)
 			layout.CellSize = UDim2.new(1 / columns, -12, 0, width / 0.78)
 		end
 		fitGrid()
@@ -1566,11 +1743,39 @@ local function panel(title: string, grid: boolean?): (Frame, ScrollingFrame)
 			return
 		end
 		if frame.Visible then
-			pop.Scale = 0
+			frame:SetAttribute("CloseTicket", (frame:GetAttribute("CloseTicket") or 0) + 1)
+			for _, child in frame:GetChildren() do
+				if
+					child:IsA("GuiObject")
+					and child ~= content
+					and child.Name ~= "Close"
+					and child.Name ~= "Shadow"
+					and child.Name ~= "OverhangTitle"
+				then
+					child.Parent = content
+				end
+			end
+			pop.Scale = 0.7
+			content.GroupTransparency = 1
+			UI.tween(content, 0.12, { GroupTransparency = 0 })
+			local order = 0
+			for _, child in list:GetChildren() do
+				if child:IsA("Frame") then
+					order += 1
+					local animation = child:FindFirstChildOfClass("UIScale")
+						or Instance.new("UIScale")
+					animation.Parent, animation.Scale = child, 0.94
+					task.delay(math.min(order * 0.018, 0.25), function()
+						if child.Parent then
+							UI.tween(animation, 0.20, { Scale = 1 }, Enum.EasingStyle.Back)
+						end
+					end)
+				end
+			end
 			Services.TweenService
 				:Create(
 					pop,
-					TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+					TweenInfo.new(0.26, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
 					{ Scale = 1 }
 				)
 				:Play()
@@ -1731,58 +1936,57 @@ local function gridCard(
 	text: string
 ): GridCard
 	local c = Instance.new("Frame")
-	c.LayoutOrder = order
-	c.BackgroundColor3 = Config.UI.Tokens.card
-	c.Parent = list
-	corner(c, 14)
-	stroke(c, 2.5).Color = Palette.OUTLINE
-	local icon = Instance.new("Frame")
-	icon.AnchorPoint = Vector2.new(0.5, 0)
-	icon.Position = UDim2.new(0.5, 0, 0, 12)
-	icon.Size = UDim2.fromOffset(64, 64)
-	icon.BackgroundColor3 = color
-	icon.Parent = c
-	corner(icon)
-	stroke(icon, 3).Color = Palette.OUTLINE
-	local shine = Instance.new("Frame")
-	shine.Position = UDim2.fromOffset(14, 9)
-	shine.Size = UDim2.fromOffset(18, 12)
-	shine.BackgroundColor3 = Color3.new(1, 1, 1)
-	shine.BackgroundTransparency = 0.45
-	shine.BorderSizePixel = 0
-	shine.Parent = icon
-	corner(shine)
-	local lock = textLabel(icon, "LOCKED", Color3.new(1, 1, 1))
-	lock.Size = UDim2.fromScale(1, 1)
-	lock.Visible = false
-	local name = textLabel(c, title, Color3.new(1, 1, 1), "title")
-	name.Position = UDim2.new(0, 8, 0, 82)
-	name.Size = UDim2.new(1, -16, 0, 26)
-	local info = textLabel(c, text, Color3.fromRGB(80, 70, 100), "small")
-	info:FindFirstChildOfClass("UIStroke"):Destroy()
-	info.Position = UDim2.new(0, 10, 0, 110)
-	info.Size = UDim2.new(1, -20, 0, 40)
-	info.TextWrapped = true
-	local b = makeButton(c, "", Palette.BUY)
-	b.AnchorPoint = Vector2.new(0.5, 1)
-	b.Position = UDim2.new(0.5, 0, 1, -14)
-	b.Size = UDim2.new(1, -24, 0, 46)
-	local tag = textLabel(c, "Owned!", Color3.new(1, 1, 1))
-	tag.FontFace = fontFace("title", "Heavy", "Italic")
-	tag.AnchorPoint = Vector2.new(0.5, 1)
-	tag.Position = UDim2.new(0.5, 0, 1, -14)
-	tag.Size = UDim2.new(1, -24, 0, 44)
-	tag.Rotation = 0
+	c.LayoutOrder, c.BackgroundColor3, c.ZIndex, c.Parent = order, color, 12, list
+	corner(c, 12)
+	stroke(c, 2.5)
+	UI.shadow(c)
+	local gradient = Instance.new("UIGradient")
+	gradient.Color, gradient.Rotation, gradient.Parent =
+		ColorSequence.new(Color3.new(1, 1, 1), Color3.new(0.48, 0.48, 0.48)), 90, c
+	local icon =
+		UI.box(c, "Preview", UDim2.fromScale(0.04, 0.12), UDim2.fromScale(0.92, 0.55), color, 13)
+	icon.AnchorPoint, icon.Position, icon.BackgroundTransparency =
+		Vector2.new(0.5, 0), UDim2.fromScale(0.5, 0.12), 1
+	-- Compatibility children for the existing scythe layout.
+	stroke(icon, 0)
+	UI.box(icon, "Frame", UDim2.new(), UDim2.new(), color, 13)
+	local lock = textLabel(icon, "", Color3.new(1, 1, 1))
+	lock.Size, lock.Visible = UDim2.fromScale(1, 1), false
+	local name = textLabel(c, title, Color3.new(1, 1, 1))
+	name.Position, name.Size, name.ZIndex =
+		UDim2.fromScale(0.04, 0.02), UDim2.fromScale(0.92, 0.13), 16
+	name:SetAttribute("TypeSize", Config.UI.Tokens.type.card)
+	local info = textLabel(c, text, Color3.new(1, 1, 1))
+	info.Position, info.Size, info.ZIndex =
+		UDim2.fromScale(0.12, 0.69), UDim2.fromScale(0.76, 0.10), 16
+	info.BackgroundColor3, info.BackgroundTransparency = Config.UI.Tokens.well, 0.25
+	corner(info, 6)
+	local button = makeButton(c, "", Config.UI.Tokens.go)
+	button.AnchorPoint, button.Position, button.Size =
+		Vector2.new(0.5, 1), UDim2.fromScale(0.5, 0.98), UDim2.fromScale(0.94, 0.16)
+	button.ZIndex = 16
+	button:FindFirstChild("Label"):SetAttribute("TypeSize", Config.UI.Tokens.type.price)
+	for _, object in button:GetDescendants() do
+		if object:IsA("GuiObject") then
+			object.ZIndex += 16
+		end
+	end
+	local tag = textLabel(c, "", Config.UI.Tokens.candy)
 	tag.Visible = false
-	local tagStroke = tag:FindFirstChildOfClass("UIStroke") :: UIStroke
-	tagStroke.Thickness = 3.5
-	tagStroke.Color = Color3.fromRGB(20, 70, 15)
-	return { frame = c, color = color, icon = icon, info = info, button = b, lock = lock, tag = tag }
+	return {
+		frame = c,
+		color = color,
+		icon = icon,
+		info = info,
+		button = button,
+		lock = lock,
+		tag = tag,
+	}
 end
 
 local function cardState(gc: GridCard, look: string, text: string)
 	local owned, locked = look == "owned", look == "locked"
-	gc.frame.BackgroundColor3 = Config.UI.Tokens.card
+	gc.frame.BackgroundColor3 = gc.color
 	gc.icon.BackgroundColor3 = gc.color
 	gc.lock.Visible = locked
 	gc.info.TextColor3 = Color3.new(1, 1, 1)
@@ -1792,21 +1996,55 @@ local function cardState(gc: GridCard, look: string, text: string)
 	local priceIcon = gc.button:FindFirstChild("PriceIcon")
 	if not priceIcon then
 		priceIcon = Instance.new("Frame")
-		priceIcon.Name, priceIcon.BackgroundTransparency, priceIcon.ZIndex = "PriceIcon", 1, 5
+		priceIcon.Name, priceIcon.BackgroundTransparency, priceIcon.ZIndex =
+			"PriceIcon", 1, gc.button.ZIndex + 4
 		priceIcon.Position, priceIcon.Size =
 			UDim2.fromScale(0.04, 0.18), UDim2.fromScale(0.18, 0.52)
 		priceIcon.Parent = gc.button
 		UI.candyGlyph(priceIcon)
 	end
 	priceIcon.Visible = not owned and text:find("%d") ~= nil
+	local tick = gc.button:FindFirstChild("EquippedCheck")
+	if not tick then
+		tick = UI.box(
+			gc.button,
+			"EquippedCheck",
+			UDim2.fromScale(0.06, 0.25),
+			UDim2.fromScale(0.14, 0.4),
+			Config.UI.Tokens.info,
+			36
+		)
+		tick.BackgroundTransparency = 1
+		local shortArm = UI.box(
+			tick,
+			"Short",
+			UDim2.fromScale(0.05, 0.5),
+			UDim2.fromScale(0.45, 0.16),
+			Color3.new(1, 1, 1),
+			37
+		)
+		shortArm.Rotation = 45
+		local longArm = UI.box(
+			tick,
+			"Long",
+			UDim2.fromScale(0.25, 0.35),
+			UDim2.fromScale(0.75, 0.16),
+			Color3.new(1, 1, 1),
+			37
+		)
+		longArm.Rotation = -45
+	end
+	tick.Visible = owned and text:find("Equipped") ~= nil
 	local label = gc.button:FindFirstChild("Label")
-	label.Position = UDim2.fromScale(priceIcon.Visible and 0.23 or 0, 0)
-	label.Size = UDim2.fromScale(priceIcon.Visible and 0.74 or 1, 0.88)
+	label.Position = UDim2.fromScale((priceIcon.Visible or tick.Visible) and 0.23 or 0, 0)
+	label.Size = UDim2.fromScale((priceIcon.Visible or tick.Visible) and 0.74 or 1, 0.88)
 	gc.button.BackgroundColor3 = owned
 			and (text:find("Equipped") and Config.UI.Tokens.info or Config.UI.Tokens.off)
 		or locked and Config.UI.Tokens.off
 		or Config.UI.Tokens.go
-	gc.button.TextColor3 = locked and Config.UI.Tokens.stop or Color3.new(1, 1, 1)
+	gc.button.TextColor3 = locked and Config.UI.Tokens.stop
+		or priceIcon.Visible and Config.UI.Tokens.candy
+		or Color3.new(1, 1, 1)
 end
 local buyUpgrade = remotes:WaitForChild("BuyUpgrade") :: RemoteFunction
 -- The one Shop panel has three tabs, each its own frame: Scythes (toolPanel), Upgrades
@@ -1827,7 +2065,7 @@ do
 			i,
 			Config.UI.Tokens.rarity[math.min(i, 6)],
 			tool.name,
-			"DMG " .. short(tool.damage)
+			short(tool.damage)
 		)
 		gc.info.TextColor3 = Color3.new(1, 1, 1)
 		gc.frame.Name = "ScytheCard_" .. tool.id
@@ -1835,21 +2073,37 @@ do
 		gc.icon.BackgroundTransparency = 1
 		gc.icon:FindFirstChildOfClass("UIStroke"):Destroy()
 		gc.icon:FindFirstChild("Frame"):Destroy()
-		gc.icon.Position = UDim2.fromScale(0.5, 0.025)
-		gc.icon.Size = UDim2.fromScale(0.92, 0.52)
+		gc.icon.Position = UDim2.fromScale(0.5, 0.12)
+		gc.icon.Size = UDim2.fromScale(0.92, 0.55)
 		for _, child in gc.frame:GetChildren() do
 			if child:IsA("TextLabel") and child ~= gc.tag and child ~= gc.info then
-				child.Position = UDim2.fromScale(0.04, 0.55)
-				child.Size = UDim2.fromScale(0.92, 0.14)
+				child.Position = UDim2.fromScale(0.04, 0.01)
+				child.Size = UDim2.fromScale(0.92, 0.13)
 			end
 		end
-		gc.info.Position = UDim2.fromScale(0.04, 0.69)
-		gc.info.Size = UDim2.fromScale(0.92, 0.10)
+		gc.info.Position = UDim2.fromScale(0.12, 0.69)
+		gc.info.Size = UDim2.fromScale(0.76, 0.10)
+		local statIcon = UI.box(
+			gc.info,
+			"ScytheStat",
+			UDim2.fromScale(0.02, 0.06),
+			UDim2.fromScale(0.17, 0.82),
+			Config.UI.Tokens.card,
+			18
+		)
+		statIcon.BackgroundTransparency = 1
+		UI.icon(statIcon, "Carry")
 		task.spawn(function()
 			local folder = Services.ReplicatedStorage:WaitForChild("PatchScytheIcons")
 			Palette.renderModel(gc.icon, folder:WaitForChild(tool.id))
 		end)
 		cards[tool.id] = gc
+		gc.tag =
+			UI.sticker(gc.frame, i == #Config.Tools and "BEST" or "NEXT", Config.UI.Tokens.candy)
+		gc.tag.Visible = i == #Config.Tools
+		if i == 7 then
+			UI.secret(gc.frame)
+		end
 		local b = gc.button
 		b.Size, b.Position = UDim2.fromScale(0.92, 0.16), UDim2.fromScale(0.5, 0.98)
 		b.Activated:Connect(function()
@@ -1861,7 +2115,11 @@ do
 			if ok then
 				play(Config.Sounds.Buy, 1, 0.8)
 				Center.purchaseBurst()
-				toast(string.upper(tool.name) .. "!", short(tool.damage) .. " damage per swing")
+				toast(tool.name, "Scythe equipped")
+				candyShower(6)
+				local scale = gc.frame:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
+				scale.Parent, scale.Scale = gc.frame, 1.08
+				UI.tween(scale, 0.20, { Scale = 1 }, Enum.EasingStyle.Back)
 			else
 				b.Text = tostring(message or "?")
 				task.delay(1, refreshToolCards)
@@ -1874,7 +2132,19 @@ do
 			owned[id] = true
 		end
 		local held = player:GetAttribute("Tool")
+		local nextId, cheapest = nil, math.huge
 		for _, tool in Config.Tools do
+			if
+				tool.cost
+				and not owned[tool.id]
+				and tool.id ~= held
+				and tool.cost <= candyValue.Value
+				and tool.cost < cheapest
+			then
+				nextId, cheapest = tool.id, tool.cost
+			end
+		end
+		for i, tool in Config.Tools do
 			local gc = cards[tool.id]
 			if tool.id == held then
 				cardState(gc, "owned", "Equipped!")
@@ -1885,6 +2155,11 @@ do
 			else
 				local price = short(tool.cost) .. " candy"
 				cardState(gc, candyValue.Value >= tool.cost and "buy" or "locked", price)
+			end
+			gc.tag.Text = i == #Config.Tools and "BEST" or "NEXT"
+			gc.tag.Visible = i == #Config.Tools or tool.id == nextId
+			if i == 7 then
+				gc.frame.BackgroundColor3 = Color3.new(1, 1, 1)
 			end
 		end
 	end
@@ -1903,6 +2178,7 @@ Palette.UPGRADE_COLOR = {
 for i, id in Palette.UPGRADE_ORDER do
 	local info = Config.Upgrades[id]
 	local gc = gridCard(upgradeList, i, Palette.UPGRADE_COLOR[id], info.title, info.text)
+	UI.icon(gc.icon, "Sprint")
 	upgradeCards[id] = gc
 	local b = gc.button
 	b.Activated:Connect(function()
@@ -1922,10 +2198,7 @@ function refreshUpgradeCards()
 		local info = Config.Upgrades[id]
 		local level = player:GetAttribute("Up_" .. id) or 0
 		gc.frame.Visible = not info.cut and (id ~= "Lucky" or unlocked("LuckySwing"))
-		gc.info.Text = info.text
-			.. "\n"
-			.. string.rep("●", level)
-			.. string.rep("○", info.max - level)
+		gc.info.Text = string.format("Level %d/%d", level, info.max)
 		if level >= info.max then
 			cardState(gc, "owned", "MAX!")
 		else
@@ -1946,9 +2219,9 @@ end)
 refreshToolCards()
 refreshUpgradeCards()
 
--- One plain pet grid, with lazy static previews and server-authoritative claims.
+-- Zone collection: lazy previews, one detail card and one server-authoritative reward action.
 local indexPanel, indexList = panel("Index")
-local IndexUI: { [string]: any } = { cells = {}, chips = {}, count = 0 }
+local IndexUI: { [string]: any } = { cells = {}, zones = {}, count = 0, zone = 1 }
 function IndexUI.set(attribute)
 	local result = {}
 	for key in string.gmatch(player:GetAttribute(attribute) or "", "[^,]+") do
@@ -1956,8 +2229,16 @@ function IndexUI.set(attribute)
 	end
 	return result
 end
+function IndexUI.discovered(seed)
+	for key in IndexUI.set("Index") do
+		if string.match(key, "^([^:]+):") == seed.id then
+			return true
+		end
+	end
+	return false
+end
 function IndexUI.claim(key)
-	if IndexUI.busy then
+	if IndexUI.busy or IndexUI.count == 0 then
 		return
 	end
 	IndexUI.busy = true
@@ -1967,204 +2248,369 @@ function IndexUI.claim(key)
 		end)
 		IndexUI.busy = false
 		if ok and result and result.candy and result.candy > 0 then
-			toast("INDEX REWARD", short(result.candy) .. " candy")
+			toast("Index reward", "+" .. short(result.candy))
+			if candyShower then
+				candyShower(6)
+			end
 		end
 		IndexUI.refresh()
 	end)
 end
-function IndexUI.preview(seed, cell)
-	if cell.model then
-		return
+function IndexUI.rarity(seed)
+	for i, rarity in Config.Rarities do
+		if rarity.name == Config.Pets[seed.pet].rarity then
+			return Config.UI.Tokens.rarity[math.min(i, 6)], rarity.name
+		end
 	end
+	return Config.UI.Tokens.rarity[1], "Common"
+end
+function IndexUI.preview(seed, host, silhouette)
 	local folder = Services.ReplicatedStorage:FindFirstChild("PetPreviews")
 	local source = folder and folder:FindFirstChild(seed.pet)
-	if not source or not source:IsA("Model") then
-		return
+	if source then
+		return Palette.renderModel(host, source, silhouette)
 	end
-	local model = source:Clone()
-	model.Parent = cell.view
-	local cf, size = model:GetBoundingBox()
-	model:PivotTo(CFrame.Angles(0, math.rad(-25), 0) * cf:Inverse() * model:GetPivot())
-	local camera = Instance.new("Camera")
-	camera.FieldOfView = 30
-	camera.Parent = cell.view
-	cell.view.CurrentCamera = camera
-	cell.model, cell.camera, cell.radius = model, camera, size.Magnitude / 2
-	local function fit()
-		local aspect = cell.view.AbsoluteSize.X / math.max(1, cell.view.AbsoluteSize.Y)
-		local angle = math.atan(math.tan(math.rad(15)) * math.min(1, aspect))
-		local distance = cell.radius / math.sin(angle) * 1.08
-		camera.CFrame = CFrame.lookAt(Vector3.new(0, cell.radius * 0.25, distance), Vector3.zero)
-	end
-	cell.view:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
-	fit()
+	return nil
 end
-function IndexUI.refresh()
-	local found, claims, milestones =
-		IndexUI.set("Index"), IndexUI.set("IndexClaims"), IndexUI.set("IndexMilestones")
-	local total, count = 0, 0
-	for _, seed in Config.Seeds do
-		local discovered = false
-		for key in found do
-			if string.match(key, "^([^:]+):") == seed.id then
-				discovered = true
+function IndexUI.select(seed)
+	IndexUI.selected = seed
+	local found = IndexUI.discovered(seed)
+	local color, rarity = IndexUI.rarity(seed)
+	IndexUI.detailName.Text = found and Config.Pets[seed.pet].display or "Undiscovered"
+	IndexUI.detailRarity.Text, IndexUI.detailRarity.TextColor3 = rarity, color
+	IndexUI.detailRate.Text = found and ("+" .. rateShort(seed.income) .. "/s") or "Hatch first"
+	for _, child in IndexUI.hero:GetChildren() do
+		child:Destroy()
+	end
+	IndexUI.heroView = IndexUI.preview(seed, IndexUI.hero, not found)
+	IndexUI.heroAngle = 0
+end
+function IndexUI.build()
+	UI.indexBuilt = true
+	for _, cell in IndexUI.cells do
+		cell.tile:Destroy()
+	end
+	table.clear(IndexUI.cells)
+	local zone = IndexUI.zones[IndexUI.zone]
+	for _, entry in IndexUI.zones do
+		if not entry.view then
+			local zones = garden:FindFirstChild("Zones")
+			local folder = zones and zones:FindFirstChild(entry.id)
+			local source = folder and folder:FindFirstChild("HoardPumpkin", true)
+			if source then
+				for _, child in entry.icon:GetChildren() do
+					child:Destroy()
+				end
+				entry.view = Palette.renderModel(entry.icon, source)
+			end
+		end
+	end
+	for i, seed in Config.Seeds do
+		if zone.config.weights[seed.id] then
+			local color = IndexUI.rarity(seed)
+			local tile = makeButton(indexList, "", Config.UI.Tokens.off)
+			tile.Name, tile.LayoutOrder, tile.ZIndex = "Pet_" .. seed.pet, i, 13
+			for _, child in tile:GetChildren() do
+				child:Destroy()
+			end
+			tile.BackgroundTransparency, tile.BackgroundColor3 = 0, color
+			corner(tile, 10)
+			stroke(tile, 2.5)
+			local host = UI.box(
+				tile,
+				"Pet",
+				UDim2.fromScale(0.04, 0.04),
+				UDim2.fromScale(0.92, 0.92),
+				color,
+				14
+			)
+			host.BackgroundTransparency = 1
+			local view = IndexUI.preview(seed, host, not IndexUI.discovered(seed))
+			local unknown = textLabel(tile, "?", Color3.new(1, 1, 1))
+			unknown.Size, unknown.ZIndex = UDim2.fromScale(1, 1), 17
+			tile.Activated:Connect(function()
+				IndexUI.select(seed)
+			end)
+			IndexUI.cells[seed.pet] = {
+				tile = tile,
+				host = host,
+				view = view,
+				unknown = unknown,
+				seed = seed,
+				color = color,
+			}
+		end
+	end
+	if not IndexUI.selected or not zone.config.weights[IndexUI.selected.id] then
+		for _, seed in Config.Seeds do
+			if zone.config.weights[seed.id] then
+				IndexUI.select(seed)
 				break
 			end
 		end
-		if discovered then
+	else
+		IndexUI.select(IndexUI.selected)
+	end
+	IndexUI.refresh()
+end
+function IndexUI.refresh()
+	local claims, milestones = IndexUI.set("IndexClaims"), IndexUI.set("IndexMilestones")
+	local total, count, zoneFound, zoneTotal = 0, 0, 0, 0
+	local zone = IndexUI.zones[IndexUI.zone]
+	for _, seed in Config.Seeds do
+		local found = IndexUI.discovered(seed)
+		if found then
 			total += 1
 			if not claims[seed.pet] then
 				count += 1
 			end
 		end
+		if zone and zone.config.weights[seed.id] then
+			zoneTotal += 1
+			if found then
+				zoneFound += 1
+			end
+		end
 		local cell = IndexUI.cells[seed.pet]
 		if cell then
-			cell.name.Text = discovered and Config.Pets[seed.pet].display or "???"
-			cell.view.ImageColor3 = discovered and Color3.new(1, 1, 1) or Color3.fromRGB(12, 12, 16)
-			cell.view.Ambient = discovered and Color3.fromRGB(190, 190, 190) or Color3.new(0, 0, 0)
-			cell.claim.Visible = discovered
-			cell.claim.Text = claims[seed.pet] and "CLAIMED" or "CLAIM"
-			cell.claim.Active = discovered and not claims[seed.pet]
-			cell.claim.BackgroundColor3 = claims[seed.pet] and Color3.fromRGB(100, 100, 110)
-				or Config.UI.Tokens.go
-			if indexPanel.Visible then
-				IndexUI.preview(seed, cell)
+			cell.tile.BackgroundColor3 = found and cell.color
+				or cell.color:Lerp(Config.UI.Tokens.ink, 0.55)
+			cell.unknown.Visible = not found
+			if not cell.view and indexPanel.Visible then
+				cell.view = IndexUI.preview(seed, cell.host, not found)
+			end
+			if cell.view then
+				cell.view.ImageColor3 = found and Color3.new(1, 1, 1) or Config.UI.Tokens.ink
 			end
 		end
 	end
-	for i, milestone in Config.IndexRewards.milestones do
-		local key = tostring(milestone.percent)
-		local reached = total * 100 >= #Config.Seeds * milestone.percent
-		if reached and not milestones[key] then
+	for _, milestone in Config.IndexRewards.milestones do
+		if
+			total * 100 >= #Config.Seeds * milestone.percent
+			and not milestones[tostring(milestone.percent)]
+		then
 			count += 1
 		end
-		local chip = IndexUI.chips[i]
-		chip.Text = key
-			.. "% "
-			.. (milestones[key] and "CLAIMED" or reached and "CLAIM" or "Locked")
-		if milestone.percent == 100 and not milestones[key] then
-			chip.Text ..= " + title"
-		end
-		chip.BackgroundColor3 = reached and Config.UI.Tokens.go or Color3.fromRGB(100, 100, 110)
-		chip.Active = reached and not milestones[key]
 	end
-	IndexUI.progress.Text = string.format("Discovered %d/%d", total, #Config.Seeds)
-	IndexUI.fill.Size = UDim2.fromScale(total / #Config.Seeds, 1)
 	IndexUI.count = count
-	IndexUI.all.Text = "CLAIM ALL"
-	IndexUI.all.Active = count > 0
-	IndexUI.badge.Text = tostring(count)
-	IndexUI.badge.Visible = count > 0
+	IndexUI.progress.Text =
+		string.format("%s %d/%d", zone and zone.name or "Patch", zoneFound, zoneTotal)
+	IndexUI.fill.Size = UDim2.fromScale(zoneFound / math.max(1, zoneTotal), 1)
+	IndexUI.global.Text = string.format("Unlocked %d/%d", total, #Config.Seeds)
+	IndexUI.globalFill.Size = UDim2.fromScale(total / #Config.Seeds, 1)
+	IndexUI.all.Active, IndexUI.all.BackgroundColor3 =
+		count > 0, count > 0 and Config.UI.Tokens.go or Config.UI.Tokens.off
+	IndexUI.badge.Text, IndexUI.badge.Visible = tostring(count), count > 0
 	if IndexUI.hudBadge then
-		IndexUI.hudBadge.Text = "!"
-		IndexUI.hudBadge.Visible = count > 0
+		IndexUI.hudBadge.Text, IndexUI.hudBadge.Visible = "!", count > 0
+	end
+	for i, entry in IndexUI.zones do
+		entry.outline.Color = i == IndexUI.zone and Color3.new(1, 1, 1) or Config.UI.Tokens.ink
 	end
 end
 do
 	indexList:FindFirstChildOfClass("UIListLayout"):Destroy()
-	indexList.Position, indexList.Size = UDim2.fromScale(0.025, 0.36), UDim2.fromScale(0.95, 0.61)
+	indexList.BackgroundColor3, indexList.BackgroundTransparency, indexList.ZIndex =
+		Config.UI.Tokens.well, 0, 12
+	corner(indexList, 10)
 	local layout = Instance.new("UIGridLayout")
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.CellPadding = UDim2.fromOffset(8, 8)
-	layout.Parent = indexList
-	local function fit()
-		local width = math.max(70, indexList.AbsoluteSize.X - 24)
-		local columns = math.max(1, math.floor((width + 8) / 98))
-		local size = math.max(70, math.floor((width - (columns - 1) * 8) / columns))
-		layout.CellSize = UDim2.fromOffset(size, size + 56)
+	layout.SortOrder, layout.CellPadding, layout.Parent =
+		Enum.SortOrder.LayoutOrder, UDim2.fromOffset(6, 6), indexList
+	local rail = UI.box(indexPanel, "ZoneRail", UDim2.new(), UDim2.new(), Config.UI.Tokens.well, 12)
+	rail.BackgroundTransparency = 1
+	for i, entry in
+		{
+			{ "Zone1", "Patch", "Pets", { "Zone1" } },
+			{ "Zone3", "Woods", "Pets", { "Zone3", "Zone4" } },
+			{ "Zone5", "Castle", "King", { "Zone5", "Zone6", "Zone7" } },
+			{ "Zone2", "Graveyard", "Clock", { "Zone2" } },
+		}
+	do
+		local members = {}
+		for _, zoneId in entry[4] do
+			for _, seedId in Config.Zones[zoneId].pets do
+				members[seedId] = true
+			end
+		end
+		if entry[2] == "Castle" then
+			for _, seed in Config.Seeds do
+				if seed.pet == "Kinglet" then
+					members[seed.id] = true
+				end
+			end
+		end
+		local tile = makeButton(rail, entry[2], Config.UI.Tokens.zones[entry[2]])
+		tile.ZIndex = 13
+		for _, d in tile:GetDescendants() do
+			if d:IsA("GuiObject") then
+				d.ZIndex += 13
+			end
+		end
+		local icon = UI.box(
+			tile,
+			"ZoneProp",
+			UDim2.fromScale(0.15, 0.03),
+			UDim2.fromScale(0.70, 0.62),
+			Config.UI.Tokens.panel,
+			16
+		)
+		icon.BackgroundTransparency = 1
+		UI.icon(icon, entry[3])
+		local label = tile:FindFirstChild("Label")
+		label.Position, label.Size = UDim2.fromScale(0, 0.65), UDim2.fromScale(1, 0.24)
+		IndexUI.zones[i] = {
+			tile = tile,
+			outline = stroke(tile, 2),
+			config = { weights = members },
+			name = entry[2],
+			id = entry[1],
+			icon = icon,
+		}
+		tile.Activated:Connect(function()
+			IndexUI.zone = i
+			IndexUI.build()
+		end)
 	end
-	indexList:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
-	fit()
-	local track = Instance.new("Frame")
-	track.BackgroundColor3 = Color3.fromRGB(60, 55, 75)
-	track.Position, track.Size = UDim2.fromScale(0.025, 0.14), UDim2.fromScale(0.62, 0.075)
-	track.Parent = indexPanel
-	corner(track, 10)
-	IndexUI.fill = Instance.new("Frame")
-	IndexUI.fill.BackgroundColor3 = Config.UI.Tokens.good
-	IndexUI.fill.BorderSizePixel = 0
-	IndexUI.fill.Parent = track
-	corner(IndexUI.fill, 10)
+	local track =
+		UI.box(indexPanel, "ZoneProgress", UDim2.new(), UDim2.new(), Config.UI.Tokens.off, 12)
+	corner(track, 6)
+	IndexUI.fill = UI.box(track, "Fill", UDim2.new(), UDim2.new(), Config.UI.Tokens.good, 13)
+	corner(IndexUI.fill, 6)
 	IndexUI.progress = textLabel(track, "", Color3.new(1, 1, 1))
-	IndexUI.progress.Size = UDim2.fromScale(1, 1)
-	IndexUI.all = makeButton(indexPanel, "CLAIM ALL", Config.UI.Tokens.go)
-	IndexUI.all.Position, IndexUI.all.Size =
-		UDim2.fromScale(0.68, 0.14), UDim2.fromScale(0.29, 0.075)
+	IndexUI.progress.Size, IndexUI.progress.ZIndex = UDim2.fromScale(0.88, 1), 16
+	local gift = UI.box(
+		track,
+		"GiftPip",
+		UDim2.fromScale(0.88, -0.05),
+		UDim2.fromScale(0.12, 1.1),
+		Config.UI.Tokens.panel,
+		17
+	)
+	gift.BackgroundTransparency = 1
+	UI.icon(gift, "Daily")
+	local detail = UI.box(indexPanel, "Detail", UDim2.new(), UDim2.new(), Config.UI.Tokens.card, 12)
+	corner(detail, 12)
+	stroke(detail, 2).Color = Config.UI.Tokens.cardStroke
+	IndexUI.hero = UI.box(
+		detail,
+		"Hero",
+		UDim2.fromScale(0.03, 0.01),
+		UDim2.fromScale(0.94, 0.55),
+		Config.UI.Tokens.card,
+		13
+	)
+	IndexUI.hero.BackgroundTransparency = 1
+	IndexUI.detailName = textLabel(detail, "", Color3.new(1, 1, 1))
+	IndexUI.detailName.Position, IndexUI.detailName.Size, IndexUI.detailName.ZIndex =
+		UDim2.fromScale(0.03, 0.57), UDim2.fromScale(0.94, 0.17), 16
+	IndexUI.detailName.TextWrapped = true
+	IndexUI.detailRarity = textLabel(detail, "", Config.UI.Tokens.candy)
+	IndexUI.detailRarity.Position, IndexUI.detailRarity.Size, IndexUI.detailRarity.ZIndex =
+		UDim2.fromScale(0.03, 0.75), UDim2.fromScale(0.94, 0.09), 16
+	local detailCandy = UI.box(
+		detail,
+		"Candy",
+		UDim2.fromScale(0.04, 0.87),
+		UDim2.fromScale(0.14, 0.10),
+		Config.UI.Tokens.candy,
+		16
+	)
+	detailCandy.BackgroundTransparency = 1
+	UI.candyGlyph(detailCandy)
+	IndexUI.detailRate = textLabel(detail, "", Config.UI.Tokens.good)
+	IndexUI.detailRate.Position, IndexUI.detailRate.Size, IndexUI.detailRate.ZIndex =
+		UDim2.fromScale(0.20, 0.87), UDim2.fromScale(0.77, 0.10), 16
+	local rewards =
+		UI.box(indexPanel, "Rewards", UDim2.new(), UDim2.new(), Config.UI.Tokens.well, 12)
+	corner(rewards, 10)
+	local rewardTitle = textLabel(rewards, "Rewards", Color3.new(1, 1, 1))
+	rewardTitle.Size, rewardTitle.ZIndex = UDim2.fromScale(1, 0.30), 16
+	IndexUI.all = makeButton(rewards, "CLAIM", Config.UI.Tokens.go)
+	IndexUI.all.Position, IndexUI.all.Size, IndexUI.all.ZIndex =
+		UDim2.fromScale(0.05, 0.38), UDim2.fromScale(0.90, 0.55), 16
+	for _, d in IndexUI.all:GetDescendants() do
+		if d:IsA("GuiObject") then
+			d.ZIndex += 16
+		end
+	end
 	IndexUI.all.Activated:Connect(function()
 		IndexUI.claim("All")
 	end)
 	IndexUI.badge = textLabel(IndexUI.all, "", Color3.new(1, 1, 1))
-	IndexUI.badge.BackgroundColor3 = Color3.fromRGB(255, 30, 30)
-	IndexUI.badge.BackgroundTransparency = 0
-	IndexUI.badge.AnchorPoint = Vector2.new(0.5, 0.5)
-	IndexUI.badge.Position, IndexUI.badge.Size =
-		UDim2.fromScale(0.97, 0.08), UDim2.fromOffset(24, 24)
-	IndexUI.badge.ZIndex = 8
-	corner(IndexUI.badge, 12)
-	for i, milestone in Config.IndexRewards.milestones do
-		local chip = makeButton(indexPanel, "", Color3.fromRGB(100, 100, 110))
-		chip.Position, chip.Size =
-			UDim2.fromScale(0.025 + (i - 1) * 0.24, 0.235), UDim2.fromScale(0.225, 0.085)
-		IndexUI.chips[i] = chip
-		chip.Activated:Connect(function()
-			IndexUI.claim("Milestone:" .. milestone.percent)
-		end)
-	end
-end
-function IndexUI.build()
-	UI.indexBuilt = true
-	if IndexUI.built then
-		return
-	end
-	IndexUI.built = true
-	for i, seed in Config.Seeds do
-		local color = Config.Rarities[1].color
-		for _, rarity in Config.Rarities do
-			if rarity.name == Config.Pets[seed.pet].rarity then
-				color = rarity.color
-			end
+	IndexUI.badge.Position, IndexUI.badge.Size, IndexUI.badge.ZIndex =
+		UDim2.fromScale(0.80, -0.12), UDim2.fromScale(0.23, 0.50), 35
+	IndexUI.badge.BackgroundColor3, IndexUI.badge.BackgroundTransparency = Config.UI.Tokens.stop, 0
+	corner(IndexUI.badge)
+	IndexUI.global = textLabel(indexPanel, "", Color3.new(1, 1, 1))
+	IndexUI.global.Position, IndexUI.global.Size, IndexUI.global.ZIndex =
+		UDim2.fromScale(0.08, 0.91), UDim2.fromScale(0.84, 0.045), 16
+	local globalTrack = UI.box(
+		indexPanel,
+		"GlobalProgress",
+		UDim2.fromScale(0.08, 0.966),
+		UDim2.fromScale(0.84, 0.009),
+		Config.UI.Tokens.off,
+		12
+	)
+	IndexUI.globalFill =
+		UI.box(globalTrack, "Fill", UDim2.new(), UDim2.new(), Config.UI.Tokens.good, 13)
+	local function fit()
+		local portrait = Palette.mobile() and gui.AbsoluteSize.X < gui.AbsoluteSize.Y
+		rail.Position, rail.Size =
+			UDim2.fromScale(0.025, 0.16),
+			UDim2.fromScale(portrait and 0.95 or 0.15, portrait and 0.11 or 0.72)
+		for i, entry in IndexUI.zones do
+			entry.tile.Position = portrait and UDim2.fromScale((i - 1) * 0.25, 0)
+				or UDim2.fromScale(0, (i - 1) * 0.25)
+			entry.tile.Size = portrait and UDim2.fromScale(0.235, 1) or UDim2.fromScale(1, 0.235)
 		end
-		local tile = Instance.new("Frame")
-		tile.Name, tile.LayoutOrder = "Tile_" .. seed.pet, i
-		tile.BackgroundColor3 = color:Lerp(Color3.new(1, 1, 1), 0.3)
-		tile.Parent = indexList
-		corner(tile, 10)
-		stroke(tile, 2.5).Color = color
-		local view = Instance.new("ViewportFrame")
-		view.BackgroundTransparency = 1
-		view.Position, view.Size = UDim2.fromScale(0.04, 0.02), UDim2.new(0.92, 0, 1, -60)
-		view.LightColor, view.LightDirection = Color3.new(1, 1, 1), Vector3.new(-1, -1.5, -1)
-		view.Parent = tile
-		local name = textLabel(tile, "???", Color3.new(1, 1, 1))
-		name.Position, name.Size = UDim2.new(0, 3, 1, -58), UDim2.new(1, -6, 0, 24)
-		local claim = makeButton(tile, "CLAIM", Config.UI.Tokens.go)
-		claim.Position, claim.Size = UDim2.new(0, 4, 1, -32), UDim2.new(1, -8, 0, 28)
-		claim.Activated:Connect(function()
-			IndexUI.claim(seed.pet)
-		end)
-		IndexUI.cells[seed.pet] = { view = view, name = name, claim = claim }
+		track.Position, track.Size =
+			UDim2.fromScale(portrait and 0.025 or 0.20, portrait and 0.29 or 0.16),
+			UDim2.fromScale(portrait and 0.95 or 0.48, 0.055)
+		indexList.Position, indexList.Size =
+			UDim2.fromScale(portrait and 0.025 or 0.20, portrait and 0.365 or 0.24),
+			UDim2.fromScale(portrait and 0.54 or 0.48, portrait and 0.525 or 0.65)
+		detail.Position, detail.Size =
+			UDim2.fromScale(portrait and 0.59 or 0.71, portrait and 0.365 or 0.16),
+			UDim2.fromScale(portrait and 0.385 or 0.265, portrait and 0.34 or 0.47)
+		rewards.Position, rewards.Size =
+			UDim2.fromScale(portrait and 0.59 or 0.71, portrait and 0.73 or 0.67),
+			UDim2.fromScale(portrait and 0.385 or 0.265, portrait and 0.16 or 0.22)
+		local columns = portrait and 2 or 4
+		local width = (indexList.AbsoluteSize.X / uiScale.Scale - 24 - (columns - 1) * 6) / columns
+		layout.CellSize = UDim2.fromOffset(math.max(20, width), math.max(20, width * 1.15))
 	end
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
+	indexList:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
+	Services.UserInputService.LastInputTypeChanged:Connect(fit)
+	fit()
+	Services.RunService.RenderStepped:Connect(function(dt)
+		if indexPanel.Visible and IndexUI.heroView then
+			UI.rotatePreview(IndexUI.heroView, dt * math.rad(15))
+		end
+	end)
 end
 indexPanel:GetPropertyChangedSignal("Visible"):Connect(function()
 	if indexPanel.Visible then
 		IndexUI.build()
-		IndexUI.refresh()
 	end
 end)
 for _, attribute in { "Index", "IndexClaims", "IndexMilestones", "Loaded" } do
-	player:GetAttributeChangedSignal(attribute):Connect(IndexUI.refresh)
+	player:GetAttributeChangedSignal(attribute):Connect(function()
+		IndexUI.refresh()
+		if indexPanel.Visible and IndexUI.selected then
+			IndexUI.select(IndexUI.selected)
+		end
+	end)
 end
 IndexUI.refresh()
 task.spawn(function()
 	local previews = Services.ReplicatedStorage:WaitForChild("PetPreviews")
 	previews.ChildAdded:Connect(function()
 		if indexPanel.Visible then
-			IndexUI.refresh()
+			IndexUI.build()
 		end
 	end)
-	if indexPanel.Visible then
-		IndexUI.refresh()
-	end
 end)
 -- Music: a calm day loop, a tense midnight loop and a boss loop that crossfade by phase.
 -- toggleSound (the small speaker button in the Shop panel corner) mutes music and effects.
@@ -2238,15 +2684,23 @@ function UI.tile(id, color, slot)
 	b.Name, b.AnchorPoint = id .. "Tile", Vector2.new(1, 0)
 	local icon = Instance.new("Frame")
 	icon.BackgroundTransparency, icon.Position, icon.Size, icon.ZIndex, icon.Parent =
-		1, UDim2.fromScale(0.11, 0.05), UDim2.fromScale(0.78, 0.78), 5, b
+		1, UDim2.fromScale(0.16, 0.04), UDim2.fromScale(0.68, 0.65), 5, b
 	UI.icon(icon, id)
+	local caption = textLabel(b, id, Color3.new(1, 1, 1))
+	caption:SetAttribute("TypeSize", Config.UI.Tokens.type.caption)
+	caption.Position, caption.Size, caption.ZIndex =
+		UDim2.fromScale(0, 0.65), UDim2.fromScale(1, 0.25), 7
 	local function layout()
 		local touch, h = Palette.mobile(), gui.AbsoluteSize.Y / uiScale.Scale
 		b.Position = UDim2.fromScale(
 			touch and 0.99 or 0.992,
-			(touch and 0.30 or 0.36) + (slot - 1) * (touch and 0.10 or 0.082)
+			(touch and 0.30 or 0.36) + (slot - 1) * (touch and 0.10 or 0.104)
 		)
 		b.Size = UDim2.fromOffset(h * (touch and 0.09 or 0.070), h * (touch and 0.09 or 0.070))
+		icon.Position = UDim2.fromScale(touch and 0.16 or 0.11, 0.04)
+		icon.Size = UDim2.fromScale(touch and 0.68 or 0.78, touch and 0.62 or 0.78)
+		caption.Position = UDim2.fromScale(touch and 0 or -0.35, touch and 0.66 or 1.02)
+		caption.Size = UDim2.fromScale(touch and 1 or 1.35, touch and 0.30 or 0.34)
 	end
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)
 	Services.UserInputService.LastInputTypeChanged:Connect(layout)
@@ -2274,7 +2728,7 @@ do
 	top.Parent = player:WaitForChild("PlayerGui")
 	local gear = makeButton(top, "", Config.UI.Tokens.ink)
 	gear.Name, gear.AnchorPoint, gear.Position, gear.Size =
-		"SettingsGear", Vector2.new(1, 0), UDim2.fromScale(0.99, 0), UDim2.fromOffset(32, 32)
+		"SettingsGear", Vector2.new(1, 0), UDim2.new(1, -16, 0, 8), UDim2.fromOffset(36, 36)
 	for _, child in gear:GetChildren() do
 		if child:IsA("Frame") then
 			child.BackgroundTransparency = 0.4
@@ -2747,8 +3201,6 @@ do
 	local SHOP_TABS = {
 		{ name = "Scythes", label = "Scythes", frame = toolPanel },
 		{ name = "Upgrades", label = "Upgrades", frame = upgradePanel },
-		{ name = "Haunt", label = "Rebirth", frame = hauntPanel },
-		{ name = "Robux", label = "Robux", frame = shopPanel },
 	}
 	local TAB_ON, TAB_OFF = Config.UI.Tokens.info, Config.UI.Tokens.off
 	local hasRobux = #shopCards > 0
@@ -2829,7 +3281,7 @@ do
 	-- and the speaker button at the row's right end.
 	for _, tab in SHOP_TABS do
 		local frame = tab.frame
-		local list = frame:FindFirstChildOfClass("ScrollingFrame")
+		local list = frame:FindFirstChildWhichIsA("ScrollingFrame", true)
 		if list then
 			list.Position = UDim2.fromScale(0.025, 0.28)
 			list.Size = UDim2.fromScale(0.95, 0.69)
@@ -2937,6 +3389,51 @@ remotes:WaitForChild("Announce").OnClientEvent:Connect(function(text: string)
 	play(Config.Sounds.Brew, 0.7, 0.8)
 end)
 
+function UI.rotatePreview(view, angle)
+	local world = view:FindFirstChildOfClass("WorldModel")
+	local model = world and world:FindFirstChildOfClass("Model")
+	if not model then
+		return
+	end
+	local cf = model:GetBoundingBox()
+	model:PivotTo(
+		CFrame.new(cf.Position)
+			* CFrame.Angles(0, angle, 0)
+			* CFrame.new(-cf.Position)
+			* model:GetPivot()
+	)
+	if UI.fitters and UI.fitters[view] then
+		UI.fitters[view]()
+	end
+end
+function UI.hatchConfetti(parent, color, legendary)
+	local box = UI.box(
+		parent,
+		"ConfettiBounds",
+		UDim2.fromScale(0.2, 0.16),
+		UDim2.fromScale(0.6, 0.6),
+		color,
+		20
+	)
+	box.BackgroundTransparency, box.ClipsDescendants = 1, true
+	for i = 1, legendary and 40 or 20 do
+		local tint = i % 2 == 0 and Color3.new(1, 1, 1) or color
+		if legendary and i % 3 == 0 then
+			tint = Config.UI.Tokens.candy
+		end
+		local piece =
+			UI.box(box, "Confetti", UDim2.fromScale(0.5, 0.5), UDim2.fromOffset(6, 10), tint, 21)
+		piece.Rotation = math.random(0, 360)
+		UI.tween(piece, 0.65, {
+			Position = UDim2.fromScale(math.random(), math.random()),
+			Rotation = piece.Rotation + 180,
+			BackgroundTransparency = 1,
+		})
+	end
+	task.delay(0.7, function()
+		box:Destroy()
+	end)
+end
 -- Reward reveal (Steal an Egg hatch / Pet Sim 99 "New Item!"): a 0.15 s white flash, then a
 -- centred white card: the pumpkin itself turning slowly in a ViewportFrame over a ray burst, the
 -- rarity in its colour, the name, its income "+X/s" and a green "NEW!" tag for a type you never
@@ -3057,247 +3554,241 @@ do
 		mutation: string?,
 		isNew: boolean,
 		rate: number,
-		kind: string?,
+		_kind: string?,
 		pet: string?,
 		weight: number?
 	)
-		Center.acquire()
 		local seed = seedById[seedId]
+		if not seed then
+			return
+		end
+		Center.acquire()
 		local rarity = rarityOf(seed.order)
-		local rarityPet = Config.Pets[pet or seed.pet]
-		if rarityPet then
+		local petDef = Config.Pets[pet or seed.pet]
+		if petDef then
 			for _, r in Config.Rarities do
-				if r.name == rarityPet.rarity then
+				if r.name == petDef.rarity then
 					rarity = r
 					break
 				end
 			end
 		end
-		local m = mutation and mutationById[mutation]
-		-- White flash first (a hatch already flashed pink).
-		if kind ~= "jack" then
-			flash.BackgroundTransparency = 0
-			Services.TweenService
-				:Create(
-					flash,
-					TweenInfo.new(
-						Config.RevealFlash,
-						Enum.EasingStyle.Quad,
-						Enum.EasingDirection.In
-					),
-					{ BackgroundTransparency = 1 }
-				)
-				:Play()
+		local color = rarity.color
+		for i, r in Config.Rarities do
+			if r.name == rarity.name then
+				color = Config.UI.Tokens.rarity[math.min(i, 6)]
+			end
 		end
-		play(Config.Sounds.Reveal, isNew and 1.08 or 1, 0.8)
-		task.wait(Config.RevealFlash)
-		Services.TweenService:Create(blur, TweenInfo.new(0.3), { Size = 0 }):Play()
-		if kind == "jack" and seed.order >= 3 then
-			-- Rare and up: confetti over the card.
-			confetti(revealGui)
-		end
-
-		-- A full-screen button under the card dims the world (black at 0.45) and closes the card
-		-- on a click anywhere.
+		-- No scene blur while the HUD is visible.
+		blur.Size = 0
+		flash.BackgroundTransparency = 1
 		local catcher = Instance.new("TextButton")
+		catcher.Name, catcher.Text, catcher.AutoButtonColor = "Reveal", "", false
 		catcher.FontFace = fontFace("button")
-		catcher.Name = "Reveal"
-		catcher.Text = ""
-		catcher.AutoButtonColor = false
-		catcher.BackgroundColor3 = Color3.new(0, 0, 0)
-		catcher.BackgroundTransparency = 1
-		catcher.BorderSizePixel = 0
-		catcher.Size = UDim2.fromScale(1, 1)
-		catcher.ZIndex = 2
-		catcher.Parent = revealGui
+		catcher.Size, catcher.BackgroundColor3, catcher.BackgroundTransparency =
+			UDim2.fromScale(1, 1), Config.UI.Tokens.ink, 1
+		catcher.ZIndex, catcher.Parent = 2, revealGui
 		Center.register(catcher)
-		Services.TweenService
-			:Create(catcher, TweenInfo.new(0.2), { BackgroundTransparency = 0.45 })
-			:Play()
-		local cardFrame = Instance.new("Frame")
-		cardFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-		cardFrame.Position = UDim2.fromScale(0.5, 0.46)
-		cardFrame.Size = UDim2.fromOffset(340, 410)
-		cardFrame.BackgroundColor3 = Color3.new(1, 1, 1)
-		cardFrame.Parent = catcher
-		corner(cardFrame, 16)
-		-- Rarity-coloured border: a thick rarity ring inside a thin dark outline.
-		local border = stroke(cardFrame, 6)
-		border.Color = rarity.color
-		local outer = Instance.new("Frame")
-		outer.AnchorPoint = Vector2.new(0.5, 0.5)
-		outer.Position = UDim2.fromScale(0.5, 0.5)
-		outer.Size = UDim2.new(1, 12, 1, 12)
-		outer.BackgroundTransparency = 1
-		outer.ZIndex = 0
-		outer.Parent = cardFrame
-		corner(outer, 20)
-		stroke(outer, 3).Color = Palette.OUTLINE
-		-- Pop-in: 0.6 -> 1 (x the HUD scale) with Back easing (overshoots ~1.05).
-		local scale = Instance.new("UIScale")
-		scale.Scale = 0.6 * uiScale.Scale
-		scale.Parent = cardFrame
-		Services.TweenService
-			:Create(
-				scale,
-				TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-				{ Scale = uiScale.Scale }
+		UI.tween(catcher, 0.12, { BackgroundTransparency = 0.55 })
+		-- A pumpkin shell cracks apart before the pet gets its hero moment.
+		local shell = UI.box(
+			catcher,
+			"CrackingPumpkin",
+			UDim2.fromScale(0.5, 0.46),
+			UDim2.fromScale(0.16, 0.18),
+			Config.UI.Tokens.go,
+			3
+		)
+		shell.AnchorPoint, shell.BackgroundTransparency = Vector2.new(0.5, 0.5), 1
+		local halves = {}
+		for i = 1, 2 do
+			local half = UI.box(
+				shell,
+				"Half",
+				UDim2.fromScale((i - 1) * 0.5, 0.10),
+				UDim2.fromScale(0.49, 0.80),
+				Config.UI.Tokens.go,
+				4
 			)
-			:Play()
-
-		-- Light rays in the rarity colour behind the pumpkin.
-		local rays = Instance.new("Frame")
-		rays.AnchorPoint = Vector2.new(0.5, 0.5)
-		rays.Position = UDim2.new(0.5, 0, 0, 132)
-		rays.Size = UDim2.fromOffset(290, 290)
-		rays.BackgroundTransparency = 1
-		rays.ZIndex = 1
-		rays.Parent = cardFrame
-		for k = 1, 8 do
-			local ray = Instance.new("Frame")
-			ray.AnchorPoint = Vector2.new(0.5, 0.5)
-			ray.Position = UDim2.fromScale(0.5, 0.5)
-			ray.Size = UDim2.new(0, 30, 1, 0)
-			ray.Rotation = k * 22.5
-			-- Rarity tint, a little lighter so the rays glow behind the pumpkin.
-			ray.BackgroundColor3 = rarity.color:Lerp(Color3.new(1, 1, 1), 0.15)
-			ray.BackgroundTransparency = 0.2
-			ray.BorderSizePixel = 0
-			ray.ZIndex = 1
-			ray.Parent = rays
-			local fadeEnds = Instance.new("UIGradient")
-			fadeEnds.Rotation = 90
-			fadeEnds.Transparency = NumberSequence.new({
-				NumberSequenceKeypoint.new(0, 1),
-				NumberSequenceKeypoint.new(0.5, 0.15),
-				NumberSequenceKeypoint.new(1, 1),
+			corner(half, 14)
+			stroke(half, 3)
+			local eye = UI.box(
+				half,
+				"Eye",
+				UDim2.fromScale(0.35, 0.27),
+				UDim2.fromScale(0.25, 0.17),
+				Config.UI.Tokens.ink,
+				5
+			)
+			eye.Rotation = 45
+			halves[i] = half
+		end
+		UI.box(
+			shell,
+			"Stem",
+			UDim2.fromScale(0.43, -0.05),
+			UDim2.fromScale(0.14, 0.24),
+			Config.UI.Tokens.good,
+			4
+		)
+		for i, half in halves do
+			UI.tween(half, 0.4, {
+				Position = UDim2.fromScale(i == 1 and -0.7 or 1.2, 0.45),
+				Rotation = i == 1 and -35 or 35,
+				BackgroundTransparency = 1,
 			})
-			fadeEnds.Parent = ray
 		end
-
-		-- The pumpkin itself, slowly turning.
-		local view = Instance.new("ViewportFrame")
-		view.AnchorPoint = Vector2.new(0.5, 0.5)
-		view.Position = UDim2.new(0.5, 0, 0, 132)
-		view.Size = UDim2.fromOffset(220, 220)
-		view.BackgroundTransparency = 1
-		view.Ambient = Color3.fromRGB(235, 235, 255)
-		view.LightColor = Color3.new(1, 1, 1)
-		view.LightDirection = Vector3.new(-1, -0.5, -1)
-		view.ZIndex = 2
-		view.Parent = cardFrame
-		local cam = Instance.new("Camera")
-		cam.FieldOfView = 40
-		cam.Parent = view
-		view.CurrentCamera = cam
-		local model = pumpkinCopy(seed, mutation, pet)
-		model.Parent = view
-		local extents = if model:IsA("Model")
-			then model:GetExtentsSize()
-			else (model :: BasePart).Size
-		local radius = math.max(extents.Magnitude / 2, 0.5)
-		local dist = radius / math.tan(math.rad(cam.FieldOfView / 2)) * 1.1
-		cam.CFrame = CFrame.lookAt(Vector3.new(0, radius * 0.45, dist), Vector3.zero)
-
-		local rarityLabel = textLabel(cardFrame, string.upper(rarity.name), rarity.color)
-		rarityLabel.Position = UDim2.fromOffset(12, 250)
-		rarityLabel.Size = UDim2.new(1, -24, 0, 40)
-		rarityLabel.ZIndex = 3
-		local rarityStroke = rarityLabel:FindFirstChildOfClass("UIStroke") :: UIStroke
-		rarityStroke.Thickness = 3.5
-		rarityStroke.Color = Palette.OUTLINE
-		local petDef = Config.Pets[pet or seed.pet]
-		local nameText = (mutation and (mutation .. " ") or "")
-			.. (petDef and petDef.display or "Pumpkin")
-		local nameLabel = textLabel(cardFrame, nameText, m and m.color or Color3.new(1, 1, 1))
-		nameLabel.Position = UDim2.fromOffset(12, 292)
-		nameLabel.Size = UDim2.new(1, -24, 0, 46)
-		nameLabel.ZIndex = 3
-		local nameStroke = nameLabel:FindFirstChildOfClass("UIStroke") :: UIStroke
-		nameStroke.Thickness = 4
-		nameStroke.Color = Palette.OUTLINE
-		local incomeText = "+"
-			.. rateShort(rate)
-			.. "/s"
-			.. (weight and string.format(" · %.1f kg", weight) or "")
-		local income = textLabel(cardFrame, incomeText, Palette.MONEY)
-		income.Position = UDim2.fromOffset(12, 344)
-		income.Size = UDim2.new(1, -24, 0, 42)
-		income.ZIndex = 3
-		local incomeStroke = income:FindFirstChildOfClass("UIStroke") :: UIStroke
-		incomeStroke.Thickness = 3.5
-		incomeStroke.Color = Color3.fromRGB(10, 50, 10)
-
-		if isNew then
-			-- Green "NEW!" tag hanging over the top-right corner, gently pulsing.
-			local tag = Instance.new("Frame")
-			tag.AnchorPoint = Vector2.new(1, 0)
-			tag.Position = UDim2.new(1, 16, 0, -16)
-			tag.Size = UDim2.fromOffset(112, 46)
-			tag.Rotation = 8
-			tag.BackgroundColor3 = Color3.fromRGB(60, 205, 70)
-			tag.ZIndex = 4
-			tag.Parent = cardFrame
-			corner(tag, 12)
-			stroke(tag, 3.5).Color = Palette.OUTLINE
-			local newLabel = textLabel(tag, "NEW!", Color3.new(1, 1, 1))
-			newLabel.FontFace = fontFace("title", "Heavy", "Italic")
-			newLabel.Position = UDim2.fromOffset(6, 5)
-			newLabel.Size = UDim2.new(1, -12, 1, -10)
-			newLabel.ZIndex = 5
-			local tagScale = Instance.new("UIScale")
-			tagScale.Parent = tag
-			Services.TweenService
-				:Create(
-					tagScale,
-					TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-					{ Scale = 1.12 }
-				)
-				:Play()
-		end
-
-		local angle = 0
-		local spin = Services.RunService.RenderStepped:Connect(function(dt)
-			angle += dt * 1.1
-			model:PivotTo(CFrame.Angles(math.rad(-10), angle, 0))
-			rays.Rotation += dt * 20
+		task.wait(0.4)
+		shell:Destroy()
+		play(Config.Sounds.Reveal, isNew and 1.08 or 1, 0.8)
+		local h = revealGui.AbsoluteSize.Y
+		local height = math.min(
+			h * Config.UI.Tokens.layout.hatchHeight,
+			revealGui.AbsoluteSize.X * 0.80 / Config.UI.Tokens.layout.hatchAspect
+		)
+		local cardFrame = UI.box(
+			catcher,
+			"HatchCard",
+			UDim2.fromScale(0.5, 0.46),
+			UDim2.fromOffset(height * Config.UI.Tokens.layout.hatchAspect, height),
+			Config.UI.Tokens.panel,
+			3
+		)
+		cardFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+		corner(cardFrame, 12)
+		stroke(cardFrame, 3)
+		UI.shadow(cardFrame)
+		local inner = UI.box(
+			cardFrame,
+			"RarityBorder",
+			UDim2.fromScale(0.025, 0.02),
+			UDim2.fromScale(0.95, 0.96),
+			color,
+			4
+		)
+		inner.BackgroundTransparency = 1
+		corner(inner, 10)
+		stroke(inner, 2).Color = color
+		local ribbon = UI.box(
+			cardFrame,
+			"RarityRibbon",
+			UDim2.fromScale(0.02, 0.03),
+			UDim2.fromScale(0.96, 0.10),
+			color,
+			5
+		)
+		local rarityLabel = textLabel(ribbon, string.upper(rarity.name), Color3.new(1, 1, 1))
+		rarityLabel.Size, rarityLabel.ZIndex = UDim2.fromScale(1, 1), 6
+		local scale = Instance.new("UIScale")
+		scale.Scale, scale.Parent = 0, cardFrame
+		UI.tween(scale, 0.18, { Scale = 1.12 }, Enum.EasingStyle.Back)
+		task.delay(0.18, function()
+			if cardFrame.Parent then
+				UI.tween(scale, 0.12, { Scale = 1 })
+			end
 		end)
-		local closed = false
+		local rays = UI.box(
+			cardFrame,
+			"Rays",
+			UDim2.fromScale(0.5, 0.41),
+			UDim2.fromScale(0.82, 0.64),
+			color,
+			4
+		)
+		rays.AnchorPoint, rays.BackgroundTransparency = Vector2.new(0.5, 0.5), 1
+		for k = 1, 12 do
+			local ray =
+				UI.box(rays, "Ray", UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.035, 1), color, 4)
+			ray.AnchorPoint, ray.Rotation, ray.BackgroundTransparency =
+				Vector2.new(0.5, 0.5), k * 30, 0.45
+			local gradient = Instance.new("UIGradient")
+			gradient.Rotation, gradient.Transparency, gradient.Parent =
+				90, NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 1),
+					NumberSequenceKeypoint.new(0.5, 0.25),
+					NumberSequenceKeypoint.new(1, 1),
+				}), ray
+		end
+		local host = UI.box(
+			cardFrame,
+			"PetHero",
+			UDim2.fromScale(0.08, 0.15),
+			UDim2.fromScale(0.84, 0.52),
+			color,
+			5
+		)
+		host.BackgroundTransparency = 1
+		local source = pumpkinCopy(seed, mutation, pet)
+		local view = Palette.renderModel(host, source)
+		source:Destroy()
+		local name = textLabel(
+			cardFrame,
+			(mutation and mutation .. " " or "") .. (petDef and petDef.display or "Pumpkin"),
+			Color3.new(1, 1, 1)
+		)
+		name.Position, name.Size, name.ZIndex, name.TextWrapped =
+			UDim2.fromScale(0.04, 0.68), UDim2.fromScale(0.92, 0.12), 8, true
+		local income = textLabel(cardFrame, "+" .. rateShort(rate) .. "/s", Config.UI.Tokens.good)
+		income.Position, income.Size, income.ZIndex =
+			UDim2.fromScale(0.04, 0.81), UDim2.fromScale(0.92, 0.08), 8
+		local weightLabel = textLabel(
+			cardFrame,
+			weight and string.format("%.1f kg", weight) or "Pumpkin hatch",
+			Config.UI.Tokens.cardStroke
+		)
+		weightLabel.Position, weightLabel.Size, weightLabel.ZIndex =
+			UDim2.fromScale(0.04, 0.91), UDim2.fromScale(0.92, 0.06), 8
+		if isNew then
+			UI.sticker(cardFrame, "NEW!", Config.UI.Tokens.good)
+		end
+		local legendary = rarity.name == "Legendary"
+			or rarity.name == "Mythic"
+			or rarity.name == "Secret"
+		UI.hatchConfetti(catcher, color, legendary)
+		local shownAt, closed = os.clock(), false
+		local spin = Services.RunService.RenderStepped:Connect(function(dt)
+			if view then
+				UI.rotatePreview(
+					view,
+					dt * (os.clock() - shownAt < 0.30 and math.pi * 2 / 0.30 or math.rad(25))
+				)
+			end
+		end)
 		local function close()
 			if closed then
 				return
 			end
 			closed = true
 			spin:Disconnect()
-			Services.TweenService:Create(blur, TweenInfo.new(0.3), { Size = 0 }):Play()
-			local shrink = Services.TweenService:Create(
-				scale,
-				TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.In),
-				{ Scale = 0 }
+			local target = UI.petsButton or indexButton
+			local position = target.AbsolutePosition + target.AbsoluteSize * 0.5
+			UI.tween(
+				cardFrame,
+				0.22,
+				{ Position = UDim2.fromOffset(position.X, position.Y) },
+				Enum.EasingStyle.Quad,
+				Enum.EasingDirection.In
 			)
-			shrink:Play()
-			Services.TweenService
-				:Create(catcher, TweenInfo.new(0.15), { BackgroundTransparency = 1 })
-				:Play()
-			shrink.Completed:Once(function()
+			UI.tween(scale, 0.22, { Scale = 0.04 })
+			UI.tween(catcher, 0.22, { BackgroundTransparency = 1 })
+			task.delay(0.22, function()
 				catcher:Destroy()
+				local pop = target:FindFirstChildOfClass("UIScale")
+				if pop then
+					pop.Scale = 1.12
+					UI.tween(pop, 0.20, { Scale = 1 }, Enum.EasingStyle.Back)
+				end
 			end)
 		end
-		local shownAt = os.clock()
-		catcher.Activated:Connect(function()
-			play(Config.Sounds.Click, 1, 0.35)
-			if os.clock() - shownAt >= 1 then
-				close()
-			end
-		end)
-		while not closed and os.clock() - shownAt < Config.RevealSeconds do
+		catcher.Activated:Connect(close)
+		while not closed and os.clock() - shownAt < 2.0 do
 			local dt = task.wait(0.05)
 			if Center.urgent then
 				shownAt += dt
 			end
 		end
 		close()
-		task.wait(0.2)
+		task.wait(0.24)
 		Center.release()
 	end
 
@@ -5537,11 +6028,19 @@ do
 	bar.Name = "Objective"
 	bar.AnchorPoint = Vector2.new(0.5, 0)
 	bar.Position = UDim2.fromScale(0.5, Config.UI.objectiveY)
-	bar.Size = UDim2.fromScale(Palette.mobile() and 0.60 or 0.60, 0.040)
+	bar.Size = UDim2.fromScale(Palette.mobile() and 0.74 or 0.46, 0.042)
 	UI.objective = bar
+	local function fitObjective()
+		local touch = Palette.mobile()
+		bar.Position = UDim2.fromScale(0.5, touch and 0.19 or Config.UI.objectiveY)
+		bar.Size = UDim2.fromScale(touch and 0.80 or 0.46, 0.042)
+	end
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitObjective)
+	Services.UserInputService.LastInputTypeChanged:Connect(fitObjective)
+	fitObjective()
 	-- Only the title has a soft pill; the banner frame leaves world billboards visible.
 	bar.BackgroundColor3 = Color3.fromRGB(22, 14, 32)
-	bar.BackgroundTransparency = 1
+	bar.BackgroundTransparency = 0.30
 	bar.BorderSizePixel = 0
 	bar.Parent = gui
 	corner(bar, 16)
@@ -5554,9 +6053,9 @@ do
 	corner(title, 12)
 	title.AnchorPoint = Vector2.new(0.5, 0)
 	title.Position = UDim2.fromScale(0.5, 0)
-	title.Size = UDim2.fromScale(0, 1)
-	title.AutomaticSize = Enum.AutomaticSize.X
-	title.TextScaled = false
+	title.Position = UDim2.fromScale(0.54, 0)
+	title.Size = UDim2.fromScale(0.88, 1)
+	title.TextScaled = true
 	local titlePad = Instance.new("UIPadding")
 	titlePad.PaddingLeft = UDim.new(0, 12)
 	titlePad.PaddingRight = UDim.new(0, 12)
@@ -5630,10 +6129,12 @@ do
 	popScale.Parent = bar
 	local objectiveIcon = Instance.new("Frame")
 	objectiveIcon.BackgroundTransparency = 1
-	objectiveIcon.Position, objectiveIcon.Size = UDim2.fromScale(0, 0), UDim2.fromScale(0.06, 1)
+	objectiveIcon.Position, objectiveIcon.Size =
+		UDim2.fromScale(0.015, 0.1), UDim2.fromScale(0.08, 0.8)
 	objectiveIcon.Parent = bar
 	UI.icon(objectiveIcon, "Pets")
 	title.RichText = true
+	title:SetAttribute("TypeSize", Config.UI.Tokens.type.objective)
 
 	local function setObjective(verb: string, sub: string)
 		if UI.objectiveVerb ~= verb then
@@ -6459,112 +6960,89 @@ do
 		end
 	end
 
-	local frame, list = panel("Daily Reward")
-	frame.BackgroundColor3 = Config.UI.body
-	list.ZIndex = 12
+	local frame, list = panel("Daily")
+	list:FindFirstChildOfClass("UIListLayout"):Destroy()
+	list.AutomaticCanvasSize, list.CanvasSize, list.ScrollingDirection =
+		Enum.AutomaticSize.None, UDim2.new(), Enum.ScrollingDirection.X
+	list.Position, list.Size, list.ZIndex =
+		UDim2.fromScale(0.025, 0.19), UDim2.fromScale(0.95, 0.60), 12
 	local daily = UI.tile("Daily", Config.UI.Tokens.info, 3)
 	UI.dailyButton = daily
-	local reward = textLabel(list, "TODAY: claim to reveal your streak day", Config.UI.candy)
-	reward.BackgroundColor3 = Color3.fromRGB(70, 48, 12)
-	reward.BackgroundTransparency = 0
-	reward.Size = UDim2.new(1, 0, 0, 36)
-	reward.ZIndex = 13
-	corner(reward, 8)
-	local days = Instance.new("Frame")
-	days.Name = "RewardDays"
-	days.BackgroundTransparency = 1
-	days.Size = UDim2.new(1, 0, 0, 128)
-	days.LayoutOrder = 1
-	days.ZIndex = 13
-	days.Parent = list
-	local tiles = {}
-	local today: number? = nil -- Saved streak is not replicated; only Daily confirms it.
-	for day = 1, Config.DailyMaxStreak do
-		local tile = Instance.new("Frame")
-		tile.Name = "Day" .. day
-		tile.BackgroundColor3 = Color3.fromRGB(52, 52, 64)
-		tile.Position = UDim2.fromScale((day - 1) / Config.DailyMaxStreak, 0)
-		tile.Size = UDim2.new(1 / Config.DailyMaxStreak, -5, 1, 0)
-		tile.ZIndex = 13
-		tile.Parent = days
-		corner(tile, 8)
-		local outline = stroke(tile, 2)
-		local amount = Config.DailyCandy
-			* day
-			* (day == Config.DailyMaxStreak and Config.DailyLastMult or 1)
-		local label = textLabel(tile, "Day " .. day, Color3.new(1, 1, 1))
-		label.Size = UDim2.fromScale(1, 0.25)
-		label.ZIndex = 14
-		local icon = Instance.new("Frame")
-		icon.BackgroundTransparency = 1
-		icon.Position = UDim2.fromScale(0.18, 0.25)
-		icon.Size = UDim2.fromScale(0.64, 0.40)
-		icon.ZIndex = 14
-		icon.Parent = tile
-		Palette.candyIcon(icon)
-		local value = textLabel(tile, short(amount), Config.UI.candy)
-		value.Position = UDim2.fromScale(0, 0.68)
-		value.Size = UDim2.fromScale(1, 0.25)
-		value.ZIndex = 14
-		tiles[day] = { tile = tile, outline = outline }
-	end
-	local claim = makeButton(list, "CLAIM", Config.UI.Tokens.go)
-	claim.Size = UDim2.new(1, 0, 0, 58)
-	claim.ZIndex = 13
-	for _, child in claim:GetDescendants() do
-		if child:IsA("GuiObject") then
-			child.ZIndex += 13
-		end
-	end
-	claim.LayoutOrder = 2
-	local busy = false
+	local tiles, status = {}, nil
+	local busy, pending = false, false
+	local footer = textLabel(frame, "Loading daily gifts...", Color3.new(1, 1, 1))
+	footer.Position, footer.Size, footer.ZIndex =
+		UDim2.fromScale(0.14, 0.84), UDim2.fromScale(0.82, 0.09), 16
+	local clock = UI.box(
+		frame,
+		"Clock",
+		UDim2.fromScale(0.05, 0.83),
+		UDim2.fromScale(0.08, 0.10),
+		Config.UI.Tokens.panel,
+		16
+	)
+	clock.BackgroundTransparency = 1
+	UI.icon(clock, "Clock")
 	local function refresh()
 		local allowed = inHub()
 			and (player:GetAttribute("Carry") or 0) == 0
 			and not player:GetAttribute("GuardChasing")
-		daily.Visible = true
-		local ready = player:GetAttribute("DailyClaimable") == true
-		claim.Visible = true
-		claim.Active = allowed and ready and not busy
-		claim.Text = ready and "CLAIM"
-			or (
-				"Come back in "
-				.. string.format(
-					"%02d:%02d",
-					math.floor((86400 - os.time() % 86400) / 3600),
-					math.floor((86400 - os.time() % 86400) % 3600 / 60)
-				)
-			)
-		claim.BackgroundColor3 = ready and Config.UI.Tokens.go or Config.UI.Tokens.off
+		local ready = status and status.ready and player:GetAttribute("DailyClaimable") == true
 		for day, entry in tiles do
-			entry.tile.BackgroundColor3 = day == today and Color3.fromRGB(110, 76, 10)
-				or Color3.fromRGB(52, 52, 64)
-			entry.outline.Color = day == today and Config.UI.candy or Color3.new(0, 0, 0)
+			local claimed = status and day <= status.claimedThrough
+			local current = status and day == status.day and not claimed
+			entry.tile.BackgroundColor3 = claimed and Config.UI.Tokens.well
+				or current and Config.UI.Tokens.card
+				or Config.UI.Tokens.off
+			entry.icon.BackgroundTransparency = 1
+			entry.check.Visible = claimed == true
+			entry.claim.Visible, entry.claim.Active =
+				current == true, current and ready and allowed and not busy or false
+			entry.claim.Text = ready and "CLAIM" or "Wait"
+			entry.claim.BackgroundColor3 = ready and Config.UI.Tokens.go or Config.UI.Tokens.off
+			entry.outline.Color = current and Color3.new(1, 1, 1)
+				or day == Config.DailyMaxStreak and Config.UI.Tokens.candy
+				or Config.UI.Tokens.ink
+			entry.outline.Transparency = current and (0.12 + 0.12 * math.sin(os.clock() * math.pi))
+				or 0
+		end
+		if status then
+			local seconds = math.max(0, status.nextAt - os.time())
+			footer.Text = ready and ("Day " .. status.day .. " is ready")
+				or string.format(
+					"Next in %dh %dm",
+					math.floor(seconds / 3600),
+					math.floor(seconds % 3600 / 60)
+				)
 		end
 		if not allowed then
 			frame.Visible = false
 		end
 	end
-	daily.Activated:Connect(function()
-		local root = rootPart()
-		if
-			not root
-			or root.Position.Z >= (state:GetAttribute("SafeLineZ") or Config.SafeLineZ)
-			or (player:GetAttribute("Carry") or 0) > 0
-			or player:GetAttribute("GuardChasing")
-		then
+	local function loadStatus()
+		if pending then
 			return
 		end
-		for _, f in panelFrames do
-			f.Visible = false
-		end
-		frame.Visible = true
-	end)
-	claim.Activated:Connect(function()
-		if busy or not claim.Active then
+		pending = true
+		task.spawn(function()
+			local ok, result = pcall(function()
+				return remotes:WaitForChild("DailyStatus"):InvokeServer()
+			end)
+			pending = false
+			if ok and result then
+				status = result
+			else
+				footer.Text = "Daily gifts unavailable"
+			end
+			refresh()
+		end)
+	end
+	local function claim()
+		if busy or not status or not status.ready then
 			return
 		end
 		busy = true
+		refresh()
 		local ok, claimed = pcall(function()
 			return remotes:WaitForChild("ClaimDaily"):InvokeServer()
 		end)
@@ -6572,24 +7050,132 @@ do
 		if not ok or not claimed then
 			hint("Daily gift is not ready")
 		end
-		refresh()
+		loadStatus()
+	end
+	for day = 1, Config.DailyMaxStreak do
+		local tile = UI.box(list, "Day" .. day, UDim2.new(), UDim2.new(), Config.UI.Tokens.off, 13)
+		corner(tile, 8)
+		local outline = stroke(tile, 2.5)
+		local label = textLabel(tile, "Day " .. day, Color3.new(1, 1, 1))
+		label.Size, label.ZIndex = UDim2.fromScale(1, 0.17), 16
+		local icon = UI.box(
+			tile,
+			"Reward",
+			UDim2.fromScale(0.10, 0.21),
+			UDim2.fromScale(0.80, 0.37),
+			Config.UI.Tokens.off,
+			15
+		)
+		icon.BackgroundTransparency = 1
+		UI.icon(icon, day == Config.DailyMaxStreak and "Pets" or "Candy")
+		local amount = Config.DailyCandy
+			* day
+			* (day == Config.DailyMaxStreak and Config.DailyLastMult or 1)
+		local value = textLabel(tile, short(amount), Config.UI.Tokens.candy)
+		value.Position, value.Size, value.ZIndex =
+			UDim2.fromScale(0.02, 0.60), UDim2.fromScale(0.96, 0.15), 16
+		-- Day 7's pumpkin is presentation only; the existing reward remains candy.
+		if day == Config.DailyMaxStreak then
+			UI.sticker(tile, "BIG", Config.UI.Tokens.candy)
+		end
+		local check = UI.box(
+			tile,
+			"Claimed",
+			UDim2.fromScale(0.32, 0.31),
+			UDim2.fromScale(0.50, 0.25),
+			Config.UI.Tokens.good,
+			18
+		)
+		check.BackgroundTransparency, check.Visible = 1, false
+		local shortArm = UI.box(
+			check,
+			"Short",
+			UDim2.fromScale(0, 0.53),
+			UDim2.fromScale(0.46, 0.15),
+			Config.UI.Tokens.good,
+			19
+		)
+		shortArm.Rotation = 45
+		local longArm = UI.box(
+			check,
+			"Long",
+			UDim2.fromScale(0.25, 0.38),
+			UDim2.fromScale(0.75, 0.15),
+			Config.UI.Tokens.good,
+			19
+		)
+		longArm.Rotation = -45
+		local button = makeButton(tile, "CLAIM", Config.UI.Tokens.go)
+		button.Position, button.Size, button.ZIndex =
+			UDim2.fromScale(0.04, 0.79), UDim2.fromScale(0.92, 0.19), 18
+		for _, d in button:GetDescendants() do
+			if d:IsA("GuiObject") then
+				d.ZIndex += 18
+			end
+		end
+		button.Activated:Connect(claim)
+		tiles[day] = { tile = tile, icon = icon, check = check, claim = button, outline = outline }
+	end
+	local function fit()
+		local width = list.AbsoluteSize.X / uiScale.Scale
+		local cell = math.max(gui.AbsoluteSize.Y / uiScale.Scale * 0.11, (width - 42) / 7.3)
+		local x = 0
+		for day, entry in tiles do
+			local w = cell * (day == Config.DailyMaxStreak and 1.3 or 1)
+			entry.tile.Position, entry.tile.Size = UDim2.fromOffset(x, 4), UDim2.new(0, w, 1, -14)
+			x += w + 6
+		end
+		list.CanvasSize = UDim2.fromOffset(x, 0)
+	end
+	list:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
+	fit()
+	daily.Activated:Connect(function()
+		if
+			not inHub()
+			or (player:GetAttribute("Carry") or 0) > 0
+			or player:GetAttribute("GuardChasing")
+		then
+			return
+		end
+		local open = not frame.Visible
+		for _, f in panelFrames do
+			f.Visible = false
+		end
+		frame.Visible = open
+		if open then
+			loadStatus()
+		end
 	end)
 	remotes:WaitForChild("Daily").OnClientEvent:Connect(function(streak, candy)
-		today = streak
-		reward.Text = string.format("TODAY - Day %d: +%s candy!", streak, short(candy))
-		hint(reward.Text)
-		confetti(gui)
+		if tiles[streak] then
+			local entry = tiles[streak]
+			entry.check.Visible = true
+			local stamp = entry.check:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
+			stamp.Parent, stamp.Scale = entry.check, 1.6
+			UI.tween(stamp, 0.24, { Scale = 1 }, Enum.EasingStyle.Back)
+		end
+		toast("Daily gift", "+" .. short(candy))
+		if candyShower then
+			candyShower(6)
+		end
 		play(Config.Sounds.Coin, 0.9, 1)
+		loadStatus()
 	end)
 	local elapsed = 0
 	Services.RunService.Heartbeat:Connect(function(dt)
 		elapsed += dt
-		if elapsed >= 1 then
+		if elapsed >= 0.25 then
 			elapsed = 0
-			refresh()
+			if frame.Visible then
+				refresh()
+			end
 		end
 	end)
-	player:GetAttributeChangedSignal("DailyClaimable"):Connect(refresh)
+	player:GetAttributeChangedSignal("DailyClaimable"):Connect(function()
+		if frame.Visible then
+			loadStatus()
+		end
+	end)
 	refresh()
 end
 
@@ -7847,6 +8433,13 @@ do
 	run.Position = UDim2.fromScale(0.70, 0.60)
 	run.Size = UDim2.fromScale(0.16, 0.05)
 	UI.sprintButton = run
+	run.Visible = Palette.mobile()
+	UI.icon(run, "Sprint")
+	for _, d in run:GetDescendants() do
+		if d:IsA("UICorner") then
+			d.CornerRadius = UDim.new(0.5, 0)
+		end
+	end
 	run.Activated:Connect(function()
 		setSprint(not sprinting)
 		travel.Visible = false
@@ -7928,6 +8521,7 @@ end
 -- U1 HUD: only object icons use viewports; transient candy flights use Frame glyphs.
 do
 	local pets = UI.tile("Pets", Config.UI.Tokens.go, 1)
+	UI.petsButton = pets
 	local petsBadge = pillBadge(pets)
 	local dailyBadge = pillBadge(UI.dailyButton)
 	petsBadge.Text, dailyBadge.Text = "!", "!"
@@ -7962,28 +8556,42 @@ do
 		for _, object in gui:GetDescendants() do
 			if object:IsA("UITextSizeConstraint") then
 				object.MinTextSize = math.max(11, math.ceil(h * Config.UI.Tokens.type.caption))
-				object.MaxTextSize = math.max(object.MinTextSize, object.MaxTextSize)
+				object.MaxTextSize = math.max(
+					object.MinTextSize,
+					math.floor(
+						h
+							* (object.Parent.Name == "Money" and Config.UI.Tokens.type.currency or object.Parent:GetAttribute(
+								"TypeSize"
+							) or Config.UI.Tokens.type.hud)
+							* 1.1
+					)
+				)
 			end
 		end
 		leftBar.Size = UDim2.fromScale(0.25, 0.25)
 		statsFrame.AnchorPoint = touch and Vector2.zero or Vector2.new(0, 1)
 		statsFrame.Position = UDim2.fromScale(touch and 0.012 or 0.006, touch and 0.06 or 0.985)
 		statsFrame.Size = UDim2.fromOffset(
-			touch and gui.AbsoluteSize.X / uiScale.Scale * 0.40 or h * 0.44,
+			touch and gui.AbsoluteSize.X / uiScale.Scale * 0.43 or h * 0.44,
 			h * 0.105
 		)
 		local candy = statsFrame:FindFirstChild("CandyIcon")
 		candy.Position = UDim2.fromScale(0, touch and 0 or 0.42)
 		candy.Size = UDim2.fromOffset(h * 0.058, h * 0.058)
 		candyBig.Position, candyBig.Size =
-			UDim2.fromScale(0.16, touch and 0 or 0.42), UDim2.fromScale(0.84, 0.56)
+			UDim2.new(0, h * 0.062, touch and 0 or 0.42, 0), UDim2.new(1, -h * 0.062, 0.56, 0)
 		candyBig.TextScaled = true;
 		(candyBig:FindFirstChildOfClass("UITextSizeConstraint") :: UITextSizeConstraint).MaxTextSize =
 			math.max(11, math.floor(h * 0.058 * 1.1))
 		carryIcon.Position, carryIcon.Size =
 			UDim2.fromScale(0, touch and 0.59 or 0), UDim2.fromOffset(h * 0.04, h * 0.04)
 		carryLabel.Position, carryLabel.Size =
-			UDim2.fromScale(0.16, touch and 0.59 or 0), UDim2.fromScale(0.72, 0.38)
+			UDim2.fromScale(0.12, touch and 0.59 or 0), UDim2.fromScale(0.24, 0.38)
+		carryLabel.BackgroundColor3, carryLabel.BackgroundTransparency = Config.UI.Tokens.well, 0.25
+		carryLabel.TextXAlignment = Enum.TextXAlignment.Center
+		if not carryLabel:FindFirstChildOfClass("UICorner") then
+			corner(carryLabel)
+		end
 		boosts.Position, boosts.Size =
 			UDim2.fromScale(touch and 0.70 or 0.99, touch and 0.19 or 0.89),
 			UDim2.fromOffset(h * 0.21, h * 0.055)
@@ -7992,9 +8600,10 @@ do
 				UDim2.fromOffset((i - 1) * h * 0.065, 0), UDim2.fromOffset(h * 0.055, h * 0.055)
 		end
 		if UI.sprintButton then
-			UI.sprintButton.Text = touch and "Sprint" or "Sprint [Shift]"
-			UI.sprintButton.Position =
-				UDim2.fromScale(touch and 0.70 or 0.99, touch and 0.60 or 0.82)
+			UI.sprintButton.Visible = touch and not anyPanelOpen()
+			UI.sprintButton.Text = ""
+			UI.sprintButton.Size = UDim2.fromOffset(h * 0.065, h * 0.065)
+			UI.sprintButton.Position = UDim2.fromScale(0.68, 0.59)
 		end
 	end
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)
@@ -8067,5 +8676,24 @@ do
 				end
 			end
 		end
+	end
+end
+
+-- Secondary destinations stay accessible without adding HUD chips or Shop tabs.
+do
+	for i, entry in { { "Rebirth", hauntPanel }, { "Extras", shopPanel } } do
+		local button = makeButton(UI.settingsList, entry[1], Config.UI.Tokens.info)
+		button.Size, button.LayoutOrder = UDim2.new(1, 0, 0, 48), i + 1
+		button.Activated:Connect(function()
+			for _, frame in panelFrames do
+				frame.Visible = false
+			end
+			entry[2].Visible = true
+		end)
+		local function refresh()
+			button.Visible = i == 1 and unlocked("Haunt") or i == 2 and #shopCards > 0
+		end
+		player:GetAttributeChangedSignal("Unlock_Haunt"):Connect(refresh)
+		refresh()
 	end
 end
