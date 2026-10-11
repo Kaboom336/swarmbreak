@@ -4602,7 +4602,7 @@ do
 		if old then
 			old:Destroy()
 		end
-		local ink = Color3.fromRGB(26, 15, 46)
+		local ink = Color3.fromHex("3B2766")
 		local bb = Instance.new("BillboardGui")
 		bb.Name = "GateGui"
 		bb.Size = UDim2.fromOffset(300, 120)
@@ -4614,7 +4614,7 @@ do
 		title.Size = UDim2.fromScale(1, 0.56)
 		title.FontFace = Helpers.fontFace("title")
 		title.TextScaled = true
-		title.TextColor3 = Color3.new(1, 1, 1)
+		title.TextColor3 = def.color
 		title.Text = def.title .. "\n2 new pets + " .. def.unlock
 		title.Parent = bb
 		local titleStroke = Instance.new("UIStroke")
@@ -4626,7 +4626,7 @@ do
 		pill.AnchorPoint = Vector2.new(0.5, 1)
 		pill.Position = UDim2.new(0.5, 0, 1, -4)
 		pill.Size = UDim2.fromOffset(180, 42)
-		pill.BackgroundColor3 = Color3.fromRGB(255, 205, 40)
+		pill.BackgroundColor3 = Color3.fromHex("FFC83D")
 		pill.Parent = bb
 		local pillCorner = Instance.new("UICorner")
 		pillCorner.CornerRadius = UDim.new(1, 0)
@@ -4643,7 +4643,7 @@ do
 		cost.Size = UDim2.new(1, -20, 1, -10)
 		cost.FontFace = Helpers.fontFace("title")
 		cost.TextScaled = true
-		cost.TextColor3 = Color3.new(1, 1, 1)
+		cost.TextColor3 = Color3.fromHex("FFF8EC")
 		cost.Text = "🍬 " .. Helpers.short(def.cost or 0)
 		cost.Parent = pill
 		local costStroke = Instance.new("UIStroke")

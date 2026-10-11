@@ -332,7 +332,7 @@ local Config = {
 	Zones = {
 		Zone1 = {
 			hoard = { type = HOARD1, guardian = "Scarecrow", guardHeight = 6 },
-			color = Color3.fromRGB(255, 179, 71),
+			color = Color3.fromHex("FF9A2E"),
 			title = "Pumpkin Meadow",
 			emoji = "🙂",
 			cost = 0,
@@ -345,7 +345,7 @@ local Config = {
 		},
 		Zone2 = {
 			hoard = { type = "Moon", guardian = "SkeletonKnight", guardHeight = 9 },
-			color = Color3.fromRGB(200, 204, 208),
+			color = Color3.fromHex("C9B4F0"),
 			title = "Graveyard",
 			emoji = "😐",
 			cost = 1000,
@@ -358,7 +358,7 @@ local Config = {
 		},
 		Zone3 = {
 			hoard = { type = "Golden", guardian = "TreeEnt", guardHeight = 13 },
-			color = Color3.fromRGB(155, 234, 58),
+			color = Color3.fromHex("A8DC6A"),
 			title = "Haunted Woods",
 			emoji = "😬",
 			cost = 25000,
@@ -371,7 +371,7 @@ local Config = {
 		},
 		Zone4 = {
 			hoard = { type = "Shadow", guardian = "SwampToad", guardHeight = 16 },
-			color = Color3.fromRGB(160, 64, 224),
+			color = Color3.fromHex("9A6BE8"),
 			title = "Witch Swamp",
 			emoji = "😨",
 			cost = 400000,
@@ -389,7 +389,7 @@ local Config = {
 				parts = "SkeletonKnight",
 				guardHeight = 18,
 			},
-			color = Color3.fromRGB(224, 32, 32),
+			color = Color3.fromHex("FF6B8E"),
 			title = "Vampire Castle",
 			emoji = "😱",
 			cost = 2500000,
@@ -407,7 +407,7 @@ local Config = {
 				parts = "TreeEnt",
 				guardHeight = 20,
 			},
-			color = Color3.fromRGB(255, 110, 199),
+			color = Color3.fromHex("FF7EC0"),
 			title = "Candy Kingdom",
 			emoji = "😈",
 			cost = 17500000,
@@ -425,7 +425,7 @@ local Config = {
 				parts = "Scarecrow",
 				guardHeight = 24,
 			},
-			color = Color3.fromRGB(240, 208, 32),
+			color = Color3.fromHex("FFD23D"),
 			title = "Pumpkin King's Throne",
 			emoji = "👹",
 			cost = 140000000,
