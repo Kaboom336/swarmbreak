@@ -6,13 +6,13 @@ local HOARD1 = "Ghost" -- the Zone1 Hoard's pumpkin type
 local Config = {
 	-- Font names stay plain data so offline economy tools can load this module.
 	Fonts = {
-		-- Zion picked Gotham (2026-10-11): sharp heavy sans like Steal an Egg.
-		title = { family = "rbxasset://fonts/families/GothamSSm.json", weight = "Heavy" },
-		number = { family = "rbxasset://fonts/families/GothamSSm.json", weight = "Heavy" },
-		button = { family = "rbxasset://fonts/families/GothamSSm.json", weight = "Heavy" },
-		small = { family = "rbxasset://fonts/families/GothamSSm.json", weight = "Heavy" },
-		shout = { family = "rbxasset://fonts/families/GothamSSm.json", weight = "Heavy" },
-		numberStyle = "Italic",
+		-- L1: rounded display face; readable Bold body, always upright.
+		title = { family = "rbxasset://fonts/families/FredokaOne.json", weight = "Regular" },
+		number = { family = "rbxasset://fonts/families/FredokaOne.json", weight = "Regular" },
+		button = { family = "rbxasset://fonts/families/FredokaOne.json", weight = "Regular" },
+		small = { family = "rbxasset://fonts/families/GothamSSm.json", weight = "Bold" },
+		shout = { family = "rbxasset://fonts/families/FredokaOne.json", weight = "Regular" },
+		numberStyle = "Normal",
 	},
 	StartCandy = 0,
 	UI = {
@@ -56,15 +56,15 @@ local Config = {
 				Graveyard = Color3.fromRGB(127, 217, 201),
 			},
 			type = {
-				currency = 0.058,
-				title = 0.058,
-				hud = 0.034,
-				objective = 0.036,
-				card = 0.030,
-				price = 0.032,
-				toast = 0.034,
-				badge = 0.022,
-				caption = 0.026,
+				currency = 0.051852,
+				title = 0.040741,
+				hud = 0.027778,
+				objective = 0.027778,
+				card = 0.022222,
+				price = 0.027778,
+				toast = 0.027778,
+				badge = 0.018519,
+				caption = 0.018519,
 			},
 			corners = { button = 0.20, icon = 0.20, card = 0.12, panel = 0.04, chip = 0.5 },
 			layout = {
@@ -135,18 +135,18 @@ local Config = {
 		domeWidth = 6.5,
 		domeTransparency = 0.55,
 		domeColor = Color3.fromRGB(207, 239, 255),
-		wood = Color3.fromRGB(146, 103, 74),
-		rim = Color3.fromRGB(107, 74, 47),
-		locked = Color3.fromRGB(140, 140, 148),
-		lock = Color3.fromRGB(58, 58, 68),
+		wood = Color3.fromRGB(201, 139, 82),
+		rim = Color3.fromRGB(58, 36, 20),
+		locked = Color3.fromRGB(110, 110, 120),
+		lock = Color3.fromRGB(242, 193, 46),
 		gold = Color3.fromRGB(242, 193, 46),
 		priceBar = Color3.fromRGB(194, 10, 26),
-		lockSize = Vector3.new(1.8, 1.6, 0.8),
+		lockSize = Vector3.new(2.6, 2.2, 1.0),
 		markerHeight = 22,
 		wander = 3,
 		minPetHeight = 2.5,
-		maxPetHeight = 3.8,
-		maxPetWidth = 4.2,
+		maxPetHeight = 8.75,
+		maxPetWidth = 7.0,
 		readySeconds = 1,
 		growthStart = 0.65,
 		growthSteps = 4,
@@ -198,6 +198,7 @@ local Config = {
 			income = 4,
 			hp = 60,
 			template = "pumpkin_yellow",
+			color = Color3.fromRGB(255, 181, 32),
 			scale = 1.35,
 		},
 		{
@@ -300,11 +301,11 @@ local Config = {
 	PetRareMult = 1.2,
 	PetRareOrder = 3,
 	PetSizes = {
-		Common = { height = 3.5, median = 5 },
-		Rare = { height = 5, median = 12 },
-		Epic = { height = 7, median = 30 },
-		Legendary = { height = 9, median = 75 },
-		Mythic = { height = 12, median = 180 },
+		Common = { height = 3.2, median = 5, width = 4.4 },
+		Rare = { height = 3.9, median = 12, width = 5 },
+		Epic = { height = 4.7, median = 30, width = 5.6 },
+		Legendary = { height = 5.7, median = 75, width = 6.2 },
+		Mythic = { height = 7, median = 180, width = 7 },
 	},
 	Farm = {
 		firstSwingSeconds = 1.0, -- about 50 candy/min before travel, including golden rolls
@@ -314,7 +315,11 @@ local Config = {
 		goldenMult = 20,
 		critChance = 0.1,
 		critMult = 3,
-		arcRange = 6,
+		arcRange = 9,
+		arcDegrees = 110,
+		maxTargets = 6,
+		chainBonus = 0.05,
+		chainBonusCap = 0.25,
 		arcTargets = 3,
 	},
 	World2 = {
@@ -339,7 +344,7 @@ local Config = {
 	-- the top banner on the HUD (Steal an Egg zone label colours).
 	Zones = {
 		Zone1 = {
-			hoard = { type = HOARD1, guardian = "Scarecrow", guardHeight = 6 },
+			hoard = { type = HOARD1, guardian = "Scarecrow", guardHeight = 11 },
 			color = Color3.fromHex("FF9A2E"),
 			title = "Pumpkin Meadow",
 			emoji = "🙂",
@@ -860,23 +865,10 @@ local Config = {
 	-- Extra King HP per point of swing damage of everyone in the server.
 	KingHpPerDamage = 25,
 	KingSeconds = 150,
-	KingReach = 14,
 	-- Attacks: a red circle warns first; standing inside when it lands knocks you away, dizzy.
-	AttackEvery = { 4.5, 3.5, 2.8 },
-	SlamWarn = 1.4,
-	SlamRadius = 24,
-	VolleyWarn = 1.6,
-	KingGrace = 1.5,
-	KingDizzy = 1,
 	-- Phase 2: the King hides in a shield until every Lantern Lackey is bonked, then is stunned.
-	LackeyHp = 3,
 	StunSeconds = 6,
-	KingLastHit = 25,
 	FailRefill = 0.5,
-	KingBase = 20,
-	KingPoolShare = 0.5,
-	RainCount = 40,
-	RainCandy = 5,
 	RainSeconds = 16,
 
 	-- Candy upgrades: cost of level n is base * n ^ CostPower.
@@ -1220,7 +1212,16 @@ Config.KingNight = {
 	walkSpeed = 10,
 	padPause = 3,
 	ring = Vector2.new(80, 50),
-	windup = 1.2,
+	phaseAt = { 0.66, 0.33 },
+	attackEvery = { 5.0, 4.0, 3.2 },
+	recover = { 2.5, 2.0, 1.5 },
+	recoverMult = 1.5,
+	transition = 2.5,
+	grace = 1.5,
+	soloExtraWarn = 0.3,
+	combo = { window = 1.0, finisher = 1.5 },
+	rainCount = 80,
+	rainCandy = 8,
 	signOffset = Vector3.new(28, 8, 0),
 	look = {
 		tint = Color3.fromRGB(255, 242, 232),
@@ -1244,16 +1245,16 @@ Config.KingNight = {
 	consolation = 0.25,
 	rarityWeights = { 0, 70, 27, 3 },
 	rewardSeeds = { "Ghost", "CandyCorn", "Inferno", "KingletSeed" },
-	weakEvery = 20,
+	weakEvery = 15,
 	lackeysPerPlayer = 2,
-	lackeyMax = 12,
+	lackeyMax = 8,
 	stagger = 1,
 	volleyLength = 60,
 	volleyWidth = 6,
 	volleySpacing = 14,
 	push = 50,
 	lift = 40,
-	finale = 1.5,
+	finale = 2.5,
 	finaleSpeed = 0.15,
 	rain = 3,
 	resultsSeconds = 3,
@@ -1262,39 +1263,50 @@ Config.KingNight = {
 	critMult = 3,
 }
 Config.GuardTwists = {
+	minDist = 14,
+	maxDist = 60,
+	minChase = 3,
 	soundRange = 120,
 	volume = 0.7,
 	Zone1 = {
 		kind = "Crow",
+		color = Color3.fromHex("FF9A2E"),
+		predict = 1.5,
 		cooldown = 8,
 		warn = 1.5,
 		radius = 6,
-		slow = 0.6,
+		slow = 0.5,
 		seconds = 1.5,
 		sound = 9113730784,
 	},
 	Zone2 = {
 		kind = "Bone",
+		color = Color3.fromHex("C9B4F0"),
 		cooldown = 7,
 		warn = 1.3,
-		length = 40,
-		width = 3,
+		length = 44,
+		width = 4,
 		push = 12,
 		slow = 0.6,
-		seconds = 1,
+		seconds = 1.5,
 		sound = 9116488438,
 	},
 	Zone3 = {
 		kind = "Root",
+		color = Color3.fromHex("A8DC6A"),
+		predict = 1.4,
 		cooldown = 8,
 		warn = 1.4,
-		radius = 8,
+		radius = 7,
 		slow = 0,
-		seconds = 1.5,
+		seconds = 0.8,
 		sound = Config.Sounds.Whoosh,
 	},
 	Zone4 = {
 		kind = "Tongue",
+		color = Color3.fromHex("9A6BE8"),
+		slow = 0.6,
+		seconds = 1.0,
 		cooldown = 8,
 		warn = 1.2,
 		radius = 7,
@@ -1304,6 +1316,9 @@ Config.GuardTwists = {
 	},
 	Zone5 = {
 		kind = "Bat",
+		color = Color3.fromHex("A855F7"),
+		slow = 0.5,
+		seconds = 1.5,
 		cooldown = 9,
 		warn = 1.5,
 		radius = 7,
@@ -1312,6 +1327,8 @@ Config.GuardTwists = {
 	},
 	Zone6 = {
 		kind = "Sticky",
+		color = Color3.fromHex("FF6EC7"),
+		ahead = 14,
 		cooldown = 8,
 		warn = 1.2,
 		radius = 6,
@@ -1324,13 +1341,14 @@ Config.GuardTwists = {
 	},
 	Zone7 = {
 		kind = "Boulder",
+		color = Color3.fromHex("FFD23D"),
 		cooldown = 7,
 		warn = 1.5,
-		lanes = 3,
-		fanAngle = 20,
+		lanes = 2,
+		fanAngle = 14,
 		slow = 0.6,
-		width = 6,
-		length = 40,
+		width = 5,
+		length = 44,
 		speed = 50,
 		push = 14,
 		seconds = 1,
@@ -1338,7 +1356,7 @@ Config.GuardTwists = {
 	},
 	first = 3,
 	mercy = 1,
-	slowCap = 2,
+	slowCap = 2.5,
 	effectTick = 0.1,
 	iconHeight = 4,
 }
@@ -1489,14 +1507,13 @@ Config.Badges = { Welcome = 0, FirstSteal = 0, FirstHatch = 0 }
 function Config.gateBenefits(zoneId)
 	return (zoneId == "Zone3" or zoneId == "Zone5") and "+2 pen slots, new pets" or "new pets"
 end
-Config.KingHpPerDamage = 120
+-- Recovery/finishers now deal their full damage instead of being flattened by the old DPS budget.
+-- Compensate with HP; actual solo 90-150s acceptance still requires the Studio dodge route.
+Config.KingHpPerDamage = 240
 Config.KingHpPerPlayer = 200
 Config.KingSeconds = 300
-Config.AttackEvery = { 6, 4.5, 3.5 }
-Config.SlamWarn = 1.5
-Config.SlamRadius = 14
-Config.VolleyWarn = 1.2
-Config.LackeyHp = 1
+Config.RainCount = Config.KingNight.rainCount
+Config.RainCandy = Config.KingNight.rainCandy
 Config.RainSeconds = Config.KingNight.rain
 
 -- All world themes, farm tuning and nest inhabitants live in Zones.
@@ -2098,4 +2115,98 @@ do
 	}
 	Config.ScythePose = { idle = IDLE, swings = SWINGS }
 end
+do
+	-- Shared presentation policy; no gameplay or saved data lives here.
+	local Presentation = {}
+
+	function Presentation.text(label, height)
+		if not (label:IsA("TextLabel") or label:IsA("TextButton") or label:IsA("TextBox")) then
+			return
+		end
+		local bb = label:FindFirstAncestorWhichIsA("BillboardGui")
+		local numeric = label.Text:match("^%s*[%+%-]?[%d%.,]+[%w%%]*%s*$") ~= nil
+		local body = not bb
+			and not numeric
+			and (
+				label:GetAttribute("FontRole") == "small"
+				or string.find(label.FontFace.Family, "GothamSSm", 1, true) ~= nil
+			)
+		label.FontFace = body
+				and Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold)
+			or Font.fromEnum(Enum.Font.FredokaOne)
+		label.TextScaled = false
+		label.TextWrapped = true
+		local fraction = label:GetAttribute("TypeSize")
+		local chosen = label.TextSize
+		if chosen <= 15 and not fraction then
+			chosen = bb and 28 or (label:IsA("TextButton") and 30 or (body and 20 or 44))
+		end
+		label.TextSize = math.max(
+			height < 700 and 14 or 15,
+			math.floor((fraction and height * fraction or chosen) + 0.5)
+		)
+		for _, child in label:GetChildren() do
+			if child:IsA("UITextSizeConstraint") then
+				child:Destroy()
+			end
+		end
+		label.TextStrokeTransparency = 1
+		local stroke = label:FindFirstChildOfClass("UIStroke") or Instance.new("UIStroke")
+		stroke.Color = Color3.new(0, 0, 0)
+		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+		stroke.LineJoinMode = Enum.LineJoinMode.Round
+		stroke.Thickness = body and (label.TextSize < 16 and 1.5 or 2)
+			or math.clamp(math.floor(label.TextSize * 0.09 + 0.5), 2, 6)
+		stroke.Parent = label
+	end
+
+	function Presentation.billboard(bb)
+		local host = bb.Adornee or bb.Parent
+		if not host then
+			return
+		end
+		local origin = host:IsA("Attachment") and host.WorldPosition
+			or host:IsA("BasePart") and host.Position
+			or host:IsA("Model") and host:GetPivot().Position
+		if not origin then
+			return
+		end
+		local model = host:IsA("Model") and host or host:FindFirstChild("PetLook")
+		-- Use the subject's model, never the entire Garden or a pen folder.
+		if
+			not model
+			and host.Parent
+			and host.Parent:IsA("Model")
+			and not host.Parent:FindFirstChild("Soil")
+			and not host:GetAttribute("Seed")
+		then
+			model = host.Parent
+		end
+		local cf, size
+		if model and model:IsA("Model") then
+			cf, size = model:GetBoundingBox()
+		elseif host:IsA("BasePart") then
+			cf, size = host.CFrame, host.Size
+		elseif host:IsA("Attachment") and host.Parent:IsA("BasePart") then
+			cf, size = host.Parent.CFrame, host.Parent.Size
+		end
+		if not cf then
+			return
+		end
+		local extent = math.abs(cf.RightVector.Y) * size.X / 2
+			+ math.abs(cf.UpVector.Y) * size.Y / 2
+			+ math.abs(cf.LookVector.Y) * size.Z / 2
+		local margin = bb:GetAttribute("TopMargin")
+			or ((bb.Name == "CarveTag" or bb.Name == "MysteryTag") and 2.6)
+			or ((bb.Name == "AlertTag" or bb.Name == "SleepTag") and 2)
+			or 1.2
+		margin += bb.Size.Y.Scale / 2
+		bb.StudsOffset = Vector3.zero
+		bb.StudsOffsetWorldSpace = Vector3.new(0, cf.Position.Y + extent - origin.Y + margin, 0)
+		bb.AlwaysOnTop = true
+	end
+
+	Config.Presentation = Presentation
+end
+
 return Config

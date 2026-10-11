@@ -1922,6 +1922,62 @@ end
 -- parts), so plots, stacks, drops and ghosts fit the look. Attribute "Look" = "Folder/Name" (to
 -- rebuild it after a resize), "BaseSize" = the pumpkin's own size (to go back to a pumpkin).
 local Looks: { [string]: any } = {}
+-- Reuse the mesh carrier and its ribs; add dark grooves and a readable carved face.
+-- Decorations are welded, non-colliding and disappear with their pumpkin.
+function Looks.wild(p: BasePart, seed)
+	local rank = table.find(Config.Seeds, seed) or 1
+	local width = 3 + math.min(rank - 1, 10) * 0.5
+	if seed.id == "KingSeed" then
+		width = 8
+	end
+	local mult = p:GetAttribute("SizeMult") or 1
+	p.Size *= width * mult / p.Size.X
+	local base = seed.color
+		or (seed.id == "Sunny" and Color3.fromRGB(255, 181, 32))
+		or Color3.fromRGB(242, 140, 27)
+	local function piece(name, size, offset, color, shape)
+		local part = Instance.new("Part")
+		part.Name, part.Size, part.Color = name, size, color
+		part.Shape = shape or Enum.PartType.Ball
+		part.Material = Enum.Material.SmoothPlastic
+		part.CanCollide, part.CanTouch, part.CanQuery = false, false, false
+		part.Massless = true
+		part.CFrame = p.CFrame * offset
+		local weld = Instance.new("Weld")
+		weld.Part0, weld.Part1, weld.C0 = p, part, offset
+		weld.Parent = part
+		part.Parent = p
+		return part
+	end
+	-- Narrow darker lobes follow the existing round silhouette instead of flattening it.
+	for i = 1, 8 do
+		local angle = i * math.pi / 4
+		piece(
+			"PumpkinRib",
+			Vector3.new(p.Size.X * 0.16, p.Size.Y * 0.82, p.Size.Z * 0.16),
+			CFrame.new(
+				math.cos(angle) * p.Size.X * 0.43,
+				-p.Size.Y * 0.04,
+				math.sin(angle) * p.Size.Z * 0.43
+			),
+			base:Lerp(Color3.new(0, 0, 0), 0.24)
+		)
+	end
+	for _, x in { -0.17, 0.17 } do
+		piece(
+			"CarvedEye",
+			Vector3.new(p.Size.X * 0.14, p.Size.Y * 0.16, p.Size.Z * 0.06),
+			CFrame.new(x * p.Size.X, p.Size.Y * 0.09, -p.Size.Z * 0.46),
+			Color3.fromRGB(32, 18, 42)
+		)
+	end
+	piece(
+		"CarvedMouth",
+		Vector3.new(p.Size.X * 0.28, p.Size.Y * 0.1, p.Size.Z * 0.06),
+		CFrame.new(0, -p.Size.Y * 0.16, -p.Size.Z * 0.47),
+		Color3.fromRGB(32, 18, 42)
+	)
+end
 do
 	local function source(folder: string, name: string?): Model?
 		local holder = Services.ServerStorage:FindFirstChild(folder)
@@ -2100,7 +2156,7 @@ do
 			p:SetAttribute("WeightKg", kg)
 		end
 		local height = math.clamp(
-			size.height * math.clamp((kg / size.median) ^ 0.25, 0.8, 1.6),
+			size.height * math.clamp((kg / size.median) ^ 0.2, 0.9, 1.25),
 			Config.Plots.minPetHeight,
 			Config.Plots.maxPetHeight
 		)
@@ -2110,7 +2166,7 @@ do
 			if box.Y > 0 then
 				height = math.min(
 					height,
-					Config.Plots.maxPetWidth * box.Y / math.max(box.X, box.Z, 0.01)
+					(size.width or Config.Plots.maxPetWidth) * box.Y / math.max(box.X, box.Z, 0.01)
 				)
 			end
 		end
@@ -2131,10 +2187,15 @@ do
 			local look = p:FindFirstChild("PetLook")
 			for _, part in look and look:GetDescendants() or {} do
 				if part:IsA("BasePart") and not Looks.isFacePart(part, pet) then
-					part.Color = finish
+					part.Color = part.Color:Lerp(finish, 0.6)
 					part.Material = Enum.Material.SmoothPlastic
 					part.Reflectance = p:GetAttribute("Gold") and 0.22 or 0.12
 				end
+			end
+		end
+		for _, tag in p:GetChildren() do
+			if tag:IsA("BillboardGui") then
+				Config.Presentation.billboard(tag)
 			end
 		end
 		return true
@@ -2171,13 +2232,11 @@ local function stackPumpkin(player: Player, pumpkin: BasePart): boolean
 	end
 	pumpkin.Transparency = 0
 	pumpkin.Material = Enum.Material.SmoothPlastic
-	pumpkin.Size *= (#stack == 0 and Config.Payoff.chestSize or Config.Payoff.stackSize) / math.max(
-		pumpkin.Size.X,
-		pumpkin.Size.Y,
-		pumpkin.Size.Z
-	)
-	local offset = #stack == 0 and Vector3.new(0, 0.6, -1.8)
-		or Vector3.new(0, 3.2 + (#stack - 1) * Config.Payoff.stackSize, 0)
+	local tier = table.find(Config.Seeds, Lookup.seedById[pumpkin:GetAttribute("Seed")]) or 1
+	local carrySize = 1.9 + math.min(1, (tier - 1) / 9) * 0.9
+	pumpkin.Size *= carrySize / math.max(pumpkin.Size.X, pumpkin.Size.Y, pumpkin.Size.Z)
+	local offset = #stack == 0 and Vector3.new(0, 0.4, 1.4)
+		or Vector3.new(0, 3.4 + (#stack - 1) * 2.9, 0)
 	pumpkin:SetAttribute("Placed", nil)
 	pumpkin.Anchored = false
 	pumpkin.Massless = true
@@ -2276,15 +2335,7 @@ local function dropLoose(
 	end
 	pumpkin.CFrame = CFrame.new(at.X, (y :: number) + pumpkin.Size.Y / 2, at.Z)
 	pumpkin.Parent = loose
-	local seed = Lookup.seedById[pumpkin:GetAttribute("Seed") or ""]
-	local prompt = Instance.new("ProximityPrompt")
-	prompt.ActionText = "Pick up"
-	prompt.ObjectText = rescued and "Rescued pumpkin" or ((seed and seed.name or "") .. " pumpkin")
-	prompt.HoldDuration = 0.2
-	prompt.MaxActivationDistance = 9
-	prompt.RequiresLineOfSight = false
-	prompt.Parent = pumpkin
-	prompt.Triggered:Connect(function(player)
+	local function pickLoose(player)
 		if pumpkin.Parent ~= loose then
 			return
 		end
@@ -2292,7 +2343,12 @@ local function dropLoose(
 		if
 			not Helpers.isLoaded(player)
 			or not root
-			or (root.Position - pumpkin.Position).Magnitude > 11
+			or Vector3.new(
+				root.Position.X - pumpkin.Position.X,
+				0,
+				root.Position.Z - pumpkin.Position.Z
+			).Magnitude > 4.5
+			or math.abs(root.Position.Y - pumpkin.Position.Y) > pumpkin.Size.Y / 2 + 5
 		then
 			return
 		end
@@ -2318,6 +2374,14 @@ local function dropLoose(
 			if rescued then
 				track(player, "rescue", 1)
 			end
+		end
+	end
+	task.spawn(function()
+		while pumpkin.Parent == loose and pumpkin:GetAttribute("LooseToken") == token do
+			for _, player in Services.Players:GetPlayers() do
+				pickLoose(player)
+			end
+			task.wait(0.15)
 		end
 	end)
 	task.delay(seconds or 60, function()
@@ -2372,6 +2436,26 @@ do
 
 	-- Income tags, the shield on the single best plot (it cannot be stolen) and the owner's
 	-- "Income" attribute (candy per second with their Haunt / pass multipliers).
+	function Bases.rims(patch)
+		for _, rim in patch:GetDescendants() do
+			if rim.Name == "DiscRim" and rim:IsA("BasePart") then
+				local plot = rim.Parent
+				local pumpkin = plot:FindFirstChild("Pumpkin")
+				local def = pumpkin and Config.Pets[pumpkin:GetAttribute("Pet") or ""]
+				local color = nil
+				for k, rarity in Config.Rarities do
+					if def and def.rarity ~= "Common" and rarity.name == def.rarity then
+						color = Config.UI.Tokens.rarity[k]
+					end
+				end
+				rim.Color = plot:GetAttribute("SlotLocked") and Config.Plots.gold
+					or color
+					or Config.Plots.rim
+				rim.Material = color and Enum.Material.Neon or Enum.Material.Wood
+			end
+		end
+	end
+
 	function Bases.slotLook(patch, slots, previousSlots)
 		Bases.layout(patch)
 		for _, plot in patch:GetChildren() do
@@ -2407,13 +2491,19 @@ do
 					piece("Padlock", Config.Plots.lockSize, Vector3.zero, Config.Plots.lock)
 				for _, entry in
 					{
-						{ Vector3.new(0.25, 1.1, 0.25), Vector3.new(-0.55, 1, 0) },
-						{ Vector3.new(0.25, 1.1, 0.25), Vector3.new(0.55, 1, 0) },
-						{ Vector3.new(1.35, 0.25, 0.25), Vector3.new(0, 1.5, 0) },
+						{ Vector3.new(0.35, 1.4, 0.35), Vector3.new(-0.8, 1.6, 0) },
+						{ Vector3.new(0.35, 1.4, 0.35), Vector3.new(0.8, 1.6, 0) },
+						{ Vector3.new(1.95, 0.35, 0.35), Vector3.new(0, 2.3, 0) },
 					}
 				do
-					piece("Shackle", entry[1], entry[2], Config.Plots.gold)
+					piece("Shackle", entry[1], entry[2], Color3.fromRGB(200, 204, 214))
 				end
+				piece(
+					"Keyhole",
+					Vector3.new(0.35, 0.55, 0.08),
+					Vector3.new(0, -0.1, -0.54),
+					Color3.fromRGB(43, 43, 43)
+				)
 				local bb = Instance.new("BillboardGui")
 				bb.Name = "Price"
 				bb.Size = UDim2.fromOffset(140, 32)
@@ -2426,7 +2516,7 @@ do
 				label.BackgroundColor3 = Config.Plots.priceBar
 				label.TextColor3 = Color3.new(1, 1, 1)
 				label.FontFace = Helpers.fontFace("title")
-				label.TextScaled = true
+				label.TextScaled = false
 				local zone = (plot:GetAttribute("Index") or 1) <= Config.Progression.woodsSlots
 						and "Zone3"
 					or "Zone5"
@@ -2497,11 +2587,7 @@ do
 			prompt.ObjectText = Config.Zones[zone].title .. " - +2 slots"
 		end
 
-		for _, rim in patch:GetDescendants() do
-			if rim.Name == "DiscRim" and rim:IsA("BasePart") then
-				rim.Color = Config.Plots.rim
-			end
-		end
+		Bases.rims(patch)
 	end
 
 	function Bases.weakest(patch: Instance): BasePart?
@@ -2528,6 +2614,7 @@ do
 		then
 			task.defer(Bases.drainCarry, owner)
 		end
+		Bases.rims(patch)
 		local weakest = Bases.weakest(patch)
 		local weakestPet = weakest and plotState[weakest].pumpkin
 		local weakestSeed = weakestPet and Lookup.seedById[weakestPet:GetAttribute("Seed") or ""]
@@ -2635,7 +2722,7 @@ do
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
 		label.FontFace = Helpers.fontFace("title")
-		label.TextScaled = true
+		label.TextScaled = false
 		label.TextColor3 = Color3.fromRGB(150, 255, 110)
 		label.Text = ""
 		label.Parent = bb
@@ -2703,7 +2790,7 @@ do
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
 		label.FontFace = Helpers.fontFace("title")
-		label.TextScaled = true
+		label.TextScaled = false
 		label.TextColor3 = Color3.fromRGB(255, 200, 120)
 		label.Text = hatchText(seconds)
 		label.Parent = bb
@@ -3252,6 +3339,33 @@ do
 	end
 
 	Bases.place = place
+	task.spawn(function()
+		while true do
+			for player, patch in patchOf do
+				local _, root = aliveRoot(player)
+				local soil = patch:FindFirstChild("Soil")
+				if root and soil and soil:IsA("BasePart") and #(carrying[player] or {}) > 0 then
+					local at = soil.CFrame:PointToObjectSpace(root.Position)
+					if
+						math.abs(at.X) <= soil.Size.X / 2
+						and math.abs(at.Z) <= soil.Size.Z / 2
+						and math.abs(at.Y) < 9
+					then
+						for _, plot in plotsOf(patch) do
+							if
+								plotState[plot]
+								and not plotState[plot].pumpkin
+								and #(carrying[player] or {}) > 0
+							then
+								place(player, plot, true)
+							end
+						end
+					end
+				end
+			end
+			task.wait(0.2)
+		end
+	end)
 
 	-- Full-pen choices use the existing take/place/value flow.
 	function Bases.fullChoice(player: Player, swap: boolean)
@@ -3597,7 +3711,7 @@ do
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
 		label.FontFace = Helpers.fontFace("title")
-		label.TextScaled = true
+		label.TextScaled = false
 		label.TextColor3 = Color3.fromRGB(220, 170, 255)
 		label.Text = "🔒 LOCKED"
 		label.Parent = bb
@@ -3766,8 +3880,9 @@ do
 			then
 				local from = Config.roamPoint(p, t)
 				local cfg = Config.PetRoam
-				local x = math.min(Config.Plots.wander, math.max(0, plot.Size.Y / 2 - 0.5))
-				local z = math.min(Config.Plots.wander, math.max(0, plot.Size.Z / 2 - 0.5))
+				local wander = (p:GetAttribute("PetHeight") or 0) > 5.5 and 2 or Config.Plots.wander
+				local x = math.min(wander, math.max(0, plot.Size.Y / 2 - 0.5))
+				local z = math.min(wander, math.max(0, plot.Size.Z / 2 - 0.5))
 				local goal = plot.Position
 					+ soil.CFrame:VectorToWorldSpace(
 						Vector3.new((math.random() * 2 - 1) * x, 0, (math.random() * 2 - 1) * z)
@@ -3804,7 +3919,8 @@ do
 		prompt.ObjectText = ""
 		prompt.HoldDuration = hold
 		prompt.MaxActivationDistance = 9
-		prompt.RequiresLineOfSight = false
+		prompt.RequiresLineOfSight = true
+		prompt.Exclusivity = Enum.ProximityPromptExclusivity.OneGlobally
 		prompt.Parent = parent
 		if name == "PetPrompt" then
 			prompt.HoldDuration = Config.Purge.hold
@@ -4140,7 +4256,7 @@ do
 		local rare = seed.order >= Config.RareNameOrder
 		local bb = Instance.new("BillboardGui")
 		bb.Name = "HpBar"
-		bb.Size = UDim2.fromOffset(96, rare and 32 or 14)
+		bb.Size = UDim2.fromOffset(200, rare and 76 or 36)
 		bb.StudsOffsetWorldSpace = Vector3.new(0, part.Size.Y / 2 + 1.4, 0)
 		bb.LightInfluence = 0
 		bb.AlwaysOnTop = true
@@ -4149,9 +4265,10 @@ do
 		if rare then
 			local name = Instance.new("TextLabel")
 			name.BackgroundTransparency = 1
-			name.Size = UDim2.new(1, 0, 0, 16)
+			name.Size = UDim2.new(1, 0, 0, 32)
+			name.TextSize = 28
 			name.FontFace = Helpers.fontFace("title")
-			name.TextScaled = true
+			name.TextScaled = false
 			name.TextColor3 = seed.color or Color3.fromRGB(255, 190, 90)
 			name.Text = seed.name
 			name.Parent = bb
@@ -4164,7 +4281,7 @@ do
 		back.Name = "Back"
 		back.AnchorPoint = Vector2.new(0, 1)
 		back.Position = UDim2.new(0, 4, 1, -3)
-		back.Size = UDim2.fromOffset(60, 8)
+		back.Size = UDim2.fromOffset(90, 12)
 		back.BackgroundColor3 = Color3.fromRGB(34, 22, 48)
 		back.BorderSizePixel = 0
 		back.Parent = bb
@@ -4189,9 +4306,10 @@ do
 		hp.BackgroundTransparency = 1
 		hp.AnchorPoint = Vector2.new(1, 1)
 		hp.Position = UDim2.fromScale(1, 1)
-		hp.Size = UDim2.fromOffset(28, 14)
+		hp.Size = UDim2.fromOffset(104, 32)
+		hp.TextSize = 28
 		hp.FontFace = Helpers.fontFace("title")
-		hp.TextScaled = true
+		hp.TextScaled = false
 		hp.TextXAlignment = Enum.TextXAlignment.Left
 		hp.TextColor3 = Color3.new(1, 1, 1)
 		hp.Text = Helpers.short(part:GetAttribute("Hp") or seed.hp)
@@ -4270,23 +4388,11 @@ do
 		local sizeMult = big and 2 or 1
 		local part = makePumpkin(id, sizeMult)
 		part.Name = "WildPumpkin"
-		local shape = math.random(3)
-		part.Size *= shape == 1 and Vector3.new(1, 1.2, 0.9) or shape == 2 and Vector3.new(
-			1.1,
-			0.85,
-			1.1
-		) or Vector3.one
-		local stem = Instance.new("Part")
-		stem.Name, stem.Size = "PumpkinStem", Vector3.new(0.35, 0.8, 0.35) * sizeMult
-		stem.Color, stem.Material = Color3.fromRGB(76, 92, 32), Enum.Material.Wood
-		stem.CanCollide, stem.CanTouch, stem.CanQuery = false, false, false
-		stem.Massless, stem.Parent = true, part
+		part.Size *= Vector3.new(1, 0.95 + math.random() * 0.13, 1)
+		Looks.wild(part, seed)
 		local groundY = sp.Position.Y - sp.Size.Y / 2
 		part.CFrame = CFrame.new(sp.Position.X, groundY + part.Size.Y / 2, sp.Position.Z)
 			* CFrame.Angles(0, math.random() * math.pi * 2, 0)
-		stem.CFrame = part.CFrame * CFrame.new(0, part.Size.Y / 2, 0) * CFrame.Angles(0, 0, 0.2)
-		local stemWeld = Instance.new("WeldConstraint")
-		stemWeld.Part0, stemWeld.Part1, stemWeld.Parent = part, stem, stem
 		part:SetAttribute("Wild", true)
 		part:SetAttribute("Zone", zoneId)
 		part:SetAttribute("Hp", hp)
@@ -4298,19 +4404,6 @@ do
 			sparkle.SparkleColor = Color3.fromRGB(255, 220, 60)
 			sparkle.Parent = part
 		end
-		local icon = Instance.new("BillboardGui")
-		icon.Name = "CandyIcon"
-		icon.Size = UDim2.fromOffset(40, 40)
-		icon.StudsOffsetWorldSpace = Vector3.new(0, part.Size.Y / 2 + 2.4, 0)
-		icon.LightInfluence = 0
-		icon.MaxDistance = 60
-		local label = Instance.new("TextLabel")
-		label.BackgroundTransparency = 1
-		label.Size = UDim2.fromScale(1, 1)
-		label.TextScaled = true
-		label.Text = "🍬"
-		label.Parent = icon
-		icon.Parent = part
 		hpBar(part, seed)
 		part.Parent = folder
 		taken[sp] = true
@@ -4359,7 +4452,7 @@ do
 	end
 
 	-- A popped pumpkin goes to whoever dealt the most damage (the last hitter wins ties).
-	local function pop(w: WildState)
+	local function pop(w: WildState, chain: number?, chainIndex: number?)
 		local part = w.part
 		alive[part] = nil
 		count[w.zone] = math.max(0, (count[w.zone] or 1) - 1)
@@ -4389,10 +4482,15 @@ do
 			candy = part:GetAttribute("CandyReward") or 1
 			candy = addCandy(
 				winner,
-				candy * (Helpers.hasPass(winner, "DoubleCandy") and Config.DoubleCandyMult or 1)
+				candy
+					* (1 + math.min(
+						Config.Farm.chainBonusCap,
+						math.max(0, (chain or 1) - 1) * Config.Farm.chainBonus
+					))
+					* (Helpers.hasPass(winner, "DoubleCandy") and Config.DoubleCandyMult or 1)
 			)
 		end
-		Remotes.wildPopEvent:FireAllClients(at, seedId, winner, candy)
+		Remotes.wildPopEvent:FireAllClients(at, seedId, winner, candy, chain or 1, chainIndex or 1)
 		part:Destroy()
 		if not winner then
 			return
@@ -4406,67 +4504,52 @@ do
 		end
 	end
 
-	-- Swing at the nearest wild pumpkin in front of root (BonkRange from its side).
+	-- The server selects a bounded forward arc, independent of scythe tier.
 	function Wild.hit(player: Player, root: BasePart): boolean
-		local look = root.CFrame.LookVector
-		local range = Config.BonkRange
-		local best, bestDist = nil, math.huge
-		-- A pumpkin in reach that sits in a zone this player has not unlocked (refused).
-		local lockedZone: string? = nil
+		local look = Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z)
+		if look.Magnitude < 0.01 then
+			return false
+		end
+		look = look.Unit
+		local targets = {}
+		local lockedZone = nil
 		for part, w in alive do
 			local offset = part.Position - root.Position
 			local flat = Vector3.new(offset.X, 0, offset.Z)
-			local dist = math.max(0, flat.Magnitude - part.Size.X / 2)
-			if math.abs(offset.Y) < 12 and dist <= range and dist < bestDist then
-				if flat.Magnitude < 0.1 or flat.Unit:Dot(look) > -0.2 then
-					if hasZone(player, w.zone) then
-						best, bestDist = w, dist
-					else
-						lockedZone = w.zone
-					end
+			if
+				math.abs(offset.Y) < 12
+				and flat.Magnitude <= Config.Farm.arcRange
+				and (
+					flat.Magnitude < 0.1
+					or flat.Unit:Dot(look) >= math.cos(math.rad(Config.Farm.arcDegrees / 2))
+				)
+			then
+				if hasZone(player, w.zone) then
+					table.insert(targets, w)
+				else
+					lockedZone = w.zone
 				end
 			end
 		end
-		if not best then
+		table.sort(targets, function(a, b)
+			return (a.part.Position - root.Position).Magnitude
+				< (b.part.Position - root.Position).Magnitude
+		end)
+		while #targets > Config.Farm.maxTargets do
+			table.remove(targets)
+		end
+		if #targets == 0 then
 			if lockedZone then
-				local def = Config.Zones[lockedZone]
-				Remotes.hintEvent:FireClient(
-					player,
-					string.format(
-						"🔒 Unlock the %s at its gate first!",
-						def and def.title or "zone"
-					)
-				)
+				Remotes.hintEvent:FireClient(player, "Unlock the zone at its gate first!")
 			end
 			return false
 		end
-		local targets = { best }
-		if bestTool(player).order >= 3 then
-			local candidates = {}
-			for part, w in alive do
-				local delta = part.Position - root.Position
-				local flat = Vector3.new(delta.X, 0, delta.Z)
-				if
-					w ~= best
-					and hasZone(player, w.zone)
-					and math.abs(delta.Y) < 12
-					and flat.Magnitude <= Config.Farm.arcRange
-					and (flat.Magnitude < 0.1 or flat.Unit:Dot(look) >= 0.5)
-				then
-					table.insert(candidates, w)
-				end
-			end
-			table.sort(candidates, function(x, y)
-				return (x.part.Position - root.Position).Magnitude
-					< (y.part.Position - root.Position).Magnitude
-			end)
-			for i = 1, math.min(#candidates, Config.Farm.arcTargets - 1) do
-				table.insert(targets, candidates[i])
-			end
-		end
-		for _, w in targets do
+		local chain = #targets
+		local spread =
+			math.min(1, (bestTool(player).order >= 3 and Config.Farm.arcTargets or 1) / chain)
+		for chainIndex, w in targets do
 			local crit = math.random() < Config.Farm.critChance
-			local damage = swingDamage(player) * (crit and Config.Farm.critMult or 1)
+			local damage = swingDamage(player) * spread * (crit and Config.Farm.critMult or 1)
 			w.damage[player] = (w.damage[player] or 0) + math.min(damage, w.hp)
 			w.last = player
 			w.hp -= damage
@@ -4480,7 +4563,7 @@ do
 				w.maxHp
 			)
 			if w.hp <= 0 then
-				pop(w)
+				pop(w, chain, chainIndex)
 			else
 				setBar(w)
 			end
@@ -4639,7 +4722,7 @@ do
 		title.BackgroundTransparency = 1
 		title.Size = UDim2.fromScale(1, 0.56)
 		title.FontFace = Helpers.fontFace("title")
-		title.TextScaled = true
+		title.TextScaled = false
 		title.TextColor3 = def.color
 		title.Text = def.title
 		title.Parent = bb
@@ -4668,7 +4751,7 @@ do
 		cost.Position = UDim2.fromOffset(10, 5)
 		cost.Size = UDim2.new(1, -20, 1, -10)
 		cost.FontFace = Helpers.fontFace("title")
-		cost.TextScaled = true
+		cost.TextScaled = false
 		cost.TextColor3 = Color3.fromHex("FFF8EC")
 		cost.Text = "🍬 " .. Helpers.short(def.cost or 0)
 		cost.Parent = pill
@@ -4705,47 +4788,19 @@ do
 				prompt.HoldDuration = 0.6
 				prompt.KeyboardKeyCode = Enum.KeyCode.E
 				prompt.MaxActivationDistance = 14
-				prompt.RequiresLineOfSight = false
+				prompt.RequiresLineOfSight = true
+				prompt.Exclusivity = Enum.ProximityPromptExclusivity.OneGlobally
 				prompt.Parent = wall
-				local holds = {}
-				Services.Players.PlayerRemoving:Connect(function(player)
-					holds[player] = nil
-				end)
-				local function near(player)
+				prompt.HoldDuration = 0
+				prompt.Triggered:Connect(function(player)
 					local _, root = aliveRoot(player)
-					return root
+					if
+						root
 						and (root.Position - wall.Position).Magnitude
 							<= prompt.MaxActivationDistance
-				end
-				prompt.PromptButtonHoldBegan:Connect(function(player)
-					if near(player) then
-						holds[player] = workspace:GetServerTimeNow()
-					end
-				end)
-				prompt.Triggered:Connect(function(player)
-					local started = holds[player]
-					holds[player] = nil
-					if
-						not started
-						or workspace:GetServerTimeNow() - started < 0.3
-						or workspace:GetServerTimeNow() - started > prompt.HoldDuration + 2
-						or not near(player)
 					then
-						Remotes.hintEvent:FireClient(
-							player,
-							"Gate unlock failed: move closer and hold E again"
-						)
-						return
+						unlockZone(player, zoneId)
 					end
-					unlockZone(player, zoneId)
-				end)
-				prompt.PromptButtonHoldEnded:Connect(function(player)
-					local started = holds[player]
-					task.delay(1, function()
-						if holds[player] == started then
-							holds[player] = nil
-						end
-					end)
 				end)
 			end
 			local sign = zone:FindFirstChild("GateSign")
@@ -5014,7 +5069,7 @@ do
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
 		label.FontFace = Helpers.fontFace("title")
-		label.TextScaled = true
+		label.TextScaled = false
 		label.TextColor3 = color
 		label.Text = text
 		label.Parent = bb
@@ -5177,7 +5232,15 @@ do
 	-- Moves the root: asleep it slumps forward a little; walking it waddles and bobs.
 	local function pose(g: Guardian)
 		local cf = CFrame.lookAt(g.pos, g.pos + g.look)
-		if g.state == "sleep" then
+		if g.twist and os.clock() < (g.warnUntil or 0) then
+			local elapsed = os.clock() - (g.warnStarted or os.clock())
+			local lunge = math.clamp(1 - (g.warnUntil - os.clock()) / 0.2, 0, 1)
+			cf *= CFrame.new(0, 0, -2 * lunge) * CFrame.Angles(
+				math.rad(-15) * math.min(elapsed / 0.5, 1) + math.rad(30) * lunge,
+				0,
+				0
+			)
+		elseif g.state == "sleep" then
 			cf *= CFrame.Angles(math.rad(-7), 0, 0)
 		else
 			cf *= CFrame.new(0, math.abs(math.sin(g.walk)) * 0.35, 0) * CFrame.Angles(
@@ -5304,8 +5367,8 @@ do
 				label.Text = "?"
 				label.TextColor3 = C(255, 227, 128)
 				label.TextStrokeTransparency = 0.3
-				label.TextScaled = true
-				label.Font = Enum.Font.GothamBlack
+				label.TextScaled = false
+				label.FontFace = Helpers.fontFace("title")
 				label.Parent = question
 				question.Parent = p
 			end
@@ -5356,6 +5419,12 @@ do
 	end
 
 	local function bonk(g: Guardian, thief: Player, thiefRoot: BasePart)
+		if
+			workspace:GetServerTimeNow() < (thief:GetAttribute("GuardMercyUntil") or 0)
+			or workspace:GetServerTimeNow() < (state:GetAttribute("KingTransitionUntil") or 0)
+		then
+			return
+		end
 		local stack = carrying[thief] or {}
 		for i = #stack, 1, -1 do
 			local p = stack[i]
@@ -5420,6 +5489,22 @@ do
 		end
 	end
 
+	function Hoards.inReach(root: BasePart, p: BasePart): boolean
+		local delta = p.Position - root.Position
+		local flat = Vector3.new(delta.X, 0, delta.Z)
+		if
+			math.abs(delta.Y) >= 8
+			or flat.Magnitude > 9
+			or (flat.Magnitude >= 0.1 and flat.Unit:Dot(root.CFrame.LookVector) < 0.57)
+		then
+			return false
+		end
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { root.Parent, p }
+		return workspace:Raycast(root.Position, delta, params) == nil
+	end
+
 	local function grab(h: Hoard, p: BasePart, player: Player)
 		local i = nil
 		for k = 1, Config.HoardCount do
@@ -5445,7 +5530,7 @@ do
 			return
 		end
 		local _, root = aliveRoot(player)
-		if not root or (root.Position - p.Position).Magnitude > 12 then
+		if not root or not Hoards.inReach(root, p) then
 			return
 		end
 		local at = p.Position
@@ -5465,6 +5550,27 @@ do
 		wake(h.guard, player)
 	end
 
+	-- Swing and tap share the same server checks.
+	function Hoards.swing(player: Player, root: BasePart): boolean
+		local nearest, nest, distance = nil, nil, math.huge
+		for _, h in hoards do
+			if not hasZone(player, h.zone) then
+				continue
+			end
+			for _, p in h.slots do
+				local d = (p.Position - root.Position).Magnitude
+				if d < distance and Hoards.inReach(root, p) then
+					nearest, nest, distance = p, h, d
+				end
+			end
+		end
+		if not nearest then
+			return false
+		end
+		grab(nest, nearest, player)
+		return nearest.Parent ~= nest.model
+	end
+
 	function seat(h: Hoard, i: number, p: BasePart)
 		h.slots[i] = p
 		p.Anchored = true
@@ -5476,9 +5582,10 @@ do
 		prompt.Name = "StealPrompt"
 		prompt.ActionText = "Steal"
 		prompt.ObjectText = (seed and seed.name or "") .. " pumpkin · Hoard"
-		prompt.HoldDuration = Config.HoardHold
-		prompt.MaxActivationDistance = 10
-		prompt.RequiresLineOfSight = false
+		prompt.HoldDuration = 0
+		prompt.MaxActivationDistance = 9
+		prompt.RequiresLineOfSight = true
+		prompt.Exclusivity = Enum.ProximityPromptExclusivity.OneGlobally
 		prompt.Parent = p
 		prompt.Triggered:Connect(function(player)
 			grab(h, p, player)
@@ -5575,20 +5682,30 @@ do
 			not cfg
 			or g.twist
 			or os.clock() < (g.nextTwist or math.huge)
-			or g.cosmetic
 			or g.state ~= "chase"
-			or os.clock() - (g.chasedAt or os.clock()) < Config.GuardLaunch.minChase
+			or os.clock() - (g.chasedAt or os.clock()) < Config.GuardTwists.minChase
+			or (root.Position - g.pos).Magnitude < Config.GuardTwists.minDist
+			or (root.Position - g.pos).Magnitude > Config.GuardTwists.maxDist
+			or os.clock() < (g.windedUntil or 0)
 			or workspace:GetServerTimeNow() < (player:GetAttribute("GuardMercyUntil") or 0)
 		then
 			return
 		end
 		local token = {}
 		g.twist = token
+		g.warnStarted = os.clock()
 		g.warnUntil = os.clock() + cfg.warn
 		g.nextTwist = os.clock() + cfg.cooldown
-		local direction =
+		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		local direction = hum and hum.MoveDirection or Vector3.zero
+		local velocity =
 			Vector3.new(root.AssemblyLinearVelocity.X, 0, root.AssemblyLinearVelocity.Z)
-		if direction.Magnitude < 1 then
+		local motion = direction.Magnitude > 0.1 and direction * (hum and hum.WalkSpeed or 16)
+			or velocity
+		if direction.Magnitude < 0.1 and velocity.Magnitude > 1 then
+			direction = velocity.Unit
+		end
+		if direction.Magnitude < 0.1 then
 			direction = root.CFrame.LookVector
 		end
 		direction = Vector3.new(direction.X, 0, direction.Z).Unit
@@ -5599,7 +5716,9 @@ do
 			local aim = Vector3.new(pos.X - origin.X, 0, pos.Z - origin.Z)
 			aim = aim.Magnitude > 0.1 and aim.Unit or direction
 			for i = 1, cfg.lanes or 1 do
-				local angle = cfg.kind == "Boulder" and (i - 2) * math.rad(cfg.fanAngle) or 0
+				local angle = cfg.kind == "Boulder"
+						and (i == 1 and -1 or 1) * math.rad(cfg.fanAngle)
+					or 0
 				local dir = CFrame.Angles(0, angle, 0):VectorToWorldSpace(aim)
 				local at = origin + dir * cfg.length / 2
 				table.insert(shapes, {
@@ -5613,11 +5732,7 @@ do
 			end
 		else
 			if cfg.predict then
-				pos += direction * math.min(
-					root.AssemblyLinearVelocity.Magnitude,
-					Config.walkSpeed(Helpers.upgradeLevel(player, "Boots"))
-						* Config.Movement.sprintMult
-				) * cfg.predict
+				pos += motion * cfg.predict
 			end
 			if cfg.ahead then
 				pos += direction * cfg.ahead
@@ -5643,12 +5758,14 @@ do
 					cfg.warn,
 					cfg.sound,
 					cfg.lifetime,
-					cfg.pitch
+					cfg.pitch,
+					{ victim = player, origin = g.root.Position, color = cfg.color }
 				)
 			end
 		end
 		task.spawn(function()
 			task.wait(cfg.warn)
+			local hit = false
 			local function valid()
 				return g.twist == token
 					and g.target == player
@@ -5674,6 +5791,18 @@ do
 					"GuardMercyUntil",
 					workspace:GetServerTimeNow() + Config.GuardTwists.mercy
 				)
+				hit = true
+				if cfg.kind == "Root" then
+					victim:SetAttribute(
+						"GuardMercyUntil",
+						workspace:GetServerTimeNow() + cfg.seconds + Config.GuardTwists.mercy
+					)
+				elseif cfg.kind == "Crow" then
+					Remotes.stompEvent:FireAllClients(
+						"GuardCrow",
+						{ { pos = r.Position, radius = 6 } }
+					)
+				end
 				if cfg.slow then
 					Progress.slow(victim, cfg.slow, cfg.seconds, cfg.slow == 0 and "ROOT" or "SLOW")
 				end
@@ -5697,11 +5826,16 @@ do
 			if valid() then
 				if cfg.kind == "Bat" then
 					local at = shapes[1].pos
-					if at.Z >= math.max(Lane.safeZ, h.zMin) and at.Z <= h.zMax then
+					if
+						(at - g.pos).Magnitude <= 24
+						and at.Z >= math.max(Lane.safeZ, h.zMin)
+						and at.Z <= h.zMax
+					then
 						g.pos = Vector3.new(at.X, g.pos.Y, at.Z)
 						pose(g)
 						Remotes.stompEvent:FireAllClients("GuardBat", shapes)
 					end
+					Progress.landAttack(shapes, player, effect)
 				elseif cfg.kind == "Sticky" then
 					local ends = os.clock() + cfg.lifetime
 					while valid() and os.clock() < ends do
@@ -5726,18 +5860,15 @@ do
 						task.wait(Config.GuardTwists.effectTick)
 					end
 				else
-					if cfg.kind == "Tongue" then
-						local at = shapes[1].pos
-						if at.Z >= math.max(Lane.safeZ, h.zMin) and at.Z <= h.zMax then
-							g.pos = Vector3.new(at.X, g.pos.Y, at.Z)
-							pose(g)
-						end
-					end
 					Progress.landAttack(shapes, player, effect)
 				end
 			end
 			if g.twist == token then
 				g.twist = nil
+				if not hit then
+					g.windedUntil = os.clock() + 1
+				end
+				pose(g)
 			end
 		end)
 	end
@@ -5805,7 +5936,7 @@ do
 						if to.Magnitude > 0.1 then
 							g.look = to.Unit
 						end
-						if g.twist and now < (g.warnUntil or 0) then
+						if g.twist or now < (g.windedUntil or 0) then
 							pose(g)
 						elseif g.state == "wake" then
 							-- A short grace while it gets up and roars.
@@ -7087,6 +7218,9 @@ local king = {
 	phase = 1,
 	shield = false,
 	stunnedUntil = 0,
+	transitionUntil = 0,
+	cast = 0,
+	combos = {},
 	lastHitter = nil :: Player?,
 	faceSize = nil :: Vector3?,
 	-- Payout pool, frozen when the Blood Moon starts.
@@ -7123,6 +7257,7 @@ local function kingDropPlayer(player: Player)
 	local add = king.counted[player]
 	king.counted[player] = nil
 	king.dps[player] = nil
+	king.combos[player] = nil
 	if not add or not king.active then
 		return
 	end
@@ -7232,45 +7367,53 @@ Remotes.bonkEvent.OnServerEvent:Connect(function(player)
 		end
 		return
 	end
-	if king.active and not king.shield then
+	if king.active and not king.shield and now >= king.transitionUntil then
 		local flat = Vector3.new(
 			kingFace.Position.X - root.Position.X,
 			0,
 			kingFace.Position.Z - root.Position.Z
 		)
-		if flat.Magnitude - kingFace.Size.X / 2 <= Config.KingReach then
+		local facing = Vector3.new(king.faceBase.LookVector.X, 0, king.faceBase.LookVector.Z)
+		if
+			flat.Magnitude - kingFace.Size.X / 2 <= Config.BonkRange
+			and (flat.Magnitude < 6 or (-flat.Unit):Dot(facing) >= 0)
+		then
 			local stunned = os.clock() < king.stunnedUntil
 			local crit = math.random() < Config.KingNight.critChance
-			local dealt = swingDamage(player)
-				* (stunned and 2 or 1)
+			local chain = king.combos[player]
+			local step = chain and now - chain.t <= Config.KingNight.combo.window and chain.n + 1
+				or 1
+			local recovering = (king.recoveryEnds or 0) > now
+			local mult = (stunned and (recovering and Config.KingNight.recoverMult or 2) or 1)
+				* (step == 3 and Config.KingNight.combo.finisher or 1)
 				* (crit and Config.KingNight.critMult or 1)
+			local dealt = swingDamage(player) * math.min(mult, 3)
 			if hasSkill(player, "KingSlayer") then
 				dealt = math.floor(dealt * Config.SkillKingDamageMult + 0.5)
 			end
 			-- At most KingSwingsPerSecond swings' worth per player in each one-second window.
 			local window = king.dps[player]
 			if not window or now - window.t >= 1 then
-				window = { t = now, d = 0 }
+				window = { t = now, d = 0, swings = 0 }
 				king.dps[player] = window
 			end
-			dealt = math.min(
-				dealt,
-				math.min(
-					swingDamage(player) * (stunned and 2 or 1) * Config.KingSwingsPerSecond,
-					(king.counted[player] or kingPlayerHp(player)) / 60
-				) - window.d,
-				king.hp
-			)
+			if (window.swings or 0) >= Config.KingSwingsPerSecond then
+				return
+			end
+			dealt = math.min(dealt, king.hp)
 			if dealt <= 0 then
 				return
 			end
 			window.d += dealt
+			window.swings = (window.swings or 0) + 1
+			king.combos[player] = { t = now, n = step == 3 and 0 or step }
 			king.hp = math.max(0, king.hp - dealt)
 			king.damage[player] = (king.damage[player] or 0) + dealt
 			king.hits[player] = (king.hits[player] or 0) + 1
 			king.lastHitter = player
 			state:SetAttribute("KingHp", king.hp)
-			Remotes.kingHitEvent:FireAllClients(player, dealt, crit)
+			player:SetAttribute("KingDamage", king.damage[player])
+			Remotes.kingHitEvent:FireAllClients(player, dealt, crit, step, recovering)
 			track(player, "kingHit", 1)
 			track(player, "kingDamage", dealt)
 			if king.hp <= 0 then
@@ -7279,7 +7422,9 @@ Remotes.bonkEvent.OnServerEvent:Connect(function(player)
 			return
 		end
 	end
-	Wild.hit(player, root)
+	if not Wild.hit(player, root) then
+		Hoards.swing(player, root)
+	end
 end)
 
 -- Day / midnight / Blood Moon -------------------------------------------------------------------
@@ -7326,7 +7471,18 @@ for _ = 1, Config.RainCount do
 	table.insert(Helpers.rainCandies, slot)
 	slot.body.Touched:Connect(function(hit)
 		local player = Services.Players:GetPlayerFromCharacter(hit.Parent)
-		if not slot.active or not player then
+		local root = nil
+		if player then
+			local _, liveRoot = aliveRoot(player)
+			root = liveRoot
+		end
+		if
+			not slot.active
+			or not player
+			or not Helpers.isLoaded(player)
+			or not root
+			or (root.Position - slot.body.Position).Magnitude > 7
+		then
 			return
 		end
 		local at = slot.body.Position
@@ -7378,6 +7534,10 @@ local runDay -- forward
 
 local function endBloodMoon(refill: number)
 	king.active = false
+	king.finalizing = false
+	if king.motionTween then
+		king.motionTween:Cancel()
+	end
 	state:SetAttribute("KingActive", false)
 	king.shield = false
 	giantJack.Transparency = 1
@@ -7396,6 +7556,8 @@ local function endBloodMoon(refill: number)
 	state:SetAttribute("KingPhase", nil)
 	state:SetAttribute("KingShield", nil)
 	state:SetAttribute("KingStunned", nil)
+	state:SetAttribute("KingRecoverUntil", nil)
+	state:SetAttribute("KingTransitionUntil", nil)
 	state:SetAttribute("KingTop", nil)
 	state:SetAttribute("LocksOff", nil)
 	setKingWakes()
@@ -7410,6 +7572,11 @@ function defeatKing()
 		return
 	end
 	king.active = false
+	king.finalizing = true
+	if king.motionTween then
+		king.motionTween:Cancel()
+	end
+	state:SetAttribute("KingWalking", false)
 	state:SetAttribute("KingActive", false)
 	phaseToken += 1
 	-- Finale: the King swells, then bursts.
@@ -7428,6 +7595,7 @@ function defeatKing()
 	)
 	grow:Play()
 	grow.Completed:Wait()
+	king.finalizing = false
 	local payouts, mvp = Progress.kingRewards(true)
 	Remotes.kingDoneEvent:FireAllClients("won", payouts, mvp)
 	state:SetAttribute(
@@ -7443,6 +7611,9 @@ end
 do
 	-- Telegraphed attacks: clients draw the red circles; the server checks who is inside when they land.
 	local function landAttack(shapes, victim, effect)
+		if king.active and os.clock() < king.transitionUntil then
+			return
+		end
 		for _, player in victim and { victim } or Services.Players:GetPlayers() do
 			local _, root = aliveRoot(player)
 			if root then
@@ -7475,6 +7646,7 @@ do
 			king.phase == 1
 			or king.attackBusy
 			or os.clock() < king.stunnedUntil
+			or os.clock() < king.transitionUntil
 			or (king.recoverUntil or 0) > os.clock()
 		then
 			return
@@ -7500,8 +7672,9 @@ do
 			if delta.Magnitude > 0.001 then
 				kingGround += delta.Unit * distance
 			end
-			local grounded = CFrame.new(kingGround + Vector3.yAxis * (kingFace.Size.Y / 2 - 1))
-				* king.homeBase.Rotation
+			local direction = delta.Magnitude > 0.001 and delta.Unit or king.faceBase.LookVector
+			local groundedAt = kingGround + Vector3.yAxis * (kingFace.Size.Y / 2 - 1)
+			local grounded = CFrame.lookAt(groundedAt, groundedAt + direction)
 			local drop = math.clamp((os.clock() - (king.stepDownAt or 0)) / 0.6, 0, 1)
 			local raised = king.eventBase + (kingGround - king.groundHome)
 			king.faceBase = raised:Lerp(grounded, drop)
@@ -7520,78 +7693,304 @@ do
 		end
 	end)
 
+	local function fightCount()
+		local n = 0
+		for player in king.counted do
+			if player.Parent then
+				n += 1
+			end
+		end
+		return math.clamp(n, 1, 12)
+	end
+
+	local function nextCard()
+		if king.deckPhase ~= king.phase or not king.deck or #king.deck == 0 then
+			king.deckPhase = king.phase
+			king.deck = king.phase == 1 and { "Stomp", "Sweep", "Volley" }
+				or king.phase == 2 and { "Stomp", "Sweep", "Volley", "Donut" }
+				or { "Sweep", "Volley", "Seedfall", "Donut", "Triple", "Stomp" }
+			for i = #king.deck, 2, -1 do
+				local j = math.random(i)
+				king.deck[i], king.deck[j] = king.deck[j], king.deck[i]
+			end
+			if king.deck[#king.deck] == king.lastAttack then
+				king.deck[1], king.deck[#king.deck] = king.deck[#king.deck], king.deck[1]
+			end
+		end
+		local kind = table.remove(king.deck)
+		king.lastAttack = kind
+		return kind
+	end
+
+	function Progress.combatCandy(count, value)
+		for i = 1, count do
+			local a = i / count * math.pi * 2
+			local at = kingGround + Vector3.new(math.cos(a) * 25, 1.5, math.sin(a) * 25)
+			local model = Instance.new("Model")
+			model.Name = "KingCandyCorn"
+			local body
+			for j, color in
+				{ Color3.fromRGB(255, 210, 50), Color3.fromRGB(255, 145, 40), Color3.new(1, 1, 1) }
+			do
+				local part = Instance.new("WedgePart")
+				part.Size = Vector3.new(1.8 - j * 0.35, 0.65, 1.5 - j * 0.25)
+				part.Position = at + Vector3.yAxis * (j - 1) * 0.6
+				part.Color, part.Material = color, Enum.Material.Neon
+				part.Anchored, part.CanCollide, part.CanQuery = true, false, false
+				part.Parent = model
+				if j == 1 then
+					body = part
+				end
+			end
+			model.Parent = loose
+			local collected = false
+			body.Touched:Connect(function(other)
+				local player = Services.Players:GetPlayerFromCharacter(other.Parent)
+				if collected or not player or not Helpers.isLoaded(player) then
+					return
+				end
+				collected = true
+				addCandy(player, value)
+				Remotes.rainEvent:FireAllClients(player, at)
+				model:Destroy()
+			end)
+			task.delay(20, function()
+				model:Destroy()
+			end)
+		end
+	end
+
+	function Progress.kingTransition()
+		if king.motionTween then
+			king.motionTween:Cancel()
+		end
+		king.cast += 1 -- Invalidate a cast even if its delayed landing is already queued.
+		king.attackBusy = false
+		king.transitionUntil = os.clock() + Config.KingNight.transition
+		state:SetAttribute("KingWalking", false)
+		king.recoveryEnds = 0
+		state:SetAttribute("KingRecoverUntil", nil)
+		state:SetAttribute(
+			"KingTransitionUntil",
+			workspace:GetServerTimeNow() + Config.KingNight.transition
+		)
+		for _, player in Services.Players:GetPlayers() do
+			player:SetAttribute(
+				"KingGraceUntil",
+				workspace:GetServerTimeNow() + Config.KingNight.transition
+			)
+		end
+		kingFace.CFrame = king.faceBase
+		local player = king.lastHitter or Services.Players:GetPlayers()[1]
+		Progress.combatCandy(
+			12,
+			player and math.max(1, math.floor(Progress.bossCandy(player) * 0.01)) or 1
+		)
+	end
+
 	local function attack(token: number, kind: string)
-		if king.moving or king.attackBusy then
+		if king.attackBusy or os.clock() < king.transitionUntil then
 			return
 		end
 		king.attackBusy = true
-		local circles = {}
-		local warn
-		if kind == "Slam" then
-			warn = Config.KingNight.windup
-			table.insert(circles, { pos = kingGround, radius = Config.SlamRadius })
-		else
-			warn = Config.KingNight.windup
+		state:SetAttribute("KingWalking", false)
+		king.cast += 1
+		local cast, phase, base = king.cast, king.phase, king.faceBase
+		local n = fightCount()
+		local targets, nearest, distance = {}, nil, math.huge
+		for player in king.counted do
+			local _, root = aliveRoot(player)
+			if root then
+				table.insert(targets, root)
+				local d = (root.Position - kingGround).Magnitude
+				if d < distance then
+					nearest, distance = root, d
+				end
+			end
+		end
+		local target = kind == "Volley" and #targets > 0 and targets[math.random(#targets)]
+			or nearest
+		local aim = target and target.Position - kingGround or base.LookVector
+		aim = Vector3.new(aim.X, 0, aim.Z)
+		aim = aim.Magnitude > 0.01 and aim.Unit or Vector3.zAxis
+		if kind == "Sweep" or kind == "Volley" or kind == "Triple" then
+			base = CFrame.lookAt(base.Position, base.Position + aim)
+			king.faceBase, kingFace.CFrame = base, base
+		end
+		local shapes = {}
+		local warns =
+			{ Stomp = 1.5, Sweep = 1.2, Volley = 1.5, Donut = 1.4, Seedfall = 1.4, Triple = 1.3 }
+		local warn = warns[kind] + (n == 1 and Config.KingNight.soloExtraWarn or 0)
+		local function lane(dir, width, length, start)
+			local at = kingGround + dir * (start + length / 2)
+			table.insert(
+				shapes,
+				{ pos = at, cf = CFrame.lookAt(at, at + dir), width = width, length = length }
+			)
+		end
+		if kind == "Stomp" or kind == "Donut" then
+			table.insert(shapes, {
+				pos = kingGround,
+				radius = kind == "Stomp" and 18 or 22,
+				inner = kind == "Donut" and 10 or nil,
+			})
+		elseif kind == "Sweep" then
+			lane(aim, 22, 34, kingFace.Size.X / 2)
+		elseif kind == "Volley" then
 			for i = -1, 1 do
-				local pos = kingGround
-					+ Vector3.new(
-						i * Config.KingNight.volleySpacing,
-						0,
-						Config.KingNight.volleyLength / 2
-					)
-				table.insert(circles, {
-					pos = pos,
-					cf = CFrame.new(pos),
-					width = Config.KingNight.volleyWidth,
-					length = Config.KingNight.volleyLength,
+				lane(CFrame.Angles(0, math.rad(i * 18), 0):VectorToWorldSpace(aim), 6, 60, 0)
+			end
+		elseif kind == "Triple" then
+			for i, d in { 10, 22, 34 } do
+				table.insert(
+					shapes,
+					{ pos = kingGround + aim * d, radius = 9, number = i, delay = (i - 1) * 0.5 }
+				)
+			end
+		else
+			local count = n == 1 and 2 or math.min(2 + math.floor(n / 2), 8)
+			for i = 1, count do
+				local at
+				if i == 1 and target and n > 1 then
+					at = target.Position + target.AssemblyLinearVelocity * 0.8
+					local flat = Vector3.new(at.X - kingGround.X, 0, at.Z - kingGround.Z)
+					if flat.Magnitude > 40 then
+						at = kingGround + flat.Unit * 40
+					end
+				else
+					for _ = 1, 64 do
+						local a, r = math.random() * math.pi * 2, math.sqrt(math.random()) * 40
+						at = kingGround + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r)
+						if
+							n > 1
+							or not target
+							or (at - Vector3.new(target.Position.X, at.Y, target.Position.Z)).Magnitude
+								>= 10
+						then
+							break
+						end
+					end
+				end
+				if n == 1 and target then
+					local spawn = Vector3.new(target.Position.X, kingGround.Y, target.Position.Z)
+					if (at - spawn).Magnitude < 10 then
+						local away = kingGround - spawn
+						at = kingGround + (away.Magnitude > 0.01 and away.Unit or aim) * 40
+					end
+				end
+				table.insert(shapes, {
+					pos = Vector3.new(at.X, kingGround.Y, at.Z),
+					radius = 6,
+					delay = (i - 1) * 0.15,
 				})
 			end
 		end
-		Remotes.telegraphEvent:FireAllClients(kind, circles, warn)
-		task.wait(warn)
-		if token ~= phaseToken or not king.active then
+		local function valid()
+			return king.active
+				and token == phaseToken
+				and cast == king.cast
+				and phase == king.phase
+				and os.clock() >= king.transitionUntil
+		end
+		local effects = {
+			Stomp = { 50, 40, 1 },
+			Sweep = { 50, 0, 1 },
+			Volley = { 40, 30, 0.8 },
+			Donut = { 45, 35, 1 },
+			Seedfall = { 30, 25, 0.6 },
+			Triple = { 45, 35, 1 },
+		}
+		local function hit(victim, root)
+			local now = workspace:GetServerTimeNow()
+			if not valid() or now < (victim:GetAttribute("KingGraceUntil") or 0) then
+				return
+			end
+			victim:SetAttribute("KingGraceUntil", now + Config.KingNight.grace)
+			local out =
+				Vector3.new(root.Position.X - kingGround.X, 0, root.Position.Z - kingGround.Z)
+			out = kind == "Sweep" and Vector3.new(-aim.Z, 0, aim.X)
+				or (out.Magnitude > 0.01 and out.Unit or aim)
+			local e = effects[kind]
+			root.AssemblyLinearVelocity = out * e[1] + Vector3.yAxis * e[2]
+			Progress.slow(victim, 0, e[3], "STAGGER")
+			Remotes.knockEvent:FireClient(victim, root.AssemblyLinearVelocity, 0)
+		end
+		Remotes.telegraphEvent:FireAllClients(kind, shapes, warn)
+		local pose = kind == "Sweep" and CFrame.Angles(0, math.rad(-35), 0)
+			or kind == "Volley" and CFrame.Angles(math.rad(15), 0, 0)
+			or CFrame.new(0, kind == "Stomp" and 7 or kind == "Donut" and 4 or 0, 0)
+		local windup = Services.TweenService:Create(
+			kingFace,
+			TweenInfo.new(kind == "Stomp" and 0.25 or kind == "Sweep" and 1 or 1.2),
+			{ CFrame = base * pose }
+		)
+		windup:Play()
+		king.motionTween = windup
+		task.wait(warn - 0.2)
+		if not valid() then
+			windup:Cancel()
 			return
 		end
-		if kind == "Slam" then
-			local up = Services.TweenService:Create(
-				kingFace,
-				TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-				{
-					CFrame = king.faceBase * CFrame.new(0, 7, 0),
-				}
-			)
-			up:Play()
-			up.Completed:Wait()
-			local down = Services.TweenService:Create(
-				kingFace,
-				TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-				{
-					CFrame = king.faceBase,
-				}
-			)
-			down:Play()
-			down.Completed:Wait()
+		local slam = Services.TweenService:Create(
+			kingFace,
+			TweenInfo.new(kind == "Sweep" and 0.2 or 0.15),
+			{ CFrame = kind == "Sweep" and base * CFrame.Angles(0, math.rad(35), 0) or base }
+		)
+		slam:Play()
+		king.motionTween = slam
+		task.wait(0.2)
+		for i, shape in shapes do
+			if i > 1 and (kind == "Triple" or kind == "Seedfall") then
+				task.wait(kind == "Triple" and 0.5 or 0.15)
+			end
+			if not valid() then
+				slam:Cancel()
+				return
+			end
+			Remotes.stompEvent:FireAllClients(kind, { shape })
+			landAttack({ shape }, nil, hit)
+			if kind == "Triple" and i < 3 then
+				king.motionTween = Services.TweenService:Create(
+					kingFace,
+					TweenInfo.new(0.2),
+					{ CFrame = base * CFrame.new(0, 3, 0) }
+				)
+				king.motionTween:Play()
+				task.delay(0.25, function()
+					if valid() then
+						king.motionTween = Services.TweenService:Create(
+							kingFace,
+							TweenInfo.new(0.15),
+							{ CFrame = base }
+						)
+						king.motionTween:Play()
+					end
+				end)
+			end
 		end
-		if token ~= phaseToken or not king.active then
+		if valid() then
+			kingFace.CFrame = base
+			if kind == "Stomp" or kind == "Sweep" or kind == "Donut" or kind == "Triple" then
+				king.recoveryEnds = os.clock() + Config.KingNight.recover[phase]
+				king.stunnedUntil = math.max(king.stunnedUntil, king.recoveryEnds)
+				state:SetAttribute(
+					"KingRecoverUntil",
+					workspace:GetServerTimeNow() + Config.KingNight.recover[phase]
+				)
+				Remotes.kingDoneEvent:FireAllClients("recover", {})
+			end
 			king.attackBusy = false
-			return
 		end
-		Remotes.stompEvent:FireAllClients(kind, circles)
-		landAttack(circles)
-		king.attackBusy = false
 	end
-
 	local function spawnLackeys(count: number)
-		local cauldrons = cauldronFolder:GetChildren()
 		for i = 1, count do
-			local pot = cauldrons[(i - 1) % #cauldrons + 1]:FindFirstChild("Pot") :: BasePart
-			local a = math.random() * math.pi * 2
-			local at = pot.Position + Vector3.new(math.cos(a) * 9, 6, math.sin(a) * 9)
+			local a = i / count * math.pi * 2
+			local at = kingGround + Vector3.new(math.cos(a) * 32, 6, math.sin(a) * 32)
 			local model, root = buildGhost(at, true)
 			table.insert(ghosts, {
 				model = model,
 				root = root,
-				hp = Config.LackeyHp,
+				hp = 2,
 				target = nil,
 				plot = nil,
 				carried = nil,
@@ -7621,24 +8020,46 @@ do
 		state:SetAttribute("KingShield", left)
 		if left == 0 then
 			king.shield = false
+			king.cast += 1
+			king.attackBusy = false
+			if king.motionTween then
+				king.motionTween:Cancel()
+			end
+			king.recoveryEnds = 0
+			state:SetAttribute("KingRecoverUntil", nil)
 			king.stunnedUntil = os.clock() + Config.StunSeconds
+			local player = king.lastHitter or Services.Players:GetPlayers()[1]
+			Progress.combatCandy(
+				12,
+				player and math.max(1, math.floor(Progress.bossCandy(player) * 0.01)) or 1
+			)
 			state:SetAttribute("KingShield", nil)
 			state:SetAttribute("KingStunned", true)
 			Remotes.kingDoneEvent:FireAllClients("stun", {})
-			Services.TweenService
-				:Create(kingFace, TweenInfo.new(0.5, Enum.EasingStyle.Bounce), {
+			king.motionTween = Services.TweenService:Create(
+				kingFace,
+				TweenInfo.new(0.5, Enum.EasingStyle.Bounce),
+				{
 					CFrame = king.faceBase
 						* CFrame.new(0, -2, 0)
 						* CFrame.Angles(math.rad(25), 0, math.rad(12)),
-				})
-				:Play()
+				}
+			)
+			king.motionTween:Play()
+			local token, deadline = phaseToken, king.stunnedUntil
 			task.delay(Config.StunSeconds, function()
+				if token ~= phaseToken or not king.active or king.stunnedUntil ~= deadline then
+					return
+				end
 				state:SetAttribute("KingStunned", nil)
 				if king.active then
 					king.recoverUntil = os.clock() + 0.4
-					Services.TweenService
-						:Create(kingFace, TweenInfo.new(0.4), { CFrame = king.faceBase })
-						:Play()
+					king.motionTween = Services.TweenService:Create(
+						kingFace,
+						TweenInfo.new(0.4),
+						{ CFrame = king.faceBase }
+					)
+					king.motionTween:Play()
 				end
 			end)
 		end
@@ -7662,9 +8083,15 @@ do
 		state:SetAttribute("LocksOff", nil)
 		state:SetAttribute("KingWarning", nil)
 		Remotes.kingDoneEvent:FireAllClients("wake", {})
-		local players = #Services.Players:GetPlayers()
 		king.counted = {}
 		king.dps = {}
+		king.combos = {}
+		king.deck = nil
+		king.lastAttack = nil
+		king.cast += 1
+		king.transitionUntil = 0
+		king.recoveryEnds = 0
+		state:SetAttribute("KingRecoverUntil", nil)
 		king.maxHp = Config.KingBaseHp
 		for _, player in Services.Players:GetPlayers() do
 			local add = kingPlayerHp(player)
@@ -7697,6 +8124,7 @@ do
 		state:SetAttribute("KingWalking", false)
 		for _, player in Services.Players:GetPlayers() do
 			player:SetAttribute("MVP", nil)
+			player:SetAttribute("KingDamage", 0)
 		end
 		state:SetAttribute("KingMaxHp", king.maxHp)
 		state:SetAttribute("KingHp", king.hp)
@@ -7710,7 +8138,6 @@ do
 			local started = os.clock()
 			local lastTop = 0
 			local nextAttack = os.clock() + 4
-			local turn = 0
 			local nextWeak = math.huge
 			while
 				king.active
@@ -7723,45 +8150,62 @@ do
 					publishTopDamage()
 				end
 				local fraction = king.hp / king.maxHp
-				if king.phase == 1 and fraction <= 0.66 then
+				if (king.recoveryEnds or 0) > 0 and os.clock() >= king.recoveryEnds then
+					king.recoveryEnds = 0
+					state:SetAttribute("KingRecoverUntil", nil)
+				end
+				if king.phase == 1 and fraction <= Config.KingNight.phaseAt[1] then
 					king.phase = 2
+					Progress.kingTransition()
 					king.shield = true
 					state:SetAttribute("KingPhase", 2)
-					local count = math.min(
-						Config.KingNight.lackeyMax,
-						math.max(
-							Config.KingNight.lackeysPerPlayer,
-							Config.KingNight.lackeysPerPlayer * players
-						)
-					)
+					local count = math.clamp(2 * fightCount(), 2, 8)
 					spawnLackeys(count)
 					state:SetAttribute("KingShield", count)
 					state:SetAttribute("KingShieldMax", count)
 					Remotes.kingDoneEvent:FireAllClients("phase2", {})
-				elseif king.phase == 2 and not king.shield and fraction <= 0.33 then
+				elseif
+					king.phase == 2
+					and not king.shield
+					and fraction <= Config.KingNight.phaseAt[2]
+				then
 					king.phase = 3
+					Progress.kingTransition()
 					nextWeak = os.clock() + Config.KingNight.weakEvery
 					state:SetAttribute("KingPhase", 3)
 					Remotes.kingDoneEvent:FireAllClients("phase3", {})
 				end
-				if king.phase == 3 and os.clock() >= nextWeak then
-					king.stunnedUntil = os.clock() + Config.StunSeconds
+				if
+					king.phase == 3
+					and os.clock() >= nextWeak
+					and not king.attackBusy
+					and os.clock() >= king.transitionUntil
+				then
+					king.recoveryEnds = 0
+					state:SetAttribute("KingRecoverUntil", nil)
+					king.stunnedUntil = os.clock() + 5
 					state:SetAttribute("KingStunned", true)
 					nextWeak = os.clock() + Config.KingNight.weakEvery
-					task.delay(Config.StunSeconds, function()
-						state:SetAttribute("KingStunned", nil)
+					local deadline = king.stunnedUntil
+					task.delay(5, function()
+						if token == phaseToken and king.stunnedUntil == deadline then
+							state:SetAttribute("KingStunned", nil)
+						end
 					end)
 				end
 				if
-					not king.moving
-					and not king.attackBusy
+					not king.attackBusy
 					and os.clock() >= nextAttack
 					and os.clock() >= king.stunnedUntil
+					and os.clock() >= king.transitionUntil
 				then
-					turn += 1
-					local kind = (turn % 2 == 1) and "Slam" or "Volley"
+					local kind = nextCard()
 					task.spawn(attack, token, kind)
-					nextAttack = os.clock() + Config.AttackEvery[king.phase]
+					local scale = math.max(0.5, 1 / (1 + 0.1 * (fightCount() - 1)))
+					nextAttack = os.clock()
+						+ Config.KingNight.attackEvery[king.phase]
+							* scale
+							* (fraction <= 0.1 and 0.85 or 1)
 				end
 			end
 			if king.active and token == phaseToken then
@@ -7903,7 +8347,7 @@ do
 			label.BackgroundTransparency = 1
 			label.Size = UDim2.new(1, 0, height, 0)
 			label.FontFace = Helpers.fontFace("title")
-			label.TextScaled = true
+			label.TextScaled = false
 			label.TextColor3 = color
 			label.Text = text
 			label.Parent = surface
@@ -8027,7 +8471,7 @@ do
 			label.Position = UDim2.fromScale(0, i == 1 and 0 or 0.42)
 			label.Size = UDim2.fromScale(1, i == 1 and 0.42 or 0.58)
 			label.FontFace = Helpers.fontFace("title")
-			label.TextScaled = true
+			label.TextScaled = false
 			label.TextColor3 = VIP_GOLD
 			label.Text = text
 			label.Parent = bb
@@ -8702,7 +9146,8 @@ do
 			local v = shape.cf:PointToObjectSpace(pos)
 			return math.abs(v.X) <= shape.width / 2 and math.abs(v.Z) <= shape.length / 2
 		end
-		return Vector3.new(pos.X - shape.pos.X, 0, pos.Z - shape.pos.Z).Magnitude <= shape.radius
+		local radius = Vector3.new(pos.X - shape.pos.X, 0, pos.Z - shape.pos.Z).Magnitude
+		return radius <= shape.radius and radius >= (shape.inner or 0)
 	end
 	function Progress.slow(player, mult, seconds, icon)
 		seconds = math.min(seconds, Config.GuardTwists.slowCap)
@@ -8886,6 +9331,7 @@ do
 				podium = podium,
 				won = won,
 				qualified = qualified,
+				pity = Config.KingNight.pity - Progress.data[player].crates % Config.KingNight.pity,
 			})
 		end
 		if mvp and Progress.data[mvp] then
@@ -8993,7 +9439,7 @@ do
 	label.BackgroundColor3 = Color3.fromRGB(30, 12, 40)
 	label.TextColor3 = Color3.fromRGB(255, 214, 80)
 	label.FontFace = Helpers.fontFace("title")
-	label.TextScaled = true
+	label.TextScaled = false
 	label.Parent = bb
 	task.spawn(function()
 		while label.Parent do
@@ -10268,28 +10714,23 @@ do
 			end
 		end
 		local previous = false
-		local lastAt, facing = kingFace.Position, kingFace.CFrame.Rotation
+		local baseScale, baseHeight = body:GetScale(), Config.KingNight.height
 		Services.RunService.Heartbeat:Connect(function()
-			local active = king.active
+			local active = king.active or king.finalizing == true
 			kingFace.Transparency = 1
 			kingFace.CanCollide = false
 			if active then
-				local delta = (kingFace.Position - lastAt) * Vector3.new(1, 0, 1)
-				if delta.Magnitude > 0.01 then
-					facing = CFrame.lookAt(Vector3.zero, delta).Rotation
-				end
+				local scale = baseScale * kingFace.Size.Y / baseHeight
+				body:SetAttribute("CombatScale", scale)
+				body:ScaleTo(scale)
 				local walking = state:GetAttribute("KingWalking")
 				local stride = walking and math.sin(os.clock() * 7) or 0
 				body:PivotTo(
 					CFrame.new(kingFace.Position + Vector3.yAxis * math.abs(stride) * 0.35)
-						* facing
+						* kingFace.CFrame.Rotation
 						* CFrame.Angles(0, 0, math.rad(2) * stride)
 						* offset
 				)
-			end
-			lastAt = kingFace.Position
-			if not active then
-				facing = kingFace.CFrame.Rotation
 			end
 			if active ~= previous or not body:GetAttribute("Initialized") then
 				previous = active
@@ -10308,4 +10749,38 @@ do
 			"Voxel PumpkinKing missing: restore GuardModels.PumpkinKing before launch"
 		)
 	end
+end
+
+-- L1 runtime presentation; scene files and saved payloads remain unchanged.
+do
+	local presentation = Config.Presentation
+	local billboards = setmetatable({}, { __mode = "k" })
+	local function decorate(item)
+		if not item.Parent then
+			return
+		end
+		if item:IsA("BillboardGui") then
+			billboards[item] = true
+			presentation.billboard(item)
+		end
+		presentation.text(item, 1080)
+	end
+	for _, item in garden:GetDescendants() do
+		decorate(item)
+	end
+	garden.DescendantAdded:Connect(function(item)
+		task.defer(decorate, item)
+	end)
+	task.spawn(function()
+		while true do
+			for item in billboards do
+				if item.Parent then
+					presentation.billboard(item)
+				else
+					billboards[item] = nil
+				end
+			end
+			task.wait(1)
+		end
+	end)
 end

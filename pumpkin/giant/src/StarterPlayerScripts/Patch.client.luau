@@ -32,7 +32,7 @@ local function fontFace(role: string, weight: string?, style: string?): Font
 		return Font.new(
 			spec.family,
 			Enum.FontWeight[spec.weight or weight or "Regular"],
-			Enum.FontStyle[style or "Normal"]
+			Enum.FontStyle.Normal
 		)
 	end
 	local base = Font.fromEnum(Enum.Font[spec])
@@ -282,14 +282,17 @@ end
 -- the pumpkin itself never hides the number, and the billboard is AlwaysOnTop.
 -- The billboard lives in PlayerGui with an explicit Adornee (an Attachment in Terrain), which
 -- always renders; a billboard parented straight under an Attachment did not show on screen.
-local function damageText(at: Vector3, damage: number, color: Color3?)
+local function damageText(at: Vector3, damage: number, color: Color3?, separate: boolean?)
 	local now = os.clock()
-	UI.damageTotal = now - (UI.damageAt or 0) <= 0.3 and (UI.damageTotal or 0) + damage or damage
-	UI.damageAt = now
-	damage = UI.damageTotal
-	if UI.damageGui then
-		UI.damageGui:Destroy()
-		UI.damageHolder:Destroy()
+	if not separate then
+		UI.damageTotal = now - (UI.damageAt or 0) <= 0.3 and (UI.damageTotal or 0) + damage
+			or damage
+		UI.damageAt = now
+		damage = UI.damageTotal
+		if UI.damageGui then
+			UI.damageGui:Destroy()
+			UI.damageHolder:Destroy()
+		end
 	end
 	local px = math.floor(math.clamp(34 + 5.5 * math.log10(math.max(damage, 1)), 34, 56))
 	local camera = workspace.CurrentCamera
@@ -302,7 +305,9 @@ local function damageText(at: Vector3, damage: number, color: Color3?)
 	holder.Parent = workspace.Terrain
 	local bb = Instance.new("BillboardGui")
 	bb.Name = "DamageNumber"
-	UI.damageGui, UI.damageHolder = bb, holder
+	if not separate then
+		UI.damageGui, UI.damageHolder = bb, holder
+	end
 	bb.Adornee = holder
 	bb.Size = UDim2.fromOffset(px * 5, px + 60)
 	bb.AlwaysOnTop = true
@@ -316,7 +321,8 @@ local function damageText(at: Vector3, damage: number, color: Color3?)
 	label.Position = UDim2.fromScale(0, 1)
 	label.Size = UDim2.new(1, 0, 0, px)
 	label.FontFace = fontFace("number")
-	label.TextScaled = true
+	label.TextScaled = false
+	label.TextSize = px
 	label.Text = short(damage)
 	label.TextColor3 = color
 		or (
@@ -374,7 +380,7 @@ local function pickupPop(amount: number)
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.fromScale(1, 1)
 	label.FontFace = fontFace("number")
-	label.TextScaled = true
+	label.TextScaled = false
 	label.TextColor3 = Color3.new(1, 1, 1)
 	label.Text = "+" .. amount .. " Pumpkin"
 	label.Parent = bb
@@ -592,27 +598,11 @@ function Palette.uiText(text: string): string
 			:gsub("Blood Moon", "King Fight")
 	)
 end
+UI.presentation = Config.Presentation
 function UI.fitText(label, fraction)
 	label:SetAttribute("TypeSize", fraction)
-	local bounds = label:FindFirstChildOfClass("UITextSizeConstraint")
-		or Instance.new("UITextSizeConstraint")
-	bounds.Parent = label
 	local function fit()
-		local h = gui.AbsoluteSize.Y / uiScale.Scale
-		bounds.MinTextSize = math.max(
-			11,
-			math.ceil(11 / uiScale.Scale),
-			math.ceil(h * Config.UI.Tokens.type.caption)
-		)
-		bounds.MaxTextSize = math.max(
-			bounds.MinTextSize,
-			math.floor(h * (label:GetAttribute("TypeSize") or fraction) * 1.1)
-		)
-		local outline = label:FindFirstChildOfClass("UIStroke")
-		if outline then
-			outline.Thickness = math.max(2.5, h * 0.006)
-			outline.LineJoinMode = Enum.LineJoinMode.Round
-		end
+		UI.presentation.text(label, gui.AbsoluteSize.Y / uiScale.Scale)
 	end
 	local resize = gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
 	local role = label:GetAttributeChangedSignal("TypeSize"):Connect(fit)
@@ -622,11 +612,13 @@ function UI.fitText(label, fraction)
 	end)
 	fit()
 end
+
 local function textLabel(parent: Instance, text: string, color: Color3, font: string?): TextLabel
 	local label = Instance.new("TextLabel")
 	label.BackgroundTransparency = 1
 	label.FontFace = fontFace(font or "small")
-	label.TextScaled = true
+	label:SetAttribute("FontRole", font or "small")
+	label.TextScaled = false
 	label.TextColor3 = color
 	label.Text = Palette.uiText(text)
 	label.Parent = parent
@@ -790,7 +782,7 @@ local function makeButton(parent: Instance, text: string, color: Color3): TextBu
 	label.Size = UDim2.fromScale(1, 1)
 	label.ZIndex = b.ZIndex + 4
 	label.FontFace = b.FontFace
-	label.TextScaled = true
+	label.TextScaled = false
 	label.Parent = b
 	local pad = Instance.new("UIPadding")
 	pad.PaddingTop = UDim.new(0, 3)
@@ -1402,7 +1394,7 @@ do
 	local iconScale = Instance.new("UIScale")
 	iconScale.Parent = icon
 	-- Candy gold at 5% of the HUD height, with a black stroke.
-	candyBig = textLabel(stats, "", Palette.MONEY)
+	candyBig = textLabel(stats, "", Palette.MONEY, "number")
 	candyBig.Name = "Money"
 	candyBig:SetAttribute("TypeSize", Config.UI.Tokens.type.currency)
 	candyBig.Position = UDim2.fromScale(0.25, 0.18)
@@ -1410,14 +1402,20 @@ do
 	candyBig.TextScaled = false
 	candyBig.FontFace = fontFace("number", "Regular", Config.Fonts.numberStyle)
 	local function sizeCandy()
-		candyBig.TextSize = math.max(10, gui.AbsoluteSize.Y / uiScale.Scale * 0.058)
+		candyBig.TextSize =
+			math.max(15, math.floor(gui.AbsoluteSize.Y / uiScale.Scale * 0.052 + 0.5))
 	end
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(sizeCandy)
 	sizeCandy()
 	candyBig.TextXAlignment = Enum.TextXAlignment.Left
 	local moneyStroke = candyBig:FindFirstChildOfClass("UIStroke") :: UIStroke
-	moneyStroke.Thickness = math.max(2.5, gui.AbsoluteSize.Y / uiScale.Scale * 0.006)
+	moneyStroke.Thickness = math.clamp(math.floor(candyBig.TextSize * 0.09 + 0.5), 2, 6)
 	moneyStroke.Color = Color3.new(0, 0, 0)
+	local moneyGradient = Instance.new("UIGradient")
+	moneyGradient.Rotation = 90
+	moneyGradient.Color =
+		ColorSequence.new(Color3.fromRGB(255, 210, 58), Color3.fromRGB(255, 162, 26))
+	moneyGradient.Parent = candyBig
 	incomeLabel = textLabel(stats, "", Config.UI.Tokens.good)
 	incomeLabel.Name = "Income"
 	incomeLabel.Visible = true
@@ -1744,7 +1742,7 @@ function UI.secret(parent)
 end
 function UI.sticker(parent, text, color)
 	local ribbon = textLabel(parent, text, color)
-	ribbon.FontFace = fontFace("small", "Heavy", "Italic")
+	ribbon.FontFace = fontFace("small")
 	ribbon.Position, ribbon.Size, ribbon.Rotation, ribbon.ZIndex =
 		UDim2.fromScale(0.54, 0.10), UDim2.fromScale(0.46, 0.12), 12, parent.ZIndex + 5
 	local pop = Instance.new("UIScale")
@@ -2092,7 +2090,7 @@ do
 	amount.Text = tostring(Config.Admin.candy)
 	amount.PlaceholderText = "Candy amount"
 	amount.FontFace = fontFace("small")
-	amount.TextScaled = true
+	amount.TextScaled = false
 	amount.Size = UDim2.new(1, 0, 0, 40)
 	amount.LayoutOrder = 2
 	amount.Parent = list
@@ -4276,6 +4274,7 @@ do
 						active
 							and mine
 							and carrying
+							and full
 							and (
 								not filled
 								or (
@@ -4295,7 +4294,7 @@ do
 					local prompt = plot:FindFirstChild("PetPrompt", true)
 					if prompt and prompt:IsA("ProximityPrompt") then
 						prompt.ActionText = mine and "Pick up" or "Steal"
-						prompt.HoldDuration = mine and 0.3 or Config.Purge.hold
+						prompt.HoldDuration = mine and 0 or Config.Purge.hold
 					end
 					-- While carrying, the full-pen Place prompt owns the interaction.
 					set(
@@ -4944,7 +4943,10 @@ do
 		local sw = st.swing
 		if sw then
 			local paused = sw.localSwing and math.clamp(FarmFX.freezeUntil - (now - dt), 0, dt) or 0
-			sw.t += (dt - paused) * sw.speed
+			local kingPause = sw.localSwing
+					and math.clamp((FarmFX.kingPauseUntil or 0) - (now - dt), 0, dt)
+				or 0
+			sw.t += math.max(0, dt - paused - kingPause * 0.8) * sw.speed
 			local keys = SWINGS[sw.step]
 			local prev, at = sw.start, 0
 			for _, key in keys do
@@ -5241,7 +5243,7 @@ do
 		end
 		table.insert(rigs, rig)
 	end
-	function FarmFX.arc(step)
+	function FarmFX.arc(step, combat)
 		if FarmFX.arcDrawn then
 			return
 		end
@@ -5265,6 +5267,7 @@ do
 		local def = Config.ScytheStyles[tool:GetAttribute("StyleId") or tool:GetAttribute("ToolId")]
 			or Config.ScytheStyles.RustySickle
 		rig.started, rig.step = os.clock(), step
+		rig.combat = combat
 		rig.part.CFrame = root.CFrame
 			* CFrame.new(0, ({ 1, 0.9, 1.5 })[step], 0)
 			* CFrame.Angles(0, 0, math.rad(({ 30, -20, 90 })[step]))
@@ -5282,7 +5285,7 @@ do
 						beam.Enabled = false
 					end
 				else
-					local radius = 4.2 + 0.6 * t / 0.16
+					local radius = (4.2 + 0.6 * t / 0.16) * (rig.combat and 1.5 or 1)
 					local reverse = rig.step == 2
 					for i, a in rig.attachments do
 						local phi = math.rad((reverse and -1 or 1) * (2 - i) * 80)
@@ -5382,11 +5385,11 @@ do
 		part.Parent = workspace
 		shards[i] = { part = part }
 	end
-	for i = 1, 60 do
+	for i = 1, 144 do
 		local label = Instance.new("Frame")
 		label.Name = "FlyingCandy"
 		label.AnchorPoint = Vector2.new(0.5, 0.5)
-		label.Size = UDim2.fromOffset(9, 9)
+		label.Size = UDim2.fromOffset(14, 14)
 		label.BorderSizePixel, label.Visible = 0, false
 		label.ZIndex, label.Parent = 20, gui
 		candies[i] = { label = label }
@@ -5466,9 +5469,12 @@ do
 				if
 					ownsZone
 					and math.abs(offset.Y) < 12
-					and dist <= Config.BonkRange
+					and flat.Magnitude <= Config.Farm.arcRange
 					and dist < bestDist
-					and (flat.Magnitude < 0.1 or flat.Unit:Dot(look) > -0.2)
+					and (
+						flat.Magnitude < 0.1
+						or flat.Unit:Dot(look) >= math.cos(math.rad(Config.Farm.arcDegrees / 2))
+					)
 				then
 					best, bestDist = part, dist
 				end
@@ -5632,7 +5638,8 @@ do
 					damageText(
 						at + Vector3.new((math.random() - 0.5) * 2.5, 3, 0),
 						damage,
-						crit and Palette.ORANGE or Color3.new(1, 1, 1)
+						crit and Palette.ORANGE or Color3.new(1, 1, 1),
+						true
 					)
 					countHit(at)
 				else
@@ -5649,9 +5656,15 @@ do
 			end)
 		end
 	)
-	remotes
-		:WaitForChild("WildPopped").OnClientEvent
-		:Connect(function(at: Vector3, seedId: string, winner: Player?, candy: number?)
+	remotes:WaitForChild("WildPopped").OnClientEvent:Connect(
+		function(
+			at: Vector3,
+			seedId: string,
+			winner: Player?,
+			candy: number?,
+			chain: number?,
+			chainIndex: number?
+		)
 			if not nearby(winner, at) then
 				return
 			end
@@ -5669,7 +5682,7 @@ do
 				burst(at, color, winner == player and 26 or 13, 24, Palette.SPARKLE, 1.1)
 				burst(at, Palette.ORANGE, winner == player and 8 or 4, 16, nil, 0.8)
 				chunks(at, 6)
-				play(Config.Sounds.Break, 1, 0.7)
+				play(Config.Sounds.Break, 1 + math.min(5, (chainIndex or 1) - 1) * 0.06, 0.7)
 				if seedId == "Golden" then
 					play(Config.Sounds.Reveal, 1.2, 0.4)
 					if winner == player then
@@ -5681,7 +5694,7 @@ do
 						FarmFX.freezeUntil,
 						os.clock() + (FarmFX.step == 3 and 0.13 or 0.11)
 					)
-					candyBurst(at + Vector3.new(0, 1, 0), 8)
+					candyBurst(at + Vector3.new(0, 1, 0), 10 + math.min(5, (chain or 1) - 1) * 2)
 					floatText(
 						at + Vector3.new(0, 4, 0),
 						"+" .. short(candy or 0) .. " 🍬",
@@ -5691,7 +5704,8 @@ do
 					shake(0.4 * (mobile and 0.6 or 1), 5)
 				end
 			end)
-		end)
+		end
+	)
 	task.spawn(function()
 		while true do
 			task.wait(0.1)
@@ -5804,20 +5818,63 @@ end)
 
 remotes
 	:WaitForChild("KingHit").OnClientEvent
-	:Connect(function(who: Player, power: number, stunned: boolean)
-		local at = kingFace.Position
-			+ Vector3.new(
-				(math.random() - 0.5) * 10,
-				(math.random() - 0.5) * 6,
-				(math.random() - 0.5) * 10
+	:Connect(
+		function(who: Player, power: number, crit: boolean, chain: number?, recovering: boolean?)
+			local at = kingFace.Position
+				+ Vector3.new(
+					(math.random() - 0.5) * 10,
+					(math.random() - 0.5) * 6,
+					(math.random() - 0.5) * 10
+				)
+			burst(
+				at,
+				Color3.fromRGB(255, 120, 60),
+				chain == 3 and 28 or 10,
+				chain == 3 and 24 or 14,
+				Palette.SPARKLE,
+				0.9
 			)
-		burst(at, Color3.fromRGB(255, 120, 60), stunned and 18 or 10, 14, Palette.SPARKLE, 0.9)
-		if who == player then
-			damageText(at, power, stunned and Color3.fromRGB(255, 150, 40) or nil)
-			play(Config.Sounds.Bonk, 0.9 + math.min(combo, 10) * 0.03, 0.8)
-			countHit(at)
+			local body = market:FindFirstChild("FightPumpkinKing") or kingFace
+			local flash = UI.kingHighlight or Instance.new("Highlight")
+			flash.Adornee, flash.FillColor, flash.FillTransparency = body, Color3.new(1, 1, 1), 0
+			flash.Enabled, flash.Parent = true, kingFace
+			UI.kingFlashUntil = os.clock() + 0.12
+			Services.TweenService
+				:Create(flash, TweenInfo.new(0.12), { FillTransparency = 1 })
+				:Play()
+			task.delay(0.12, function()
+				if flash ~= UI.kingHighlight then
+					flash:Destroy()
+				end
+			end)
+			FarmFX.kingSquashAt = os.clock()
+			local hp = gui:FindFirstChild("KingTopHp")
+			if hp then
+				hp.Position = UDim2.fromScale(0.5, Config.UI.bossY) + UDim2.fromOffset(4, 0)
+				Services.TweenService
+					:Create(
+						hp,
+						TweenInfo.new(0.1),
+						{ Position = UDim2.fromScale(0.5, Config.UI.bossY) }
+					)
+					:Play()
+			end
+			if who == player then
+				damageText(at, power, crit and Color3.fromHex("FFB020") or nil)
+				local label = UI.damageGui and UI.damageGui:FindFirstChildOfClass("TextLabel")
+				if label then
+					label.Text ..= (crit and " CRIT!" or "") .. (chain == 3 and " x3!" or "") .. (recovering and " x1.5" or "")
+				end
+				FarmFX.kingPauseUntil = os.clock() + 0.06
+				if chain == 3 then
+					FarmFX.arcDrawn = false
+					FarmFX.arc(3, true)
+				end
+				play(Config.Sounds.Bonk, 0.9 + (chain or 1) * 0.08, 0.8)
+				countHit(at)
+			end
 		end
-	end)
+	)
 
 remotes:WaitForChild("Stomp").OnClientEvent:Connect(function(kind: string, circles: { any })
 	local root = rootPart()
@@ -5841,6 +5898,43 @@ remotes:WaitForChild("Stomp").OnClientEvent:Connect(function(kind: string, circl
 		end
 		if kind == "GuardBat" then
 			burst(c.pos, Color3.fromRGB(170, 80, 255), 30, 15)
+			continue
+		end
+		if kind == "GuardCrow" then
+			burst(c.pos, Color3.fromRGB(70, 60, 80), 18, 10, nil, 1.2)
+			for _ = 1, 8 do
+				local feather = Instance.new("WedgePart")
+				feather.Anchored, feather.CanCollide, feather.CanQuery, feather.CanTouch =
+					true, false, false, false
+				feather.Size, feather.Color = Vector3.new(0.1, 1.2, 0.5), Color3.fromRGB(50, 40, 65)
+				feather.CFrame, feather.Parent = CFrame.new(c.pos + Vector3.yAxis * 2), workspace
+				Services.TweenService
+					:Create(feather, TweenInfo.new(0.5), {
+						CFrame = feather.CFrame
+							+ Vector3.new(math.random(-5, 5), math.random(1, 4), math.random(-5, 5)),
+						Transparency = 1,
+					})
+					:Play()
+				task.delay(0.5, function()
+					feather:Destroy()
+				end)
+			end
+			continue
+		end
+		if kind == "Donut" then
+			local anchor = Instance.new("Part")
+			anchor.Anchored, anchor.CanCollide, anchor.CanQuery, anchor.CanTouch, anchor.Transparency =
+				true, false, false, false, 1
+			anchor.CFrame, anchor.Parent =
+				CFrame.new(c.pos) * CFrame.Angles(math.pi / 2, 0, 0), workspace
+			local annulus = Instance.new("CylinderHandleAdornment")
+			annulus.Adornee, annulus.Height, annulus.Radius, annulus.InnerRadius =
+				anchor, 0.25, c.radius, c.inner
+			annulus.Color3, annulus.Parent = Color3.fromHex("FF3B30"), anchor
+			Services.TweenService:Create(annulus, TweenInfo.new(0.45), { Transparency = 1 }):Play()
+			task.delay(0.45, function()
+				anchor:Destroy()
+			end)
 			continue
 		end
 		local ring = Instance.new("Part")
@@ -5899,11 +5993,6 @@ remotes
 			burst(kingFace.Position, Color3.fromRGB(255, 140, 40), 40, 30)
 			play(Config.Sounds.Reveal, 1, 0.8)
 			task.spawn(shake, 2, 14)
-			local camera = workspace.CurrentCamera
-			camera.FieldOfView = 90
-			Services.TweenService
-				:Create(camera, TweenInfo.new(0.6, Enum.EasingStyle.Quad), { FieldOfView = 70 })
-				:Play()
 		elseif kind == "wake" then
 			toast("THE PUMPKIN KING WAKES!", "Everyone bonk him!")
 			play(Config.Sounds.Brew, 0.4, 1)
@@ -5923,16 +6012,10 @@ remotes
 			end
 			toast("HE'S GOING TO BURST!")
 			play(Config.Sounds.Brew, 0.5, 1)
-		elseif kind == "phase2" then
-			toast("SHIELD UP!", "Bonk the Lantern ghosts at the cauldrons!")
-			play(Config.Sounds.Brew, 0.6, 1)
 		elseif kind == "stun" then
 			toast("HE'S STUNNED! SMASH HIM!", "Double damage!")
 			play(Config.Sounds.Growl, 1, 0.9)
 			task.spawn(shake, 1, 8)
-		elseif kind == "phase3" then
-			toast("THE KING IS ANGRY!", "Faster attacks. Finish him!")
-			play(Config.Sounds.Brew, 0.4, 1)
 		elseif kind == "escaped" then
 			toast(
 				"THE KING ESCAPED",
@@ -6095,10 +6178,7 @@ do
 					gateTitle.Text, gateTitle.Size = def.title, UDim2.fromScale(1, 0.40)
 					gateTitle:FindFirstChildOfClass("UIStroke").Color = Config.UI.Tokens.ink
 					gateTitle:FindFirstChildOfClass("UIStroke").Thickness = 5
-					local bounds = gateTitle:FindFirstChildOfClass("UITextSizeConstraint")
-						or Instance.new("UITextSizeConstraint")
-					bounds.Parent = gateTitle
-					bounds.MinTextSize, bounds.MaxTextSize = 12, 40
+					gateTitle.TextSize = 40
 				end
 				local benefit = gateGui:FindFirstChild("Benefit")
 				if not benefit then
@@ -6112,8 +6192,8 @@ do
 				benefit.Text = Config.UI.Tokens.gateBenefit[zoneId] or "New pets"
 				benefit.Visible = not open
 				benefit:FindFirstChildOfClass("UIStroke").Thickness = 3
-				local bounds = benefit:FindFirstChildOfClass("UITextSizeConstraint")
-				bounds.MinTextSize, bounds.MaxTextSize = 10, 22
+				benefit:SetAttribute("TypeSize", nil)
+				benefit.TextSize = 22
 			end
 			local costLabel = gateGui and gateGui:FindFirstChild("Cost", true) :: TextLabel?
 			if costLabel then
@@ -6128,9 +6208,7 @@ do
 						pillFrame.Size = UDim2.fromOffset(open and 115 or 180, open and 21 or 42)
 					end
 				end
-				local bounds = costLabel:FindFirstChildOfClass("UITextSizeConstraint")
-					or Instance.new("UITextSizeConstraint")
-				bounds.MinTextSize, bounds.MaxTextSize, bounds.Parent = 10, 28, costLabel
+				costLabel.TextSize = 28
 			end
 		end
 	end
@@ -6607,7 +6685,7 @@ do
 			local measured = Services.TextService:GetTextSize(
 				verb,
 				textSize,
-				Enum.Font.GothamBold,
+				Enum.Font.FredokaOne,
 				Vector2.new(10000, 10000)
 			)
 			bar.Size = UDim2.fromOffset(
@@ -7083,7 +7161,8 @@ do
 			if step <= 2 then
 				local nest = hoardSpot("Zone1")
 				return step == 1 and "Steal a Pumpkin!" or "Place it in your pen!",
-					step == 1 and "Hold E at the nest" or "Your pumpkin cracks open in 6 seconds",
+					step == 1 and "Swing or tap at the nest"
+						or "Your pumpkin cracks open in 6 seconds",
 					step == 1 and nest or soil.Position
 			elseif step == 3 then
 				return "Smash pumpkins for 50 candy!", "Swing your scythe", zone
@@ -7105,7 +7184,7 @@ do
 						"Need " .. short(price - candyValue.Value) .. " more for the Graveyard",
 						zone
 				end
-				return "Unlock the Graveyard!", "Hold E at the gate", ZoneView.gate("Zone2")
+				return "Unlock the Graveyard!", "Tap E at the gate", ZoneView.gate("Zone2")
 			end
 		end
 		local owned = {}
@@ -7139,7 +7218,7 @@ do
 		then
 			local nest, ready = hoardSpot("Zone1")
 			if ready then
-				return "Steal a Pumpkin!", "Hold E for a pet", nest
+				return "Steal a Pumpkin!", "Swing or tap for a pet", nest
 			end
 		end
 		return "Smash pumpkins!",
@@ -7368,7 +7447,7 @@ do
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
 		label.FontFace = fontFace("small")
-		label.TextScaled = true
+		label.TextScaled = false
 		label.TextColor3 = Palette.MONEY
 		label.Text = "+" .. rateShort(rate)
 		label.Parent = bb
@@ -7863,226 +7942,368 @@ ContextActionService:SetPosition("Bonk", UDim2.new(1, -250, 1, -100))
 
 -- Boss: warnings, shield bubble, enrage glow, MVP crowns, top damage. -----------------------
 
-local function circlePart(pos: Vector3, radius: number, warn: number, color: Color3?)
-	local disc = Instance.new("Part")
-	disc.Shape = Enum.PartType.Cylinder
-	disc.Material = Enum.Material.Neon
-	disc.Color = color or Color3.fromRGB(255, 60, 50)
-	-- A see-through fill grows inside a thin glowing outline ring (no solid red floor).
-	disc.Transparency = 0.75
-	disc.Anchored = true
-	disc.CanCollide = false
-	disc.CanQuery = false
-	disc.CanTouch = false
-	disc.CastShadow = false
-	disc.Size = Vector3.new(0.2, 0.5, 0.5)
-	disc.CFrame = CFrame.new(pos + Vector3.new(0, 0.15, 0)) * CFrame.Angles(0, 0, math.rad(90))
-	disc.Parent = workspace
-	local edge = Instance.new("Part")
-	edge.Anchored = true
-	edge.CanCollide = false
-	edge.CanQuery = false
-	edge.CanTouch = false
-	edge.Transparency = 1
-	edge.Size = Vector3.one
-	edge.CFrame = CFrame.new(pos + Vector3.new(0, 0.25, 0)) * CFrame.Angles(math.rad(90), 0, 0)
-	edge.Parent = workspace
-	local ring = Instance.new("CylinderHandleAdornment")
-	ring.Adornee = edge
-	ring.Radius = radius
-	ring.InnerRadius = math.max(0, radius - 0.7)
-	ring.Height = 0.25
-	ring.Color3 = color or Color3.fromRGB(255, 70, 50)
-	ring.Transparency = 0.4
-	ring.Parent = edge
-	Services.TweenService
-		:Create(disc, TweenInfo.new(warn, Enum.EasingStyle.Linear), {
-			Size = Vector3.new(0.2, radius * 2, radius * 2),
-		})
-		:Play()
-	task.delay(warn + 0.15, function()
-		disc:Destroy()
-		edge:Destroy()
-	end)
-end
-
-remotes:WaitForChild("Telegraph").OnClientEvent:Connect(
-	function(
-		kind: string,
-		circles: { any },
-		warn: number,
-		sound: number?,
-		lifetime: number?,
-		pitch: number?
-	)
-		if sound then
-			play(sound, pitch or 1, Config.GuardTwists.volume)
-		end
-		for _, c in circles do
-			if c.cf then
-				local lane = Instance.new("Part")
-				lane.Anchored = true
-				lane.CanCollide = false
-				lane.CanQuery = false
-				lane.CanTouch = false
-				lane.Material = Enum.Material.Neon
-				lane.Color = Color3.fromRGB(255, 60, 50)
-				lane.Transparency = 0.65
-				lane.Size = Vector3.new(c.width, 0.2, c.length)
-				lane.CFrame = c.cf
-				lane.Parent = workspace
-				task.delay(warn, function()
-					if kind == "Guard:Boulder" then
-						local rock = Instance.new("Part")
-						rock.Shape = Enum.PartType.Ball
-						rock.Size = Vector3.one * c.width
-						rock.Anchored = true
-						rock.CanCollide = false
-						rock.Color = Color3.fromRGB(80, 45, 30)
-						rock.Position = c.origin + Vector3.yAxis * c.width / 2
-						rock.Parent = workspace
-						local cfg = Config.GuardTwists.Zone7
-						Services.TweenService
-							:Create(
-								rock,
-								TweenInfo.new(cfg.length / cfg.speed, Enum.EasingStyle.Linear),
-								{ Position = rock.Position + c.direction * cfg.length }
-							)
-							:Play()
-						task.delay(cfg.length / cfg.speed, function()
-							rock:Destroy()
-						end)
-					end
-					lane:Destroy()
-				end)
-			else
-				circlePart(
-					c.pos,
-					c.radius,
-					warn,
-					kind == "Guard:Bat" and Color3.fromRGB(170, 80, 255)
-						or kind == "Guard:Sticky" and Color3.fromRGB(255, 110, 199)
-						or nil
+do
+	local function part(size, cf, color)
+		local p = Instance.new("Part")
+		p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.CastShadow =
+			true, false, false, false, false
+		p.Size, p.CFrame, p.Color, p.Material = size, cf, color, Enum.Material.Neon
+		p.Parent = workspace
+		return p
+	end
+	local function mark(anchor, text, seconds)
+		local bb = Instance.new("BillboardGui")
+		bb.Size, bb.AlwaysOnTop, bb.Adornee = UDim2.fromOffset(70, 70), true, anchor
+		bb.StudsOffsetWorldSpace = Vector3.yAxis * 4
+		bb.Parent = anchor
+		local label = textLabel(bb, text, Color3.new(1, 1, 1))
+		label.Size = UDim2.fromScale(1, 1)
+		label.TextSize = 48
+		task.delay(seconds, function()
+			bb:Destroy()
+		end)
+	end
+	local function shape(c, warn, color, kingCast)
+		local duration = warn + (c.delay or 0)
+		local cf = c.cf
+			or CFrame.new(c.pos + Vector3.yAxis * 0.15) * CFrame.Angles(math.pi / 2, 0, 0)
+		local anchor = part(c.cf and Vector3.new(c.width, 0.2, c.length) or Vector3.one, cf, color)
+		anchor.Transparency = c.cf and 0.8 or 1
+		local fill, edge, safe
+		if c.cf then
+			fill = part(Vector3.new(c.width, 0.22, 0.1), cf, color)
+			fill.Transparency = 0.6
+			Services.TweenService
+				:Create(
+					fill,
+					TweenInfo.new(duration, Enum.EasingStyle.Linear),
+					{ Size = Vector3.new(c.width, 0.22, c.length) }
 				)
+				:Play()
+		else
+			edge = Instance.new("CylinderHandleAdornment")
+			edge.Adornee, edge.Height, edge.Radius, edge.InnerRadius =
+				anchor, 0.2, c.radius, c.radius - 0.5
+			edge.Color3, edge.Transparency, edge.Parent = color, 0.2, anchor
+			fill = Instance.new("CylinderHandleAdornment")
+			fill.Adornee, fill.Height, fill.Radius, fill.InnerRadius =
+				anchor, 0.18, (c.inner or 0) + 0.05, c.inner or 0
+			fill.Color3, fill.Transparency, fill.Parent = color, 0.6, anchor
+			Services.TweenService
+				:Create(
+					fill,
+					TweenInfo.new(duration, Enum.EasingStyle.Linear),
+					{ Radius = c.radius }
+				)
+				:Play()
+			if c.inner then
+				safe = part(
+					Vector3.new(0.2, c.inner * 2, c.inner * 2),
+					CFrame.new(c.pos + Vector3.yAxis * 0.15) * CFrame.Angles(0, 0, math.pi / 2),
+					Color3.fromHex("5EE08A")
+				)
+				safe.Shape, safe.Transparency = Enum.PartType.Cylinder, 0.7
+			end
+		end
+		if c.number then
+			mark(anchor, tostring(c.number), duration)
+		end
+		local cleared = false
+		task.delay(duration - 0.2, function()
+			if cleared then
+				return
+			end
+			if
+				kingCast
+				and (state:GetAttribute("KingTransitionUntil") or 0)
+					> workspace:GetServerTimeNow()
+			then
+				return
+			end
+			if c.cf then
+				fill.Color = Color3.new(1, 1, 1)
+				anchor.Color = Color3.new(1, 1, 1)
+			else
+				fill.Color3 = Color3.new(1, 1, 1)
+				edge.Color3 = Color3.new(1, 1, 1)
+			end
+		end)
+		local cancel, done, stun
+		local function clear()
+			if cleared then
+				return
+			end
+			cleared = true
+			if cancel then
+				cancel:Disconnect()
+			end
+			if done then
+				done:Disconnect()
+			end
+			if stun then
+				stun:Disconnect()
+			end
+			anchor:Destroy()
+			fill:Destroy()
+			if safe then
+				safe:Destroy()
+			end
+		end
+		if kingCast then
+			cancel = state:GetAttributeChangedSignal("KingTransitionUntil"):Connect(clear)
+			done = state:GetAttributeChangedSignal("KingActive"):Connect(function()
+				if not state:GetAttribute("KingActive") then
+					clear()
+				end
+			end)
+			stun = state:GetAttributeChangedSignal("KingStunned"):Connect(function()
+				if state:GetAttribute("KingStunned") then
+					clear()
+				end
+			end)
+		end
+		task.delay(duration, clear)
+	end
+	remotes
+		:WaitForChild("Telegraph").OnClientEvent
+		:Connect(function(kind, shapes, warn, sound, lifetime, pitch, meta)
+			local guard = string.sub(kind, 1, 6) == "Guard:"
+			local color = meta and meta.color or Color3.fromHex("FF3B30")
+			if sound then
+				play(sound, pitch or 1, Config.GuardTwists.volume)
+			end
+			if meta and meta.victim then
+				local head = meta.victim.Character and meta.victim.Character:FindFirstChild("Head")
+				if head then
+					mark(head, "!", warn)
+				end
+			end
+			for _, c in shapes do
+				shape(c, warn, color, not guard)
 				if kind == "Guard:Sticky" then
-					local puddle = Instance.new("Part")
-					puddle.Shape = Enum.PartType.Cylinder
-					puddle.Anchored = true
-					puddle.CanCollide = false
-					puddle.CanQuery = false
-					puddle.CanTouch = false
-					puddle.Material = Enum.Material.Neon
-					puddle.Color = Color3.fromRGB(255, 110, 199)
-					puddle.Transparency = 0.55
-					puddle.Size = Vector3.new(0.2, c.radius * 2, c.radius * 2)
-					puddle.CFrame = CFrame.new(c.pos) * CFrame.Angles(0, 0, math.pi / 2)
-					puddle.Parent = workspace
-					task.delay(warn + (lifetime or 0), function()
-						puddle:Destroy()
+					task.delay(warn, function()
+						local puddle = part(
+							Vector3.new(0.2, c.radius * 2, c.radius * 2),
+							CFrame.new(c.pos) * CFrame.Angles(0, 0, math.pi / 2),
+							color
+						)
+						puddle.Shape, puddle.Transparency = Enum.PartType.Cylinder, 0.55
+						task.delay(lifetime or 6, function()
+							puddle:Destroy()
+						end)
+					end)
+				elseif kind == "Guard:Tongue" and meta then
+					local delta = c.pos - meta.origin
+					local line = part(
+						Vector3.new(0.25, 0.25, delta.Magnitude),
+						CFrame.lookAt((c.pos + meta.origin) / 2, c.pos),
+						color
+					)
+					task.delay(warn, function()
+						line:Destroy()
+					end)
+				elseif kind == "Guard:Root" then
+					task.delay(warn - 0.3, function()
+						for i = 1, 6 do
+							local a = i / 6 * math.pi * 2
+							local root = part(
+								Vector3.new(0.6, 0.1, 0.6),
+								CFrame.new(c.pos + Vector3.new(math.cos(a) * 5, 0, math.sin(a) * 5)),
+								color
+							)
+							Services.TweenService
+								:Create(root, TweenInfo.new(0.3), {
+									Size = Vector3.new(0.6, 4, 0.6),
+									Position = root.Position + Vector3.yAxis * 2,
+								})
+								:Play()
+							task.delay(1.1, function()
+								root:Destroy()
+							end)
+						end
+					end)
+				elseif kind == "Guard:Boulder" or kind == "Guard:Bone" then
+					task.delay(warn, function()
+						local cfg = kind == "Guard:Boulder" and Config.GuardTwists.Zone7
+							or Config.GuardTwists.Zone2
+						local projectile = part(
+							kind == "Guard:Bone" and Vector3.new(3, 0.6, 0.6)
+								or Vector3.one * c.width,
+							CFrame.new(c.origin + Vector3.yAxis * c.width / 2),
+							color
+						)
+						if kind == "Guard:Boulder" then
+							projectile.Shape = Enum.PartType.Ball
+						end
+						local seconds = cfg.length / (cfg.speed or 50)
+						local started, from = os.clock(), projectile.Position
+						local spin
+						spin = Services.RunService.RenderStepped:Connect(function()
+							local t = math.min(seconds, os.clock() - started)
+							projectile.CFrame = CFrame.new(
+								from + c.direction * (cfg.speed or 50) * t
+							) * CFrame.Angles(0, 0, t * 18)
+						end)
+						task.delay(seconds, function()
+							spin:Disconnect()
+							projectile:Destroy()
+						end)
+					end)
+				elseif kind == "Seedfall" then
+					local streak = part(
+						Vector3.new(0.3, 14, 0.3),
+						CFrame.new(c.pos + Vector3.yAxis * 35),
+						color
+					)
+					Services.TweenService
+						:Create(
+							streak,
+							TweenInfo.new(warn + (c.delay or 0)),
+							{ Position = c.pos + Vector3.yAxis * 7 }
+						)
+						:Play()
+					task.delay(warn + (c.delay or 0), function()
+						streak:Destroy()
 					end)
 				elseif kind == "Guard:Bat" then
-					local ghost = Instance.new("Part")
-					ghost.Anchored = true
-					ghost.CanCollide = false
-					ghost.CanQuery = false
-					ghost.Size = Vector3.new(3, 6, 3)
-					ghost.Color = Color3.fromRGB(180, 80, 255)
-					ghost.Transparency = 0.65
-					ghost.CFrame = CFrame.new(c.pos + Vector3.yAxis * 3)
-					ghost.Parent = workspace
 					task.delay(warn, function()
-						burst(ghost.Position, ghost.Color, 30, 15)
-						ghost:Destroy()
+						burst(c.pos + Vector3.yAxis * 3, color, 30, 15)
 					end)
 				end
 			end
-			if kind == "Volley" and not c.cf then
-				-- A seed ball arcs from the King onto each circle.
-				task.delay(warn - 0.45, function()
-					local seed = Instance.new("Part")
-					seed.Shape = Enum.PartType.Ball
-					seed.Size = Vector3.new(3, 3, 3)
-					seed.Material = Enum.Material.SmoothPlastic
-					seed.Color = Color3.fromRGB(40, 24, 20)
-					seed.Anchored = true
-					seed.CanCollide = false
-					seed.CanQuery = false
-					seed.Position = kingFace.Position + Vector3.new(0, 6, 0)
-					seed.Parent = workspace
-					local from = seed.Position
-					local to = c.pos + Vector3.new(0, 1.5, 0)
-					local t0 = os.clock()
-					local conn
-					conn = Services.RunService.RenderStepped:Connect(function()
-						local t = math.min(1, (os.clock() - t0) / 0.45)
-						local p = from:Lerp(to, t) + Vector3.new(0, math.sin(t * math.pi) * 18, 0)
-						seed.Position = p
-						if t >= 1 then
-							conn:Disconnect()
-							seed:Destroy()
-						end
-					end)
+		end)
+end
+do
+	local stars = {}
+	local rim = Instance.new("Highlight")
+	UI.kingHighlight = rim
+	rim.FillTransparency, rim.OutlineColor = 1, Color3.fromHex("FFD23D")
+	rim.Enabled, rim.Parent = false, kingFace
+	for i = 1, 3 do
+		local p = Instance.new("Part")
+		p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.Transparency =
+			true, false, false, false, 1
+		p.Size, p.Parent = Vector3.one, workspace
+		local bb = Instance.new("BillboardGui")
+		bb.Size, bb.AlwaysOnTop, bb.Enabled, bb.Parent = UDim2.fromOffset(45, 45), true, false, p
+		local label = textLabel(bb, utf8.char(9733), Color3.fromHex("FFD23D"))
+		label.Size = UDim2.fromScale(1, 1)
+		stars[i] = { p = p, bb = bb }
+	end
+	local flash = Instance.new("Frame")
+	flash.Name, flash.Size, flash.BackgroundTransparency, flash.BorderSizePixel =
+		"KingPhaseFlash", UDim2.fromScale(1, 1), 1, 0
+	flash.ZIndex, flash.Parent = 80, gui
+	local gradient = Instance.new("UIGradient")
+	gradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0),
+		NumberSequenceKeypoint.new(0.5, 1),
+		NumberSequenceKeypoint.new(1, 0),
+	})
+	gradient.Parent = flash
+	local phaseBanner = textLabel(gui, "", Color3.new(1, 1, 1))
+	phaseBanner.Name, phaseBanner.Size, phaseBanner.AnchorPoint =
+		"KingPhaseBanner", UDim2.new(1, 0, 0, 130), Vector2.new(0.5, 0)
+	phaseBanner.FontFace, phaseBanner.TextScaled, phaseBanner.TextSize, phaseBanner.ZIndex =
+		fontFace("title"), false, 90, 81
+	phaseBanner.Position, phaseBanner.Visible = UDim2.fromScale(0.5, -0.3), false
+	local sequence = 0
+	remotes:WaitForChild("KingDone").OnClientEvent:Connect(function(kind)
+		if kind == "recover" then
+			floatText(
+				kingFace.Position + Vector3.yAxis * 15,
+				"HIT HIM!",
+				Color3.fromHex("FFD23D"),
+				true
+			)
+		elseif kind == "phase2" or kind == "phase3" then
+			sequence += 1
+			local token = sequence
+			local color = Color3.fromHex(kind == "phase2" and "A855F7" or "FF3B30")
+			flash.BackgroundColor3, flash.BackgroundTransparency = color, 0.35
+			Services.TweenService
+				:Create(flash, TweenInfo.new(0.25), { BackgroundTransparency = 1 })
+				:Play()
+			phaseBanner.Text = kind == "phase2" and "PHASE 2: SHIELD!" or "PHASE 3: ENRAGED!"
+			phaseBanner.Position, phaseBanner.Visible = UDim2.fromScale(0.5, -0.3), true
+			Services.TweenService
+				:Create(phaseBanner, TweenInfo.new(0.3), { Position = UDim2.fromScale(0.5, 0.16) })
+				:Play()
+			play(Config.Sounds.Growl, 0.7, 1)
+			shake(1.5, 60)
+			FarmFX.kingPhaseAt = os.clock()
+			task.delay(1.5, function()
+				if sequence == token then
+					phaseBanner.Visible = false
+				end
+			end)
+		elseif kind == "swell" then
+			for i = 1, 3 do
+				task.delay((i - 1) * Config.KingNight.finale / 3, function()
+					flash.BackgroundColor3, flash.BackgroundTransparency = Color3.new(1, 1, 1), 0.35
+					Services.TweenService
+						:Create(flash, TweenInfo.new(0.2), { BackgroundTransparency = 1 })
+						:Play()
 				end)
 			end
 		end
-		if kind == "Slam" then
-			play(Config.Sounds.Brew, 0.35, 0.9)
+	end)
+	Services.RunService.RenderStepped:Connect(function()
+		local now = os.clock()
+		local recovering = state:GetAttribute("KingActive")
+			and (state:GetAttribute("KingRecoverUntil") or 0) > workspace:GetServerTimeNow()
+		local body = market:FindFirstChild("FightPumpkinKing")
+		local angry = (state:GetAttribute("KingPhase") or 1) == 3
+		local flashing = now < (UI.kingFlashUntil or 0)
+		rim.Adornee, rim.Enabled =
+			body or kingFace, state:GetAttribute("KingActive") == true or flashing
+		rim.OutlineColor = Color3.fromHex(recovering and "FFD23D" or "FF3B30")
+		rim.OutlineTransparency = recovering
+				and (0.15 + 0.35 * (1 + math.sin(now * math.pi * 4)) / 2)
+			or angry and 0.2
+			or 1
+		if not flashing then
+			rim.FillColor =
+				Color3.fromHex(state:GetAttribute("KingStunned") and "FFD23D" or "FF3B30")
+			rim.FillTransparency = (angry or state:GetAttribute("KingStunned")) and 0.55 or 1
 		end
-	end
-)
-
+		for i, star in stars do
+			star.bb.Enabled = recovering == true
+			local a = now * 3 + i * math.pi * 2 / 3
+			star.p.Position = kingFace.Position
+				+ Vector3.new(math.cos(a) * 5, kingFace.Size.Y / 2 + 2, math.sin(a) * 5)
+		end
+		if body then
+			local t = now - (FarmFX.kingSquashAt or -math.huge)
+			local squash = t < 0.1 and (1 - 0.04 * math.sin(t / 0.1 * math.pi)) or 1
+			local phase = math.max(0, 1 - (now - (FarmFX.kingPhaseAt or -math.huge)) / 0.15)
+			body:ScaleTo(
+				(body:GetAttribute("CombatScale") or body:GetScale()) * squash * (1 + 0.15 * phase)
+			)
+		end
+	end)
+end
 do
-	local shieldBubble: Part? = nil
-	local enrageGlow: Highlight? = nil
-	local function refreshBossLook()
-		local phase = state:GetAttribute("Phase")
-		local shield = state:GetAttribute("KingShield")
-		if phase == "BloodMoon" and shield then
+	local shieldBubble
+	Services.RunService.RenderStepped:Connect(function()
+		local shield = state:GetAttribute("Phase") == "BloodMoon"
+			and state:GetAttribute("KingShield")
+		if shield then
 			if not shieldBubble then
 				local b = Instance.new("Part")
-				b.Shape = Enum.PartType.Ball
-				b.Material = Enum.Material.ForceField
-				b.Color = Color3.fromRGB(170, 90, 255)
-				b.Anchored = true
-				b.CanCollide = false
-				b.CanQuery = false
-				b.Size = Vector3.one * (kingFace.Size.X * 1.5)
-				b.CFrame = CFrame.new(kingFace.Position)
-				b.Parent = workspace
+				b.Shape, b.Material, b.Color =
+					Enum.PartType.Ball, Enum.Material.ForceField, Color3.fromRGB(170, 90, 255)
+				b.Anchored, b.CanCollide, b.CanQuery, b.CanTouch = true, false, false, false
+				b.Size, b.Parent = Vector3.one * kingFace.Size.X * 1.5, workspace
 				shieldBubble = b
 			end
+			shieldBubble.Position = kingFace.Position
 		elseif shieldBubble then
 			shieldBubble:Destroy()
 			shieldBubble = nil
 		end
-		if
-			phase == "BloodMoon"
-			and (state:GetAttribute("KingStunned") or (state:GetAttribute("KingPhase") or 1) >= 3)
-		then
-			if not enrageGlow then
-				local h = Instance.new("Highlight")
-				h.FillColor = Color3.fromRGB(255, 30, 30)
-				h.FillTransparency = 0.55
-				h.OutlineColor = Color3.fromRGB(255, 120, 60)
-				h.Parent = kingFace
-				enrageGlow = h
-			end
-			if enrageGlow then
-				enrageGlow.FillColor = state:GetAttribute("KingStunned")
-						and Color3.fromRGB(255, 240, 120)
-					or Color3.fromRGB(255, 30, 30)
-			end
-		elseif enrageGlow then
-			enrageGlow:Destroy()
-			enrageGlow = nil
-		end
-	end
-	for _, attr in { "Phase", "KingShield", "KingPhase", "KingStunned" } do
-		state:GetAttributeChangedSignal(attr):Connect(refreshBossLook)
-	end
-	refreshBossLook()
+	end)
 end
-
 -- The Pumpkin King's look (client only): a glowing core, a gold neon crown that follows the
 -- face, and an HP bar over his head. The server's bob and slam tweens move KingFace.
 task.spawn(function()
@@ -8189,10 +8410,21 @@ task.spawn(function()
 		local shield = state:GetAttribute("KingShield")
 		wideText.Text = shield and string.format("SHIELD: bonk %d lanterns", shield)
 			or state:GetAttribute("KingStunned") and "WEAK SPOT x2"
+			or (state:GetAttribute("KingRecoverUntil") or 0) > workspace:GetServerTimeNow() and "HIT HIM! x1.5"
 			or string.format("King Fight %s/%s", short(hp), short(maxHp))
 		fillGradient.Color = Palette.KING_FILL
 	end
-	for _, attr in { "Phase", "KingHp", "KingMaxHp", "KingShield", "KingShieldMax", "KingStunned" } do
+	for _, attr in
+		{
+			"Phase",
+			"KingHp",
+			"KingMaxHp",
+			"KingShield",
+			"KingShieldMax",
+			"KingStunned",
+			"KingRecoverUntil",
+		}
+	do
 		state:GetAttributeChangedSignal(attr):Connect(refreshHpBar)
 	end
 	refreshHpBar()
@@ -8236,21 +8468,23 @@ do
 	topLabel.Size = UDim2.fromOffset(260, 165)
 	topLabel.TextXAlignment = Enum.TextXAlignment.Right
 	topLabel.TextYAlignment = Enum.TextYAlignment.Top
-	topLabel.TextScaled = true
+	topLabel.TextScaled = false
 	topLabel.TextWrapped = true
-	local topSize = Instance.new("UITextSizeConstraint")
-	topSize.MaxTextSize = 22
-	topSize.Parent = topLabel
+	topLabel.TextSize = 22
 	local function refreshTop()
 		local top = state:GetAttribute("KingTop")
-		if state:GetAttribute("Phase") == "BloodMoon" and top and top ~= "" then
-			topLabel.Text = "TOP BONKERS\n" .. top
+		if state:GetAttribute("Phase") == "BloodMoon" then
+			topLabel.Text = "TOP BONKERS\n"
+				.. (top or "")
+				.. "\nYOU: "
+				.. short(player:GetAttribute("KingDamage") or 0)
 			topLabel.Visible = true
 		else
 			topLabel.Visible = false
 		end
 	end
 	state:GetAttributeChangedSignal("KingTop"):Connect(refreshTop)
+	player:GetAttributeChangedSignal("KingDamage"):Connect(refreshTop)
 	state:GetAttributeChangedSignal("Phase"):Connect(refreshTop)
 	refreshTop()
 end
@@ -8768,7 +9002,7 @@ do
 						and zones
 						and p:IsDescendantOf(zones)
 					local epic = def
-						and (Config.Economy.rarityRanks[def.rarity] or 0) >= 3
+						and (Config.Economy.rarityRanks[def.rarity] or 0) >= 2
 						and p:GetAttribute("Placed")
 						and p:GetAttribute("Jack")
 					if nest or epic then
@@ -8911,7 +9145,9 @@ do
 						short(data.candy)
 					)
 						.. (#loot > 0 and (" | " .. table.concat(loot, " + ")) or "")
-						.. (#podium > 0 and ("\n" .. table.concat(podium, "   ")) or ""),
+						.. (#podium > 0 and ("\n" .. table.concat(podium, "   ")) or "")
+						.. " | Next guaranteed Epic in "
+						.. tostring(data.pity or Config.KingNight.pity),
 					Color3.new(1, 1, 1)
 				)
 				body.Position, body.Size = UDim2.fromScale(0.03, 0.36), UDim2.fromScale(0.94, 0.60)
@@ -9154,19 +9390,7 @@ do
 		leftBar.Position =
 			UDim2.new(anyPanelOpen() and -0.12 or 0, h * 0.012, touch and 0.30 or 0.40, 0)
 		for _, object in gui:GetDescendants() do
-			if object:IsA("UITextSizeConstraint") then
-				object.MinTextSize = math.max(11, math.ceil(h * Config.UI.Tokens.type.caption))
-				object.MaxTextSize = math.max(
-					object.MinTextSize,
-					math.floor(
-						h
-							* (object.Parent.Name == "Money" and Config.UI.Tokens.type.currency or object.Parent:GetAttribute(
-								"TypeSize"
-							) or Config.UI.Tokens.type.hud)
-							* 1.1
-					)
-				)
-			end
+			UI.presentation.text(object, h)
 		end
 		leftBar.Size = UDim2.fromScale(0.25, 0.25)
 		statsFrame.AnchorPoint = Vector2.new(0, 1)
@@ -9182,9 +9406,7 @@ do
 		candyBig.Position, candyBig.Size =
 			UDim2.new(0, h * 0.078, 0.24, 0), UDim2.new(1, -h * 0.115, 0.34, 0)
 		candyBig.TextScaled = false
-		candyBig.TextSize = h * 0.058;
-		(candyBig:FindFirstChildOfClass("UITextSizeConstraint") :: UITextSizeConstraint).MaxTextSize =
-			math.max(11, math.floor(h * 0.058))
+		candyBig.TextSize = math.max(15, math.floor(h * 0.052 + 0.5))
 		carryIcon.Position, carryIcon.Size =
 			UDim2.fromScale(0, 0), UDim2.fromOffset(h * 0.036, h * 0.036)
 		carryLabel.Position, carryLabel.Size = UDim2.fromScale(0.10, 0), UDim2.fromScale(0.40, 0.20)
@@ -9448,4 +9670,50 @@ do
 			end
 		end)
 	end
+end
+
+-- L1: normalize all existing/new UI, including admin and legacy Giant labels.
+do
+	local nestPrompts = setmetatable({}, { __mode = "k" })
+	local function decorate(item)
+		if not item.Parent then
+			return
+		end
+		if item:IsA("ProximityPrompt") and item.Name == "StealPrompt" then
+			nestPrompts[item] = true
+		end
+		if item:IsA("BillboardGui") then
+			UI.presentation.billboard(item)
+		end
+		UI.presentation.text(
+			item,
+			item:IsDescendantOf(gui) and gui.AbsoluteSize.Y / uiScale.Scale
+				or workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize.Y
+				or 1080
+		)
+	end
+	for _, scope in { player:WaitForChild("PlayerGui"), workspace } do
+		for _, item in scope:GetDescendants() do
+			decorate(item)
+		end
+		scope.DescendantAdded:Connect(function(item)
+			task.defer(decorate, item)
+		end)
+	end
+	task.spawn(function()
+		while true do
+			local root = rootPart()
+			for prompt in nestPrompts do
+				if prompt.Parent and prompt.Parent:IsA("BasePart") then
+					local delta = root and prompt.Parent.Position - root.Position
+					local flat = delta and Vector3.new(delta.X, 0, delta.Z)
+					prompt.Enabled = root ~= nil
+						and math.abs(delta.Y) < 8
+						and flat.Magnitude <= 9
+						and (flat.Magnitude < 0.1 or flat.Unit:Dot(root.CFrame.LookVector) >= 0.57)
+				end
+			end
+			task.wait(0.15)
+		end
+	end)
 end
