@@ -1,0 +1,40 @@
+﻿ M .gitignore
+ M pumpkin/BRIEF.md
+ M pumpkin/src/ReplicatedStorage/Shared/Config.luau
+ M pumpkin/src/ReplicatedStorage/Shared/ProfileSchema.luau
+ M pumpkin/src/ServerScriptService/Game.server.luau
+ M pumpkin/src/ServerScriptService/Pets.server.luau
+ M pumpkin/src/ServerStorage/Data.luau
+ M pumpkin/src/ServerStorage/Remotes.luau
+ M pumpkin/src/StarterPlayer/StarterPlayerScripts/Hud.client.luau
+ M pumpkin/src/StarterPlayer/StarterPlayerScripts/Pets.client.luau
+ M pumpkin/src/StarterPlayer/StarterPlayerScripts/Roll.client.luau
+?? .concept-tools/
+?? pumpkin/evidence/
+?? pumpkin/garden.project.json
+?? pumpkin/production/PROCESS-AUDIT.md
+?? pumpkin/production/concepts/refs3/_tools/
+?? pumpkin/production/watch4/
+?? pumpkin/research/COOP-ART-INTAKE.md
+?? pumpkin/research/FOUNDATION-REVIEW.md
+?? pumpkin/research/GARDEN-ART-COLLECTION-DESIGN.md
+?? pumpkin/research/GROWTH-COMPARABLES-20261006.md
+?? pumpkin/research/MAGIC-DIRECTION-PROPOSAL.md
+?? pumpkin/research/concepts/
+?? pumpkin/src/ReplicatedStorage/Shared/Catapult.luau
+?? pumpkin/src/ReplicatedStorage/Shared/CoopRules.luau
+?? pumpkin/src/ReplicatedStorage/Shared/GardenLayout.luau
+?? pumpkin/src/ReplicatedStorage/Shared/GardenRules.luau
+?? pumpkin/src/ReplicatedStorage/Shared/SessionRules.luau
+?? pumpkin/src/ServerScriptService/Coop.server.luau
+?? pumpkin/src/ServerScriptService/Garden.server.luau
+?? pumpkin/src/ServerStorage/CoopScene.luau
+?? pumpkin/src/ServerStorage/GardenScene.luau
+?? pumpkin/src/StarterPlayer/StarterPlayerScripts/Catapult.client.luau
+?? pumpkin/src/StarterPlayer/StarterPlayerScripts/Coop.client.luau
+?? pumpkin/src/StarterPlayer/StarterPlayerScripts/Garden.client.luau
+?? pumpkin/tests/catapult.spec.luau
+?? pumpkin/tests/coop.spec.luau
+?? pumpkin/tests/data_session.spec.luau
+?? pumpkin/tests/garden.spec.luau
+?? pumpkin/tests/garden_layout.spec.luau

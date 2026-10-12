@@ -1,0 +1,1525 @@
+{
+  "evidence": "PROPOSED geometry; inferred arithmetic, not runtime testing",
+  "formula": "D=17+hypot(penApproach-gate)+64; T=D/16+D/(16-n)+3; hatch/reveal adds8.2",
+  "summary": {
+    "minStuds": 123.57933771208752,
+    "maxStuds": 298.13820483738004,
+    "minStealPlace": 18.962331121144636,
+    "maxStealPlace": 44.5673458667501,
+    "maxWithHatchReveal": 52.767345866750105
+  },
+  "routes": [
+    {
+      "pen": 1,
+      "zone": 1,
+      "approach": [
+        -67,
+        -54
+      ],
+      "gate": [
+        -90,
+        -96
+      ],
+      "oneWayStuds": 128.8852795752515,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 8.055329973453219,
+        "return": 8.592351971683433,
+        "stealPlace": 19.647681945136654,
+        "includingHatchReveal": 27.847681945136653
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 8.055329973453219,
+        "return": 9.914252275019347,
+        "stealPlace": 20.969582248472566,
+        "includingHatchReveal": 29.169582248472565
+      }
+    },
+    {
+      "pen": 1,
+      "zone": 2,
+      "approach": [
+        -67,
+        -54
+      ],
+      "gate": [
+        -30,
+        -96
+      ],
+      "oneWayStuds": 136.97320787662613,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 8.560825492289133,
+        "return": 9.131547191775075,
+        "stealPlace": 20.69237268406421,
+        "includingHatchReveal": 28.89237268406421
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 8.560825492289133,
+        "return": 10.536400605894318,
+        "stealPlace": 22.09722609818345,
+        "includingHatchReveal": 30.29722609818345
+      }
+    },
+    {
+      "pen": 1,
+      "zone": 3,
+      "approach": [
+        -67,
+        -54
+      ],
+      "gate": [
+        30,
+        -96
+      ],
+      "oneWayStuds": 186.70241246064347,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 11.668900778790217,
+        "return": 12.446827497376232,
+        "stealPlace": 27.11572827616645,
+        "includingHatchReveal": 35.31572827616645
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 11.668900778790217,
+        "return": 14.361724035434113,
+        "stealPlace": 29.030624814224332,
+        "includingHatchReveal": 37.23062481422433
+      }
+    },
+    {
+      "pen": 1,
+      "zone": 4,
+      "approach": [
+        -67,
+        -54
+      ],
+      "gate": [
+        90,
+        -96
+      ],
+      "oneWayStuds": 243.52076790367437,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 15.220047993979648,
+        "return": 16.23471786024496,
+        "stealPlace": 34.454765854224604,
+        "includingHatchReveal": 42.65476585422461
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 15.220047993979648,
+        "return": 18.732366761821105,
+        "stealPlace": 36.95241475580075,
+        "includingHatchReveal": 45.15241475580075
+      }
+    },
+    {
+      "pen": 1,
+      "zone": 5,
+      "approach": [
+        -67,
+        -54
+      ],
+      "gate": [
+        -60,
+        96
+      ],
+      "oneWayStuds": 231.16324450410627,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 14.447702781506642,
+        "return": 15.410882966940418,
+        "stealPlace": 32.85858574844706,
+        "includingHatchReveal": 41.05858574844706
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 14.447702781506642,
+        "return": 17.781788038777407,
+        "stealPlace": 35.22949082028405,
+        "includingHatchReveal": 43.429490820284045
+      }
+    },
+    {
+      "pen": 1,
+      "zone": 6,
+      "approach": [
+        -67,
+        -54
+      ],
+      "gate": [
+        0,
+        96
+      ],
+      "oneWayStuds": 245.28329190760695,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 15.330205744225434,
+        "return": 16.35221946050713,
+        "stealPlace": 34.68242520473257,
+        "includingHatchReveal": 42.88242520473256
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 15.330205744225434,
+        "return": 18.86794553135438,
+        "stealPlace": 37.19815127557982,
+        "includingHatchReveal": 45.39815127557982
+      }
+    },
+    {
+      "pen": 1,
+      "zone": 7,
+      "approach": [
+        -67,
+        -54
+      ],
+      "gate": [
+        60,
+        96
+      ],
+      "oneWayStuds": 277.5426162439078,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 17.346413515244237,
+        "return": 18.502841082927187,
+        "stealPlace": 38.84925459817143,
+        "includingHatchReveal": 47.04925459817143
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 17.346413515244237,
+        "return": 21.349432018762137,
+        "stealPlace": 41.695845534006374,
+        "includingHatchReveal": 49.89584553400637
+      }
+    },
+    {
+      "pen": 2,
+      "zone": 1,
+      "approach": [
+        -67,
+        -18
+      ],
+      "gate": [
+        -90,
+        -96
+      ],
+      "oneWayStuds": 162.32035415564792,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 10.145022134727995,
+        "return": 10.821356943709862,
+        "stealPlace": 23.966379078437857,
+        "includingHatchReveal": 32.166379078437856
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 10.145022134727995,
+        "return": 12.486181088895993,
+        "stealPlace": 25.631203223623988,
+        "includingHatchReveal": 33.83120322362399
+      }
+    },
+    {
+      "pen": 2,
+      "zone": 2,
+      "approach": [
+        -67,
+        -18
+      ],
+      "gate": [
+        -30,
+        -96
+      ],
+      "oneWayStuds": 167.33075929238663,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 10.458172455774164,
+        "return": 11.155383952825776,
+        "stealPlace": 24.61355640859994,
+        "includingHatchReveal": 32.813556408599936
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 10.458172455774164,
+        "return": 12.871596868645126,
+        "stealPlace": 26.32976932441929,
+        "includingHatchReveal": 34.52976932441929
+      }
+    },
+    {
+      "pen": 2,
+      "zone": 3,
+      "approach": [
+        -67,
+        -18
+      ],
+      "gate": [
+        30,
+        -96
+      ],
+      "oneWayStuds": 205.47088012864697,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 12.841930008040435,
+        "return": 13.69805867524313,
+        "stealPlace": 29.539988683283568,
+        "includingHatchReveal": 37.73998868328357
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 12.841930008040435,
+        "return": 15.805452317588228,
+        "stealPlace": 31.647382325628662,
+        "includingHatchReveal": 39.84738232562866
+      }
+    },
+    {
+      "pen": 2,
+      "zone": 4,
+      "approach": [
+        -67,
+        -18
+      ],
+      "gate": [
+        90,
+        -96
+      ],
+      "oneWayStuds": 256.30829986055994,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 16.019268741284996,
+        "return": 17.087219990703996,
+        "stealPlace": 36.10648873198899,
+        "includingHatchReveal": 44.30648873198899
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 16.019268741284996,
+        "return": 19.716023066196918,
+        "stealPlace": 38.735291807481914,
+        "includingHatchReveal": 46.93529180748192
+      }
+    },
+    {
+      "pen": 2,
+      "zone": 5,
+      "approach": [
+        -67,
+        -18
+      ],
+      "gate": [
+        -60,
+        96
+      ],
+      "oneWayStuds": 195.21471008587292,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 12.200919380367058,
+        "return": 13.014314005724861,
+        "stealPlace": 28.215233386091917,
+        "includingHatchReveal": 36.41523338609191
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 12.200919380367058,
+        "return": 15.016516160451763,
+        "stealPlace": 30.21743554081882,
+        "includingHatchReveal": 38.417435540818815
+      }
+    },
+    {
+      "pen": 2,
+      "zone": 6,
+      "approach": [
+        -67,
+        -18
+      ],
+      "gate": [
+        0,
+        96
+      ],
+      "oneWayStuds": 213.23085872821065,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 13.326928670513166,
+        "return": 14.21539058188071,
+        "stealPlace": 30.542319252393874,
+        "includingHatchReveal": 38.74231925239387
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 13.326928670513166,
+        "return": 16.402373748323896,
+        "stealPlace": 32.729302418837065,
+        "includingHatchReveal": 40.92930241883706
+      }
+    },
+    {
+      "pen": 2,
+      "zone": 7,
+      "approach": [
+        -67,
+        -18
+      ],
+      "gate": [
+        60,
+        96
+      ],
+      "oneWayStuds": 251.66048165876012,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 15.728780103672507,
+        "return": 16.77736544391734,
+        "stealPlace": 35.506145547589846,
+        "includingHatchReveal": 43.70614554758984
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 15.728780103672507,
+        "return": 19.358498589135394,
+        "stealPlace": 38.0872786928079,
+        "includingHatchReveal": 46.2872786928079
+      }
+    },
+    {
+      "pen": 3,
+      "zone": 1,
+      "approach": [
+        -67,
+        18
+      ],
+      "gate": [
+        -90,
+        -96
+      ],
+      "oneWayStuds": 197.29703349613007,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 12.33106459350813,
+        "return": 13.153135566408672,
+        "stealPlace": 28.484200159916803,
+        "includingHatchReveal": 36.6842001599168
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 12.33106459350813,
+        "return": 15.176694884317698,
+        "stealPlace": 30.50775947782583,
+        "includingHatchReveal": 38.70775947782583
+      }
+    },
+    {
+      "pen": 3,
+      "zone": 2,
+      "approach": [
+        -67,
+        18
+      ],
+      "gate": [
+        -30,
+        -96
+      ],
+      "oneWayStuds": 200.85407794480756,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 12.553379871550472,
+        "return": 13.39027186298717,
+        "stealPlace": 28.943651734537642,
+        "includingHatchReveal": 37.14365173453764
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 12.553379871550472,
+        "return": 15.45031368806212,
+        "stealPlace": 31.003693559612593,
+        "includingHatchReveal": 39.20369355961259
+      }
+    },
+    {
+      "pen": 3,
+      "zone": 3,
+      "approach": [
+        -67,
+        18
+      ],
+      "gate": [
+        30,
+        -96
+      ],
+      "oneWayStuds": 230.68299836654796,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 14.417687397909248,
+        "return": 15.378866557769864,
+        "stealPlace": 32.796553955679116,
+        "includingHatchReveal": 40.99655395567911
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 14.417687397909248,
+        "return": 17.744846028195997,
+        "stealPlace": 35.16253342610524,
+        "includingHatchReveal": 43.362533426105244
+      }
+    },
+    {
+      "pen": 3,
+      "zone": 4,
+      "approach": [
+        -67,
+        18
+      ],
+      "gate": [
+        90,
+        -96
+      ],
+      "oneWayStuds": 275.02319448973105,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 17.18894965560819,
+        "return": 18.334879632648736,
+        "stealPlace": 38.52382928825693,
+        "includingHatchReveal": 46.72382928825692
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 17.18894965560819,
+        "return": 21.155630345363928,
+        "stealPlace": 41.344580000972115,
+        "includingHatchReveal": 49.54458000097212
+      }
+    },
+    {
+      "pen": 3,
+      "zone": 5,
+      "approach": [
+        -67,
+        18
+      ],
+      "gate": [
+        -60,
+        96
+      ],
+      "oneWayStuds": 159.31347265956222,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 9.957092041222639,
+        "return": 10.620898177304149,
+        "stealPlace": 23.577990218526786,
+        "includingHatchReveal": 31.777990218526785
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 9.957092041222639,
+        "return": 12.254882512274017,
+        "stealPlace": 25.211974553496656,
+        "includingHatchReveal": 33.411974553496655
+      }
+    },
+    {
+      "pen": 3,
+      "zone": 6,
+      "approach": [
+        -67,
+        18
+      ],
+      "gate": [
+        0,
+        96
+      ],
+      "oneWayStuds": 183.82509421342633,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 11.489068388339145,
+        "return": 12.255006280895088,
+        "stealPlace": 26.744074669234234,
+        "includingHatchReveal": 34.94407466923423
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 11.489068388339145,
+        "return": 14.140391862571256,
+        "stealPlace": 28.6294602509104,
+        "includingHatchReveal": 36.8294602509104
+      }
+    },
+    {
+      "pen": 3,
+      "zone": 7,
+      "approach": [
+        -67,
+        18
+      ],
+      "gate": [
+        60,
+        96
+      ],
+      "oneWayStuds": 230.04026301640778,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 14.377516438525486,
+        "return": 15.336017534427185,
+        "stealPlace": 32.713533972952675,
+        "includingHatchReveal": 40.91353397295267
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 14.377516438525486,
+        "return": 17.695404847415983,
+        "stealPlace": 35.07292128594147,
+        "includingHatchReveal": 43.272921285941464
+      }
+    },
+    {
+      "pen": 4,
+      "zone": 1,
+      "approach": [
+        -67,
+        54
+      ],
+      "gate": [
+        -90,
+        -96
+      ],
+      "oneWayStuds": 232.75308893067051,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 14.547068058166907,
+        "return": 15.516872595378034,
+        "stealPlace": 33.06394065354494,
+        "includingHatchReveal": 41.263940653544935
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 14.547068058166907,
+        "return": 17.90408376389773,
+        "stealPlace": 35.45115182206464,
+        "includingHatchReveal": 43.651151822064634
+      }
+    },
+    {
+      "pen": 4,
+      "zone": 2,
+      "approach": [
+        -67,
+        54
+      ],
+      "gate": [
+        -30,
+        -96
+      ],
+      "oneWayStuds": 235.49595463959568,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 14.71849716497473,
+        "return": 15.699730309306378,
+        "stealPlace": 33.41822747428111,
+        "includingHatchReveal": 41.61822747428111
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 14.71849716497473,
+        "return": 18.115073433815052,
+        "stealPlace": 35.833570598789784,
+        "includingHatchReveal": 44.03357059878978
+      }
+    },
+    {
+      "pen": 4,
+      "zone": 3,
+      "approach": [
+        -67,
+        54
+      ],
+      "gate": [
+        30,
+        -96
+      ],
+      "oneWayStuds": 259.63090438107287,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 16.226931523817054,
+        "return": 17.30872695873819,
+        "stealPlace": 36.53565848255525,
+        "includingHatchReveal": 44.73565848255525
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 16.226931523817054,
+        "return": 19.9716080293133,
+        "stealPlace": 39.19853955313035,
+        "includingHatchReveal": 47.39853955313035
+      }
+    },
+    {
+      "pen": 4,
+      "zone": 4,
+      "approach": [
+        -67,
+        54
+      ],
+      "gate": [
+        90,
+        -96
+      ],
+      "oneWayStuds": 298.13820483738004,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 18.633637802336253,
+        "return": 19.875880322492,
+        "stealPlace": 41.509518124828254,
+        "includingHatchReveal": 49.70951812482825
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 18.633637802336253,
+        "return": 22.93370806441385,
+        "stealPlace": 44.5673458667501,
+        "includingHatchReveal": 52.767345866750105
+      }
+    },
+    {
+      "pen": 4,
+      "zone": 5,
+      "approach": [
+        -67,
+        54
+      ],
+      "gate": [
+        -60,
+        96
+      ],
+      "oneWayStuds": 123.57933771208752,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 7.72370860700547,
+        "return": 8.238622514139168,
+        "stealPlace": 18.962331121144636,
+        "includingHatchReveal": 27.16233112114464
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 7.72370860700547,
+        "return": 9.50610290092981,
+        "stealPlace": 20.22981150793528,
+        "includingHatchReveal": 28.42981150793528
+      }
+    },
+    {
+      "pen": 4,
+      "zone": 6,
+      "approach": [
+        -67,
+        54
+      ],
+      "gate": [
+        0,
+        96
+      ],
+      "oneWayStuds": 160.07591289387688,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 10.004744555867305,
+        "return": 10.671727526258458,
+        "stealPlace": 23.676472082125763,
+        "includingHatchReveal": 31.876472082125762
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 10.004744555867305,
+        "return": 12.313531761067452,
+        "stealPlace": 25.318276316934757,
+        "includingHatchReveal": 33.51827631693476
+      }
+    },
+    {
+      "pen": 4,
+      "zone": 7,
+      "approach": [
+        -67,
+        54
+      ],
+      "gate": [
+        60,
+        96
+      ],
+      "oneWayStuds": 214.7647188162858,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 13.422794926017863,
+        "return": 14.31764792108572,
+        "stealPlace": 30.740442847103584,
+        "includingHatchReveal": 38.94044284710358
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 13.422794926017863,
+        "return": 16.52036298586814,
+        "stealPlace": 32.943157911886004,
+        "includingHatchReveal": 41.14315791188601
+      }
+    },
+    {
+      "pen": 5,
+      "zone": 1,
+      "approach": [
+        67,
+        -54
+      ],
+      "gate": [
+        -90,
+        -96
+      ],
+      "oneWayStuds": 243.52076790367437,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 15.220047993979648,
+        "return": 16.23471786024496,
+        "stealPlace": 34.454765854224604,
+        "includingHatchReveal": 42.65476585422461
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 15.220047993979648,
+        "return": 18.732366761821105,
+        "stealPlace": 36.95241475580075,
+        "includingHatchReveal": 45.15241475580075
+      }
+    },
+    {
+      "pen": 5,
+      "zone": 2,
+      "approach": [
+        67,
+        -54
+      ],
+      "gate": [
+        -30,
+        -96
+      ],
+      "oneWayStuds": 186.70241246064347,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 11.668900778790217,
+        "return": 12.446827497376232,
+        "stealPlace": 27.11572827616645,
+        "includingHatchReveal": 35.31572827616645
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 11.668900778790217,
+        "return": 14.361724035434113,
+        "stealPlace": 29.030624814224332,
+        "includingHatchReveal": 37.23062481422433
+      }
+    },
+    {
+      "pen": 5,
+      "zone": 3,
+      "approach": [
+        67,
+        -54
+      ],
+      "gate": [
+        30,
+        -96
+      ],
+      "oneWayStuds": 136.97320787662613,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 8.560825492289133,
+        "return": 9.131547191775075,
+        "stealPlace": 20.69237268406421,
+        "includingHatchReveal": 28.89237268406421
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 8.560825492289133,
+        "return": 10.536400605894318,
+        "stealPlace": 22.09722609818345,
+        "includingHatchReveal": 30.29722609818345
+      }
+    },
+    {
+      "pen": 5,
+      "zone": 4,
+      "approach": [
+        67,
+        -54
+      ],
+      "gate": [
+        90,
+        -96
+      ],
+      "oneWayStuds": 128.8852795752515,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 8.055329973453219,
+        "return": 8.592351971683433,
+        "stealPlace": 19.647681945136654,
+        "includingHatchReveal": 27.847681945136653
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 8.055329973453219,
+        "return": 9.914252275019347,
+        "stealPlace": 20.969582248472566,
+        "includingHatchReveal": 29.169582248472565
+      }
+    },
+    {
+      "pen": 5,
+      "zone": 5,
+      "approach": [
+        67,
+        -54
+      ],
+      "gate": [
+        -60,
+        96
+      ],
+      "oneWayStuds": 277.5426162439078,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 17.346413515244237,
+        "return": 18.502841082927187,
+        "stealPlace": 38.84925459817143,
+        "includingHatchReveal": 47.04925459817143
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 17.346413515244237,
+        "return": 21.349432018762137,
+        "stealPlace": 41.695845534006374,
+        "includingHatchReveal": 49.89584553400637
+      }
+    },
+    {
+      "pen": 5,
+      "zone": 6,
+      "approach": [
+        67,
+        -54
+      ],
+      "gate": [
+        0,
+        96
+      ],
+      "oneWayStuds": 245.28329190760695,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 15.330205744225434,
+        "return": 16.35221946050713,
+        "stealPlace": 34.68242520473257,
+        "includingHatchReveal": 42.88242520473256
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 15.330205744225434,
+        "return": 18.86794553135438,
+        "stealPlace": 37.19815127557982,
+        "includingHatchReveal": 45.39815127557982
+      }
+    },
+    {
+      "pen": 5,
+      "zone": 7,
+      "approach": [
+        67,
+        -54
+      ],
+      "gate": [
+        60,
+        96
+      ],
+      "oneWayStuds": 231.16324450410627,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 14.447702781506642,
+        "return": 15.410882966940418,
+        "stealPlace": 32.85858574844706,
+        "includingHatchReveal": 41.05858574844706
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 14.447702781506642,
+        "return": 17.781788038777407,
+        "stealPlace": 35.22949082028405,
+        "includingHatchReveal": 43.429490820284045
+      }
+    },
+    {
+      "pen": 6,
+      "zone": 1,
+      "approach": [
+        67,
+        -18
+      ],
+      "gate": [
+        -90,
+        -96
+      ],
+      "oneWayStuds": 256.30829986055994,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 16.019268741284996,
+        "return": 17.087219990703996,
+        "stealPlace": 36.10648873198899,
+        "includingHatchReveal": 44.30648873198899
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 16.019268741284996,
+        "return": 19.716023066196918,
+        "stealPlace": 38.735291807481914,
+        "includingHatchReveal": 46.93529180748192
+      }
+    },
+    {
+      "pen": 6,
+      "zone": 2,
+      "approach": [
+        67,
+        -18
+      ],
+      "gate": [
+        -30,
+        -96
+      ],
+      "oneWayStuds": 205.47088012864697,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 12.841930008040435,
+        "return": 13.69805867524313,
+        "stealPlace": 29.539988683283568,
+        "includingHatchReveal": 37.73998868328357
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 12.841930008040435,
+        "return": 15.805452317588228,
+        "stealPlace": 31.647382325628662,
+        "includingHatchReveal": 39.84738232562866
+      }
+    },
+    {
+      "pen": 6,
+      "zone": 3,
+      "approach": [
+        67,
+        -18
+      ],
+      "gate": [
+        30,
+        -96
+      ],
+      "oneWayStuds": 167.33075929238663,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 10.458172455774164,
+        "return": 11.155383952825776,
+        "stealPlace": 24.61355640859994,
+        "includingHatchReveal": 32.813556408599936
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 10.458172455774164,
+        "return": 12.871596868645126,
+        "stealPlace": 26.32976932441929,
+        "includingHatchReveal": 34.52976932441929
+      }
+    },
+    {
+      "pen": 6,
+      "zone": 4,
+      "approach": [
+        67,
+        -18
+      ],
+      "gate": [
+        90,
+        -96
+      ],
+      "oneWayStuds": 162.32035415564792,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 10.145022134727995,
+        "return": 10.821356943709862,
+        "stealPlace": 23.966379078437857,
+        "includingHatchReveal": 32.166379078437856
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 10.145022134727995,
+        "return": 12.486181088895993,
+        "stealPlace": 25.631203223623988,
+        "includingHatchReveal": 33.83120322362399
+      }
+    },
+    {
+      "pen": 6,
+      "zone": 5,
+      "approach": [
+        67,
+        -18
+      ],
+      "gate": [
+        -60,
+        96
+      ],
+      "oneWayStuds": 251.66048165876012,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 15.728780103672507,
+        "return": 16.77736544391734,
+        "stealPlace": 35.506145547589846,
+        "includingHatchReveal": 43.70614554758984
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 15.728780103672507,
+        "return": 19.358498589135394,
+        "stealPlace": 38.0872786928079,
+        "includingHatchReveal": 46.2872786928079
+      }
+    },
+    {
+      "pen": 6,
+      "zone": 6,
+      "approach": [
+        67,
+        -18
+      ],
+      "gate": [
+        0,
+        96
+      ],
+      "oneWayStuds": 213.23085872821065,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 13.326928670513166,
+        "return": 14.21539058188071,
+        "stealPlace": 30.542319252393874,
+        "includingHatchReveal": 38.74231925239387
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 13.326928670513166,
+        "return": 16.402373748323896,
+        "stealPlace": 32.729302418837065,
+        "includingHatchReveal": 40.92930241883706
+      }
+    },
+    {
+      "pen": 6,
+      "zone": 7,
+      "approach": [
+        67,
+        -18
+      ],
+      "gate": [
+        60,
+        96
+      ],
+      "oneWayStuds": 195.21471008587292,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 12.200919380367058,
+        "return": 13.014314005724861,
+        "stealPlace": 28.215233386091917,
+        "includingHatchReveal": 36.41523338609191
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 12.200919380367058,
+        "return": 15.016516160451763,
+        "stealPlace": 30.21743554081882,
+        "includingHatchReveal": 38.417435540818815
+      }
+    },
+    {
+      "pen": 7,
+      "zone": 1,
+      "approach": [
+        67,
+        18
+      ],
+      "gate": [
+        -90,
+        -96
+      ],
+      "oneWayStuds": 275.02319448973105,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 17.18894965560819,
+        "return": 18.334879632648736,
+        "stealPlace": 38.52382928825693,
+        "includingHatchReveal": 46.72382928825692
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 17.18894965560819,
+        "return": 21.155630345363928,
+        "stealPlace": 41.344580000972115,
+        "includingHatchReveal": 49.54458000097212
+      }
+    },
+    {
+      "pen": 7,
+      "zone": 2,
+      "approach": [
+        67,
+        18
+      ],
+      "gate": [
+        -30,
+        -96
+      ],
+      "oneWayStuds": 230.68299836654796,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 14.417687397909248,
+        "return": 15.378866557769864,
+        "stealPlace": 32.796553955679116,
+        "includingHatchReveal": 40.99655395567911
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 14.417687397909248,
+        "return": 17.744846028195997,
+        "stealPlace": 35.16253342610524,
+        "includingHatchReveal": 43.362533426105244
+      }
+    },
+    {
+      "pen": 7,
+      "zone": 3,
+      "approach": [
+        67,
+        18
+      ],
+      "gate": [
+        30,
+        -96
+      ],
+      "oneWayStuds": 200.85407794480756,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 12.553379871550472,
+        "return": 13.39027186298717,
+        "stealPlace": 28.943651734537642,
+        "includingHatchReveal": 37.14365173453764
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 12.553379871550472,
+        "return": 15.45031368806212,
+        "stealPlace": 31.003693559612593,
+        "includingHatchReveal": 39.20369355961259
+      }
+    },
+    {
+      "pen": 7,
+      "zone": 4,
+      "approach": [
+        67,
+        18
+      ],
+      "gate": [
+        90,
+        -96
+      ],
+      "oneWayStuds": 197.29703349613007,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 12.33106459350813,
+        "return": 13.153135566408672,
+        "stealPlace": 28.484200159916803,
+        "includingHatchReveal": 36.6842001599168
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 12.33106459350813,
+        "return": 15.176694884317698,
+        "stealPlace": 30.50775947782583,
+        "includingHatchReveal": 38.70775947782583
+      }
+    },
+    {
+      "pen": 7,
+      "zone": 5,
+      "approach": [
+        67,
+        18
+      ],
+      "gate": [
+        -60,
+        96
+      ],
+      "oneWayStuds": 230.04026301640778,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 14.377516438525486,
+        "return": 15.336017534427185,
+        "stealPlace": 32.713533972952675,
+        "includingHatchReveal": 40.91353397295267
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 14.377516438525486,
+        "return": 17.695404847415983,
+        "stealPlace": 35.07292128594147,
+        "includingHatchReveal": 43.272921285941464
+      }
+    },
+    {
+      "pen": 7,
+      "zone": 6,
+      "approach": [
+        67,
+        18
+      ],
+      "gate": [
+        0,
+        96
+      ],
+      "oneWayStuds": 183.82509421342633,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 11.489068388339145,
+        "return": 12.255006280895088,
+        "stealPlace": 26.744074669234234,
+        "includingHatchReveal": 34.94407466923423
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 11.489068388339145,
+        "return": 14.140391862571256,
+        "stealPlace": 28.6294602509104,
+        "includingHatchReveal": 36.8294602509104
+      }
+    },
+    {
+      "pen": 7,
+      "zone": 7,
+      "approach": [
+        67,
+        18
+      ],
+      "gate": [
+        60,
+        96
+      ],
+      "oneWayStuds": 159.31347265956222,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 9.957092041222639,
+        "return": 10.620898177304149,
+        "stealPlace": 23.577990218526786,
+        "includingHatchReveal": 31.777990218526785
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 9.957092041222639,
+        "return": 12.254882512274017,
+        "stealPlace": 25.211974553496656,
+        "includingHatchReveal": 33.411974553496655
+      }
+    },
+    {
+      "pen": 8,
+      "zone": 1,
+      "approach": [
+        67,
+        54
+      ],
+      "gate": [
+        -90,
+        -96
+      ],
+      "oneWayStuds": 298.13820483738004,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 18.633637802336253,
+        "return": 19.875880322492,
+        "stealPlace": 41.509518124828254,
+        "includingHatchReveal": 49.70951812482825
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 18.633637802336253,
+        "return": 22.93370806441385,
+        "stealPlace": 44.5673458667501,
+        "includingHatchReveal": 52.767345866750105
+      }
+    },
+    {
+      "pen": 8,
+      "zone": 2,
+      "approach": [
+        67,
+        54
+      ],
+      "gate": [
+        -30,
+        -96
+      ],
+      "oneWayStuds": 259.63090438107287,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 16.226931523817054,
+        "return": 17.30872695873819,
+        "stealPlace": 36.53565848255525,
+        "includingHatchReveal": 44.73565848255525
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 16.226931523817054,
+        "return": 19.9716080293133,
+        "stealPlace": 39.19853955313035,
+        "includingHatchReveal": 47.39853955313035
+      }
+    },
+    {
+      "pen": 8,
+      "zone": 3,
+      "approach": [
+        67,
+        54
+      ],
+      "gate": [
+        30,
+        -96
+      ],
+      "oneWayStuds": 235.49595463959568,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 14.71849716497473,
+        "return": 15.699730309306378,
+        "stealPlace": 33.41822747428111,
+        "includingHatchReveal": 41.61822747428111
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 14.71849716497473,
+        "return": 18.115073433815052,
+        "stealPlace": 35.833570598789784,
+        "includingHatchReveal": 44.03357059878978
+      }
+    },
+    {
+      "pen": 8,
+      "zone": 4,
+      "approach": [
+        67,
+        54
+      ],
+      "gate": [
+        90,
+        -96
+      ],
+      "oneWayStuds": 232.75308893067051,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 14.547068058166907,
+        "return": 15.516872595378034,
+        "stealPlace": 33.06394065354494,
+        "includingHatchReveal": 41.263940653544935
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 14.547068058166907,
+        "return": 17.90408376389773,
+        "stealPlace": 35.45115182206464,
+        "includingHatchReveal": 43.651151822064634
+      }
+    },
+    {
+      "pen": 8,
+      "zone": 5,
+      "approach": [
+        67,
+        54
+      ],
+      "gate": [
+        -60,
+        96
+      ],
+      "oneWayStuds": 214.7647188162858,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 13.422794926017863,
+        "return": 14.31764792108572,
+        "stealPlace": 30.740442847103584,
+        "includingHatchReveal": 38.94044284710358
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 13.422794926017863,
+        "return": 16.52036298586814,
+        "stealPlace": 32.943157911886004,
+        "includingHatchReveal": 41.14315791188601
+      }
+    },
+    {
+      "pen": 8,
+      "zone": 6,
+      "approach": [
+        67,
+        54
+      ],
+      "gate": [
+        0,
+        96
+      ],
+      "oneWayStuds": 160.07591289387688,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 10.004744555867305,
+        "return": 10.671727526258458,
+        "stealPlace": 23.676472082125763,
+        "includingHatchReveal": 31.876472082125762
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 10.004744555867305,
+        "return": 12.313531761067452,
+        "stealPlace": 25.318276316934757,
+        "includingHatchReveal": 33.51827631693476
+      }
+    },
+    {
+      "pen": 8,
+      "zone": 7,
+      "approach": [
+        67,
+        54
+      ],
+      "gate": [
+        60,
+        96
+      ],
+      "oneWayStuds": 123.57933771208752,
+      "onePumpkin": {
+        "carrySpeed": 15,
+        "outbound": 7.72370860700547,
+        "return": 8.238622514139168,
+        "stealPlace": 18.962331121144636,
+        "includingHatchReveal": 27.16233112114464
+      },
+      "threePumpkins": {
+        "carrySpeed": 13,
+        "outbound": 7.72370860700547,
+        "return": 9.50610290092981,
+        "stealPlace": 20.22981150793528,
+        "includingHatchReveal": 28.42981150793528
+      }
+    }
+  ]
+}

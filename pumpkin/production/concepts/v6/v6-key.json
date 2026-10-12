@@ -1,0 +1,21 @@
+{
+ "img01.png": "ours:scythes",
+ "img02.png": "ours:guards-and-king",
+ "img03.jpg": "control:refs2/hatch-reveal-ref-1.jpg",
+ "img04.jpg": "control:refs2/pets-ref-1.jpg",
+ "img05.png": "ours:hud-phone",
+ "img06.png": "ours:hud-desktop",
+ "img07.jpg": "control:refs2/hud-desktop-ref-1.jpg",
+ "img08.png": "ours:hatch-reveal-mass",
+ "img09.png": "ours:first-5-min",
+ "img10.png": "ours:panels-shop-index",
+ "img11.png": "ours:hub-perspective",
+ "img12.png": "ours:zones-strip",
+ "img13.png": "ours:panels-index",
+ "img14.png": "ours:zones-strip-2",
+ "img15.jpg": "control:refs2/hub-perspective-ref-1.jpg",
+ "img16.png": "ours:guards-and-king-fight",
+ "img17.png": "ours:zone1-perspective",
+ "img18.png": "ours:hatch-reveal",
+ "img19.png": "ours:pets"
+}

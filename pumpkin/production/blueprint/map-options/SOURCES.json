@@ -1,0 +1,148 @@
+{
+  "reviewDate": "2026-10-12",
+  "footageWindow": [
+    "2026-09-01",
+    "2026-10-12"
+  ],
+  "dateMethod": "yt-dlp --skip-download --print upload_date, independently checked during task",
+  "sources": [
+    {
+      "game": "Steal a Brainrot",
+      "file": "ref-steal-a-brainrot.jpg",
+      "url": "https://www.youtube.com/watch?v=6AQG8cQaZJA",
+      "uploadDate": "2026-10-12",
+      "timestampSeconds": 105,
+      "type": "recent overhead footage",
+      "scope": "partial base rows and conveyor; admin/flight actions exclude normal-speed timing"
+    },
+    {
+      "game": "Steal an Egg",
+      "file": "ref-steal-an-egg.jpg",
+      "url": "https://www.youtube.com/watch?v=0sqILTHsdU8",
+      "uploadDate": "2026-09-23",
+      "timestampSeconds": 1460,
+      "type": "recent overhead footage; reused source frame",
+      "scope": "hub/lane mouth; high-speed account",
+      "localOriginal": "C:/dev/codex-lab/refs/videos/sae-new-frames/h_1460.jpg"
+    },
+    {
+      "game": "Bubble Gum Simulator INFINITY",
+      "file": "ref-bubble-gum-simulator-infinity.jpg",
+      "url": "https://www.youtube.com/watch?v=Fe-04b8SQf8",
+      "uploadDate": "2026-10-11",
+      "timestampSeconds": 335,
+      "type": "recent overhead footage",
+      "scope": "Nightmare Town event plaza"
+    },
+    {
+      "game": "Adopt Me",
+      "file": "ref-adopt-me.jpg",
+      "url": "https://www.youtube.com/watch?v=gMrhEJOLIUI",
+      "uploadDate": "2026-10-11",
+      "timestampSeconds": 637.5,
+      "type": "recent overhead footage",
+      "scope": "residential neighborhood; flying tour, no walking times"
+    },
+    {
+      "game": "Adopt Me",
+      "file": "ref-adopt-me-official-2018.jpg",
+      "url": "https://x.com/Bethink_RBX/status/982512386979573760",
+      "imageURL": "https://pbs.twimg.com/media/DaKVopqWsAI6ROi.jpg",
+      "sourceDate": "2018-04-07",
+      "type": "historical official developer overview",
+      "scope": "historical Adoption Island topology; NOT current Halloween build"
+    },
+    {
+      "game": "Fisch",
+      "file": "ref-fisch.jpg",
+      "url": "https://www.destructoid.com/fisch-map-with-all-islands-and-npcs/",
+      "imageURL": "https://www.destructoid.com/wp-content/uploads/2024/12/fisch-map-ancient-isle.webp",
+      "sourceDate": "2024-12-25",
+      "articleUpdated": "2025-04-14",
+      "creator": "XxMakio",
+      "type": "historical community atlas reproduced by editorial guide",
+      "scope": "Ancient Isle era; NOT a complete current world atlas"
+    },
+    {
+      "game": "Fisch",
+      "file": "ref-fisch-recent.jpg",
+      "url": "https://www.youtube.com/watch?v=P72rR1yjGl4",
+      "uploadDate": "2026-09-15",
+      "timestampSeconds": 315,
+      "type": "recent local footage",
+      "scope": "island/service geography, not full overhead atlas"
+    },
+    {
+      "game": "Fisch",
+      "url": "https://www.youtube.com/watch?v=NZcqxxrt-e4",
+      "uploadDate": "2026-10-10",
+      "type": "additional sampled recent footage",
+      "scope": "Nate quest and cave/service travel"
+    },
+    {
+      "game": "Huss Valley",
+      "file": "ref-huss-valley.jpg",
+      "url": "https://www.youtube.com/watch?v=kMwDMi4fSMs",
+      "uploadDate": "2026-10-11",
+      "timestampSeconds": 337,
+      "type": "recent footage of in-game overhead map previews",
+      "scope": "School Yard and The Barn map-selection renders; small original-resolution previews"
+    },
+    {
+      "game": "Huss Valley",
+      "file": "ref-huss-valley-crossing.jpg",
+      "url": "https://www.youtube.com/watch?v=kMwDMi4fSMs",
+      "uploadDate": "2026-10-11",
+      "timestampSeconds": 110,
+      "type": "recent elevated crossing view",
+      "scope": "confirms schoolyard route; not a full atlas"
+    },
+    {
+      "game": "99 Nights in the Forest",
+      "file": "ref-99-nights-in-the-forest.jpg",
+      "url": "https://www.youtube.com/watch?v=i1JjcFxKL0k",
+      "uploadDate": "2026-10-05",
+      "timestampSeconds": 355,
+      "type": "seventh supporting recent local frame",
+      "scope": "camp return loop, not a procedural-world map"
+    }
+  ],
+  "rights": "Research/reference use only; no source game assets adopted or shipped. Referenced wiki text licenses do not establish ownership of screenshots.",
+  "method": "Read study.sh source; its hardcoded output path is outside allowed writes. Reused its yt-dlp discovery and FFmpeg contact-sheet method with downloads and outputs only in map-options. Native FFmpeg partial-download TLS failed; full native yt-dlp video streams worked. No passwords, accounts, cookies or TLS/security weakening. Primary accepted JPEGs are complete original source frames; only the requested comparison montage resizes them.",
+  "crossChecks": [
+    "https://stealabrainrot-wiki.wiki/wiki/map-routes/",
+    "https://eggipedia.com/updates",
+    "https://adoptme.fandom.com/wiki/Adoption_Island",
+    "https://adoptme.fandom.com/wiki/Special:AllMaps",
+    "https://fisch.wiki/wiki/the-ocean/",
+    "https://fisch.fandom.com/wiki/Special:AllMaps",
+    "https://bubblegumsimulatorinfinity.wiki/guides/worlds-and-islands/"
+  ],
+  "rejected": [
+    {
+      "url": "https://huss-valley-roblox.wiki/en/map/",
+      "reason": "Industrial Folk Valley description does not match current observed School Yard. Not used for layout claims."
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=JRo41ayUl0Q",
+      "uploadDate": "2026-09-26",
+      "reason": "Jump for Eggs LTM arena; not representative main Brainrot base row."
+    },
+    {
+      "url": "https://fisch.wiki/wiki/moosewood/",
+      "reason": "Thumbnail resolved to generic house icon, not a map. Excluded."
+    }
+  ],
+  "toolSources": [
+    {
+      "tool": "yt-dlp",
+      "license": "Unlicense source; release executable tool only",
+      "url": "https://github.com/yt-dlp/yt-dlp/blob/master/LICENSE"
+    },
+    {
+      "tool": "FFmpeg",
+      "license": "LGPL/GPL depends on build; existing binary tool only, not redistributed or game-linked",
+      "url": "https://ffmpeg.org/legal.html"
+    }
+  ]
+}

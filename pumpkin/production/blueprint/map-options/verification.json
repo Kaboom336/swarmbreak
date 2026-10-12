@@ -1,0 +1,132 @@
+{
+  "missing": [],
+  "brokenLocalLinks": [],
+  "dates": [
+    {
+      "url": "https://www.youtube.com/watch?v=6AQG8cQaZJA",
+      "date": "2026-10-12",
+      "inWindow": true
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=0sqILTHsdU8",
+      "date": "2026-09-23",
+      "inWindow": true
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=Fe-04b8SQf8",
+      "date": "2026-10-11",
+      "inWindow": true
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=gMrhEJOLIUI",
+      "date": "2026-10-11",
+      "inWindow": true
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=P72rR1yjGl4",
+      "date": "2026-09-15",
+      "inWindow": true
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=NZcqxxrt-e4",
+      "date": "2026-10-10",
+      "inWindow": true
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=kMwDMi4fSMs",
+      "date": "2026-10-11",
+      "inWindow": true
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=kMwDMi4fSMs",
+      "date": "2026-10-11",
+      "inWindow": true
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=i1JjcFxKL0k",
+      "date": "2026-10-05",
+      "inWindow": true
+    }
+  ],
+  "bRoutes": 56,
+  "bSummary": {
+    "minStuds": 123.57933771208752,
+    "maxStuds": 298.13820483738004,
+    "minStealPlace": 18.962331121144636,
+    "maxStealPlace": 44.5673458667501,
+    "maxWithHatchReveal": 52.767345866750105
+  },
+  "files": [
+    {
+      "file": "MAP-REVIEW.md",
+      "bytes": 25099,
+      "sha256": "50dc47e9ca7775f7232b9a4705328f4de4d92be0d8e05fe5856a1cd530e78e9c"
+    },
+    {
+      "file": "option-A.png",
+      "bytes": 2174280,
+      "sha256": "2b883cf49151331f6b16e25b7113259fe1f8cdc267d6e236c2ea7456eda684e6"
+    },
+    {
+      "file": "option-B.png",
+      "bytes": 2118995,
+      "sha256": "eeac4cef390f195c0fcc78add04c3ffee6921dc02375cd7c2e52fea06b3abed2"
+    },
+    {
+      "file": "option-C.png",
+      "bytes": 2206652,
+      "sha256": "00b8a41605634abef01dd7e65fa6a0f63298a2c7e1b2623ac6770efc393f668c"
+    },
+    {
+      "file": "compare.jpg",
+      "bytes": 1472106,
+      "sha256": "3acac0d92a9a32f94f2134273ea5b60af14dd8e547fb581309173e9c8aec1c19"
+    },
+    {
+      "file": "ref-steal-a-brainrot.jpg",
+      "bytes": 88390,
+      "sha256": "b5fde1226bbe9596361ce3227c39f56ad336504cac9f51ec39cc95e7563c5600"
+    },
+    {
+      "file": "ref-steal-an-egg.jpg",
+      "bytes": 91634,
+      "sha256": "59393bc022aa35e63112e9d98d4d59cb22a58e431d8cc345eefa7bd86ee3a3bd"
+    },
+    {
+      "file": "ref-bubble-gum-simulator-infinity.jpg",
+      "bytes": 131117,
+      "sha256": "c9a55ecd433ac969b197a97d81857c85377d8505925197f5558f9a6bfbb042ab"
+    },
+    {
+      "file": "ref-adopt-me.jpg",
+      "bytes": 56837,
+      "sha256": "2d6b87140b8a30eaef65399962e3b907b44a26609df6f064ead33165b49fb125"
+    },
+    {
+      "file": "ref-fisch.jpg",
+      "bytes": 901232,
+      "sha256": "93ee76025ed0ebd66ff17c03c8493c5e7d163249ba0a54de8889a1eb80999ba0"
+    },
+    {
+      "file": "ref-huss-valley.jpg",
+      "bytes": 48976,
+      "sha256": "9515a601e804832a090879e0083e90c32878d9377001fb520adc6cd079ebc64c"
+    },
+    {
+      "file": "SOURCES.json",
+      "bytes": 6013,
+      "sha256": "ed1b34d652b58d11442dfb01974d7edfef7675eceb1eadc9963b2a182ebf820e"
+    },
+    {
+      "file": "route-numbers.json",
+      "bytes": 36393,
+      "sha256": "67e6a76f95dbc751a9c7538c5c6d333b9731da0dcb0beeaec7bbad5fdfb0ed90"
+    },
+    {
+      "file": "video-metadata.txt",
+      "bytes": 720,
+      "sha256": "d9704cf89cdc60a74cc82422136b3d04699ccda7cf0e5aa0a218aef769493830"
+    }
+  ],
+  "scope": "Artifact checks only, no Roblox runtime or independent critic pass."
+}

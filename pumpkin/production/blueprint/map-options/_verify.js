@@ -1,0 +1,14 @@
+const fs=require('fs'), path=require('path'),crypto=require('crypto');
+const root=__dirname;
+const required=['MAP-REVIEW.md','option-A.png','option-B.png','option-C.png','compare.jpg','ref-steal-a-brainrot.jpg','ref-steal-an-egg.jpg','ref-bubble-gum-simulator-infinity.jpg','ref-adopt-me.jpg','ref-fisch.jpg','ref-huss-valley.jpg','SOURCES.json','route-numbers.json','video-metadata.txt'];
+const missing=required.filter(f=>!fs.existsSync(path.join(root,f)));
+const md=fs.readFileSync(path.join(root,'MAP-REVIEW.md'),'utf8');
+const broken=[...md.matchAll(/\]\(([^)]+)\)/g)].map(m=>m[1]).filter(x=>!x.startsWith('http')).filter(x=>!fs.existsSync(path.join(root,x)));
+const ledger=JSON.parse(fs.readFileSync(path.join(root,'SOURCES.json')));
+const dates=ledger.sources.filter(x=>x.uploadDate).map(x=>({url:x.url,date:x.uploadDate,inWindow:x.uploadDate>='2026-09-01'&&x.uploadDate<='2026-10-12'}));
+const numbers=JSON.parse(fs.readFileSync(path.join(root,'route-numbers.json')));
+const files=required.map(file=>({file,bytes:fs.statSync(path.join(root,file)).size,sha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')}));
+const result={missing,brokenLocalLinks:broken,dates,bRoutes:numbers.routes.length,bSummary:numbers.summary,files,scope:'Artifact checks only, no Roblox runtime or independent critic pass.'};
+fs.writeFileSync(path.join(root,'verification.json'),JSON.stringify(result,null,2));
+console.log(JSON.stringify({missing,brokenLocalLinks:broken,allDatesEligible:dates.every(x=>x.inWindow),bRoutes:numbers.routes.length,files:files.length}));
+if(missing.length||broken.length||!dates.every(x=>x.inWindow)||numbers.routes.length!==56)process.exit(1);
