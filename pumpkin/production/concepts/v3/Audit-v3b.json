@@ -1,0 +1,98 @@
+﻿[
+    {
+        "sheet":  "hub-perspective",
+        "width":  1672,
+        "height":  941,
+        "ratio":  1.7768331562167907,
+        "sha256":  "99770B6C70DEA0B5F26F615BDF6185D33142790EE4F195C17A873B80873C51B5",
+        "comparisonExists":  true,
+        "v3aBackupExists":  true,
+        "score":  8,
+        "scoreType":  "Independent visual critic judgment",
+        "paletteHexVerification":  "UNKNOWN"
+    },
+    {
+        "sheet":  "hud-desktop",
+        "width":  1672,
+        "height":  941,
+        "ratio":  1.7768331562167907,
+        "sha256":  "157FEC3ED347DCEC6375CCD49C35848D38FF476AB1E90912D41262967A0C2666",
+        "comparisonExists":  true,
+        "v3aBackupExists":  true,
+        "score":  8,
+        "scoreType":  "Independent visual critic judgment",
+        "paletteHexVerification":  "UNKNOWN"
+    },
+    {
+        "sheet":  "panels-shop-index",
+        "width":  1671,
+        "height":  941,
+        "ratio":  1.77577045696068,
+        "sha256":  "DB78D458B949493F317151B7F06DD6C01105C9C0A60397123081D0146489542B",
+        "comparisonExists":  true,
+        "v3aBackupExists":  true,
+        "score":  8,
+        "scoreType":  "Independent visual critic judgment",
+        "paletteHexVerification":  "UNKNOWN"
+    },
+    {
+        "sheet":  "panels-index",
+        "width":  1672,
+        "height":  941,
+        "ratio":  1.7768331562167907,
+        "sha256":  "8634B5B104ACBE9CF219F4480B06D2ABF89180D7AEF623C452B70EA0B3C080B3",
+        "comparisonExists":  true,
+        "v3aBackupExists":  true,
+        "score":  8,
+        "scoreType":  "Independent visual critic judgment",
+        "paletteHexVerification":  "UNKNOWN"
+    },
+    {
+        "sheet":  "scythes",
+        "width":  1672,
+        "height":  941,
+        "ratio":  1.7768331562167907,
+        "sha256":  "E537E5512B06087BF09B77EB69808D4A306516024871A5EF9DEF369EBE7EEF09",
+        "comparisonExists":  true,
+        "v3aBackupExists":  true,
+        "score":  8,
+        "scoreType":  "Independent visual critic judgment",
+        "paletteHexVerification":  "UNKNOWN"
+    },
+    {
+        "sheet":  "zones-strip",
+        "width":  1672,
+        "height":  941,
+        "ratio":  1.7768331562167907,
+        "sha256":  "9BA1F6E8446EF6850BF05629CDC21DACDC4932EFF9625171A5E71100E4F170F7",
+        "comparisonExists":  true,
+        "v3aBackupExists":  true,
+        "score":  8,
+        "scoreType":  "Independent visual critic judgment",
+        "paletteHexVerification":  "UNKNOWN"
+    },
+    {
+        "sheet":  "hud-phone",
+        "width":  1844,
+        "height":  853,
+        "ratio":  2.1617819460726846,
+        "sha256":  "5C29EA2A740A235AEAC9111B1C408088C5C597CCE44F07B00C15435FD151AB78",
+        "comparisonExists":  true,
+        "v3aBackupExists":  true,
+        "score":  8,
+        "scoreType":  "Independent visual critic judgment",
+        "paletteHexVerification":  "UNKNOWN"
+    },
+    {
+        "sheet":  "first-5-min",
+        "width":  1507,
+        "height":  1044,
+        "ratio":  1.4434865900383143,
+        "sha256":  "9479FDE06E97E04546341665D7F34D4BD02582A2BAEED812D8384BD055224DCF",
+        "comparisonExists":  true,
+        "v3aBackupExists":  true,
+        "score":  8,
+        "scoreType":  "Independent visual critic judgment",
+        "paletteHexVerification":  "UNKNOWN"
+    }
+]

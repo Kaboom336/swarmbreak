@@ -1,0 +1,434 @@
+[
+  {
+    "sheet": "hub-perspective",
+    "tries": 2,
+    "selected": 2,
+    "score": 8,
+    "ref": 1,
+    "game": "Pet Simulator 99",
+    "gap": "World rarity auras understated. Actual 40-stud throne dimension cannot be proven from concept art.",
+    "checks": [
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "n/a",
+      "pass",
+      "pass",
+      "pass"
+    ],
+    "v3aManifest": {
+      "tries": 3,
+      "selected": 2,
+      "score": 7,
+      "gap": "Billboard remains black-on-white rather than floating stroked white; missing clouds; simpler geometry than PS99.",
+      "checks": [
+        "pass",
+        "partial",
+        "pass",
+        "fail",
+        "n/a",
+        "n/a",
+        "pass",
+        "partial"
+      ]
+    },
+    "round": "v3b",
+    "scoreSource": "Independent art_critic review, REDRAW-RULES checklist and reference images",
+    "paletteVerification": "Visual colour-family match; pixel-exact hex values UNKNOWN"
+  },
+  {
+    "sheet": "zone1-perspective",
+    "tries": 3,
+    "selected": 3,
+    "score": 8,
+    "ref": 3,
+    "game": "Steal an Egg",
+    "gap": "Stud texture remains stronger than the faint-grid brief; only six ordinary pumpkins plus two nest pumpkins.",
+    "checks": [
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "n/a",
+      "pass",
+      "pass",
+      "pass"
+    ],
+    "scoreSource": "Fresh JUDGE.md (unchanged artwork)"
+  },
+  {
+    "sheet": "zones-strip",
+    "tries": 1,
+    "selected": 1,
+    "score": 8,
+    "ref": 1,
+    "game": "Steal an Egg",
+    "gap": "Swamp teal looks clean rather than murky, but lime shoulders/cauldron preserve saturated witch-swamp identity.",
+    "checks": [
+      "pass*",
+      "pass",
+      "pass",
+      "pass",
+      "n/a",
+      "n/a",
+      "pass",
+      "pass"
+    ],
+    "v3aManifest": {
+      "tries": 2,
+      "selected": 1,
+      "score": 8,
+      "gap": "Three-view format reduces viewport width; giant guards sit above arches rather than on the lane.",
+      "checks": [
+        "pass*",
+        "pass*",
+        "pass",
+        "pass",
+        "n/a",
+        "n/a",
+        "pass",
+        "pass"
+      ]
+    },
+    "round": "v3b",
+    "scoreSource": "Independent art_critic review, REDRAW-RULES checklist and reference images",
+    "paletteVerification": "Visual colour-family match; pixel-exact hex values UNKNOWN"
+  },
+  {
+    "sheet": "zones-strip-2",
+    "tries": 1,
+    "selected": 1,
+    "score": 8,
+    "refSheet": "zones-strip",
+    "ref": 1,
+    "game": "Steal an Egg",
+    "gap": "Candy sky is pink by biome rule; narrow viewports reduce distant prop detail.",
+    "checks": [
+      "pass*",
+      "pass*",
+      "pass",
+      "pass",
+      "n/a",
+      "n/a",
+      "pass",
+      "pass"
+    ],
+    "scoreSource": "Fresh JUDGE.md (unchanged artwork)"
+  },
+  {
+    "sheet": "hud-desktop",
+    "tries": 3,
+    "selected": 3,
+    "score": 8,
+    "ref": 1,
+    "game": "Pet Simulator 99",
+    "gap": "Dense wild rows are an owner override of the sparse prop-count rule; native pixel palette/font exactness UNKNOWN.",
+    "checks": [
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "n/a",
+      "pass",
+      "pass"
+    ],
+    "v3aManifest": {
+      "tries": 1,
+      "selected": 1,
+      "score": 8,
+      "gap": "Ground and wall studs are stronger than brief; hotbar cards larger than the 80px target.",
+      "checks": [
+        "pass",
+        "pass",
+        "pass",
+        "pass",
+        "pass",
+        "n/a",
+        "pass",
+        "pass"
+      ]
+    },
+    "round": "v3b",
+    "scoreSource": "Independent art_critic review, REDRAW-RULES checklist and reference images",
+    "paletteVerification": "Visual colour-family match; pixel-exact hex values UNKNOWN"
+  },
+  {
+    "sheet": "hud-phone",
+    "tries": 1,
+    "selected": 1,
+    "score": 8,
+    "ref": 1,
+    "game": "Steal an Egg Mobile",
+    "gap": "Native 1844x853 is within 0.23% of 19.5:9. Larger context button follows owner override; exact thumb sizing is conceptual.",
+    "checks": [
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "pass*",
+      "pass",
+      "pass",
+      "pass"
+    ],
+    "v3aManifest": {
+      "tries": 3,
+      "selected": 3,
+      "score": 8,
+      "gap": "Minor checker pattern on floor; context prompt has a soft backing; button sizing remains a concept approximation.",
+      "checks": [
+        "pass",
+        "pass",
+        "pass",
+        "pass",
+        "pass*",
+        "pass",
+        "pass",
+        "pass"
+      ]
+    },
+    "round": "v3b",
+    "scoreSource": "Independent art_critic review, REDRAW-RULES checklist and reference images",
+    "paletteVerification": "Visual colour-family match; pixel-exact hex values UNKNOWN"
+  },
+  {
+    "sheet": "panels-shop-index",
+    "tries": 2,
+    "selected": 2,
+    "score": 8,
+    "ref": 1,
+    "game": "Pet Simulator 99",
+    "gap": "Detached Witch tooltip avoids obscuring or mispointing to cards; thumbnail hotbar is small but correct.",
+    "checks": [
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "pass*",
+      "pass",
+      "pass",
+      "pass"
+    ],
+    "v3aManifest": {
+      "tries": 3,
+      "selected": 3,
+      "score": 8,
+      "gap": "Bonus bar adds unrequested reward icons; pet tile is small; exact rarity pixel values not verified.",
+      "checks": [
+        "pass",
+        "pass",
+        "pass",
+        "pass",
+        "n/a",
+        "pass",
+        "pass~",
+        "pass"
+      ]
+    },
+    "round": "v3b",
+    "scoreSource": "Independent art_critic review, REDRAW-RULES checklist and reference images",
+    "paletteVerification": "Visual colour-family match; pixel-exact hex values UNKNOWN"
+  },
+  {
+    "sheet": "panels-index",
+    "tries": 2,
+    "selected": 2,
+    "score": 8,
+    "refSheet": "panels-shop-index",
+    "ref": 3,
+    "game": "Pet Simulator 99",
+    "round": "v3b",
+    "gap": "Uniform star badges across tiers; detached tooltip and full Pup preserve clarity/identity.",
+    "checks": [
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "pass*",
+      "pass",
+      "pass",
+      "pass"
+    ],
+    "scoreSource": "Independent art_critic review, REDRAW-RULES checklist and PS99 Index reference",
+    "paletteVerification": "Visual colour-family match; pixel-exact hex values UNKNOWN"
+  },
+  {
+    "sheet": "hatch-reveal",
+    "tries": 3,
+    "selected": 2,
+    "score": 8,
+    "ref": 2,
+    "game": "Pet Simulator 99",
+    "gap": "Card is grey rather than white; Puppy head/body proportion is close rather than a production model lock.",
+    "checks": [
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "n/a",
+      "pass",
+      "pass~",
+      "pass"
+    ],
+    "scoreSource": "Fresh JUDGE.md (unchanged artwork)"
+  },
+  {
+    "sheet": "hatch-reveal-mass",
+    "tries": 1,
+    "selected": 1,
+    "score": 8,
+    "refSheet": "hatch-reveal",
+    "ref": 3,
+    "game": "Pet Simulator 99",
+    "gap": "Pets are still arranged more evenly than PS99's overlapping mass wall; Common glow trends white.",
+    "checks": [
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "n/a",
+      "pass",
+      "pass~",
+      "pass"
+    ],
+    "scoreSource": "Fresh JUDGE.md (unchanged artwork)"
+  },
+  {
+    "sheet": "pets",
+    "tries": 3,
+    "selected": 2,
+    "score": 8,
+    "ref": 2,
+    "game": "Steal an Egg",
+    "gap": "Unrequested game title/HUD and limited overlap; Pumpkin Pup proportion drifts; aura hex values not pixel verified.",
+    "checks": [
+      "fail",
+      "pass",
+      "partial",
+      "pass",
+      "partial",
+      "pass",
+      "partial",
+      "partial"
+    ],
+    "scoreSource": "Fresh JUDGE.md (unchanged artwork)"
+  },
+  {
+    "sheet": "scythes",
+    "tries": 1,
+    "selected": 1,
+    "score": 8,
+    "ref": 2,
+    "game": "Pet Simulator 99",
+    "gap": "Held Witch/Epic label and incidental Pup income omitted; seven icon silhouettes verified at actual 40px.",
+    "checks": [
+      "pass",
+      "pass",
+      "pass",
+      "pass",
+      "pass*",
+      "pass",
+      "pass",
+      "pass"
+    ],
+    "v3aManifest": {
+      "tries": 2,
+      "selected": 2,
+      "score": 8,
+      "gap": "Witch/King aura surrounds avatars too; details flatten at 40px though hook silhouettes remain distinct.",
+      "checks": [
+        "pass",
+        "pass",
+        "pass*",
+        "pass",
+        "pass*",
+        "pass",
+        "pass",
+        "pass"
+      ]
+    },
+    "round": "v3b",
+    "scoreSource": "Independent art_critic review, REDRAW-RULES checklist and reference images",
+    "paletteVerification": "Visual colour-family match; pixel-exact hex values UNKNOWN"
+  },
+  {
+    "sheet": "guards-and-king",
+    "tries": 3,
+    "selected": 1,
+    "score": 8,
+    "ref": 1,
+    "game": "Pet Simulator 99",
+    "gap": "Arena frame passes visually (8); fight variant is 7: duplicated boss portraits, purple subtitle and missing FINAL BOSS sign.",
+    "checks": [
+      "pass",
+      "pass",
+      "pass",
+      "partial",
+      "pass",
+      "pass",
+      "pass",
+      "partial"
+    ],
+    "scoreSource": "Fresh JUDGE.md (unchanged artwork)"
+  },
+  {
+    "sheet": "guards-and-king-fight",
+    "tries": 2,
+    "selected": 2,
+    "score": 8,
+    "refSheet": "guards-and-king",
+    "ref": 2,
+    "game": "Pet Simulator 99",
+    "gap": "Both HP portraits show King; subtitle purple-filled; FINAL BOSS billboard omitted.",
+    "checks": [
+      "pass",
+      "pass",
+      "pass",
+      "partial",
+      "pass",
+      "pass",
+      "pass",
+      "partial"
+    ],
+    "scoreSource": "Fresh JUDGE.md (unchanged artwork)"
+  },
+  {
+    "sheet": "first-5-min",
+    "tries": 2,
+    "selected": 2,
+    "score": 8,
+    "ref": 2,
+    "game": "Steal an Egg Mobile",
+    "gap": "Candy goes 0 to 1 then resets to 0 without a shown spend. Native grid ratio within 0.07% of 13:9, six panels near 19.5:9.",
+    "checks": [
+      "pass*",
+      "pass",
+      "pass",
+      "pass",
+      "pass*",
+      "pass",
+      "pass",
+      "pass"
+    ],
+    "v3aManifest": {
+      "tries": 2,
+      "selected": 2,
+      "score": 8,
+      "gap": "Chest and action target are separated; target size is smaller than requested; studs remain strong.",
+      "checks": [
+        "pass",
+        "pass",
+        "pass",
+        "pass",
+        "pass*",
+        "n/a",
+        "pass",
+        "pass"
+      ]
+    },
+    "round": "v3b",
+    "scoreSource": "Independent art_critic review, REDRAW-RULES checklist and reference images",
+    "paletteVerification": "Visual colour-family match; pixel-exact hex values UNKNOWN"
+  }
+]
