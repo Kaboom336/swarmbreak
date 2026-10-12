@@ -1,0 +1,19 @@
+{
+  "name": "GuardianGreybox",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": { "$properties": { "Gravity": 196.2, "StreamingEnabled": false } },
+    "Lighting": { "$properties": { "ClockTime": 12, "Brightness": 2, "GlobalShadows": false } },
+    "ReplicatedStorage": {
+      "GreyboxConfig": { "$path": "GreyboxConfig.luau" },
+      "GreyboxLayout": { "$path": "Layout.luau" }
+    },
+    "ServerScriptService": {
+      "$attributes": { "GreyboxSelfTest": false, "GreyboxSeed": 0 },
+      "Greybox": { "$path": "Greybox.server.luau" }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": { "Greybox": { "$path": "Greybox.client.luau" } }
+    }
+  }
+}

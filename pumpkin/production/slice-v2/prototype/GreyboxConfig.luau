@@ -1,0 +1,22 @@
+return {
+	Name = "Steal a Pumpkin — GREYBOX",
+	SoloRunSlots = true,
+	HolidayPetsReturnYearly = true,
+	RecipeVersion = 1,
+	SessionSeed = 20261012,
+	WalkSpeed = 16,
+	CarrySpeed = 15,
+	CatchRadius = 3.5,
+	SlowSeconds = 1,
+	MercySeconds = 3,
+	WarningSeconds = 1.2,
+	HeadStartSeconds = 1.2,
+	Pieces = {
+		P01 = { width = 32, depth = 24, route = 20 },
+		P02 = { width = 32, depth = 24, route = 24 },
+		P02Short = { width = 32, depth = 16, route = 16 },
+		P06 = { width = 32, depth = 24, route = 24 },
+		P06Short = { width = 32, depth = 16, route = 16 },
+		P07 = { width = 48, depth = 48, route = 40 },
+	},
+}
