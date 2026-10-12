@@ -117,3 +117,19 @@ Claude handles Studio/design review; Codex handles code/build/research. A fresh 
 Acceptance requires real fresh pacing, fixed-seed shuffles, solo/two/eight clients, transfer/item conservation, save/rejoin, full-pen behavior, landscape touch and10-min absence of late systems. Distinguish static/build, Studio, visual/critic, owner and real-device evidence. No commit/publish.
 
 Lessons: When topology changes, replace spatial assumptions because old safety helpers can silently end danger. When events end, preserve item identity because cosmetics must not erase earned pets. When first-session targets are modeled, time actual input because arithmetic cannot prove clarity or fun.
+
+## Changes from Zion's TikTok favorites (2026-10-12b, refs/TIKTOK-DELTA-2026-10-12b.md)
+- Guardian tell: "!" over its head + one-line "RUN!" banner when it wakes; optional hide spots (crawl-in log/bush, "HIDDEN") as a second way to escape besides dodging.
+- Dash (later islands): readable VFX (white-outline ghost trail, smear, landing ring), not a silent speed bump.
+- Guardian strikes telegraphed with red ground discs and a short red banner before they land.
+- First-minute tutorial card: "STEP 1/5" segmented bar, SKIP button, one arrow, key hint on the button.
+- Reveals/boss intros: title card + "tap to skip" on every shot.
+- Parkour stays small and contextual (slide, short wall-run) on later islands, never a full parkour system.
+
+## TikTok-first design (Zion 2026-10-12)
+The game will be promoted on TikTok with our clip/edit pipeline (Clipper), so every core moment must make a good 9:16 clip:
+- Clip moments built in: close-call escapes (guardian inches behind, "!" and RUN banner), the steal ring filling, rare/huge hatch reveals with title card + rarity burst, funny guardian fails (trips, gets confused when you hide).
+- Readable in a vertical crop: action stays in the centre third of the screen; big bold text and colours; no tiny UI.
+- Sound stingers on steal, escape, rare hatch (clips are watched with sound).
+- A seasonal hook each event (Halloween islands now, winter next) gives fresh clip topics.
+- Later: an in-game "replay last run" camera for creators (not v1).
