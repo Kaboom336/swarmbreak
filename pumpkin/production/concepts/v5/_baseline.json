@@ -1,0 +1,614 @@
+﻿[
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\CameraFraming.luau",
+        "sha256":  "DDC24AFC6428425678C7C6638C283ABCD6A286A70CC7A344922E34FDB857080D"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Catapult.luau",
+        "sha256":  "BD5CE14585C576F18D10CFC6F2CD507A0B1876AD5B984DFAB678DFFDDDAE9085"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Challenges.luau",
+        "sha256":  "3472046E05445AE565292B043F9E895C9E56A1F21DD7908A5CC2ADFA8CAFFE89"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Codes.luau",
+        "sha256":  "EC75C534BF6FDEA0AFCD2327DA7455B8B8FA53C24084A9E0E410079A5A2E5DF3"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Config.luau",
+        "sha256":  "850B0AC6B812F95E3AB4D0204C871C4F74E512B00826ACDD8A90A1B8E0522763"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\CoopRules.luau",
+        "sha256":  "6F57D3457489A948290E7A023DFB03CB56A07D769DCEB9679AB52A46F0093E0C"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Daily.luau",
+        "sha256":  "3998303D858692FD8836145299A187A9F757BF4E070DD96ADD5E1299BC855E2F"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Economy.luau",
+        "sha256":  "CB1E772E07EB99E1A35D2D8AF006DC9E035B228432789D9C8BAAF62BAFFD6F86"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\ExperienceRules.luau",
+        "sha256":  "63012A772CE3EAB58A51325DBB1201D2E62425E7BE66B720E6DE77839C3A4027"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Format.luau",
+        "sha256":  "3DF5041952EB9528F1943748F8D7D15C5AB990CBB96EF0394A976AB1E7A48F62"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\FreeDoubleWins.luau",
+        "sha256":  "248CA96BED2C4E72FC8D6BE10C3A95A832FDFCCEE03C82436EF03823A89E6986"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\FriendBoost.luau",
+        "sha256":  "4D3CD8D1E3D20EA05037EA989E0AB7CE4B05A49A5B0412C367E10E8ABFE67E66"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\GardenLayout.luau",
+        "sha256":  "622FF1BA8C614CBA8C537EF346C47A27B294E8AB9BA7B423FEE3BCC0EACDA57C"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\GardenRules.luau",
+        "sha256":  "CCFA59A95CD1D3EEEA0D48EA564C081C13BD1C396E1474AE7C975917E40CB9AD"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\GiftSchedule.luau",
+        "sha256":  "BB511BAFDBBD632C19B507B1D8EBCCD38C6DC0C4B58ED935D20D77C91EE08B0D"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Grow.luau",
+        "sha256":  "CD3000CE0FCB28B4CE825F8DF0FEEF5A55C13313FAED48754B099AF913341CBC"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\HatchEntitlements.luau",
+        "sha256":  "D974BE7F48B6D07A51B44E439B49C8A5DE67D5B86E62A9F48DF9FFC522301DC8"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\HudLayout.luau",
+        "sha256":  "CDE94C2D9F7082052CD1032F6F5F618E4DB30BAD25BB289D181B4029E56BE995"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Monetization.luau",
+        "sha256":  "3C623B93C46F02CEC4D591F328812BF3D451088AA997C64C9F4BB01B6C9C081F"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\PetIndex.luau",
+        "sha256":  "CC220E04A617EC60E894A91AEB208FB797011FEADCB07491356A9EE4081BCBD9"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Pets.luau",
+        "sha256":  "3B982A5423B07B03E4384229F8FC899D1365C06C5498BF23D3F7EC49A5909557"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\ProfileSchema.luau",
+        "sha256":  "C01F671F71EC03F5CF342E561AAFFD3EF56386FE04A6C014EC5C4145343B96EA"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Rebirth.luau",
+        "sha256":  "07CE77003065CFC7E48A5F1001DCD6FF711CE66CA05C2B99DC344817D882445D"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\ReceiptLedger.luau",
+        "sha256":  "3A87A60BA89E241B7DF2C5DDB9AD6C427F6BE3AD1D268F751EC508F1D59722FE"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Ride.luau",
+        "sha256":  "D80B82257F7E335714F75F649BC91A26C7DB907ABBF4347C73340C0DDCAB5C85"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\RideSurface.luau",
+        "sha256":  "851774E5BF7D3004E9C3633DDEA7B1BA418C4DBEA9E2CBEF651D576AC9E43E55"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Roll.luau",
+        "sha256":  "127545B2E57C867EB998E7B4DC4B50A0B0CB826772AD96E4053592D3125B4F18"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\SessionRules.luau",
+        "sha256":  "6D833C79D85DACF68563AAB9BAB9CC967562095CC09993CB0F355481F157744A"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\StarterPack.luau",
+        "sha256":  "C6A990BC2747C0BCA663B26DBE53BBB9CE7B44893802326ED20A05AD843D4C6D"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Style.luau",
+        "sha256":  "EDC6FE0F7327E778977DFC90BEED5D8FE4D9F6A4A90A8F96C9007F94F298969D"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\Tutorial.luau",
+        "sha256":  "233840807E32403B66E5195BB9AA9EC3B5C11830463D4DAF7E687E3DA0AFD305"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\VisualRules.luau",
+        "sha256":  "0E1E9AB6AFCC28BCFA550ECF65EC634288D34F35E19406A8B390DEC5FC73A124"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ReplicatedStorage\\Shared\\WallProgress.luau",
+        "sha256":  "CE3D620AE491AE865BCDF06A7C21086BD98ACA5463200B30E92AD6379A456437"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ServerScriptService\\.gitkeep",
+        "sha256":  "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ServerScriptService\\Coop.server.luau",
+        "sha256":  "21D84E5A5043AC1C1E00B173D534787868CBA587DA7C834FB6B515F8EF3BEB48"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ServerScriptService\\Game.server.luau",
+        "sha256":  "C5BE13FF927B4B7CB9DAE14006DC4573B3511B9E9520CE88B23107715E1A600E"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ServerScriptService\\Garden.server.luau",
+        "sha256":  "A25E2797078977C6E4A4075BB0FEE7D6F966734005BE5B4565BB747A319225A3"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ServerScriptService\\MapFallback.luau",
+        "sha256":  "DEEC0F71CF42D99DDF5D85E91E0ED55465A5FF4F14946CDE3A4D14FD175E0114"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ServerScriptService\\Pets.server.luau",
+        "sha256":  "7F90F3F91946A4D968090BC3DAAB86A141929C6FF76357D7EE7BD6CFEDD5C3C2"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ServerStorage\\.gitkeep",
+        "sha256":  "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ServerStorage\\CoopScene.luau",
+        "sha256":  "9270E14F88398B8A5BED9068BF806D0FF6358B8C5B9754ABE44A806D3FD61391"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ServerStorage\\Data.luau",
+        "sha256":  "9D50849AF42FE0885E12B5A90643E9CB434DA358F766BB92F83FFE0A8231798A"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ServerStorage\\EconomyService.luau",
+        "sha256":  "B133F12786AA281430E89F94BC3D3BEB86AF2D2EF452AEB30266D6E24C18BAA9"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ServerStorage\\GardenScene.luau",
+        "sha256":  "A9C865E8C93500693BC2A155E3E534A3C2A14FC7ABED134896897BF355327DCE"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ServerStorage\\Leaderboards.luau",
+        "sha256":  "ECD08D8F62F1D9D61605F53C1556452EB7D2274B5A2DAFCDCB8906262DFF3DF3"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ServerStorage\\PumpkinVisual.luau",
+        "sha256":  "670561FDB7BD0813E280B23C294638E1CCC67291036C0040D4FFE7CBC2143186"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\ServerStorage\\Remotes.luau",
+        "sha256":  "E267D727226110570662BF369A47E220FC2745045A10485B1DBEB3DF973C9CA7"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\StarterGui\\.gitkeep",
+        "sha256":  "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\StarterPlayer\\StarterPlayerScripts\\.gitkeep",
+        "sha256":  "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\StarterPlayer\\StarterPlayerScripts\\Catapult.client.luau",
+        "sha256":  "0B47C52FDEE65B21159657B9EFC84EBCB71C771B26BED4CDE150C93E701FEEBF"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\StarterPlayer\\StarterPlayerScripts\\Coop.client.luau",
+        "sha256":  "BEE5E6703E7BCA9605D9F27EF041A31F4DC5AC85CE04A950261C1E38A057751E"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\StarterPlayer\\StarterPlayerScripts\\Garden.client.luau",
+        "sha256":  "2E989A9151A151AFF6841B4A3613F4824E4F63C0B8D1EC579C88DCC602CA5673"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\StarterPlayer\\StarterPlayerScripts\\Hud.client.luau",
+        "sha256":  "86D4C4D630CB5897BFB324ABC2BDE636E45E412486F94FBEF4E187BBC6CF91B7"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\StarterPlayer\\StarterPlayerScripts\\Pets.client.luau",
+        "sha256":  "4F41FAE0E53AD530E2B1694998B155E6CDCE6C341D3D003E9ECE7344224C83DC"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\src\\StarterPlayer\\StarterPlayerScripts\\Roll.client.luau",
+        "sha256":  "10277E8722C7C22829359889E66A017FA20F25AD78465CFB3D3F2D75C2220193"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\first-5-min-cmp.jpg",
+        "sha256":  "46101455BCF129044415E0687C4FF076E063CB85C80F9697755C44D87ED2BD0B"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\first-5-min-sbs.jpg",
+        "sha256":  "F05F73B28C6894CBCD67DEECEF30F790838C3DF032912AE8847215A51750DA89"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\first-5-min.png",
+        "sha256":  "18245C30B63372EDFC9FEA345B52BBBCDD3BBF01F85CB3E947BB1F9D9CC4BF4B"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\guards-and-king-cmp.jpg",
+        "sha256":  "82F846C92E88CAE7CCC9C1DC11187F251709B726DB99C81E65016663D50BCDCF"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\guards-and-king-fight-cmp.jpg",
+        "sha256":  "EC3CD1720C394BE59F39288A7218CEB3F8FC7274CB1808A4743FCAA8F4450273"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\guards-and-king-fight-sbs.jpg",
+        "sha256":  "6B7508315F3FA9F72E7DD023DBF089C48EBB8ACF0EFCC011A9BD43F626CA7C05"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\guards-and-king-fight.png",
+        "sha256":  "275A93B9C3E90985D8FB90DE21A66D8321338BD38A4BF21A07CDB4CCE12A2E7C"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\guards-and-king-sbs.jpg",
+        "sha256":  "1C7749546C1B35F4BC9C53DD52F9B050B2AE92ACE3DFEE8A5FCADCFB0747340D"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\guards-and-king.png",
+        "sha256":  "5E210758FA639A2713424380306CC0D18809DAE1F568D42CDE7737D3EE0626AE"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hatch-reveal-cmp.jpg",
+        "sha256":  "61476F7F4620DF2F005C63AEFD6745E81AAB97231920565BC707EC4C649FE034"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hatch-reveal-mass-cmp.jpg",
+        "sha256":  "E279DB0C5C97EED47C2704A0E3CD9930B90A838C0711E2114D9302137A2F84F4"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hatch-reveal-mass-sbs.jpg",
+        "sha256":  "4DE767A8F069ABA2E103AB05C53377AB7D237D95171CF9568CD3710066BB96B5"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hatch-reveal-mass.png",
+        "sha256":  "ADDE6605C6FA11FEAB2FB48B2E4109DE8C1410BC973639FAB44B5E8F74DDE6A0"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hatch-reveal-sbs.jpg",
+        "sha256":  "71A3221BF196127BC1E353AA2E7BEB60F03147B977180497B7DCB37B5B0AFE12"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hatch-reveal.png",
+        "sha256":  "3C12753BA1C80A9BF4B7D37F50059C08158F513D63DB3CC536C1566D5CD287EB"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hub-perspective-cmp.jpg",
+        "sha256":  "34A7AB69F841F3D5788837C0009CD5AD52EAD688E0BE0CC3F48C9466275D6290"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hub-perspective-sbs.jpg",
+        "sha256":  "E8803B0061401776139BB978D25A09CEEF9ACDB53678CD13E90570B959C43DEE"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hub-perspective.png",
+        "sha256":  "3B65A135F5D3E89074B4C40DE6A1AA7BDCBEE16057B268EE9C403A7340368C52"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hud-desktop-cmp.jpg",
+        "sha256":  "3151BB24D33B29AF589EE50AAA10143821D9A334E8FD5B5603506FD8E8A00124"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hud-desktop-sbs.jpg",
+        "sha256":  "8E1F00AB4B4F272DFB5C0C8E8696F0C2B32E7A7A5002C209D1FB78A654D3CC29"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hud-desktop.png",
+        "sha256":  "707B23F95DB1EE42183403695A8C2EA91B4A4203E5F3F5551C25DD5D2DA5B739"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hud-phone-cmp.jpg",
+        "sha256":  "EED64B8364568BC0EDF8C1C5B3D48DF2FF6A8D2A479F426C38943B73A55548DA"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hud-phone-sbs.jpg",
+        "sha256":  "E7808E7C88F3E4E4B9C42B71F26E225C4343F80281C2BA2F430A151BE3114C88"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\hud-phone.png",
+        "sha256":  "061CC511D6CB92E0F2A2F3D8CE740C9E7AD42D865A6BB75135E1080F99B7390C"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\JUDGE4.md",
+        "sha256":  "DB6C43A8E398E03B92B8D9007D1BD2E83BF19E22AE85243E5779EB7B06153A2A"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\MANIFEST.json",
+        "sha256":  "5EA2E8DE4D29AC8FDB0C61A8ACE8C7AC2EF5296C90CB81511565F8952B2BAB72"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\panels-index-cmp.jpg",
+        "sha256":  "2E8D95B3FB537F79A9A2B0891EA7DA3B559D2F6DD9147E0D8A89CDC10EF026EF"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\panels-index-sbs.jpg",
+        "sha256":  "0D2CD8270251248403A909904EB70365795B4EF240F316882E654351CD52FBF6"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\panels-index.png",
+        "sha256":  "56A73146263C50974314EB943E2917FC73A1BDA42F3906A8562C423C41A8E2E5"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\panels-shop-index-cmp.jpg",
+        "sha256":  "EA3D4FAA32F383D285784704D845B6DCC46EF0AEBF3CC7ADC5732F6D83193970"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\panels-shop-index-sbs.jpg",
+        "sha256":  "7A5F6D2670061784D3216A3A6D81E804AE56B9125264CBD117F5B4FD40F561DC"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\panels-shop-index.png",
+        "sha256":  "E3A3CDD4D1A08EB456AAE32F1E85C7176F82BDACEA3A048AF6CFF8D009235540"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\pets-cmp.jpg",
+        "sha256":  "61D871E89ED8F183F0351B54BAEBC0DE4082131F100431758FCEB2AE0F05D6E2"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\pets-sbs.jpg",
+        "sha256":  "66A798AC19955D658B3FA3992718C6FED52FC8F7AE861CEC56D8EA975CEF5A56"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\pets.png",
+        "sha256":  "2580E8F1F9BEECE68D92BAFE5B9B51138282B2CE75C52575782BC76B922A9EE3"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\PROMPTS.md",
+        "sha256":  "C6CE82953284033F83681FF20EB31A9DF88828292A7A89795937C68F48B81ED5"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\SCORES.md",
+        "sha256":  "FA025BF65ECB9D8AD0C6A9733AD1B29A8593E0326527C6EF735D5644F8038449"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\scythes-cmp.jpg",
+        "sha256":  "8DD5890BA2E66D759C268BA47E2D1B5F53F967C5D6538E9B7CCA3BCDAE95CD2F"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\scythes-sbs.jpg",
+        "sha256":  "32B51A46202F697989E1C43087BBA332B37D0726A2B89CEAE61606AE38FF5179"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\scythes.png",
+        "sha256":  "D708A82188B5103B372CA2F74D9526476E7ADE0403AA6EEB5F07F72C3FBC13EF"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\VERIFY.md",
+        "sha256":  "01FC2C8B8522863714090D0D46848D0792F02BF02B32E60B760059D991667ECA"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\zone1-perspective-cmp.jpg",
+        "sha256":  "A3B9527A26BA34E106C12A8983926B0B7725E750E1CF73E8813B08E708FB3D99"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\zone1-perspective-sbs.jpg",
+        "sha256":  "35923A9936A6AEFA85E06A0F8A887E5830426D814E5716FC7B8E72E1000316CC"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\zone1-perspective.png",
+        "sha256":  "4BA74DF7BCF88EB4D5C6DC64BF52835A8EE95AC6AA439A9F3058919792B4CE79"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\zones-strip-2-cmp.jpg",
+        "sha256":  "1B4693D5AF9C369A4B69ECF581FEF51E2B70F8EAF8C0BD552F27BEDE5B567BA7"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\zones-strip-2-sbs.jpg",
+        "sha256":  "F909B1222B316C5938D06345A3E914744281D7AF1CA4985ADF9A71AAA9A0CDE7"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\zones-strip-2.png",
+        "sha256":  "3377285447496EDF2CF62915329316B3B82D21E94A9B5982B676B257C57A4514"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\zones-strip-cmp.jpg",
+        "sha256":  "EC9527D0E2E18B274ABE0F5C351B5CA875067C895F90A08710A7D6FD7413F70D"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\zones-strip-sbs.jpg",
+        "sha256":  "67D1DA0281AB6FF46F3D213DA85D7DF2F074B0146DCE8DE652B0C115F063773D"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\zones-strip.png",
+        "sha256":  "8026987445B515F97BF49DAB2A59E1966B10B2F43E9C91996101DE659DA71EE3"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\_assemble.ps1",
+        "sha256":  "515A908DD2D861A74231473EB794FC69F02EA167C508DA09C8FD52C246AEE72C"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\v4\\_sheet.jpg",
+        "sha256":  "A4900E6B5F9FD4C78F3F8B0392FC76A024AA981472D942B6F00E37DE304E6647"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\bgs-upload-date.txt",
+        "sha256":  "A7E3267A6C75DF0ED2CAE6DCBD4E0A6A76C6435AC32A68DE07F3F5AB655B9AEC"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\boss-fight-deepwoken-1.jpg",
+        "sha256":  "A5E233CCE60790EA25734AAF83504D3D1FB8A17A811FCF49AA46589269B50298"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\boss-fight-deepwoken-2.jpg",
+        "sha256":  "1AD18F7F6C457CF3DA9F83EBC428BA4657D00CBBEEE4AF14FD1D098DF00EB346"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\boss-fight-rivals-1.jpg",
+        "sha256":  "2FE5F5C745A77F4180A7CCBEBB1BA8AA7175E99E030AE043C1EA9F8AFA6D7FE8"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\chart-api-0.json",
+        "sha256":  "8906B029C389C4BCE44437A779903A92D0B8CF2C91038031EC0CC0C5CBEBB438"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\chart-api-1.json",
+        "sha256":  "40C2DB9748F63F7D3990F0110F1FE706E19EE5866D65D94905BCCC59098D9CE3"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\chart-api-2.json",
+        "sha256":  "5EFF8149729437B70178B2E5522EC5EF0B1C2260EE1AC4769D5F2CCD5861FB3C"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\chart-capture.json",
+        "sha256":  "D6FAF87C1EAF00C0821FED1B6C3B7A59E037841F4D216D31BA4698B5209BEF0A"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\deepwoken-checks.txt",
+        "sha256":  "BD30D18F8CBB5BB57563EBA3E4BD84D130AAA36035292CE78E1519D544C3AC7A"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\deepwoken-recent-checks.txt",
+        "sha256":  "81E43CE905A29EC7318269C739A7E248CF9C46A010F7489FF83E38536726F610"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\extra-checks.txt",
+        "sha256":  "3F394D47E96DE6F06B13B280D54687331230E1C0BB04B8003F555B741B8E5CA6"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\first-minutes-adopt-me-1.jpg",
+        "sha256":  "7D83ADAF4C69616C7AE8D7019E9E7E43989F698BC47BD0DF718729EF60177C35"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\first-minutes-bgsi-1.jpg",
+        "sha256":  "E157C2F3F959DBE2EA3869F890E84E92A6A4081978F5DE89B6710E93E8FA90A9"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\first-minutes-doors-1.jpg",
+        "sha256":  "298C8CEE2CC2B2511764E0441AD26540FCBC083C245961CA2421D6C526500D45"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\frames.json",
+        "sha256":  "EA28E7426E96CF50492B5415685D912C2235569C420A5A1F7B37C505C1208EDD"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\hatch-reveal-adopt-me-1.jpg",
+        "sha256":  "B3918F2505B418DF7F9F25B69E5DA3D6AC52006917AB7E53F7437E71D4F6082A"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\hatch-reveal-bgsi-1.jpg",
+        "sha256":  "D77107EAB70CADDE86F7A5B30047B0E403CED8EC99558D627EE3748EFC15D8AD"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\hatch-reveal-fisch-1.jpg",
+        "sha256":  "CBC37CE94D2FEBFF858312B71DFDB7BE4E02611C4C234020C7FF90CAA757F8D8"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\hub-base-adopt-me-1.jpg",
+        "sha256":  "C0FE008AA93A74B97E6218CAA84096E8AB3D70C6060701B3249DEC873898D0C5"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\hub-base-bgsi-1.jpg",
+        "sha256":  "A0984FEB3D06F47695037B2E2E3329116EF5DE970B0149405A2C83334C7D81A2"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\hub-base-bgsi-2.jpg",
+        "sha256":  "1B54DAE27D5D38CBF3277BF666A7953F7DE1822981145A7A5419F83B8532181F"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\hud-pc-bgsi-1.jpg",
+        "sha256":  "B6818BDC1C709524542DE90B98ED4BBB5DAD3645A03373E6A22B30E4AC72E969"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\hud-pc-fisch-1.jpg",
+        "sha256":  "550ACDC075A9D1773B83A30892DF385BDDB814F6A9EC42870EBDA97B1205B583"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\hud-pc-rivals-1.jpg",
+        "sha256":  "EC8E859441BCD273442E3F327436558E353A4BD3524FE548110A0AB9813DBB7E"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\hud-phone-adopt-me-1.jpg",
+        "sha256":  "7B23CF8C3BF6ECBA38A5D284F46EE600976BB4F2CCC1E312FDD748922C1383EC"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\hud-phone-rivals-1.jpg",
+        "sha256":  "F35A587845DD1B377FE5B9628770D01A5F930774DC21111EDDD5A6CC0490BC51"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\hud-phone-rivals-2.jpg",
+        "sha256":  "B37389F8760C07F7293109A6C6754135092FAC4CF85C4BF72BCDAE18E9525CEA"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\index-panel-adopt-me-1.jpg",
+        "sha256":  "5E2491D99D2115056CD602256566C21F895B8DF0F6683F3DEE75F924C6834947"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\index-panel-adopt-me-2.jpg",
+        "sha256":  "639872A7EE68CD40DAA01E544607FA69464034C1CFF08CF3D3649495A7BB90B2"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\index-panel-bgsi-1.jpg",
+        "sha256":  "C0C81E1957513647FA06C21864C9A9F1D5C2250AB594166674CE8B85B544067E"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\pets-lineup-adopt-me-1.jpg",
+        "sha256":  "1FF1C637758E28703DC6EAF3354EDCD8FAECDBE265D1BB66D11AC35FFF0771D8"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\pets-lineup-bgsi-1.jpg",
+        "sha256":  "ABE98F886103A9C26EB1F94A89D8B231D6CAE206B21A5FF93E574A89657575D9"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\pets-lineup-bgsi-2.jpg",
+        "sha256":  "4B48E054FE9330FEAA6E2483DC27AC5EBB586BE3806DFA7901FD04642D3922F4"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\REFS3.md",
+        "sha256":  "76013F834269B8E080E8969BEC26E7E1EFAFAA2BD1751594F5872272FA23373B"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\shop-panel-bgsi-1.jpg",
+        "sha256":  "72136FA7E91E60A2B36FD9A29500B1B9A8DB117E82C51CA45440F9AFB725A2CA"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\shop-panel-doors-1.jpg",
+        "sha256":  "C0364673A085917DA278EA2370D651C18806770067D418303423D789A8DB34A1"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\tool-held-doors-1.jpg",
+        "sha256":  "ACD12248A374D3E40BAE23B90C0FF76003D99CD69F8DD04CA1915C85C6FC50DD"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\tool-held-fisch-1.jpg",
+        "sha256":  "701783B9EBFC4D888B723A9BCA462BC47EEF75D4D189E69B10360590653B2A50"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\tool-held-rivals-1.jpg",
+        "sha256":  "B37389F8760C07F7293109A6C6754135092FAC4CF85C4BF72BCDAE18E9525CEA"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\verification.json",
+        "sha256":  "EC5E7BCE8498025999B2D77D37B7E93EDBFF04FEB774F6D3E20C392628E170E0"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\video-checks.txt",
+        "sha256":  "CF3D8140329EADCF467A69DA4BEB1CA62A2F19967445B87CA99F3504AB79B78C"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\videos.jsonl",
+        "sha256":  "3EB0DA9058D62E53B32BEDE48E84749D72F66EAB50D69C0B0719550647D3E4C3"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\zone-lane-adopt-me-1.jpg",
+        "sha256":  "305B26B5206603B436EC15A7C9940DE41AE880B5A6ED6247E318A224A814C6F5"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\zone-lane-fisch-1.jpg",
+        "sha256":  "0D5352BCAFE6C70503BB25FA0A5AB1EB45D249EE74FFF3381D349F2FA5C95345"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\_hub-comparison.jpg",
+        "sha256":  "128875CFC0CE3DF8A6E230946340F25F2D430550EDED2E4881A27CA6EE2C9D62"
+    },
+    {
+        "path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\concepts\\refs3\\_overview.jpg",
+        "sha256":  "68FEABB889F12236D1CCD15C1E392888CEC361EA348043CD19F78135CFCCAA7B"
+    }
+]

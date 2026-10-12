@@ -1,0 +1,480 @@
+﻿[
+  {
+    "screen": "hub-perspective",
+    "refs": [
+      "hub-base-bgsi-1.jpg",
+      "hub-base-adopt-me-1.jpg"
+    ],
+    "source_v4": "../v4/hub-perspective.png",
+    "selected_file": "hub-perspective.png",
+    "selected_attempt": 3,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "hub-perspective",
+        "attempt": 1,
+        "path": "C:/Users/zerha/.codex/generated_images/01a130b1-bb42-7a93-9786-f99a055c9ed1/exec-0718e45d-6218-432b-b3c4-4a232a1f06ec.png",
+        "selected": false
+      },
+      {
+        "screen": "hub-perspective",
+        "attempt": 2,
+        "path": "C:/Users/zerha/.codex/generated_images/01a130b1-bb42-7a93-9786-f99a055c9ed1/exec-9ac12caf-4a6c-4e82-8ada-7a1117726da7.png",
+        "selected": false
+      },
+      {
+        "screen": "hub-perspective",
+        "attempt": 3,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-12d5798a-4dec-4f32-a338-3e08ac9b547f.png",
+        "selected": true
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  },
+  {
+    "screen": "zone1-perspective",
+    "refs": [
+      "zone-lane-fisch-1.jpg",
+      "zone-lane-adopt-me-1.jpg"
+    ],
+    "source_v4": "../v4/zone1-perspective.png",
+    "selected_file": "zone1-perspective.png",
+    "selected_attempt": 2,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "zone1-perspective",
+        "attempt": 1,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-1fa58a74-477f-46ab-9e9c-cd9b1ece1c92.png",
+        "selected": false
+      },
+      {
+        "screen": "zone1-perspective",
+        "attempt": 2,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-294883cb-3a9c-4e06-84a4-b4957a8272b6.png",
+        "selected": true
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  },
+  {
+    "screen": "hud-desktop",
+    "refs": [
+      "hud-pc-rivals-1.jpg",
+      "hud-pc-fisch-1.jpg"
+    ],
+    "source_v4": "../v4/hud-desktop.png",
+    "selected_file": "hud-desktop.png",
+    "selected_attempt": 3,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "hud-desktop",
+        "attempt": 1,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-44edcc67-1c3b-4c0c-b44a-272e0dab8ff3.png",
+        "selected": false
+      },
+      {
+        "screen": "hud-desktop",
+        "attempt": 2,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-be98b421-586a-4f39-8567-df0304fc53d9.png",
+        "selected": false
+      },
+      {
+        "screen": "hud-desktop",
+        "attempt": 3,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-2ee489ab-121d-4497-9bfb-2d6e52f17ac8.png",
+        "selected": true
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  },
+  {
+    "screen": "hud-phone",
+    "refs": [
+      "hud-phone-rivals-1.jpg",
+      "hud-phone-adopt-me-1.jpg"
+    ],
+    "source_v4": "../v4/hud-phone.png",
+    "selected_file": "hud-phone.png",
+    "selected_attempt": 3,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "hud-phone",
+        "attempt": 1,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-2f42ea57-6c2a-4124-86bc-b19a1248b026.png",
+        "selected": false
+      },
+      {
+        "screen": "hud-phone",
+        "attempt": 2,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-27356d74-33b4-4c29-a2dd-a51b2658d23c.png",
+        "selected": false
+      },
+      {
+        "screen": "hud-phone",
+        "attempt": 3,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-db4ed6c3-9ccd-457d-ad17-5c21a3fe9a57.png",
+        "selected": true
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  },
+  {
+    "screen": "panels-shop-index",
+    "refs": [
+      "shop-panel-doors-1.jpg",
+      "shop-panel-bgsi-1.jpg"
+    ],
+    "source_v4": "../v4/panels-shop-index.png",
+    "selected_file": "panels-shop-index.png",
+    "selected_attempt": 2,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "panels-shop-index",
+        "attempt": 1,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-ec4ef38b-faa0-4db1-88b5-a7a342ae22c4.png",
+        "selected": false
+      },
+      {
+        "screen": "panels-shop-index",
+        "attempt": 2,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-76ffc578-cfaf-43c3-9ab7-ccd8ae6508a1.png",
+        "selected": true
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  },
+  {
+    "screen": "panels-index",
+    "refs": [
+      "index-panel-bgsi-1.jpg",
+      "index-panel-adopt-me-1.jpg"
+    ],
+    "source_v4": "../v4/panels-index.png",
+    "selected_file": "panels-index.png",
+    "selected_attempt": 2,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "panels-index",
+        "attempt": 1,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-be743751-17fc-4529-947a-24b8dc71720d.png",
+        "selected": false
+      },
+      {
+        "screen": "panels-index",
+        "attempt": 2,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-c3056e01-17b8-4b02-b4ec-faf580b449b3.png",
+        "selected": true
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  },
+  {
+    "screen": "hatch-reveal",
+    "refs": [
+      "hatch-reveal-adopt-me-1.jpg",
+      "hatch-reveal-fisch-1.jpg"
+    ],
+    "source_v4": "../v4/hatch-reveal.png",
+    "selected_file": "hatch-reveal.png",
+    "selected_attempt": 3,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "hatch-reveal",
+        "attempt": 1,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-9f7b70de-3490-4134-938e-9cc4bfdd7c90.png",
+        "selected": false
+      },
+      {
+        "screen": "hatch-reveal",
+        "attempt": 2,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-c83800f1-1bb4-4e79-8935-4bb2b985c966.png",
+        "selected": false
+      },
+      {
+        "screen": "hatch-reveal",
+        "attempt": 3,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-6c98aa71-d7cc-4036-beac-a315698a8cff.png",
+        "selected": true
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  },
+  {
+    "screen": "hatch-reveal-mass",
+    "refs": [
+      "hatch-reveal-bgsi-1.jpg",
+      "hatch-reveal-fisch-1.jpg"
+    ],
+    "source_v4": "../v4/hatch-reveal-mass.png",
+    "selected_file": "hatch-reveal-mass.png",
+    "selected_attempt": 3,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "hatch-reveal-mass",
+        "attempt": 1,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-aeb15d86-0624-42d8-a02f-cd2ae6b61ea8.png",
+        "selected": false
+      },
+      {
+        "screen": "hatch-reveal-mass",
+        "attempt": 2,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-bec08be2-6a4a-450c-8caf-815f62a618d3.png",
+        "selected": false
+      },
+      {
+        "screen": "hatch-reveal-mass",
+        "attempt": 3,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-02690b09-18a3-4d44-8e9f-fb86434c9967.png",
+        "selected": true
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  },
+  {
+    "screen": "pets",
+    "refs": [
+      "pets-lineup-adopt-me-1.jpg",
+      "pets-lineup-bgsi-1.jpg"
+    ],
+    "source_v4": "../v4/pets.png",
+    "selected_file": "pets.png",
+    "selected_attempt": 2,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "pets",
+        "attempt": 1,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-2a0e088b-1831-4329-adb0-9632cb6fa707.png",
+        "selected": false
+      },
+      {
+        "screen": "pets",
+        "attempt": 2,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-6f7d3a78-5268-4d54-b166-abab895c0acc.png",
+        "selected": true
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  },
+  {
+    "screen": "scythes",
+    "refs": [
+      "tool-held-rivals-1.jpg",
+      "tool-held-fisch-1.jpg"
+    ],
+    "source_v4": "../v4/scythes.png",
+    "selected_file": "scythes.png",
+    "selected_attempt": 3,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "scythes",
+        "attempt": 1,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-61512339-5636-4c97-bb3f-5a2259d2b6b4.png",
+        "selected": false
+      },
+      {
+        "screen": "scythes",
+        "attempt": 2,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-9e7c309a-2c1f-4857-8745-6577d8509511.png",
+        "selected": false
+      },
+      {
+        "screen": "scythes",
+        "attempt": 3,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-577bf939-e27a-44c8-935c-c429ae6a9c8f.png",
+        "selected": true
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  },
+  {
+    "screen": "guards-and-king",
+    "refs": [
+      "boss-fight-deepwoken-1.jpg",
+      "boss-fight-rivals-1.jpg"
+    ],
+    "source_v4": "../v4/guards-and-king.png",
+    "selected_file": "guards-and-king.png",
+    "selected_attempt": 2,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "guards-and-king",
+        "attempt": 1,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-d8c4ad75-2226-4c37-906e-d2a1454f92ef.png",
+        "selected": false
+      },
+      {
+        "screen": "guards-and-king",
+        "attempt": 2,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-3fc06459-ce4e-4daa-982d-4713efd1fa8d.png",
+        "selected": true
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  },
+  {
+    "screen": "guards-and-king-fight",
+    "refs": [
+      "boss-fight-deepwoken-1.jpg",
+      "boss-fight-rivals-1.jpg"
+    ],
+    "source_v4": "../v4/guards-and-king-fight.png",
+    "selected_file": "guards-and-king-fight.png",
+    "selected_attempt": 2,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "guards-and-king-fight",
+        "attempt": 1,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-fd6dbd50-fc19-41ab-8587-d9e04b5d8014.png",
+        "selected": false
+      },
+      {
+        "screen": "guards-and-king-fight",
+        "attempt": 2,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-a6912f8a-1e6f-4080-94f5-7969fd730fd6.png",
+        "selected": true
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  },
+  {
+    "screen": "first-5-min",
+    "refs": [
+      "first-minutes-adopt-me-1.jpg",
+      "first-minutes-doors-1.jpg"
+    ],
+    "source_v4": "../v4/first-5-min.png",
+    "selected_file": "first-5-min.png",
+    "selected_attempt": 2,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "first-5-min",
+        "attempt": 1,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-bc79ad30-34e7-494d-a130-ece2a008bfd8.png",
+        "selected": false
+      },
+      {
+        "screen": "first-5-min",
+        "attempt": 2,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-caabc4a9-1d8c-42f9-85d8-1704393cb24e.png",
+        "selected": true,
+        "selection_note": "Selected attempt2: attempt3 dropped essential HUD/companion/action labels. Some foreground softness remains; not strict screenshot acceptance."
+      },
+      {
+        "screen": "first-5-min",
+        "attempt": 3,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-39b9e641-25e1-4489-9b47-2acfff984f55.png",
+        "selected": false,
+        "selection_note": "Rejected: sharpening caused loss of essential composition/UI content."
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  },
+  {
+    "screen": "zones-strip",
+    "refs": [
+      "zone-lane-fisch-1.jpg",
+      "zone-lane-adopt-me-1.jpg"
+    ],
+    "source_v4": "../v4/zones-strip.png",
+    "selected_file": "zones-strip.png",
+    "selected_attempt": 2,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "zones-strip",
+        "attempt": 1,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-97e49794-0140-4dc9-8dc7-d191a44e619d.png",
+        "selected": false
+      },
+      {
+        "screen": "zones-strip",
+        "attempt": 2,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-cc6cae35-9873-4a51-a7b5-9b6b667f4486.png",
+        "selected": true,
+        "selection_note": "Selected attempt2: attempt3 dropped essential HUD/companion/action labels. Some foreground softness remains; not strict screenshot acceptance."
+      },
+      {
+        "screen": "zones-strip",
+        "attempt": 3,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-8e6307c0-5098-4b26-9725-94c8d2f4d80e.png",
+        "selected": false,
+        "selection_note": "Rejected: sharpening caused loss of essential composition/UI content."
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  },
+  {
+    "screen": "zones-strip-2",
+    "refs": [
+      "zone-lane-adopt-me-1.jpg",
+      "boss-fight-deepwoken-1.jpg"
+    ],
+    "source_v4": "../v4/zones-strip-2.png",
+    "selected_file": "zones-strip-2.png",
+    "selected_attempt": 3,
+    "built_in_tool": "image_gen__imagegen",
+    "real_studio_capture": false,
+    "attempts": [
+      {
+        "screen": "zones-strip-2",
+        "attempt": 1,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-c03f7489-3210-42f9-9b66-80751165fc7c.png",
+        "selected": false
+      },
+      {
+        "screen": "zones-strip-2",
+        "attempt": 2,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-36724e9d-181a-49ad-96d7-9c8223fd740d.png",
+        "selected": false
+      },
+      {
+        "screen": "zones-strip-2",
+        "attempt": 3,
+        "path": "C:\\Users\\zerha\\.codex\\generated_images\\01a130b1-bb42-7a93-9786-f99a055c9ed1\\exec-33a83160-23e0-4a9b-9539-08858e6c0d47.png",
+        "selected": true
+      }
+    ],
+    "review_status": "feasibility/visual pre-check only; see VERIFY.md",
+    "strict_renderer_match": "not runtime-verified"
+  }
+]

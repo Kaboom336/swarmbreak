@@ -1,0 +1,115 @@
+﻿{
+    "finalScreens":  15,
+    "allComparisons":  true,
+    "protectedFiles":  153,
+    "changedProtectedFiles":  0,
+    "generationCalls":  39,
+    "maximumTries":  3,
+    "images":  [
+                   {
+                       "screen":  "first-5-min",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "F313CF8EA54FF6CEE2C34CAE82F454A9DEF240810D1C605E7913A7D53CD68F2A",
+                       "comparisonExists":  true
+                   },
+                   {
+                       "screen":  "guards-and-king-fight",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "0E0065063E079C31CF712E95C6823F578BB6C8FA51A75652690F2D2DED8F959B",
+                       "comparisonExists":  true
+                   },
+                   {
+                       "screen":  "guards-and-king",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "652F54E3C9918F35D6A9D9ED8005937A642C1D3E1DED50C011673ABB143B8B7E",
+                       "comparisonExists":  true
+                   },
+                   {
+                       "screen":  "hatch-reveal-mass",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "10AF93A07AF167DDC4E5A31BFACD7806437FB57E0B0279C2FDD6A0BA921EAF2E",
+                       "comparisonExists":  true
+                   },
+                   {
+                       "screen":  "hatch-reveal",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "866BB33BED21AE6EC7CBA0051B79CF878AEEE9FD31570290D0C2432F075F227C",
+                       "comparisonExists":  true
+                   },
+                   {
+                       "screen":  "hub-perspective",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "B7F195179A2E026C0EB12BB0EC72E266C8A24157A001E6E33142D8A0E9FBEA76",
+                       "comparisonExists":  true
+                   },
+                   {
+                       "screen":  "hud-desktop",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "5DF21858AE09A934816058E8F631BB2C243FC9D1B1F2573332EF627B98C054BD",
+                       "comparisonExists":  true
+                   },
+                   {
+                       "screen":  "hud-phone",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "40F55AE4C188EB55B9E230B5E14293CB46A4C9C3340BB547898150EFA1622A24",
+                       "comparisonExists":  true
+                   },
+                   {
+                       "screen":  "panels-index",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "93A1FF28BEA778096D0CDDC9CA5EE37EA1118AB9BB2D15716CC8E24162ED30F3",
+                       "comparisonExists":  true
+                   },
+                   {
+                       "screen":  "panels-shop-index",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "24D4536B18E4D8E2D9DEB2EE2D899F2E4E13D59C9692D61D50AE12DF29E24793",
+                       "comparisonExists":  true
+                   },
+                   {
+                       "screen":  "pets",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "79EE988A5C1FA0163AC277F4162F97FC05011B3048E0FFA1F4D7061D9BBD2E35",
+                       "comparisonExists":  true
+                   },
+                   {
+                       "screen":  "scythes",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "78693E6B9B80B90B9ACFD604168F4814BCF6EF5B869BEF07E26A5BB7E84653E8",
+                       "comparisonExists":  true
+                   },
+                   {
+                       "screen":  "zone1-perspective",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "7D2228458732474E738EA03587E1ECD92D87CA683DE74064A5EA6BFEF6E557B9",
+                       "comparisonExists":  true
+                   },
+                   {
+                       "screen":  "zones-strip-2",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "59D3F2CCE1E97AAF42237D62DB4745CE3972D5D6DA64061C5B9E39A313E806BB",
+                       "comparisonExists":  true
+                   },
+                   {
+                       "screen":  "zones-strip",
+                       "width":  1672,
+                       "height":  941,
+                       "pngHash":  "ACC248FD20DEE6F51B30FDE7FA14E516EE319E29A1DCB9C04DDB91122D292AB3",
+                       "comparisonExists":  true
+                   }
+               ]
+}
