@@ -1,0 +1,14 @@
+{
+  "iteration": 2,
+  "triangles": 2260,
+  "height_studs": 3.2,
+  "objects": 24,
+  "materials": {
+    "Feathers": "1C1A24",
+    "Chest": "4B2C7A",
+    "Pumpkin": "FF8A1F",
+    "BillFeet": "FFA032",
+    "EyeWhite": "FFFFFF",
+    "Stem": "3FAE49"
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "source": "Blender 4.5 local checks; Roblox Studio import NOT tested",
+  "meshes": [
+    {
+      "name": "Rounded brick head",
+      "triangles": 188,
+      "signed_volume": 5.648284284927781
+    },
+    {
+      "name": "Tucked short body",
+      "triangles": 108,
+      "signed_volume": 1.3874982926219463
+    },
+    {
+      "name": "Purple chest feather bib",
+      "triangles": 138,
+      "signed_volume": 0.04021091451396046
+    },
+    {
+      "name": "Orange stub foot -1",
+      "triangles": 108,
+      "signed_volume": 0.06064888183832538
+    },
+    {
+      "name": "Left waving stepped wing",
+      "triangles": 128,
+      "signed_volume": 0.1614648418995147
+    },
+    {
+      "name": "Wing top brick",
+      "triangles": 44,
+      "signed_volume": 0.003352688446835275
+    },
+    {
+      "name": "Orange stub foot 1",
+      "triangles": 108,
+      "signed_volume": 0.06064888183832537
+    },
+    {
+      "name": "Right waving stepped wing",
+      "triangles": 128,
+      "signed_volume": 0.1612918821861755
+    },
+    {
+      "name": "Wing top brick.001",
+      "triangles": 44,
+      "signed_volume": 0.0033526965170841473
+    },
+    {
+      "name": "Small tail",
+      "triangles": 44,
+      "signed_volume": 0.06908598092574197
+    },
+    {
+      "name": "White eye -1",
+      "triangles": 140,
+      "signed_volume": 0.013816304921076359
+    },
+    {
+      "name": "Big pupil -1",
+      "triangles": 140,
+      "signed_volume": 0.0024890211809579527
+    },
+    {
+      "name": "Eye sparkle large -1",
+      "triangles": 68,
+      "signed_volume": 6.245136715229803e-05
+    },
+    {
+      "name": "Eye sparkle tiny -1",
+      "triangles": 56,
+      "signed_volume": 1.2235985714597857e-05
+    },
+    {
+      "name": "White eye 1",
+      "triangles": 140,
+      "signed_volume": 0.013816304921076179
+    },
+    {
+      "name": "Big pupil 1",
+      "triangles": 140,
+      "signed_volume": 0.0024890211809580533
+    },
+    {
+      "name": "Eye sparkle large 1",
+      "triangles": 68,
+      "signed_volume": 6.245136351145416e-05
+    },
+    {
+      "name": "Eye sparkle tiny 1",
+      "triangles": 56,
+      "signed_volume": 1.2235997056492986e-05
+    },
+    {
+      "name": "Short chunky orange bill",
+      "triangles": 108,
+      "signed_volume": 0.03389104776657441
+    },
+    {
+      "name": "Tiny bill smile seam",
+      "triangles": 44,
+      "signed_volume": 2.4425390687586748e-05
+    },
+    {
+      "name": "Lobed pumpkin brick cap",
+      "triangles": 188,
+      "signed_volume": 0.25542142686410674
+    },
+    {
+      "name": "Green stem base",
+      "triangles": 44,
+      "signed_volume": 0.005953756139884732
+    },
+    {
+      "name": "Bent green stem",
+      "triangles": 44,
+      "signed_volume": 0.002255282882635823
+    },
+    {
+      "name": "Pumpkin top stud",
+      "triangles": 44,
+      "signed_volume": 0.0008762855284676971
+    },
+    {
+      "name": "Pumpkin top stud.001",
+      "triangles": 44,
+      "signed_volume": 0.0008762855284676976
+    }
+  ],
+  "checks": [
+    "3.2 stud height and bottom-centred zero origin",
+    "Applied bevels; closed meshes; consistent outside winding",
+    "Seven exact palette colours, one JSON part per colour; no image textures",
+    "Separate #111018 Pupil; 55% width/height, low/inward; two white highlights per pupil",
+    "JSON coordinates match Blender with (x,y,z) -> (x,z,-y); zero-based indices",
+    "FBX re-import: identical triangle count; vertex positions within 0.00001 studs",
+    "All twelve iteration renders are 1024 x 1024",
+    "Both regenerated final renders are 1024 x 1024"
+  ],
+  "blender_triangles": 2362,
+  "height_studs": 3.200000047683716,
+  "head_height_fraction": 0.5475713603560424,
+  "json_triangles": 2362,
+  "fbx_max_position_error_studs": 5.21540641784668e-07,
+  "fbx_triangles": 2362,
+  "fbx_meshes": 25
+}

@@ -1,0 +1,908 @@
+{
+  "objects": {
+    "Rounded brick head": {
+      "material": "Feathers",
+      "hash": "e71a8fc7e0e2a16b1a087789e4f753a934a4e67e1050beb9f45aecb61f183223",
+      "bounds_blender": [
+        [
+          -1.0553192,
+          -0.8163791,
+          1.0851868
+        ],
+        [
+          1.0553192,
+          0.8163791,
+          2.8374152
+        ]
+      ],
+      "closed": true,
+      "volume": 5.648284284927781
+    },
+    "Tucked short body": {
+      "material": "Feathers",
+      "hash": "8a85331320394b465ca22c58b511058ac713e2e47112f69dab9ba31817a08e01",
+      "bounds_blender": [
+        [
+          -0.6222402,
+          -0.4729025,
+          0.2090726
+        ],
+        [
+          0.6222402,
+          0.6720194,
+          1.3042154
+        ]
+      ],
+      "closed": true,
+      "volume": 1.3874982926219463
+    },
+    "Purple chest feather bib": {
+      "material": "Chest",
+      "hash": "27e637064e5f5be6e781aae96c8a9131f0d0aa5dbce4a8d05f7c6fd0f663bbd7",
+      "bounds_blender": [
+        [
+          -0.456347,
+          -0.5127259,
+          0.4181454
+        ],
+        [
+          0.456347,
+          -0.4380571,
+          1.134966
+        ]
+      ],
+      "closed": true,
+      "volume": 0.04021091451396046
+    },
+    "Orange stub foot -1": {
+      "material": "BillFeet",
+      "hash": "5a582540cf8fd457b4dc51d144fc4022820954f240c7e898e30282d3e45793d0",
+      "bounds_blender": [
+        [
+          -0.6172622,
+          -0.5425934,
+          0.0
+        ],
+        [
+          -0.1592934,
+          0.064713,
+          0.2389402
+        ]
+      ],
+      "closed": true,
+      "volume": 0.06064888183832538
+    },
+    "Left waving stepped wing": {
+      "material": "Feathers",
+      "hash": "a0171647fd0da40f1ce0c14f91f8d6ca0d5b5b5ecdd7ddb92fcdc12e5653137c",
+      "bounds_blender": [
+        [
+          -1.8252292,
+          -0.0796467,
+          0.8580676
+        ],
+        [
+          -0.6760195,
+          0.2389402,
+          1.7421544
+        ]
+      ],
+      "closed": true,
+      "volume": 0.1614648418995147
+    },
+    "Wing top brick": {
+      "material": "Feathers",
+      "hash": "93f81620f9e3882fd1a39bc68af6aeb1c191bedaad8ca3037b14e58d9bd209a9",
+      "bounds_blender": [
+        [
+          -1.6128465,
+          -0.0348455,
+          1.6576478
+        ],
+        [
+          -1.4137295,
+          0.1642714,
+          1.7472503
+        ]
+      ],
+      "closed": true,
+      "volume": 0.003352688446835275
+    },
+    "Orange stub foot 1": {
+      "material": "BillFeet",
+      "hash": "3c57c12dcbadde7af40a830c39ed9e4496378c4c2d9d57cf351742074bde4991",
+      "bounds_blender": [
+        [
+          0.1592934,
+          -0.5425934,
+          0.0
+        ],
+        [
+          0.6172622,
+          0.064713,
+          0.2389402
+        ]
+      ],
+      "closed": true,
+      "volume": 0.06064888183832537
+    },
+    "Right waving stepped wing": {
+      "material": "Feathers",
+      "hash": "056ead3c58843927b64b7d5d604f285e76e1fce3bb7172060c0237313f667c1a",
+      "bounds_blender": [
+        [
+          0.6757293,
+          -0.0796467,
+          0.8654798
+        ],
+        [
+          1.8253909,
+          0.2389402,
+          1.9035277
+        ]
+      ],
+      "closed": true,
+      "volume": 0.1612918821861755
+    },
+    "Wing top brick.001": {
+      "material": "Feathers",
+      "hash": "72319d458229ff4b3723e74e747ace7b1580fdb0315ffcbf0c1cc2e2fe6a7dae",
+      "bounds_blender": [
+        [
+          1.4137295,
+          -0.0348455,
+          1.7970295
+        ],
+        [
+          1.6128465,
+          0.1642714,
+          1.8866322
+        ]
+      ],
+      "closed": true,
+      "volume": 0.0033526965170841473
+    },
+    "Small tail": {
+      "material": "Feathers",
+      "hash": "6bc2278adf3016e5d8d3fab73169db6dde744d2a5d0f5bdb74a32c2771d2d5f9",
+      "bounds_blender": [
+        [
+          -0.313609,
+          0.4747631,
+          0.3858432
+        ],
+        [
+          0.313609,
+          0.9987016,
+          0.7491227
+        ]
+      ],
+      "closed": true,
+      "volume": 0.06908598092574197
+    },
+    "White eye -1": {
+      "material": "EyeWhite",
+      "hash": "e318ed5e7a826b8bafffb1274b159f876ad17a7b5ad5d6e615705e818c3235a2",
+      "bounds_blender": [
+        [
+          -0.9408271,
+          -0.8402731,
+          1.6011981
+        ],
+        [
+          -0.0547571,
+          -0.8183703,
+          2.5404325
+        ]
+      ],
+      "closed": true,
+      "volume": 0.013816304921076359
+    },
+    "Big pupil -1": {
+      "material": "Pupil",
+      "hash": "3ea8e88cdfe87d404daebb9111204c0be83f53263058bef4555c71c0f7a051a6",
+      "bounds_blender": [
+        [
+          -0.6966601,
+          -0.8591892,
+          1.7627467
+        ],
+        [
+          -0.2093216,
+          -0.8432599,
+          2.2793252
+        ]
+      ],
+      "closed": true,
+      "volume": 0.0024890211809579527
+    },
+    "Eye sparkle large -1": {
+      "material": "EyeWhite",
+      "hash": "6bf66b343f25be5388e6f01fdea8a0ecb40af4d06b3ecf29885f4ae6919a965d",
+      "bounds_blender": [
+        [
+          -0.5754477,
+          -0.8691451,
+          2.03597
+        ],
+        [
+          -0.4599599,
+          -0.8621759,
+          2.1653957
+        ]
+      ],
+      "closed": true,
+      "volume": 6.245136715229803e-05
+    },
+    "Eye sparkle tiny -1": {
+      "material": "EyeWhite",
+      "hash": "4124f1d4919a1f06b702c804d377aeca9bf51426a164a64893ae3141c28da4ee",
+      "bounds_blender": [
+        [
+          -0.3992293,
+          -0.8691451,
+          1.9288642
+        ],
+        [
+          -0.3474589,
+          -0.8621759,
+          1.9837819
+        ]
+      ],
+      "closed": true,
+      "volume": 1.2235985714597857e-05
+    },
+    "White eye 1": {
+      "material": "EyeWhite",
+      "hash": "2c1e18975e79bff9a99096bc7468bed8cce6f0f125356eba4efd3bc6e50c2f21",
+      "bounds_blender": [
+        [
+          0.0547571,
+          -0.8402731,
+          1.6011981
+        ],
+        [
+          0.9408271,
+          -0.8183703,
+          2.5404325
+        ]
+      ],
+      "closed": true,
+      "volume": 0.013816304921076179
+    },
+    "Big pupil 1": {
+      "material": "Pupil",
+      "hash": "cf855385af2445f4eb2cf6686a5d41c342313f86ac816bc654d692cc0f5af9a2",
+      "bounds_blender": [
+        [
+          0.2093216,
+          -0.8591892,
+          1.7627467
+        ],
+        [
+          0.6966601,
+          -0.8432599,
+          2.2793252
+        ]
+      ],
+      "closed": true,
+      "volume": 0.0024890211809580533
+    },
+    "Eye sparkle large 1": {
+      "material": "EyeWhite",
+      "hash": "28ba5411c3e3174f2f9beb6e9a5b2b05b4bf00402191accc24108400c85c70f6",
+      "bounds_blender": [
+        [
+          0.330534,
+          -0.8691451,
+          2.03597
+        ],
+        [
+          0.4460218,
+          -0.8621759,
+          2.1653957
+        ]
+      ],
+      "closed": true,
+      "volume": 6.245136351145416e-05
+    },
+    "Eye sparkle tiny 1": {
+      "material": "EyeWhite",
+      "hash": "3e7d4d7e767b881ca5d5667e1f9327396fa4b967c57652ff10d37e91fa743458",
+      "bounds_blender": [
+        [
+          0.5067524,
+          -0.8691451,
+          1.9288642
+        ],
+        [
+          0.5585228,
+          -0.8621759,
+          1.9837819
+        ]
+      ],
+      "closed": true,
+      "volume": 1.2235997056492986e-05
+    },
+    "Short chunky orange bill": {
+      "material": "BillFeet",
+      "hash": "fe762e8ef5507d64fcce4f40c82cbcb44264cee8f8dcf8823a4860ae800c6db4",
+      "bounds_blender": [
+        [
+          -0.259746,
+          -1.2444804,
+          1.4854096
+        ],
+        [
+          0.259746,
+          -0.7964674,
+          1.7316341
+        ]
+      ],
+      "closed": true,
+      "volume": 0.03389104776657441
+    },
+    "Tiny bill smile seam": {
+      "material": "Feathers",
+      "hash": "ac912aa5ca4837b156f86b68aa24dae106aa5fb1472fde2aec850d641b4c507f",
+      "bounds_blender": [
+        [
+          -0.0850104,
+          -1.2534405,
+          1.5506225
+        ],
+        [
+          0.0850104,
+          -1.2414936,
+          1.5655563
+        ]
+      ],
+      "closed": true,
+      "volume": 2.4425390687586748e-05
+    },
+    "Lobed pumpkin brick cap": {
+      "material": "Pumpkin",
+      "hash": "cfb8d090b81d8e96cf77ebc600acf34be251f9c63aea774db15190b08311150d",
+      "bounds_blender": [
+        [
+          -0.661964,
+          -0.5208896,
+          2.7677243
+        ],
+        [
+          0.661964,
+          0.5208896,
+          3.0614216
+        ]
+      ],
+      "closed": true,
+      "volume": 0.25542142686410674
+    },
+    "Green stem base": {
+      "material": "Stem",
+      "hash": "43d2ed724b1017ae59d36fad4a12898e6c6e09db4dfce8a6978b32bfbd9c7581",
+      "bounds_blender": [
+        [
+          -0.1493376,
+          -0.124448,
+          3.0166204
+        ],
+        [
+          0.1493376,
+          0.124448,
+          3.1062229
+        ]
+      ],
+      "closed": true,
+      "volume": 0.005953756139884732
+    },
+    "Bent green stem": {
+      "material": "Stem",
+      "hash": "253ab0fdd76b196c36210dbe098e7a26e1015321b1710b4cba5b3549cdcef905",
+      "bounds_blender": [
+        [
+          -0.0798038,
+          -0.064713,
+          3.0522692
+        ],
+        [
+          0.0798038,
+          0.0846247,
+          3.2
+        ]
+      ],
+      "closed": true,
+      "volume": 0.002255282882635823
+    },
+    "Pumpkin top stud": {
+      "material": "Pumpkin",
+      "hash": "9eebaedc39b5798a2393fd07b7e7601930ee2f0029552cbde4c431de9b24da52",
+      "bounds_blender": [
+        [
+          -0.3534324,
+          -0.064713,
+          3.0315542
+        ],
+        [
+          -0.2240064,
+          0.064713,
+          3.091289
+        ]
+      ],
+      "closed": true,
+      "volume": 0.0008762855284676971
+    },
+    "Pumpkin top stud.001": {
+      "material": "Pumpkin",
+      "hash": "9ddaee6b27955fcba6f5f4a61af947e983ea8c792aed654a653597863053e223",
+      "bounds_blender": [
+        [
+          0.2240064,
+          -0.064713,
+          3.0315542
+        ],
+        [
+          0.3534324,
+          0.064713,
+          3.091289
+        ]
+      ],
+      "closed": true,
+      "volume": 0.0008762855284676976
+    }
+  },
+  "export_islands": {
+    "Feathers": [
+      {
+        "vertices": 96,
+        "triangles": 188,
+        "bounds_y_up": [
+          [
+            -1.0553192,
+            1.0851868,
+            -0.8163791
+          ],
+          [
+            1.0553192,
+            2.8374152,
+            0.8163791
+          ]
+        ],
+        "signed_volume": 5.648122566596916
+      },
+      {
+        "vertices": 56,
+        "triangles": 108,
+        "bounds_y_up": [
+          [
+            -0.6222402,
+            0.2090726,
+            -0.6720194
+          ],
+          [
+            0.6222402,
+            1.3042154,
+            0.4729025
+          ]
+        ],
+        "signed_volume": 1.3886677082029393
+      },
+      {
+        "vertices": 66,
+        "triangles": 128,
+        "bounds_y_up": [
+          [
+            -1.8252292,
+            0.8580676,
+            -0.2389402
+          ],
+          [
+            -0.6760195,
+            1.7421544,
+            0.0796467
+          ]
+        ],
+        "signed_volume": 0.16146483897561367
+      },
+      {
+        "vertices": 24,
+        "triangles": 44,
+        "bounds_y_up": [
+          [
+            -1.6128465,
+            1.6576478,
+            -0.1642714
+          ],
+          [
+            -1.4137295,
+            1.7472503,
+            0.0348455
+          ]
+        ],
+        "signed_volume": 0.0033527110742094615
+      },
+      {
+        "vertices": 66,
+        "triangles": 128,
+        "bounds_y_up": [
+          [
+            0.6757293,
+            0.8654798,
+            -0.2389402
+          ],
+          [
+            1.8253909,
+            1.9035277,
+            0.0796467
+          ]
+        ],
+        "signed_volume": 0.16129186453569372
+      },
+      {
+        "vertices": 24,
+        "triangles": 44,
+        "bounds_y_up": [
+          [
+            1.4137295,
+            1.7970295,
+            -0.1642714
+          ],
+          [
+            1.6128465,
+            1.8866322,
+            0.0348455
+          ]
+        ],
+        "signed_volume": 0.0033527056075399746
+      },
+      {
+        "vertices": 24,
+        "triangles": 44,
+        "bounds_y_up": [
+          [
+            -0.313609,
+            0.3858432,
+            -0.9987016
+          ],
+          [
+            0.313609,
+            0.7491227,
+            -0.4747631
+          ]
+        ],
+        "signed_volume": 0.06908598179870752
+      },
+      {
+        "vertices": 24,
+        "triangles": 44,
+        "bounds_y_up": [
+          [
+            -0.0850104,
+            1.5506225,
+            1.2414936
+          ],
+          [
+            0.0850104,
+            1.5655563,
+            1.2534405
+          ]
+        ],
+        "signed_volume": 2.4420845875283856e-05
+      }
+    ],
+    "Chest": [
+      {
+        "vertices": 71,
+        "triangles": 138,
+        "bounds_y_up": [
+          [
+            -0.456347,
+            0.4181454,
+            0.4380571
+          ],
+          [
+            0.456347,
+            1.134966,
+            0.5127259
+          ]
+        ],
+        "signed_volume": 0.04021818853198057
+      }
+    ],
+    "Pumpkin": [
+      {
+        "vertices": 96,
+        "triangles": 188,
+        "bounds_y_up": [
+          [
+            -0.661964,
+            2.7677243,
+            -0.5208896
+          ],
+          [
+            0.661964,
+            3.0614216,
+            0.5208896
+          ]
+        ],
+        "signed_volume": 0.25542139339571157
+      },
+      {
+        "vertices": 24,
+        "triangles": 44,
+        "bounds_y_up": [
+          [
+            -0.3534324,
+            3.0315542,
+            -0.064713
+          ],
+          [
+            -0.2240064,
+            3.091289,
+            0.064713
+          ]
+        ],
+        "signed_volume": 0.000876285523797072
+      },
+      {
+        "vertices": 24,
+        "triangles": 44,
+        "bounds_y_up": [
+          [
+            0.2240064,
+            3.0315542,
+            -0.064713
+          ],
+          [
+            0.3534324,
+            3.091289,
+            0.064713
+          ]
+        ],
+        "signed_volume": 0.000876289089016307
+      }
+    ],
+    "BillFeet": [
+      {
+        "vertices": 56,
+        "triangles": 108,
+        "bounds_y_up": [
+          [
+            -0.6172622,
+            0.0,
+            -0.064713
+          ],
+          [
+            -0.1592934,
+            0.2389402,
+            0.5425934
+          ]
+        ],
+        "signed_volume": 0.0606790252686551
+      },
+      {
+        "vertices": 56,
+        "triangles": 108,
+        "bounds_y_up": [
+          [
+            0.1592934,
+            0.0,
+            -0.064713
+          ],
+          [
+            0.6172622,
+            0.2389402,
+            0.5425934
+          ]
+        ],
+        "signed_volume": 0.06067902690877722
+      },
+      {
+        "vertices": 56,
+        "triangles": 108,
+        "bounds_y_up": [
+          [
+            -0.259746,
+            1.4854096,
+            0.7964674
+          ],
+          [
+            0.259746,
+            1.7316341,
+            1.2444804
+          ]
+        ],
+        "signed_volume": 0.03390105033177182
+      }
+    ],
+    "EyeWhite": [
+      {
+        "vertices": 72,
+        "triangles": 140,
+        "bounds_y_up": [
+          [
+            -0.9408271,
+            1.6011981,
+            0.8183703
+          ],
+          [
+            -0.0547571,
+            2.5404325,
+            0.8402731
+          ]
+        ],
+        "signed_volume": 0.01381651116147009
+      },
+      {
+        "vertices": 36,
+        "triangles": 68,
+        "bounds_y_up": [
+          [
+            -0.5754477,
+            2.03597,
+            0.8621759
+          ],
+          [
+            -0.4599599,
+            2.1653957,
+            0.8691451
+          ]
+        ],
+        "signed_volume": 6.240941002033659e-05
+      },
+      {
+        "vertices": 30,
+        "triangles": 56,
+        "bounds_y_up": [
+          [
+            -0.3992293,
+            1.9288642,
+            0.8621759
+          ],
+          [
+            -0.3474589,
+            1.9837819,
+            0.8691451
+          ]
+        ],
+        "signed_volume": 1.2247163491944588e-05
+      },
+      {
+        "vertices": 72,
+        "triangles": 140,
+        "bounds_y_up": [
+          [
+            0.0547571,
+            1.6011981,
+            0.8183703
+          ],
+          [
+            0.9408271,
+            2.5404325,
+            0.8402731
+          ]
+        ],
+        "signed_volume": 0.013816118793329219
+      },
+      {
+        "vertices": 36,
+        "triangles": 68,
+        "bounds_y_up": [
+          [
+            0.330534,
+            2.03597,
+            0.8621759
+          ],
+          [
+            0.4460218,
+            2.1653957,
+            0.8691451
+          ]
+        ],
+        "signed_volume": 6.24692571970326e-05
+      },
+      {
+        "vertices": 30,
+        "triangles": 56,
+        "bounds_y_up": [
+          [
+            0.5067524,
+            1.9288642,
+            0.8621759
+          ],
+          [
+            0.5585228,
+            1.9837819,
+            0.8691451
+          ]
+        ],
+        "signed_volume": 1.2347732990747231e-05
+      }
+    ],
+    "Stem": [
+      {
+        "vertices": 24,
+        "triangles": 44,
+        "bounds_y_up": [
+          [
+            -0.1493376,
+            3.0166204,
+            -0.124448
+          ],
+          [
+            0.1493376,
+            3.1062229,
+            0.124448
+          ]
+        ],
+        "signed_volume": 0.005953753551390646
+      },
+      {
+        "vertices": 24,
+        "triangles": 44,
+        "bounds_y_up": [
+          [
+            -0.0798038,
+            3.0522692,
+            -0.0846247
+          ],
+          [
+            0.0798038,
+            3.2,
+            0.064713
+          ]
+        ],
+        "signed_volume": 0.002255282421477509
+      }
+    ],
+    "Pupil": [
+      {
+        "vertices": 72,
+        "triangles": 140,
+        "bounds_y_up": [
+          [
+            -0.6966601,
+            1.7627467,
+            0.8432599
+          ],
+          [
+            -0.2093216,
+            2.2793252,
+            0.8591892
+          ]
+        ],
+        "signed_volume": 0.002489050191798037
+      },
+      {
+        "vertices": 72,
+        "triangles": 140,
+        "bounds_y_up": [
+          [
+            0.2093216,
+            1.7627467,
+            0.8432599
+          ],
+          [
+            0.6966601,
+            2.2793252,
+            0.8591892
+          ]
+        ],
+        "signed_volume": 0.0024890431280558344
+      }
+    ]
+  },
+  "orange_result": "BillFeet: exactly two feet and one beak. Pumpkin: cap and two top studs. All islands closed, CCW, positive volume; no unused vertices.",
+  "changed_meshes": [
+    "White eye -1",
+    "Big pupil -1",
+    "Eye sparkle large -1",
+    "Eye sparkle tiny -1",
+    "White eye 1",
+    "Big pupil 1",
+    "Eye sparkle large 1",
+    "Eye sparkle tiny 1"
+  ],
+  "preserved_meshes": 17,
+  "studio_duplicate_cause": "UNKNOWN: extra orange piece in supplied capture is absent from both original and fixed Blender/JSON geometry; likely existing Studio geometry (inference)."
+}
