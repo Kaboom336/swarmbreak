@@ -1,18 +1,19 @@
-﻿# Handoff: Steal a Pumpkin (2026-10-11 ~19:00 UTC)
+﻿# Handoff: Steal a Pumpkin (2026-10-12 ~19:50 UTC)
 
-## Where we are (updated 2026-10-12)
-- Zion asked (10/12 00:08Z) to improve concepts vs popular games + TikTok favourites. Done: refs2/ (45 current frames, side-by-sides), refs/TIKTOK-DELTA-2026-10-12.md, REDRAW-RULES.md, concepts/v3/ (15 in-game style screens, JUDGE.md + SCORES.md). Method = Roblox Builder skill step 10 + Keystone lesson.
-- WAITING ON ZION: round 3 page https://claude.ai/artifact/ULmLC7G8SuQCfBXJjGDS9y (v2; ours vs ref). Old v1/v2 sheets stay in concepts/ for history.
-- Slice prep done: slice/SLICE-SPEC.md, tasks T1-T6, ASSETS.md, QUEUE.md, giant/scene/SliceSmokeTest.luau (untested in Studio). Spec still references the old concept sheets: point builders at concepts/v3 + REDRAW-RULES (daytime, dark glossy UI, phone = joystick + one action + Jump).
+## Where we are
+- Zion (10/12 18:10): stop 2D, start 3D models one at a time, slowly, so he learns the process. Concepts final set = concepts/v6 (judge panel: ours 7-8 Codex / 6-7 Claude; real hit frames 6-8). Plan page: https://claude.ai/artifact/4UhV6VWs5ohfDiJdLkD5mA (diagrams, map options, screens).
+- Map: options A radial / B compact plaza (recommended, 19-45 s runs) / C islands in blueprint/map-options/MAP-REVIEW.md. Zion has NOT picked yet ("not 100% confident" on radial).
+- Model lab: separate Studio place C:\dev\codex-lab\model-lab\model-lab.rbxl (copy, game untouched; studio_id changes on reopen, use list_roblox_studios). Daytime preset from concepts/v5/BUILDABILITY.md. Folders: ModelLab (pups), SizeLadder, PumpkinLab, CrowLab. Black 2x5.5 block = player scale. Zion must Ctrl+S to keep models (or re-insert by publishedAssetId).
+- Method per model: Creator Store check (nothing usable for custom pets) -> Studio generate_mesh 2 versions (explicit parts, 1.5-2.5k tris) -> capture next to concept + a real hit frame -> Zion picks -> refine.
+- Decisions: Pumpkin Pup = A (PupGen2, chibi studded, assetId 98518831184004; colour a bit red, recolour attempt worse). Pet size by place: pen pets bigger Common 4 / Rare 4.8 / Epic 5.8 / Legendary 7 / Mythic 9 studs; follower pets current smaller ladder (3.2-7). Several pumpkin models per zone, each zone its own themed set.
+- Pending Zion: Crow C (assetId 116910402228285) yes/retry; pumpkins "A fixed" (E, 99871023459752) + "D fixed" (D2, 127689219325625) + Graveyard ghost sample ok?
+- Zone 1 pets (PatchConfig): Pumpkin Pup (Orange), Crow (Sunny).
+- Insight: real hits (PS99) pets = simple smooth shapes, huge eyes, glow/sparkle/name tags. Next: add glow, sparkle, name tag effects in Studio; then nest pumpkin (glowing) and scythe.
+- Rules: ask one clearly labelled question at a time ("Crow C: yes/retry"); show a real hit model next to ours; close helpers/tabs when done.
 
-## Next steps
-1. Zion yes -> run T1..T6 via Codex (order and file ownership in SLICE-SPEC section 5), Claude reviews/merges each, Studio-tests.
-2. Gates: SmokeTest full run, side-by-side shots vs concept sheets, blind critics >= 8/10 per pillar. Then Zion playtest.
-3. Zion changes -> redraw named sheets (task template C:\dev\codex-lab\concepts-fix-task.md, clone concepts-run\repo), republish same page.
+## Usage
+- Claude weekly 86% at 19:50Z (reset 10/14 21:00Z). Pause Claude-heavy judging at 90% and tell Zion.
 
-## Code / Studio notes (unchanged)
-- Branch pumpkin/patch-panic. Commit with -c user.name/email from the last commit (no global git identity).
-- Only git add pumpkin/giant pumpkin/production pumpkin/tools.
-- Studio Rojo may be disconnected; push via http.server + ScriptEditorService (see roblox-builder skill).
-- Claude weekly ~80%, resets 10/14 21:00 UTC. Codex builds and draws; pause Claude-heavy judging near 90%.
-
+## Code
+- Branch pumpkin/patch-panic; commit with -c user.name/email from last commit; only git add pumpkin/giant pumpkin/production pumpkin/tools.
+- Slice spec/tasks (production/slice) are stale vs v6 + map choice: refresh after Zion picks the map.
