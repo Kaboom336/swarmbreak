@@ -3,12 +3,18 @@ local RS = game:GetService("ReplicatedStorage")
 local SSS = game:GetService("ServerScriptService")
 local RunService = game:GetService("RunService")
 local Pathfinding = game:GetService("PathfindingService")
+local PromptService = game:GetService("ProximityPromptService")
 local Config = require(RS:WaitForChild("GreyboxConfig"))
 local Layout = require(RS:WaitForChild("GreyboxLayout"))
 local world = Instance.new("Folder")
 world.Name = "GREYBOX"
 world.Parent = workspace
 local states, pens, slots = {}, {}, {}
+local loopPlayer, loopRunning = nil, false
+local firstPlayer
+local actionRemote = Instance.new("RemoteEvent")
+actionRemote.Name, actionRemote.Parent = "GreyboxAction", RS
+PromptService.Enabled, PromptService.MaxPromptsVisible = true, 8
 local orange = Color3.fromRGB(255, 150, 35)
 local grey = Color3.fromRGB(125, 135, 145)
 
@@ -39,7 +45,14 @@ local function prompt(p, action, object, hold)
 	local q = Instance.new("ProximityPrompt")
 	q.ActionText, q.ObjectText, q.HoldDuration = action, object, hold or 0
 	q.MaxActivationDistance, q.RequiresLineOfSight = 9, false
-	q.Parent = p
+	q.Enabled, q.Style, q.Exclusivity =
+		true, Enum.ProximityPromptStyle.Default, Enum.ProximityPromptExclusivity.AlwaysShow
+	q.KeyboardKeyCode, q.GamepadKeyCode, q.ClickablePrompt = Enum.KeyCode.E, Enum.KeyCode.ButtonX, true
+	q:SetAttribute("GreyboxAction", action)
+	-- Explicit point origin: avoid depending on large-part surface distance semantics.
+	local anchor = Instance.new("Attachment")
+	anchor.Name, anchor.Parent = "ActionPoint", p
+	q.Parent = anchor
 	return q
 end
 
@@ -55,13 +68,14 @@ end
 
 local function near(player, p)
 	local r = root(player)
-	return r and (r.Position - p.Position).Magnitude <= 11
+	return r and (r.Position - p.Position).Magnitude <= 9
 end
 
 local function update(player, text)
 	local s = states[player]
 	player:SetAttribute("GreyboxGoal", text)
 	player:SetAttribute("GreyboxCarry", s and s.item ~= nil or false)
+	player:SetAttribute("GreyboxPhase", s and s.phase or "Home")
 end
 
 local function carry(player)
@@ -131,6 +145,89 @@ local portal = part(world, "HomePortal", Vector3.new(10, 8, 2), Vector3.new(0, 4
 label(portal, "GREYBOX — Enter guardian island")
 local enter = prompt(portal, "Enter", "Guardian island")
 
+local function placeItem(player, slot)
+	local s, pen = states[player], pens[slot]
+	if
+		not s
+		or not pen
+		or s.slot ~= slot
+		or s.phase ~= "Home"
+		or not s.item
+		or not near(player, pen.marker)
+		or pen.count >= 8
+	then
+		return false, "place validation (owner/phase/item/range/capacity)"
+	end
+	local item = s.item
+	s.item = nil -- consume identity before creating the placement; duplicate input cannot replay
+	pen.count += 1
+	local n, position = pen.count - 1, pen.base.Position
+	local ball = part(
+		world,
+		"Placed_" .. item,
+		Vector3.new(3, 3, 3),
+		Vector3.new(position.X - 12 + (n % 4) * 8, 1.7, position.Z - 5 + math.floor(n / 4) * 10),
+		orange
+	)
+	ball.Shape, ball.Material = Enum.PartType.Ball, Enum.Material.Neon
+	ball:SetAttribute("PenSlot", slot)
+	carry(player)
+	update(player, "Placed! Enter the portal for another run.")
+	print("[Greybox] place user=" .. player.UserId .. " item=" .. item)
+	return true
+end
+
+local function returnRun(player)
+	local s = states[player]
+	if not s or not s.run or s.phase ~= "Run" or not near(player, s.run.dock) then
+		return false, "return validation (run/phase/range)"
+	end
+	home(player, s.item ~= nil)
+	return true
+end
+
+local function stealHold(player, stage)
+	local s = states[player]
+	if s and stage == "cancel" then
+		s.hold = nil
+		return true
+	end
+	local run = s and s.run
+	if not run or s.phase ~= "Run" or s.item or not near(player, run.loot) then
+		return false, "steal validation (run/phase/item/range)"
+	end
+	if stage == "begin" then
+		if s.hold then
+			return false, "hold already active"
+		end
+		s.hold = { token = run.token, began = os.clock() }
+		return true
+	elseif stage ~= "finish" then
+		return false, "unknown hold stage"
+	end
+	local hold = s.hold
+	if not hold or hold.token ~= run.token or os.clock() - hold.began < 0.8 then
+		return false, "missing/short hold"
+	end
+	-- Native Triggered can arrive just before one server second due to event transit.
+	-- Wait out the remainder, then revalidate; never grant before a full second.
+	local remaining = 1 - (os.clock() - hold.began)
+	if remaining > 0 then
+		task.wait(remaining)
+	end
+	if states[player] ~= s or s.run ~= run or s.hold ~= hold or s.item or not near(player, run.loot) then
+		return false, "hold interrupted"
+	end
+	s.item, s.hold = run.token, nil
+	run.grants += 1
+	run.steal.Enabled, run.loot.Transparency = false, 1
+	run.mode, run.untilTime = "HeadStart", os.clock() + Config.HeadStartSeconds
+	carry(player)
+	update(player, "Carry 1/1 — dodge around cover, return to the same portal.")
+	print(string.format("[Greybox] steal user=%d seed=%d fresh=%.3fs", player.UserId, run.seed, os.clock() - s.joined))
+	return true
+end
+
 for i = 1, 8 do
 	local x, z = i <= 4 and -88 or 88, -54 + ((i - 1) % 4) * 36
 	local base =
@@ -150,27 +247,9 @@ for i = 1, 8 do
 	local place = prompt(marker, "Place", "Own pen")
 	place:SetAttribute("PenSlot", i)
 	place.Triggered:Connect(function(player)
-		local s = states[player]
-		local pen = pens[i]
-		if not s or s.slot ~= i or s.phase ~= "Home" or not s.item or not near(player, marker) or pen.count >= 8 then
-			return
+		if not loopRunning then
+			placeItem(player, i)
 		end
-		local item = s.item
-		s.item = nil -- consume identity before creating the placement; duplicate prompt cannot replay
-		pen.count += 1
-		local n = pen.count - 1
-		local ball = part(
-			world,
-			"Placed_" .. item,
-			Vector3.new(3, 3, 3),
-			Vector3.new(x - 12 + (n % 4) * 8, 1.7, z - 5 + math.floor(n / 4) * 10),
-			orange
-		)
-		ball.Shape, ball.Material = Enum.PartType.Ball, Enum.Material.Neon
-		ball:SetAttribute("PenSlot", i)
-		carry(player)
-		update(player, "Placed! Enter the portal for another run.")
-		print("[Greybox] place user=" .. player.UserId .. " item=" .. item)
 	end)
 end
 
@@ -252,14 +331,23 @@ local function assemble(player, seed, first)
 	local dock = build("ReturnPortal", Vector3.new(10, 8, 2), 0, 4, -8, Color3.fromRGB(70, 180, 220))
 	label(dock, "Return home — safe pad")
 	local back = prompt(dock, "Return", "Home")
+	back:SetAttribute("OwnerUserId", player.UserId)
 	local loot = build("Treasure", Vector3.new(3, 3, 3), 0, 1.5, nest.z + 16, orange)
 	loot.Shape, loot.Material = Enum.PartType.Ball, Enum.Material.Neon
 	loot.CanCollide, loot.CanQuery = false, false
 	local steal = prompt(loot, "Steal", "Glowing ball", 1)
+	steal:SetAttribute("OwnerUserId", player.UserId)
 	local guard = build("Guardian", Vector3.new(4, 11, 4), 12, 5.5, nest.z + 8, Color3.fromRGB(150, 100, 100))
 	guard.CanCollide, guard.CanQuery = false, false
 	local warning = label(guard, "GUARDIAN — patrol")
 	local run = {
+		layout = layout,
+		dock = dock,
+		loot = loot,
+		steal = steal,
+		grants = 0,
+		chaseTicks = 0,
+		chaseDistance = 0,
 		model = model,
 		seed = seed,
 		token = s.slot .. ":" .. s.counter,
@@ -278,59 +366,50 @@ local function assemble(player, seed, first)
 	}
 	s.run, s.phase = run, "Run"
 	back.Triggered:Connect(function(p)
-		if p ~= player or s.run ~= run or s.phase ~= "Run" or not near(p, dock) then
-			return
+		if p == player and s.run == run and not loopRunning then
+			returnRun(p)
 		end
-		home(p, s.item ~= nil)
 	end)
 	steal.PromptButtonHoldBegan:Connect(function(p)
-		if p == player and s.run == run and s.phase == "Run" and not s.item and near(p, loot) then
-			s.hold = { token = run.token, began = os.clock() }
+		if p == player and s.run == run and not loopRunning then
+			stealHold(p, "begin")
 		end
 	end)
 	steal.PromptButtonHoldEnded:Connect(function(p)
-		if p == player then
-			s.hold = nil
+		if p == player and not loopRunning then
+			local hold = s.hold
+			-- Allow the matching Triggered event to consume a completed native hold first.
+			task.delay(0.2, function()
+				if s.run == run and s.hold == hold then
+					stealHold(p, "cancel")
+				end
+			end)
 		end
 	end)
 	steal.Triggered:Connect(function(p)
-		local hold = s.hold
-		if
-			p ~= player
-			or s.run ~= run
-			or s.phase ~= "Run"
-			or s.item
-			or not near(p, loot)
-			or not hold
-			or hold.token ~= run.token
-			or os.clock() - hold.began < 1
-		then
-			return
+		if p == player and s.run == run and not loopRunning then
+			stealHold(p, "finish")
 		end
-		s.item, s.hold = run.token, nil
-		steal.Enabled, loot.Transparency = false, 1
-		run.mode, run.untilTime = "HeadStart", os.clock() + Config.HeadStartSeconds
-		carry(p)
-		update(p, "Carry 1/1 — dodge around cover, return to the same portal.")
-		print(string.format("[Greybox] steal user=%d seed=%d fresh=%.3fs", p.UserId, seed, os.clock() - s.joined))
 	end)
 	player.Character:PivotTo(CFrame.new(at(0, 4, -4)) * CFrame.Angles(0, math.pi, 0))
 	update(player, "Dodge around cover. Hold Steal for 1 second at the glowing ball.")
 	print("[Greybox] assembled slot=" .. s.slot .. " " .. Layout.signature(layout))
 end
 
-enter.Triggered:Connect(function(player)
+local function enterRun(player)
 	local s = states[player]
 	if not s or s.phase ~= "Home" or s.run or not near(player, portal) then
-		return
+		return false, "enter validation (phase/run/range)"
 	end
-	if s.item then
-		update(player, "Place your carried ball in your own pen first.")
-		return
+	if not loopRunning and SSS:GetAttribute("GreyboxLoopTestSuccess") ~= true then
+		update(player, "Build locked: run GreyboxLoopTest on the server before owner play.")
+		return false, "full-loop test has not passed"
 	end
-	if pens[s.slot].count >= 8 then
-		update(player, "Your pen is full (8/8). No new run.")
-		return
+	if loopRunning and player ~= loopPlayer then
+		return false, "full-loop test owns the build"
+	end
+	if s.item or pens[s.slot].count >= 8 then
+		return false, "place cargo first / pen full"
 	end
 	s.counter += 1
 	local override = SSS:GetAttribute("GreyboxSeed")
@@ -338,8 +417,41 @@ enter.Triggered:Connect(function(player)
 	local seed = fixed and override
 		or (Config.SessionSeed + s.slot * 1009 + s.counter * 9176 + Config.RecipeVersion * 31) % 2147483647
 	assemble(player, seed, not fixed and s.counter == 1)
+	return true
+end
+
+enter.Triggered:Connect(function(player)
+	if not loopRunning then
+		enterRun(player)
+	end
 end)
 
+-- Client sends only intent. Server selects the current run/own pen and validates all state.
+local lastAction = {}
+actionRemote.OnServerEvent:Connect(function(player, action, stage)
+	if loopRunning or type(action) ~= "string" then
+		return
+	end
+	local now = os.clock()
+	if now - (lastAction[player] or 0) < 0.08 and stage ~= "cancel" then
+		return
+	end
+	lastAction[player] = now
+	local ok, reason
+	if action == "Enter" then
+		ok, reason = enterRun(player)
+	elseif action == "Return" then
+		ok, reason = returnRun(player)
+	elseif action == "Place" then
+		local s = states[player]
+		ok, reason = placeItem(player, s and s.slot)
+	elseif action == "Steal" and (stage == "begin" or stage == "finish" or stage == "cancel") then
+		ok, reason = stealHold(player, stage)
+	else
+		return
+	end
+	actionRemote:FireClient(player, ok, reason)
+end)
 local function addPlayer(player)
 	if states[player] then
 		return
@@ -356,16 +468,20 @@ local function addPlayer(player)
 		return
 	end
 	slots[slot] = player
+	firstPlayer = firstPlayer or player
 	states[player] = { slot = slot, counter = 0, completed = 0, phase = "Home", joined = os.clock() }
 	pens[slot].text.Text = "Pen " .. slot .. " — " .. player.DisplayName
 	player:SetAttribute("GreyboxPen", slot)
 	local function characterAdded(character)
+		player:SetAttribute("GreyboxReady", false)
 		character:WaitForChild("HumanoidRootPart")
+		character:WaitForChild("Humanoid")
 		if states[player] then
 			if states[player].counter == 0 then
 				states[player].joined = os.clock()
 			end
 			home(player, false)
+			player:SetAttribute("GreyboxReady", true)
 		end -- committed item stays in session escrow through reset
 	end
 	player.CharacterAdded:Connect(characterAdded)
@@ -380,6 +496,7 @@ for _, player in Players:GetPlayers() do
 end
 Players.PlayerRemoving:Connect(function(player)
 	local s = states[player]
+	lastAction[player] = nil
 	if not s then
 		return
 	end
@@ -395,6 +512,76 @@ Players.PlayerRemoving:Connect(function(player)
 	pens[s.slot].count, pens[s.slot].text.Text = 0, "Pen " .. s.slot .. " — vacant"
 	slots[s.slot], states[player] = nil, nil
 end)
+
+local function startLoopTest()
+	if loopRunning then
+		return
+	end
+	loopRunning = true
+	SSS:SetAttribute("GreyboxLoopTestResult", "RUNNING")
+	SSS:SetAttribute("GreyboxLoopTestSuccess", false)
+	SSS:SetAttribute("GreyboxLoopTestFreshToSteal", nil)
+	SSS:SetAttribute("GreyboxLoopTestPortalToPortal", nil)
+	SSS:SetAttribute("GreyboxLoopTestCatches", nil)
+	task.spawn(function()
+		local function log(message)
+			print("[GreyboxLoopTest] " .. message)
+		end
+		log("START; manual actions locked; guardian unchanged")
+		local ok, result = pcall(function()
+			local deadline = os.clock() + 15
+			repeat
+				loopPlayer = firstPlayer
+				if loopPlayer and loopPlayer:GetAttribute("GreyboxReady") then
+					break
+				end
+				task.wait(0.1)
+			until os.clock() >= deadline
+			assert(loopPlayer and loopPlayer:GetAttribute("GreyboxReady"), "first player not ready within 15s")
+			loopPlayer:SetAttribute("GreyboxLoopTesting", true)
+			return require(SSS:WaitForChild("GreyboxLoopTestRunner")).run(loopPlayer, states, pens, world, {
+				enterRun = enterRun,
+				stealHold = stealHold,
+				returnRun = returnRun,
+				placeItem = placeItem,
+			}, log)
+		end)
+		local r, h
+		if loopPlayer then
+			loopPlayer:SetAttribute("GreyboxLoopTesting", false)
+			r, h = root(loopPlayer)
+		end
+		if r then
+			if h then
+				h:MoveTo(r.Position)
+			end
+			pcall(function()
+				r:SetNetworkOwnershipAuto()
+			end)
+		end
+		loopRunning, loopPlayer = false, nil
+		SSS:SetAttribute("GreyboxLoopTest", false)
+		SSS:SetAttribute("GreyboxLoopTestSuccess", ok)
+		if ok then
+			SSS:SetAttribute("GreyboxLoopTestFreshToSteal", result.freshToSteal)
+			SSS:SetAttribute("GreyboxLoopTestPortalToPortal", result.portalToPortal)
+			SSS:SetAttribute("GreyboxLoopTestCatches", result.catches)
+			SSS:SetAttribute("GreyboxLoopTestResult", "PASS: full loop; guardian chased; one grant and placement")
+			log("PASS — full loop, one grant, one placement; owner play unlocked")
+		else
+			SSS:SetAttribute("GreyboxLoopTestResult", "FAIL: " .. tostring(result))
+			log("FAIL: " .. tostring(result) .. "; success=false; owner play locked")
+		end
+	end)
+end
+SSS:GetAttributeChangedSignal("GreyboxLoopTest"):Connect(function()
+	if SSS:GetAttribute("GreyboxLoopTest") then
+		startLoopTest()
+	end
+end)
+if SSS:GetAttribute("GreyboxLoopTest") then
+	startLoopTest()
+end
 
 local function selfTest()
 	for _, seed in { 101, 202, 303, 101 } do
@@ -456,7 +643,7 @@ RunService.Heartbeat:Connect(function(dt)
 			home(player, false)
 			continue
 		end
-		if s.hold and ((r.Position - (run.origin + Vector3.new(0, 1.5, run.nestZ + 16))).Magnitude > 11) then
+		if s.hold and not near(player, run.loot) then
 			s.hold = nil
 		end
 		h.WalkSpeed = now < (s.slowUntil or 0) and 5 or (s.item and Config.CarrySpeed or Config.WalkSpeed)
@@ -480,6 +667,9 @@ RunService.Heartbeat:Connect(function(dt)
 			run.mode = "Patrol"
 		end
 		local stopped = run.mode == "Warn" or run.mode == "HeadStart"
+		if run.mode == "Chase" then
+			run.chaseTicks += 1
+		end
 		run.warning.Text = run.mode == "Warn" and "WARNING — move around cover!" or "GUARDIAN — " .. run.mode
 		guard.Color = stopped and orange or Color3.fromRGB(150, 100, 100)
 		local aggressive = run.mode == "Chase" or run.mode == "Approach"
@@ -544,6 +734,9 @@ RunService.Heartbeat:Connect(function(dt)
 				local wall = workspace:Blockcast(CFrame.new(guard.Position), Vector3.new(4, 10, 4), movement, params)
 				local floor = workspace:Raycast(nextPosition, Vector3.new(0, -8, 0), params)
 				if not wall and floor and nextPosition.Z - run.origin.Z > 14 then
+					if run.mode == "Chase" then
+						run.chaseDistance += movement.Magnitude
+					end
 					guard.Position = nextPosition
 				else
 					run.points, run.nextPath = {}, 0

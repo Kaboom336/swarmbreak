@@ -9,7 +9,8 @@
       "GreyboxLayout": { "$path": "Layout.luau" }
     },
     "ServerScriptService": {
-      "$attributes": { "GreyboxSelfTest": false, "GreyboxSeed": 0 },
+      "$attributes": { "GreyboxSelfTest": false, "GreyboxSeed": 0, "GreyboxLoopTest": false, "GreyboxLoopTestResult": "NOT RUN", "GreyboxLoopTestSuccess": false },
+      "GreyboxLoopTestRunner": { "$path": "LoopTest.luau" },
       "Greybox": { "$path": "Greybox.server.luau" }
     },
     "StarterPlayer": {
