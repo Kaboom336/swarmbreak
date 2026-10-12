@@ -1,0 +1,422 @@
+﻿[
+  {
+    "sheet": "hub-perspective",
+    "ref": "hub-base-bgsi-1.jpg",
+    "score": 7.5,
+    "tries": 2,
+    "gap": "Finished ground/depth and held tool improved; hub remains densely dressed and no carried-pumpkin action is shown.",
+    "game": "Bubble Gum Simulator Infinity",
+    "uploadDate": "2026-10-11",
+    "sourceURL": "https://www.youtube.com/watch?v=Fe-04b8SQf8",
+    "timestampSeconds": 173,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-dbf4591e-df0a-49dc-ab44-c5fa298cde0d.png",
+    "inputQualityRefs": [
+      "hub-base-bgsi-1.jpg",
+      "hub-base-adopt-me-1.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "context",
+      "partial",
+      "pass",
+      "n/a",
+      "n/a",
+      "partial",
+      "partial"
+    ],
+    "refinement": "Held Rusty, readable rival plaque, less orange canopy/clutter.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  },
+  {
+    "sheet": "zone1-perspective",
+    "ref": "zone-lane-fisch-1.jpg",
+    "score": 7.5,
+    "tries": 2,
+    "gap": "Authored meadow, contact and rival context read; grass/flowers are dense and harvest pose remains staged.",
+    "game": "Fisch",
+    "uploadDate": "2026-10-10",
+    "sourceURL": "https://www.youtube.com/watch?v=NZcqxxrt-e4",
+    "timestampSeconds": 13,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-dfbee67c-b392-43ee-b874-6b9f1b25a134.png",
+    "inputQualityRefs": [
+      "zone-lane-fisch-1.jpg",
+      "zone-lane-adopt-me-1.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "context",
+      "partial",
+      "pass",
+      "n/a",
+      "n/a",
+      "partial",
+      "partial"
+    ],
+    "refinement": "Remove faces from blue nest, shrink target shield to thin arc/ring.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  },
+  {
+    "sheet": "hud-desktop",
+    "ref": "hud-pc-rivals-1.jpg",
+    "score": 7.5,
+    "tries": 2,
+    "gap": "Target contact/progress and quieter selected HUD read; scene remains densely dressed and 3D candy icon/target marker compete with action.",
+    "game": "RIVALS",
+    "uploadDate": "2026-10-11",
+    "sourceURL": "https://www.youtube.com/watch?v=1OOfL2QjI-0",
+    "timestampSeconds": 93,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-acdb3a67-d4ec-45d5-8e22-9bdfce67d490.png",
+    "inputQualityRefs": [
+      "hud-pc-rivals-1.jpg",
+      "hud-pc-fisch-1.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "n/a",
+      "partial",
+      "pass",
+      "n/a",
+      "n/a",
+      "partial",
+      "partial"
+    ],
+    "refinement": "Smaller HUD/goal; mouse cue; sharper foreground.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  },
+  {
+    "sheet": "hud-phone",
+    "ref": "hud-phone-rivals-1.jpg",
+    "score": 7.5,
+    "tries": 2,
+    "gap": "Clear separated touch controls and eligible target; foliage stays busy, target cue remains large.",
+    "game": "RIVALS",
+    "uploadDate": "2026-10-11",
+    "sourceURL": "https://www.youtube.com/watch?v=1OOfL2QjI-0",
+    "timestampSeconds": 101,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-c9459494-06da-4dfa-8501-d090e29a25c2.png",
+    "inputQualityRefs": [
+      "hud-phone-rivals-1.jpg",
+      "hud-phone-rivals-2.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "n/a",
+      "partial",
+      "pass",
+      "n/a",
+      "n/a",
+      "partial",
+      "partial"
+    ],
+    "refinement": "Smaller touch controls; correct Rusty glyph; Jump label; selected underline.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  },
+  {
+    "sheet": "panels-shop-index",
+    "ref": "shop-panel-doors-1.jpg",
+    "score": 7.5,
+    "tries": 2,
+    "gap": "Owned/selected/locked hierarchy and tool benefits read; price/unlock facts are TBD, affordance cannot be judged as final economy UI.",
+    "game": "DOORS",
+    "uploadDate": "2026-10-02",
+    "sourceURL": "https://www.youtube.com/watch?v=Pz8ffoAMd6o",
+    "timestampSeconds": 13,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-99ae6f68-78fe-41b2-8ddd-ffeab22464e3.png",
+    "inputQualityRefs": [
+      "shop-panel-doors-1.jpg",
+      "shop-panel-bgsi-1.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "n/a",
+      "partial",
+      "n/a",
+      "n/a",
+      "partial",
+      "pass",
+      "partial"
+    ],
+    "refinement": "Dim behind modal; explicit Selected; reduced locked/aura emphasis.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  },
+  {
+    "sheet": "panels-index",
+    "ref": "index-panel-bgsi-1.jpg",
+    "score": 8,
+    "tries": 3,
+    "gap": "Distinct silhouettes, discovered checks, selected detail and dark journal hierarchy read; Ghosty/Bat construction still varies across set and pixel-exact rarity hex compliance UNKNOWN.",
+    "game": "Bubble Gum Simulator Infinity",
+    "uploadDate": "2026-10-11",
+    "sourceURL": "https://www.youtube.com/watch?v=qnC4WKS9gqY",
+    "timestampSeconds": 353,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-f027b363-98ef-4ef0-9cd5-4ab86398d5cf.png",
+    "inputQualityRefs": [
+      "index-panel-bgsi-1.jpg",
+      "index-panel-adopt-me-2.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "n/a",
+      "partial",
+      "n/a",
+      "n/a",
+      "pass",
+      "pass",
+      "pass"
+    ],
+    "refinement": "Unique unknown silhouettes, discovered checks, dim world; neutral unknown borders.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  },
+  {
+    "sheet": "hatch-reveal",
+    "ref": "hatch-reveal-adopt-me-1.jpg",
+    "score": 7.5,
+    "tries": 2,
+    "gap": "Physical Pup emerges visibly from grounded shell/nest; decorative density and equal warm sparkle intensity still dilute Common reward hierarchy.",
+    "game": "Adopt Me",
+    "uploadDate": "2026-10-07",
+    "sourceURL": "https://www.youtube.com/watch?v=q90HCeJSKAk",
+    "timestampSeconds": 183,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-bd19e771-7601-48cf-9720-6bee4c5fcc06.png",
+    "inputQualityRefs": [
+      "hatch-reveal-adopt-me-1.jpg",
+      "hatch-reveal-bgsi-1.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "n/a",
+      "partial",
+      "n/a",
+      "pass",
+      "n/a",
+      "partial",
+      "partial"
+    ],
+    "refinement": "Delete unwanted egg stall/oval eggs; seed props instead; retain physical Pup.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  },
+  {
+    "sheet": "hatch-reveal-mass",
+    "ref": "hatch-reveal-bgsi-1.jpg",
+    "score": 7,
+    "tries": 2,
+    "gap": "Nine physical results and discovery counts agree; ordered showroom staging, cube Bat/Ghosty contours and strong Common source glow remain.",
+    "game": "Bubble Gum Simulator Infinity",
+    "uploadDate": "2026-10-10",
+    "sourceURL": "https://www.youtube.com/watch?v=yICyhi4p0DA",
+    "timestampSeconds": 195,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-ee3bac29-dea8-47b1-9ef6-d6e2a52a2354.png",
+    "inputQualityRefs": [
+      "hatch-reveal-bgsi-1.jpg",
+      "hatch-reveal-adopt-me-1.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "n/a",
+      "partial",
+      "n/a",
+      "partial",
+      "n/a",
+      "partial",
+      "partial"
+    ],
+    "refinement": "Fix total to six Pups/two Ghostys/one Bat; one NEW badge per species; reduce auras.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  },
+  {
+    "sheet": "pets",
+    "ref": "pets-lineup-bgsi-1.jpg",
+    "score": 7,
+    "tries": 2,
+    "gap": "Opaque dragon wings, owl mantle and cat tail improve contours; pack still partly faces camera and Ghosty/Pup construction drifts across screens.",
+    "game": "Bubble Gum Simulator Infinity",
+    "uploadDate": "2026-10-11",
+    "sourceURL": "https://www.youtube.com/watch?v=qnC4WKS9gqY",
+    "timestampSeconds": 297,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-91819803-5a3a-45e6-9844-273e37d2b8c7.png",
+    "inputQualityRefs": [
+      "pets-lineup-bgsi-1.jpg",
+      "pets-lineup-adopt-me-1.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "n/a",
+      "partial",
+      "pass",
+      "n/a",
+      "n/a",
+      "partial",
+      "partial"
+    ],
+    "refinement": "Short Pup muzzle; opaque dragon wings, owl mantle, cat tail; reduce auras; move companions behind.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  },
+  {
+    "sheet": "scythes",
+    "ref": "tool-held-rivals-1.jpg",
+    "score": 7.5,
+    "tries": 2,
+    "gap": "Tools match shop contours and grip/material/contact read; blade tip stops short of physical crack and foreground blur remains.",
+    "game": "RIVALS",
+    "uploadDate": "2026-10-11",
+    "sourceURL": "https://www.youtube.com/watch?v=1OOfL2QjI-0",
+    "timestampSeconds": 213,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-8fd753fd-bc4e-4ea7-936b-fc02a9b1999c.png",
+    "inputQualityRefs": [
+      "tool-held-rivals-1.jpg",
+      "tool-held-doors-1.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "n/a",
+      "partial",
+      "partial",
+      "n/a",
+      "n/a",
+      "pass",
+      "partial"
+    ],
+    "refinement": "Skin hands, exact shop contours, small shelf instead of pedestal hero staging; white attack arc.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  },
+  {
+    "sheet": "guards-and-king",
+    "ref": "boss-fight-deepwoken-1.jpg",
+    "score": 7.5,
+    "tries": 2,
+    "gap": "Authored royal paving, distinct guards and forward King posture read; entrance remains symmetric and admission requirements are unresolved TBD.",
+    "game": "Deepwoken",
+    "uploadDate": "2026-10-11",
+    "sourceURL": "https://www.youtube.com/watch?v=UeRKESkr2Ag",
+    "timestampSeconds": 167,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-24df5def-521c-4cf6-8928-98628bc09c94.png",
+    "inputQualityRefs": [
+      "boss-fight-deepwoken-1.jpg",
+      "boss-fight-rivals-1.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "n/a",
+      "partial",
+      "pass",
+      "n/a",
+      "n/a",
+      "pass",
+      "partial"
+    ],
+    "refinement": "Forward King foot/posture/sceptre, different guard ready poses, small throne plaque.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  },
+  {
+    "sheet": "guards-and-king-fight",
+    "ref": "boss-fight-deepwoken-2.jpg",
+    "score": 7.5,
+    "tries": 2,
+    "gap": "King floor slam, dodge lane and coherent active HUD read; player blade-to-boot contact still ambiguous and floor impact chiefly appears at boot.",
+    "game": "Deepwoken",
+    "uploadDate": "2026-10-11",
+    "sourceURL": "https://www.youtube.com/watch?v=UeRKESkr2Ag",
+    "timestampSeconds": 175,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-91dcaa16-a257-4a0b-ac3b-df5cf7134263.png",
+    "inputQualityRefs": [
+      "boss-fight-deepwoken-2.jpg",
+      "boss-fight-rivals-1.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "n/a",
+      "partial",
+      "partial",
+      "partial",
+      "n/a",
+      "pass",
+      "partial"
+    ],
+    "refinement": "Shorter white outgoing arc, reduced impact clutter, edge damage cue; contact still ambiguous.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  },
+  {
+    "sheet": "first-5-min",
+    "ref": "first-minutes-adopt-me-1.jpg",
+    "score": 8,
+    "tries": 2,
+    "gap": "Ownership, intact carry, pursuer and empty home destination read together; foreground blur/Pup pose drift remain, phone thumb usability untested. Provisional self-score only.",
+    "game": "Adopt Me",
+    "uploadDate": "2026-10-07",
+    "sourceURL": "https://www.youtube.com/watch?v=q90HCeJSKAk",
+    "timestampSeconds": 93,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-efc0c1d0-9852-4994-8b26-164142651bd1.png",
+    "inputQualityRefs": [
+      "first-minutes-adopt-me-1.jpg",
+      "first-minutes-doors-1.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "pass",
+      "partial",
+      "n/a",
+      "n/a",
+      "n/a",
+      "partial",
+      "pass"
+    ],
+    "refinement": "Empty intact rival nest and empty farmhouse home nest instead of shells/portal; coherent carry HUD.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  },
+  {
+    "sheet": "zones-strip",
+    "ref": "zone-lane-fisch-1.jpg",
+    "score": 7.5,
+    "tries": 3,
+    "gap": "Distinct terrain cross-sections, defended faceless nests and depth improve; inherited central giant gates remain repetitive and narrow viewports crowd HUD.",
+    "game": "Fisch",
+    "uploadDate": "2026-10-10",
+    "sourceURL": "https://www.youtube.com/watch?v=NZcqxxrt-e4",
+    "timestampSeconds": 13,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-9580c435-e9ce-4cec-9c9b-257b00743296.png",
+    "inputQualityRefs": [
+      "zone-lane-fisch-1.jpg",
+      "zone-lane-adopt-me-1.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "context",
+      "partial",
+      "pass",
+      "n/a",
+      "n/a",
+      "pass",
+      "partial"
+    ],
+    "refinement": "Faceless nest targets and small guardians; restore accidentally removed HUD/names.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  },
+  {
+    "sheet": "zones-strip-2",
+    "ref": "zone-lane-adopt-me-1.jpg",
+    "score": 7.5,
+    "tries": 2,
+    "gap": "Distinct castle balcony, curved candy tiles and stepped royal court; faceless defended nests read, but King's sceptre head drifts from other scenes and Candy surface reads pavers more than biscuit.",
+    "game": "Adopt Me",
+    "uploadDate": "2026-10-07",
+    "sourceURL": "https://www.youtube.com/watch?v=q90HCeJSKAk",
+    "timestampSeconds": 101,
+    "selectedGeneratedSource": "C:\\Users\\zerha\\.codex\\generated_images\\01a12e3d-56e9-79c0-9f0c-9dc4e41383c9\\exec-d97ec52a-08ef-4e24-ad6f-7be68e711b92.png",
+    "inputQualityRefs": [
+      "zone-lane-adopt-me-1.jpg",
+      "zone-lane-fisch-1.jpg"
+    ],
+    "judgeChecklist": [
+      "pass",
+      "context",
+      "partial",
+      "pass",
+      "n/a",
+      "n/a",
+      "pass",
+      "partial"
+    ],
+    "refinement": "Skin hands; confection-built guard; active King and defended faceless targets.",
+    "scoreSource": "Author self pre-check only; blind judge pending"
+  }
+]

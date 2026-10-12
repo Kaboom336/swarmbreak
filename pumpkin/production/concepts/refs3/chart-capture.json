@@ -1,0 +1,9 @@
+{
+  "retrievedUTC": "2026-10-12T02:34:27.570Z",
+  "market": "Computer / US",
+  "source": "https://apis.roblox.com/explore-api/v1/get-sorts",
+  "files": [
+    "chart-api-1.json",
+    "chart-api-2.json"
+  ]
+}

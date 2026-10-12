@@ -1,0 +1,168 @@
+{
+  "verifiedUTC": "2026-10-12T03:09:31.801Z",
+  "frames": 31,
+  "screenGroups": 11,
+  "games": 6,
+  "acceptedSourceVideos": 8,
+  "uploadWindow": [
+    "2026-09-01",
+    "2026-10-12"
+  ],
+  "dimensions": [
+    {
+      "file": "hub-base-bgsi-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "hub-base-adopt-me-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "hub-base-bgsi-2.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "zone-lane-fisch-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "zone-lane-adopt-me-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "hud-pc-rivals-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "hud-pc-bgsi-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "hud-pc-fisch-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "hud-phone-rivals-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "hud-phone-rivals-2.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "hud-phone-adopt-me-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "shop-panel-doors-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "shop-panel-bgsi-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "index-panel-bgsi-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "index-panel-adopt-me-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "index-panel-adopt-me-2.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "pets-lineup-bgsi-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "pets-lineup-adopt-me-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "pets-lineup-bgsi-2.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "tool-held-rivals-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "tool-held-fisch-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "tool-held-doors-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "boss-fight-deepwoken-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "boss-fight-deepwoken-2.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "boss-fight-rivals-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "first-minutes-adopt-me-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "first-minutes-bgsi-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "first-minutes-doors-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "hatch-reveal-adopt-me-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "hatch-reveal-fisch-1.jpg",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "hatch-reveal-bgsi-1.jpg",
+      "width": 1280,
+      "height": 720
+    }
+  ]
+}
