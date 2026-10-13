@@ -17,3 +17,6 @@
 - Codex: use apply_patch only (a PowerShell alias once overwrote sources); Rojo exe C:/Users/zerha/.rokit/tool-storage/rojo-rbx/rojo/7.4.4/rojo.exe. Codex usage: grep rate_limits in newest ~/.codex/sessions jsonl (stop if used >= 85%).
 - Zion 10/13: keep building until Codex is at 15% left or his opinion is needed; one labelled question at a time; never block Sales/Clipper Codex jobs.
 - Git: branch pumpkin/patch-panic, commit with -c user.name/email from last commit, only add pumpkin/giant pumpkin/production pumpkin/tools.
+
+## 2026-10-13 11:50 UTC
+- Zion: KEEP golden acorn (models/golden-acorn). Meadow Keeper rejected ("not nearly as good as the reference"); Codex redo running detached (task C:\dev\codex-labrt1b-keeper-task.md -> art1b.last.txt, compare.jpg in models/meadow-keeper/blender). Next session: check it, send to Zion one question "Keeper: ok / change".
