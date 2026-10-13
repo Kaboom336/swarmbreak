@@ -1,28 +1,19 @@
-﻿# Handoff: Steal a Treasure (2026-10-12 ~23:45 UTC) - ACTIVE
+﻿# Handoff: Steal a Treasure (2026-10-13 ~06:00 UTC) - ACTIVE, Claude paused at 92%
 
-## Decisions today (all in Keystone)
-- Evergreen game + holiday events; renamed **Steal a Treasure** (no Roblox clash). Title tag per event: "[🎃] Steal a Treasure".
-- Standout: shared guardian islands (4-8 players): hills, simple jumps, 3 routes, hide spots, guardian throws with red telegraphs, PvP loot handoffs, 12 shuffled chunks (slice-v2/ISLAND-V2.md).
-- Each island guards its own container that opens into pets: Meadow golden acorn, Crystal Cave geode, Frost Peak ice crystal, Volcano magma orb, Ocean pearl clam; events: pumpkin, present.
-- TikTok-first design (clip moments, centre-third action, sound stingers).
-- Models approved: Pup A (assetId 98518831184004), Blender Crow (models/crow/blender), pumpkins (now Halloween event loot), pet effects v2 (no disc; Rare+ outline/glow/sparkles; name tags).
-- Usage cap: Codex builds, Claude judges; max 2 rounds per model; one review page per batch. Claude weekly ~86% (reset 10/14 21:00Z); money lanes first.
+## State
+- Greybox milestone DONE (prototype/guardian-greybox.rbxl, commit c0eab31): home island matching treasure/v2 refs, Meadow island (top-down map, height passes 1+2), harder guardian (guards, 2 s steal, chase, leading throws with red discs, knock-drop, leash), 60 s escape timer, no hide spots, bigger free-placement plots (64x48, pets stay put by default), reachable drops + gap climb-out, island backdrops/weather (background islands kept), decoy trap. Studio tests ALL PASS: GreyboxLoopTest 3/3, GreyboxPvpTest, GreyboxTrapTest.
+- Side-by-sides: slice-v2/evidence/sbs-home.jpg, sbs-meadow.jpg, sbs-meadow-2.jpg (Meadow still less hilly than ref; art pass should close it).
+- Running: Codex art batch 1 (task C:\dev\codex-lab\art1-models-task.md -> art1.last.txt): Blender golden acorn (+open) and Meadow Keeper guardian, renders for Zion review.
+- Open questions for Zion: pets wander vs stay put (default stay put).
+- Plan/GDD: treasure/GDD.md (revised by ARENA-1013.md), BUILD-PLAN.md, plan page https://claude.ai/artifact/RjiitVJmQswzyYZt4gxTpF.
 
-## Running / next (updated 2026-10-13 ~02:05 UTC)
-- Plan page: https://claude.ai/artifact/RjiitVJmQswzyYZt4gxTpF (GDD v1). References v2 + Meadow top-down map: treasure/v2/ (Zion likes the background floating islands; keep them).
-- Greybox (prototype/): layout rebuilt to refs v1, harder guardian done (offline checks pass). RUNNING: Codex t1i aligns Meadow + home to treasure/v2/meadow-topdown.png (task C:\dev\codex-lab\t1i-topdown-task.md -> t1i.last.txt). RUNNING: Codex design arena on Zion's 10/13 ideas (no hide zones, 1-min portal escape timer, traps before stealing, themed island backdrops/weather, bigger free-placement plots, unique future islands) -> treasure/ARENA-1013.md + revised GDD.md (task arena-1013-task.md -> arena1013.last.txt).
-- NEXT: show Zion the arena keep/change/cut list (max 1 question); build order core loop (guardian, timer, map) -> plots -> backdrops; traps/unique spawns later unless arena says core. Before Zion plays: open guardian-greybox.rbxl in Studio, run GreyboxLoopTest and GreyboxPvpTest (Play, set attributes on ServerScriptService; portal stays locked for players until both pass in that session), capture side-by-side shots with GreyboxCaptureCams vs treasure/v2 images.
-- Claude ~88% weekly (reset 10/14 21:00Z): pause Claude judging at 90%, Codex keeps building; money-lane Codex jobs first. Max 2 Codex rounds per piece.
+## Next (after Claude weekly reset 10/14 21:00 UTC, or light checks only)
+1. Show Zion the art batch 1 renders (one labelled question per model), then load approved models into the greybox (EditableMesh loader: see models/crow notes in previous handoff / Keystone lesson).
+2. Art pass over the greybox per treasure/v2 refs (real models, Pup/Crow in plots, acorn reveal), keep all 3 tests passing, side-by-side before Zion plays.
+3. Zion plays a run.
 
-## Code
-- Branch pumpkin/patch-panic; commit with -c user.name/email from last commit; only git add pumpkin/giant pumpkin/production pumpkin/tools.
-- Rojo: C:/Users/zerha/.rokit/tool-storage/rojo-rbx/rojo/7.4.4/rojo.exe (shim fails in Codex shell). Blender: C:\dev\codex-lab\tools\blender.
-
-
-
-## Overnight build rule (Zion 2026-10-13 02:15)
-- Keep building batches on Codex: map+guardian -> timer/no-hide (t1j) -> plots (C:/dev/codex-lab/t2-plots-task.md) -> backdrops (t3-backdrops-task.md) -> traps. Each batch: both Studio tests pass. Stop only if Codex weekly used >= 85% (check: grep rate_limits in newest ~/.codex/sessions/*/*/*/*.jsonl; was 22% at 02:20Z) or Zion opinion needed. Claude: light checks only until 10/14 reset.
-
-## Status 2026-10-13 ~03:30 UTC
-- Committed 5fa0ab3: map + harder guardian + 60 s timer, both tests PASS. Since then (uncommitted, prototype/): plots 64x48 free placement, dropped-loot reachable, gap climb-out, robust loop test (GreyboxLoopTestRuns=3). PvP PASS; loop test keeps false-failing on waypoint arrival; Codex t2d (arrival = 3 studs / passed / takeoff plane) running -> t2d.last.txt. Then retest, commit, then t3-backdrops-task.md, then traps.
-- Studio test recipe: reopen guardian-greybox.rbxl (kill old greybox window), Play, set ServerScriptService GreyboxLoopTest=true, poll GreyboxLoopTestResult up to ~9 min; restart Play, GreyboxPvpTest=true (~140 s).
+## Rules
+- Studio test recipe: kill old greybox window, reopen guardian-greybox.rbxl, Play, set ServerScriptService attribute GreyboxLoopTest/GreyboxPvpTest/GreyboxTrapTest true, poll *Result (loop ~140 s, PvP ~140 s); restart Play between tests. Portal is locked for players until tests pass in that session.
+- Codex: use apply_patch only (a PowerShell alias once overwrote sources); Rojo exe C:/Users/zerha/.rokit/tool-storage/rojo-rbx/rojo/7.4.4/rojo.exe. Codex usage: grep rate_limits in newest ~/.codex/sessions jsonl (stop if used >= 85%).
+- Zion 10/13: keep building until Codex is at 15% left or his opinion is needed; one labelled question at a time; never block Sales/Clipper Codex jobs.
+- Git: branch pumpkin/patch-panic, commit with -c user.name/email from last commit, only add pumpkin/giant pumpkin/production pumpkin/tools.
