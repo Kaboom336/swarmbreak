@@ -117,58 +117,54 @@ end
 function Scene.home(parent, make, label)
 	local home = Instance.new("Model")
 	home.Name, home.Parent = "HomeFloatingIsland", parent
-	floor(home, "HomeGrass", Vector3.new(126, 4, 208), Vector3.new(0, -2, 0), make, grass).Material =
+	floor(home, "HomeGrass", Vector3.new(216, 4, 320), Vector3.new(0, -2, 0), make, grass).Material =
 		Enum.Material.Grass
-	for _, side in { -1, 1 } do
-		floor(home, "ClippedGrassWing", Vector3.new(14, 4, 180), Vector3.new(side * 70, -2, 0), make, grass).Material =
-			Enum.Material.Grass
-	end
-	Scene.underside(home, Vector3.zero, 154, 208, make)
-	cosmetic(make(home, "CentralStonePath", Vector3.new(24, 0.08, 172), Vector3.new(0, 0.04, 16), stone))
+	Scene.underside(home, Vector3.zero, 216, 320, make)
+	cosmetic(make(home, "CentralStonePath", Vector3.new(40, 0.08, 280), Vector3.new(0, 0.04, 0), stone))
 	-- Broad walking ramp into the cyan arch, as in home v2.
-	local start, finish = Vector3.new(0, 0, 14), Vector3.new(0, 3, -3)
+	local start, finish = Vector3.new(0, 0, 38), Vector3.new(0, 3, 21)
 	local approach =
 		floor(home, "MeadowApproachRamp", Vector3.new(26, 1, (finish - start).Magnitude), (start + finish) / 2, make)
 	approach.CFrame = lookAt((start + finish) / 2, finish) * CFrame.new(0, -0.5, 0)
-	floor(home, "MeadowStepLanding", Vector3.new(26, 3, 8), Vector3.new(0, 1.5, -6), make)
-	local pad = floor(home, "RoundMeadowPlatform", Vector3.new(3, 32, 32), Vector3.new(0, 1.5, -24), make)
+	floor(home, "MeadowStepLanding", Vector3.new(26, 3, 8), Vector3.new(0, 1.5, 18), make)
+	local pad = floor(home, "RoundMeadowPlatform", Vector3.new(3, 32, 32), Vector3.new(0, 1.5, 0), make)
 	pad.Shape = Enum.PartType.Cylinder
-	pad.CFrame = CFrame.new(0, 1.5, -24) * CFrame.Angles(0, 0, math.pi / 2)
-	Scene.portal(home, Vector3.new(0, 13, -24), 10, make, false)
-	local action = cosmetic(make(home, "HomePortal", Vector3.new(1, 1, 1), Vector3.new(0, 5, -16), cyan))
+	pad.CFrame = CFrame.new(0, 1.5, 0) * CFrame.Angles(0, 0, math.pi / 2)
+	Scene.portal(home, Vector3.new(0, 13, 0), 10, make, false)
+	local action = cosmetic(make(home, "HomePortal", Vector3.new(1, 1, 1), Vector3.new(0, 5, 8), cyan))
 	action.Transparency = 1
 	label(action, "Meadow / Enter Meadow")
-	floor(home, "LockedPortalTerrace", Vector3.new(144, 6, 30), Vector3.new(0, 3, -84), make, grass)
+	floor(home, "LockedPortalTerrace", Vector3.new(144, 6, 30), Vector3.new(0, 3, -144), make, grass)
 	for i = 1, 6 do
 		floor(
 			home,
 			"TerraceStep" .. i,
 			Vector3.new(24, 3 + i * 0.5, 3),
-			Vector3.new(0, 1.5 + i * 0.25, -38.5 - i * 3),
+			Vector3.new(0, 1.5 + i * 0.25, -98.5 - i * 3),
 			make
 		)
 	end
-	floor(home, "TerraceLanding", Vector3.new(24, 6, 14), Vector3.new(0, 3, -63), make)
+	floor(home, "TerraceLanding", Vector3.new(24, 6, 14), Vector3.new(0, 3, -123), make)
 	for i, name in { "Crystal Cave", "Frost Peak", "Volcano", "Ocean" } do
 		local x = -54 + (i - 1) * 36
-		local locked = Scene.portal(home, Vector3.new(x, 12, -86), 6, make, true)
+		local locked = Scene.portal(home, Vector3.new(x, 12, -146), 6, make, true)
 		locked:SetAttribute("Destination", name)
 		label(locked, name .. " / LOCKED")
 	end
-	for _, z in { -48, -8, 32, 72 } do
+	for _, z in { -96, -32, 32, 96 } do
 		for _, x in { -17, 17 } do
 			Scene.lantern(home, Vector3.new(x, 0, z), make)
 		end
 	end
 	-- Open stall: columns, counter, pitched roof and striped awning.
 	for _, x in { -14, 14 } do
-		for _, z in { 88, 107 } do
+		for _, z in { 135, 154 } do
 			cosmetic(make(home, "ShopPost", Vector3.new(2, 12, 2), Vector3.new(x, 6, z), wood))
 		end
 	end
-	cosmetic(make(home, "ShopCounter", Vector3.new(28, 4, 5), Vector3.new(0, 2, 89), wood))
+	cosmetic(make(home, "ShopCounter", Vector3.new(28, 4, 5), Vector3.new(0, 2, 136), wood))
 	for _, side in { -1, 1 } do
-		local roof = cosmetic(make(home, "ShopRoof", Vector3.new(17, 1.2, 24), Vector3.new(side * 7.5, 13, 98), wood))
+		local roof = cosmetic(make(home, "ShopRoof", Vector3.new(17, 1.2, 24), Vector3.new(side * 7.5, 13, 145), wood))
 		roof.CFrame *= CFrame.Angles(0, 0, -side * math.rad(18))
 	end
 	for i = 0, 6 do
@@ -177,46 +173,41 @@ function Scene.home(parent, make, label)
 				home,
 				"ShopAwning",
 				Vector3.new(4, 0.6, 7),
-				Vector3.new(-12 + i * 4, 9, 92),
+				Vector3.new(-12 + i * 4, 9, 139),
 				i % 2 == 0 and grass or Color3.fromRGB(230, 225, 200)
 			)
 		)
 	end
 	label(
-		cosmetic(make(home, "ShopSign", Vector3.new(26, 3, 1), Vector3.new(0, 11, 93), wood)),
+		cosmetic(make(home, "ShopSign", Vector3.new(26, 3, 1), Vector3.new(0, 11, 140), wood)),
 		"Steal a Treasure / Shop"
 	)
 	for _, x in { -67, 67 } do
-		Scene.tree(home, Vector3.new(x, 6, -90), make, 1.15)
+		Scene.tree(home, Vector3.new(x, 6, -150), make, 1.15)
 	end
 	return action
 end
 function Scene.pen(parent, x, z, make)
-	-- Two rails/posts, with a wide inward-facing opening and eight visible pads.
-	for _, dz in { -14, 14 } do
+	-- Open plot, twelve-wide inward gate, no earning pads.
+	for _, dz in { -24, 24 } do
 		for _, y in { 1.4, 3.4 } do
-			cosmetic(make(parent, "PenRail", Vector3.new(38, 0.8, 0.8), Vector3.new(x, y, z + dz), wood))
+			cosmetic(make(parent, "PenRail", Vector3.new(64, 0.8, 0.8), Vector3.new(x, y, z + dz), wood))
 		end
-		for dx = -19, 19, 9.5 do
+		for dx = -32, 32, 16 do
 			cosmetic(make(parent, "PenPost", Vector3.new(1.4, 4.5, 1.4), Vector3.new(x + dx, 2.25, z + dz), wood))
 		end
 	end
-	local back = x + (x < 0 and -19 or 19)
+	local back = x + (x < 0 and -32 or 32)
 	for _, y in { 1.4, 3.4 } do
-		cosmetic(make(parent, "PenBackRail", Vector3.new(0.8, 0.8, 28), Vector3.new(back, y, z), wood))
+		cosmetic(make(parent, "PenBackRail", Vector3.new(0.8, 0.8, 48), Vector3.new(back, y, z), wood))
 	end
-	for n = 0, 7 do
-		cosmetic(
-			make(
-				parent,
-				"PetPad",
-				Vector3.new(6, 0.15, 6),
-				Vector3.new(x - 12 + n % 4 * 8, 0.2, z - 5 + math.floor(n / 4) * 10),
-				rock
-			)
-		)
+	local front = x + (x < 0 and 32 or -32)
+	for _, side in { -1, 1 } do
+		for _, y in { 1.4, 3.4 } do
+			cosmetic(make(parent, "PenGateRail", Vector3.new(0.8, 0.8, 18), Vector3.new(front, y, z + side * 15), wood))
+		end
 	end
-	cosmetic(make(parent, "PenAccessPath", Vector3.new(18, 0.06, 12), Vector3.new(x < 0 and -23 or 23, 0.03, z), stone))
+	cosmetic(make(parent, "PenAccessPath", Vector3.new(32, 0.06, 8), Vector3.new(x < 0 and -36 or 36, 0.23, z), stone))
 end
 function Scene.meadow(parent, origin, layout, make)
 	Scene.underside(parent, origin, 160, 160, make)
@@ -368,8 +359,8 @@ function Scene.captureCams(parent, enabled, meadowOrigin)
 		{
 			{
 				"HomeReferenceCamera",
-				Vector3.new(0, 96, 172),
-				Vector3.new(0, 4, -22),
+				Vector3.new(0, 150, 260),
+				Vector3.new(0, 4, 0),
 				55,
 				"home-island.png",
 			},

@@ -16,6 +16,7 @@
                                                   }
                               },
                  "ReplicatedStorage":  {
+                                           "GreyboxPlacement": { "$path": "Placement.luau" },
                                            "GreyboxConfig":  {
                                                                  "$path":  "GreyboxConfig.luau"
                                                              },
@@ -34,6 +35,9 @@
                                                                  "GreyboxSelfTest":  false,
                                                                  "GreyboxSeed":  0,
                                                                  "GreyboxLoopTest":  false,
+                                                                 "GreyboxLoopTestRuns":  3,
+                                                                 "GreyboxLoopTestPassCount":  0,
+                                                                 "GreyboxLoopTestExpiryCount":  0,
                                                                  "GreyboxLoopTestResult":  "NOT RUN",
                                                                  "GreyboxLoopTestSuccess":  false,
                                                                  "GreyboxPvpTest":  false,

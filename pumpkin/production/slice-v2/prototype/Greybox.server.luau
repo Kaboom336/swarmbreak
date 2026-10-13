@@ -11,6 +11,7 @@ local Layout = require(RS:WaitForChild("GreyboxLayout"))
 local Rules = require(RS:WaitForChild("GreyboxLootRules"))
 local Arena = require(SSS:WaitForChild("GreyboxArena"))
 local Scene = require(RS:WaitForChild("GreyboxScene"))
+local Placement = require(RS:WaitForChild("GreyboxPlacement"))
 local rules = Rules.new(Config)
 local states, pens, slots = rules.actors, {}, {}
 local world = Instance.new("Folder")
@@ -126,7 +127,7 @@ local function visual(item)
 		p.Transparency = item.recoverAt and 1 or 0
 	elseif item.state == "Placed" then
 		p.Size = Vector3.new(3, 3, 3)
-		p.Position = item.position
+		p.CFrame = CFrame.new(item.position) * CFrame.Angles(0, math.rad(item.rotation or 0), 0)
 	elseif item.state == "Retired" then
 		p:Destroy()
 		item.visual = nil
@@ -435,13 +436,14 @@ local function home(actor)
 	local s = states[actor]
 	s.run, s.hold = nil, nil
 	if actor.Character then
-		actor.Character:PivotTo(CFrame.new(0, 4, Config.HomeSpawnZ))
+		local pen = s.item and pens[s.slot]
+		actor.Character:PivotTo(pen and CFrame.new(pen.gate) or CFrame.new(0, 6, Config.HomeSpawnZ))
 	end
 	if s.item then
 		visual(s.item)
 	end
 	publish(actor)
-	goal(actor, s.item and "Secured / place in your marked pen" or "Enter the central portal")
+	goal(actor, s.item and "Secured / choose a free plot spot / Place, Rotate, Snap" or "Enter the central portal")
 end
 local function returnRun(actor, automatic)
 	expireLoot(os.clock())
@@ -472,46 +474,65 @@ local function returnRun(actor, automatic)
 	end
 	return ok, why
 end
-local function placeItem(actor, slot)
+local function placeItem(actor, slot, position, rotation)
 	local s, pen = states[actor], pens[slot]
-	if not s or not pen or s.slot ~= slot or not near(actor, pen.marker) or pen.count >= 8 then
-		return false, "pen owner/range/capacity"
+	local r = root(actor)
+	if not s or not pen or s.slot ~= slot or not r then
+		return false, "plot owner"
+	end
+	if typeof(position) ~= "Vector3" or type(rotation) ~= "number" then
+		return false, "placement required"
+	end
+	local valid, extent = Placement.validate(Config, slot, position.X, position.Z, rotation, pen.occupied)
+	if not valid then
+		return false, extent
+	end
+	if position.Y ~= position.Y or math.abs(position.Y - 0.2) > 0.05 or (r.Position - position).Magnitude > 24 then
+		return false, "floor/range"
+	end
+	local params = RaycastParams.new()
+	params.FilterType, params.FilterDescendantsInstances = Enum.RaycastFilterType.Include, { pen.base }
+	local floor = workspace:Raycast(position + Vector3.new(0, 2, 0), Vector3.new(0, -4, 0), params)
+	if not floor or math.abs(floor.Position.Y - position.Y) > 0.05 then
+		return false, "plot floor"
 	end
 	local ok, item = Rules.place(rules, actor)
 	if not ok then
 		return false, item
 	end
 	pen.count += 1
-	local n, position = pen.count - 1, pen.base.Position
-	item.position = Vector3.new(position.X - 12 + n % 4 * 8, 1.7, position.Z - 5 + math.floor(n / 4) * 10)
+	item.position = Vector3.new(position.X, 1.7, position.Z)
+	item.rotation = rotation % 360
+	item.penSlot = slot
+	table.insert(pen.occupied, { x = position.X, z = position.Z, extent = extent })
 	visual(item)
 	item.visual.Name = "Placed_" .. item.id
 	item.visual:SetAttribute("PenSlot", slot)
+	item.visual:SetAttribute("PlacementX", position.X)
+	item.visual:SetAttribute("PlacementZ", position.Z)
+	item.visual:SetAttribute("PlacementExtent", extent)
 	goal(actor, "Placed / enter for another run")
 	publish(actor)
 	Rules.audit(rules)
 	return true
 end
 for i = 1, 8 do
-	local x, z = i <= 4 and -50 or 50, -54 + ((i - 1) % 4) * 36
+	local x, z = Placement.center(i)
 	local base =
-		part(world, "Pen" .. i, Vector3.new(38, 0.2, 28), Vector3.new(x, 0.1, z), Color3.fromRGB(100, 115, 100))
+		part(world, "Pen" .. i, Vector3.new(64, 0.2, 48), Vector3.new(x, 0.1, z), Color3.fromRGB(100, 115, 100))
+	base:SetAttribute("SurfaceRole", "Floor")
 	Scene.pen(world, x, z, part)
 	local marker =
-		part(world, "PenMarker" .. i, Vector3.new(2, 3, 2), Vector3.new(x + (x < 0 and 16 or -16), 1.5, z), orange)
+		part(world, "PenMarker" .. i, Vector3.new(2, 3, 2), Vector3.new(x + (x < 0 and 32 or -32), 1.5, z + 8), orange)
+	marker.CanCollide = false
 	pens[i] = {
 		base = base,
 		marker = marker,
 		text = label(marker, "Pen " .. i .. " / vacant"),
 		count = 0,
+		occupied = {},
+		gate = Vector3.new(x < 0 and -16 or 16, 4, z),
 	}
-	local q = prompt(marker, "Place", "Own pen")
-	q:SetAttribute("PenSlot", i)
-	q.Triggered:Connect(function(actor)
-		if not testRunning then
-			placeItem(actor, i)
-		end
-	end)
 end
 local function assemble()
 	session += 1
@@ -584,6 +605,7 @@ local function enterRun(actor)
 	s.phase, s.run, s.counter, s.started, s.mercy, s.catches =
 		"Run", arena, (s.counter or 0) + 1, os.clock(), os.clock() + Config.MercySeconds, 0
 	local arrivals = { -12, 0, 12 }
+	s.lastSafe = Arena.position(arena, arrivals[((population() - 1) % 3) + 1], 3, -58)
 	actor.Character:PivotTo(CFrame.new(Arena.position(arena, arrivals[((population() - 1) % 3) + 1], 4, -58)))
 	publish(actor)
 	goal(actor, "Choose a route / hold Steal at " .. Config.ItemName .. " / escape commits ownership")
@@ -595,7 +617,7 @@ enter.Triggered:Connect(function(actor)
 	end
 end)
 local lastAction = {}
-actionRemote.OnServerEvent:Connect(function(actor, action, stage)
+actionRemote.OnServerEvent:Connect(function(actor, action, stage, rotation)
 	if testRunning or type(action) ~= "string" then
 		return
 	end
@@ -612,7 +634,7 @@ actionRemote.OnServerEvent:Connect(function(actor, action, stage)
 	elseif action == "Return" then
 		ok, why = returnRun(actor)
 	elseif action == "Place" then
-		ok, why = placeItem(actor, states[actor] and states[actor].slot)
+		ok, why = placeItem(actor, states[actor] and states[actor].slot, stage, rotation)
 	else
 		return
 	end
@@ -728,6 +750,7 @@ Players.PlayerRemoving:Connect(function(actor)
 		end
 	end
 	pens[s.slot].count, pens[s.slot].text.Text = 0, "Pen " .. s.slot .. " / vacant"
+	pens[s.slot].occupied = {}
 	slots[s.slot], states[actor], lastAction[actor] = nil, nil, nil
 end)
 local accumulator = 0
@@ -738,6 +761,15 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 	local step, now = math.min(accumulator, 0.15), os.clock()
 	accumulator = 0
+	for _, item in rules.items do
+		if item.state == "Placed" and item.visual then
+			local drift = Config.PetsWander and Vector3.new(math.sin(now * 0.7) * 0.25, 0, math.cos(now * 0.7) * 0.25)
+				or Vector3.zero
+			item.visual.CFrame = CFrame.new(
+				item.position + drift + Vector3.new(0, math.abs(math.sin(now * 2)) * 0.15, 0)
+			) * CFrame.Angles(0, math.rad(item.rotation or 0), 0)
+		end
+	end
 	expireLoot(now)
 	for actor, s in states do
 		local r, h = root(actor)
@@ -754,7 +786,8 @@ RunService.Heartbeat:Connect(function(dt)
 			if s.item then
 				drop(actor, "outside island fall/recovery")
 			end
-			actor.Character:PivotTo(CFrame.new(Arena.position(arena, 0, 4, -58)))
+			actor.Character:PivotTo(CFrame.new(s.lastSafe or Arena.position(arena, 0, 3, -58)))
+			r.AssemblyLinearVelocity, r.AssemblyAngularVelocity = Vector3.zero, Vector3.zero
 			continue
 		end
 		if s.item and Arena.safe(arena, r.Position) then
@@ -762,6 +795,12 @@ RunService.Heartbeat:Connect(function(dt)
 			continue
 		end
 		local socket = Arena.dropSocket(arena, r.Position)
+		if h.FloorMaterial ~= Enum.Material.Air then
+			local floor = Arena.floor(arena, r.Position)
+			if floor and math.abs(r.Position.Y - floor.Y - 3) < 1 and (socket - floor).Magnitude < 3 then
+				s.lastSafe = socket + Vector3.new(0, 3, 0)
+			end
+		end
 		if socket then
 			s.lastSocket = socket
 		end
@@ -993,7 +1032,31 @@ local function startTest(mode)
 					dummy = value
 				end)
 			end
-			return runner.run(player, states, pens, world, api, log)
+			local runs = SSS:GetAttribute("GreyboxLoopTestRuns") or 3
+			assert(type(runs) == "number" and runs >= 3 and runs % 1 == 0, "GreyboxLoopTestRuns must be an integer >=3")
+			local passed, expiries = 0, 0
+			SSS:SetAttribute("GreyboxLoopTestPassCount", 0)
+			SSS:SetAttribute("GreyboxLoopTestExpiryCount", 0)
+			for i = 1, runs do
+				log("loop " .. i .. "/" .. runs .. " START")
+				local loopOk, detail, outcome = pcall(runner.run, player, states, pens, world, api, log)
+				if not loopOk then
+					error(passed .. "/" .. runs .. " passed; loop " .. i .. " harness error: " .. tostring(detail))
+				end
+				passed += 1
+				expiries += outcome == "expiry" and 1 or 0
+				SSS:SetAttribute("GreyboxLoopTestPassCount", passed)
+				SSS:SetAttribute("GreyboxLoopTestExpiryCount", expiries)
+				log("loop " .. i .. "/" .. runs .. " PASS: " .. detail)
+			end
+			return passed
+				.. "/"
+				.. runs
+				.. " passed; "
+				.. expiries
+				.. " legal expiries; "
+				.. (passed - expiries)
+				.. " placed"
 		end)
 		log((ok and "PASS: " or "FAIL: ") .. tostring(result))
 		pvpCourtPaused = false -- Always restore on success or failure.

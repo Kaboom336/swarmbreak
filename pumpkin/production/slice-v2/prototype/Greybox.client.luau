@@ -7,6 +7,7 @@ local player = Players.LocalPlayer
 local remote = RS:WaitForChild("GreyboxAction")
 local world = workspace:WaitForChild("GREYBOX")
 local Config = require(RS:WaitForChild("GreyboxConfig"))
+local Placement = require(RS:WaitForChild("GreyboxPlacement"))
 local controls = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule")):GetControls()
 local function testControls()
 	if player:GetAttribute("GreyboxLoopTesting") then
@@ -41,6 +42,96 @@ end
 player:GetAttributeChangedSignal("GreyboxGoal"):Connect(refresh)
 player:GetAttributeChangedSignal("GreyboxCarry"):Connect(refresh)
 refresh()
+local rotation, snap, candidate, placementActive = 0, false, nil, false
+local ghost = Instance.new("Part")
+ghost.Name, ghost.Size, ghost.Anchored = "PlacementGhost", Vector3.new(4, 0.15, 4), true
+ghost.CanCollide, ghost.CanQuery, ghost.CanTouch = false, false, false
+ghost.Material, ghost.Transparency = Enum.Material.Neon, 1
+ghost.Parent = workspace
+local function placementButton(name, x, width)
+	local b = Instance.new("TextButton")
+	b.Name, b.Text = name, name
+	b.Position, b.Size = UDim2.fromScale(x, 0.7), UDim2.new(width, 0, 0, 48)
+	b.BackgroundColor3, b.TextColor3 = Color3.fromRGB(40, 55, 65), Color3.new(1, 1, 1)
+	b.TextSize, b.Visible, b.Parent = 18, false, gui
+	return b
+end
+local placeButton = placementButton("Place [E / X]", 0.15, 0.3)
+local rotateButton = placementButton("Rotate [R / Y]", 0.46, 0.2)
+local snapButton = placementButton("Snap OFF [G / B]", 0.67, 0.2)
+local function rotate()
+	rotation = (rotation + 15) % 360
+end
+local function toggleSnap()
+	snap = not snap
+	snapButton.Text = "Snap " .. (snap and "ON" or "OFF") .. " [G / B]"
+end
+local function confirmPlacement()
+	if placementActive and candidate then
+		remote:FireServer("Place", candidate, rotation)
+	end
+end
+placeButton.Activated:Connect(confirmPlacement)
+rotateButton.Activated:Connect(rotate)
+snapButton.Activated:Connect(toggleSnap)
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed or not placementActive then
+		return
+	end
+	if input.KeyCode == Enum.KeyCode.R or input.KeyCode == Enum.KeyCode.ButtonY then
+		rotate()
+	elseif input.KeyCode == Enum.KeyCode.G or input.KeyCode == Enum.KeyCode.ButtonB then
+		toggleSnap()
+	elseif input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.ButtonX then
+		confirmPlacement()
+	end
+end)
+RunService.RenderStepped:Connect(function()
+	placementActive = player:GetAttribute("GreyboxPhase") == "Home"
+		and player:GetAttribute("GreyboxCarry") == true
+		and not player:GetAttribute("GreyboxLoopTesting")
+	placeButton.Visible, rotateButton.Visible, snapButton.Visible = placementActive, placementActive, placementActive
+	ghost.Transparency, candidate = 1, nil
+	local camera, slot = workspace.CurrentCamera, player:GetAttribute("GreyboxPen")
+	local character = player.Character
+	local r = character and character:FindFirstChild("HumanoidRootPart")
+	if not placementActive or not camera or not slot or not r then
+		return
+	end
+	local mouse = UserInputService:GetMouseLocation()
+	local ray = camera:ScreenPointToRay(mouse.X, mouse.Y)
+	if UserInputService.TouchEnabled or UserInputService:GetLastInputType() == Enum.UserInputType.Gamepad1 then
+		ray = camera:ViewportPointToRay(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+	end
+	if ray.Direction.Y >= -0.001 then
+		return
+	end
+	local point = ray.Origin + ray.Direction * ((0.2 - ray.Origin.Y) / ray.Direction.Y)
+	local x, z = point.X, point.Z
+	if snap then
+		x, z = math.round(x), math.round(z)
+	end
+	local occupied = {}
+	for _, p in world:GetChildren() do
+		if p:IsA("BasePart") and p:GetAttribute("PenSlot") == slot and p:GetAttribute("PlacementX") then
+			table.insert(occupied, {
+				x = p:GetAttribute("PlacementX"),
+				z = p:GetAttribute("PlacementZ"),
+				extent = p:GetAttribute("PlacementExtent"),
+			})
+		end
+	end
+	local valid = Placement.validate(Config, slot, x, z, rotation, occupied)
+	point = Vector3.new(x, 0.2, z)
+	valid = valid and (r.Position - point).Magnitude <= 24
+	ghost.CFrame = CFrame.new(x, 0.3, z) * CFrame.Angles(0, math.rad(rotation), 0)
+	ghost.Transparency = 0.45
+	ghost.Color = valid and Color3.fromRGB(80, 240, 150) or Color3.fromRGB(255, 70, 70)
+	placeButton.Text = valid and "Place [E / X]" or "Choose a free plot spot"
+	if valid then
+		candidate = point
+	end
+end)
 local countdown = Instance.new("TextLabel")
 countdown.Name = "EscapeCountdown"
 countdown.AnchorPoint, countdown.Position = Vector2.new(0.5, 0.5), UDim2.fromScale(0.5, 0.36)

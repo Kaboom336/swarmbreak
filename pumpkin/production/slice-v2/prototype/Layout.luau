@@ -102,13 +102,15 @@ function Layout.assemble(config, seed, _fixed)
 	box("JumpStart", -55, -1, -34, 12, 2, 12)
 	box("Stone1", -43, -1, -34, 8, 4, 8)
 	box("Stone2", -31, -0.5, -34, 8, 5, 8)
-	box("Stone3", -25, 0, -20, 8, 6, 8)
+	-- One stud less gap gives the carrying jump a margin at default gravity.
+	box("Stone3", -25, 0, -20.5, 8, 6, 9)
 	box("JumpLanding", -25, -1, -10, 12, 2, 12)
-	ramp("RecoveryWest", point(-40, -3, -24), point(-48, 0, -24), 12)
-	ramp("RecoveryEast", point(-23.5, -3, -32), point(-16, 0, -32), 12)
+	-- Overlap the banks: ending at the cutout edge leaves a vertical floor seam.
+	ramp("RecoveryWest", point(-40, -3, -24), point(-49.5, 0, -24), 12)
+	ramp("RecoveryEast", point(-23.5, -3, -32), point(-14.5, 0, -32), 12)
 	l.jumps = {
 		{ from = point(-43, 1, -34), to = point(-31, 2, -34, "Jump"), gap = 4 },
-		{ from = point(-31, 2, -34), to = point(-25, 3, -20, "Jump"), gap = 6 },
+		{ from = point(-31, 2, -34), to = point(-25, 3, -20, "Jump"), gap = 5 },
 	}
 	-- Open rock cutbacks: twelve-stud through passages, no interior.
 	box("CutbackRockA", 38, 4, -18, 8, 8, 8, "Cover")
@@ -163,6 +165,14 @@ function Layout.loopCarrySteps(_l)
 	add("four-stud gap", -31, 2, -34, "Jump").takeoff = point(-39.8, 1, -34)
 	add("six-stud gap", -25, 3, -20, "Jump").takeoff = point(-29, 2, -30.5)
 	add("stone north landing", -25, 0, -10, "Jump").takeoff = point(-25, 3, -16.8)
+	for _, p in steps do
+		if p.takeoff then
+			local t = p.takeoff
+			local dx, dz = p.x - t.x, p.z - t.z
+			local length = math.sqrt(dx * dx + dz * dz)
+			p.runup = point(t.x - dx / length * 6.6, t.y, t.z - dz / length * 6.6)
+		end
+	end
 	add("east stone clearance", -18, 0, -10)
 	add("inner return corner", -18, 0, -6)
 	add("inner return turn", -16.5, 0, 0)

@@ -1,4 +1,54 @@
-PREVIOUS RUN (before reported Studio failures; superseded by current run below)
+CURRENT RUN: shared waypoint arrival and route progress (2026-10-13)
+PASS Lune0.10.5 run check.luau: ten sources O0/O1/O2; complete harness
+PASS shared driver four reported orbit X/Z samples (synthetic goal Z33.5);
+normal/edge/overshoot/grounded jump arrival; run-up plane and zero-length line;
+immediate next MoveTo without stop/yield; one command per moving segment
+PASS route-projection watchdog: forward progress despite growing point distance;
+sideways orbit still fails >8s; existing takeoff and missed-jump checks retained
+PASS preserved drop/stumble/expiry/secure/PvP/placement and 3-run batch checks
+PASS fifty-seed route clearance/floor continuity and final runtime source parity
+PASS StyLua2.0.2 --check .; all text edits via apply_patch
+PASS Selene0.31.0: 0 errors / 0 warnings / 0 parse errors
+PASS exact Rojo7.4.4 build greybox.project.json -o guardian-greybox.rbxl
+SHA256 06736357A81132E27E44BD3116D692DB5520B5FA586DD43DBBEA45747A6143CE
+STUDIO NOT RUN: no callable integration; gates false/NOT RUN; live 3/3 UNKNOWN
+Harness-only fix; production game rules unchanged; no commit/publication
+
+PREVIOUS RUN: missed-jump/gully/void recovery (2026-10-13)
+PASS Lune ten-file O0/O1/O2 compile and complete check.luau harness
+PASS production driver 6.6-stud straight run-up, edge launch, reported Y0.45
+miss detection before8s; walking-only recovery radius1.5
+PASS sampled west/east climb-out ramp continuity and ground-bank connections
+PASS carrying center trajectories at assumed default gravity196.2:
+required3.51/4.81/5.89/0.80, range7.05/7.05/7.05/8.01, minimum margin1.16
+PASS production void recovery with/without cargo and with/without lastSafe;
+drop before recovery; zero fall velocities; retained treasure ID/clock
+PASS retained guardian/PvP/expiry/drop/placement and three-run batch regressions
+PASS StyLua --check; formatting changes via apply_patch
+PASS Selene0 errors/0 warnings/0 parse errors
+PASS exact requested Rojo build; every runtime source/binary parity
+SHA256 CDA4FAD03C843F1E2E6263C921BEEA72C0E51613297D57235FF337B042B9CEB2
+STUDIO NOT RUN: no callable Studio integration; gates false/NOT RUN
+Movement/navigation/collision mocked; live jump success UNKNOWN
+Prototype-only repair; no commit/publication
+
+PREVIOUS RUN: recipe 6 free-placement plots (2026-10-12)
+PASS Lune ten-file O0/O1/O2 compile and full check.luau harness
+PASS production free Place on all eight plots: chosen fractional transform/yaw;
+owner/types/finite/floor/range/bounds/rotation/gate/overlap/capacity8/replay;
+all rejected actions retain secured cargo
+PASS constructed 216x320 home, 64x48 rails, twelve-wide gates, no PetPad
+PASS all eight home entry routes: built floor/clearance/ramp continuity
+PASS retained guardian, PvP, drop/recovery, original-ID/deadline, expiry regressions
+PASS StyLua --check (formatting edits via apply_patch only)
+PASS Selene: 0 errors, 0 warnings, 0 parse errors
+PASS requested Rojo build and every runtime source/binary parity check
+SHA256 70C7968AFF445309485F8BAC64CAA9FCAB6F5F450AEE32DB9F7096122F02AD32
+STUDIO: owner-reported prior Loop/PvP PASS; changed runners NOT RUN here
+No callable Studio integration; binary runtime gates false/NOT RUN
+No commit; changes restricted to prototype/
+
+PREVIOUS RUNS (historical results below; superseded by current run above)
 PASS stylua format
 Results:
 0 errors
@@ -79,7 +129,19 @@ Preserved regressions: targeting/range/sight/safety/mercy/cooldown, original car
 Build SHA256: 254EC403F7D70FE30C48DD4EE9DD3F7FD12350218E8ED8DD133D80018819EB60
 Studio NOT RUN: no connected Studio integration. Physics/navmesh/poof appearance UNKNOWN; both gates false/NOT RUN. Prototype-only edits via apply_patch; requested Rojo-generated binary; no commit.
 
-CURRENT RUN: 2026-10-12 Studio retest round 3 reachable treasure drops / live PvP range.
+CURRENT RUN: 2026-10-12 interruption-safe loop harness after plots.
+Pinned Rojo 7.4.4 build greybox.project.json -o guardian-greybox.rbxl: exit 0 PASS.
+Pinned Lune 0.10.5 run check.luau: exit 0 PASS; ten sources O0/O1/O2; complete harness and final built-source parity.
+Pinned StyLua 2.0.2 --check .: exit 0 PASS; text formatting edits via apply_patch only.
+Pinned Selene 0.31.0 .: exit 0 PASS; 0 errors / 0 warnings / 0 parse errors.
+New live-driver mocks: drop/stumble/expiry during walk, jump approach and readiness; legal secure at any step; secured Home requires movement; stumble wait/interrupted Grab retry/original clock; expiry during recovery.
+Nearest route: reported stone landing and hill segment resume. Shared empty expiry exit: fifty-seed endpoints and half-stud sampled continuous ramp/floor PASS.
+Batch: default mixed 3/3 legal outcomes PASS; 2/3 then harness error rejected; fewer than three runs rejected; built defaults runs=3/counts=0.
+Expiry outcome: clean loss/no award, new Nest ID without deadline, physical conservation PASS; orphan weld rejected.
+Build SHA256: 75E7E1679E0324F6C99FDEF6C891395B691EB05FF82A4A10CED6C9DAF0AA1065
+Studio NOT RUN here; owner-reported prior PvP PASS, solo FLAKY. New live navmesh/physics and 3/3 UNKNOWN; rebuilt gates false/NOT RUN. Prototype-only apply_patch text edits and requested generated binary; no commit.
+
+PREVIOUS RUN: 2026-10-12 Studio retest round 3 reachable treasure drops / live PvP range.
 Pinned Rojo 7.4.4 build greybox.project.json -o guardian-greybox.rbxl: exit 0 PASS.
 Pinned Lune 0.10.5 run check.luau: exit 0 PASS; nine sources compile O0/O1/O2; complete harness and rebuilt binary/source parity.
 Pinned StyLua 2.0.2 --check .: exit 0 PASS; formatting edits via apply_patch only.

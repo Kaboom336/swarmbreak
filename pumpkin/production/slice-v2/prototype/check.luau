@@ -3,6 +3,7 @@ local luau = require("@lune/luau")
 local Config = require("./GreyboxConfig")
 local Layout = require("./Layout")
 local Rules = require("./LootRules")
+local Placement = require("./Placement")
 for _, name in fs.readDir(".") do
 	if string.sub(name, -5) == ".luau" then
 		for level = 0, 2 do
@@ -12,6 +13,110 @@ for _, name in fs.readDir(".") do
 	end
 end
 Layout.selfTest(Config, print)
+-- Execute the production placement adapter with raycasts/visuals mocked.
+local function placementTest()
+	local roblox = require("@lune/roblox")
+	local v = roblox.Vector3
+	local source = fs.readFile("Greybox.server.luau")
+	local from = assert(source:find("local function placeItem(", 1, true))
+	local finish = assert(source:find("\nfor i = 1, 8 do", from, true))
+	for slot = 1, 8 do
+		local cx, cz = Placement.center(slot)
+		local actor, other = {}, {}
+		local rules = Rules.new(Config)
+		local s = Rules.actor(rules, actor)
+		s.slot = slot
+		local pen = { count = 0, occupied = {}, base = roblox.Instance.new("Part") }
+		local position = v.new(cx - 5.25, 0.2, cz + 10.5)
+		local r = { Position = position + v.new(0, 3, 0) }
+		local missingFloor = false
+		local place = luau.load(source:sub(from, finish - 1) .. "\nreturn placeItem", {
+			environment = {
+				Config = Config,
+				Placement = Placement,
+				Rules = Rules,
+				rules = rules,
+				states = rules.actors,
+				pens = { [slot] = pen },
+				Vector3 = v,
+				Enum = roblox.Enum,
+				typeof = typeof,
+				RaycastParams = {
+					new = function()
+						return {}
+					end,
+				},
+				workspace = {
+					Raycast = function(_, origin)
+						return not missingFloor and { Position = v.new(origin.X, 0.2, origin.Z) } or nil
+					end,
+				},
+				root = function(a)
+					return a == actor and r or nil
+				end,
+				visual = function(item)
+					item.visual = roblox.Instance.new("Part")
+				end,
+				goal = function() end,
+				publish = function() end,
+			},
+		})()
+		local function secured()
+			local item = Rules.spawn(rules, position)
+			item.state, item.holder = "Secured", actor
+			rules.active, s.item = nil, item
+			return item
+		end
+		local item = secured()
+		local function reject(point, angle, reason)
+			local ok, why = place(actor, slot, point, angle)
+			assert(not ok and (not reason or why == reason), "invalid Place accepted/wrong reason: " .. tostring(why))
+			assert(s.item == item and item.state == "Secured" and pen.count == #pen.occupied, "refusal consumed cargo")
+		end
+		assert(not place(other, slot, position, 15), "foreign owner placed")
+		reject(nil, 0, "placement required")
+		reject(v.new(0 / 0, 0.2, cz), 0, "invalid placement")
+		reject(v.new(cx, 0 / 0, cz + 10), 0, "floor/range")
+		reject(position, math.huge, "invalid placement")
+		reject(v.new(cx + 40, 0.2, cz), 15, "out of bounds")
+		reject(v.new(cx + 26, 0.2, cz + 10), 45, "out of bounds")
+		reject(v.new(cx + (cx < 0 and 22 or -22), 0.2, cz), 0, "keep entrance clear")
+		reject(v.new(position.X, 4, position.Z), 15, "floor/range")
+		r.Position = position + v.new(0, 30, 0)
+		reject(position, 15, "floor/range")
+		r.Position = position + v.new(0, 3, 0)
+		missingFloor = true
+		reject(position, 15, "plot floor")
+		missingFloor = false
+		assert(place(actor, slot, position, 15), "free placement failed")
+		assert(item.position == position + v.new(0, 1.5, 0) and item.rotation == 15, "free transform lost")
+		assert(
+			item.visual:GetAttribute("PlacementX") == position.X and item.visual:GetAttribute("PenSlot") == slot,
+			"preview footprint missing"
+		)
+		assert(not place(actor, slot, position, 15), "duplicate Place")
+		item = secured()
+		reject(position, 15, "overlap")
+		reject(position + v.new(5, 0, 0), 15, "overlap")
+		for dz = -14, 14, 7 do
+			for dx = -22, 22, 7 do
+				local p = v.new(cx + dx, 0.2, cz + dz)
+				if #pen.occupied < 8 and Placement.validate(Config, slot, p.X, p.Z, 15, pen.occupied) then
+					r.Position = p + v.new(0, 3, 0)
+					assert(place(actor, slot, p, 15), "legal capacity placement rejected")
+					item = secured()
+				end
+			end
+		end
+		assert(pen.count == 8 and #pen.occupied == 8, "eight active pets do not fit")
+		reject(position, 15, "active pet limit")
+		Rules.audit(rules)
+	end
+	print(
+		"PASS production free Place across eight plots: chosen transform, owner/types/finite/floor/range/bounds/rotation/gate/overlap/capacity/replay; refusals retain cargo"
+	)
+end
+placementTest()
 local invalid = Layout.assemble(Config, 101, true)
 invalid.pieces[3].x = 0
 assert(not pcall(Layout.validate, Config, invalid), "overlap accepted")
@@ -193,6 +298,26 @@ local function constructionTest()
 	-- Sample the built home's real floor transforms, including its round pad.
 	local v = roblox.Vector3
 	local home = world:FindFirstChild("HomeFloatingIsland")
+	assert(home.HomeGrass.Size == v.new(216, 4, 320), "home envelope")
+	for slot = 1, 8 do
+		local cx, cz = Placement.center(slot)
+		local plot = roblox.Instance.new("Folder")
+		plot.Parent = world
+		scene.pen(plot, cx, cz, make)
+		local gateRails = 0
+		for _, p in plot:GetChildren() do
+			assert(p.Name ~= "PetPad", "fixed pads remain")
+			if p.Name == "PenRail" then
+				assert(p.Size.X == 64 and math.abs(p.Position.Z - cz) == 24, "plot rails")
+			elseif p.Name == "PenBackRail" then
+				assert(p.Size.Z == 48 and math.abs(p.Position.X - cx) == 32, "plot depth")
+			elseif p.Name == "PenGateRail" then
+				gateRails += 1
+				assert(math.abs(p.Position.Z - cz) - p.Size.Z / 2 == 6, "twelve-wide gate")
+			end
+		end
+		assert(gateRails == 4, "inward gate missing")
+	end
 	local function homeFloor(x, z)
 		local best = -math.huge
 		for _, p in home:GetDescendants() do
@@ -228,9 +353,9 @@ local function constructionTest()
 	})()
 	for slot = 1, 8 do
 		local side = slot <= 4 and -1 or 1
-		local z = -54 + (slot - 1) % 4 * 36
-		local points = entry({ marker = { Position = v.new(side * 34, 1.5, z) } })
-		local previous = v.new(side * 29, 3, z)
+		local _, z = Placement.center(slot)
+		local points = entry({ marker = { Position = v.new(side * 20, 1.5, z + 8) } })
+		local previous = v.new(side * 15, 3, z + 8)
 		for _, point in points do
 			local p = point.position
 			assert(math.abs(homeFloor(p.X, p.Z) - (p.Y - 3)) < 0.7, "home waypoint height")
@@ -785,7 +910,7 @@ local function automaticReturnTest()
 		if nearGoal then
 			root.Position = v.new(-35.85, 79.45, -304)
 		end
-		local humanoid = { Health = 100, FloorMaterial = "Ground", Move = function() end }
+		local humanoid = { Health = 100, FloorMaterial = "Ground", Move = function() end, MoveTo = function() end }
 		local driver = luau.load(string.sub(source, startAt, endAt - 1) .. "\nreturn driver", {
 			environment = {
 				Vector3 = v,
@@ -839,6 +964,519 @@ local function automaticReturnTest()
 	)
 end
 automaticReturnTest()
+-- Run the shared driver against momentum, plane crossings and watchdog traces.
+local function waypointArrivalTest()
+	local v = require("@lune/roblox").Vector3
+	local source = fs.readFile("LoopTest.luau")
+	local first = assert(source:find("local function driver(", 1, true))
+	local last = assert(source:find("local function act(", first, true))
+	local function scenario(start, goal, trace, options)
+		options = options or {}
+		local actor, time, waits, commands, stops = { Character = {} }, 0, 0, {}, 0
+		local root = { Position = start, SetNetworkOwner = function() end }
+		local h = {
+			Health = 100,
+			FloorMaterial = "Ground",
+			Move = function()
+				stops += 1
+			end,
+			MoveTo = function(_, p)
+				table.insert(commands, { goal = p, time = time })
+			end,
+			ChangeState = function() end,
+		}
+		local driver = luau.load(source:sub(first, last - 1) .. "\nreturn driver", {
+			environment = {
+				Vector3 = v,
+				SSS = { SetAttribute = function() end },
+				Enum = { Material = { Air = "Air" }, HumanoidStateType = { Jumping = "Jumping" } },
+				os = {
+					clock = function()
+						return time
+					end,
+				},
+				task = {
+					wait = function()
+						waits += 1
+						time += options.tick or 0.03
+						local p, material = trace(waits)
+						root.Position, h.FloorMaterial = p, material or "Ground"
+					end,
+				},
+			},
+		})()
+		local walk = driver(actor, { [actor] = { phase = "Run", run = 1 } }, {
+			root = function()
+				return root, h
+			end,
+			audit = function() end,
+		}, function() end, function(p)
+			return p
+		end)
+		local ok, why =
+			pcall(walk, goal, "arrival regression", options.jump, false, nil, nil, options.edge, nil, options.line)
+		if ok and options.nextGoal then
+			assert(walk(options.nextGoal, "next segment"), "next segment rejected")
+		end
+		return ok, why, waits, commands, stops, time
+	end
+	local goal = v.new(-57.1, 3, 33.5)
+	for _, p in { v.new(-58.44, 3, 34.24), v.new(-57.94, 3, 31.92), v.new(-55.89, 3, 33.22), v.new(-55.72, 3, 35.17) } do
+		for _, edge in { false, true } do
+			local ok, _, waits, _, stops = scenario(p, goal, function()
+				error("reported orbit should arrive before waiting")
+			end, { edge = edge })
+			assert(ok and waits == 0 and stops == 0, "reported orbit arrival rejected or momentum stopped")
+		end
+	end
+	local ok, _, waits, commands, stops = scenario(v.new(0, 3, 0), v.new(10, 3, 0), function(i)
+		return v.new(i == 1 and 14 or 24, 3, 4)
+	end, { nextGoal = v.new(20, 3, 0) })
+	assert(ok and waits == 2 and #commands == 2 and stops == 0, "passed goal / immediate next segment failed")
+	assert(commands[2].time == 0.03, "next MoveTo delayed after arrival")
+	ok, _, waits, commands, stops = scenario(v.new(0, 3, 0), v.new(10, 3, 0), function(i)
+		return v.new(i == 1 and 9 or 10.2, 3, 2)
+	end, { line = true, edge = true })
+	assert(
+		ok and waits == 2 and #commands == 1 and commands[1].goal.X == 13 and stops == 0,
+		"run-up braked before line"
+	)
+	ok, _, waits, commands = scenario(v.new(10, 3, 0), v.new(10, 3, 0), function()
+		error("already on run-up line should not wait")
+	end, { line = true })
+	assert(ok and waits == 0 and #commands == 0, "zero-length run-up stalled")
+	local jumpReason
+	ok, jumpReason, waits, commands = scenario(v.new(0, 3, 0), v.new(10, 3, 0), function(i)
+		return v.new(14, 3, 4), i == 1 and "Air" or "Ground"
+	end, { jump = true })
+	assert(
+		ok and waits == 2 and #commands == 1,
+		"jump must observe airborne then grounded landing beyond goal: " .. tostring(jumpReason)
+	)
+	-- Along-route progress continues even while lateral drift increases point distance.
+	ok, _, waits, commands = scenario(v.new(0, 3, 0), v.new(10, 3, 0), function(i)
+		return v.new(i, 3, i * 5)
+	end, { tick = 1 })
+	assert(ok and waits == 10 and #commands == 1, "watchdog still measures distance to goal")
+	local why, time
+	ok, why, _, commands, _, time = scenario(v.new(0, 3, 0), v.new(20, 3, 0), function(i)
+		return v.new(1, 3, i % 2 == 0 and 4 or -4)
+	end, { tick = 1 })
+	assert(
+		not ok and why:find("stuck >8s", 1, true) and time == 10 and #commands == 1,
+		"lateral orbit bypassed stuck detector"
+	)
+	print(
+		"PASS shared waypoint arrival: four reported orbit positions; edge/walk/overshoot/jump/run-up line; immediate next MoveTo without stops; one command per segment; route-progress watchdog rejects lateral orbit. Mock physics."
+	)
+end
+waypointArrivalTest()
+local function loopInterruptionTest()
+	local v = require("@lune/roblox").Vector3
+	local source = fs.readFile("LoopTest.luau")
+	local first = assert(source:find("local function driver(", 1, true))
+	local last = assert(source:find("local function act(", first, true))
+	local function interrupted(event, jump, duringReadiness)
+		local actor = { Character = {} }
+		local item = { id = "interrupt:1", state = "Carried", holder = actor, escapeDeadline = 60 }
+		local state = { phase = "Run", run = 1, item = item, slowUntil = 0 }
+		if event == "home" then
+			state.phase, state.run, item.state, item.securedAt = "Home", nil, "Secured", 5
+		end
+		local time, waits, jumped = 10, 0, false
+		local root = { Position = v.new(0, 3, 0), SetNetworkOwner = function() end }
+		local humanoid = {
+			Health = 100,
+			FloorMaterial = duringReadiness and "Air" or "Ground",
+			Move = function() end,
+			MoveTo = function() end,
+			ChangeState = function()
+				jumped = true
+			end,
+		}
+		local driver = luau.load(source:sub(first, last - 1) .. "\nreturn driver", {
+			environment = {
+				Vector3 = v,
+				Enum = { Material = { Air = "Air" }, HumanoidStateType = { Jumping = "Jumping" } },
+				os = {
+					clock = function()
+						return time
+					end,
+				},
+				task = {
+					wait = function()
+						waits += 1
+						assert(waits == 1, "event did not interrupt current step")
+						time += 0.03
+						if event == "drop" then
+							state.item, item.state, item.holder = nil, "Dropped", nil
+							state.slowUntil = time + 2
+						elseif event == "stumble" then
+							state.slowUntil = time + 2
+						elseif event == "expiry" then
+							time = 60
+						elseif event == "home" then
+							root.Position = v.new(20, 3, 0)
+						else
+							state.phase, state.run = "Home", nil
+							item.state, item.securedAt = "Secured", time
+						end
+					end,
+				},
+			},
+		})()
+		local walk = driver(actor, { [actor] = state }, {
+			root = function()
+				return root, humanoid
+			end,
+			audit = function() end,
+		}, function() end, function(p)
+			return p
+		end, { item = item })
+		local reached, reason = walk(v.new(20, 3, 0), "interrupted step", jump, false, jump and v.new(10, 3, 0))
+		assert(reached == (event == "secure" or event == "home"), "incorrect legal event outcome")
+		if event == "home" then
+			assert(waits == 1, "secured Home walk falsely completed without moving")
+		elseif event ~= "secure" then
+			assert(reason == event and not jumped, "jump/event race")
+		end
+	end
+	for _, event in { "drop", "stumble", "expiry" } do
+		interrupted(event, false, false)
+		interrupted(event, true, false)
+		interrupted(event, true, true)
+	end
+	interrupted("secure", false, false)
+	interrupted("home", false, false)
+	first = assert(source:find("local function recover(", 1, true))
+	last = assert(source:find("-- Live production expiry:", first, true))
+	local actor, time, item =
+		{}, 10, { id = "recover:1", state = "Dropped", escapeDeadline = 60, firstPickup = 0, settle = 11 }
+	local s = { phase = "Run", slowUntil = 12 }
+	local states, rules = { [actor] = s }, { active = item }
+	local walks, holds = 0, 0
+	local api = {
+		root = function()
+			return nil, { Move = function() end }
+		end,
+		audit = function() end,
+		rules = rules,
+		holdAction = function(_, _, stage)
+			assert(time >= 12, "Grab began during stumble")
+			holds += 1
+			if stage == "finish" then
+				if holds == 2 then
+					return false, "missing/short hold"
+				end
+				s.item, item.state = item, "Carried"
+			end
+			return true
+		end,
+	}
+	local recover = luau.load(source:sub(first, last - 1) .. "\nreturn recover", {
+		environment = {
+			Config = Config,
+			Vector3 = v,
+			os = {
+				clock = function()
+					return time
+				end,
+			},
+			task = {
+				wait = function(seconds)
+					time += math.max(seconds, 0.03)
+				end,
+			},
+			recoveryPoint = function()
+				return v.zero
+			end,
+		},
+	})()
+	local function walk()
+		assert(time >= 12, "recovery walked during stumble")
+		walks += 1
+		return true
+	end
+	assert(recover(api, actor, states, walk, item, function() end, nil), "same-item recovery failed")
+	assert(
+		walks == 2 and holds == 4 and item.firstPickup == 0 and item.escapeDeadline == 60,
+		"recovery changed identity/clock"
+	)
+	s.item, item.state, s.slowUntil, time = nil, "Dropped", 70, 59.99
+	local recovered, reason = recover(api, actor, states, walk, item, function() end, nil)
+	assert(not recovered and reason == "expiry" and walks == 2, "expiry during stumble attempted recovery")
+	assert(not source:find("nearestRoute", 1, true), "recovery still selects fixed route nodes")
+	first = assert(source:find("local function expiryExitSteps(", 1, true))
+	last = assert(source:find("local function expiryTest(", first, true))
+	local exit = luau.load(source:sub(first, last - 1) .. "\nreturn expiryExitSteps")()
+	for seed = 1, 50 do
+		local layout = Layout.assemble(Config, seed, false)
+		local previous
+		for _, p in exit() do
+			standable(layout, p)
+			if previous then
+				local n = math.ceil(math.sqrt((p.x - previous.x) ^ 2 + (p.z - previous.z) ^ 2) * 2)
+				for i = 0, n do
+					local t = i / n
+					local x, z = previous.x + (p.x - previous.x) * t, previous.z + (p.z - previous.z) * t
+					assert(
+						math.abs(height(layout, x, z) - (previous.y + (p.y - previous.y) * t)) < 0.7,
+						"expiry exit leaves continuous ramp/floor"
+					)
+				end
+			end
+			previous = p
+		end
+	end
+	print(
+		"PASS loop driver walk/jump/readiness drop/stumble/expiry interruptions; legal secure at any step; stumble wait/retry/original clock; no nearest-node recovery"
+	)
+	print("PASS shared empty expiry exit across 50 seeds: supported terrace, ramp descent and reachable cyan boundary")
+end
+loopInterruptionTest()
+-- Exercise real recovery follower code with deterministic navmesh/event traces.
+local function pathRecoveryTest()
+	local roblox = require("@lune/roblox")
+	local v, source = roblox.Vector3, fs.readFile("LoopTest.luau")
+	local first = assert(source:find("local function driver(", 1, true))
+	local last = assert(source:find("local function act(", first, true))
+	for _, mode in { "blocked", "stalled", "jump", "no-path" } do
+		local actor, time, computes, cleaned, jumps = { Character = {} }, 0, 0, 0, 0
+		local starts, blocked, target, airTicks = {}, nil, nil, 0
+		local root = { Position = v.new(-60.74, 3.45, 0), SetNetworkOwner = function() end }
+		local goal = root.Position + v.new(12, 0, 0)
+		local h = { Health = 100, FloorMaterial = roblox.Enum.Material.Grass, Move = function() end }
+		h.MoveTo = function(_, p)
+			target = p
+		end
+		h.ChangeState = function()
+			jumps += 1
+			airTicks = 2
+			h.FloorMaterial = roblox.Enum.Material.Air
+		end
+		local service = {
+			CreatePath = function(_, options)
+				assert(
+					options.AgentRadius == 2
+						and options.AgentHeight == 5
+						and options.AgentCanJump
+						and options.WaypointSpacing == 4
+						and options.Costs.JumpGully == 20,
+					"path recovery agent/cost mismatch"
+				)
+				return {
+					Status = roblox.Enum.PathStatus.Success,
+					ComputeAsync = function(self, start)
+						computes += 1
+						table.insert(starts, start)
+						if mode == "no-path" and computes == 1 then
+							self.Status = roblox.Enum.PathStatus.NoPath
+						end
+					end,
+					GetWaypoints = function()
+						return {
+							{ Position = root.Position - v.new(0, 3, 0) },
+							{
+								Position = goal - v.new(0, 3, 0),
+								Action = mode == "jump" and roblox.Enum.PathWaypointAction.Jump
+									or roblox.Enum.PathWaypointAction.Walk,
+							},
+						}
+					end,
+					Blocked = {
+						Connect = function(_, callback)
+							blocked = callback
+							return {
+								Disconnect = function()
+									blocked = nil
+								end,
+							}
+						end,
+					},
+					Destroy = function()
+						cleaned += 1
+					end,
+				}
+			end,
+		}
+		local driver = luau.load(source:sub(first, last - 1) .. "\nreturn driver", {
+			environment = {
+				Vector3 = v,
+				Enum = roblox.Enum,
+				SSS = { SetAttribute = function() end },
+				game = {
+					GetService = function()
+						return service
+					end,
+				},
+				os = {
+					clock = function()
+						return time
+					end,
+				},
+				task = {
+					wait = function()
+						time += 0.1
+						if mode == "blocked" and computes == 1 and blocked then
+							root.Position += v.new(1, 0, 0)
+							blocked(2)
+						elseif target and not (mode == "stalled" and computes == 1) then
+							root.Position = target
+						end
+						if airTicks > 0 then
+							airTicks -= 1
+							h.FloorMaterial = airTicks == 0 and roblox.Enum.Material.Grass or roblox.Enum.Material.Air
+						end
+					end,
+				},
+			},
+		})()
+		local _, _, _, navigate = driver(actor, { [actor] = { phase = "Run", run = 1 } }, {
+			root = function()
+				return root, h
+			end,
+			audit = function() end,
+		}, function() end, function()
+			error("computed waypoints used authored validator")
+		end)
+		assert(navigate(goal, mode), "path follower failed " .. mode)
+		assert(cleaned == computes and blocked == nil, "path/connection leaked")
+		assert(computes == (mode == "jump" and 1 or 2), "missing recompute " .. mode)
+		if mode == "blocked" then
+			assert(starts[2] ~= starts[1], "recompute ignored live root")
+		end
+		if mode == "stalled" then
+			assert(time >= 3 and time < 4, "stall recompute missed 3s")
+		end
+		if mode == "jump" then
+			assert(jumps == 1, "Jump waypoint not executed")
+		end
+	end
+	print(
+		"PASS recovery path agent/costs; live-start Blocked and 3s stall recompute; Jump actions; NoPath retry; cleanup. Navmesh/physics mocked."
+	)
+end
+pathRecoveryTest()
+local function loopBatchTest()
+	local source = fs.readFile("Greybox.server.luau")
+	local first = assert(source:find('local runs = SSS:GetAttribute("GreyboxLoopTestRuns")', 1, true))
+	local last = assert(source:find("\n\t\tend)", first, true))
+	local function scenario(failAt, runs)
+		local attributes, calls = { GreyboxLoopTestRuns = runs }, 0
+		local batch = luau.load(source:sub(first, last - 1), {
+			environment = {
+				SSS = {
+					GetAttribute = function(_, name)
+						return attributes[name]
+					end,
+					SetAttribute = function(_, name, value)
+						attributes[name] = value
+					end,
+				},
+				log = function() end,
+				runner = {
+					run = function()
+						calls += 1
+						assert(calls ~= failAt, "injected harness error")
+						return "conserved", calls == 2 and "expiry" or "placed"
+					end,
+				},
+			},
+		})
+		local ok, result = pcall(batch)
+		return ok, result, attributes, calls
+	end
+	local ok, result, attributes, calls = scenario(nil, nil)
+	assert(ok and calls == 3 and result == "3/3 passed; 1 legal expiries; 2 placed", "default batch outcome")
+	assert(attributes.GreyboxLoopTestPassCount == 3 and attributes.GreyboxLoopTestExpiryCount == 1, "batch counts")
+	ok, result, attributes, calls = scenario(3, 3)
+	assert(not ok and calls == 3 and attributes.GreyboxLoopTestPassCount == 2, "partial batch incorrectly passed")
+	assert(result:find("2/3 passed; loop 3 harness error", 1, true), "partial batch lost error/count")
+	assert(not scenario(nil, 2), "fewer than three loops could unlock PASS")
+	print(
+		"PASS default 3-loop batch: conserved expiry counts as legal loss; 2/3 harness failure rejected; minimum 3 runs"
+	)
+end
+loopBatchTest()
+local function loopExpiryOutcomeTest()
+	local v = require("@lune/roblox").Vector3
+	local source = fs.readFile("LoopTest.luau")
+	local first = assert(source:find("local function verifyExpiry(", 1, true))
+	local last = assert(source:find("local function expiryExitSteps(", first, true))
+	local function scenario(orphan)
+		local actor, time = {}, 59.99
+		local rules = Rules.new(Config)
+		local s = Rules.actor(rules, actor)
+		s.phase, s.slot = "Run", 1
+		local item = Rules.spawn(rules, v.zero)
+		item.state, item.holder, item.firstPickup, item.escapeDeadline = "Carried", actor, 0, 60
+		s.item, s.hold = item, { item = item }
+		local world = {
+			GetAttribute = function()
+				return rules.active and rules.active.escapeDeadline
+			end,
+		}
+		local api = {
+			rules = rules,
+			audit = function()
+				Rules.audit(rules)
+			end,
+			placeItem = function()
+				return false
+			end,
+			holdAction = function()
+				return false
+			end,
+		}
+		local verify = luau.load(source:sub(first, last - 1) .. "\nreturn verifyExpiry", {
+			environment = {
+				Config = Config,
+				os = {
+					clock = function()
+						return time
+					end,
+				},
+				task = {
+					wait = function(seconds)
+						time += seconds
+						Rules.expire(rules, time)
+						if orphan then
+							item.weld = true
+						end
+						if not rules.active and time >= rules.respawnAt then
+							Rules.spawn(rules, v.zero)
+						end
+					end,
+				},
+				workspace = {
+					GetDescendants = function()
+						return {
+							{
+								IsA = function()
+									return true
+								end,
+								GetAttribute = function()
+									return rules.active and rules.active.id
+								end,
+							},
+						}
+					end,
+				},
+			},
+		})()
+		local replacement = verify(actor, rules.actors, { { count = 0 } }, world, api, function() end, item, 0, 0)
+		assert(
+			replacement.id ~= item.id and not replacement.escapeDeadline and not s.hold,
+			"expiry stale identity/hold"
+		)
+	end
+	assert(pcall(scenario, false), "legal live expiry outcome rejected")
+	assert(not pcall(scenario, true), "expiry orphan weld incorrectly passed")
+	print(
+		"PASS loop expiry outcome: clean loss/no award; new Nest ID without deadline; exact physical conservation; orphan rejected"
+	)
+end
+loopExpiryOutcomeTest()
 local function retestRound3()
 	local roblox = require("@lune/roblox")
 	local v = roblox.Vector3
@@ -948,6 +1586,201 @@ local function retestRound3()
 	)
 end
 retestRound3()
+local function gullyRetest()
+	local roblox = require("@lune/roblox")
+	local v = roblox.Vector3
+	local l = Layout.assemble(Config, 101, true)
+	for _, ramp in l.ramps do
+		if ramp.name == "RecoveryWest" or ramp.name == "RecoveryEast" then
+			local previous = -3
+			for i = 0, 100 do
+				local t = i / 100
+				local x = ramp.a.x + (ramp.b.x - ramp.a.x) * t
+				local y = height(l, x, ramp.a.z)
+				assert(y >= previous and y - previous < 0.7, "gully escape has a wall/seam")
+				previous = y
+			end
+			assert(previous == 0, "gully escape does not join bank")
+		end
+	end
+	-- Conservative center trajectory at default gravity, without avatar edge overlap.
+	for _, p in Layout.loopCarrySteps(l) do
+		if p.takeoff then
+			local edge = p.takeoff
+			local dx, dz = p.x - edge.x, p.z - edge.z
+			local distance = math.sqrt(dx * dx + dz * dz)
+			local landing
+			for _, b in l.solids do
+				if b.role == "Floor" and math.abs(p.x - b.x) <= b.w / 2 and math.abs(p.z - b.z) <= b.d / 2 then
+					if not landing or b.y + b.h / 2 > landing.y + landing.h / 2 then
+						landing = b
+					end
+				end
+			end
+			assert(landing, "missing jump landing")
+			local required = 0
+			while required <= distance do
+				local x, z = edge.x + dx / distance * required, edge.z + dz / distance * required
+				if math.abs(x - landing.x) <= landing.w / 2 and math.abs(z - landing.z) <= landing.d / 2 then
+					break
+				end
+				required += 0.01
+			end
+			local gravity = 196.2
+			local velocity = math.sqrt(2 * gravity * Config.CarryJumpHeight)
+			local flight = (velocity + math.sqrt(velocity ^ 2 - 2 * gravity * (p.y - edge.y))) / gravity
+			local range = flight * Config.CarrySpeed
+			assert(range - required >= 0.75, "carrying jump has insufficient landing margin")
+			print(
+				string.format(
+					"CARRY JUMP %s required=%.2f range=%.2f margin=%.2f (default gravity, inferred)",
+					p.name,
+					required,
+					range,
+					range - required
+				)
+			)
+		end
+	end
+	local source = fs.readFile("LoopTest.luau")
+	local first = assert(source:find("local function driver(", 1, true))
+	local last = assert(source:find("local function act(", first, true))
+	local actor, time, direction, jumped, pathOptions = { Character = {} }, 0, v.zero, false, nil
+	local root = { Position = v.new(-43, 4, -34), SetNetworkOwner = function() end }
+	local h = {
+		Health = 100,
+		FloorMaterial = "Ground",
+		Move = function(_, d)
+			direction = d
+		end,
+		MoveTo = function(_, p)
+			direction = (p - root.Position).Unit
+		end,
+		ChangeState = function()
+			assert(root.Position.X >= -39.95 and root.Position.X < -39.3, "jump before/after takeoff marker")
+			jumped = true
+		end,
+	}
+	local driver = luau.load(source:sub(first, last - 1) .. "\nreturn driver", {
+		environment = {
+			Vector3 = v,
+			Enum = {
+				Material = { Air = "Air" },
+				HumanoidStateType = { Jumping = "Jumping" },
+				PathStatus = { Success = "Success" },
+			},
+			game = {
+				GetService = function()
+					return {
+						CreatePath = function(_, options)
+							pathOptions = options
+							return {
+								Status = "Success",
+								Blocked = {
+									Connect = function()
+										return { Disconnect = function() end }
+									end,
+								},
+								Destroy = function() end,
+								ComputeAsync = function() end,
+								GetWaypoints = function()
+									return {}
+								end,
+							}
+						end,
+					}
+				end,
+			},
+			os = {
+				clock = function()
+					return time
+				end,
+			},
+			task = {
+				wait = function()
+					time += 0.03
+					root.Position += direction * Config.CarrySpeed * 0.03
+					if jumped then
+						root.Position = v.new(root.Position.X, 0.45, root.Position.Z)
+					end
+				end,
+			},
+		},
+	})()
+	local walk, _, _, navigate = driver(actor, { [actor] = { phase = "Run", run = 1 } }, {
+		root = function()
+			return root, h
+		end,
+		audit = function() end,
+	}, function() end, function(p)
+		return p
+	end)
+	local reached, reason =
+		walk(v.new(-31, 5, -34), "reported four-stud miss", true, false, v.new(-39.8, 4, -34), v.new(-46.4, 4, -34))
+	assert(not reached and reason == "missed jump" and jumped and time < 8, "missed jump waited for stuck timeout")
+	assert(navigate(root.Position, "live recovery"), "live recovery rejected")
+	assert(
+		pathOptions.AgentCanJump
+			and pathOptions.AgentRadius == 2
+			and pathOptions.AgentHeight == 5
+			and pathOptions.WaypointSpacing == 4
+			and pathOptions.Costs.JumpGully == 20,
+		"recovery agent/cost mismatch"
+	)
+	local server = fs.readFile("Greybox.server.luau")
+	first = assert(server:find("\t\tif Arena.outside(arena, r.Position) then", 1, true))
+	last = assert(server:find("\t\tif s.item and Arena.safe", first, true))
+	for _, carrying in { false, true } do
+		for _, recorded in { false, true } do
+			local item = { id = "void:1", firstPickup = 0, escapeDeadline = 60 }
+			local state = { item = carrying and item or nil, lastSafe = recorded and v.new(-43, 80, -326) or nil }
+			local pivot, drops = nil, 0
+			local fallenRoot = { Position = v.new(-35.5, 60, -326), AssemblyLinearVelocity = v.new(0, -80, 0) }
+			local fallenActor = { Character = {
+				PivotTo = function(_, cf)
+					pivot = cf.Position
+				end,
+			} }
+			luau.load("for _ = 1, 1 do\n" .. server:sub(first, last - 1) .. "\nend", {
+				environment = {
+					s = state,
+					r = fallenRoot,
+					actor = fallenActor,
+					arena = {},
+					Vector3 = v,
+					CFrame = roblox.CFrame,
+					Arena = {
+						outside = function()
+							return true
+						end,
+						position = function(_, x, y, z)
+							return v.new(x, 76 + y, -360 - z)
+						end,
+					},
+					drop = function()
+						assert(not pivot, "fall drop must precede player recovery")
+						drops += 1
+						state.item = nil
+					end,
+				},
+			})()
+			assert(pivot == (state.lastSafe or v.new(0, 79, -302)), "void fall did not restore last safe spot")
+			assert(drops == (carrying and 1 or 0), "void fall changed treasure drop rules")
+			assert(
+				fallenRoot.AssemblyLinearVelocity == v.zero and fallenRoot.AssemblyAngularVelocity == v.zero,
+				"fall velocity retained"
+			)
+			assert(
+				item.id == "void:1" and item.firstPickup == 0 and item.escapeDeadline == 60,
+				"fall refreshed treasure identity/clock"
+			)
+		end
+	end
+	print(
+		"PASS production driver straight run-up/edge launch; reported Y0.45 miss caught before 8s; live path recovery; both bank ramps continuous; void recovery with/without cargo and last safe spot. Movement/navigation mocked."
+	)
+end
+gullyRetest()
 for seed = 1, 50 do
 	local l = Layout.assemble(Config, seed, false)
 	for _, p in Layout.dodgePoints() do
@@ -963,11 +1796,15 @@ for seed = 1, 50 do
 		standable(l, p)
 		if p.kind == "Jump" then
 			local edge = assert(p.takeoff, "missing live takeoff edge")
-			local start = carry[#carry]
+			local start = assert(p.runup, "missing straight run-up")
+			standable(l, start, true)
 			standable(l, edge, true)
 			assert(math.abs(height(l, edge.x, edge.z) - edge.y) < 0.1, "takeoff not on authored floor")
 			local runup = math.sqrt((edge.x - start.x) ^ 2 + (edge.z - start.z) ^ 2)
-			assert(runup >= 2.5 and runup <= 6, "jump run-up ordering")
+			assert(runup >= 6.5, "jump run-up shorter than six studs plus arrival tolerance")
+			local dx, dz = p.x - edge.x, p.z - edge.z
+			assert(math.abs((edge.x - start.x) * dz - (edge.z - start.z) * dx) < 0.001, "crooked run-up")
+			table.insert(carry, start)
 			-- Check the grounded lead-in separately; only the airborne segment may skip cliffs.
 			table.insert(carry, { x = edge.x, y = edge.y, z = edge.z, kind = "Walk" })
 		end
@@ -1063,6 +1900,7 @@ if fs.isFile("guardian-greybox.rbxl") then
 			{ "ReplicatedStorage", "GreyboxLayout", "Layout.luau" },
 			{ "ReplicatedStorage", "GreyboxScene", "Scene.luau" },
 			{ "ReplicatedStorage", "GreyboxLootRules", "LootRules.luau" },
+			{ "ReplicatedStorage", "GreyboxPlacement", "Placement.luau" },
 		}
 	do
 		local node = place:FindFirstChild(map[1]):FindFirstChild(map[2])
@@ -1073,6 +1911,12 @@ if fs.isFile("guardian-greybox.rbxl") then
 		"client source mismatch"
 	)
 	local sss = place.ServerScriptService
+	assert(
+		sss:GetAttribute("GreyboxLoopTestRuns") == 3
+			and sss:GetAttribute("GreyboxLoopTestPassCount") == 0
+			and sss:GetAttribute("GreyboxLoopTestExpiryCount") == 0,
+		"batch defaults/results fabricated"
+	)
 	for _, mode in { "GreyboxLoopTest", "GreyboxPvpTest" } do
 		assert(
 			sss:GetAttribute(mode) == false

@@ -1,9 +1,16 @@
 return {
 	ItemName = "LOOT", -- The only display-name source.
-	RecipeVersion = 5,
-	HomeSpawnZ = 84,
-	HomePortalApproachZ = -16,
-	HomeAisleX = 25,
+	RecipeVersion = 6,
+	HomeSpawnZ = 16,
+	HomePortalApproachZ = 8,
+	HomeAisleX = 18,
+	PlotWidth = 64,
+	PlotDepth = 48,
+	PlotInset = 4,
+	PetFootprint = 4,
+	PetSpacing = 2,
+	MaxActivePets = 8,
+	PetsWander = false, -- Owner decision pending; false keeps the chosen position + idle bounce.
 	MeadowX = 0,
 	MeadowHeight = 76,
 	MeadowZ = -360,
