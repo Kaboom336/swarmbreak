@@ -16,6 +16,7 @@
                                                   }
                               },
                  "ReplicatedStorage":  {
+                                           "GreyboxTraps": { "$path": "Traps.luau" },
                                            "GreyboxPlacement": { "$path": "Placement.luau" },
                                            "GreyboxConfig":  {
                                                                  "$path":  "GreyboxConfig.luau"
@@ -33,6 +34,9 @@
                  "ServerScriptService":  {
                                              "$attributes":  {
                                                                  "GreyboxSelfTest":  false,
+                                                                 "GreyboxTrapTest": false,
+                                                                 "GreyboxTrapTestSuccess": false,
+                                                                 "GreyboxTrapTestResult": "NOT RUN",
                                                                  "GreyboxSeed":  0,
                                                                  "GreyboxLoopTest":  false,
                                                                  "GreyboxLoopTestRuns":  3,
@@ -48,6 +52,7 @@
                                              "GreyboxLoopTestRunner":  {
                                                                            "$path":  "LoopTest.luau"
                                                                        },
+                                             "GreyboxTrapTestRunner": { "$path": "TrapTest.luau" },
                                              "Greybox":  {
                                                              "$path":  "Greybox.server.luau"
                                                          },

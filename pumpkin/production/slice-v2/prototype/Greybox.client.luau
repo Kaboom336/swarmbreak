@@ -8,6 +8,8 @@ local remote = RS:WaitForChild("GreyboxAction")
 local world = workspace:WaitForChild("GREYBOX")
 local Config = require(RS:WaitForChild("GreyboxConfig"))
 local Placement = require(RS:WaitForChild("GreyboxPlacement"))
+local Traps = require(RS:WaitForChild("GreyboxTraps"))
+local Layout = require(RS:WaitForChild("GreyboxLayout"))
 local Scene = require(RS:WaitForChild("GreyboxScene"))
 local lighting = game:GetService("Lighting")
 local pollenVolume, pollenEmitter = Scene.pollen(workspace)
@@ -172,7 +174,7 @@ RunService.RenderStepped:Connect(function()
 	countdown.Visible = player:GetAttribute("GreyboxPhase") == "Run" and remaining ~= nil
 	if remaining then
 		countdown.Text =
-			string.format("Escape · %d:%02d", math.floor(math.ceil(remaining) / 60), math.ceil(remaining) % 60)
+			string.format("Escape ? %d:%02d", math.floor(math.ceil(remaining) / 60), math.ceil(remaining) % 60)
 		countdown.TextSize = remaining <= 5 and 56 or 44
 		countdown.TextColor3 = remaining <= 5 and Color3.fromRGB(255, 70, 70)
 			or remaining <= 15 and Color3.fromRGB(255, 185, 50)
@@ -245,6 +247,39 @@ print(
 )
 player:SetAttribute("GreyboxClientReady", true)
 
+local trapChoice = Instance.new("ProximityPrompt") -- Contextual fallback; no permanent hotbar.
+trapChoice:SetAttribute("GreyboxAction", "Trap")
+local recallChoice = Instance.new("ProximityPrompt")
+recallChoice:SetAttribute("GreyboxAction", "TrapRecall")
+local trapPreview = Instance.new("Part")
+trapPreview.Name, trapPreview.Size = "DecoyPreview", Vector3.new(0.1, 6, 6)
+trapPreview.Shape, trapPreview.Material = Enum.PartType.Cylinder, Enum.Material.Neon
+trapPreview.Anchored, trapPreview.CanCollide, trapPreview.CanQuery, trapPreview.CanTouch = true, false, false, false
+trapPreview.Transparency, trapPreview.Parent = 1, workspace
+local trapHint = Instance.new("TextLabel")
+trapHint.Size, trapHint.Position = UDim2.fromOffset(340, 32), UDim2.fromScale(0.5, 0.78)
+trapHint.AnchorPoint, trapHint.BackgroundTransparency = Vector2.new(0.5, 1), 1
+trapHint.TextSize, trapHint.TextColor3, trapHint.Visible, trapHint.Parent = 18, Color3.new(1, 1, 1), false, gui
+local previewAPI = {}
+function previewAPI.floor(a, position)
+	local hit =
+		workspace:Raycast(Vector3.new(position.X, a.origin.Y + 45, position.Z), Vector3.new(0, -70, 0), a.params)
+	if hit and hit.Instance:GetAttribute("SurfaceRole") == "Floor" then
+		return hit.Position, hit.Normal
+	end
+	return nil
+end
+function previewAPI.sight(a, from, to)
+	return workspace:Raycast(from, to - from, a.params) == nil
+end
+function previewAPI.safe(a, position, radius)
+	local p = position - a.origin
+	return Layout.protected(p.X, -p.Z, radius)
+end
+local previewManager = Traps.new(Config, previewAPI)
+local previewArena
+local trapCandidate, trapHeldPosition
+local nextPreviewCheck, previewValid, previewWhy, checkedPoint = 0, false, "Checking floor", nil
 local selected, holding, heldInput
 local sentFinish = false
 local began = 0
@@ -259,7 +294,8 @@ local function beginHold(input)
 		return
 	end
 	holding, heldInput, began, sentFinish = selected, input, os.clock(), false
-	remote:FireServer(selected:GetAttribute("GreyboxAction"), "begin")
+	trapHeldPosition = selected == trapChoice and trapCandidate or nil
+	remote:FireServer(selected:GetAttribute("GreyboxAction"), "begin", selected == trapChoice and trapCandidate or nil)
 end
 button.Activated:Connect(function()
 	if selected and not Config.HoldSeconds[selected:GetAttribute("GreyboxAction")] then
@@ -342,6 +378,80 @@ RunService.RenderStepped:Connect(function()
 			end
 		end
 	end
+	trapPreview.Transparency, trapCandidate, trapHint.Visible = 1, nil, false
+	if not nearest and r and phase == "Run" and not carrying and player:GetAttribute("GreyboxTrapUnlocked") then
+		local island = world:FindFirstChild("SharedIsland")
+		local ownTrap
+		if island then
+			for _, p in island:GetChildren() do
+				if p:IsA("BasePart") and p:GetAttribute("TrapOwner") == player.UserId then
+					ownTrap = p
+					break
+				end
+			end
+		end
+		if ownTrap then
+			nearest = recallChoice
+		elseif player:GetAttribute("GreyboxTrapAvailable") and island and workspace.CurrentCamera then
+			if not previewArena or previewArena.model ~= island then
+				local params = RaycastParams.new()
+				params.FilterType, params.FilterDescendantsInstances = Enum.RaycastFilterType.Include, { island }
+				previewArena = {
+					model = island,
+					origin = Vector3.new(Config.MeadowX, Config.MeadowHeight, Config.MeadowZ),
+					layout = Layout.assemble(Config, island:GetAttribute("Seed"), true),
+					params = params,
+				}
+			end
+			previewManager.active = {}
+			for _, part in island:GetChildren() do
+				if part:IsA("BasePart") and part:GetAttribute("TrapType") then
+					table.insert(
+						previewManager.active,
+						{ arena = previewArena, owner = part:GetAttribute("TrapOwner"), position = part.Position }
+					)
+				end
+			end
+			local camera = workspace.CurrentCamera
+			local mouse = UserInputService:GetMouseLocation()
+			local ray = camera:ScreenPointToRay(mouse.X, mouse.Y)
+			if UserInputService.TouchEnabled or UserInputService:GetLastInputType() == Enum.UserInputType.Gamepad1 then
+				ray = camera:ViewportPointToRay(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+			end
+			local params = RaycastParams.new()
+			params.FilterType, params.FilterDescendantsInstances = Enum.RaycastFilterType.Include, { island }
+			local hit = workspace:Raycast(ray.Origin, ray.Direction * 500, params)
+			if holding == trapChoice and trapHeldPosition then
+				hit = { Position = trapHeldPosition }
+			end
+			if hit then
+				trapPreview.CFrame = CFrame.new(hit.Position + Vector3.new(0, 0.15, 0))
+					* CFrame.Angles(0, 0, math.pi / 2)
+				trapPreview.Transparency = 0.5
+				local now = workspace:GetServerTimeNow()
+				if now >= nextPreviewCheck then
+					nextPreviewCheck, checkedPoint = now + 0.1, hit.Position
+					previewValid, previewWhy = Traps.eligible(previewManager, player, {
+						phase = "Run",
+						run = previewArena,
+						trapCharge = true,
+						meadowEscapes = player:GetAttribute("GreyboxMeadowEscapes"),
+						trapCooldown = player:GetAttribute("GreyboxTrapCooldownUntil"),
+					}, previewArena, hit.Position, r.Position, now, holding == trapChoice)
+				end
+				local valid = previewValid and checkedPoint and (checkedPoint - hit.Position).Magnitude < 0.25
+				local why = checkedPoint and (checkedPoint - hit.Position).Magnitude >= 0.25 and "Checking floor"
+					or previewWhy
+				trapHint.Visible = not valid
+				local remaining = math.max(0, (player:GetAttribute("GreyboxTrapCooldownUntil") or 0) - now)
+				trapHint.Text = remaining > 0 and ("Decoy ready in " .. math.ceil(remaining) .. "s") or tostring(why)
+				trapPreview.Color = valid and Color3.fromRGB(255, 210, 60) or Color3.fromRGB(255, 70, 70)
+				if valid then
+					trapCandidate, nearest = hit.Position, trapChoice
+				end
+			end
+		end
+	end
 	selected = nearest
 	if holding and holding ~= selected then
 		cancelHold()
@@ -350,6 +460,13 @@ RunService.RenderStepped:Connect(function()
 	if selected then
 		local action = selected:GetAttribute("GreyboxAction")
 		button.Text = Config.HoldSeconds[action] and ("Hold to " .. action .. " [E / X]") or action .. " [E / X]"
+		if action == "Trap" then
+			button.Text = "Hold to place Decoy [E / X]"
+		elseif action == "TrapRecall" then
+			button.Text = "Recall Decoy [E / X]"
+		elseif action == "Enter" and player:GetAttribute("GreyboxTrapUnlocked") then
+			button.Text = "Enter Meadow / Decoy selected [E / X]"
+		end
 		if holding then
 			local elapsed = os.clock() - began
 			button.Text =

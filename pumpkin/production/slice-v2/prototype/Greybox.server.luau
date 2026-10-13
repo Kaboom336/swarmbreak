@@ -12,6 +12,7 @@ local Rules = require(RS:WaitForChild("GreyboxLootRules"))
 local Arena = require(SSS:WaitForChild("GreyboxArena"))
 local Scene = require(RS:WaitForChild("GreyboxScene"))
 local Placement = require(RS:WaitForChild("GreyboxPlacement"))
+local Traps = require(RS:WaitForChild("GreyboxTraps"))
 local rules = Rules.new(Config)
 local states, pens, slots = rules.actors, {}, {}
 local world = Instance.new("Folder")
@@ -50,6 +51,14 @@ local function label(p, text)
 	return t
 end
 
+local traps = Traps.new(Config, Arena, part, label)
+traps.rattle = function(parent)
+	local sound = Instance.new("Sound")
+	sound.Name, sound.SoundId = "DecoyRattle", "rbxasset://sounds/electronicpingshort.wav"
+	sound.Volume, sound.PlaybackSpeed, sound.RollOffMaxDistance, sound.Parent = 0.5, 1.5, 48, parent
+	sound:Play()
+end
+
 local function prompt(p, action, object, hold)
 	local q = Instance.new("ProximityPrompt")
 	q.ActionText, q.ObjectText, q.HoldDuration = action, object, hold or 0
@@ -79,6 +88,17 @@ local function near(player, p)
 	local r = root(player)
 	return r and (r.Position - p.Position).Magnitude <= 9
 end
+local function trapAction(actor, stage, position, kind)
+	local r = root(actor)
+	local s = states[actor]
+	if s then
+		s.trapActor = actor
+		s.trapRoot = function()
+			return root(actor)
+		end
+	end
+	return Traps.action(traps, actor, states[actor], arena, r and r.Position, stage, position, os.clock(), kind)
+end
 
 local function update(player, text)
 	local s = states[player]
@@ -94,6 +114,16 @@ local function goal(actor, text)
 end
 local function publish(actor)
 	local s = states[actor]
+	actor:SetAttribute("GreyboxTrapUnlocked", s and Traps.unlocked(traps, actor, s) or false)
+	actor:SetAttribute(
+		"GreyboxTrapAvailable",
+		s and s.phase == "Run" and s.trapCharge == true and not s.trapPickedUp and not s.item or false
+	)
+	actor:SetAttribute("GreyboxMeadowEscapes", s and s.meadowEscapes or 0)
+	actor:SetAttribute(
+		"GreyboxTrapCooldownUntil",
+		workspace:GetServerTimeNow() + math.max(0, (s and s.trapCooldown or 0) - os.clock())
+	)
 	actor:SetAttribute("GreyboxCarry", s and s.item ~= nil or false)
 	actor:SetAttribute("GreyboxPhase", s and s.phase or "Home")
 	actor:SetAttribute("GreyboxMercyUntil", s and s.mercy or 0)
@@ -233,6 +263,7 @@ local function expireLoot(now)
 	local expired, item = Rules.expire(rules, now)
 	if expired then
 		visual(item)
+		Traps.clearIsland(traps, arena)
 		Arena.reset(arena)
 		for actor, s in states do
 			if s.phase == "Run" then
@@ -392,6 +423,7 @@ local function holdAction(actor, action, stage)
 		end
 		goal(target, Config.ItemName .. " DROPPED")
 	else
+		s.trapPickedUp, s.trapHold = true, nil
 		s.lastSocket = oldPosition or s.lastSocket
 		if not oldItem.eventTimestamp then
 			oldItem.eventTimestamp = workspace:GetServerTimeNow()
@@ -435,6 +467,8 @@ local function bindHold(q, action)
 end
 local function home(actor)
 	local s = states[actor]
+	Traps.remove(traps, actor)
+	s.trapHold = nil
 	s.run, s.hold = nil, nil
 	if actor.Character then
 		local pen = s.item and pens[s.slot]
@@ -460,6 +494,10 @@ local function returnRun(actor, automatic)
 	end
 	local ok, why = Rules.secure(rules, actor, os.clock())
 	if ok then
+		if s.item and s.item.state == "Secured" then
+			-- RAM-only greybox progression; production unlock requires durable awards.
+			s.meadowEscapes = (s.meadowEscapes or 0) + 1
+		end
 		print(
 			string.format(
 				"[Greybox] return source=%s boundary=%s position=%s item=%s",
@@ -605,6 +643,7 @@ local function enterRun(actor)
 	arena.hasEntrants = true
 	s.phase, s.run, s.counter, s.started, s.mercy, s.catches =
 		"Run", arena, (s.counter or 0) + 1, os.clock(), os.clock() + Config.MercySeconds, 0
+	Traps.entry(traps, actor, s)
 	local arrivals = { -12, 0, 12 }
 	s.lastSafe = Arena.position(arena, arrivals[((population() - 1) % 3) + 1], 3, -58)
 	actor.Character:PivotTo(CFrame.new(Arena.position(arena, arrivals[((population() - 1) % 3) + 1], 4, -58)))
@@ -628,7 +667,11 @@ actionRemote.OnServerEvent:Connect(function(actor, action, stage, rotation)
 	end
 	lastAction[actor] = now
 	local ok, why
-	if Config.HoldSeconds[action] then
+	if action == "Trap" then
+		ok, why = trapAction(actor, stage, rotation)
+	elseif action == "TrapRecall" then
+		ok, why = trapAction(actor, "recall")
+	elseif Config.HoldSeconds[action] then
 		ok, why = holdAction(actor, action, stage)
 	elseif action == "Enter" then
 		ok, why = enterRun(actor)
@@ -709,6 +752,8 @@ local function addPlayer(actor)
 		configureCharacter(actor, character)
 	end)
 	actor.CharacterRemoving:Connect(function()
+		Traps.remove(traps, actor)
+		s.trapHold = nil
 		if s.phase == "Run" and s.item then
 			drop(actor)
 		end
@@ -732,6 +777,7 @@ for _, actor in Players:GetPlayers() do
 	addPlayer(actor)
 end
 Players.PlayerRemoving:Connect(function(actor)
+	Traps.remove(traps, actor)
 	local s = states[actor]
 	if not s then
 		return
@@ -842,6 +888,7 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 	if population() == 0 and not testRunning then
 		if arena.hasEntrants and not arena.idle then
+			Traps.clearIsland(traps, arena)
 			Rules.retire(rules)
 			for _, item in rules.items do
 				if item.state == "Retired" and item.visual then
@@ -867,6 +914,7 @@ RunService.Heartbeat:Connect(function(dt)
 			item.bounceAt = nil
 		end
 	end
+	Traps.tick(traps, now, states)
 	if not pvpCourtPaused then
 		Arena.tick(arena, step, now, states, root, hit, goal, rules.active)
 	end
@@ -882,6 +930,8 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 end)
 local api = {
+	traps = traps,
+	trapAction = trapAction,
 	enterRun = enterRun,
 	holdAction = holdAction,
 	returnRun = returnRun,
@@ -962,6 +1012,7 @@ function api.pvpCourt(enabled)
 	end
 end
 function api.removeDummy(actor)
+	Traps.remove(traps, actor)
 	local s = states[actor]
 	if s and s.item then
 		drop(actor)
@@ -1031,6 +1082,9 @@ local function startTest(mode)
 			assert(player and player:GetAttribute("GreyboxReady"), "player not ready >8s")
 			player:SetAttribute("GreyboxLoopTesting", true)
 			local runner = require(SSS:WaitForChild("GreyboxLoopTestRunner"))
+			if mode == "GreyboxTrapTest" then
+				return require(SSS:WaitForChild("GreyboxTrapTestRunner")).run(player, states, api, log)
+			end
 			if mode == "GreyboxPvpTest" then
 				return runner.pvp(player, states, pens, world, api, log, function(value)
 					dummy = value
@@ -1084,7 +1138,7 @@ local function startTest(mode)
 		SSS:SetAttribute(mode .. "Result", (ok and "PASS: " or "FAIL: ") .. tostring(result))
 	end)
 end
-for _, mode in { "GreyboxLoopTest", "GreyboxPvpTest" } do
+for _, mode in { "GreyboxLoopTest", "GreyboxPvpTest", "GreyboxTrapTest" } do
 	SSS:GetAttributeChangedSignal(mode):Connect(function()
 		if SSS:GetAttribute(mode) then
 			startTest(mode)

@@ -383,7 +383,7 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 	end
 	logState(a, root)
 	-- Windups stay planted; recovery takes priority after impact.
-	if not a.attack then
+	if not a.attack and not a.decoy then
 		if a.progressPosition and (guard.Position - a.progressPosition).Magnitude >= Config.GuardianProgressStuds then
 			a.progressAt, a.progressPosition = now, guard.Position
 			a.recoveryStarted = nil
@@ -499,12 +499,34 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 		return -- Plant feet; never overlap windups.
 	end
 	local target = a.target
+	if a.decoy then
+		-- Locked windups resolved above. The visible rattle turns attention;
+		-- investigation then uses normal walking/pathfinding, never a stun.
+		a.target, target = nil, nil
+		a.lostTarget, a.searchAt = nil, nil
+		a.mode = now < a.decoy.tellEnd and "DecoyTell" or "Investigate"
+		a.warning.Text = a.mode == "DecoyTell" and "! / DECOY RATTLE" or "? / investigate DECOY"
+		if a.mode == "DecoyTell" then
+			local towards = Vector3.new(a.decoy.position.X, guard.Position.Y, a.decoy.position.Z)
+			if (towards - guard.Position).Magnitude > 0.1 then
+				guard.CFrame = CFrame.lookAt(guard.Position, towards)
+			end
+			return
+		end
+	elseif a.mode == "Investigate" or a.mode == "DecoyTell" then
+		a.mode, a.progressAt, a.progressPosition = "Guard", nil, nil
+		clearPath(a)
+	end
 	if target and not visible(target, false) then
 		a.lostTarget = target
 		a.target, a.mode, a.untilTime = nil, "Search", now + Config.GuardianSearchSeconds
 		a.searchAt = a.lastSeen
 	end
-	if a.mode ~= "Return" and (not a.target or now - (a.targetSince or 0) >= Config.GuardianTargetLockSeconds) then
+	if
+		not a.decoy
+		and a.mode ~= "Return"
+		and (not a.target or now - (a.targetSince or 0) >= Config.GuardianTargetLockSeconds)
+	then
 		local candidate, best = nil, math.huge
 		for actor, s in actors do
 			if visible(actor, actor ~= a.target and actor ~= a.lostTarget) then
@@ -541,7 +563,9 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 		return
 	end
 	local destination
-	if target and a.mode == "Chase" then
+	if a.decoy then
+		destination = a.decoy.position
+	elseif target and a.mode == "Chase" then
 		a.chaseTicks += 1
 		local s, r = actors[target], root(target)
 		destination = r.Position
@@ -649,6 +673,7 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 	end
 end
 function Arena.reset(a)
+	a.decoy = nil
 	if a.poof then
 		a.poof.part:Destroy()
 		a.poof = nil

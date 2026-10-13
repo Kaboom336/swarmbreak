@@ -951,6 +951,38 @@ local function guardianLogicTest(seed)
 	cover.y, cover.h = 10, 20
 	assert(not scenario(arenaCode, { guard = map(0, 13.5, 32) }).attack, "tall cover wall bypassed")
 	table.remove(layout.solids)
+	blocked = false
+	local trapEnvironment = { Vector3 = v, CFrame = roblox.CFrame, Color3 = roblox.Color3, Enum = roblox.Enum }
+	local Traps = luau.load(fs.readFile("Traps.luau"), { environment = trapEnvironment })()
+	local TrapTest = luau.load(fs.readFile("TrapTest.luau"), { environment = trapEnvironment })()
+	local trapArena = scenario(arenaCode, { phase = "Home", seconds = 0 })
+	trapArena.layout = layout
+	local manager = Traps.new(Config, arenaCode, function(parent, name, size, position, color)
+		local p = instance.new("Part")
+		p.Name, p.Size, p.Position, p.Color, p.Anchored, p.Parent = name, size, position, color, true, parent
+		return p
+	end, function()
+		return {}
+	end)
+	local detail = TrapTest.exercise(Traps, manager, trapArena, {}, function()
+		local attributes = {}
+		local trapOwner = { UserId = -1 }
+		function trapOwner:GetAttribute(key)
+			return attributes[key]
+		end
+		function trapOwner:SetAttribute(key, value)
+			attributes[key] = value
+		end
+		return trapOwner
+	end, function(now, mode)
+		arenaCode.tick(trapArena, 0.05, now, {}, function()
+			return nil
+		end, function()
+			error("decoy player hit")
+		end, function() end)
+		assert(trapArena.mode == mode and not trapArena.attack, "guardian decoy reaction " .. mode)
+	end)
+	print("PASS GreyboxTrapTest seed=" .. seed .. ": " .. detail .. "; scalar geometry, mocked navigation")
 	print(
 		"PASS production guardian seed="
 			.. seed
@@ -2090,6 +2122,8 @@ if fs.isFile("guardian-greybox.rbxl") then
 			{ "ServerScriptService", "Greybox", "Greybox.server.luau" },
 			{ "ServerScriptService", "GreyboxLoopTestRunner", "LoopTest.luau" },
 			{ "ServerScriptService", "GreyboxArena", "Arena.luau" },
+			{ "ReplicatedStorage", "GreyboxTraps", "Traps.luau" },
+			{ "ServerScriptService", "GreyboxTrapTestRunner", "TrapTest.luau" },
 			{ "ReplicatedStorage", "GreyboxConfig", "GreyboxConfig.luau" },
 			{ "ReplicatedStorage", "GreyboxLayout", "Layout.luau" },
 			{ "ReplicatedStorage", "GreyboxScene", "Scene.luau" },
@@ -2111,7 +2145,7 @@ if fs.isFile("guardian-greybox.rbxl") then
 			and sss:GetAttribute("GreyboxLoopTestExpiryCount") == 0,
 		"batch defaults/results fabricated"
 	)
-	for _, mode in { "GreyboxLoopTest", "GreyboxPvpTest" } do
+	for _, mode in { "GreyboxLoopTest", "GreyboxPvpTest", "GreyboxTrapTest" } do
 		assert(
 			sss:GetAttribute(mode) == false
 				and sss:GetAttribute(mode .. "Success") == false
@@ -2119,5 +2153,5 @@ if fs.isFile("guardian-greybox.rbxl") then
 			"fabricated runtime result"
 		)
 	end
-	print("PASS built binary sources; both runtime gates NOT RUN/locked")
+	print("PASS built binary sources; loop/PvP/trap runtime gates NOT RUN")
 end

@@ -317,3 +317,31 @@ Current-fix lessons:
 - When editing sources through PowerShell tooling, use apply_patch because aliases previously overwrote runtime code.
 
 Build SHA256: 5E9BB88ECD59CFC3AB28CE0E69C8BBAF8D8B71D232E14C184A65DC0A132DD99E
+
+## TRAPS update — 2026-10-13
+
+CHECKED: read ARENA-1013.md and GDD.md; reused the existing guardian, floor/sight validation, server action adapter and loop harness. No external code/kit/assets imported; rattle uses a native Roblox sound. No commit. All source/document edits used apply_patch; StyLua output was applied through patches. Rebuilt with the exact requested Rojo command in this folder.
+
+Implemented Decoy after three successful Meadow secure escapes. T1 progression is session RAM only because this greybox has no durable award/profile service; production must count durable escapes. For testing, set boolean **GreyboxDevTrapUnlock=true on the Player** in Studio's server Explorer. This grants only Decoy; Sticky stays config-defined and locked for a future Crystal island.
+
+- One free Decoy charge per entry, one active/player, four/island, eight/server. Re-entry removes the prior trap and refills charge, preserving the 15s cooldown. No power/currency/shop additions. Decoy is the sole available selection; the unlocked portal fallback identifies it.
+- Aim at an island floor point with mouse, or screen centre on touch/gamepad. Away from nearby treasure/return prompts, hold the contextual **place Decoy [E/X]** action for 1s. The visible six-stud preview uses shared validation, sampled at 10Hz. Red means refused; contextual text explains the margin/floor/cooldown. The hold pins its initial point. The same contextual action recalls an active trap without refunding its charge.
+- Server validates live actor/entry, empty hands, no earlier Steal/Grab this entry, unlock/type, charge/cooldown/caps/spacing, finite position, 8-stud range, sight, supported height and floor on begin and finish. An interrupted/failed started attempt retains charge and incurs cooldown. Successful pickup permanently closes planning for that entry, even after dropping cargo.
+- A full flat 18x18 walking envelope must clear floors/headroom, slope at most 10 degrees, edges/cover/ledges/bridges. Centre excludes nest by 19 studs and the entire protected apron by 19, jump/recovery footprints and cross-link junctions; trap centres remain 12 apart. Visuals have collision/query/touch disabled, preserving zero-trap routes and bypasses. Free positions on open floor; no dedicated trap sockets.
+- Everyone sees the replicated yellow disc, arming label, guardian-only label and pulsing rattle. Arms 2s after placement; nearby guardian within 6 studs gets a 1.2s visible/native-ping tell, then 2s investigation using normal navigation. Clears player target, does not hard-stun, and never cancels/retargets a committed throw or close hit. Trigger waits for windup resolution. One shot; guardian ignores decoys for 8s afterward.
+- Expires 90s after placement; removed on recall, owner home/secure/exit/reset/disconnect, re-entry, arena expiry or retirement. No player damage, slow, knockback, drop, reward or ownership effects.
+
+CHECKED offline: all 12 Luau files compile at O0/O1/O2; full check.luau exits 0 including existing loop/PvP/deadline/50-seed geometry regressions. GreyboxTrapTest cases pass across seeds 101/202/303: unlock/locked Sticky, short/cancelled hold, original held point despite forged finish, finish range revalidation, charge/cooldown across entry, player/island/server caps, guardian target release/tell/investigate, windup deferral, immunity, 90s cleanup, exit/disconnect/arena cleanup, noncolliding bypass and prohibited route placements. Scalar floors/raycasts and navigation are mocked. Server-cap test simulates other-island occupancy. Runtime source parity checked against the rebuilt binary. StyLua --check passes; Selene reports 0 errors/0 warnings/0 parse errors; requested Rojo build passes.
+
+Studio test route: reopen guardian-greybox.rbxl, start Play, set ServerScriptService.GreyboxLoopTest=true, then GreyboxPvpTest=true, then **GreyboxTrapTest=true**. The new runner uses actual Studio floor/sight geometry and an isolated trap manager with accelerated lifecycle clock; it reports GreyboxTrapTestSuccess/Result and restores guardian state. The existing loop runner remains intact. Build defaults for all three runners are false / NOT RUN; live entry still requires the existing loop/PvP gates. After those pass, grant the Player dev attribute, enter Meadow and aim on open outer floor; set up a Decoy before stealing and lure the guardian toward it. Verify audible rattle and an actual route change without cancelling a red disc.
+
+Independent code critic checked both design documents and implementation. Fixed their invalid-preview and missing-audio findings; throttled costly preview validation after their follow-up. No blocking code issue found on recheck. Named comparison bar: Steal an Egg's clear guarded objective stays readable alongside one optional setup/payoff; this is an offline design comparison, not reference victory. No new licensed foundation needed for this extension.
+
+NOT RUN / UNKNOWN: live GreyboxLoopTest/PvpTest/TrapTest, real navigation toward the bell, native sound playback/readability, real two-client fairness, full 90s wall-clock run, device performance, fun and owner acceptance. No connected Studio tool is available. Exact Keystone Roblox Process Playbook remains unavailable; not replaced by a local document or claimed as read. Delivery stays in the user-requested prototype folder.
+
+Latest build SHA256: **287A8B8FC984226D773ECE4A0A751708DCB1EAEEF0322E80D91BF2B74D80AB98**.
+
+Lessons:
+- When previews show legal placement, share server geometry checks because optimistic discs misteach protected areas.
+- When an optional effect competes with a locked attack, defer it because cancellation would break the established threat tell.
+- When previews sample full walking clearance, throttle them because render frequency exceeds placement decisions.
