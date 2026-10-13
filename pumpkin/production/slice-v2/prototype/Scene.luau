@@ -1,5 +1,6 @@
 -- Reference silhouettes made only from native Parts. Collision remains authored.
 local Scene = {}
+local Layout = require(game:GetService("ReplicatedStorage"):WaitForChild("GreyboxLayout"))
 local function lookAt(eye, target)
 	local forward = (target - eye).Unit
 	local right = forward:Cross(Vector3.yAxis).Unit
@@ -229,6 +230,10 @@ function Scene.meadow(parent, origin, layout, make)
 	for _, ramp in layout.ramps do
 		table.insert(paths, { route = { ramp.a, ramp.b }, width = ramp.width })
 	end
+	-- Connect both switchbacks across their real summit/landing surfaces.
+	for _, route in Layout.hillPaths(layout) do
+		table.insert(paths, { route = route, width = 12 })
+	end
 	for _, path in paths do
 		for i = 2, #path.route do
 			local a, b = path.route[i - 1], path.route[i]
@@ -239,10 +244,64 @@ function Scene.meadow(parent, origin, layout, make)
 					"MeadowStonePath",
 					Vector3.new(path.width, 0.06, (finish - start).Magnitude),
 					origin + (start + finish) / 2,
-					stone
+					Color3.fromRGB(166, 151, 128)
 				)
 			)
+			p.Material = Enum.Material.Cobblestone
 			p.CFrame = lookAt(origin + (start + finish) / 2, origin + finish) * CFrame.new(0, 0.04, 0)
+		end
+	end
+	-- Expose slate faces below grass caps. These skins never add collision or
+	-- query walls; Layout owns every traversable surface and cover collider.
+	for _, b in layout.solids do
+		if (b.name:find("Mountain") or b.name:find("GroveHill") or b.name == "CampTerrace") and b.h > 1 then
+			for _, side in { -1, 1 } do
+				for _, axis in { "X", "Z" } do
+					local size = axis == "X" and Vector3.new(0.12, b.h - 0.65, b.d)
+						or Vector3.new(b.w, b.h - 0.65, 0.12)
+					local offset = axis == "X" and map(side * (b.w / 2 + 0.03), -0.325, 0)
+						or map(0, -0.325, side * (b.d / 2 + 0.03))
+					local face =
+						cosmetic(make(parent, "MeadowCliffFace", size, origin + map(b.x, b.y, b.z) + offset, rock))
+					face.Material = Enum.Material.Slate
+				end
+			end
+		end
+	end
+	-- Short wooden links at the camp's upper cross-route, on its existing floor.
+	-- Deck/rails are cosmetic so both twelve-wide routes and guardian nav survive.
+	for _, side in { -1, 1 } do
+		for i = 0, 7 do
+			cosmetic(
+				make(
+					parent,
+					"MeadowBridgePlank",
+					Vector3.new(1.45, 0.12, 12),
+					origin + map(side * (8.75 + i * 1.5), 4.09, 24),
+					wood
+				)
+			)
+		end
+		for _, z in { 17.5, 30.5 } do
+			for _, x in { 9, 19 } do
+				cosmetic(
+					make(parent, "MeadowBridgePost", Vector3.new(0.7, 3, 0.7), origin + map(side * x, 5.5, z), wood)
+				)
+			end
+			cosmetic(make(parent, "MeadowBridgeRail", Vector3.new(12, 0.5, 0.5), origin + map(side * 14, 6.2, z), wood))
+		end
+	end
+	-- Staggered perimeter columns break the square base into visible cliff strata.
+	for i = -9, 9 do
+		for _, side in { -1, 1 } do
+			for _, axis in { "X", "Z" } do
+				local h = 10 + (i + 9) % 4 * 3
+				local position = axis == "X" and map(side * 80, -h / 2 - 0.7, i * 8)
+					or map(i * 8, -h / 2 - 0.7, side * 80)
+				local cliff =
+					cosmetic(make(parent, "MeadowEdgeVoxel", Vector3.new(7.5, h, 7.5), origin + position, rock))
+				cliff.Material = Enum.Material.Slate
+			end
 		end
 	end
 	for _, p in parent:GetDescendants() do
@@ -251,6 +310,7 @@ function Scene.meadow(parent, origin, layout, make)
 				p.Name:find("Mountain")
 				or p.Name:find("GroveHill")
 				or p.Name == "CampTerrace"
+				or p.Name:find("CampShoulderStep")
 				or p.Name == "IslandGround"
 			then
 				p.Color, p.Material = grass, Enum.Material.Grass
@@ -265,15 +325,23 @@ function Scene.meadow(parent, origin, layout, make)
 			{ -62, 0, -66 },
 			{ 65, 0, -64 },
 			{ 68, 0, 42 },
-			{ -54, 10, 12 },
+			{ -56, 10, 28 },
 			{
-				40,
+				56,
 				8,
-				12,
+				28,
 			},
 		}
 	do
 		Scene.tree(parent, origin + map(d[1], d[2], d[3]), make, 0.8)
+	end
+	for _, d in { { -68, 0, 48 }, { 68, 0, 28 }, { 62, 0, 58 }, { -68, 0, 30 } } do
+		Scene.tree(parent, origin + map(d[1], d[2], d[3]), make, 0.65)
+	end
+	for _, d in { { -72, 0, 8 }, { -64, 0, 44 }, { 64, 0, 18 }, { 70, 0, -8 }, { -60, 0, -48 }, { 48, 0, 48 } } do
+		local p =
+			cosmetic(make(parent, "MeadowOutcrop", Vector3.new(5, 4, 6), origin + map(d[1], d[2] + 2, d[3]), rock))
+		p.Material = Enum.Material.Slate
 	end
 	for _, d in
 		{

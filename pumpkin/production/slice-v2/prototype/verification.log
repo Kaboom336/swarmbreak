@@ -1,4 +1,22 @@
-CURRENT RUN: phase-safe PvP portal return (2026-10-13)
+CURRENT RUN: Meadow relief and reference silhouette (2026-10-13)
+PASS pinned Lune0.10.5 run check.luau: ten sources O0/O1/O2; complete harness; exit 0
+PASS 50 seeds: both summit paths, 56 shared reference points, solo/PvP waypoints,
+3-stud clearance, sampled walking floors, recovery, expiry and original-ID rules
+PASS constructed +10/+8/+4 collidable landmark tops; solid 12-wide hill fill;
+16 wood deck planks; new cliff/bridge scenery noncolliding/nonquery/nontouching
+MEASURE authored carrying traversal 400.78 studs; not observed completion time
+MEASURE Quick 93.52, Ridge 110.48, Grove 129.88 studs; unchanged
+PASS pinned StyLua2.0.2 --check .; formatting edits only through apply_patch
+PASS pinned Selene0.31.0 .: 0 errors, 0 warnings, 0 parse errors
+PASS exact requested Rojo7.4.4 build greybox.project.json -o guardian-greybox.rbxl
+PASS rebuilt runtime source parity; both Studio gates false/NOT RUN
+SHA256 C09F8E9CDEFEDA39D6A34A9ADA7C884E64C5B4657D11CD0B2E2D6D2010EA0FB4
+CHECKED supplied side-by-side, Meadow perspective/top-down PNGs and v2 CHANGES.md
+UNKNOWN fresh Studio tests, navmesh/physics and rendered reference-camera acceptance
+No connected Studio tool; earlier both-tests PASS is owner-reported baseline only
+No commit or publication
+
+PREVIOUS RUN: phase-safe PvP portal return (2026-10-13)
 PASS pinned Lune0.10.5 run check.luau: all ten sources O0/O1/O2; complete harness
 PASS eight shared portal-return scenarios: manual, automatic, already Home,
 empty, out of range, lost cargo, late secure, interrupted drop; navigation mocked

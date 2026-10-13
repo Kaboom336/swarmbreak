@@ -675,6 +675,9 @@ function Test.run(player, states, pens, world, api, log)
 	for i, p in dodgePoints do
 		table.insert(points, { position = at(arena, p.x, p.y, p.z), name = "disc dodge option " .. i })
 	end
+	for i, p in Layout.referencePoints(arena.layout) do
+		table.insert(points, { position = at(arena, p.x, p.y, p.z), name = "raised reference surface " .. i })
+	end
 	for _, p in arena.layout.routes.Quick do
 		table.insert(points, { position = at(arena, p.x, p.y, p.z), name = "approach " .. p.kind })
 	end
@@ -849,6 +852,9 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 	local arena = api.arena()
 	recoveryCosts(world)
 	local routes, points = Layout.pvpRoutes(), {}
+	for i, p in Layout.referencePoints(arena.layout) do
+		table.insert(points, { position = at(arena, p.x, p.y, p.z), name = "raised reference surface " .. i })
+	end
 	for name, route in routes do
 		for _, p in route do
 			table.insert(points, { position = at(arena, p.x, p.y, p.z), name = "PvP " .. name })

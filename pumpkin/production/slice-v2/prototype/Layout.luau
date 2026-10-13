@@ -49,7 +49,37 @@ function Layout.assemble(config, seed, _fixed)
 		box(name .. "LandingN", x - direction * 14, h / 2, 18, 12, h, 24)
 		box(name .. "Summit", x, h / 2, 12, 16, h, 12)
 	end
+	-- Solid voxel skirts under the thin ramp decks: the hills must read as land,
+	-- not floating ribbons. Each two-stud tread rises less than one stud; the
+	-- continuous twelve-wide deck above remains the carrying/navigation surface.
+	for _, r in l.ramps do
+		local run = math.abs(r.b.x - r.a.x)
+		local count = math.ceil(run / 2)
+		assert(math.abs(r.b.y - r.a.y) / count <= 1.5, "voxel tread height")
+		for i = 1, count do
+			local t0, t1 = (i - 1) / count, i / count
+			local low = math.min(r.a.y + (r.b.y - r.a.y) * t0, r.a.y + (r.b.y - r.a.y) * t1)
+			local top = math.max(0, low - 0.6)
+			if top > 0 then
+				box(
+					r.name .. "Voxel" .. i,
+					r.a.x + (r.b.x - r.a.x) * (t0 + t1) / 2,
+					top / 2,
+					r.a.z,
+					run / count,
+					top,
+					12
+				)
+			end
+		end
+	end
 	box("CampTerrace", 0, 2, 32, 40, 4, 40)
+	-- Shoulder terraces flank the central ramp without entering the cover lane.
+	for i = 1, 3 do
+		for _, x in { -16, 17 } do
+			box("CampShoulderStep" .. i, x, i / 2, 5 + i * 2, x < 0 and 8 or 6, i, 2)
+		end
+	end
 	ramp("CampSouthRamp", point(-4, 0, 0), point(-4, 4, 12), 16)
 	ramp("CampNorthRamp", point(0, 0, 64), point(0, 4, 52), 16)
 	box("CoverWest", -10, 4, -10, 8, 8, 12, "Cover")
@@ -134,6 +164,40 @@ function Layout.length(route)
 	end
 	return length
 end
+function Layout.hillPaths(l)
+	local paths = {}
+	for _, r in l.ramps do
+		if r.name == "MountainSouthRamp" or r.name == "GroveHillSouthRamp" then
+			local side, route = r.a.x < 0 and -1 or 1, {}
+			for _, p in { { 32, 0 }, { 28, 0 }, { 28, 12 }, { 40, 12 }, { 54, 12 }, { 54, 24 }, { 48, 24 } } do
+				table.insert(route, point(side * p[1], r.b.y, p[2]))
+			end
+			table.insert(paths, route)
+		end
+	end
+	return paths
+end
+function Layout.referencePoints(l)
+	local points = {}
+	for _, route in Layout.hillPaths(l) do
+		for _, p in route do
+			table.insert(points, p)
+		end
+	end
+	for _, r in l.ramps do
+		for i = 0, 4 do
+			local t = i / 4
+			table.insert(
+				points,
+				point(r.a.x + (r.b.x - r.a.x) * t, r.a.y + (r.b.y - r.a.y) * t, r.a.z + (r.b.z - r.a.z) * t)
+			)
+		end
+	end
+	for _, x in { -14, 14 } do
+		table.insert(points, point(x, 4, 24))
+	end
+	return points
+end
 function Layout.loopCarrySteps(_l)
 	local steps = {}
 	local function add(name, x, y, z, kind)
@@ -154,6 +218,8 @@ function Layout.loopCarrySteps(_l)
 	add("hill south ramp", -32, 10, 0, "ClimbRamp")
 	add("hill south landing", -28, 10, 0)
 	add("hill summit east", -28, 10, 12)
+	add("hill summit centre", -40, 10, 12)
+	add("hill summit east back", -28, 10, 12)
 	add("hill south landing back", -28, 10, 0)
 	add("hill ramp back", -32, 10, 0)
 	add("hill foot back", -60, 0, 0, "ClimbRamp")

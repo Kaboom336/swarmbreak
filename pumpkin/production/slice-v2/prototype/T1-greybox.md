@@ -1,6 +1,27 @@
 # T1 v2 greybox — ARENA-1013 free-placement plots
 
-## Current revision: themed surroundings (2026-10-13)
+## Current revision: Meadow relief and reference silhouette (2026-10-13)
+
+CHECKED: viewed evidence/sbs-meadow.jpg (Studio left/reference right), treasure/v2/meadow-island.png and meadow-topdown.png; read treasure/v2/CHANGES.md and the existing Layout, Scene, Arena and LoopTest code. Reused the project's native-Part construction; no new dependency or imported assets. The comparison target is the supplied Meadow v2, with Steal an Egg retained as the existing gameplay anchor. Numeric v2 heights govern over the generated image's exaggerated perspective.
+
+- Mountain +10, Grove Hill +8 and camp +4 were already authored, but the ramp decks had empty air beneath them and grass-coloured vertical sides. Added solid two-stud voxel columns beneath all four hill ramps and slate face skins under the grass caps. Ramp fill stays twelve wide and below the existing decks; maximum voxel tread rise is below one stud. Added three one-stud shoulder steps on each side of the camp approach. Continuous walking ramps remain at or below the existing 25-degree contract, stricter than the requested 35-degree ceiling.
+- Connected the two switchbacks on each summit with twelve-wide cobblestone paths. Shared Layout.hillPaths coordinates drive scenery and validation. Both upper camp links now have twelve-wide wooden plank sections and rails over the existing +4 terrace floor. Decorative decks/rails/rock skins are noncolliding, nonquery and nontouching; the authored floors still support walking and pathfinding.
+- Added staggered slate perimeter columns above the retained tapered underside, six outcrops and four smaller trees. Moved the hill trees toward the back corners of their real +10/+8 landings. Kept all six gameplay cover rocks, the stone chain/recovery cutout, safety apron, portal, background islands and MeadowReferenceCamera unchanged.
+- Both Studio runners now preflight 56 additional shared reference points: both summit paths, all ramp endpoints/quarter points and the wooden links. The solo route also walks to the Mountain summit centre and back before its existing descent. Its authored carrying traversal is now 400.78 studs; this is distance, not observed completion time. Existing Quick/Ridge/Grove route lengths remain 93.52/110.48/129.88 studs. Production pathfinding recovery, original treasure ID/deadline, guardian difficulty, PvP and expiry behavior remain covered by the harness.
+
+Reference audit: the supplied Studio capture showed thin pale ramp ribbons and a broad green slab; the revised construction gives those slopes solid stepped mass, contrasting cliff faces, summit connections and wooden links. The generated reference also contains a hide log/bush: those were removed by earlier owner direction and remain ordinary open rock cover. Visual match and independent rendered critique are UNKNOWN until a new Studio capture is made; no screenshot or live pass is claimed here.
+
+CHECKED final build: all ten Luau sources compile O0/O1/O2 in Lune 0.10.5; full check.luau PASS, including 50-seed reference/solo/PvP floor and three-stud waypoint clearance, sampled summit paths, original recovery/expiry/PvP rules and binary/source parity. New construction assertions check +10/+8/+4 collidable landmark tops, solid twelve-wide hill fill, sixteen bridge planks and nonblocking cliff/bridge scenery. StyLua 2.0.2 --check . PASS; Selene 0.31.0 reports zero errors, warnings and parse errors; requested Rojo 7.4.4 build PASS. See verification.log.
+
+Studio retest required: reopen guardian-greybox.rbxl, run GreyboxLoopTest and GreyboxPvpTest in fresh Play sessions, then enable GreyboxCaptureCams and inspect MeadowReferenceCamera at 16:9. Camera eye remains (0,140,-228), target (0,80,-370), FOV58. Verify raised hill silhouettes, camp ramps, wooden links, front cliffs and underside; compare with sbs-meadow.jpg/reference. Earlier both-tests PASS is owner-reported in the previous revision, not a result for this build. No Studio connector is exposed; live physics/navmesh, fresh runner results and visual acceptance remain UNKNOWN. Build gates remain false/NOT RUN. Exact Keystone Roblox Process Playbook remains unavailable in the checked local sources.
+
+Scope: only prototype source/report edits through apply_patch and the requested generated binary. No commit or publication.
+
+Build SHA256: C09F8E9CDEFEDA39D6A34A9ADA7C884E64C5B4657D11CD0B2E2D6D2010EA0FB4
+
+Lessons: When correct heights still look flat, fill beneath ramps and expose cliff faces because thin decks lack a landform silhouette. When changing relief, share reference paths with both runner preflights because decorative coordinates can drift away from walkable floors.
+
+## Previous revision: themed surroundings (2026-10-13)
 
 OWNER-REPORTED baseline: both Studio tests PASS, loop 3/3 about 140 seconds and PvP about 140 seconds. This supersedes the historical PvP failure below. CHECKED this revision: ARENA-1013.md, home-island.png and meadow-island.png viewed, existing scene/client/server/compile harness inspected; reused native-Part scene code. No imported art, dependency, purchase, commit or publication. Only prototype files edited with apply_patch; the requested Rojo command generated guardian-greybox.rbxl. Exact Keystone Roblox Process Playbook remains unavailable in the checked local sources; no Keystone or Studio connector is exposed.
 

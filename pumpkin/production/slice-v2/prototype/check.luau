@@ -209,6 +209,19 @@ local function constructionTest()
 	local roblox = require("@lune/roblox")
 	local scene = luau.load(fs.readFile("Scene.luau"), {
 		environment = {
+			game = {
+				GetService = function()
+					return {
+						WaitForChild = function(_, name)
+							return name
+						end,
+					}
+				end,
+			},
+			require = function(name)
+				assert(name == "GreyboxLayout", "unexpected scene dependency")
+				return Layout
+			end,
 			Instance = roblox.Instance,
 			Vector2 = roblox.Vector2,
 			NumberRange = roblox.NumberRange,
@@ -267,6 +280,29 @@ local function constructionTest()
 	local arena = arenaModule.build(world, layout, make, function()
 		return {}
 	end)
+	local cliffCount, bridgeCount, fillCount = 0, 0, 0
+	for _, p in arena.model:GetDescendants() do
+		if p:IsA("BasePart") then
+			if p.Name == "MeadowCliffFace" or p.Name == "MeadowEdgeVoxel" or p.Name:find("MeadowBridge") then
+				assert(not p.CanCollide and not p.CanQuery and not p.CanTouch, "new scenery blocks gameplay")
+				if p.Name == "MeadowCliffFace" then
+					cliffCount += 1
+				elseif p.Name == "MeadowBridgePlank" then
+					bridgeCount += 1
+					assert(p.Size.Z == 12, "bridge route width")
+				end
+			elseif p.Name:find("Voxel") and p:GetAttribute("SurfaceRole") == "Floor" then
+				fillCount += 1
+				assert(p.CanCollide and p.Size.Z == 12, "hill fill must be solid and respect ramp width")
+			end
+		end
+	end
+	assert(cliffCount > 0 and bridgeCount == 16 and fillCount > 0, "missing raised Meadow geometry")
+	for name, top in { MountainSummit = 10, GroveHillSummit = 8, CampTerrace = 4 } do
+		local p = assert(arena.model:FindFirstChild(name, true), "missing raised landmark " .. name)
+		assert(p.CanCollide and p.Position.Y + p.Size.Y / 2 == arena.origin.Y + top, "landmark surface height")
+	end
+	print("PASS built Meadow: solid voxel ramp fill, slate cliff faces, 12-wide wood decks; new scenery nonblocking")
 	assert(not arena.model:FindFirstChild("I09") and not arena.model:FindFirstChild("I10"), "hide chunks remain")
 	assert(#arena.obstacles == 6, "ordinary cover lost")
 	for _, p in arena.model:GetDescendants() do
@@ -1923,6 +1959,9 @@ end
 gullyRetest()
 for seed = 1, 50 do
 	local l = Layout.assemble(Config, seed, false)
+	for _, p in Layout.referencePoints(l) do
+		standable(l, p)
+	end
 	for _, p in Layout.dodgePoints() do
 		standable(l, p)
 	end
@@ -1930,6 +1969,9 @@ for seed = 1, 50 do
 	local routes = table.clone(l.routes)
 	for i, route in l.crossLinks do
 		routes["CrossLink" .. i] = route
+	end
+	for i, route in Layout.hillPaths(l) do
+		routes["SummitPath" .. i] = route
 	end
 	local carry = { { x = 0, y = 4, z = 32, kind = "Walk" } }
 	for _, p in Layout.loopCarrySteps(l) do
