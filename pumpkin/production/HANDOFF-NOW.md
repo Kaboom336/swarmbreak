@@ -22,3 +22,7 @@
 
 ## Overnight build rule (Zion 2026-10-13 02:15)
 - Keep building batches on Codex: map+guardian -> timer/no-hide (t1j) -> plots (C:/dev/codex-lab/t2-plots-task.md) -> backdrops (t3-backdrops-task.md) -> traps. Each batch: both Studio tests pass. Stop only if Codex weekly used >= 85% (check: grep rate_limits in newest ~/.codex/sessions/*/*/*/*.jsonl; was 22% at 02:20Z) or Zion opinion needed. Claude: light checks only until 10/14 reset.
+
+## Status 2026-10-13 ~03:30 UTC
+- Committed 5fa0ab3: map + harder guardian + 60 s timer, both tests PASS. Since then (uncommitted, prototype/): plots 64x48 free placement, dropped-loot reachable, gap climb-out, robust loop test (GreyboxLoopTestRuns=3). PvP PASS; loop test keeps false-failing on waypoint arrival; Codex t2d (arrival = 3 studs / passed / takeoff plane) running -> t2d.last.txt. Then retest, commit, then t3-backdrops-task.md, then traps.
+- Studio test recipe: reopen guardian-greybox.rbxl (kill old greybox window), Play, set ServerScriptService GreyboxLoopTest=true, poll GreyboxLoopTestResult up to ~9 min; restart Play, GreyboxPvpTest=true (~140 s).
