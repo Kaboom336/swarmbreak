@@ -202,7 +202,7 @@ end
 local function dropPosition(actor)
 	local r = root(actor)
 	local last = states[actor] and states[actor].lastSocket
-	return arena and Arena.dropSocket(arena, r and r.Position or last or Arena.position(arena, 0, 4, 32))
+	return arena and Arena.dropSocket(arena, r and r.Position or last or Arena.position(arena, 0, 8, 32))
 end
 local function presentDrop(item, actor)
 	local r = root(actor)
@@ -575,7 +575,7 @@ local function assemble()
 			returnRun(actor)
 		end
 	end)
-	visual(Rules.spawn(rules, Arena.position(arena, 0, 4, 32)))
+	visual(Rules.spawn(rules, Arena.position(arena, 0, 8, 32)))
 	refreshLoot()
 	print("[Greybox] shared arena: " .. Layout.signature(layout))
 end
@@ -656,7 +656,7 @@ local function configureCharacter(actor, character)
 				rules,
 				actor,
 				os.clock(),
-				Arena.dropSocket(arena, s.lastSocket or Arena.position(arena, 0, 4, 32))
+				Arena.dropSocket(arena, s.lastSocket or Arena.position(arena, 0, 8, 32))
 			)
 			if ok then
 				visual(item)
@@ -853,7 +853,7 @@ RunService.Heartbeat:Connect(function(dt)
 		return
 	end
 	if not rules.active and now >= (rules.respawnAt or math.huge) then
-		visual(Rules.spawn(rules, Arena.position(arena, 0, 4, 32)))
+		visual(Rules.spawn(rules, Arena.position(arena, 0, 8, 32)))
 		arena.mode, arena.target = "Guard", nil
 	end
 	if rules.active and rules.active.state == "Dropped" then

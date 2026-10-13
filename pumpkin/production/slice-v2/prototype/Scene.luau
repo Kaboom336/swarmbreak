@@ -216,6 +216,21 @@ function Scene.pen(parent, x, z, make)
 end
 function Scene.meadow(parent, origin, layout, make)
 	Scene.underside(parent, origin, 160, 160, make)
+	-- Meadow-only hanging teeth; background islands and Home retain their silhouette.
+	for i = 0, 23 do
+		local angle = i * math.pi / 12
+		local h = 28 + i % 5 * 9
+		local p = cosmetic(
+			make(
+				parent,
+				"MeadowRockTooth" .. i,
+				Vector3.new(12 + i % 3 * 4, h, 14),
+				origin + Vector3.new(math.cos(angle) * 52, -34 - h / 2, math.sin(angle) * 52),
+				rock
+			)
+		)
+		p.Material = Enum.Material.Slate
+	end
 	local function map(x, y, z)
 		return Vector3.new(x, y, -z)
 	end
@@ -277,7 +292,7 @@ function Scene.meadow(parent, origin, layout, make)
 					parent,
 					"MeadowBridgePlank",
 					Vector3.new(1.45, 0.12, 12),
-					origin + map(side * (8.75 + i * 1.5), 4.09, 24),
+					origin + map(side * (8.75 + i * 1.5), 8.09, 24),
 					wood
 				)
 			)
@@ -285,10 +300,12 @@ function Scene.meadow(parent, origin, layout, make)
 		for _, z in { 17.5, 30.5 } do
 			for _, x in { 9, 19 } do
 				cosmetic(
-					make(parent, "MeadowBridgePost", Vector3.new(0.7, 3, 0.7), origin + map(side * x, 5.5, z), wood)
+					make(parent, "MeadowBridgePost", Vector3.new(0.7, 3, 0.7), origin + map(side * x, 9.5, z), wood)
 				)
 			end
-			cosmetic(make(parent, "MeadowBridgeRail", Vector3.new(12, 0.5, 0.5), origin + map(side * 14, 6.2, z), wood))
+			cosmetic(
+				make(parent, "MeadowBridgeRail", Vector3.new(12, 0.5, 0.5), origin + map(side * 14, 10.2, z), wood)
+			)
 		end
 	end
 	-- Staggered perimeter columns break the square base into visible cliff strata.
@@ -296,11 +313,21 @@ function Scene.meadow(parent, origin, layout, make)
 		for _, side in { -1, 1 } do
 			for _, axis in { "X", "Z" } do
 				local h = 10 + (i + 9) % 4 * 3
-				local position = axis == "X" and map(side * 80, -h / 2 - 0.7, i * 8)
-					or map(i * 8, -h / 2 - 0.7, side * 80)
+				local position = axis == "X" and map(side * (78 + (i + 9) % 3 * 2), -h / 2 + (i + 9) % 4, i * 8)
+					or map(i * 8, -h / 2 + (i + 9) % 4, side * (78 + (i + 9) % 3 * 2))
 				local cliff =
 					cosmetic(make(parent, "MeadowEdgeVoxel", Vector3.new(7.5, h, 7.5), origin + position, rock))
 				cliff.Material = Enum.Material.Slate
+				local cap = cosmetic(
+					make(
+						parent,
+						"MeadowEdgeGrass",
+						Vector3.new(8, 0.65, 8),
+						origin + position + Vector3.new(0, h / 2 + 0.325, 0),
+						grass
+					)
+				)
+				cap.Material = Enum.Material.Grass
 			end
 		end
 	end
@@ -325,10 +352,10 @@ function Scene.meadow(parent, origin, layout, make)
 			{ -62, 0, -66 },
 			{ 65, 0, -64 },
 			{ 68, 0, 42 },
-			{ -56, 10, 28 },
+			{ -56, 18, 28 },
 			{
 				56,
-				8,
+				14,
 				28,
 			},
 		}
@@ -337,6 +364,50 @@ function Scene.meadow(parent, origin, layout, make)
 	end
 	for _, d in { { -68, 0, 48 }, { 68, 0, 28 }, { 62, 0, 58 }, { -68, 0, 30 } } do
 		Scene.tree(parent, origin + map(d[1], d[2], d[3]), make, 0.65)
+	end
+	-- Twenty additional off-route silhouettes, with canopies kept away from walking decks.
+	for _, d in
+		{
+			{ -72, 0, 66 },
+			{ -48, 0, 66 },
+			{ -26, 0, 66 },
+			{ 26, 0, 66 },
+			{ 48, 0, 66 },
+			{ 72, 0, 66 },
+			{ 72, 0, -26 },
+			{ -74, 0, -22 },
+		}
+	do
+		Scene.tree(parent, origin + map(d[1], d[2], d[3]), make, 0.55)
+	end
+	for i, d in
+		{
+			{ -70, 0, -72 },
+			{ -46, 0, -68 },
+			{ 46, 0, -68 },
+			{ 72, 0, -48 },
+			{ -72, 0, 14 },
+			{ 72, 0, 14 },
+			{ -66, 0, 48 },
+			{ 66, 0, 48 },
+			{ -48, 6, 48 },
+			{ 48, 2, 48 },
+			{ -32, 18, 32 },
+			{ 32, 14, 32 },
+		}
+	do
+		for j, dx in { -2, 1, 3 } do
+			local p = cosmetic(
+				make(
+					parent,
+					"MeadowBush" .. i .. "_" .. j,
+					Vector3.new(4, 3 + j % 2, 4),
+					origin + map(d[1] + dx, d[2] + 1.5, d[3] + j % 2 * 2),
+					grass
+				)
+			)
+			p.Material = Enum.Material.Grass
+		end
 	end
 	for _, d in { { -72, 0, 8 }, { -64, 0, 44 }, { 64, 0, 18 }, { 70, 0, -8 }, { -60, 0, -48 }, { 48, 0, 48 } } do
 		local p =
@@ -349,10 +420,10 @@ function Scene.meadow(parent, origin, layout, make)
 			{ 18, 0, -46 },
 			{ -18, 0, -22 },
 			{ 18, 0, -22 },
-			{ -16, 4, 46 },
+			{ -16, 8, 46 },
 			{
 				16,
-				4,
+				8,
 				46,
 			},
 		}

@@ -130,7 +130,7 @@ local function deadlineTest()
 		local a, b = {}, {}
 		local sa, sb = Rules.actor(r, a), Rules.actor(r, b)
 		sa.phase, sb.phase = "Run", "Run"
-		local item = Rules.spawn(r, { x = 0, y = 4, z = 32 })
+		local item = Rules.spawn(r, { x = 0, y = 8, z = 32 })
 		local function legal()
 			return true
 		end
@@ -298,7 +298,7 @@ local function constructionTest()
 		end
 	end
 	assert(cliffCount > 0 and bridgeCount == 16 and fillCount > 0, "missing raised Meadow geometry")
-	for name, top in { MountainSummit = 10, GroveHillSummit = 8, CampTerrace = 4 } do
+	for name, top in { MountainSummit = 18, GroveHillSummit = 14, CampTerrace = 8 } do
 		local p = assert(arena.model:FindFirstChild(name, true), "missing raised landmark " .. name)
 		assert(p.CanCollide and p.Position.Y + p.Size.Y / 2 == arena.origin.Y + top, "landmark surface height")
 	end
@@ -484,7 +484,7 @@ local function rulesTest()
 	local a, b, c = {}, {}, {}
 	local sa, sb, sc = Rules.actor(r, a), Rules.actor(r, b), Rules.actor(r, c)
 	sa.phase, sb.phase, sc.phase = "Run", "Run", "Run"
-	local position = { x = 0, y = 4, z = 32 }
+	local position = { x = 0, y = 8, z = 32 }
 	local item = Rules.spawn(r, position)
 	local function legal()
 		return true
@@ -755,7 +755,7 @@ local function guardianLogicTest(seed)
 			for iz = -6, 6 do
 				if ix * ix + iz * iz <= 36 then
 					local x, z = floor.X + ix * 0.5, -floor.Z + iz * 0.5
-					assert(math.abs(height(layout, x, z) - floor.Y) <= 1.5, "drop clearance cliff/wall")
+					assert(math.abs(height(layout, x, z) - floor.Y) <= 2.15, "drop clearance cliff/wall")
 					for _, b in layout.solids do
 						assert(
 							b.role ~= "Cover"
@@ -797,7 +797,7 @@ local function guardianLogicTest(seed)
 		blocked = options.blocked or false
 		-- Lune instances do not derive Position when CFrame changes like Studio.
 		local guard = setmetatable({
-			CFrame = roblox.CFrame.new(options.guard or map(8, 9.5, 32)),
+			CFrame = roblox.CFrame.new(options.guard or map(8, 13.5, 32)),
 			Size = map(4, 11, 4),
 		}, {
 			__index = function(part, key)
@@ -823,8 +823,8 @@ local function guardianLogicTest(seed)
 			impacts = 0,
 			chaseDistance = 0,
 			targetSince = -10,
-			lastSeen = map(0, 3.45, 8),
-			searchAt = map(0, 3.45, 8),
+			lastSeen = map(0, 16 / 3 + 3.45, 8),
+			searchAt = map(0, 16 / 3 + 3.45, 8),
 		}
 		local s = {
 			phase = options.phase or "Run",
@@ -835,7 +835,7 @@ local function guardianLogicTest(seed)
 			s.item = nil
 		end
 		local actors = { [actor] = s }
-		local roots = { [actor] = { Position = options.position or map(0, 3.45, 8) } }
+		local roots = { [actor] = { Position = options.position or map(0, 16 / 3 + 3.45, 8) } }
 		if options.rival then
 			actors[rival], roots[rival] = { phase = "Run", mercy = 0 }, { Position = map(8, 7, 28) }
 			a.target = rival
@@ -850,7 +850,7 @@ local function guardianLogicTest(seed)
 			local now = i * 0.05
 			local before = guard.Position
 			if options.walkReturn and a.mode == "Return" then
-				a.points, a.index = { { Position = guard.Position.Z > -15.5 and map(0, 4, 16) or map(8, 4, 32) } }, 1
+				a.points, a.index = { { Position = guard.Position.Z > -15.5 and map(0, 8, 16) or map(8, 8, 32) } }, 1
 			end
 			if options.revealAt and now >= options.revealAt then
 				blocked = false
@@ -860,7 +860,7 @@ local function guardianLogicTest(seed)
 			end, function() end)
 			if options.walkReturn then
 				assert(
-					(guard.Position - before).Magnitude <= Config.GuardianReturnSpeed * 0.05 * 1.2,
+					(guard.Position - before).Magnitude <= Config.GuardianReturnSpeed * 0.05 / math.cos(math.rad(35)),
 					"return teleported"
 				)
 			end
@@ -870,10 +870,10 @@ local function guardianLogicTest(seed)
 		end
 		return a
 	end
-	for _, guard in { map(8, 9.5, 32), map(0, 9.5, 32), map(0, 7, 32) } do
+	for _, guard in { map(8, 13.5, 32), map(0, 13.5, 32), map(0, 13.5, 32) } do
 		for _, x in { -0.5, 0, 2 } do
 			for _, mode in { "Patrol", "Search" } do
-				local a = scenario(arenaCode, { guard = guard, position = map(x, 3.45, 8), mode = mode })
+				local a = scenario(arenaCode, { guard = guard, position = map(x, 16 / 3 + 3.45, 8), mode = mode })
 				assert(
 					a.attack and a.attack.disc and a.attack.actor == actor and a.attack.start <= 3,
 					"carrier lane acquisition/throw >3s"
@@ -914,9 +914,9 @@ local function guardianLogicTest(seed)
 		cooldown.attack and cooldown.attack.disc and cooldown.attack.start >= 4 and cooldown.attack.start <= 8,
 		"spent cooldown failed to reopen"
 	)
-	local poke = scenario(arenaCode, { guard = map(0, 5.5, 8) })
+	local poke = scenario(arenaCode, { guard = map(0, 16 / 3 + 5.5, 8) })
 	assert(poke.attack and poke.attack.close and not poke.attack.disc, "close poke changed")
-	for _, position in { map(-0.4, 3.45, 8), map(2.7, 3.45, 8) } do
+	for _, position in { map(-0.4, 16 / 3 + 3.45, 8), map(2.7, 16 / 3 + 3.45, 8) } do
 		local hill =
 			scenario(arenaCode, { guard = map(-44.3, 14, 5.9), position = position, cooldown = 4, seconds = 8 })
 		assert(not hill.attack and hill.mode == "Return", "frozen navigation must keep walking return")
@@ -927,29 +927,29 @@ local function guardianLogicTest(seed)
 			"missing guardian transition logs"
 		)
 	end
-	local stuck = scenario(arenaCode, { guard = map(0, 5.5, 8), blocked = true, seconds = 5 })
+	local stuck = scenario(arenaCode, { guard = map(0, 16 / 3 + 5.5, 8), blocked = true, seconds = 5 })
 	assert(
-		stuck.mode == "Return" and (stuck.guardian.Position - map(0, 5.5, 8)).Magnitude < 0.1,
+		stuck.mode == "Return" and (stuck.guardian.Position - map(0, 16 / 3 + 5.5, 8)).Magnitude < 0.1,
 		"failed path teleported early"
 	)
 	assert((stuck.pathVersion or 0) >= 1, "failed path recovery did not invalidate paths")
-	local departure = scenario(arenaCode, { guard = map(0, 5.5, 8), blocked = true, seconds = 22.5 })
+	local departure = scenario(arenaCode, { guard = map(0, 16 / 3 + 5.5, 8), blocked = true, seconds = 22.5 })
 	assert(departure.recoveryStarted and departure.poof, "missing visible departure after long stall")
-	assert((departure.guardian.Position - map(0, 5.5, 8)).Magnitude < 0.1, "poof must precede relocation")
-	local recovered = scenario(arenaCode, { guard = map(0, 5.5, 8), blocked = true, seconds = 23.5 })
-	assert((recovered.guardian.Position - map(8, 9.5, 32)).Magnitude < 0.1 and recovered.poof, "missing arrival poof")
+	assert((departure.guardian.Position - map(0, 16 / 3 + 5.5, 8)).Magnitude < 0.1, "poof must precede relocation")
+	local recovered = scenario(arenaCode, { guard = map(0, 16 / 3 + 5.5, 8), blocked = true, seconds = 23.5 })
+	assert((recovered.guardian.Position - map(8, 13.5, 32)).Magnitude < 0.1 and recovered.poof, "missing arrival poof")
 	local walking = scenario(arenaCode, { guard = map(0, 5.5, 0), blocked = true, seconds = 7, walkReturn = true })
 	assert(walking.mode == "Guard" and not walking.poof, "moving guardian must walk home without recovery")
 	local leash =
 		scenario(arenaCode, { guard = map(8, 5.5, 0.5), waypoint = map(8, 0, -4), blocked = true, seconds = 5 })
 	assert(leash.mode == "Return" and not leash.poof, "blocked leash return teleported early")
-	local slope = scenario(arenaCode, { guard = map(0, 7.5, 23), position = map(0, 3.45, 8) })
+	local slope = scenario(arenaCode, { guard = map(0, 13.5, 23), position = map(0, 16 / 3 + 3.45, 8) })
 	assert(slope.attack and slope.attack.disc, "slope throw failed")
 	local cover = { role = "Cover", x = 0, y = 2.6, z = 14, w = 10, h = 5.2, d = 2 }
 	table.insert(layout.solids, cover)
-	assert(scenario(arenaCode, { guard = map(0, 7, 32) }).attack, "low cover top blocked upper-body sight")
-	cover.y, cover.h = 6, 12
-	assert(not scenario(arenaCode, { guard = map(0, 7, 32) }).attack, "tall cover wall bypassed")
+	assert(scenario(arenaCode, { guard = map(0, 13.5, 32) }).attack, "low cover top blocked upper-body sight")
+	cover.y, cover.h = 10, 20
+	assert(not scenario(arenaCode, { guard = map(0, 13.5, 32) }).attack, "tall cover wall bypassed")
 	table.remove(layout.solids)
 	print(
 		"PASS production guardian seed="
@@ -964,13 +964,25 @@ end
 -- This cannot replace Studio raycasts or Humanoid physics.
 local function standable(l, p, edge)
 	local center = height(l, p.x, p.z)
-	assert(math.abs(center - p.y) < 0.7, "waypoint Y mismatch")
+	assert(
+		math.abs(center - p.y) < 0.7,
+		"waypoint Y mismatch "
+			.. tostring(p.name)
+			.. " at "
+			.. p.x
+			.. ","
+			.. p.z
+			.. " expected="
+			.. p.y
+			.. " floor="
+			.. center
+	)
 	for ix = -6, 6 do
 		for iz = -6, 6 do
 			if ix * ix + iz * iz <= 36 then
 				local x, z = p.x + ix * 0.5, p.z + iz * 0.5
 				local rise = height(l, x, z) - center
-				assert(rise <= 1.5 and (edge or rise >= -1.5), "waypoint cliff/wall " .. tostring(p.name))
+				assert(rise <= 2.15 and (edge or rise >= -2.15), "waypoint cliff/wall " .. tostring(p.name))
 				for _, b in l.solids do
 					if b.role == "Cover" then
 						assert(
@@ -1973,7 +1985,7 @@ for seed = 1, 50 do
 	for i, route in Layout.hillPaths(l) do
 		routes["SummitPath" .. i] = route
 	end
-	local carry = { { x = 0, y = 4, z = 32, kind = "Walk" } }
+	local carry = { { x = 0, y = 8, z = 32, kind = "Walk" } }
 	for _, p in Layout.loopCarrySteps(l) do
 		standable(l, p)
 		if p.kind == "Jump" then
@@ -2042,7 +2054,7 @@ for seed = 1, 50 do
 	end
 end
 local first = Layout.assemble(Config, 101, true)
-print("PASS both disc-dodge destinations across 50 seeds; old Y0 at Z8 rejected; CampSouthRamp Y=8/3")
+print("PASS both disc-dodge destinations across 50 seeds; old Y0 at Z8 rejected; CampSouthRamp Y=16/3")
 for _, p in
 	{
 		{ x = -10, y = 0, z = -10 }, -- inside cover
@@ -2052,7 +2064,7 @@ for _, p in
 do
 	assert(not pcall(standable, first, p), "bad waypoint accepted")
 end
-local carry = { { x = 0, y = 4, z = 32 } }
+local carry = { { x = 0, y = 8, z = 32 } }
 for _, p in Layout.loopCarrySteps(first) do
 	table.insert(carry, p)
 end

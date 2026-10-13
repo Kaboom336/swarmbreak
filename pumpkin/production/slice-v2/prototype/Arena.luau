@@ -176,8 +176,8 @@ end
 function Arena.floor(a, position)
 	local hit =
 		workspace:Raycast(Vector3.new(position.X, a.origin.Y + 45, position.Z), Vector3.new(0, -70, 0), a.params)
-	if hit and hit.Instance:GetAttribute("SurfaceRole") == "Floor" and hit.Normal.Y >= math.cos(math.rad(25.1)) then
-		return hit.Position
+	if hit and hit.Instance:GetAttribute("SurfaceRole") == "Floor" and hit.Normal.Y >= math.cos(math.rad(35.1)) then
+		return hit.Position, hit.Normal
 	end
 	return nil
 end
@@ -193,7 +193,7 @@ function Arena.outside(a, position)
 	return p.Y < -10 or math.abs(p.X) > Config.IslandSize / 2 + 2 or math.abs(p.Z) > Config.IslandSize / 2 + 2
 end
 local function dropFloor(a, p)
-	local center = Arena.floor(a, p)
+	local center, normal = Arena.floor(a, p)
 	if not center or math.abs(center.Y - p.Y) >= 0.7 or Arena.safe(a, center, 3) then
 		return nil
 	end
@@ -202,11 +202,12 @@ local function dropFloor(a, p)
 		for iz = -6, 6 do
 			if ix * ix + iz * iz <= 36 then
 				local sample = center + Vector3.new(ix * 0.5, 0, iz * 0.5)
-				local floor = Arena.floor(a, sample)
-				if not floor or math.abs(floor.Y - center.Y) > 1.5 then
+				local floor, sampleNormal = Arena.floor(a, sample)
+				local slope = (normal and normal.Y < 0.999) or (sampleNormal and sampleNormal.Y < 0.999)
+				if not floor or math.abs(floor.Y - center.Y) > (slope and 2.15 or 1.5) then
 					return nil
 				end
-				if workspace:Raycast(sample + Vector3.new(0, 1.55, 0), Vector3.new(0, 6, 0), a.params) then
+				if workspace:Raycast(sample + Vector3.new(0, 2.2, 0), Vector3.new(0, 6, 0), a.params) then
 					return nil
 				end
 			end
@@ -636,7 +637,7 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 		and not blocked
 		and not Arena.safe(a, floor)
 		and (a.mode == "Return" or Vector3.new(floor.X - camp.X, 0, floor.Z - camp.Z).Magnitude <= leashRadius)
-		and math.abs(floor.Y - (guard.Position.Y - 5.5)) <= movement.Magnitude * 0.5 + 0.25
+		and math.abs(floor.Y - (guard.Position.Y - 5.5)) <= movement.Magnitude * math.tan(math.rad(35)) + 0.25
 	then
 		local position = floor + Vector3.new(0, 5.5, 0)
 		guard.CFrame = CFrame.lookAt(position, position + movement)

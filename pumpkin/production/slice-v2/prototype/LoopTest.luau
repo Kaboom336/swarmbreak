@@ -25,7 +25,7 @@ local function validator(world, log)
 		end
 		local function walkable(hit)
 			return hit
-				and hit.Normal.Y >= math.cos(math.rad(25.1))
+				and hit.Normal.Y >= math.cos(math.rad(35.1))
 				and (
 					hit.Instance:GetAttribute("SurfaceRole") == "Floor"
 					or hit.Instance:GetAttribute("SurfaceRole") == nil
@@ -46,9 +46,13 @@ local function validator(world, log)
 					local hit = down(x, z)
 					assert(walkable(hit), "clearance floor/cover at " .. x .. "," .. z)
 					local rise = hit.Position.Y - center.Position.Y
-					assert(rise <= 1.5 and (edge or rise >= -1.5), "clearance cliff/wall " .. hit.Instance.Name)
+					local tolerance = (center.Normal.Y < 0.999 or hit.Normal.Y < 0.999) and 2.15 or 1.5
+					assert(
+						rise <= tolerance and (edge or rise >= -tolerance),
+						"clearance cliff/wall " .. hit.Instance.Name
+					)
 					local overhead =
-						workspace:Raycast(Vector3.new(x, center.Position.Y + 1.55, z), Vector3.new(0, 6, 0), params)
+						workspace:Raycast(Vector3.new(x, center.Position.Y + 2.2, z), Vector3.new(0, 6, 0), params)
 					assert(not overhead, "head clearance " .. (overhead and overhead.Instance.Name or ""))
 				end
 			end
@@ -521,9 +525,9 @@ local function verifyExpiry(player, states, pens, world, api, log, item, count, 
 end
 local function expiryExitSteps()
 	return {
-		{ x = 0, y = 4, z = 32 },
-		{ x = -4, y = 4, z = 18 },
-		{ x = -4, y = 4, z = 12 },
+		{ x = 0, y = 8, z = 32 },
+		{ x = -4, y = 8, z = 18 },
+		{ x = -4, y = 8, z = 12 },
 		{ x = -4, y = 0, z = 0 },
 		{ x = 0, y = 0, z = -2 },
 		{ x = 0, y = 0, z = -22 },
@@ -587,7 +591,7 @@ local function expiryTest(player, states, pens, world, api, log, walk, navigate)
 	local item = assert(s.item, "expiry missing cargo")
 	-- Put the empty-return regression on the terrace before waiting. Hits may
 	-- drop cargo; its original deadline and the actor's location remain legal.
-	walk(checked(at(arena, -4, 4, 18), "expiry wait terrace"), "expiry wait terrace")
+	walk(checked(at(arena, -4, 8, 18), "expiry wait terrace"), "expiry wait terrace")
 	verifyExpiry(player, states, pens, world, api, log, item, count, completed)
 	assert(returnPortal(player, states, api, log, navigate))
 end
@@ -871,7 +875,7 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 		local p = routes.Tester[i]
 		walk(at(arena, p.x, p.y, p.z), "PvP court approach " .. i)
 	end
-	local dummy = api.dummy(at(arena, 0, 4, 32))
+	local dummy = api.dummy(at(arena, 0, 8, 32))
 	setDummy(dummy)
 	hold(api, dummy, "Steal")
 	local ds = states[dummy]

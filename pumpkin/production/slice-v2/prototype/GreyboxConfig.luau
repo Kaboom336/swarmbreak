@@ -1,6 +1,6 @@
 return {
 	ItemName = "LOOT", -- The only display-name source.
-	RecipeVersion = 6,
+	RecipeVersion = 7,
 	HomeSpawnZ = 16,
 	HomePortalApproachZ = 8,
 	HomeAisleX = 18,
@@ -41,7 +41,7 @@ return {
 	GuardianLeashRadius = 110,
 	GuardianStuckSeconds = 2,
 	GuardianReturnSeconds = 20, -- Continuous lack of movement before visible recovery.
-	GuardianGuardOffset = { x = 8, y = 4, z = 32 },
+	GuardianGuardOffset = { x = 8, y = 8, z = 32 },
 	GuardianDroppedGuardRadius = 24,
 	GuardianGuardArrival = 3,
 	GuardianTargetLockSeconds = 2,
@@ -64,8 +64,8 @@ return {
 	Pieces = {
 		I01 = { width = 32, depth = 24 },
 		I02 = { width = 40, depth = 40 },
-		I03 = { width = 40, depth = 40, height = 8 },
-		I04 = { width = 40, depth = 40, height = 10 },
+		I03 = { width = 40, depth = 40, height = 14 },
+		I04 = { width = 40, depth = 40, height = 18 },
 		I06 = { width = 32, depth = 24 },
 		I08 = { width = 32, depth = 32 },
 		I11 = { width = 36, depth = 32 }, -- Two 12 decks + 10 gap need at least 34.

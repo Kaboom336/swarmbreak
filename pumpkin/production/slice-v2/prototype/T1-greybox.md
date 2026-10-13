@@ -1,6 +1,25 @@
 # T1 v2 greybox — ARENA-1013 free-placement plots
 
-## Current revision: Meadow relief and reference silhouette (2026-10-13)
+## Current revision: Meadow height pass 2 - final pass for this piece (2026-10-13)
+
+CHECKED: opened slice-v2/evidence/meadow-height1.jpg and treasure/v2/meadow-island.png. The Studio image has a broad flat green base and low cliffs; the supplied reference has stacked hills, an elevated guardian camp, up/down paths, irregular edges and dense block foliage. Reused and read the existing native-Part Layout/Scene/Arena code; no external asset or dependency added. Owner explicitly asked for clearer height, superseding the earlier +10/+8/+4 contract. treasure/v2/CHANGES.md now records that decision.
+
+- Mountain summit +18; Grove summit +14; camp +8. Four rear terraces on each hill step by four studs: Mountain +6/+10/+14/+18, Grove +2/+6/+10/+14. Existing summit surfaces, lower ground bypasses and solid ramp fill remain. Twelve-wide south hill ramps climb from Y0; north ramps descend to the +8 camp. Maximum ramp slope is 33.69 degrees; camp ramps are 16 wide. Camp has eight one-stud shoulder stairs per side, starting north of the west approach clearance envelope.
+- Raised nest/refill/drop fallback and guardian post heights together with solo/PvP, expiry, dodge and reference waypoints. Upper wooden paths, lanterns and hill trees follow the new surfaces. Grove's camp detour was shortened to preserve its route-length limit. Authored Quick/Ridge/Grove routes measure 95.29/112.25/128.76 studs. The expanded solo carrying test route measures 409.67 studs; distance is not an observed completion time.
+- Added twenty off-route foliage clusters (eight trees, twelve bushes), staggered rock/grass perimeter lobes and twenty-four Meadow-only hanging rock teeth extending as low as local Y-98. Slate cliff faces cover the new shelf walls. Decorative geometry is anchored, noncolliding, nonquery and nontouching; the original background islands and Home are retained.
+- Walkable floor checks now accept slopes through 35 degrees. Three-stud radial clearance allows up to 2.15 studs of height change beside a ramp; the live checks retain 1.5 at flat ledges. Guardian walking allows the corresponding vertical rise per horizontal movement. The existing path refresh, live-start blocked/stall recompute, recovery path costs, same-ID recovery and 20-second guardian stall/departure/arrival-poof rules remain.
+
+CHECKED: ten Luau files compile at O0/O1/O2; complete Lune harness PASS, including 50-seed reference/solo/PvP/drop clearance, sampled reversible route continuity, guardian return/throws on three seeds, pathfinding recovery mocks, expiry, original-ID/deadline conservation, home entry, and binary/runtime source parity. StyLua 2.0.2 output applied through apply_patch and final --check PASS. Selene 0.31.0: 0 errors, 0 warnings, 0 parse errors. Requested Rojo 7.4.4 build PASS; git diff --check PASS. No commit, upload or publication. All source/report edits used apply_patch; only the requested Rojo build generated the binary.
+
+Studio status: earlier both-tests PASS is OWNER-REPORTED baseline evidence. This build's GreyboxLoopTest and GreyboxPvpTest are UPDATED, NOT RUN; no connected Studio tool is available. Fresh Humanoid physics/navmesh, 60-second live escape completion and matched-camera visual acceptance remain UNKNOWN. Reopen guardian-greybox.rbxl and run each in fresh Play, then inspect MeadowReferenceCamera at 16:9 against meadow-height1.jpg and the supplied reference. The camera is unchanged for a direct comparison. Runtime result gates remain false/NOT RUN. Exact Keystone Roblox Process Playbook remains unavailable; existing local PLAYBOOK.md was read.
+
+Reference assessment: supplied Meadow v2 is the visual comparison bar; Steal an Egg remains the gameplay anchor. Height, cliff-face and foliage gaps are addressed in geometry. No fresh Studio capture, independent critic verdict or superiority claim is made.
+
+Build SHA256: 36561ADAA1F8CA07284EE8339387940FF3B2EAE98BA435C0911558E8B939E89D
+
+Lessons: When terrain heights change, update gameplay spawns and every runner branch together because stale Y values can sit below the new floor. When ramps steepen, derive vertical movement limits from the slope ceiling because the old guardian rise limit can reject a valid route. When adding stairs, sample nearby route clearance because a stair can be outside the centreline but still block a walking approach.
+
+## Previous revision: Meadow relief and reference silhouette (2026-10-13)
 
 CHECKED: viewed evidence/sbs-meadow.jpg (Studio left/reference right), treasure/v2/meadow-island.png and meadow-topdown.png; read treasure/v2/CHANGES.md and the existing Layout, Scene, Arena and LoopTest code. Reused the project's native-Part construction; no new dependency or imported assets. The comparison target is the supplied Meadow v2, with Steal an Egg retained as the existing gameplay anchor. Numeric v2 heights govern over the generated image's exaggerated perspective.
 

@@ -38,16 +38,24 @@ function Layout.assemble(config, seed, _fixed)
 		table.insert(l.ramps, { name = name, a = a, b = b, width = width })
 	end
 	-- Opposing switchback runs stay within the 40x40 hill envelopes.
-	for _, hill in { { -40, 10, "Mountain" }, { 40, 8, "GroveHill" } } do
+	for _, hill in { { -40, 18, "Mountain" }, { 40, 14, "GroveHill" } } do
 		local x, h, name = hill[1], hill[2], hill[3]
 		local direction = x < 0 and 1 or -1
 		ramp(name .. "SouthRamp", point(x - direction * 20, 0, 0), point(x + direction * 8, h, 0), 12)
-		ramp(name .. "NorthRamp", point(x + direction * 20, 4, 24), point(x - direction * 8, h, 24), 12)
+		ramp(name .. "NorthRamp", point(x + direction * 20, 8, 24), point(x - direction * 8, h, 24), 12)
 		-- Clip the inner south corner so cover and hillside leave a body-clear bypass.
 		box(name .. "LandingS", x + direction * 12, h / 2, 0, 8, h, 12)
 		box(name .. "LandingSCorner", x + direction * 14, h / 2, 12, 12, h, 12)
 		box(name .. "LandingN", x - direction * 14, h / 2, 18, 12, h, 24)
 		box(name .. "Summit", x, h / 2, 12, 16, h, 12)
+	end
+	-- Rear shelves stay outside the carrying loop and meet the summit's north edge.
+	for _, hill in { { -40, 18, "Mountain" }, { 40, 14, "GroveHill" } } do
+		local x, h, name = hill[1], hill[2], hill[3]
+		for i = 1, 4 do
+			local top = h - (4 - i) * 4
+			box(name .. "RearTerrace" .. i, x, top / 2, 34 + (4 - i) * 4, 44 - i * 4, top, 8)
+		end
 	end
 	-- Solid voxel skirts under the thin ramp decks: the hills must read as land,
 	-- not floating ribbons. Each two-stud tread rises less than one stud; the
@@ -73,15 +81,15 @@ function Layout.assemble(config, seed, _fixed)
 			end
 		end
 	end
-	box("CampTerrace", 0, 2, 32, 40, 4, 40)
+	box("CampTerrace", 0, 4, 32, 40, 8, 40)
 	-- Shoulder terraces flank the central ramp without entering the cover lane.
-	for i = 1, 3 do
+	for i = 1, 8 do
 		for _, x in { -16, 17 } do
-			box("CampShoulderStep" .. i, x, i / 2, 5 + i * 2, x < 0 and 8 or 6, i, 2)
+			box("CampShoulderStep" .. i, x, i / 2, 3.5 + i, x < 0 and 8 or 6, i, 1)
 		end
 	end
-	ramp("CampSouthRamp", point(-4, 0, 0), point(-4, 4, 12), 16)
-	ramp("CampNorthRamp", point(0, 0, 64), point(0, 4, 52), 16)
+	ramp("CampSouthRamp", point(-4, 0, 0), point(-4, 8, 12), 16)
+	ramp("CampNorthRamp", point(0, 0, 64), point(0, 8, 52), 16)
 	box("CoverWest", -10, 4, -10, 8, 8, 12, "Cover")
 	box("CoverEast", 10, 3, 8, 8, 6, 12, "Cover")
 	l.routes.Quick = {
@@ -89,8 +97,8 @@ function Layout.assemble(config, seed, _fixed)
 		point(0, 0, -22),
 		point(0, 0, -2),
 		point(-4, 0, 0),
-		point(-4, 4, 12, "ClimbRamp"),
-		point(0, 4, 32),
+		point(-4, 8, 12, "ClimbRamp"),
+		point(0, 8, 32),
 	}
 	for _, side in { -1, 1 } do
 		l.routes[side < 0 and "Ridge" or "Grove"] = {
@@ -100,10 +108,10 @@ function Layout.assemble(config, seed, _fixed)
 			point(side * 24, 0, -18),
 			point(side * 16.5, 0, -2),
 			point(-4, 0, 0),
-			point(-4, 4, 12, "ClimbRamp"),
-			point(-4, 4, 18),
-			point(side * 8, 4, 18),
-			point(0, 4, 32),
+			point(-4, 8, 12, "ClimbRamp"),
+			point(-4, 8, 18),
+			point(side * 6, 8, 18),
+			point(0, 8, 32),
 		}
 	end
 	table.insert(l.routes.Grove, 5, point(16, 0, -12))
@@ -116,15 +124,15 @@ function Layout.assemble(config, seed, _fixed)
 		point(0, 0, -24),
 		point(0, 0, -2),
 		point(-4, 0, 0),
-		point(-4, 4, 12, "ClimbRamp"),
-		point(-4, 4, 18),
-		point(-8, 4, 18),
-		point(0, 4, 32),
+		point(-4, 8, 12, "ClimbRamp"),
+		point(-4, 8, 18),
+		point(-8, 8, 18),
+		point(0, 8, 32),
 	}
 	-- Lower link detours six studs south of the cover so its full width is clear.
 	l.crossLinks = {
 		{ point(-10, 0, -24), point(0, 0, -24), point(0, 0, -18), point(24, 0, -18) },
-		{ point(-8, 4, 18), point(0, 4, 18), point(8, 4, 18) },
+		{ point(-8, 8, 18), point(0, 8, 18), point(8, 8, 18) },
 	}
 	l.gullies = { { x = -32, z = -28, w = 32, d = 24 } }
 	box("RecoveryFloor", -32, -5, -28, 32, 4, 24)
@@ -194,7 +202,7 @@ function Layout.referencePoints(l)
 		end
 	end
 	for _, x in { -14, 14 } do
-		table.insert(points, point(x, 4, 24))
+		table.insert(points, point(x, 8, 24))
 	end
 	return points
 end
@@ -206,8 +214,8 @@ function Layout.loopCarrySteps(_l)
 		table.insert(steps, p)
 		return p
 	end
-	add("south terrace", -4, 4, 16)
-	add("camp ramp lip", -4, 4, 12)
+	add("south terrace", -4, 8, 16)
+	add("camp ramp lip", -4, 8, 12)
 	add("camp descent", -4, 0, 0, "Dodge")
 	add("west approach", -16.5, 0, 0)
 	add("west corner clearance", -18, 0, -6)
@@ -215,13 +223,13 @@ function Layout.loopCarrySteps(_l)
 	add("hill bypass west", -64, 0, -10)
 	add("hill west turn", -64, 0, 0)
 	add("hill foot", -60, 0, 0)
-	add("hill south ramp", -32, 10, 0, "ClimbRamp")
-	add("hill south landing", -28, 10, 0)
-	add("hill summit east", -28, 10, 12)
-	add("hill summit centre", -40, 10, 12)
-	add("hill summit east back", -28, 10, 12)
-	add("hill south landing back", -28, 10, 0)
-	add("hill ramp back", -32, 10, 0)
+	add("hill south ramp", -32, 18, 0, "ClimbRamp")
+	add("hill south landing", -28, 18, 0)
+	add("hill summit east", -28, 18, 12)
+	add("hill summit centre", -40, 18, 12)
+	add("hill summit east back", -28, 18, 12)
+	add("hill south landing back", -28, 18, 0)
+	add("hill ramp back", -32, 18, 0)
 	add("hill foot back", -60, 0, 0, "ClimbRamp")
 	add("stone west bypass", -64, 0, 0)
 	add("stone bypass north", -64, 0, -10)
@@ -248,16 +256,16 @@ function Layout.loopCarrySteps(_l)
 	return steps
 end
 function Layout.dodgePoints()
-	-- CampSouthRamp rises from Y0 at Z0 to Y4 at Z12.
-	return { point(0, 8 / 3, 8), point(0, 0, -4) }
+	-- CampSouthRamp rises from Y0 at Z0 to Y8 at Z12.
+	return { point(0, 16 / 3, 8), point(0, 0, -4) }
 end
 function Layout.pvpRoutes()
 	return {
 		Tester = { point(0, 0, -58), point(-42, 0, -58), point(-62, 0, -56) },
 		Dummy = {
-			point(0, 4, 32),
-			point(-4, 4, 16),
-			point(-4, 4, 12),
+			point(0, 8, 32),
+			point(-4, 8, 16),
+			point(-4, 8, 12),
 			point(-4, 0, 0),
 			point(-16.5, 0, 0),
 			point(-18, 0, -6),
@@ -330,7 +338,7 @@ function Layout.validate(config, l)
 	end
 	for _, r in l.ramps do
 		local run = math.sqrt((r.a.x - r.b.x) ^ 2 + (r.a.z - r.b.z) ^ 2)
-		assert(r.width >= 12 and math.deg(math.atan(math.abs(r.a.y - r.b.y) / run)) <= 25, "ramp carrying contract")
+		assert(r.width >= 12 and math.deg(math.atan(math.abs(r.a.y - r.b.y) / run)) <= 35, "ramp carrying contract")
 	end
 	for name, route in l.routes do
 		local length = Layout.length(route)
