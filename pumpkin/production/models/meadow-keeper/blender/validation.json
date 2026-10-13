@@ -1,0 +1,49 @@
+{
+  "meadow-keeper": {
+    "triangles": 1532,
+    "limit": 4000,
+    "height_studs": 11.0,
+    "color_parts": 10,
+    "fbx_meshes": 7,
+    "fbx_max_position_error_studs": 1.0941957953036763e-06,
+    "json_basis": "x,z,-y (Y-up, front +Z, determinant +1 preserves CCW)",
+    "closed_outward_meshes": [
+      {
+        "name": "Arm.L",
+        "closed": true,
+        "positive_volume": true
+      },
+      {
+        "name": "Arm.R",
+        "closed": true,
+        "positive_volume": true
+      },
+      {
+        "name": "Hat",
+        "closed": true,
+        "positive_volume": true
+      },
+      {
+        "name": "Head",
+        "closed": true,
+        "positive_volume": true
+      },
+      {
+        "name": "Leg.L",
+        "closed": true,
+        "positive_volume": true
+      },
+      {
+        "name": "Leg.R",
+        "closed": true,
+        "positive_volume": true
+      },
+      {
+        "name": "Torso",
+        "closed": true,
+        "positive_volume": true
+      }
+    ],
+    "studio_import": "UNTESTED"
+  }
+}

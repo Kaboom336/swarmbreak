@@ -1,0 +1,12 @@
+{
+  "closed": {
+    "triangles": 300,
+    "height_studs": 3.0,
+    "objects": 3
+  },
+  "open": {
+    "triangles": 456,
+    "height_studs": 3.78,
+    "objects": 4
+  }
+}

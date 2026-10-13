@@ -1,0 +1,61 @@
+{
+  "golden-acorn": {
+    "triangles": 300,
+    "limit": 1500,
+    "height_studs": 3.0,
+    "color_parts": 3,
+    "fbx_meshes": 3,
+    "fbx_max_position_error_studs": 5.364418029785156e-07,
+    "json_basis": "x,z,-y (Y-up, front +Z, determinant +1 preserves CCW)",
+    "closed_outward_meshes": [
+      {
+        "name": "Cap \u2022 popped lid",
+        "closed": true,
+        "positive_volume": true
+      },
+      {
+        "name": "Shell \u2022 closed",
+        "closed": true,
+        "positive_volume": true
+      },
+      {
+        "name": "Stem \u2022 short angled brick",
+        "closed": true,
+        "positive_volume": true
+      }
+    ],
+    "studio_import": "UNTESTED"
+  },
+  "golden-acorn-open": {
+    "triangles": 456,
+    "limit": 1500,
+    "height_studs": 3.7799999713897705,
+    "color_parts": 3,
+    "fbx_meshes": 4,
+    "fbx_max_position_error_studs": 6.078504952711228e-07,
+    "json_basis": "x,z,-y (Y-up, front +Z, determinant +1 preserves CCW)",
+    "closed_outward_meshes": [
+      {
+        "name": "Cap \u2022 popped lid",
+        "closed": true,
+        "positive_volume": true
+      },
+      {
+        "name": "Left shell half \u2022 hollow",
+        "closed": true,
+        "positive_volume": true
+      },
+      {
+        "name": "Right shell half \u2022 hollow",
+        "closed": true,
+        "positive_volume": true
+      },
+      {
+        "name": "Stem \u2022 short angled brick",
+        "closed": true,
+        "positive_volume": true
+      }
+    ],
+    "studio_import": "UNTESTED"
+  }
+}
