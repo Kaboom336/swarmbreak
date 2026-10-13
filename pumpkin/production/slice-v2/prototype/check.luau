@@ -190,6 +190,71 @@ local function constructionTest()
 	scene.home(world, make, function()
 		return {}
 	end)
+	-- Sample the built home's real floor transforms, including its round pad.
+	local v = roblox.Vector3
+	local home = world:FindFirstChild("HomeFloatingIsland")
+	local function homeFloor(x, z)
+		local best = -math.huge
+		for _, p in home:GetDescendants() do
+			if p:IsA("BasePart") and p:GetAttribute("SurfaceRole") == "Floor" then
+				if p.Shape == roblox.Enum.PartType.Cylinder then
+					local c = p.CFrame.Position
+					if (x - c.X) ^ 2 + (z - c.Z) ^ 2 <= (p.Size.Y / 2) ^ 2 then
+						best = math.max(best, c.Y + p.Size.X / 2)
+					end
+				else
+					local top = p.CFrame * v.new(0, p.Size.Y / 2, 0)
+					local n = p.CFrame.UpVector
+					local y = top.Y - ((x - top.X) * n.X + (z - top.Z) * n.Z) / n.Y
+					local localPoint = p.CFrame:PointToObjectSpace(v.new(x, y, z))
+					if math.abs(localPoint.X) <= p.Size.X / 2 and math.abs(localPoint.Z) <= p.Size.Z / 2 then
+						best = math.max(best, y)
+					end
+				end
+			end
+		end
+		return best
+	end
+	local runner = fs.readFile("LoopTest.luau")
+	local from = assert(runner:find("local function homeEntryPoints(", 1, true))
+	local finish = assert(runner:find("local function homePoints(", from, true))
+	local entry = luau.load(runner:sub(from, finish - 1) .. "\nreturn homeEntryPoints", {
+		environment = {
+			Config = Config,
+			at = function(_, x, y, z)
+				return v.new(x, y + 3, z)
+			end,
+		},
+	})()
+	for slot = 1, 8 do
+		local side = slot <= 4 and -1 or 1
+		local z = -54 + (slot - 1) % 4 * 36
+		local points = entry({ marker = { Position = v.new(side * 34, 1.5, z) } })
+		local previous = v.new(side * 29, 3, z)
+		for _, point in points do
+			local p = point.position
+			assert(math.abs(homeFloor(p.X, p.Z) - (p.Y - 3)) < 0.7, "home waypoint height")
+			for dx = -3, 3, 0.5 do
+				for dz = -3, 3, 0.5 do
+					if dx * dx + dz * dz <= 9 then
+						assert(math.abs(homeFloor(p.X + dx, p.Z + dz) - (p.Y - 3)) <= 1.5, "home waypoint clearance")
+					end
+				end
+			end
+			local samples = math.ceil((p - previous).Magnitude * 2)
+			local last = homeFloor(previous.X, previous.Z)
+			for i = 1, samples do
+				local q = previous:Lerp(p, i / samples)
+				local y = homeFloor(q.X, q.Z)
+				assert(math.abs(y - last) <= 0.65, "home entry hits raised platform side")
+				last = y
+			end
+			previous = p
+		end
+	end
+	print(
+		"PASS all eight pen-to-home-portal routes: built floor heights, 3-stud waypoint clearance, sampled ramp continuity"
+	)
 	scene.skyIslands(world, make)
 	scene.captureCams(world, true, arena.origin)
 	assert(world:FindFirstChild("CaptureCameras"), "capture cameras lost")
@@ -400,7 +465,7 @@ local function guardianLogicTest(seed)
 	local function raycast(_, from, direction)
 		if direction == map(0, -70, 0) then
 			return {
-				Position = map(from.X, height(layout, from.X, -from.Z), from.Z),
+				Position = v.new(from.X, height(layout, from.X, -from.Z), from.Z),
 				Normal = v.yAxis,
 				Instance = floorPart,
 			}
@@ -468,6 +533,51 @@ local function guardianLogicTest(seed)
 	end
 	local source = fs.readFile("Arena.luau")
 	local arenaCode = loadArena(source)
+	local dropArena = { origin = v.zero, layout = layout }
+	for _, position in { map(-24, 6, -16), map(-10, 3, -10), map(79, 3, 79), map(95, -20, -28), map(-32, -20, -28) } do
+		local floor = arenaCode.dropSocket(dropArena, position)
+		assert(floor and not Layout.protected(floor.X, -floor.Z, 3), "drop missing/on safe apron")
+		assert(math.abs(floor.X) <= 77 and math.abs(floor.Z) <= 77, "drop off island/edge")
+		for ix = -6, 6 do
+			for iz = -6, 6 do
+				if ix * ix + iz * iz <= 36 then
+					local x, z = floor.X + ix * 0.5, -floor.Z + iz * 0.5
+					assert(math.abs(height(layout, x, z) - floor.Y) <= 1.5, "drop clearance cliff/wall")
+					for _, b in layout.solids do
+						assert(
+							b.role ~= "Cover"
+								or math.abs(x - b.x) > b.w / 2
+								or math.abs(z - b.z) > b.d / 2
+								or b.y + b.h / 2 <= floor.Y,
+							"drop inside cover"
+						)
+					end
+				end
+			end
+		end
+		local minDistance = math.huge
+		for i, candidate in dropArena.dropPoints do
+			-- Resolve every candidate to independently verify global nearest choice.
+			arenaCode.dropSocket(dropArena, map(candidate.x, candidate.y + 3, candidate.z))
+			local valid = dropArena.dropFloors[i]
+			if valid then
+				minDistance = math.min(minDistance, (valid + map(0, 3, 0) - position).Magnitude)
+			end
+		end
+		assert(
+			math.abs((floor + map(0, 3, 0) - position).Magnitude - minDistance) < 0.01,
+			"drop not nearest safe route spot"
+		)
+	end
+	assert(
+		arenaCode.outside(dropArena, map(95, 3, 0)) and arenaCode.outside(dropArena, map(0, -20, 0)),
+		"fall detection"
+	)
+	assert(not arenaCode.outside(dropArena, map(-24, 6, -16)), "on-island cliff treated as fall")
+	print(
+		"PASS production drop projection: reported JumpLanding cliff, cover, edge and off-island falls; 3-stud clearance; nearest safe route spot seed="
+			.. seed
+	)
 	local actor, rival = {}, {}
 	local function scenario(code, options)
 		transitions = {}
@@ -525,12 +635,22 @@ local function guardianLogicTest(seed)
 		end
 		for i = 0, math.floor((options.seconds or 3) / 0.05) do
 			local now = i * 0.05
+			local before = guard.Position
+			if options.walkReturn and a.mode == "Return" then
+				a.points, a.index = { { Position = guard.Position.Z > -15.5 and map(0, 4, 16) or map(8, 4, 32) } }, 1
+			end
 			if options.revealAt and now >= options.revealAt then
 				blocked = false
 			end
 			code.tick(a, 0.05, now, actors, root, function()
 				error("unexpected offline hit")
 			end, function() end)
+			if options.walkReturn then
+				assert(
+					(guard.Position - before).Magnitude <= Config.GuardianReturnSpeed * 0.05 * 1.2,
+					"return teleported"
+				)
+			end
 			if a.attack then
 				return a
 			end
@@ -586,21 +706,30 @@ local function guardianLogicTest(seed)
 	for _, position in { map(-0.4, 3.45, 8), map(2.7, 3.45, 8) } do
 		local hill =
 			scenario(arenaCode, { guard = map(-44.3, 14, 5.9), position = position, cooldown = 4, seconds = 8 })
-		assert(hill.attack and hill.attack.disc and hill.attack.start < 8, "hill leash recovery/throw >8s")
-		assert(hill.attack.start >= 4, "hill recovery bypassed cooldown")
-		assert((hill.guardian.Position - map(8, 9.5, 32)).Magnitude < 0.1, "guardian did not return to camp")
+		assert(not hill.attack and hill.mode == "Return", "frozen navigation must keep walking return")
+		assert((hill.guardian.Position - map(-44.3, 14, 5.9)).Magnitude < 0.1, "early return teleport")
 		local logs = table.concat(transitions, "\n")
 		assert(
-			string.find(logs, "state=Return", 1, true) and string.find(logs, "state=Throw", 1, true),
+			string.find(logs, "state=Return", 1, true) and not string.find(logs, "recovery poof", 1, true),
 			"missing guardian transition logs"
 		)
 	end
 	local stuck = scenario(arenaCode, { guard = map(0, 5.5, 8), blocked = true, seconds = 5 })
-	assert((stuck.guardian.Position - map(8, 9.5, 32)).Magnitude < 0.1, "failed path did not recover")
-	assert((stuck.pathVersion or 0) >= 2, "failed path recovery did not invalidate paths")
+	assert(
+		stuck.mode == "Return" and (stuck.guardian.Position - map(0, 5.5, 8)).Magnitude < 0.1,
+		"failed path teleported early"
+	)
+	assert((stuck.pathVersion or 0) >= 1, "failed path recovery did not invalidate paths")
+	local departure = scenario(arenaCode, { guard = map(0, 5.5, 8), blocked = true, seconds = 22.5 })
+	assert(departure.recoveryStarted and departure.poof, "missing visible departure after long stall")
+	assert((departure.guardian.Position - map(0, 5.5, 8)).Magnitude < 0.1, "poof must precede relocation")
+	local recovered = scenario(arenaCode, { guard = map(0, 5.5, 8), blocked = true, seconds = 23.5 })
+	assert((recovered.guardian.Position - map(8, 9.5, 32)).Magnitude < 0.1 and recovered.poof, "missing arrival poof")
+	local walking = scenario(arenaCode, { guard = map(0, 5.5, 0), blocked = true, seconds = 7, walkReturn = true })
+	assert(walking.mode == "Guard" and not walking.poof, "moving guardian must walk home without recovery")
 	local leash =
 		scenario(arenaCode, { guard = map(8, 5.5, 0.5), waypoint = map(8, 0, -4), blocked = true, seconds = 5 })
-	assert((leash.guardian.Position - map(8, 9.5, 32)).Magnitude < 0.1, "waypoint escaped camp leash")
+	assert(leash.mode == "Return" and not leash.poof, "blocked leash return teleported early")
 	local slope = scenario(arenaCode, { guard = map(0, 7.5, 23), position = map(0, 3.45, 8) })
 	assert(slope.attack and slope.attack.disc, "slope throw failed")
 	local cover = { role = "Cover", x = 0, y = 2.6, z = 14, w = 10, h = 5.2, d = 2 }
@@ -612,7 +741,7 @@ local function guardianLogicTest(seed)
 	print(
 		"PASS production guardian seed="
 			.. seed
-			.. ": reported hill pose recovers/throws <8s; failed navigation recovers; terrace/slope throws; 18 lane cases <=3s; old 24-stud stall; carrier priority/sight/safe/range/mercy/cooldown/poke. Navigation frozen; live Studio UNKNOWN."
+			.. ": frozen return stays put through 8s; recovery only after 20s stationary + visible departure/arrival poofs; moving return reaches Guard with bounded steps; terrace/slope throws; targeting rules preserved. Mock navigation; live Studio UNKNOWN."
 	)
 end
 for _, seed in { 101, 202, 303 } do
@@ -641,8 +770,190 @@ local function standable(l, p, edge)
 		end
 	end
 end
+-- Exercise the live movement runner's return branch, including the old failure.
+local function automaticReturnTest()
+	local roblox = require("@lune/roblox")
+	local v = roblox.Vector3
+	local source = fs.readFile("LoopTest.luau")
+	local startAt = assert(string.find(source, "local function driver(", 1, true))
+	local endAt = assert(string.find(source, "local function act(", startAt, true))
+	local function scenario(automatic, invalidReturn, nearGoal, jump)
+		local actor = { Character = {} }
+		local cargo = { id = "regression:1", state = "Carried", holder = actor, escapeDeadline = 60 }
+		local s = { phase = "Run", run = 1, item = cargo }
+		local root = { Position = v.new(-42, 79, -304), SetNetworkOwner = function() end }
+		if nearGoal then
+			root.Position = v.new(-35.85, 79.45, -304)
+		end
+		local humanoid = { Health = 100, FloorMaterial = "Ground", Move = function() end }
+		local driver = luau.load(string.sub(source, startAt, endAt - 1) .. "\nreturn driver", {
+			environment = {
+				Vector3 = v,
+				Enum = { Material = { Air = "Air" } },
+				os = {
+					clock = function()
+						return 10
+					end,
+				},
+				task = {
+					wait = function()
+						assert(not nearGoal, "near-goal movement still required")
+						-- Production home() clears run and teleports after Rules.secure().
+						s.phase, s.run = "Home", nil
+						cargo.state, cargo.securedAt = "Secured", invalidReturn == "late" and 60 or 10
+						if invalidReturn == "lost" then
+							s.item = nil
+						end
+						root.Position = v.new(0, 4, 84)
+					end,
+				},
+			},
+		})()
+		local walk = driver(actor, { [actor] = s }, {
+			root = function()
+				return root, humanoid
+			end,
+			audit = function() end,
+		}, function() end, function(p)
+			return p
+		end)
+		return pcall(walk, v.new(-34, 79, -304), "west apron crossing", jump, automatic)
+	end
+	assert(scenario(false, nil, true), "reported 1.94-stud walk arrival rejected")
+	assert(not scenario(false, nil, true, true), "jump accepted without takeoff/landing")
+	assert(scenario(true), "legal automatic secure rejected")
+	local ok, why = scenario(false)
+	assert(not ok and string.find(why, "unexpected arena reset/return", 1, true), "old return failure not reproduced")
+	assert(not scenario(true, "lost"), "return accepted lost cargo")
+	assert(not scenario(true, "late"), "return accepted deadline tie")
+	local winner = Layout.pvpRoutes().Winner
+	for i = 1, #winner - 1 do
+		assert(not Layout.protected(winner[i].x, winner[i].z), "winner approach enters apron")
+	end
+	local last = winner[#winner]
+	assert(last.kind == "Return" and Layout.protected(last.x, last.z), "winner missing expected boundary return")
+	assert(not Layout.protected(-38.01, -56) and Layout.protected(-38, -56), "west return boundary")
+	assert(Layout.protected(-26, -56), "reported winner goal must trigger legal return")
+	print(
+		"PASS live driver legal automatic return; old unexpected-return reproduced; lost/late cargo rejected; west apron X=-38"
+	)
+end
+automaticReturnTest()
+local function retestRound3()
+	local roblox = require("@lune/roblox")
+	local v = roblox.Vector3
+	local now, fallen, poofs = 10, true, 0
+	local source = fs.readFile("Greybox.server.luau")
+	local first = assert(string.find(source, "local function presentDrop(", 1, true))
+	local last = assert(string.find(source, "local function expireLoot(", first, true))
+	local present, recover =
+		luau.load(string.sub(source, first, last - 1) .. "\nreturn presentDrop, recoverFallenLoot", {
+			environment = {
+				Config = Config,
+				Vector3 = v,
+				Enum = roblox.Enum,
+				world = {},
+				root = function()
+					return { Position = v.zero }
+				end,
+				Arena = {
+					outside = function()
+						return fallen
+					end,
+				},
+				os = {
+					clock = function()
+						return now
+					end,
+				},
+				visual = function(item)
+					item.visual = { Transparency = item.recoverAt and 1 or 0 }
+				end,
+				part = function()
+					poofs += 1
+					return {}
+				end,
+				TweenInfo = {
+					new = function()
+						return {}
+					end,
+				},
+				TweenService = {
+					Create = function()
+						return { Play = function() end }
+					end,
+				},
+				Debris = { AddItem = function() end },
+			},
+		})()
+	local r, actor = Rules.new(Config), {}
+	local s = Rules.actor(r, actor)
+	s.phase = "Run"
+	local item = Rules.spawn(r, v.zero)
+	local function legal()
+		return true
+	end
+	assert(Rules.begin(r, actor, "Steal", nil, 0, legal))
+	assert(Rules.finish(r, actor, "Steal", 2, legal))
+	local id, deadline = item.id, item.escapeDeadline
+	assert(Rules.drop(r, actor, now, v.zero))
+	present(item, actor)
+	assert(item.recoverAt == 11 and item.visual.Transparency == 1 and not item.bounceAt, "fall must hide for 1s")
+	now = 10.99
+	recover(item, now)
+	assert(poofs == 0 and item.visual.Transparency == 1, "early fall recovery")
+	assert(not Rules.begin(r, actor, "Grab", nil, now, legal), "hidden treasure grabbed")
+	now = 11
+	recover(item, now)
+	assert(poofs == 1 and item.visual.Transparency == 0 and item.bounceAt == 11, "missing 1s respawn/poof")
+	recover(item, now)
+	assert(poofs == 1 and item.id == id and item.escapeDeadline == deadline, "duplicate poof/deadline refresh")
+	assert(not Rules.begin(r, actor, "Grab", nil, now, legal), "recovery skipped settle")
+	assert(Rules.begin(r, actor, "Grab", nil, item.settle, legal), "recovered treasure unavailable")
+	fallen = false
+	present(item, actor)
+	assert(not item.recoverAt and item.visual.Transparency == 0, "ordinary drop delayed")
+
+	source = fs.readFile("LoopTest.luau")
+	first = assert(string.find(source, "local function closeToDummy(", 1, true))
+	last = assert(string.find(source, "local function recover(", first, true))
+	local close = luau.load(string.sub(source, first, last - 1) .. "\nreturn closeToDummy", {
+		environment = { Vector3 = v, os = {
+			clock = function()
+				return now
+			end,
+		} },
+	})()
+	local player, dummy = {}, {}
+	local pr, dr = { Position = v.new(-59.85, 3.44, 56.20) }, { Position = v.new(-65.36, 3, 54.63) }
+	local walks = 0
+	local api = {
+		root = function(who)
+			return who == player and pr or dr
+		end,
+		floor = function(p)
+			return v.new(p.X, 0, p.Z)
+		end,
+	}
+	close(api, function(target)
+		walks += 1
+		pr.Position = target
+		if walks == 1 then
+			dr.Position += v.new(-4, 0, 0) -- Movement after the first live snapshot.
+		end
+	end, player, dummy)
+	assert(walks == 2 and (pr.Position - dr.Position).Magnitude <= 3, "failed to follow live displaced dummy")
+	print(
+		"PASS production 1s hidden fall recovery/poof/settle with original ID/deadline; reported PvP root separation and moving-dummy recheck"
+	)
+end
+retestRound3()
 for seed = 1, 50 do
 	local l = Layout.assemble(Config, seed, false)
+	for _, p in Layout.dodgePoints() do
+		standable(l, p)
+	end
+	assert(not pcall(standable, l, { x = 0, y = 0, z = 8 }), "old dodge Y mismatch not reproduced")
 	local routes = table.clone(l.routes)
 	for i, route in l.crossLinks do
 		routes["CrossLink" .. i] = route
@@ -712,6 +1023,7 @@ for seed = 1, 50 do
 	end
 end
 local first = Layout.assemble(Config, 101, true)
+print("PASS both disc-dodge destinations across 50 seeds; old Y0 at Z8 rejected; CampSouthRamp Y=8/3")
 for _, p in
 	{
 		{ x = -10, y = 0, z = -10 }, -- inside cover

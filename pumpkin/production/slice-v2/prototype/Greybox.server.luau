@@ -4,6 +4,8 @@ local SSS = game:GetService("ServerScriptService")
 local RunService = game:GetService("RunService")
 local PhysicsService = game:GetService("PhysicsService")
 local PromptService = game:GetService("ProximityPromptService")
+local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
 local Config = require(RS:WaitForChild("GreyboxConfig"))
 local Layout = require(RS:WaitForChild("GreyboxLayout"))
 local Rules = require(RS:WaitForChild("GreyboxLootRules"))
@@ -17,6 +19,7 @@ local actionRemote = Instance.new("RemoteEvent")
 actionRemote.Name, actionRemote.Parent = "GreyboxAction", RS
 local orange, grey = Color3.fromRGB(255, 160, 40), Color3.fromRGB(125, 135, 145)
 local arena, testRunning, firstPlayer, session = nil, false, nil, 0
+local pvpCourtPaused = false -- Only the Studio runner can pause guardian interference.
 local testLog
 PromptService.Enabled, PromptService.MaxPromptsVisible = true, 8
 pcall(function()
@@ -120,6 +123,7 @@ local function visual(item)
 		end
 	elseif item.state == "Nest" or item.state == "Dropped" then
 		p.Position = item.position + Vector3.new(0, 1.4, 0)
+		p.Transparency = item.recoverAt and 1 or 0
 	elseif item.state == "Placed" then
 		p.Size = Vector3.new(3, 3, 3)
 		p.Position = item.position
@@ -195,7 +199,33 @@ local function refreshLoot()
 end
 local function dropPosition(actor)
 	local r = root(actor)
-	return arena and r and Arena.dropSocket(arena, r.Position) or (states[actor] and states[actor].lastSocket)
+	local last = states[actor] and states[actor].lastSocket
+	return arena and Arena.dropSocket(arena, r and r.Position or last or Arena.position(arena, 0, 4, 32))
+end
+local function presentDrop(item, actor)
+	local r = root(actor)
+	local now = os.clock()
+	if r and Arena.outside(arena, r.Position) then
+		item.recoverAt = now + 1
+		item.settle = item.recoverAt + Config.SettleSeconds
+		item.bounceAt = nil
+	else
+		item.recoverAt, item.bounceAt = nil, now
+	end
+	visual(item)
+end
+local function recoverFallenLoot(item, now)
+	if not item.recoverAt or now < item.recoverAt then
+		return
+	end
+	item.recoverAt, item.bounceAt = nil, now
+	visual(item)
+	local effect =
+		part(world, "TreasureRecoveryPoof", Vector3.new(2, 2, 2), item.position + Vector3.new(0, 1.4, 0), orange)
+	effect.Shape, effect.Material = Enum.PartType.Ball, Enum.Material.Neon
+	effect.CanCollide, effect.CanQuery = false, false
+	TweenService:Create(effect, TweenInfo.new(1), { Size = Vector3.new(6, 6, 6), Transparency = 1 }):Play()
+	Debris:AddItem(effect, 1)
 end
 local function expireLoot(now)
 	local expired, item = Rules.expire(rules, now)
@@ -216,8 +246,7 @@ local function drop(actor, reason)
 	expireLoot(os.clock())
 	local ok, item = Rules.drop(rules, actor, os.clock(), dropPosition(actor))
 	if ok then
-		visual(item)
-		item.bounceAt = os.clock()
+		presentDrop(item, actor)
 		goal(actor, Config.ItemName .. " DROPPED / Grab after settle")
 		refreshLoot()
 		if testLog then
@@ -247,9 +276,10 @@ local function hit(actor, from, source)
 		r.CFrame += away.Unit * distance
 	end
 	if item then
-		visual(item)
 		if item.state == "Dropped" then
-			item.bounceAt = os.clock()
+			presentDrop(item, actor)
+		else
+			visual(item)
 		end
 	end
 	goal(
@@ -358,7 +388,6 @@ local function holdAction(actor, action, stage)
 				v.CFrame += delta.Unit * (obstruction and math.max(0, obstruction.Distance - 0.5) or 3.5)
 			end
 		end
-		oldItem.bounceAt = os.clock()
 		goal(target, Config.ItemName .. " DROPPED")
 	else
 		s.lastSocket = oldPosition or s.lastSocket
@@ -372,7 +401,11 @@ local function holdAction(actor, action, stage)
 			Arena.warn(arena, actor, os.clock())
 		end
 	end
-	visual(oldItem)
+	if action == "Bump" then
+		presentDrop(oldItem, target)
+	else
+		visual(oldItem)
+	end
 	refreshLoot()
 	Rules.audit(rules)
 	return true
@@ -424,6 +457,15 @@ local function returnRun(actor, automatic)
 	end
 	local ok, why = Rules.secure(rules, actor, os.clock())
 	if ok then
+		print(
+			string.format(
+				"[Greybox] return source=%s boundary=%s position=%s item=%s",
+				automatic and "protected apron" or "return action",
+				tostring(Arena.safe(arena, r.Position)),
+				tostring(r.Position),
+				s.item and (s.item.id .. "/" .. s.item.state) or "empty"
+			)
+		)
 		home(actor)
 		refreshLoot()
 		Rules.audit(rules)
@@ -587,7 +629,12 @@ local function configureCharacter(actor, character)
 	if s.phase == "Run" then
 		local item = s.item
 		if item then
-			local ok = Rules.drop(rules, actor, os.clock(), s.lastSocket or Arena.position(arena, 0, 0, 8))
+			local ok = Rules.drop(
+				rules,
+				actor,
+				os.clock(),
+				Arena.dropSocket(arena, s.lastSocket or Arena.position(arena, 0, 4, 32))
+			)
 			if ok then
 				visual(item)
 			end
@@ -703,9 +750,7 @@ RunService.Heartbeat:Connect(function(dt)
 		if s.phase ~= "Run" or not arena then
 			continue
 		end
-		local worldPoint = r.Position - arena.origin
-		local p = Vector3.new(worldPoint.X, worldPoint.Y, -worldPoint.Z)
-		if p.Y < -10 or math.abs(p.X) > Config.IslandSize / 2 + 2 or math.abs(p.Z) > Config.IslandSize / 2 + 2 then
+		if Arena.outside(arena, r.Position) then
 			if s.item then
 				drop(actor, "outside island fall/recovery")
 			end
@@ -771,6 +816,9 @@ RunService.Heartbeat:Connect(function(dt)
 		visual(Rules.spawn(rules, Arena.position(arena, 0, 4, 32)))
 		arena.mode, arena.target = "Guard", nil
 	end
+	if rules.active and rules.active.state == "Dropped" then
+		recoverFallenLoot(rules.active, now)
+	end
 	if rules.active and rules.active.state == "Dropped" and rules.active.bounceAt then
 		local item = rules.active
 		local t = math.min(1, (now - item.bounceAt) / Config.SettleSeconds)
@@ -779,7 +827,9 @@ RunService.Heartbeat:Connect(function(dt)
 			item.bounceAt = nil
 		end
 	end
-	Arena.tick(arena, step, now, states, root, hit, goal, rules.active)
+	if not pvpCourtPaused then
+		Arena.tick(arena, step, now, states, root, hit, goal, rules.active)
+	end
 	refreshLoot()
 	local ok, why = pcall(conservation)
 	SSS:SetAttribute("GreyboxConservation", ok and "PASS" or "FAIL: " .. tostring(why))
@@ -797,6 +847,9 @@ local api = {
 	returnRun = returnRun,
 	placeItem = placeItem,
 	root = root,
+	floor = function(position)
+		return Arena.floor(arena, position)
+	end,
 	rules = rules,
 	audit = function()
 		conservation()
@@ -849,6 +902,21 @@ function api.dummy(position)
 	s.phase, s.run, s.joined = "Run", arena, os.clock()
 	r:SetNetworkOwner(nil)
 	return actor
+end
+function api.pvpCourt(enabled)
+	assert(testRunning, "court isolation requires active Studio test")
+	pvpCourtPaused = enabled
+	if enabled then
+		Arena.reset(arena) -- Cancel in-flight pokes/throws and pending paths.
+		arena.guardian.CFrame = CFrame.new(
+			Arena.position(
+				arena,
+				Config.GuardianGuardOffset.x,
+				Config.GuardianGuardOffset.y + 5.5,
+				Config.GuardianGuardOffset.z
+			)
+		)
+	end
 end
 function api.removeDummy(actor)
 	local s = states[actor]
@@ -928,6 +996,7 @@ local function startTest(mode)
 			return runner.run(player, states, pens, world, api, log)
 		end)
 		log((ok and "PASS: " or "FAIL: ") .. tostring(result))
+		pvpCourtPaused = false -- Always restore on success or failure.
 		testLog = nil
 		if dummy then
 			api.removeDummy(dummy)

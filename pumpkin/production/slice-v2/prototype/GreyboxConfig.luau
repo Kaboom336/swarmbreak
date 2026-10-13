@@ -33,7 +33,7 @@ return {
 	GuardianLeadMaxStuds = 9,
 	GuardianLeashRadius = 110,
 	GuardianStuckSeconds = 2,
-	GuardianReturnSeconds = 2.5,
+	GuardianReturnSeconds = 20, -- Continuous lack of movement before visible recovery.
 	GuardianGuardOffset = { x = 8, y = 4, z = 32 },
 	GuardianDroppedGuardRadius = 24,
 	GuardianGuardArrival = 3,

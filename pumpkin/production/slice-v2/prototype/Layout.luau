@@ -171,6 +171,10 @@ function Layout.loopCarrySteps(_l)
 	add("automatic secure return", 0, 0, -40, "Return")
 	return steps
 end
+function Layout.dodgePoints()
+	-- CampSouthRamp rises from Y0 at Z0 to Y4 at Z12.
+	return { point(0, 8 / 3, 8), point(0, 0, -4) }
+end
 function Layout.pvpRoutes()
 	return {
 		Tester = { point(0, 0, -58), point(-42, 0, -58), point(-62, 0, -56) },
@@ -188,8 +192,49 @@ function Layout.pvpRoutes()
 		Pacing = { point(-64, 0, -56), point(-64, 0, -54), point(-64, 0, -56) },
 		Mercy = { point(-64, 0, -56), point(-72, 0, -48), point(-64, 0, -56) },
 		Leave = { point(-64, 0, -56), point(-68, 0, -52) },
-		Winner = { point(-64, 0, -56), point(-42, 0, -56), point(-34, 0, -56) },
+		-- The west apron starts at X=-38: crossing it secures automatically.
+		Winner = { point(-64, 0, -56), point(-42, 0, -56), point(-34, 0, -56, "Return") },
 	}
+end
+-- Drop candidates belong to traversable routes, never the old arbitrary floor grid.
+-- Sample grounded segments only; jump/recovery endpoints remain known safe spots.
+function Layout.dropPoints(l)
+	local routes = table.clone(l.routes)
+	for i, route in l.crossLinks do
+		routes["Link" .. i] = route
+	end
+	routes.Carry = Layout.loopCarrySteps(l)
+	for name, route in Layout.pvpRoutes() do
+		routes["Pvp" .. name] = route
+	end
+	local points, seen = {}, {}
+	local function add(p)
+		local key = string.format("%.3f:%.3f:%.3f", p.x, p.y, p.z)
+		if not seen[key] and not Layout.protected(p.x, p.z, 3) then
+			seen[key] = true
+			table.insert(points, point(p.x, p.y, p.z))
+		end
+	end
+	for _, route in routes do
+		for i, p in route do
+			add(p)
+			local previous = route[i - 1]
+			if previous and p.kind ~= "Jump" and p.kind ~= "Recovery" then
+				local steps = math.ceil(math.sqrt((p.x - previous.x) ^ 2 + (p.z - previous.z) ^ 2) / 2)
+				for n = 1, steps - 1 do
+					local t = n / steps
+					add(
+						point(
+							previous.x + (p.x - previous.x) * t,
+							previous.y + (p.y - previous.y) * t,
+							previous.z + (p.z - previous.z) * t
+						)
+					)
+				end
+			end
+		end
+	end
+	return points
 end
 function Layout.validate(config, l)
 	assert(#l.pieces == 5 and #l.crossLinks == 2 and #l.jumps == 2, "required v2 topology")

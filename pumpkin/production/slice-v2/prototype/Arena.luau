@@ -188,20 +188,50 @@ function Arena.safe(a, position, radius)
 	local p = position - a.origin
 	return Layout.protected(p.X, -p.Z, radius)
 end
-function Arena.dropSocket(a, position)
-	local best, distance = nil, 6.001
-	for _, socket in a.layout.sockets do
-		local p = a.origin + vector(socket)
-		if (Vector3.new(p.X, position.Y, p.Z) - position).Magnitude <= 6 then
-			local floor = Arena.floor(a, p)
-			if floor and math.abs(position.Y - floor.Y - 3) <= 5 and not Arena.safe(a, floor) then
-				local d = (floor + Vector3.new(0, 3, 0) - position).Magnitude
-				if d < distance and Arena.sight(a, position, floor + Vector3.new(0, 1.6, 0)) then
-					best, distance = floor, d
+function Arena.outside(a, position)
+	local p = position - a.origin
+	return p.Y < -10 or math.abs(p.X) > Config.IslandSize / 2 + 2 or math.abs(p.Z) > Config.IslandSize / 2 + 2
+end
+local function dropFloor(a, p)
+	local center = Arena.floor(a, p)
+	if not center or math.abs(center.Y - p.Y) >= 0.7 or Arena.safe(a, center, 3) then
+		return nil
+	end
+	-- Same body/head and 3-stud ledge envelope as the live walk preflight.
+	for ix = -6, 6 do
+		for iz = -6, 6 do
+			if ix * ix + iz * iz <= 36 then
+				local sample = center + Vector3.new(ix * 0.5, 0, iz * 0.5)
+				local floor = Arena.floor(a, sample)
+				if not floor or math.abs(floor.Y - center.Y) > 1.5 then
+					return nil
+				end
+				if workspace:Raycast(sample + Vector3.new(0, 1.55, 0), Vector3.new(0, 6, 0), a.params) then
+					return nil
 				end
 			end
 		end
 	end
+	return center
+end
+function Arena.dropSocket(a, position)
+	if not a.dropPoints then
+		a.dropPoints, a.dropFloors = Layout.dropPoints(a.layout), {}
+	end
+	local best, distance = nil, math.huge
+	for i, socket in a.dropPoints do
+		local p = a.origin + vector(socket)
+		local d = (p + Vector3.new(0, 3, 0) - position).Magnitude
+		if d < distance and a.dropFloors[i] ~= false then
+			if a.dropFloors[i] == nil then
+				a.dropFloors[i] = dropFloor(a, p) or false
+			end
+			if a.dropFloors[i] then
+				best, distance = a.dropFloors[i], d
+			end
+		end
+	end
+	assert(best, "arena has no reachable drop floor")
 	return best
 end
 local function logState(a, root)
@@ -235,6 +265,18 @@ local function returnToCamp(a, now, reason)
 	a.target, a.lostTarget, a.searchAt = nil, nil, nil
 	a.progressAt, a.progressPosition = now, a.guardian.Position
 	clearPath(a)
+end
+local function poof(a, position, now)
+	if a.poof then
+		a.poof.part:Destroy()
+	end
+	local p = Instance.new("Part")
+	p.Name, p.Shape = "GuardianRecoveryPoof", Enum.PartType.Ball
+	p.Size, p.CFrame = Vector3.new(6, 6, 6), CFrame.new(position)
+	p.Color, p.Material = Color3.fromRGB(220, 205, 180), Enum.Material.Neon
+	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch = true, false, false, false
+	p.Transparency, p.Parent = 0.2, a.model
+	a.poof = { part = p, start = now }
 end
 function Arena.warn(a, actor, now)
 	if a.target == actor and (a.mode == "Chase" or a.mode == "Warn") then
@@ -302,6 +344,15 @@ local function attack(a, actor, position, now, close)
 end
 function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 	local guard = a.guardian
+	if a.poof then
+		local alpha = math.min(1, now - a.poof.start)
+		a.poof.part.Size = Vector3.new(6, 6, 6) * (1 + alpha)
+		a.poof.part.Transparency = 0.2 + 0.8 * alpha
+		if alpha >= 1 then
+			a.poof.part:Destroy()
+			a.poof = nil
+		end
+	end
 	local nestCamp = a.origin + campOffset
 	local camp = a.guardCamp or nestCamp
 	if loot and loot.state == "Dropped" and a.guardedVersion ~= loot.version then
@@ -332,6 +383,10 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 	logState(a, root)
 	-- Windups stay planted; recovery takes priority after impact.
 	if not a.attack then
+		if a.progressPosition and (guard.Position - a.progressPosition).Magnitude >= Config.GuardianProgressStuds then
+			a.progressAt, a.progressPosition = now, guard.Position
+			a.recoveryStarted = nil
+		end
 		local flat = Vector3.new(guard.Position.X - camp.X, 0, guard.Position.Z - camp.Z)
 		if a.mode ~= "Return" and flat.Magnitude > leashRadius then
 			returnToCamp(a, now, "outside camp leash")
@@ -341,13 +396,25 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 		if a.mode == "Return" then
 			logState(a, root)
 			local home = camp + Vector3.new(0, 5.5, 0)
-			if (guard.Position - home).Magnitude < Config.GuardianGuardArrival or now >= a.untilTime then
-				-- NPC-only fallback: a broken navmesh must never park it on a hill.
-				guard.CFrame = CFrame.new(home)
+			if (guard.Position - home).Magnitude < Config.GuardianGuardArrival then
 				a.mode, a.returnReason, a.patrol = "Guard", nil, 1
+				a.recoveryStarted = nil
 				a.progressAt, a.progressPosition = nil, nil
 				clearPath(a)
 				logState(a, root)
+			elseif a.progressAt and now - a.progressAt >= returnSeconds then
+				if not a.recoveryStarted then
+					a.recoveryStarted = now
+					poof(a, guard.Position, now)
+					print("[GreyboxGuardian] recovery poof / stationary >=20s / " .. tostring(a.returnReason))
+				elseif now - a.recoveryStarted >= 1 then
+					guard.CFrame = CFrame.new(home)
+					poof(a, home, now)
+					a.recoveryStarted = nil
+					a.progressAt, a.progressPosition = now, guard.Position
+					clearPath(a)
+				end
+				return -- Visible departure before the exceptional NPC-only relocation.
 			end
 		end
 	end
@@ -581,6 +648,11 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 	end
 end
 function Arena.reset(a)
+	if a.poof then
+		a.poof.part:Destroy()
+		a.poof = nil
+	end
+	a.recoveryStarted = nil
 	if a.attack then
 		for _, name in { "disc", "fill", "rock", "outline" } do
 			if a.attack[name] then

@@ -75,20 +75,36 @@ local function validator(world, log)
 	end
 	return checked, preflight
 end
-local function homePoints(pen)
+local function homeEntryPoints(pen)
 	local side = pen.marker.Position.X < 0 and -1 or 1
 	return {
-		{ position = at(nil, 0, 3, Config.HomePortalApproachZ), name = "home portal" },
+		{ position = at(nil, side * Config.HomeAisleX, 0, pen.marker.Position.Z), name = "pen aisle" },
 		{ position = at(nil, side * Config.HomeAisleX, 0, Config.HomeSpawnZ), name = "home aisle" },
-		{
-			position = at(nil, side * Config.HomeAisleX, 0, pen.marker.Position.Z),
-			name = "own pen aisle",
-		},
-		{
-			position = Vector3.new(pen.marker.Position.X - side * 5, 3, pen.marker.Position.Z),
-			name = "own pen",
-		},
+		{ position = at(nil, 0, 0, Config.HomeSpawnZ), name = "central lane" },
+		{ position = at(nil, 0, 0, 24), name = "home ramp approach" },
+		{ position = at(nil, 0, 3, -6), name = "home ramp landing" },
+		{ position = at(nil, 0, 3, Config.HomePortalApproachZ), name = "home portal" },
 	}
+end
+local function homePoints(pen)
+	local side = pen.marker.Position.X < 0 and -1 or 1
+	local points = homeEntryPoints(pen)
+	for _, p in
+		{
+			{ position = at(nil, side * Config.HomeAisleX, 0, Config.HomeSpawnZ), name = "home aisle" },
+			{
+				position = at(nil, side * Config.HomeAisleX, 0, pen.marker.Position.Z),
+				name = "own pen aisle",
+			},
+			{
+				position = Vector3.new(pen.marker.Position.X - side * 5, 3, pen.marker.Position.Z),
+				name = "own pen",
+			},
+		}
+	do
+		table.insert(points, p)
+	end
+	return points
 end
 local function driver(actor, states, api, log, checked)
 	local character = actor.Character
@@ -126,6 +142,15 @@ local function driver(actor, states, api, log, checked)
 				return false
 			end
 			if autoReturn and states[actor].phase == "Home" then
+				assert(
+					cargo
+						and states[actor].item == cargo
+						and cargo.state == "Secured"
+						and cargo.holder == actor
+						and cargo.securedAt < cargo.escapeDeadline,
+					"automatic return lost cargo or missed deadline"
+				)
+				log("legal automatic secure / " .. cargo.id .. " / " .. name)
 				break
 			end
 			assert(states[actor].run == expected, "unexpected arena reset/return")
@@ -139,7 +164,8 @@ local function driver(actor, states, api, log, checked)
 			local horizontal = Vector3.new(delta.X, 0, delta.Z).Magnitude
 			local distance = horizontal + math.abs(delta.Y) * 0.2
 			if
-				horizontal <= 0.8
+				not autoReturn -- Return legs finish only after the production boundary handler secures cargo.
+				and horizontal <= (jump and 0.8 or 2.25)
 				and math.abs(delta.Y) < 2
 				and h.FloorMaterial ~= Enum.Material.Air
 				and (not jump or (launched and landed))
@@ -210,8 +236,8 @@ local function hold(api, actor, action)
 	end
 end
 local function recoveryPoint(checked, item)
-	-- Danger-floor sockets need only avatar clearance in production. Find a test
-	-- stand point near the same item with our stricter 3-stud clearance and Grab range.
+	-- Production drops already require this clearance. Retain nearby recovery
+	-- candidates so the test independently checks the actual settled position.
 	for _, offset in
 		{
 			Vector3.zero,
@@ -227,6 +253,18 @@ local function recoveryPoint(checked, item)
 		end
 	end
 	error("no standable Grab point for " .. item.id)
+end
+local function closeToDummy(api, walk, player, dummy)
+	local closeDeadline = os.clock() + 8
+	while true do
+		local pr, dr = api.root(player), api.root(dummy)
+		if (pr.Position - dr.Position).Magnitude <= 3 then
+			return pr, dr
+		end
+		assert(os.clock() < closeDeadline, "cannot close to live dummy within 3 studs >8s")
+		local floor = assert(api.floor(dr.Position), "dummy court floor missing")
+		walk(floor + Vector3.new(0, 3, 0), "close to live dummy within 3 studs")
+	end
 end
 local function recover(api, actor, states, walk, item, log, checked)
 	if states[actor].item == item then
@@ -264,7 +302,12 @@ end
 local function expiryTest(player, states, pens, world, api, log, walk)
 	local s = states[player]
 	local count, completed = pens[s.slot].count, s.completed
-	walk(at(nil, 0, 3, Config.HomePortalApproachZ), "expiry home portal")
+	-- Retrace the open pen aisle before using the central ramp. A direct
+	-- diagonal to the raised portal hits the platform's three-stud side.
+	local pen = pens[s.slot]
+	for _, p in homeEntryPoints(pen) do
+		walk(p.position, "expiry " .. p.name)
+	end
 	act(api, player, "enterRun")
 	local arena = api.arena()
 	local waitUntil = os.clock() + 8
@@ -356,7 +399,13 @@ function Test.run(player, states, pens, world, api, log)
 	local arena = api.arena()
 	local started = s.started
 	local carrySteps = Layout.loopCarrySteps(arena.layout)
+	local dodgePoints = Layout.dodgePoints()
+	local north = at(arena, dodgePoints[1].x, dodgePoints[1].y, dodgePoints[1].z)
+	local south = at(arena, dodgePoints[2].x, dodgePoints[2].y, dodgePoints[2].z)
 	local points = {}
+	for i, p in dodgePoints do
+		table.insert(points, { position = at(arena, p.x, p.y, p.z), name = "disc dodge option " .. i })
+	end
 	for _, p in arena.layout.routes.Quick do
 		table.insert(points, { position = at(arena, p.x, p.y, p.z), name = "approach " .. p.kind })
 	end
@@ -389,7 +438,6 @@ function Test.run(player, states, pens, world, api, log)
 			local flat =
 				Vector3.new(r.Position.X - arena.guardian.Position.X, 0, r.Position.Z - arena.guardian.Position.Z)
 			if flat.Magnitude < Config.GuardianThrowMinRange then
-				local north, south = at(arena, 0, 0, 8), at(arena, 0, 0, -4)
 				local destination = (north - arena.guardian.Position).Magnitude
 							> (south - arena.guardian.Position).Magnitude
 						and north
@@ -407,7 +455,6 @@ function Test.run(player, states, pens, world, api, log)
 			"telegraph missing/pre-impact delay"
 		)
 		local locked = telegraph.position
-		local north, south = at(arena, 0, 0, 8), at(arena, 0, 0, -4)
 		local destination = (north - locked).Magnitude > (south - locked).Magnitude and north or south
 		walk(destination, "Dodge locked red disc")
 		assert(
@@ -502,6 +549,8 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 		dummyWalk(at(arena, p.x, p.y, p.z), "dummy court approach " .. i)
 	end
 	recover(api, dummy, states, dummyWalk, item, log, checked)
+	api.pvpCourt(true)
+	log("guardian isolated at camp for PvP court; real shield/mercy/holds unchanged")
 	-- Keep the dummy moving to avoid the production AFK drop while shield expires.
 	while os.clock() < ds.shield + 0.05 do
 		dummyWalk(at(arena, -64, 0, -54), "dummy shield pacing")
@@ -512,7 +561,6 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 	for attempt = 1, Config.TestRecoverRetries do
 		recover(api, dummy, states, dummyWalk, item, log, checked)
 		dummyWalk(at(arena, -64, 0, -56), "dummy handoff court")
-		walk(at(arena, -62, 0, -56), "within 4 of dummy")
 		local vulnerableDeadline = os.clock() + 8
 		while os.clock() < ds.mercy or os.clock() < s.cooldown or not ds.item do
 			assert(os.clock() < vulnerableDeadline, "no legal handoff window >8s")
@@ -520,10 +568,12 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 			dummyWalk(at(arena, -64, 0, -56), "dummy returns to handoff court")
 			recover(api, dummy, states, dummyWalk, item, log, checked)
 		end
-		local pr = api.root(player)
-		local dr = api.root(dummy)
+		-- Fixed court goals plus normal walk tolerance do not establish Bump range.
+		-- Follow the live root using Humanoid movement, then re-read both roots.
+		closeToDummy(api, walk, player, dummy)
+		local pr, dr = api.root(player), api.root(dummy)
 		assert(ds.item == item and item.holder == dummy and item.state == "Carried", "dummy not carrying at Bump")
-		assert((pr.Position - dr.Position).Magnitude <= 4, "Bump setup outside actual 4-stud root range")
+		assert((pr.Position - dr.Position).Magnitude <= 3, "Bump setup outside live 3-stud approach range")
 		log("Bump begin / actual distance " .. (pr.Position - dr.Position).Magnitude)
 		act(api, player, "holdAction", "Bump", "begin")
 		task.wait(Config.HoldSeconds.Bump + 0.05)
@@ -552,19 +602,22 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 	api.audit()
 	SSS:SetAttribute("GreyboxPvpTestItemId", item.id)
 	SSS:SetAttribute("GreyboxPvpTestHandoffs", 1)
-	walk(at(arena, -26, 0, -56), "winner west approach")
-	for attempt = 1, Config.TestRecoverRetries do
-		recover(api, player, states, walk, item, log, checked)
-		if walk(at(arena, -22, 0, -56), "winner auto secure", false, true) then
-			break
+	for i = 2, #routes.Winner do
+		local p = routes.Winner[i]
+		for attempt = 1, Config.TestRecoverRetries do
+			recover(api, player, states, walk, item, log, checked)
+			if walk(at(arena, p.x, p.y, p.z), "winner " .. p.kind .. " " .. i, false, p.kind == "Return") then
+				break
+			end
+			assert(attempt < Config.TestRecoverRetries, "PvP return retry limit")
 		end
-		assert(attempt < Config.TestRecoverRetries, "PvP return retry limit")
 	end
 	assert(
 		item.securedAt < item.escapeDeadline and item.escapeDeadline == escapeDeadline,
 		"PvP deadline refreshed/late"
 	)
 	place(player, states, pens, api, walk, log, item, initialCount)
+	api.pvpCourt(false)
 	expiryTest(player, states, pens, world, api, log, walk)
 	return "legal Bump/drop/settle/Grab/secure/place with dummy carrier; no duplicate/lost " .. item.id
 end

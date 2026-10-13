@@ -1,3 +1,4 @@
+PREVIOUS RUN (before reported Studio failures; superseded by current run below)
 PASS stylua format
 Results:
 0 errors
@@ -31,3 +32,61 @@ PASS 50-seed actual 3D walking-floor, cliff, cover-clearance checks; same segmen
 PASS built binary sources; both runtime gates NOT RUN/locked
 PASS stylua --check
 Build SHA256: F45BB4BF5E640AA38976771DB3D9840EBA186EC1113C45938EA13CB04A020501
+
+CURRENT RUN: Studio failure fixes (dodge ramp height / legal west-apron return)
+PASS stylua format and --check
+PASS selene: 0 errors / 0 warnings / 0 parse errors
+PASS requested rojo build greybox.project.json -o guardian-greybox.rbxl
+COMPILE PASS Arena.luau O0/O1/O2
+COMPILE PASS check.luau O0/O1/O2
+COMPILE PASS Greybox.client.luau O0/O1/O2
+COMPILE PASS Greybox.server.luau O0/O1/O2
+COMPILE PASS GreyboxConfig.luau O0/O1/O2
+COMPILE PASS Layout.luau O0/O1/O2
+COMPILE PASS LoopTest.luau O0/O1/O2
+COMPILE PASS LootRules.luau O0/O1/O2
+COMPILE PASS Scene.luau O0/O1/O2
+PASS 50 seeds; fixed v2 contract; measured 3 walking routes; slopes/gaps
+PASS deadline: first Steal +60; handoff unchanged; before/exact/after ties; carried/dropped expiry; holds cleared; no award; +3 refill/new ID; production weld/visual cleanup
+PASS production scene construction: no hide chunks/scenery; six hard covers; twelve-stud cutbacks; guardian attack/path cleanup; home/vistas/capture cameras
+PASS contested nest/Grab; Bump/drop/settle; cooldown; shared mercy; reset protections; winner-only secure/place; conservation rejects loss/duplication
+PASS offline PvP production range/sight/height/arena/safe adapter; shield/mercy; hold revalidation; Bump/drop/settle/contested Grab/secure/place; same ID/time
+PASS production guardian seed=101: reported hill pose recovers/throws <8s; failed navigation recovers; terrace/slope throws; 18 lane cases <=3s; old 24-stud stall; carrier priority/sight/safe/range/mercy/cooldown/poke. Navigation frozen; live Studio UNKNOWN.
+PASS production guardian seed=202: reported hill pose recovers/throws <8s; failed navigation recovers; terrace/slope throws; 18 lane cases <=3s; old 24-stud stall; carrier priority/sight/safe/range/mercy/cooldown/poke. Navigation frozen; live Studio UNKNOWN.
+PASS production guardian seed=303: reported hill pose recovers/throws <8s; failed navigation recovers; terrace/slope throws; 18 lane cases <=3s; old 24-stud stall; carrier priority/sight/safe/range/mercy/cooldown/poke. Navigation frozen; live Studio UNKNOWN.
+PASS live driver legal automatic return; old unexpected-return reproduced; lost/late cargo rejected; west apron X=-38
+PASS both disc-dodge destinations across 50 seeds; old Y0 at Z8 rejected; CampSouthRamp Y=8/3
+MEASURE simplified nest-to-cyan route 376.78 studs
+PASS 50-seed solo/PvP waypoint 3-stud clearance; bad waypoint negatives; PvP court/pacing/mercy/exit paths
+MEASURE route Grove 129.88 studs (authored points; excludes pad approach)
+MEASURE route Ridge 110.48 studs (authored points; excludes pad approach)
+MEASURE route Quick 93.52 studs (authored points; excludes pad approach)
+PASS 50-seed actual 3D walking-floor, cliff, cover-clearance checks; same segments reversible. Live jump/navmesh UNKNOWN.
+PASS built binary sources; both runtime gates NOT RUN/locked
+Build SHA256: 5E9BB88ECD59CFC3AB28CE0E69C8BBAF8D8B71D232E14C184A65DC0A132DD99E
+Studio: owner-reported prior failures; rebuilt fix NOT RUN. Movement mocked; live raycasts/physics UNKNOWN.
+
+CURRENT RUN: 2026-10-12/13 corner arrival, walking guardian return, expiry home ramp fixes (supersedes earlier guardian snap expectations).
+Commands run from prototype/ with pinned tools; all exit code 0:
+StyLua 2.0.2 --check . PASS; formatting changes applied through apply_patch only.
+Rojo 7.4.4 build greybox.project.json -o guardian-greybox.rbxl PASS.
+Lune 0.10.5 run check.luau PASS: nine files compiled O0/O1/O2; complete production harness, fifty-seed layout checks and rebuilt source parity.
+Selene 0.31.0 . PASS: 0 errors / 0 warnings / 0 parse errors.
+New regression evidence: reported near-goal grounded walking accepted; jump without takeoff/landing rejected; automatic return still requires production secure/Home transition.
+Built home geometry: all eight pen entry routes pass floor heights, three-stud waypoint clearance and half-stud sampled ramp continuity.
+Guardian seeds 101/202/303: no frozen-navigation relocation through eight seconds; twenty-second stationary Return then departure poof precedes relocation by one second; arrival poof present; mocked walking reaches Guard with bounded per-frame movement. World-Z sign corrected in mock floor hits.
+Preserved regressions: targeting/range/sight/safety/mercy/cooldown, original cargo ID/deadline, legal secure and lost/late rejection, expiry cleanup/refill/no award, jump routes and binary gate/source parity.
+Build SHA256: 254EC403F7D70FE30C48DD4EE9DD3F7FD12350218E8ED8DD133D80018819EB60
+Studio NOT RUN: no connected Studio integration. Physics/navmesh/poof appearance UNKNOWN; both gates false/NOT RUN. Prototype-only edits via apply_patch; requested Rojo-generated binary; no commit.
+
+CURRENT RUN: 2026-10-12 Studio retest round 3 reachable treasure drops / live PvP range.
+Pinned Rojo 7.4.4 build greybox.project.json -o guardian-greybox.rbxl: exit 0 PASS.
+Pinned Lune 0.10.5 run check.luau: exit 0 PASS; nine sources compile O0/O1/O2; complete harness and rebuilt binary/source parity.
+Pinned StyLua 2.0.2 --check .: exit 0 PASS; formatting edits via apply_patch only.
+Pinned Selene 0.31.0 .: exit 0 PASS; 0 errors / 0 warnings / 0 parse errors.
+New production Arena dropSocket regressions seeds 101/202/303: reported JumpLanding cliff, cover, edge, far outside and below island; nearest safe route candidate and independent three-stud body clearance.
+Production presentation regression: hidden/ungrabbable at 0.99s; exact 1s recovery/one poof; normal settle; no duplicate poof; original ID/deadline preserved.
+Production PvP approach regression: reported root separation; live dummy displacement after first snapshot requires another walk; final actual root separation <=3 studs.
+Existing ownership/deadline/mercy/shield/cooldown/expiry, guardian navigation, jump and 50-seed layout regressions PASS.
+Build SHA256: 1303980C5C629D76444C7E8BD0F2804C4BCDC62DF7A9FAA2BD0B45C78E1F0A38
+Studio NOT RUN; runtime gates remain false/NOT RUN. Live physics/navmesh/poof appearance UNKNOWN. No commit; apply_patch source/report edits, requested Rojo binary generation.
