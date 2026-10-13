@@ -4,7 +4,7 @@ local Layout = require(game:GetService("ReplicatedStorage"):WaitForChild("Greybo
 local SSS = game:GetService("ServerScriptService")
 local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("GreyboxConfig"))
 local function at(arena, x, y, z)
-	return (arena and arena.origin or Vector3.zero) + Vector3.new(x, y + 3, z)
+	return (arena and arena.origin or Vector3.zero) + Vector3.new(x, y + 3, arena and -z or z)
 end
 -- Resolve against real collidable geometry; never target guessed root heights.
 local function validator(world, log)
@@ -19,7 +19,7 @@ local function validator(world, log)
 		params.FilterType, params.FilterDescendantsInstances = Enum.RaycastFilterType.Include, parts
 		params.RespectCanCollide = true
 		local function down(x, z)
-			return workspace:Raycast(Vector3.new(x, 45, z), Vector3.new(0, -70, 0), params)
+			return workspace:Raycast(Vector3.new(x, position.Y + 42, z), Vector3.new(0, -70, 0), params)
 		end
 		local function walkable(hit)
 			return hit
@@ -78,10 +78,16 @@ end
 local function homePoints(pen)
 	local side = pen.marker.Position.X < 0 and -1 or 1
 	return {
-		{ position = at(nil, 0, 0, -5), name = "home portal" },
-		{ position = at(nil, side * 60, 0, -12), name = "home aisle" },
-		{ position = at(nil, side * 60, 0, pen.marker.Position.Z), name = "own pen aisle" },
-		{ position = Vector3.new(pen.marker.Position.X - side * 5, 3, pen.marker.Position.Z), name = "own pen" },
+		{ position = at(nil, 0, 3, Config.HomePortalApproachZ), name = "home portal" },
+		{ position = at(nil, side * Config.HomeAisleX, 0, Config.HomeSpawnZ), name = "home aisle" },
+		{
+			position = at(nil, side * Config.HomeAisleX, 0, pen.marker.Position.Z),
+			name = "own pen aisle",
+		},
+		{
+			position = Vector3.new(pen.marker.Position.X - side * 5, 3, pen.marker.Position.Z),
+			name = "own pen",
+		},
 	}
 end
 local function driver(actor, states, api, log, checked)
@@ -98,6 +104,7 @@ local function driver(actor, states, api, log, checked)
 		local started, progressed, best, nextLog = os.clock(), os.clock(), math.huge, 0
 		local airborne, landed, launched = false, false, false
 		local expected = states[actor].run
+		local cargo = states[actor].item
 		if jump then
 			h:Move(Vector3.zero, false)
 			while os.clock() < (states[actor].slowUntil or 0) or h.FloorMaterial == Enum.Material.Air do
@@ -110,6 +117,14 @@ local function driver(actor, states, api, log, checked)
 		while true do
 			assert(actor.Character == character and h.Health > 0, "character lost")
 			api.audit()
+			if cargo and cargo.state ~= "Secured" then
+				assert(os.clock() < cargo.escapeDeadline, "escape deadline exceeded at " .. name)
+			end
+			if autoReturn and cargo and not states[actor].item and states[actor].phase == "Run" then
+				h:Move(Vector3.zero, false)
+				log("return interrupted by legal drop / recover before crossing cyan")
+				return false
+			end
 			if autoReturn and states[actor].phase == "Home" then
 				break
 			end
@@ -173,6 +188,7 @@ local function driver(actor, states, api, log, checked)
 			assert(airborne and landed, "no takeoff/landing")
 			SSS:SetAttribute("GreyboxLoopTestJumpObserved", true)
 		end
+		return true
 	end
 	return walk, r, h
 end
@@ -181,16 +197,29 @@ local function act(api, actor, name, ...)
 	assert(ok, "illegal refusal " .. name .. ": " .. tostring(why))
 end
 local function hold(api, actor, action)
-	act(api, actor, "holdAction", action, "begin")
-	task.wait(Config.HoldSeconds[action] + 0.05)
-	act(api, actor, "holdAction", action, "finish")
-	api.audit()
+	for attempt = 1, Config.TestHoldRetries do
+		act(api, actor, "holdAction", action, "begin")
+		task.wait(Config.HoldSeconds[action] + 0.05)
+		local ok, why = api.holdAction(actor, action, "finish")
+		api.audit()
+		if ok then
+			return
+		end
+		assert(action ~= "Bump" and why == "missing/short hold", "illegal hold refusal: " .. tostring(why))
+		assert(attempt < Config.TestHoldRetries, "hold repeatedly interrupted by guardian")
+	end
 end
 local function recoveryPoint(checked, item)
 	-- Danger-floor sockets need only avatar clearance in production. Find a test
 	-- stand point near the same item with our stricter 3-stud clearance and Grab range.
 	for _, offset in
-		{ Vector3.zero, Vector3.new(2, 0, 0), Vector3.new(-2, 0, 0), Vector3.new(0, 0, 2), Vector3.new(0, 0, -2) }
+		{
+			Vector3.zero,
+			Vector3.new(2, 0, 0),
+			Vector3.new(-2, 0, 0),
+			Vector3.new(0, 0, 2),
+			Vector3.new(0, 0, -2),
+		}
 	do
 		local ok, position = pcall(checked, item.position + Vector3.new(0, 3, 0) + offset, "recover " .. item.id)
 		if ok then
@@ -207,13 +236,92 @@ local function recover(api, actor, states, walk, item, log, checked)
 		states[actor].phase == "Run" and api.rules.active == item and item.state == "Dropped",
 		"loot lost/taken before recovery"
 	)
-	local timestamp = item.firstPickup
+	local timestamp, escapeDeadline = item.firstPickup, item.escapeDeadline
 	log("legal drop / recover " .. item.id)
-	walk(recoveryPoint(checked, item), "recover same dropped loot")
-	task.wait(math.max(0, item.settle - os.clock()) + 0.03)
-	hold(api, actor, "Grab")
-	assert(states[actor].item == item and item.firstPickup == timestamp, "recovery identity/timestamp changed")
+	for attempt = 1, Config.TestRecoverRetries do
+		walk(recoveryPoint(checked, item), "recover same dropped loot")
+		task.wait(math.max(0, item.settle - os.clock()) + 0.03)
+		local ok, why = api.holdAction(actor, "Grab", "begin")
+		if ok then
+			task.wait(Config.HoldSeconds.Grab + 0.05)
+			ok, why = api.holdAction(actor, "Grab", "finish")
+		end
+		api.audit()
+		if ok then
+			break
+		end
+		assert(api.rules.active == item and item.state == "Dropped", "recovery loot lost/taken")
+		log("recovery interrupted / retry " .. attempt .. " / " .. tostring(why))
+		assert(attempt < Config.TestRecoverRetries, "recovery retry limit")
+	end
+	assert(
+		states[actor].item == item and item.firstPickup == timestamp and item.escapeDeadline == escapeDeadline,
+		"recovery identity/timestamp changed"
+	)
 	api.audit()
+end
+-- Live production expiry: no shortened clock, immunity, teleport or synthetic award.
+local function expiryTest(player, states, pens, world, api, log, walk)
+	local s = states[player]
+	local count, completed = pens[s.slot].count, s.completed
+	walk(at(nil, 0, 3, Config.HomePortalApproachZ), "expiry home portal")
+	act(api, player, "enterRun")
+	local arena = api.arena()
+	local waitUntil = os.clock() + 8
+	while not api.rules.active or api.rules.active.state ~= "Nest" do
+		assert(os.clock() < waitUntil, "expiry nest unavailable")
+		task.wait(0.05)
+	end
+	for _, p in arena.layout.routes.Quick do
+		walk(at(arena, p.x, p.y, p.z), "expiry approach")
+	end
+	hold(api, player, "Steal")
+	local item = assert(s.item, "expiry missing cargo")
+	local deadline = item.escapeDeadline
+	assert(math.abs(deadline - item.firstPickup - Config.EscapeSeconds) < 0.001, "deadline start")
+	while os.clock() < deadline + 0.15 do
+		api.audit()
+		task.wait(0.05)
+	end
+	assert(item.state == "Retired" and not item.holder and not item.visual and not item.weld, "expiry orphan cargo")
+	assert(not s.item and not api.rules.active, "expiry duplicate active/holder")
+	for _, actorState in states do
+		assert(not actorState.hold or actorState.hold.item ~= item, "expiry orphan hold")
+	end
+	assert(s.completed == completed and pens[s.slot].count == count, "expiry awarded")
+	assert(not api.placeItem(player, s.slot), "expired placement accepted")
+	assert(not api.holdAction(player, "Grab", "begin"), "expired Grab accepted")
+	assert(world:GetAttribute("EscapeDeadline") == nil, "stale shared clock")
+	waitUntil = os.clock() + 4
+	while not api.rules.active do
+		assert(os.clock() < waitUntil, "expiry refill missing")
+		task.wait(0.05)
+	end
+	local replacement = api.rules.active
+	assert(
+		replacement.id ~= item.id and replacement.state == "Nest" and not replacement.escapeDeadline,
+		"expiry reused ID/clock"
+	)
+	assert(api.rules.respawnAt >= deadline + Config.RespawnSeconds, "early refill")
+	api.audit()
+	local originals, replacements = 0, 0
+	for _, p in workspace:GetDescendants() do
+		if p:IsA("BasePart") then
+			if p:GetAttribute("LootId") == item.id then
+				originals += 1
+			end
+			if p:GetAttribute("LootId") == replacement.id then
+				replacements += 1
+			end
+		end
+	end
+	assert(originals == 0 and replacements == 1, "expiry physical duplicate")
+	for i = #arena.layout.routes.Quick, 1, -1 do
+		local p = arena.layout.routes.Quick[i]
+		walk(at(arena, p.x, p.y, p.z), "empty return after expiry")
+	end
+	act(api, player, "returnRun")
+	log("expiry PASS / retired " .. item.id .. " / fresh " .. replacement.id .. " / no award or duplicate")
 end
 local function place(player, states, pens, api, walk, log, item, initialCount)
 	local s = states[player]
@@ -221,8 +329,8 @@ local function place(player, states, pens, api, walk, log, item, initialCount)
 	assert(not api.returnRun(player), "duplicate return accepted")
 	local pen = pens[s.slot]
 	local side = pen.marker.Position.X < 0 and -1 or 1
-	walk(at(nil, side * 60, 0, -12), "home aisle")
-	walk(at(nil, side * 60, 0, pen.marker.Position.Z), "own pen aisle")
+	walk(at(nil, side * Config.HomeAisleX, 0, Config.HomeSpawnZ), "home aisle")
+	walk(at(nil, side * Config.HomeAisleX, 0, pen.marker.Position.Z), "own pen aisle")
 	walk(Vector3.new(pen.marker.Position.X - side * 5, 3, pen.marker.Position.Z), "own pen")
 	act(api, player, "placeItem", s.slot)
 	assert(not api.placeItem(player, s.slot), "duplicate place accepted")
@@ -243,7 +351,7 @@ function Test.run(player, states, pens, world, api, log)
 	local checked, preflight = validator(world, log)
 	preflight(homePoints(pens[s.slot]))
 	local walk, r, h = driver(player, states, api, log, checked)
-	walk(at(nil, 0, 0, -5), "home portal")
+	walk(at(nil, 0, 3, Config.HomePortalApproachZ), "home portal")
 	act(api, player, "enterRun")
 	local arena = api.arena()
 	local started = s.started
@@ -278,6 +386,16 @@ function Test.run(player, states, pens, world, api, log)
 				telegraph = t
 				break
 			end
+			local flat =
+				Vector3.new(r.Position.X - arena.guardian.Position.X, 0, r.Position.Z - arena.guardian.Position.Z)
+			if flat.Magnitude < Config.GuardianThrowMinRange then
+				local north, south = at(arena, 0, 0, 8), at(arena, 0, 0, -4)
+				local destination = (north - arena.guardian.Position).Magnitude
+							> (south - arena.guardian.Position).Magnitude
+						and north
+					or south
+				walk(destination, "make room for readable throw")
+			end
 			assert(os.clock() - began <= 8, "no normal throw/telegraph >8s")
 			api.audit()
 			task.wait(0.03)
@@ -285,12 +403,17 @@ function Test.run(player, states, pens, world, api, log)
 		assert(
 			telegraph.disc.Parent
 				and telegraph.disc:GetAttribute("ImpactDue") - telegraph.disc:GetAttribute("TelegraphStarted")
-					>= 1.19,
+					>= Config.ThrowSeconds - 0.01,
 			"telegraph missing/pre-impact delay"
 		)
 		local locked = telegraph.position
-		walk(at(arena, 0, 0, -4), "Dodge locked red disc")
-		assert((Vector3.new(r.Position.X, locked.Y, r.Position.Z) - locked).Magnitude > 4, "failed disc dodge")
+		local north, south = at(arena, 0, 0, 8), at(arena, 0, 0, -4)
+		local destination = (north - locked).Magnitude > (south - locked).Magnitude and north or south
+		walk(destination, "Dodge locked red disc")
+		assert(
+			(Vector3.new(r.Position.X, locked.Y, r.Position.Z) - locked).Magnitude > Config.ThrowRadius,
+			"failed disc dodge"
+		)
 		local deadline = os.clock() + 8
 		while arena.attack == telegraph do
 			assert(os.clock() < deadline, "throw stuck >8s")
@@ -301,13 +424,22 @@ function Test.run(player, states, pens, world, api, log)
 	end
 	for _, step in carrySteps do
 		recover(api, player, states, walk, item, log, checked)
-		walk(
+		local reached = walk(
 			at(arena, step.x, step.y, step.z),
 			step.kind .. " " .. step.name,
 			step.kind == "Jump",
 			step.kind == "Return",
 			step.takeoff and at(arena, step.takeoff.x, step.takeoff.y, step.takeoff.z)
 		)
+		if not reached then
+			for attempt = 1, Config.TestRecoverRetries do
+				recover(api, player, states, walk, item, log, checked)
+				if walk(at(arena, step.x, step.y, step.z), step.name .. " retry", false, true) then
+					break
+				end
+				assert(attempt < Config.TestRecoverRetries, "return retry limit")
+			end
+		end
 		if step.kind == "Dodge" then
 			dodge()
 		end
@@ -324,7 +456,9 @@ function Test.run(player, states, pens, world, api, log)
 	end
 	SSS:SetAttribute("GreyboxLoopTestPortalToPortal", os.clock() - started)
 	SSS:SetAttribute("GreyboxLoopTestCatches", s.catches or 0)
+	assert(item.securedAt < item.escapeDeadline, "solo did not escape inside deadline")
 	place(player, states, pens, api, walk, log, item, 0)
+	expiryTest(player, states, pens, world, api, log, walk)
 	return "steal, one stone set, one carrying hill, one red-disc dodge, secure/place; conserved " .. item.id
 end
 function Test.pvp(player, states, pens, world, api, log, setDummy)
@@ -334,7 +468,7 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 	local checked, preflight = validator(world, log)
 	preflight(homePoints(pens[s.slot]))
 	local walk = driver(player, states, api, log, checked)
-	walk(at(nil, 0, 0, -5), "home portal")
+	walk(at(nil, 0, 3, Config.HomePortalApproachZ), "home portal")
 	act(api, player, "enterRun")
 	local arena = api.arena()
 	local routes, points = Layout.pvpRoutes(), {}
@@ -359,10 +493,11 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 	hold(api, dummy, "Steal")
 	local ds = states[dummy]
 	local item = ds.item
-	local timestamp = item.firstPickup
+	local timestamp, escapeDeadline = item.firstPickup, item.escapeDeadline
 	-- Consume the real one-time shield by waiting, never altering protection state.
 	local dummyWalk = driver(dummy, states, api, log, checked)
 	for i = 2, #routes.Dummy do
+		recover(api, dummy, states, dummyWalk, item, log, checked)
 		local p = routes.Dummy[i]
 		dummyWalk(at(arena, p.x, p.y, p.z), "dummy court approach " .. i)
 	end
@@ -373,38 +508,64 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 		dummyWalk(at(arena, -64, 0, -56), "dummy shield pacing")
 		recover(api, dummy, states, dummyWalk, item, log, checked)
 	end
-	walk(at(arena, -62, 0, -56), "within 4 of dummy")
-	local vulnerableDeadline = os.clock() + 8
-	while os.clock() < ds.mercy do
-		assert(os.clock() < vulnerableDeadline, "no legal handoff window >8s")
-		dummyWalk(at(arena, -72, 0, -48), "dummy dodges during impact mercy")
-		dummyWalk(at(arena, -64, 0, -56), "dummy returns to handoff court")
+	local handoff = false
+	for attempt = 1, Config.TestRecoverRetries do
 		recover(api, dummy, states, dummyWalk, item, log, checked)
+		dummyWalk(at(arena, -64, 0, -56), "dummy handoff court")
+		walk(at(arena, -62, 0, -56), "within 4 of dummy")
+		local vulnerableDeadline = os.clock() + 8
+		while os.clock() < ds.mercy or os.clock() < s.cooldown or not ds.item do
+			assert(os.clock() < vulnerableDeadline, "no legal handoff window >8s")
+			dummyWalk(at(arena, -72, 0, -48), "dummy dodges during impact mercy")
+			dummyWalk(at(arena, -64, 0, -56), "dummy returns to handoff court")
+			recover(api, dummy, states, dummyWalk, item, log, checked)
+		end
+		local pr = api.root(player)
+		local dr = api.root(dummy)
+		assert(ds.item == item and item.holder == dummy and item.state == "Carried", "dummy not carrying at Bump")
+		assert((pr.Position - dr.Position).Magnitude <= 4, "Bump setup outside actual 4-stud root range")
+		log("Bump begin / actual distance " .. (pr.Position - dr.Position).Magnitude)
+		act(api, player, "holdAction", "Bump", "begin")
+		task.wait(Config.HoldSeconds.Bump + 0.05)
+		local ok, why = api.holdAction(player, "Bump", "finish")
+		api.audit()
+		if ok then
+			handoff = true
+			break
+		end
+		assert(
+			why == "missing/short hold" or why == "Taken" or why == "carrier/Taken",
+			"illegal Bump refusal: " .. tostring(why)
+		)
+		log("guardian interrupted PvP handoff / retry " .. attempt)
+		assert(attempt < Config.TestRecoverRetries, "PvP Bump retry limit")
 	end
-	local pr = api.root(player)
-	local dr = api.root(dummy)
-	assert(ds.item == item and item.holder == dummy and item.state == "Carried", "dummy not carrying at Bump")
-	assert((pr.Position - dr.Position).Magnitude <= 4, "Bump setup outside actual 4-stud root range")
-	log("Bump begin / actual distance " .. (pr.Position - dr.Position).Magnitude)
-	hold(api, player, "Bump")
+	assert(handoff, "no completed production Bump")
 	assert(item.state == "Dropped" and not ds.item and not s.item, "Bump directly granted/lost/duplicated")
-	assert(item.firstPickup == timestamp, "handoff rerolled timestamp")
+	assert(item.firstPickup == timestamp and item.escapeDeadline == escapeDeadline, "handoff rerolled timestamp")
 	assert(not api.holdAction(player, "Grab", "begin"), "settle allowed precharge")
 	dummyWalk(at(arena, -68, 0, -52), "former carrier leaves contest")
-	walk(recoveryPoint(checked, item), "dropped loot")
-	task.wait(math.max(0, item.settle - os.clock()) + 0.03)
-	-- One fresh Grab wins; repeated completion must be rejected.
-	act(api, player, "holdAction", "Grab", "begin")
-	task.wait(0.45)
-	act(api, player, "holdAction", "Grab", "finish")
+	-- A fresh production Grab wins; legal interruptions may retry the same item.
+	recover(api, player, states, walk, item, log, checked)
 	assert(not api.holdAction(player, "Grab", "finish"), "duplicate Grab accepted")
 	assert(s.item == item and item.holder == player and item.state == "Carried", "handoff conservation")
 	api.audit()
 	SSS:SetAttribute("GreyboxPvpTestItemId", item.id)
 	SSS:SetAttribute("GreyboxPvpTestHandoffs", 1)
 	walk(at(arena, -26, 0, -56), "winner west approach")
-	walk(at(arena, -22, 0, -56), "winner auto secure", false, true)
+	for attempt = 1, Config.TestRecoverRetries do
+		recover(api, player, states, walk, item, log, checked)
+		if walk(at(arena, -22, 0, -56), "winner auto secure", false, true) then
+			break
+		end
+		assert(attempt < Config.TestRecoverRetries, "PvP return retry limit")
+	end
+	assert(
+		item.securedAt < item.escapeDeadline and item.escapeDeadline == escapeDeadline,
+		"PvP deadline refreshed/late"
+	)
 	place(player, states, pens, api, walk, log, item, initialCount)
+	expiryTest(player, states, pens, world, api, log, walk)
 	return "legal Bump/drop/settle/Grab/secure/place with dummy carrier; no duplicate/lost " .. item.id
 end
 return Test

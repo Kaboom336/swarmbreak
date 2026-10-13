@@ -1,13 +1,20 @@
 local Pathfinding = game:GetService("PathfindingService")
 local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("GreyboxConfig"))
 local Layout = require(game:GetService("ReplicatedStorage"):WaitForChild("GreyboxLayout"))
+local Scene = require(game:GetService("ReplicatedStorage"):WaitForChild("GreyboxScene"))
 local Arena = {}
-local detectRange, throwRange = 24, 56
-local leashRadius, stuckSeconds, returnSeconds = 32, 2, 2.5
-local campOffset = Vector3.new(8, 4, 32)
+local detectRange, throwRange = Config.GuardianDetectRange, Config.GuardianThrowRange
+local leashRadius, stuckSeconds, returnSeconds =
+	Config.GuardianLeashRadius, Config.GuardianStuckSeconds, Config.GuardianReturnSeconds
+local campOffset =
+	Vector3.new(Config.GuardianGuardOffset.x, Config.GuardianGuardOffset.y, -Config.GuardianGuardOffset.z)
 local cyan, red = Color3.fromRGB(60, 210, 230), Color3.fromRGB(255, 40, 40)
 local function vector(p)
-	return Vector3.new(p.x, p.y, p.z)
+	return Vector3.new(p.x, p.y, -p.z)
+end
+-- Map north (+local Z) points toward world -Z, keeping west on screen-left.
+function Arena.position(a, x, y, z)
+	return a.origin + Vector3.new(x, y, -z)
 end
 function Arena.build(world, layout, make, label)
 	local model = Instance.new("Model")
@@ -15,13 +22,13 @@ function Arena.build(world, layout, make, label)
 	model:SetAttribute("Seed", layout.seed)
 	model:SetAttribute("RecipeVersion", Config.RecipeVersion)
 	model:SetAttribute("ArenaId", 1)
-	model:SetAttribute("Difficulty", "Easy")
+	model:SetAttribute("Difficulty", "Meadow")
 	local a = {
 		model = model,
 		layout = layout,
-		origin = Vector3.new(500, 0, 0),
+		origin = Vector3.new(Config.MeadowX, Config.MeadowHeight, Config.MeadowZ),
 		occupants = {},
-		mode = "Patrol",
+		mode = "Guard",
 		untilTime = 0,
 		nextThrow = 0,
 		nextPath = 0,
@@ -32,7 +39,6 @@ function Arena.build(world, layout, make, label)
 		chaseTicks = 0,
 		throws = 0,
 		impacts = 0,
-		hides = {},
 		obstacles = {},
 	}
 	local chunks = {}
@@ -53,7 +59,7 @@ function Arena.build(world, layout, make, label)
 			if not (p.id == "I01" and port[1] == "S") and not (p.id == "I02" and port[1] == "N") then
 				local socket = Instance.new("Part")
 				socket.Name, socket.Size, socket.Position =
-					"Port" .. port[1], Vector3.new(12, 0.05, 1), a.origin + Vector3.new(p.x + port[2], 0, p.z + port[3])
+					"Port" .. port[1], Vector3.new(12, 0.05, 1), Arena.position(a, p.x + port[2], 0, p.z + port[3])
 				socket.Anchored, socket.Transparency, socket.CanCollide, socket.CanQuery, socket.Parent =
 					true, 1, false, false, chunk
 				local attachment = Instance.new("Attachment")
@@ -64,7 +70,7 @@ function Arena.build(world, layout, make, label)
 		end
 	end
 	local function build(name, size, position, color, role)
-		local p = make(model, name, size, a.origin + position, color)
+		local p = make(model, name, size, Arena.position(a, position.X, position.Y, position.Z), color)
 		if name ~= "IslandGround" and name ~= "RockUnderside" then
 			for definition, chunk in chunks do
 				if
@@ -111,7 +117,7 @@ function Arena.build(world, layout, make, label)
 			end
 		end
 	end
-	build("RockUnderside", Vector3.new(Config.IslandSize - 8, 8, Config.IslandSize - 8), Vector3.new(0, -10, 0))
+
 	for _, b in layout.solids do
 		build(
 			b.name,
@@ -123,37 +129,44 @@ function Arena.build(world, layout, make, label)
 	end
 	for _, r in layout.ramps do
 		local start, finish = vector(r.a), vector(r.b)
-		local p = build(r.name, Vector3.new(r.width, 1, (finish - start).Magnitude), (start + finish) / 2)
-		p.CFrame = CFrame.lookAt(a.origin + (start + finish) / 2, a.origin + finish) * CFrame.new(0, -0.5, 0)
+		local p = build(
+			r.name,
+			Vector3.new(r.width, 1, (finish - start).Magnitude),
+			Vector3.new((start.X + finish.X) / 2, (start.Y + finish.Y) / 2, -(start.Z + finish.Z) / 2)
+		)
+		local forward = (finish - start).Unit
+		local right = forward:Cross(Vector3.yAxis).Unit
+		p.CFrame = CFrame.fromMatrix(a.origin + (start + finish) / 2, right, right:Cross(forward).Unit, -forward)
+			* CFrame.new(0, -0.5, 0)
 	end
 	for _, p in layout.pieces do
 		local marker =
 			build(p.id .. "Socket", Vector3.new(p.width, 0.03, p.depth), Vector3.new(p.x, 0.02, p.z), nil, "Marker")
 		marker.CanCollide, marker.CanQuery, marker.Transparency = false, false, 0.93
 	end
-	for _, h in layout.hides do
-		local p = build(
-			"HidePocket",
-			Vector3.new(h.w, 0.05, h.d),
-			Vector3.new(h.x, 0.04, h.z),
-			Color3.fromRGB(95, 160, 95),
-			"Marker"
-		)
-		p.CanCollide, p.CanQuery = false, false
-		label(p, h.log and "HIDE / two exits" or "HIDE / stop 0.5s")
-		table.insert(a.hides, { definition = h, marker = p })
-	end
 	a.safe = build("SafePadAndApron", Vector3.new(48, 0.06, 40), Vector3.new(0, 0.04, -58), cyan, "Marker")
 	a.safe.CanCollide, a.safe.CanQuery = false, false
-	a.dock = build("ReturnPortal", Vector3.new(10, 8, 2), Vector3.new(0, 4, -64), cyan, "Marker")
+	a.safe.Transparency = 0.88
+	local entryPad = build("SafeEntryPad", Vector3.new(32, 0.08, 24), Vector3.new(0, 0.08, -58), cyan, "Marker")
+	entryPad.CanCollide, entryPad.CanQuery, entryPad.Transparency = false, false, 0.65
+	local extension = build("SafeWestApron", Vector3.new(22, 0.06, 32), Vector3.new(-27, 0.04, -58), cyan, "Marker")
+	extension.CanCollide, extension.CanQuery, extension.Transparency = false, false, 0.88
+	a.dock = build("ReturnPortal", Vector3.new(10, 8, 2), Vector3.new(-24, 4, -58), cyan, "Marker")
 	a.dock.CanCollide, a.dock.CanQuery = false, false
+	a.dock.Transparency = 1
 	label(a.dock, "CYAN = secured / home")
-	a.guardian =
-		build("Guardian", Vector3.new(4, 11, 4), Vector3.new(8, 9.5, 32), Color3.fromRGB(155, 115, 95), "Marker")
+	a.guardian = build(
+		"Guardian",
+		Vector3.new(4, 11, 4),
+		Vector3.new(campOffset.X, campOffset.Y + 5.5, -campOffset.Z),
+		Color3.fromRGB(155, 115, 95),
+		"Marker"
+	)
 	a.guardian.CanCollide, a.guardian.CanQuery = false, false
 	a.arm = build("ThrowArm", Vector3.new(2, 6, 2), Vector3.new(11, 11, 32), nil, "Marker")
 	a.arm.CanCollide, a.arm.CanQuery = false, false
-	a.warning = label(a.guardian, "GUARDIAN / patrol")
+	a.warning = label(a.guardian, "GUARDIAN / guarding")
+	Scene.meadow(model, a.origin, layout, make)
 	a.params = RaycastParams.new()
 	a.params.FilterType, a.params.FilterDescendantsInstances = Enum.RaycastFilterType.Include, { model }
 	a.wallParams = RaycastParams.new()
@@ -173,7 +186,7 @@ function Arena.sight(a, from, to)
 end
 function Arena.safe(a, position, radius)
 	local p = position - a.origin
-	return Layout.protected(p.X, p.Z, radius)
+	return Layout.protected(p.X, -p.Z, radius)
 end
 function Arena.dropSocket(a, position)
 	local best, distance = nil, 6.001
@@ -219,12 +232,16 @@ local function clearPath(a)
 end
 local function returnToCamp(a, now, reason)
 	a.mode, a.untilTime, a.returnReason = "Return", now + returnSeconds, reason
-	a.target, a.lostTarget, a.searchActor, a.searchAt = nil, nil, nil, nil
+	a.target, a.lostTarget, a.searchAt = nil, nil, nil
 	a.progressAt, a.progressPosition = now, a.guardian.Position
 	clearPath(a)
 end
 function Arena.warn(a, actor, now)
+	if a.target == actor and (a.mode == "Chase" or a.mode == "Warn") then
+		return -- Pickup must not restart the approach warning.
+	end
 	a.target, a.mode, a.untilTime, a.targetSince = actor, "Warn", now + Config.WarningSeconds, now
+	a.chaseBegan = now + Config.WarningSeconds
 	a.lostTarget = nil
 	clearPath(a)
 	a.progressAt, a.progressPosition = now, a.guardian.Position
@@ -241,7 +258,7 @@ local function attack(a, actor, position, now, close)
 		start = now,
 		from = a.guardian.Position + Vector3.new(0, 3, 0),
 		close = close,
-		closeRadius = a.searchActor == actor and 4 or Config.CatchRadius,
+		closeRadius = Config.CatchRadius,
 		previous = a.guardian.Position + Vector3.new(0, 3, 0),
 	}
 	if not close then
@@ -249,7 +266,8 @@ local function attack(a, actor, position, now, close)
 		local disc = Instance.new("Part")
 		disc.Name, disc.Shape = "RedGroundDisc", Enum.PartType.Cylinder
 		disc.Size, disc.CFrame =
-			Vector3.new(0.08, 8, 8), CFrame.new(floor + Vector3.new(0, 0.09, 0)) * CFrame.Angles(0, 0, math.pi / 2)
+			Vector3.new(0.08, Config.ThrowRadius * 2, Config.ThrowRadius * 2),
+			CFrame.new(floor + Vector3.new(0, 0.09, 0)) * CFrame.Angles(0, 0, math.pi / 2)
 		disc.Color, disc.Material, disc.Transparency = red, Enum.Material.Neon, 0.55
 		disc.Anchored, disc.CanCollide, disc.CanQuery, disc.Parent = true, false, false, a.model
 		disc:SetAttribute("TelegraphStarted", now)
@@ -260,7 +278,8 @@ local function attack(a, actor, position, now, close)
 		outline.Name, outline.Parent = "DiscOutline", a.model
 		for i = 0, 23 do
 			local angle = i * math.pi / 12
-			local segmentPosition = floor + Vector3.new(math.cos(angle) * 4, 0.15, math.sin(angle) * 4)
+			local segmentPosition = floor
+				+ Vector3.new(math.cos(angle) * Config.ThrowRadius, 0.15, math.sin(angle) * Config.ThrowRadius)
 			local segment = Instance.new("Part")
 			segment.Size, segment.CFrame =
 				Vector3.new(0.12, 0.08, 1.05),
@@ -281,9 +300,35 @@ local function attack(a, actor, position, now, close)
 		a.guardian.CFrame += Vector3.new(0, -2.5, 0)
 	end
 end
-function Arena.tick(a, dt, now, actors, root, hitPlayer, goal)
+function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 	local guard = a.guardian
-	local camp = a.origin + campOffset
+	local nestCamp = a.origin + campOffset
+	local camp = a.guardCamp or nestCamp
+	if loot and loot.state == "Dropped" and a.guardedVersion ~= loot.version then
+		a.guardedVersion = loot.version
+		local delta = loot.position - nestCamp
+		local nearby = loot.position - guard.Position
+		if
+			Vector3.new(delta.X, 0, delta.Z).Magnitude <= Config.GuardianDroppedGuardRadius
+			or Vector3.new(nearby.X, 0, nearby.Z).Magnitude <= Config.GuardianDroppedGuardRadius
+		then
+			local beside = loot.position + Vector3.new(Config.GuardianGuardOffset.x, 0, 0)
+			camp = Arena.floor(a, beside) or nestCamp
+			a.guardCamp = camp
+			if not a.attack then
+				returnToCamp(a, now, "guard nearby dropped treasure")
+			else
+				a.returnAfterAttack = true
+			end
+		end
+	elseif not loot or loot.state ~= "Dropped" then
+		a.guardCamp, a.guardedVersion, a.returnAfterAttack = nil, nil, nil
+		camp = nestCamp
+	end
+	if a.returnAfterAttack and not a.attack then
+		a.returnAfterAttack = nil
+		returnToCamp(a, now, "guard nearby dropped treasure")
+	end
 	logState(a, root)
 	-- Windups stay planted; recovery takes priority after impact.
 	if not a.attack then
@@ -296,10 +341,10 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal)
 		if a.mode == "Return" then
 			logState(a, root)
 			local home = camp + Vector3.new(0, 5.5, 0)
-			if (guard.Position - home).Magnitude < 3 or now >= a.untilTime then
+			if (guard.Position - home).Magnitude < Config.GuardianGuardArrival or now >= a.untilTime then
 				-- NPC-only fallback: a broken navmesh must never park it on a hill.
 				guard.CFrame = CFrame.new(home)
-				a.mode, a.returnReason, a.patrol = "Patrol", nil, 1
+				a.mode, a.returnReason, a.patrol = "Guard", nil, 1
 				a.progressAt, a.progressPosition = nil, nil
 				clearPath(a)
 				logState(a, root)
@@ -312,7 +357,7 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal)
 	local function visible(actor, detect)
 		local s = actors[actor]
 		local r = root(actor)
-		if not s or s.phase ~= "Run" or not r or Arena.safe(a, r.Position) or s.hidden then
+		if not s or s.phase ~= "Run" or not r or Arena.safe(a, r.Position) then
 			return false
 		end
 		local distance = (r.Position - guard.Position).Magnitude
@@ -330,7 +375,11 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal)
 		if t.rock then
 			local nextPoint = t.from:Lerp(t.position + Vector3.new(0, 1, 0), alpha)
 				+ Vector3.new(0, 40 * alpha * (1 - alpha), 0)
-			t.fill.Size = Vector3.new(0.1, math.max(0.1, 8 * alpha), math.max(0.1, 8 * alpha))
+			t.fill.Size = Vector3.new(
+				0.1,
+				math.max(0.1, Config.ThrowRadius * 2 * alpha),
+				math.max(0.1, Config.ThrowRadius * 2 * alpha)
+			)
 			local obstruction = workspace:Spherecast(t.previous, 0.9, nextPoint - t.previous, a.params)
 			-- Floor at the locked destination is an impact; other geometry intercepts.
 			if obstruction and (obstruction.Position - t.position).Magnitude > 2 then
@@ -349,7 +398,7 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal)
 						s.phase == "Run"
 						and r
 						and not Arena.safe(a, r.Position)
-						and math.abs(r.Position.Y - t.position.Y) <= 5
+						and math.abs(r.Position.Y - t.position.Y) <= Config.GuardianImpactHeight
 					then
 						local distance = (Vector3.new(r.Position.X, t.position.Y, r.Position.Z) - t.position).Magnitude
 						local closeLegal = not t.close
@@ -384,16 +433,10 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal)
 	local target = a.target
 	if target and not visible(target, false) then
 		a.lostTarget = target
-		local s = actors[target]
-		a.searchActor = s and s.hidePocket and target or nil
-		a.target, a.mode, a.untilTime = nil, "Search", now + 3
-		a.searchAt, a.sniffAt = a.lastSeen, now + 1
-		if a.searchActor then
-			a.searchAt = a.origin + vector(s.hidePocket.definition.opening)
-			a.untilTime, a.sniffAt = now + 8, nil
-		end
+		a.target, a.mode, a.untilTime = nil, "Search", now + Config.GuardianSearchSeconds
+		a.searchAt = a.lastSeen
 	end
-	if a.mode ~= "Return" and (not a.target or now - (a.targetSince or 0) >= 2) then
+	if a.mode ~= "Return" and (not a.target or now - (a.targetSince or 0) >= Config.GuardianTargetLockSeconds) then
 		local candidate, best = nil, math.huge
 		for actor, s in actors do
 			if visible(actor, actor ~= a.target and actor ~= a.lostTarget) then
@@ -414,7 +457,7 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal)
 			a.mode = "Chase"
 		end
 	elseif a.mode == "Search" and now >= a.untilTime then
-		a.mode, a.lostTarget, a.searchActor = "Patrol", nil, nil
+		a.mode, a.lostTarget = "Guard", nil
 	end
 	logState(a, root)
 	a.warning.Text = a.mode == "Warn" and "!" or (a.mode == "Search" and "?" or "GUARDIAN / " .. a.mode)
@@ -425,7 +468,7 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal)
 			if (towards - guard.Position).Magnitude > 0.1 then
 				guard.CFrame = CFrame.lookAt(guard.Position, towards)
 			end
-			goal(target, "! / move: 1.2s warning")
+			goal(target, "! / move: " .. Config.WarningSeconds .. "s warning")
 		end
 		return
 	end
@@ -437,70 +480,50 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal)
 		goal(target, "RUN! / dodge the red disc")
 		local distance = (r.Position - guard.Position).Magnitude
 		if now >= s.mercy and now >= a.nextThrow then
-			if distance >= 12 and distance <= throwRange then
-				attack(a, target, r.Position, now, false)
+			if distance >= Config.GuardianThrowMinRange and distance <= throwRange then
+				local velocity = r.AssemblyLinearVelocity or Vector3.zero
+				local lead = Vector3.new(velocity.X, 0, velocity.Z) * Config.GuardianLeadSeconds
+				if lead.Magnitude > Config.GuardianLeadMaxStuds then
+					lead = lead.Unit * Config.GuardianLeadMaxStuds
+				end
+				local predicted = r.Position + lead
+				if not Arena.floor(a, predicted) or Arena.safe(a, predicted, Config.ThrowRadius) then
+					predicted = r.Position
+				end
+				attack(a, target, predicted, now, false)
 				logState(a, root)
 				return
 			end
 			local horizontal = (Vector3.new(r.Position.X, guard.Position.Y, r.Position.Z) - guard.Position).Magnitude
-			if horizontal <= Config.CatchRadius and math.abs(r.Position.Y - (guard.Position.Y - 2.5)) <= 3 then
+			if
+				horizontal <= Config.CatchRadius
+				and math.abs(r.Position.Y - (guard.Position.Y - 2.5)) <= Config.GuardianPokeVertical
+			then
 				attack(a, target, r.Position, now, true)
 				return
 			end
-		end
-		if distance >= 12 and distance <= throwRange then
-			-- Waiting for mercy/cooldown at a throw spot is not stuck navigation.
-			a.progressAt, a.progressPosition = nil, nil
-			return
 		end
 	elseif a.mode == "Return" then
 		destination = camp
 	elseif a.mode == "Search" then
 		destination = a.searchAt
-		if a.searchActor then
-			local s, r = actors[a.searchActor], root(a.searchActor)
-			if
-				s
-				and r
-				and s.phase == "Run"
-				and (guard.Position - destination - Vector3.new(0, 5.5, 0)).Magnitude < 3
-			then
-				a.sniffAt = a.sniffAt or now
-				a.untilTime = math.max(a.untilTime, a.sniffAt + 2)
-				local eye = Vector3.new(guard.Position.X, destination.Y + 3, guard.Position.Z)
-				-- Opening poke uses a crouched eye, never a ray through the log wall.
-				if
-					not s.hidden
-					and now >= s.mercy
-					and now >= a.nextThrow
-					and (eye - r.Position).Magnitude <= 4
-					and Arena.sight(a, eye, r.Position)
-				then
-					attack(a, a.searchActor, r.Position, now, true)
-					return
-				end
-			end
-		end
 	else
-		local patrols = { campOffset, Vector3.new(0, 0, 8), Vector3.new(-12, 0, 16) }
-		destination = a.origin + patrols[a.patrol]
-		if (guard.Position - destination - Vector3.new(0, 5.5, 0)).Magnitude < 3 then
-			a.patrol = a.patrol % #patrols + 1
+		destination = camp
+		if (guard.Position - camp - Vector3.new(0, 5.5, 0)).Magnitude < Config.GuardianGuardArrival then
+			a.mode, a.progressAt, a.progressPosition = "Guard", nil, nil
+			return
 		end
 	end
 	if not destination then
 		return
 	end
-	if a.mode == "Search" and a.sniffAt and now >= a.sniffAt then
-		return
-	end -- Two-second sniff.
 	a.progressAt = a.progressAt or now
 	a.progressPosition = a.progressPosition or guard.Position
-	if (guard.Position - a.progressPosition).Magnitude >= 0.75 then
+	if (guard.Position - a.progressPosition).Magnitude >= Config.GuardianProgressStuds then
 		a.progressAt, a.progressPosition = now, guard.Position
 	end
 	if now >= a.nextPath and not a.computing then
-		a.nextPath, a.computing = now + 0.7, true
+		a.nextPath, a.computing = now + Config.GuardianPathRefreshSeconds, true
 		local requested, version = destination, a.pathVersion or 0
 		task.spawn(function()
 			local path
@@ -531,8 +554,13 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal)
 		a.index += 1
 		return
 	end
-	local movement = offset.Unit
-		* math.min(offset.Magnitude, (a.mode == "Chase" and Config.CarrySpeed * Config.ChaseRatio or 7) * dt)
+	local speed = Config.GuardianReturnSpeed
+	if a.mode == "Chase" then
+		local burst = (now - (a.chaseBegan or now)) % Config.GuardianBurstCooldown < Config.GuardianBurstSeconds
+		speed = burst and Config.GuardianBurstSpeed or Config.GuardianSpeed
+		a.warning.Text = burst and "GUARDIAN / BURST!" or "GUARDIAN / Chase"
+	end
+	local movement = offset.Unit * math.min(offset.Magnitude, speed * dt)
 	local nextPoint = guard.Position + movement
 	local floor = Arena.floor(a, nextPoint)
 	local blocked = workspace:Blockcast(guard.CFrame, Vector3.new(4, 10, 4), movement, a.wallParams)
@@ -551,5 +579,21 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal)
 	else
 		a.points, a.nextPath = {}, 0
 	end
+end
+function Arena.reset(a)
+	if a.attack then
+		for _, name in { "disc", "fill", "rock", "outline" } do
+			if a.attack[name] then
+				a.attack[name]:Destroy()
+			end
+		end
+		if a.attack.standing then
+			a.guardian.Size, a.guardian.CFrame = Vector3.new(4, 11, 4), a.attack.standing
+		end
+	end
+	a.attack, a.target, a.lostTarget, a.searchAt, a.lastSeen = nil, nil, nil, nil, nil
+	a.mode, a.patrol, a.nextThrow = "Guard", 1, 0
+	a.progressAt, a.progressPosition = nil, nil
+	clearPath(a)
 end
 return Arena

@@ -41,6 +41,25 @@ end
 player:GetAttributeChangedSignal("GreyboxGoal"):Connect(refresh)
 player:GetAttributeChangedSignal("GreyboxCarry"):Connect(refresh)
 refresh()
+local countdown = Instance.new("TextLabel")
+countdown.Name = "EscapeCountdown"
+countdown.AnchorPoint, countdown.Position = Vector2.new(0.5, 0.5), UDim2.fromScale(0.5, 0.36)
+countdown.Size, countdown.BackgroundTransparency = UDim2.fromOffset(300, 84), 1
+countdown.Font, countdown.TextStrokeTransparency = Enum.Font.GothamBold, 0.2
+countdown.Visible, countdown.Parent = false, gui
+RunService.RenderStepped:Connect(function()
+	local deadline = world:GetAttribute("EscapeDeadline")
+	local remaining = deadline and math.max(0, deadline - workspace:GetServerTimeNow())
+	countdown.Visible = player:GetAttribute("GreyboxPhase") == "Run" and remaining ~= nil
+	if remaining then
+		countdown.Text =
+			string.format("Escape · %d:%02d", math.floor(math.ceil(remaining) / 60), math.ceil(remaining) % 60)
+		countdown.TextSize = remaining <= 5 and 56 or 44
+		countdown.TextColor3 = remaining <= 5 and Color3.fromRGB(255, 70, 70)
+			or remaining <= 15 and Color3.fromRGB(255, 185, 50)
+			or Color3.new(1, 1, 1)
+	end
+end)
 local highlight = Instance.new("Highlight")
 highlight.Name, highlight.FillTransparency, highlight.OutlineColor = "OwnPen", 1, Color3.fromRGB(255, 220, 80)
 highlight.Parent = gui
@@ -117,9 +136,6 @@ local function cancelHold()
 	holding, heldInput, sentFinish = nil, nil, false
 end
 local function beginHold(input)
-	if player:GetAttribute("GreyboxHidden") then
-		return
-	end
 	if not selected or not Config.HoldSeconds[selected:GetAttribute("GreyboxAction")] or holding then
 		return
 	end
@@ -127,10 +143,6 @@ local function beginHold(input)
 	remote:FireServer(selected:GetAttribute("GreyboxAction"), "begin")
 end
 button.Activated:Connect(function()
-	if player:GetAttribute("GreyboxHidden") then
-		remote:FireServer("LeaveHide")
-		return
-	end
 	if selected and not Config.HoldSeconds[selected:GetAttribute("GreyboxAction")] then
 		remote:FireServer(selected:GetAttribute("GreyboxAction"))
 	end
@@ -141,14 +153,6 @@ button.InputBegan:Connect(function(input)
 	end
 end)
 UserInputService.InputBegan:Connect(function(input, processed)
-	if
-		not processed
-		and player:GetAttribute("GreyboxHidden")
-		and (input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.ButtonX)
-	then
-		remote:FireServer("LeaveHide")
-		return
-	end
 	if processed or not selected or shown[selected] then
 		return -- native E/X owns input while its prompt is visible
 	end
@@ -219,15 +223,11 @@ RunService.RenderStepped:Connect(function()
 			end
 		end
 	end
-	selected = not player:GetAttribute("GreyboxHidden") and nearest or nil
+	selected = nearest
 	if holding and holding ~= selected then
 		cancelHold()
 	end
-	button.Visible = (selected ~= nil or player:GetAttribute("GreyboxHidden"))
-		and not player:GetAttribute("GreyboxLoopTesting")
-	if player:GetAttribute("GreyboxHidden") and not selected then
-		button.Text = "Leave hide [tap]"
-	end
+	button.Visible = selected ~= nil and not player:GetAttribute("GreyboxLoopTesting")
 	if selected then
 		local action = selected:GetAttribute("GreyboxAction")
 		button.Text = Config.HoldSeconds[action] and ("Hold to " .. action .. " [E / X]") or action .. " [E / X]"
@@ -241,7 +241,7 @@ RunService.RenderStepped:Connect(function()
 			end
 		end
 	end
-	local portal = world:FindFirstChild("HomePortal")
+	local portal = world:FindFirstChild("HomePortal", true)
 	local inRange = r and portal and (r.Position - portal.Position).Magnitude <= 9
 	if inRange and not portalInRange then
 		local q = portal:FindFirstChild("ActionPoint"):FindFirstChildOfClass("ProximityPrompt")

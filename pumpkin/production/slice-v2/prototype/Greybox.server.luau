@@ -8,6 +8,7 @@ local Config = require(RS:WaitForChild("GreyboxConfig"))
 local Layout = require(RS:WaitForChild("GreyboxLayout"))
 local Rules = require(RS:WaitForChild("GreyboxLootRules"))
 local Arena = require(SSS:WaitForChild("GreyboxArena"))
+local Scene = require(RS:WaitForChild("GreyboxScene"))
 local rules = Rules.new(Config)
 local states, pens, slots = rules.actors, {}, {}
 local world = Instance.new("Folder")
@@ -149,14 +150,22 @@ local function conservation()
 	end
 	return true
 end
-part(world, "Home 240x192", Vector3.new(240, 4, 192), Vector3.new(0, -2, 0))
+local portal = Scene.home(world, part, label)
+Scene.skyIslands(world, part)
 local spawn = Instance.new("SpawnLocation")
-spawn.Name, spawn.Size, spawn.Position = "HomeSpawn", Vector3.new(10, 1, 10), Vector3.new(0, 0.5, -12)
+spawn.Name, spawn.Size, spawn.Position = "HomeSpawn", Vector3.new(10, 1, 10), Vector3.new(0, 0.5, Config.HomeSpawnZ)
 spawn.Anchored, spawn.Neutral, spawn.Duration, spawn.Parent = true, true, 0, world
-label(part(world, "Shop", Vector3.new(20, 12, 14), Vector3.new(0, 6, -72)), "GREYBOX SHOP / placeholder")
-local portal = part(world, "HomePortal", Vector3.new(10, 8, 2), Vector3.new(0, 4, 0), Color3.fromRGB(70, 180, 220))
-label(portal, "Enter shared guardian island")
-local enter = prompt(portal, "Enter", "Guardian island")
+spawn.Transparency, spawn.CanCollide = 1, false
+local enter = prompt(portal, "Enter", "Meadow")
+local function captureCams()
+	Scene.captureCams(
+		world,
+		SSS:GetAttribute("GreyboxCaptureCams") == true,
+		Vector3.new(Config.MeadowX, Config.MeadowHeight, Config.MeadowZ)
+	)
+end
+SSS:GetAttributeChangedSignal("GreyboxCaptureCams"):Connect(captureCams)
+captureCams()
 local function population()
 	local n = 0
 	for _, s in states do
@@ -171,6 +180,8 @@ local function refreshLoot()
 		return
 	end
 	local item = rules.active
+	world:SetAttribute("EscapeDeadline", item and item.escapeClock or nil)
+	world:SetAttribute("EscapeItemId", item and item.escapeDeadline and item.id or nil)
 	arena.steal.Enabled = item ~= nil and item.state == "Nest"
 	arena.grab.Enabled = item ~= nil and item.state == "Dropped" and os.clock() >= item.settle
 	if item and item.state == "Dropped" then
@@ -186,7 +197,23 @@ local function dropPosition(actor)
 	local r = root(actor)
 	return arena and r and Arena.dropSocket(arena, r.Position) or (states[actor] and states[actor].lastSocket)
 end
+local function expireLoot(now)
+	local expired, item = Rules.expire(rules, now)
+	if expired then
+		visual(item)
+		Arena.reset(arena)
+		for actor, s in states do
+			if s.phase == "Run" then
+				goal(actor, "Time up / treasure lost / new treasure in 3s")
+			end
+		end
+		refreshLoot()
+		conservation()
+	end
+	return expired
+end
 local function drop(actor, reason)
+	expireLoot(os.clock())
 	local ok, item = Rules.drop(rules, actor, os.clock(), dropPosition(actor))
 	if ok then
 		visual(item)
@@ -212,11 +239,11 @@ local function hit(actor, from, source)
 	s.catches = (s.catches or 0) + 1
 	local away = Vector3.new(r.Position.X - from.X, 0, r.Position.Z - from.Z)
 	if away.Magnitude > 0 then
-		local movement = away.Unit * 3.5
+		local movement = away.Unit * Config.GuardianKnockback
 		local params = RaycastParams.new()
 		params.FilterType, params.FilterDescendantsInstances = Enum.RaycastFilterType.Exclude, { actor.Character }
 		local collision = workspace:Blockcast(r.CFrame, Vector3.new(2, 4, 2), movement, params)
-		local distance = collision and math.max(0, collision.Distance - 0.5) or 3.5
+		local distance = collision and math.max(0, collision.Distance - 0.5) or Config.GuardianKnockback
 		r.CFrame += away.Unit * distance
 	end
 	if item then
@@ -227,7 +254,8 @@ local function hit(actor, from, source)
 	end
 	goal(
 		actor,
-		retained and "Stumble / first hit: kept " .. Config.ItemName or Config.ItemName .. " DROPPED / 3s mercy"
+		retained and "Stumble / first hit: kept " .. Config.ItemName
+			or Config.ItemName .. " DROPPED / " .. Config.MercySeconds .. "s mercy"
 	)
 	publish(actor)
 	refreshLoot()
@@ -280,6 +308,7 @@ local function bumpTarget(actor)
 	return nearest
 end
 local function holdAction(actor, action, stage)
+	expireLoot(os.clock())
 	if testLog then
 		testLog("hold " .. action .. " / " .. stage)
 	end
@@ -310,6 +339,7 @@ local function holdAction(actor, action, stage)
 			task.wait(remainder)
 		end
 	end
+	expireLoot(os.clock())
 	local oldItem = rules.active
 	local oldPosition = oldItem and oldItem.position
 	local target = s.hold and s.hold.target
@@ -334,6 +364,7 @@ local function holdAction(actor, action, stage)
 		s.lastSocket = oldPosition or s.lastSocket
 		if not oldItem.eventTimestamp then
 			oldItem.eventTimestamp = workspace:GetServerTimeNow()
+			oldItem.escapeClock = oldItem.eventTimestamp + math.max(0, oldItem.escapeDeadline - os.clock())
 			oldItem.baseOutcome = "GreyboxPlaceholder" -- No economy or reward reroll in T1.
 		end
 		goal(actor, Config.ItemName .. " is yours when you escape. RUN!")
@@ -369,13 +400,9 @@ local function bindHold(q, action)
 end
 local function home(actor)
 	local s = states[actor]
-	if s.hidePocket then
-		s.hidePocket = nil
-	end
-	s.run, s.hold, s.hidden, s.hidePocket = nil, nil, false, nil
-	actor:SetAttribute("GreyboxHidden", false)
+	s.run, s.hold = nil, nil
 	if actor.Character then
-		actor.Character:PivotTo(CFrame.new(0, 4, -12))
+		actor.Character:PivotTo(CFrame.new(0, 4, Config.HomeSpawnZ))
 	end
 	if s.item then
 		visual(s.item)
@@ -384,6 +411,7 @@ local function home(actor)
 	goal(actor, s.item and "Secured / place in your marked pen" or "Enter the central portal")
 end
 local function returnRun(actor, automatic)
+	expireLoot(os.clock())
 	local s, r = states[actor], root(actor)
 	if
 		not s
@@ -423,16 +451,18 @@ local function placeItem(actor, slot)
 	return true
 end
 for i = 1, 8 do
-	local x, z = i <= 4 and -88 or 88, -54 + ((i - 1) % 4) * 36
+	local x, z = i <= 4 and -50 or 50, -54 + ((i - 1) % 4) * 36
 	local base =
 		part(world, "Pen" .. i, Vector3.new(38, 0.2, 28), Vector3.new(x, 0.1, z), Color3.fromRGB(100, 115, 100))
-	for _, dz in { -14, 14 } do
-		part(world, "PenFence", Vector3.new(38, 2, 0.5), Vector3.new(x, 1, z + dz))
-	end
-	part(world, "PenBack", Vector3.new(0.5, 2, 28), Vector3.new(x + (x < 0 and -19 or 19), 1, z))
+	Scene.pen(world, x, z, part)
 	local marker =
 		part(world, "PenMarker" .. i, Vector3.new(2, 3, 2), Vector3.new(x + (x < 0 and 16 or -16), 1.5, z), orange)
-	pens[i] = { base = base, marker = marker, text = label(marker, "Pen " .. i .. " / vacant"), count = 0 }
+	pens[i] = {
+		base = base,
+		marker = marker,
+		text = label(marker, "Pen " .. i .. " / vacant"),
+		count = 0,
+	}
 	local q = prompt(marker, "Place", "Own pen")
 	q:SetAttribute("PenSlot", i)
 	q.Triggered:Connect(function(actor)
@@ -466,7 +496,7 @@ local function assemble()
 		Layout.validate(Config, layout)
 	end
 	arena = Arena.build(world, layout, part, label)
-	arena.nest = part(arena.model, "NestAction", Vector3.new(1, 1, 1), arena.origin + Vector3.new(0, 5.5, 32), orange)
+	arena.nest = part(arena.model, "NestAction", Vector3.new(1, 1, 1), Arena.position(arena, 0, 5.5, 32), orange)
 	arena.nest.Transparency, arena.nest.CanCollide, arena.nest.CanQuery = 1, false, false
 	arena.steal = prompt(arena.nest, "Steal", Config.ItemName, Config.HoldSeconds.Steal)
 	bindHold(arena.steal, "Steal")
@@ -481,10 +511,11 @@ local function assemble()
 			returnRun(actor)
 		end
 	end)
-	visual(Rules.spawn(rules, arena.origin + Vector3.new(0, 4, 32)))
+	visual(Rules.spawn(rules, Arena.position(arena, 0, 4, 32)))
 	refreshLoot()
 	print("[Greybox] shared arena: " .. Layout.signature(layout))
 end
+assemble() -- The floating Meadow is visible from home before the first entry.
 local function enterRun(actor)
 	local s = states[actor]
 	if not s or s.phase ~= "Home" or s.item or not near(actor, portal) or (s.slot and pens[s.slot].count >= 8) then
@@ -502,11 +533,16 @@ local function enterRun(actor)
 	end
 	if not arena then
 		assemble()
+	elseif arena.idle then
+		-- Keep the empty island visible; shuffle only when the next run begins.
+		arena.model:Destroy()
+		assemble()
 	end
+	arena.hasEntrants = true
 	s.phase, s.run, s.counter, s.started, s.mercy, s.catches =
-		"Run", arena, (s.counter or 0) + 1, os.clock(), os.clock() + 3, 0
+		"Run", arena, (s.counter or 0) + 1, os.clock(), os.clock() + Config.MercySeconds, 0
 	local arrivals = { -12, 0, 12 }
-	actor.Character:PivotTo(CFrame.new(arena.origin + Vector3.new(arrivals[((population() - 1) % 3) + 1], 4, -58)))
+	actor.Character:PivotTo(CFrame.new(Arena.position(arena, arrivals[((population() - 1) % 3) + 1], 4, -58)))
 	publish(actor)
 	goal(actor, "Choose a route / hold Steal at " .. Config.ItemName .. " / escape commits ownership")
 	return true
@@ -516,17 +552,6 @@ enter.Triggered:Connect(function(actor)
 		enterRun(actor)
 	end
 end)
-local function leaveHide(actor)
-	local s = states[actor]
-	if not s or not s.hidden then
-		return false, "not hidden"
-	end
-	s.hidden, s.hideUntil, s.rehideAt = false, nil, os.clock() + 3
-	actor:SetAttribute("GreyboxHidden", false)
-	publish(actor)
-	goal(actor, "RUN!")
-	return true
-end
 local lastAction = {}
 actionRemote.OnServerEvent:Connect(function(actor, action, stage)
 	if testRunning or type(action) ~= "string" then
@@ -546,8 +571,6 @@ actionRemote.OnServerEvent:Connect(function(actor, action, stage)
 		ok, why = returnRun(actor)
 	elseif action == "Place" then
 		ok, why = placeItem(actor, states[actor] and states[actor].slot)
-	elseif action == "LeaveHide" then
-		ok, why = leaveHide(actor)
 	else
 		return
 	end
@@ -564,7 +587,7 @@ local function configureCharacter(actor, character)
 	if s.phase == "Run" then
 		local item = s.item
 		if item then
-			local ok = Rules.drop(rules, actor, os.clock(), s.lastSocket or arena.origin + Vector3.new(0, 0, 8))
+			local ok = Rules.drop(rules, actor, os.clock(), s.lastSocket or Arena.position(arena, 0, 0, 8))
 			if ok then
 				visual(item)
 			end
@@ -625,9 +648,9 @@ local function addPlayer(actor)
 				s.item.weld = nil
 			end
 			s.item.visual.Parent, s.item.visual.Anchored = world, true
-			s.item.visual.Position = Vector3.new(0, 3, -12)
+			s.item.visual.Position = Vector3.new(0, 3, Config.HomeSpawnZ)
 		end
-		s.phase, s.run, s.hold, s.hidden = "Home", nil, nil, false
+		s.phase, s.run, s.hold = "Home", nil, nil
 		actor:SetAttribute("GreyboxReady", false)
 	end)
 	if actor.Character then
@@ -668,22 +691,25 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 	local step, now = math.min(accumulator, 0.15), os.clock()
 	accumulator = 0
+	expireLoot(now)
 	for actor, s in states do
 		local r, h = root(actor)
 		if not r then
 			continue
 		end
 		h.UseJumpPower, h.JumpHeight = false, s.item and Config.CarryJumpHeight or Config.JumpHeight
-		h.WalkSpeed = now < (s.slowUntil or 0) and 5 or (s.item and Config.CarrySpeed or Config.WalkSpeed)
+		h.WalkSpeed = now < (s.slowUntil or 0) and Config.StumbleSpeed
+			or (s.item and Config.CarrySpeed or Config.WalkSpeed)
 		if s.phase ~= "Run" or not arena then
 			continue
 		end
-		local p = r.Position - arena.origin
+		local worldPoint = r.Position - arena.origin
+		local p = Vector3.new(worldPoint.X, worldPoint.Y, -worldPoint.Z)
 		if p.Y < -10 or math.abs(p.X) > Config.IslandSize / 2 + 2 or math.abs(p.Z) > Config.IslandSize / 2 + 2 then
 			if s.item then
 				drop(actor, "outside island fall/recovery")
 			end
-			actor.Character:PivotTo(CFrame.new(arena.origin + Vector3.new(0, 4, -58)))
+			actor.Character:PivotTo(CFrame.new(Arena.position(arena, 0, 4, -58)))
 			continue
 		end
 		if s.item and Arena.safe(arena, r.Position) then
@@ -700,40 +726,6 @@ RunService.Heartbeat:Connect(function(dt)
 			if not ok or rules.active ~= hold.item or hold.item.version ~= hold.version then
 				s.hold = nil
 			end
-		end
-		local pocket
-		for _, hide in arena.hides do
-			local d = hide.definition
-			if math.abs(p.X - d.x) <= d.w / 2 and math.abs(p.Z - d.z) <= d.d / 2 and p.Y < 6 then
-				pocket = hide
-				break
-			end
-		end
-		local still = h.MoveDirection.Magnitude < 0.05
-			and Vector3.new(r.AssemblyLinearVelocity.X, 0, r.AssemblyLinearVelocity.Z).Magnitude < 0.7
-			and not h.Jump
-		if not pocket or not still or (s.hidden and now >= s.hideUntil) then
-			if s.hidden then
-				s.rehideAt = now + 3
-			end
-			s.hidden, s.hideStart, s.hidePocket = false, nil, nil
-		elseif not s.hidden and now >= (s.rehideAt or 0) then
-			local occupied = false
-			for other, otherState in states do
-				if other ~= actor and otherState.hidden and otherState.hidePocket == pocket then
-					occupied = true
-				end
-			end
-			if not occupied then
-				s.hideStart = s.hideStart or now
-				if now - s.hideStart >= 0.5 then
-					s.hidden, s.hideUntil, s.hidePocket = true, now + (s.item and 5 or 3600), pocket
-				end
-			end
-		end
-		actor:SetAttribute("GreyboxHidden", s.hidden == true)
-		if s.hidden then
-			goal(actor, "HIDDEN / moving leaves / carrying max 5s")
 		end
 		if s.item then
 			if
@@ -764,19 +756,20 @@ RunService.Heartbeat:Connect(function(dt)
 		return
 	end
 	if population() == 0 and not testRunning then
-		Rules.retire(rules)
-		for _, item in rules.items do
-			if item.state == "Retired" and item.visual then
-				visual(item)
+		if arena.hasEntrants and not arena.idle then
+			Rules.retire(rules)
+			for _, item in rules.items do
+				if item.state == "Retired" and item.visual then
+					visual(item)
+				end
 			end
+			arena.idle = true
 		end
-		arena.model:Destroy()
-		arena = nil
 		return
 	end
 	if not rules.active and now >= (rules.respawnAt or math.huge) then
-		visual(Rules.spawn(rules, arena.origin + Vector3.new(0, 4, 32)))
-		arena.mode, arena.target = "Patrol", nil
+		visual(Rules.spawn(rules, Arena.position(arena, 0, 4, 32)))
+		arena.mode, arena.target = "Guard", nil
 	end
 	if rules.active and rules.active.state == "Dropped" and rules.active.bounceAt then
 		local item = rules.active
@@ -786,7 +779,7 @@ RunService.Heartbeat:Connect(function(dt)
 			item.bounceAt = nil
 		end
 	end
-	Arena.tick(arena, step, now, states, root, hit, goal)
+	Arena.tick(arena, step, now, states, root, hit, goal, rules.active)
 	refreshLoot()
 	local ok, why = pcall(conservation)
 	SSS:SetAttribute("GreyboxConservation", ok and "PASS" or "FAIL: " .. tostring(why))

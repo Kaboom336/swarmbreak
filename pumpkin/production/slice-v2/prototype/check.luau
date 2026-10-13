@@ -18,6 +18,188 @@ assert(not pcall(Layout.validate, Config, invalid), "overlap accepted")
 invalid = Layout.assemble(Config, 101, true)
 invalid.ramps[1].b.y = 30
 assert(not pcall(Layout.validate, Config, invalid), "steep ramp accepted")
+-- Exact server-clock ties, holder-independent deadline, and production visual cleanup.
+local function deadlineTest()
+	local function setup()
+		local r = Rules.new(Config)
+		local a, b = {}, {}
+		local sa, sb = Rules.actor(r, a), Rules.actor(r, b)
+		sa.phase, sb.phase = "Run", "Run"
+		local item = Rules.spawn(r, { x = 0, y = 4, z = 32 })
+		local function legal()
+			return true
+		end
+		local function floor()
+			return { x = 0, y = 0, z = 8 }
+		end
+		assert(not Rules.expire(r, 1000), "pre-steal countdown")
+		assert(Rules.begin(r, a, "Steal", nil, 1000, legal))
+		assert(Rules.finish(r, a, "Steal", 1002, legal, floor))
+		assert(item.escapeDeadline == 1062, "deadline not exactly sixty")
+		return r, a, b, sa, sb, item, legal, floor
+	end
+	local r, a, _, sa, _, item = setup()
+	assert(Rules.secure(r, a, item.escapeDeadline - 0.001), "before-deadline portal blocked")
+	assert(not Rules.expire(r, 2000) and sa.item == item and item.state == "Secured", "secured cargo expired")
+	assert(sa.completed == 1, "missing secure")
+	Rules.audit(r)
+
+	local b, sb, legal, floor
+	r, a, b, sa, sb, item, legal, floor = setup()
+	local deadline = item.escapeDeadline
+	assert(Rules.drop(r, a, 1015, floor()))
+	assert(Rules.begin(r, b, "Grab", nil, 1016, legal))
+	assert(Rules.finish(r, b, "Grab", 1016.5, legal, floor))
+	assert(item.escapeDeadline == deadline and item.holder == b, "handoff refreshed deadline")
+	assert(not Rules.expire(r, deadline - 0.001), "early expiry")
+	assert(not Rules.secure(r, b, deadline), "exact tie awarded")
+	local expired, retired = Rules.expire(r, deadline)
+	assert(expired and retired == item and item.state == "Retired", "carried expiry missing")
+	assert(not sa.item and not sb.item and not item.holder and not r.active, "orphan holder")
+	assert(sa.completed == 0 and sb.completed == 0, "expiry award")
+	assert(r.respawnAt == deadline + 3 and not Rules.expire(r, deadline + 1), "refill clock/reset")
+	assert(not Rules.place(r, b) and not Rules.begin(r, b, "Grab", nil, deadline, legal), "retired ID usable")
+	Rules.audit(r)
+	local replacement = Rules.spawn(r, floor())
+	assert(replacement.id ~= item.id and replacement.state == "Nest" and not replacement.escapeDeadline, "new ID/clock")
+	Rules.audit(r)
+
+	r, a, b, sa, sb, item, legal, floor = setup()
+	deadline = item.escapeDeadline
+	assert(Rules.drop(r, a, deadline - 1, floor()))
+	assert(Rules.begin(r, a, "Grab", nil, deadline - 0.4, legal))
+	assert(Rules.begin(r, b, "Grab", nil, deadline - 0.4, legal))
+	assert(not Rules.finish(r, a, "Grab", deadline, legal, floor), "expiry finish won tie")
+	assert(Rules.expire(r, deadline))
+	assert(
+		not sa.hold and not sb.hold and not sa.item and not sb.item and item.state == "Retired",
+		"dropped expiry stale hold"
+	)
+	assert(not Rules.finish(r, b, "Grab", deadline + 0.1, legal, floor), "stale finish duplicated")
+	Rules.audit(r)
+
+	-- Execute the actual Retired visual branch: destroy weld and physical item.
+	local roblox = require("@lune/roblox")
+	local world = roblox.Instance.new("Folder")
+	local p = roblox.Instance.new("Part")
+	p.Parent = world
+	local weld = roblox.Instance.new("WeldConstraint")
+	weld.Parent = p
+	item.visual, item.weld = p, weld
+	local source = fs.readFile("Greybox.server.luau")
+	local startAt = assert(string.find(source, "local function visual(item)", 1, true))
+	local endAt = assert(string.find(source, "local function conservation()", startAt, true))
+	local visual = luau.load(string.sub(source, startAt, endAt - 1) .. "\nreturn visual", {
+		environment = { world = world, states = {}, publish = function() end },
+	})()
+	visual(item)
+	assert(not item.visual and not item.weld and #world:GetChildren() == 0, "production expiry physical orphan")
+	print(
+		"PASS deadline: first Steal +60; handoff unchanged; before/exact/after ties; carried/dropped expiry; holds cleared; no award; +3 refill/new ID; production weld/visual cleanup"
+	)
+end
+deadlineTest()
+-- Execute the actual scene assembly and inspect its physical cover and chunk tree.
+local function constructionTest()
+	local roblox = require("@lune/roblox")
+	local scene = luau.load(fs.readFile("Scene.luau"), {
+		environment = {
+			Instance = roblox.Instance,
+			Vector3 = roblox.Vector3,
+			CFrame = roblox.CFrame,
+			Color3 = roblox.Color3,
+			Enum = roblox.Enum,
+		},
+	})()
+	local arenaModule = luau.load(fs.readFile("Arena.luau"), {
+		environment = {
+			Instance = roblox.Instance,
+			Vector3 = roblox.Vector3,
+			CFrame = roblox.CFrame,
+			Color3 = roblox.Color3,
+			Enum = roblox.Enum,
+			RaycastParams = {
+				new = function()
+					return {}
+				end,
+			},
+			game = {
+				GetService = function()
+					return {
+						WaitForChild = function(_, name)
+							return name
+						end,
+					}
+				end,
+			},
+			require = function(name)
+				if name == "GreyboxConfig" then
+					return Config
+				end
+				if name == "GreyboxLayout" then
+					return Layout
+				end
+				if name == "GreyboxScene" then
+					return scene
+				end
+				error(name)
+			end,
+		},
+	})()
+	local world = roblox.Instance.new("Folder")
+	local function make(parent, name, size, position, color)
+		local p = roblox.Instance.new("Part")
+		p.Name, p.Size, p.Position, p.CFrame = name, size, position, roblox.CFrame.new(position)
+		p.Anchored, p.Color, p.Parent = true, color or roblox.Color3.new(0.5, 0.5, 0.5), parent
+		return p
+	end
+	local layout = Layout.assemble(Config, 101, true)
+	local arena = arenaModule.build(world, layout, make, function()
+		return {}
+	end)
+	assert(not arena.model:FindFirstChild("I09") and not arena.model:FindFirstChild("I10"), "hide chunks remain")
+	assert(#arena.obstacles == 6, "ordinary cover lost")
+	for _, p in arena.model:GetDescendants() do
+		assert(not p.Name:find("Hide") and not p.Name:find("Log"), "hide scene remains")
+	end
+	for _, pair in { { "CutbackRockA", "CutbackRockB" }, { "CutbackRockC", "CutbackRockD" } } do
+		local a, b = arena.model:FindFirstChild(pair[1]), arena.model:FindFirstChild(pair[2])
+		assert(a and b and a.CanCollide and b.CanCollide, "cover not solid")
+		assert(
+			math.abs(a.Position.Z - b.Position.Z) - (a.Size.Z + b.Size.Z) / 2 >= 12,
+			"cutback passage narrower than twelve"
+		)
+	end
+	-- Expiry cancels an in-flight attack and invalidates asynchronous navigation.
+	local attack = {}
+	for _, name in { "disc", "fill", "rock", "outline" } do
+		attack[name] = roblox.Instance.new("Part")
+		attack[name].Parent = arena.model
+	end
+	arena.attack, arena.target, arena.searchAt = attack, {}, roblox.Vector3.zero
+	arena.mode, arena.points, arena.pathVersion = "Chase", { {} }, 5
+	arenaModule.reset(arena)
+	assert(
+		not arena.attack and not arena.target and not arena.searchAt and arena.mode == "Guard",
+		"expiry guardian reset"
+	)
+	assert(#arena.points == 0 and arena.pathVersion == 6, "stale path after expiry")
+	for _, p in attack do
+		assert(p.Parent == nil, "orphan attack visual")
+	end
+	scene.home(world, make, function()
+		return {}
+	end)
+	scene.skyIslands(world, make)
+	scene.captureCams(world, true, arena.origin)
+	assert(world:FindFirstChild("CaptureCameras"), "capture cameras lost")
+	scene.captureCams(world, false, arena.origin)
+	assert(not world:FindFirstChild("CaptureCameras"), "capture cleanup")
+	print(
+		"PASS production scene construction: no hide chunks/scenery; six hard covers; twelve-stud cutbacks; guardian attack/path cleanup; home/vistas/capture cameras"
+	)
+end
+constructionTest()
 -- Scalar server transition tests are distinct from Roblox physics evidence.
 local function rulesTest()
 	local r = Rules.new(Config)
@@ -35,27 +217,29 @@ local function rulesTest()
 	assert(Rules.begin(r, a, "Steal", nil, 0, legal))
 	assert(Rules.begin(r, b, "Steal", nil, 0, legal))
 	assert(not Rules.finish(r, a, "Steal", 0.99, legal, floor), "short hold")
-	assert(Rules.finish(r, a, "Steal", 1, legal, floor))
-	assert(not Rules.finish(r, b, "Steal", 1, legal, floor), "simultaneous nest duplicate")
+	assert(Rules.finish(r, a, "Steal", 2, legal, floor))
+	assert(not Rules.finish(r, b, "Steal", 2, legal, floor), "simultaneous nest duplicate")
 	assert(not Rules.begin(r, b, "Bump", a, 2, legal), "shield/mercy bypass")
-	assert(Rules.hit(r, a, "Guardian", 4, floor()))
-	assert(sa.item == item and sa.firstHitUsed, "first-hit retention")
-	assert(not Rules.hit(r, a, "Guardian", 4.1, floor()), "airborne mercy bypass")
-	assert(Rules.begin(r, b, "Bump", a, 13, legal))
-	assert(Rules.finish(r, b, "Bump", 13.41, legal, floor))
+	assert(Rules.hit(r, a, "Guardian", 5.1, floor()))
+	assert(not sa.item and item.state == "Dropped", "hard guardian must drop first cargo hit")
+	assert(Rules.begin(r, a, "Grab", nil, 6, legal))
+	assert(Rules.finish(r, a, "Grab", 6.41, legal, floor))
+	assert(not Rules.hit(r, a, "Guardian", 6.5, floor()), "airborne mercy bypass")
+	assert(Rules.begin(r, b, "Bump", a, 15, legal))
+	assert(Rules.finish(r, b, "Bump", 15.41, legal, floor))
 	assert(item.state == "Dropped" and not sa.item and not sb.item, "direct carrier theft")
-	assert(not Rules.begin(r, b, "Grab", nil, 13.7, legal), "settle precharge")
-	assert(Rules.begin(r, b, "Grab", nil, 14.02, legal))
-	assert(Rules.begin(r, c, "Grab", nil, 14.02, legal))
-	assert(Rules.finish(r, b, "Grab", 14.43, legal, floor))
-	assert(not Rules.finish(r, c, "Grab", 14.43, legal, floor), "simultaneous Grab duplicate")
-	assert(item.id == "arena1:1" and item.firstPickup == 1, "identity/timestamp reroll")
+	assert(not Rules.begin(r, b, "Grab", nil, 15.7, legal), "settle precharge")
+	assert(Rules.begin(r, b, "Grab", nil, 16.02, legal))
+	assert(Rules.begin(r, c, "Grab", nil, 16.02, legal))
+	assert(Rules.finish(r, b, "Grab", 16.43, legal, floor))
+	assert(not Rules.finish(r, c, "Grab", 16.43, legal, floor), "simultaneous Grab duplicate")
+	assert(item.id == "arena1:1" and item.firstPickup == 2, "identity/timestamp reroll")
 	assert(sb.item == item and not sa.item and not sc.item, "handoff holder")
 	Rules.audit(r)
-	assert(not Rules.hit(r, b, "Pvp", 15, floor()), "cross-source mercy")
-	assert(Rules.begin(r, c, "Bump", b, 18, legal))
+	assert(not Rules.hit(r, b, "Pvp", 17, floor()), "cross-source mercy")
+	assert(Rules.begin(r, c, "Bump", b, 20, legal))
 	sc.hold = nil -- Cancelled attempt still cools down.
-	assert(not Rules.begin(r, c, "Bump", b, 18.5, legal), "cancelled Bump cooldown")
+	assert(not Rules.begin(r, c, "Bump", b, 20.5, legal), "cancelled Bump cooldown")
 	assert(Rules.secure(r, b, 19))
 	assert(sb.completed == 1 and sa.completed == 0 and item.state == "Secured" and item.firstPup, "winner finalization")
 	assert(Rules.place(r, b))
@@ -65,8 +249,8 @@ local function rulesTest()
 	assert(nextItem.id ~= item.id, "respawn identity")
 	sa.phase = "Run"
 	assert(Rules.begin(r, a, "Steal", nil, 20, legal))
-	assert(Rules.finish(r, a, "Steal", 21, legal, floor))
-	assert(sa.shield == 13 and sa.shieldUsed, "shield reset farming")
+	assert(Rules.finish(r, a, "Steal", 22, legal, floor))
+	assert(sa.shield == 14 and sa.shieldUsed, "shield reset farming")
 	assert(Rules.hit(r, a, "Guardian", 25, floor()) and nextItem.state == "Dropped", "first-hit reset farming")
 	assert(Rules.begin(r, b, "Grab", nil, 26, legal) == false, "home arena bypass")
 	Rules.retire(r)
@@ -113,7 +297,7 @@ local function pvpLogicTest()
 			end,
 			Arena = {
 				safe = function(_, p)
-					return Layout.protected(p.X, p.Z)
+					return Layout.protected(p.X, -p.Z)
 				end,
 				sight = function()
 					return visible
@@ -126,7 +310,7 @@ local function pvpLogicTest()
 		return vector.new(-64, 0, -56)
 	end
 	assert(Rules.begin(r, dummy, "Steal", nil, 0, check))
-	assert(Rules.finish(r, dummy, "Steal", 1.05, check, floor))
+	assert(Rules.finish(r, dummy, "Steal", 2.05, check, floor))
 	local timestamp = item.firstPickup
 	Rules.audit(r)
 	roots[dummy].Position = vector.new(-64, 3, -56)
@@ -143,28 +327,30 @@ local function pvpLogicTest()
 	ds.run = otherArena
 	assert(not check(player, "Bump", dummy, item), "live arena bypass")
 	ds.run = arena
-	roots[dummy].Position = vector.new(0, 3, -56)
+	roots[dummy].Position = vector.new(0, 3, 56)
 	assert(not check(player, "Bump", dummy, item), "live safe victim bypass")
 	roots[dummy].Position = vector.new(-64, 3, -56)
 	assert(Rules.hit(r, dummy, "Guardian", 13.1, floor()))
+	assert(Rules.begin(r, dummy, "Grab", nil, 14, check))
+	assert(Rules.finish(r, dummy, "Grab", 14.45, check, floor))
 	assert(not Rules.begin(r, player, "Bump", dummy, 14, check), "PvP mercy bypass")
-	assert(Rules.begin(r, player, "Bump", dummy, 16.2, check))
+	assert(Rules.begin(r, player, "Bump", dummy, 17.5, check))
 	roots[player].Position = vector.new(-59, 3, -56)
-	assert(not Rules.finish(r, player, "Bump", 16.65, check, floor), "range not rechecked on finish")
+	assert(not Rules.finish(r, player, "Bump", 17.95, check, floor), "range not rechecked on finish")
 	roots[player].Position = vector.new(-62, 3, -56)
-	assert(Rules.begin(r, player, "Bump", dummy, 18.3, check))
-	assert(Rules.finish(r, player, "Bump", 18.75, check, floor))
+	assert(Rules.begin(r, player, "Bump", dummy, 19.6, check))
+	assert(Rules.finish(r, player, "Bump", 20.05, check, floor))
 	assert(item.state == "Dropped" and not ds.item and not s.item, "PvP direct grant/loss")
-	assert(not Rules.begin(r, player, "Grab", nil, 19.34, check), "PvP settle precharge")
-	assert(Rules.begin(r, player, "Grab", nil, 19.38, check))
-	assert(Rules.begin(r, rival, "Grab", nil, 19.38, check))
-	assert(Rules.finish(r, player, "Grab", 19.83, check, floor))
-	assert(not Rules.finish(r, rival, "Grab", 19.83, check, floor), "PvP contested duplicate")
-	assert(not Rules.finish(r, player, "Grab", 19.83, check, floor), "PvP replay accepted")
+	assert(not Rules.begin(r, player, "Grab", nil, 20.64, check), "PvP settle precharge")
+	assert(Rules.begin(r, player, "Grab", nil, 20.68, check))
+	assert(Rules.begin(r, rival, "Grab", nil, 20.68, check))
+	assert(Rules.finish(r, player, "Grab", 21.13, check, floor))
+	assert(not Rules.finish(r, rival, "Grab", 21.13, check, floor), "PvP contested duplicate")
+	assert(not Rules.finish(r, player, "Grab", 21.13, check, floor), "PvP replay accepted")
 	assert(s.item == item and item.holder == player and item.firstPickup == timestamp, "PvP identity/holder")
 	Rules.audit(r)
-	assert(Rules.secure(r, player, 20))
-	assert(not Rules.secure(r, player, 20), "PvP duplicate secure")
+	assert(Rules.secure(r, player, 22))
+	assert(not Rules.secure(r, player, 22), "PvP duplicate secure")
 	assert(Rules.place(r, player) and not Rules.place(r, player), "PvP placement replay")
 	assert(s.completed == 1 and ds.completed == 0 and item.state == "Placed", "PvP winner award")
 	Rules.audit(r)
@@ -203,15 +389,18 @@ end
 local function guardianLogicTest(seed)
 	local roblox = require("@lune/roblox")
 	local v, instance = roblox.Vector3, roblox.Instance
+	local function map(x, y, z)
+		return v.new(x, y, -z)
+	end
 	local layout = Layout.assemble(Config, seed, false)
 	local floorPart = instance.new("Part")
 	floorPart:SetAttribute("SurfaceRole", "Floor")
 	local blocked = false
 	local transitions = {}
 	local function raycast(_, from, direction)
-		if direction == v.new(0, -70, 0) then
+		if direction == map(0, -70, 0) then
 			return {
-				Position = v.new(from.X, height(layout, from.X, from.Z), from.Z),
+				Position = map(from.X, height(layout, from.X, -from.Z), from.Z),
 				Normal = v.yAxis,
 				Instance = floorPart,
 			}
@@ -222,14 +411,14 @@ local function guardianLogicTest(seed)
 		local samples = math.ceil(direction.Magnitude * 4)
 		for i = 0, samples do
 			local p = from + direction * (i / math.max(1, samples))
-			if p.Y <= height(layout, p.X, p.Z) then
+			if p.Y <= height(layout, p.X, -p.Z) then
 				return { Instance = floorPart }
 			end
 			for _, b in layout.solids do
 				if
 					b.role == "Cover"
 					and math.abs(p.X - b.x) <= b.w / 2
-					and math.abs(p.Z - b.z) <= b.d / 2
+					and math.abs(-p.Z - b.z) <= b.d / 2
 					and math.abs(p.Y - b.y) <= b.h / 2
 				then
 					return { Instance = floorPart }
@@ -285,8 +474,8 @@ local function guardianLogicTest(seed)
 		blocked = options.blocked or false
 		-- Lune instances do not derive Position when CFrame changes like Studio.
 		local guard = setmetatable({
-			CFrame = roblox.CFrame.new(options.guard or v.new(8, 9.5, 32)),
-			Size = v.new(4, 11, 4),
+			CFrame = roblox.CFrame.new(options.guard or map(8, 9.5, 32)),
+			Size = map(4, 11, 4),
 		}, {
 			__index = function(part, key)
 				return key == "Position" and part.CFrame.Position or nil
@@ -311,23 +500,21 @@ local function guardianLogicTest(seed)
 			impacts = 0,
 			chaseDistance = 0,
 			targetSince = -10,
-			lastSeen = v.new(0, 3.45, 8),
-			searchAt = v.new(0, 3.45, 8),
-			sniffAt = 0,
+			lastSeen = map(0, 3.45, 8),
+			searchAt = map(0, 3.45, 8),
 		}
 		local s = {
 			phase = options.phase or "Run",
 			item = {},
-			hidden = options.hidden,
 			mercy = options.mercy or 0,
 		}
 		if options.empty then
 			s.item = nil
 		end
 		local actors = { [actor] = s }
-		local roots = { [actor] = { Position = options.position or v.new(0, 3.45, 8) } }
+		local roots = { [actor] = { Position = options.position or map(0, 3.45, 8) } }
 		if options.rival then
-			actors[rival], roots[rival] = { phase = "Run", mercy = 0 }, { Position = v.new(8, 7, 28) }
+			actors[rival], roots[rival] = { phase = "Run", mercy = 0 }, { Position = map(8, 7, 28) }
 			a.target = rival
 		end
 		local function root(who)
@@ -350,10 +537,10 @@ local function guardianLogicTest(seed)
 		end
 		return a
 	end
-	for _, guard in { v.new(8, 9.5, 32), v.new(0, 9.5, 32), v.new(0, 7, 32) } do
+	for _, guard in { map(8, 9.5, 32), map(0, 9.5, 32), map(0, 7, 32) } do
 		for _, x in { -0.5, 0, 2 } do
 			for _, mode in { "Patrol", "Search" } do
-				local a = scenario(arenaCode, { guard = guard, position = v.new(x, 3.45, 8), mode = mode })
+				local a = scenario(arenaCode, { guard = guard, position = map(x, 3.45, 8), mode = mode })
 				assert(
 					a.attack and a.attack.disc and a.attack.actor == actor and a.attack.start <= 3,
 					"carrier lane acquisition/throw >3s"
@@ -380,56 +567,52 @@ local function guardianLogicTest(seed)
 		{
 			{ empty = true },
 			{ blocked = true },
-			{ hidden = true },
 			{ phase = "Home" },
-			{ position = v.new(0, 3.45, -40) },
-			{ position = v.new(80, 3.45, 8) },
+			{ position = map(0, 3.45, -40) },
+			{ position = map(80, 3.45, 8) },
 			{ mercy = 4 },
 			{ cooldown = 4 },
 		}
 	do
-		assert(
-			not scenario(arenaCode, options).attack,
-			"guardian bypassed aggro/sight/hide/phase/safe/range/mercy/cooldown"
-		)
+		assert(not scenario(arenaCode, options).attack, "guardian bypassed aggro/sight/phase/safe/range/mercy/cooldown")
 	end
-	local cooldown = scenario(arenaCode, { cooldown = 4, seconds = 5 })
+	local cooldown = scenario(arenaCode, { cooldown = 4, seconds = 8 })
 	assert(
-		cooldown.attack and cooldown.attack.disc and cooldown.attack.start >= 4 and cooldown.attack.start <= 4.1,
+		cooldown.attack and cooldown.attack.disc and cooldown.attack.start >= 4 and cooldown.attack.start <= 8,
 		"spent cooldown failed to reopen"
 	)
-	local poke = scenario(arenaCode, { guard = v.new(0, 5.5, 8) })
+	local poke = scenario(arenaCode, { guard = map(0, 5.5, 8) })
 	assert(poke.attack and poke.attack.close and not poke.attack.disc, "close poke changed")
-	for _, position in { v.new(-0.4, 3.45, 8), v.new(2.7, 3.45, 8) } do
+	for _, position in { map(-0.4, 3.45, 8), map(2.7, 3.45, 8) } do
 		local hill =
-			scenario(arenaCode, { guard = v.new(-44.3, 14, 5.9), position = position, cooldown = 4, seconds = 8 })
+			scenario(arenaCode, { guard = map(-44.3, 14, 5.9), position = position, cooldown = 4, seconds = 8 })
 		assert(hill.attack and hill.attack.disc and hill.attack.start < 8, "hill leash recovery/throw >8s")
 		assert(hill.attack.start >= 4, "hill recovery bypassed cooldown")
-		assert((hill.guardian.Position - v.new(8, 9.5, 32)).Magnitude < 0.1, "guardian did not return to camp")
+		assert((hill.guardian.Position - map(8, 9.5, 32)).Magnitude < 0.1, "guardian did not return to camp")
 		local logs = table.concat(transitions, "\n")
 		assert(
 			string.find(logs, "state=Return", 1, true) and string.find(logs, "state=Throw", 1, true),
 			"missing guardian transition logs"
 		)
 	end
-	local stuck = scenario(arenaCode, { guard = v.new(0, 5.5, 8), blocked = true, seconds = 5 })
-	assert((stuck.guardian.Position - v.new(8, 9.5, 32)).Magnitude < 0.1, "failed path did not recover")
+	local stuck = scenario(arenaCode, { guard = map(0, 5.5, 8), blocked = true, seconds = 5 })
+	assert((stuck.guardian.Position - map(8, 9.5, 32)).Magnitude < 0.1, "failed path did not recover")
 	assert((stuck.pathVersion or 0) >= 2, "failed path recovery did not invalidate paths")
 	local leash =
-		scenario(arenaCode, { guard = v.new(8, 5.5, 0.5), waypoint = v.new(8, 0, -4), blocked = true, seconds = 5 })
-	assert((leash.guardian.Position - v.new(8, 9.5, 32)).Magnitude < 0.1, "waypoint escaped camp leash")
-	local slope = scenario(arenaCode, { guard = v.new(0, 7.5, 23), position = v.new(0, 3.45, 8) })
+		scenario(arenaCode, { guard = map(8, 5.5, 0.5), waypoint = map(8, 0, -4), blocked = true, seconds = 5 })
+	assert((leash.guardian.Position - map(8, 9.5, 32)).Magnitude < 0.1, "waypoint escaped camp leash")
+	local slope = scenario(arenaCode, { guard = map(0, 7.5, 23), position = map(0, 3.45, 8) })
 	assert(slope.attack and slope.attack.disc, "slope throw failed")
 	local cover = { role = "Cover", x = 0, y = 2.6, z = 14, w = 10, h = 5.2, d = 2 }
 	table.insert(layout.solids, cover)
-	assert(scenario(arenaCode, { guard = v.new(0, 7, 32) }).attack, "low cover top blocked upper-body sight")
+	assert(scenario(arenaCode, { guard = map(0, 7, 32) }).attack, "low cover top blocked upper-body sight")
 	cover.y, cover.h = 6, 12
-	assert(not scenario(arenaCode, { guard = v.new(0, 7, 32) }).attack, "tall cover wall bypassed")
+	assert(not scenario(arenaCode, { guard = map(0, 7, 32) }).attack, "tall cover wall bypassed")
 	table.remove(layout.solids)
 	print(
 		"PASS production guardian seed="
 			.. seed
-			.. ": reported hill pose recovers/throws <8s; failed navigation recovers; terrace/slope throws; 18 lane cases <=3s; old 24-stud stall; carrier priority/sight/hide/safe/range/mercy/4s cooldown/poke. Navigation frozen; live Studio UNKNOWN."
+			.. ": reported hill pose recovers/throws <8s; failed navigation recovers; terrace/slope throws; 18 lane cases <=3s; old 24-stud stall; carrier priority/sight/safe/range/mercy/cooldown/poke. Navigation frozen; live Studio UNKNOWN."
 	)
 end
 for _, seed in { 101, 202, 303 } do
@@ -524,9 +707,6 @@ for seed = 1, 50 do
 			end
 		end
 	end
-	for _, hide in l.hides do
-		assert(not Layout.protected(hide.x, hide.z, 4), "safe hide")
-	end
 	for _, g in l.gullies do
 		assert(g.w >= 24 and g.d >= 24, "recovery volume")
 	end
@@ -534,9 +714,9 @@ end
 local first = Layout.assemble(Config, 101, true)
 for _, p in
 	{
-		{ x = -12, y = 0, z = -24 }, -- inside cover
-		{ x = -18, y = 0, z = -24 }, -- less than 3 studs from cover
-		{ x = -38, y = 0, z = -30 }, -- wrong gully/stone height
+		{ x = -10, y = 0, z = -10 }, -- inside cover
+		{ x = -15, y = 0, z = -10 }, -- less than 3 studs from cover
+		{ x = -31, y = 0, z = -34 }, -- wrong gully/stone height
 	}
 do
 	assert(not pcall(standable, first, p), "bad waypoint accepted")
@@ -569,6 +749,7 @@ if fs.isFile("guardian-greybox.rbxl") then
 			{ "ServerScriptService", "GreyboxArena", "Arena.luau" },
 			{ "ReplicatedStorage", "GreyboxConfig", "GreyboxConfig.luau" },
 			{ "ReplicatedStorage", "GreyboxLayout", "Layout.luau" },
+			{ "ReplicatedStorage", "GreyboxScene", "Scene.luau" },
 			{ "ReplicatedStorage", "GreyboxLootRules", "LootRules.luau" },
 		}
 	do

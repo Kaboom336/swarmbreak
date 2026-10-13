@@ -24,7 +24,10 @@
                                                              },
                                            "GreyboxLootRules":  {
                                                                     "$path":  "LootRules.luau"
-                                                                }
+                                                                },
+                                           "GreyboxScene":  {
+                                                                "$path":  "Scene.luau"
+                                                            }
                                        },
                  "ServerScriptService":  {
                                              "$attributes":  {
@@ -35,7 +38,8 @@
                                                                  "GreyboxLoopTestSuccess":  false,
                                                                  "GreyboxPvpTest":  false,
                                                                  "GreyboxPvpTestSuccess":  false,
-                                                                 "GreyboxPvpTestResult":  "NOT RUN"
+                                                                 "GreyboxPvpTestResult":  "NOT RUN",
+                                                                 "GreyboxCaptureCams":  false
                                                              },
                                              "GreyboxLoopTestRunner":  {
                                                                            "$path":  "LoopTest.luau"

@@ -4,8 +4,15 @@ function Rules.new(config)
 	return { config = config, actors = {}, items = {}, serial = 0, active = nil }
 end
 function Rules.actor(r, actor)
-	local s =
-		{ phase = "Home", mercy = 0, shield = 0, shieldUsed = false, firstHitUsed = false, completed = 0, cooldown = 0 }
+	local s = {
+		phase = "Home",
+		mercy = 0,
+		shield = 0,
+		shieldUsed = false,
+		firstHitUsed = false,
+		completed = 0,
+		cooldown = 0,
+	}
 	r.actors[actor] = s
 	return s
 end
@@ -47,10 +54,35 @@ function Rules.audit(r)
 	assert(active == (r.active and 1 or 0), "duplicated arena LOOT")
 	return true
 end
+-- Deadline belongs to the original item through every drop and handoff.
+function Rules.expire(r, now)
+	local item = r.active
+	if not item or not item.escapeDeadline or now < item.escapeDeadline then
+		return false
+	end
+	if item.state ~= "Carried" and item.state ~= "Dropped" then
+		return false
+	end
+	for _, s in r.actors do
+		if s.item == item then
+			s.item = nil
+		end
+		if s.hold and s.hold.item == item then
+			s.hold = nil
+		end
+	end
+	item.state, item.holder, item.position, item.settle = "Retired", nil, nil, nil
+	item.version += 1
+	r.active, r.respawnAt = nil, now + r.config.RespawnSeconds
+	return true, item
+end
 function Rules.eligible(r, actor, action, target, now, check)
 	local s, item = r.actors[actor], r.active
 	if not s or s.phase ~= "Run" or s.item or not item then
 		return false, "hands/arena/Taken"
+	end
+	if item.escapeDeadline and now >= item.escapeDeadline then
+		return false, "escape expired"
 	end
 	if action == "Steal" then
 		if item.state ~= "Nest" then
@@ -88,7 +120,13 @@ function Rules.begin(r, actor, action, target, now, check)
 	if not ok or s.hold then
 		return false, reason or "hold active"
 	end
-	s.hold = { action = action, target = target, began = now, item = r.active, version = r.active.version }
+	s.hold = {
+		action = action,
+		target = target,
+		began = now,
+		item = r.active,
+		version = r.active.version,
+	}
 	return true
 end
 function Rules.drop(r, actor, now, position)
@@ -107,7 +145,11 @@ function Rules.hit(r, actor, source, now, position)
 	if not s or s.phase ~= "Run" or now < s.mercy or (source == "Pvp" and now < s.shield) then
 		return false, "mercy"
 	end
-	local retain = source == "Guardian" and s.item ~= nil and s.completed == 0 and not s.firstHitUsed
+	local retain = r.config.GuardianFirstHitRetains
+		and source == "Guardian"
+		and s.item ~= nil
+		and s.completed == 0
+		and not s.firstHitUsed
 	if s.item and not retain then
 		local ok, why = Rules.drop(r, actor, now, position)
 		if not ok then
@@ -141,6 +183,7 @@ function Rules.finish(r, actor, action, now, check, dropPosition)
 	local item = hold.item
 	if not item.firstPickup then
 		item.firstPickup = now
+		item.escapeDeadline = now + r.config.EscapeSeconds
 	end -- Frozen through every handoff.
 	item.state, item.holder, item.position = "Carried", actor, nil
 	item.version += 1
@@ -157,11 +200,14 @@ function Rules.secure(r, actor, now)
 	end
 	if s.item then
 		local item = s.item
+		if now >= item.escapeDeadline then
+			return false, "escape expired"
+		end
 		assert(item == r.active and item.holder == actor and item.state == "Carried", "secure identity")
 		item.state, item.securedAt, item.firstPup = "Secured", now, s.completed == 0
 		item.version += 1
 		r.active = nil
-		r.respawnAt = now + 3
+		r.respawnAt = now + r.config.RespawnSeconds
 		s.completed += 1
 	end
 	s.phase, s.hold, s.shield = "Home", nil, 0
