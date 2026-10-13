@@ -11,6 +11,8 @@ local stone = Color3.fromRGB(180, 173, 157)
 local wood = Color3.fromRGB(136, 96, 61)
 local cyan = Color3.fromRGB(65, 220, 240)
 local function cosmetic(p)
+	p.Anchored = true
+	p.CastShadow = false
 	p.CanCollide, p.CanQuery, p.CanTouch = false, false, false
 	p:SetAttribute("SurfaceRole", "Scenery")
 	return p
@@ -27,6 +29,7 @@ function Scene.underside(parent, origin, width, depth, make)
 			rock
 		)
 		p.Material = Enum.Material.Slate
+		cosmetic(p)
 		p:SetAttribute("SurfaceRole", "Underside")
 	end
 	for i = 0, 15 do
@@ -36,6 +39,7 @@ function Scene.underside(parent, origin, width, depth, make)
 		local p =
 			make(parent, "HangingCliff" .. i, Vector3.new(16, h, 16), origin + Vector3.new(x, -h / 2 - 5, z), rock)
 		p.Material = Enum.Material.Slate
+		cosmetic(p)
 		p:SetAttribute("SurfaceRole", "Underside")
 	end
 end
@@ -329,6 +333,11 @@ function Scene.skyIslands(parent, make)
 				crystal.Material = Enum.Material.Neon
 			end
 		elseif d[1] == "Volcano" then
+			for _, p in model:GetDescendants() do
+				if p:IsA("BasePart") then
+					p.Color, p.Material = Color3.fromRGB(64, 58, 66), Enum.Material.Basalt
+				end
+			end
 			cosmetic(
 				make(
 					model,
@@ -343,7 +352,133 @@ function Scene.skyIslands(parent, make)
 			cosmetic(make(model, "OceanLagoon", Vector3.new(38, 0.1, 38), o + Vector3.new(0, 0.1, 0), cyan))
 		end
 		Scene.tree(model, o + Vector3.new(-20, 0, -10), make, 0.8)
+		-- Entire vista is decoration, including the old floor/underside pieces.
+		for _, p in model:GetDescendants() do
+			if p:IsA("BasePart") then
+				cosmetic(p)
+			end
+		end
 	end
+end
+function Scene.surroundings(parent, meadowOrigin, make)
+	local scenery = Instance.new("Model")
+	scenery.Name, scenery.Parent = "DistantSurroundings", parent
+	scenery:SetAttribute("SceneryOnly", true)
+	-- Default streaming models; no Persistent mode or per-frame moving scenery.
+	for _, d in
+		{
+			{ "HomeWaterfall", Vector3.new(-240, 36, -120), 62, "Waterfall" },
+			{ "MeadowWaterfall", meadowOrigin + Vector3.new(-220, 22, -180), 70, "Waterfall" },
+			{ "MeadowSnow", meadowOrigin + Vector3.new(-310, 128, -330), 64, "Snow" },
+			{ "MeadowCrystal", meadowOrigin + Vector3.new(225, 66, -175), 56, "Crystal" },
+		}
+	do
+		local model = Instance.new("Model")
+		model.Name, model.Parent = d[1] .. "Vista", scenery
+		model:SetAttribute("SceneryOnly", true)
+		local o, width, theme = d[2], d[3], d[4]
+		model:SetAttribute("IslandHeight", o.Y)
+		local cap = cosmetic(
+			make(
+				model,
+				"VistaCap",
+				Vector3.new(width, 4, width),
+				o,
+				theme == "Snow" and Color3.fromRGB(232, 244, 250) or grass
+			)
+		)
+		cap.Material = theme == "Snow" and Enum.Material.Snow or Enum.Material.Grass
+		for i, scale in { 1, 0.7, 0.35 } do
+			local cliff = cosmetic(
+				make(
+					model,
+					"VistaRock" .. i,
+					Vector3.new(width * scale, 14, width * scale),
+					o + Vector3.new(i % 2 * 4, -9 - (i - 1) * 13, 0),
+					rock
+				)
+			)
+			cliff.Material = Enum.Material.Slate
+		end
+		if theme == "Waterfall" then
+			local water = cosmetic(
+				make(model, "WaterfallStrip", Vector3.new(9, 72, 1.5), o + Vector3.new(7, -32, width / 2 + 1), cyan)
+			)
+			water.Material, water.Transparency = Enum.Material.Neon, 0.35
+			Scene.tree(model, o + Vector3.new(-14, 2, 0), make, 0.7)
+		else
+			for i = -1, 1 do
+				local height = i == 0 and 36 or 24
+				local peak = cosmetic(
+					make(
+						model,
+						theme .. "Spire",
+						Vector3.new(theme == "Snow" and 16 or 6, height, 10),
+						o + Vector3.new(i * 16, height / 2 + 2, 0),
+						theme == "Snow" and Color3.fromRGB(222, 237, 248) or Color3.fromRGB(162, 105, 241)
+					)
+				)
+				peak.Material = theme == "Snow" and Enum.Material.Snow or Enum.Material.Neon
+				peak.CFrame *= CFrame.Angles(0, math.rad(i * 20), math.rad(i * 12))
+			end
+		end
+	end
+	for i = 0, 9 do
+		local angle = i * math.pi / 5
+		local cloud = cosmetic(
+			make(
+				scenery,
+				"DistantCloud" .. i,
+				Vector3.new(100 + i % 3 * 25, 6, 38),
+				meadowOrigin / 2 + Vector3.new(math.cos(angle) * 440, -94 + i % 3 * 8, math.sin(angle) * 460),
+				Color3.fromRGB(235, 245, 255)
+			)
+		)
+		cloud.Transparency = 0.55
+	end
+end
+function Scene.environment(lighting, meadow)
+	-- Client-only presets: portal travel cannot change another player's sky.
+	local atmosphere = lighting:FindFirstChild("GreyboxAtmosphere")
+	if not atmosphere then
+		atmosphere = Instance.new("Atmosphere")
+		atmosphere.Name, atmosphere.Parent = "GreyboxAtmosphere", lighting
+	end
+	local rays = lighting:FindFirstChild("GreyboxSunRays")
+	if not rays then
+		rays = Instance.new("SunRaysEffect")
+		rays.Name, rays.Parent = "GreyboxSunRays", lighting
+	end
+	lighting.ClockTime, lighting.Brightness = meadow and 14.2 or 12, meadow and 2.2 or 2
+	lighting.Ambient = meadow and Color3.fromRGB(126, 139, 107) or Color3.fromRGB(125, 137, 153)
+	lighting.OutdoorAmbient = meadow and Color3.fromRGB(161, 172, 139) or Color3.fromRGB(170, 185, 202)
+	atmosphere.Color = meadow and Color3.fromRGB(222, 235, 203) or Color3.fromRGB(199, 224, 255)
+	atmosphere.Decay = meadow and Color3.fromRGB(145, 168, 133) or Color3.fromRGB(143, 170, 205)
+	atmosphere.Density, atmosphere.Offset = meadow and 0.18 or 0.14, 0.15
+	atmosphere.Haze, atmosphere.Glare = meadow and 0.6 or 0.3, meadow and 0.12 or 0.05
+	rays.Intensity, rays.Spread, rays.Enabled = 0.035, 0.65, meadow
+end
+function Scene.pollen(parent)
+	local volume = Instance.new("Part")
+	volume.Name, volume.Size, volume.Transparency = "MeadowPollenVolume", Vector3.new(42, 10, 42), 1
+	cosmetic(volume).Parent = parent
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Name, emitter.Enabled = "MeadowPollen", false
+	-- Built-in Roblox texture, no imported image/mesh. At most 18 live particles.
+	emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	emitter.Rate, emitter.Lifetime = 3, NumberRange.new(4, 6)
+	emitter.Speed, emitter.SpreadAngle = NumberRange.new(0.3, 0.8), Vector2.new(80, 80)
+	emitter.Acceleration, emitter.Drag = Vector3.new(0.5, -0.08, 0.2), 0.2
+	emitter.Color = ColorSequence.new(Color3.fromRGB(213, 227, 143))
+	emitter.Size = NumberSequence.new(0.12)
+	emitter.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(0.2, 0.55),
+		NumberSequenceKeypoint.new(0.8, 0.55),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	emitter.LightEmission, emitter.LightInfluence, emitter.Parent = 0.15, 0.8, volume
+	return volume, emitter
 end
 function Scene.captureCams(parent, enabled, meadowOrigin)
 	local existing = parent:FindFirstChild("CaptureCameras")
@@ -363,6 +498,7 @@ function Scene.captureCams(parent, enabled, meadowOrigin)
 				Vector3.new(0, 4, 0),
 				55,
 				"home-island.png",
+				"Home",
 			},
 			{
 				"MeadowReferenceCamera",
@@ -370,6 +506,23 @@ function Scene.captureCams(parent, enabled, meadowOrigin)
 				meadowOrigin + Vector3.new(0, 4, -10),
 				58,
 				"meadow-island.png",
+				"Meadow",
+			},
+			{
+				"HomeSurroundingsCamera",
+				Vector3.new(0, 72, 240),
+				Vector3.new(0, 72, -230),
+				70,
+				"home-island.png",
+				"Home",
+			},
+			{
+				"MeadowSurroundingsCamera",
+				meadowOrigin + Vector3.new(0, 38, 145),
+				meadowOrigin + Vector3.new(0, 42, -150),
+				70,
+				"meadow-island.png",
+				"Meadow",
 			},
 		}
 	do
@@ -380,6 +533,7 @@ function Scene.captureCams(parent, enabled, meadowOrigin)
 		p:SetAttribute("Reference", d[5])
 		p:SetAttribute("FieldOfView", d[4])
 		p:SetAttribute("LookTarget", d[3])
+		p:SetAttribute("LightingPreset", d[6])
 		local camera = Instance.new("Camera")
 		camera.Name, camera.CFrame, camera.FieldOfView, camera.Parent = "Camera", p.CFrame, d[4], p
 	end

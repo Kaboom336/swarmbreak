@@ -153,6 +153,60 @@ Expiry outcome: clean loss/no award, new Nest ID without deadline, physical cons
 Build SHA256: 75E7E1679E0324F6C99FDEF6C891395B691EB05FF82A4A10CED6C9DAF0AA1065
 Studio NOT RUN here; owner-reported prior PvP PASS, solo FLAKY. New live navmesh/physics and 3/3 UNKNOWN; rebuilt gates false/NOT RUN. Prototype-only apply_patch text edits and requested generated binary; no commit.
 
+CURRENT RUN: 2026-10-13 themed surroundings.
+Rojo 7.4.4 requested build: exit 0 PASS; SHA256 D0517050B872A68811B65EE3E404A6E97D57B55A98BA5B397F8E3DAE188F57E4.
+StyLua 2.0.2 --check .: exit 0 PASS; formatting applied through apply_patch only.
+Selene 0.31.0 .: exit 0 PASS; 0 errors / 0 warnings / 0 parse errors.
+Lune 0.10.5 run check.luau: exit 0; actual output follows.
+COMPILE PASS Arena.luau O0/O1/O2
+COMPILE PASS check.luau O0/O1/O2
+COMPILE PASS Greybox.client.luau O0/O1/O2
+COMPILE PASS Greybox.server.luau O0/O1/O2
+COMPILE PASS GreyboxConfig.luau O0/O1/O2
+COMPILE PASS Layout.luau O0/O1/O2
+COMPILE PASS LoopTest.luau O0/O1/O2
+COMPILE PASS LootRules.luau O0/O1/O2
+COMPILE PASS Placement.luau O0/O1/O2
+COMPILE PASS Scene.luau O0/O1/O2
+PASS 50 seeds; fixed v2 contract; measured 3 walking routes; slopes/gaps
+PASS production free Place across eight plots: chosen transform, owner/types/finite/floor/range/bounds/rotation/gate/overlap/capacity/replay; refusals retain cargo
+PASS deadline: first Steal +60; handoff unchanged; before/exact/after ties; carried/dropped expiry; holds cleared; no award; +3 refill/new ID; production weld/visual cleanup
+PASS all eight pen-to-home-portal routes: built floor heights, 3-stud waypoint clearance, sampled ramp continuity
+PASS surroundings: 44 new decor parts; all vistas/undersides nonblocking; Home/Meadow/Home presets reuse effects; pollen <=18
+PASS production scene construction: no hide chunks/scenery; six hard covers; twelve-stud cutbacks; guardian attack/path cleanup; home/vistas/capture cameras
+PASS contested nest/Grab; Bump/drop/settle; cooldown; shared mercy; reset protections; winner-only secure/place; conservation rejects loss/duplication
+PASS offline PvP production range/sight/height/arena/safe adapter; shield/mercy; hold revalidation; Bump/drop/settle/contested Grab/secure/place; same ID/time
+PASS production drop projection: reported JumpLanding cliff, cover, edge and off-island falls; 3-stud clearance; nearest safe route spot seed=101
+PASS production guardian seed=101: frozen return stays put through 8s; recovery only after 20s stationary + visible departure/arrival poofs; moving return reaches Guard with bounded steps; terrace/slope throws; targeting rules preserved. Mock navigation; live Studio UNKNOWN.
+PASS production drop projection: reported JumpLanding cliff, cover, edge and off-island falls; 3-stud clearance; nearest safe route spot seed=202
+PASS production guardian seed=202: frozen return stays put through 8s; recovery only after 20s stationary + visible departure/arrival poofs; moving return reaches Guard with bounded steps; terrace/slope throws; targeting rules preserved. Mock navigation; live Studio UNKNOWN.
+PASS production drop projection: reported JumpLanding cliff, cover, edge and off-island falls; 3-stud clearance; nearest safe route spot seed=303
+PASS production guardian seed=303: frozen return stays put through 8s; recovery only after 20s stationary + visible departure/arrival poofs; moving return reaches Guard with bounded steps; terrace/slope throws; targeting rules preserved. Mock navigation; live Studio UNKNOWN.
+PASS live driver legal automatic return; old unexpected-return reproduced; lost/late cargo rejected; west apron X=-38
+PASS shared waypoint arrival: four reported orbit positions; edge/walk/overshoot/jump/run-up line; immediate next MoveTo without stops; one command per segment; route-progress watchdog rejects lateral orbit. Mock physics.
+PASS loop driver walk/jump/readiness drop/stumble/expiry interruptions; legal secure at any step; stumble wait/retry/original clock; no nearest-node recovery
+PASS shared empty expiry exit across 50 seeds: supported terrace, ramp descent and reachable cyan boundary
+PASS shared portal return: live portal path, Run/range guard, automatic/already-Home conservation, empty return, drop retry, lost/late rejection. Navigation mocked.
+PASS recovery path agent/costs; live-start Blocked and 3s stall recompute; Jump actions; NoPath retry; cleanup. Navmesh/physics mocked.
+PASS default 3-loop batch: conserved expiry counts as legal loss; 2/3 harness failure rejected; minimum 3 runs
+PASS loop expiry outcome: clean loss/no award; new Nest ID without deadline; exact physical conservation; orphan rejected
+PASS production 1s hidden fall recovery/poof/settle with original ID/deadline; reported PvP root separation and moving-dummy recheck
+CARRY JUMP first stone required=3.51 range=7.05 margin=3.54 (default gravity, inferred)
+CARRY JUMP four-stud gap required=4.81 range=7.05 margin=2.24 (default gravity, inferred)
+CARRY JUMP six-stud gap required=5.89 range=7.05 margin=1.16 (default gravity, inferred)
+CARRY JUMP stone north landing required=0.80 range=8.01 margin=7.21 (default gravity, inferred)
+PASS production driver straight run-up/edge launch; reported Y0.45 miss caught before 8s; live path recovery; both bank ramps continuous; void recovery with/without cargo and last safe spot. Movement/navigation mocked.
+PASS both disc-dodge destinations across 50 seeds; old Y0 at Z8 rejected; CampSouthRamp Y=8/3
+MEASURE simplified nest-to-cyan route 376.78 studs
+PASS 50-seed solo/PvP waypoint 3-stud clearance; bad waypoint negatives; PvP court/pacing/mercy/exit paths
+MEASURE route Grove 129.88 studs (authored points; excludes pad approach)
+MEASURE route Ridge 110.48 studs (authored points; excludes pad approach)
+MEASURE route Quick 93.52 studs (authored points; excludes pad approach)
+PASS 50-seed actual 3D walking-floor, cliff, cover-clearance checks; same segments reversible. Live jump/navmesh UNKNOWN.
+PASS built binary sources; both runtime gates NOT RUN/locked
+Studio baseline OWNER-REPORTED: both PASS, loop 3/3 ~140s, PvP ~140s. Fresh Studio/visual/device tests NOT RUN; no connector available.
+Prototype-only edits; no commit, art imports or publication.
+
 PREVIOUS RUN: 2026-10-12 Studio retest round 3 reachable treasure drops / live PvP range.
 Pinned Rojo 7.4.4 build greybox.project.json -o guardian-greybox.rbxl: exit 0 PASS.
 Pinned Lune 0.10.5 run check.luau: exit 0 PASS; nine sources compile O0/O1/O2; complete harness and rebuilt binary/source parity.

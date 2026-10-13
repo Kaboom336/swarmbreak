@@ -210,6 +210,11 @@ local function constructionTest()
 	local scene = luau.load(fs.readFile("Scene.luau"), {
 		environment = {
 			Instance = roblox.Instance,
+			Vector2 = roblox.Vector2,
+			NumberRange = roblox.NumberRange,
+			NumberSequence = roblox.NumberSequence,
+			NumberSequenceKeypoint = roblox.NumberSequenceKeypoint,
+			ColorSequence = roblox.ColorSequence,
 			Vector3 = roblox.Vector3,
 			CFrame = roblox.CFrame,
 			Color3 = roblox.Color3,
@@ -381,8 +386,55 @@ local function constructionTest()
 		"PASS all eight pen-to-home-portal routes: built floor heights, 3-stud waypoint clearance, sampled ramp continuity"
 	)
 	scene.skyIslands(world, make)
+	scene.surroundings(world, arena.origin, make)
+	local count = 0
+	for _, p in world.DistantSurroundings:GetDescendants() do
+		if p:IsA("BasePart") then
+			count += 1
+		end
+	end
+	assert(count == 44, "new scenery part budget changed")
+	for _, p in world:GetDescendants() do
+		if
+			p:IsA("BasePart")
+			and (p:GetAttribute("SurfaceRole") == "Scenery" or p:GetAttribute("SurfaceRole") == "Underside")
+		then
+			assert(
+				p.Anchored and not p.CanCollide and not p.CanQuery and not p.CanTouch,
+				"decoration blocks physics/queries: " .. p.Name
+			)
+		end
+	end
+	for _, name in { "Crystal Cave", "Frost Peak", "Volcano", "Ocean" } do
+		local vista = assert(world:FindFirstChild(name .. "Vista"), "existing vista lost")
+		for _, p in vista:GetDescendants() do
+			if p:IsA("BasePart") then
+				assert(not p.CanCollide and not p.CanQuery, "old vista blocks queries")
+			end
+		end
+	end
+	assert(world.VolcanoVista.LavaFall.Material == roblox.Enum.Material.Neon, "lava glow lost")
+	local lighting = roblox.Instance.new("Lighting")
+	scene.environment(lighting, false)
+	local homeColor = lighting.GreyboxAtmosphere.Color
+	scene.environment(lighting, true)
+	assert(lighting.GreyboxSunRays.Enabled and math.abs(lighting.ClockTime - 14.2) < 0.001, "Meadow preset missing")
+	assert(lighting.GreyboxAtmosphere.Color ~= homeColor, "presets identical")
+	scene.environment(lighting, false)
+	assert(
+		not lighting.GreyboxSunRays.Enabled and lighting.ClockTime == 12 and #lighting:GetChildren() == 2,
+		"Home preset reset/duplicate effects"
+	)
+	local volume, emitter = scene.pollen(world)
+	assert(not volume.CanQuery and not volume.CanCollide and volume.Anchored, "weather volume obstructs")
+	assert(not emitter.Enabled and emitter.Rate * emitter.Lifetime.Max <= 18, "weather particle budget")
+	volume:Destroy()
+	print(
+		"PASS surroundings: 44 new decor parts; all vistas/undersides nonblocking; Home/Meadow/Home presets reuse effects; pollen <=18"
+	)
 	scene.captureCams(world, true, arena.origin)
 	assert(world:FindFirstChild("CaptureCameras"), "capture cameras lost")
+	assert(#world.CaptureCameras:GetChildren() == 4, "surroundings cameras missing")
 	scene.captureCams(world, false, arena.origin)
 	assert(not world:FindFirstChild("CaptureCameras"), "capture cleanup")
 	print(

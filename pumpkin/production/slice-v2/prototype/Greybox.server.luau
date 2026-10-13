@@ -157,6 +157,7 @@ local function conservation()
 end
 local portal = Scene.home(world, part, label)
 Scene.skyIslands(world, part)
+Scene.surroundings(world, Vector3.new(Config.MeadowX, Config.MeadowHeight, Config.MeadowZ), part)
 local spawn = Instance.new("SpawnLocation")
 spawn.Name, spawn.Size, spawn.Position = "HomeSpawn", Vector3.new(10, 1, 10), Vector3.new(0, 0.5, Config.HomeSpawnZ)
 spawn.Anchored, spawn.Neutral, spawn.Duration, spawn.Parent = true, true, 0, world

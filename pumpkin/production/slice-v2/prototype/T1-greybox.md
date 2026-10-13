@@ -1,6 +1,32 @@
 # T1 v2 greybox — ARENA-1013 free-placement plots
 
-## Current revision: phase-safe PvP portal return (2026-10-13)
+## Current revision: themed surroundings (2026-10-13)
+
+OWNER-REPORTED baseline: both Studio tests PASS, loop 3/3 about 140 seconds and PvP about 140 seconds. This supersedes the historical PvP failure below. CHECKED this revision: ARENA-1013.md, home-island.png and meadow-island.png viewed, existing scene/client/server/compile harness inspected; reused native-Part scene code. No imported art, dependency, purchase, commit or publication. Only prototype files edited with apply_patch; the requested Rojo command generated guardian-greybox.rbxl. Exact Keystone Roblox Process Playbook remains unavailable in the checked local sources; no Keystone or Studio connector is exposed.
+
+- Kept all four original vistas at their existing positions/heights: Crystal Cave, Frost Peak, Volcano and Ocean. Volcano rock is dark basalt with its glowing orange lava strip; existing snow cap and crystal spires remain.
+- Added four compact vistas: Home waterfall at (-240,36,-120); Meadow waterfall at (-220,+22,-180), snow at (-310,+128,-330), crystal at (+225,+66,-175), relative to Meadow origin (0,76,-360). Each has three staggered, tapered rocky underside layers. Ten broad, translucent clouds sit below and beyond the playable islands. New server scenery totals 44 Parts.
+- All scenery and rocky undersides are anchored, CanCollide/CanQuery/CanTouch false; decorative shadows are disabled. Authored walking floors, slopes, hard cover and route coordinates stay intact. No persistent streaming models, moving scenery, new pathfinding obstacles or server weather updates. StreamingEnabled remains at the existing false setting because enabling it would expand gameplay scope. Actual streamed/device performance is UNKNOWN.
+- Client-only Home and Meadow Lighting/Atmosphere presets swap on GreyboxPhase changes, including return/reset. Home uses cooler midday light; Meadow uses warmer afternoon light, light haze and SunRaysEffect intensity 0.035. One Atmosphere and one ray effect are reused, so one player's portal travel does not alter another player's lighting.
+- Meadow has one local drifting pollen ParticleEmitter: built-in Roblox sparkle texture, rate 3/second, lifetime 4-6 seconds, at most 18 live particles. A nonquery/noncolliding 42x10x42 volume follows the local root four times per second. Emission stops outside Meadow or without a root; returning Home clears particles. No art asset imported. See [ParticleEmitter documentation](https://create.roblox.com/docs/reference/engine/classes/ParticleEmitter) and [Atmosphere documentation](https://create.roblox.com/docs/reference/engine/classes/Atmosphere).
+
+CHECKED: ten Luau files compile at O0/O1/O2 and the full Lune harness PASS, including existing solo/PvP rules, all eight home entry routes, 50-seed floor/waypoint clearance, recovery, expiry, portal return and binary/source parity. New construction checks enforce the 44-part budget, nonblocking new/old vista and underside flags, preserved original vista names, glowing lava, Home -> Meadow -> Home preset reuse, pollen budget and four capture cameras. StyLua --check PASS; Selene 0 errors/warnings/parse errors; requested Rojo build PASS. Studio tests were NOT rerun here: baseline PASS is owner-reported, fresh Studio physics/navmesh/rendering and visual acceptance remain UNKNOWN. Build test gates remain false/NOT RUN.
+
+Enable ServerScriptService.GreyboxCaptureCams in Play; Workspace.GREYBOX.CaptureCameras now contains four marker Parts, each with a Camera, FieldOfView, LookTarget, Reference and LightingPreset attribute. Existing reference shots are retained: Home eye (0,150,260), target (0,4,0), FOV55; Meadow eye (0,140,-228), target (0,80,-370), FOV58. Added HomeSurroundingsCamera eye (0,72,240), target (0,72,-230), FOV70; MeadowSurroundingsCamera eye (0,114,-215), target (0,118,-510), FOV70. Use 16:9 and the matching island's travel state for its preset; camera markers do not teleport or change gameplay. Restore CameraType Custom/subject afterward.
+
+| Supplied comparison bar | Current implementation | Remaining limit |
+|---|---|---|
+| home-island.png: snow/waterfall, purple spires, lava silhouette | Original vistas kept; waterfall added; dark basalt/lava preserved | Primitive shapes, no live matched capture inspected |
+| meadow-island.png: distant grass cliffs, waterfalls and pale clouds | Meadow-facing waterfall, snow/crystal silhouettes and cloud layer | Windmill/castle art outside this greybox request |
+| Catastrophic Horse Racing: readable threat against themed backdrop; Steal an Egg: clear guarded route | Small pollen, soft rays, all decoration excluded from route physics/queries | Visual superiority, live independent critique and device cost UNKNOWN |
+
+Reopen the rebuilt place for the same loop/PvP tests. Check portal lighting in both directions and reset, both surroundings cameras, drifting pollen against the red disc, and routes beside the islands. No new Studio or independent visual victory is claimed.
+
+Lessons: When scenery is cosmetic, disable both collision and queries because invisible decoration can otherwise affect route/floor checks. When players travel independently, apply lighting locally because server Lighting would change everyone's sky.
+
+Current surroundings build SHA256: D0517050B872A68811B65EE3E404A6E97D57B55A98BA5B397F8E3DAE188F57E4
+
+## Previous revision: phase-safe PvP portal return (2026-10-13)
 
 OWNER-REPORTED: GreyboxLoopTest now passes in Studio: `3/3 passed; 0 legal expiries; 3 placed`. GreyboxPvpTest fails with `GreyboxLoopTestRunner:365: illegal refusal returnRun: return boundary/phase`. CHECKED: the winner used scripted Winner segments, while the subsequent PvP expiry regression unconditionally called returnRun at its last empty-return marker (0,0,-40), short of the actual portal (-24,4,-58). The generic act line does not identify which call failed; the exact live failing stage remains UNKNOWN.
 

@@ -8,6 +8,34 @@ local remote = RS:WaitForChild("GreyboxAction")
 local world = workspace:WaitForChild("GREYBOX")
 local Config = require(RS:WaitForChild("GreyboxConfig"))
 local Placement = require(RS:WaitForChild("GreyboxPlacement"))
+local Scene = require(RS:WaitForChild("GreyboxScene"))
+local lighting = game:GetService("Lighting")
+local pollenVolume, pollenEmitter = Scene.pollen(workspace)
+local function environment()
+	local meadow = player:GetAttribute("GreyboxPhase") == "Run"
+	Scene.environment(lighting, meadow)
+	pollenEmitter.Enabled = false
+	if not meadow then
+		pollenEmitter:Clear()
+	end
+end
+player:GetAttributeChangedSignal("GreyboxPhase"):Connect(environment)
+environment()
+local weatherElapsed = 0
+RunService.RenderStepped:Connect(function(dt)
+	weatherElapsed += dt
+	if weatherElapsed < 0.25 then
+		return
+	end
+	weatherElapsed = 0
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local enabled = player:GetAttribute("GreyboxPhase") == "Run" and root ~= nil
+	if enabled then
+		pollenVolume.Position = root.Position + Vector3.new(0, 8, 0)
+	end
+	pollenEmitter.Enabled = enabled
+end)
 local controls = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule")):GetControls()
 local function testControls()
 	if player:GetAttribute("GreyboxLoopTesting") then
