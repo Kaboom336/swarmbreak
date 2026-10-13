@@ -20,3 +20,4 @@
 
 ## 2026-10-13 11:50 UTC
 - Zion: KEEP golden acorn (models/golden-acorn). Meadow Keeper rejected ("not nearly as good as the reference"); Codex redo running detached (task C:\dev\codex-labrt1b-keeper-task.md -> art1b.last.txt, compare.jpg in models/meadow-keeper/blender). Next session: check it, send to Zion one question "Keeper: ok / change".
+- 12:36 UTC Zion: Meadow map layout/shape not right or fun for the gameplay. Codex map arena running detached (task C:\dev\codex-lab\map-v3-task.md -> mapv3.last.txt, output treasure/map-v3/): 3 layout concepts + top-downs + judge pick. Next session: show Zion the 3 options (one question: pick), then rebuild the Meadow greybox to the pick with tests passing.
