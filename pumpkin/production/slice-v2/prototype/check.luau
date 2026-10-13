@@ -197,6 +197,244 @@ local function height(l, x, z)
 	end
 	return value
 end
+-- Execute Arena.tick/attack with real Roblox value types and authored scalar
+-- terrain. Navigation is frozen so targeting cannot rely on a successful path.
+-- This is state-machine evidence, not live raycast/navmesh/physics evidence.
+local function guardianLogicTest(seed)
+	local roblox = require("@lune/roblox")
+	local v, instance = roblox.Vector3, roblox.Instance
+	local layout = Layout.assemble(Config, seed, false)
+	local floorPart = instance.new("Part")
+	floorPart:SetAttribute("SurfaceRole", "Floor")
+	local blocked = false
+	local transitions = {}
+	local function raycast(_, from, direction)
+		if direction == v.new(0, -70, 0) then
+			return {
+				Position = v.new(from.X, height(layout, from.X, from.Z), from.Z),
+				Normal = v.yAxis,
+				Instance = floorPart,
+			}
+		end
+		if blocked then
+			return { Instance = floorPart }
+		end
+		local samples = math.ceil(direction.Magnitude * 4)
+		for i = 0, samples do
+			local p = from + direction * (i / math.max(1, samples))
+			if p.Y <= height(layout, p.X, p.Z) then
+				return { Instance = floorPart }
+			end
+			for _, b in layout.solids do
+				if
+					b.role == "Cover"
+					and math.abs(p.X - b.x) <= b.w / 2
+					and math.abs(p.Z - b.z) <= b.d / 2
+					and math.abs(p.Y - b.y) <= b.h / 2
+				then
+					return { Instance = floorPart }
+				end
+			end
+		end
+		return nil
+	end
+	local function loadArena(source)
+		return luau.load(source, {
+			debugName = "production guardian state machine",
+			environment = {
+				game = {
+					GetService = function(_, name)
+						return name == "ReplicatedStorage"
+								and {
+									WaitForChild = function(_, module)
+										return module
+									end,
+								}
+							or {}
+					end,
+				},
+				require = function(module)
+					return module == "GreyboxConfig" and Config or Layout
+				end,
+				Vector3 = v,
+				CFrame = roblox.CFrame,
+				Color3 = roblox.Color3,
+				Instance = instance,
+				Enum = roblox.Enum,
+				workspace = {
+					Raycast = raycast,
+					Spherecast = function()
+						return nil
+					end,
+					Blockcast = function()
+						return nil
+					end,
+				},
+				task = { spawn = function() end }, -- Freeze pathfinding/movement, not targeting.
+				print = function(message)
+					table.insert(transitions, message)
+				end,
+			},
+		})()
+	end
+	local source = fs.readFile("Arena.luau")
+	local arenaCode = loadArena(source)
+	local actor, rival = {}, {}
+	local function scenario(code, options)
+		transitions = {}
+		blocked = options.blocked or false
+		-- Lune instances do not derive Position when CFrame changes like Studio.
+		local guard = setmetatable({
+			CFrame = roblox.CFrame.new(options.guard or v.new(8, 9.5, 32)),
+			Size = v.new(4, 11, 4),
+		}, {
+			__index = function(part, key)
+				return key == "Position" and part.CFrame.Position or nil
+			end,
+		})
+		local model = instance.new("Model")
+		local a = {
+			guardian = guard,
+			arm = instance.new("Part"),
+			model = model,
+			warning = {},
+			origin = v.zero,
+			mode = options.mode or "Patrol",
+			untilTime = 0,
+			nextThrow = options.cooldown or 0,
+			nextPath = 0,
+			points = {},
+			index = 1,
+			patrol = 1,
+			chaseTicks = 0,
+			throws = 0,
+			impacts = 0,
+			chaseDistance = 0,
+			targetSince = -10,
+			lastSeen = v.new(0, 3.45, 8),
+			searchAt = v.new(0, 3.45, 8),
+			sniffAt = 0,
+		}
+		local s = {
+			phase = options.phase or "Run",
+			item = {},
+			hidden = options.hidden,
+			mercy = options.mercy or 0,
+		}
+		if options.empty then
+			s.item = nil
+		end
+		local actors = { [actor] = s }
+		local roots = { [actor] = { Position = options.position or v.new(0, 3.45, 8) } }
+		if options.rival then
+			actors[rival], roots[rival] = { phase = "Run", mercy = 0 }, { Position = v.new(8, 7, 28) }
+			a.target = rival
+		end
+		local function root(who)
+			return roots[who]
+		end
+		if options.waypoint then
+			a.points, a.index = { { Position = options.waypoint } }, 1
+		end
+		for i = 0, math.floor((options.seconds or 3) / 0.05) do
+			local now = i * 0.05
+			if options.revealAt and now >= options.revealAt then
+				blocked = false
+			end
+			code.tick(a, 0.05, now, actors, root, function()
+				error("unexpected offline hit")
+			end, function() end)
+			if a.attack then
+				return a
+			end
+		end
+		return a
+	end
+	for _, guard in { v.new(8, 9.5, 32), v.new(0, 9.5, 32), v.new(0, 7, 32) } do
+		for _, x in { -0.5, 0, 2 } do
+			for _, mode in { "Patrol", "Search" } do
+				local a = scenario(arenaCode, { guard = guard, position = v.new(x, 3.45, 8), mode = mode })
+				assert(
+					a.attack and a.attack.disc and a.attack.actor == actor and a.attack.start <= 3,
+					"carrier lane acquisition/throw >3s"
+				)
+				assert(
+					a.attack.start >= Config.WarningSeconds and a.nextThrow == a.attack.start + Config.ThrowCooldown,
+					"warning/cooldown changed"
+				)
+			end
+		end
+	end
+	local oldSource, replaced = string.gsub(source, "distance <= range", "distance <= 24", 1)
+	assert(replaced == 1, "old detection regression substitution missing")
+	assert(
+		not scenario(loadArena(oldSource), { seconds = 8 }).attack,
+		"old 24-stud acquisition must reproduce missing throw"
+	)
+	assert(scenario(arenaCode, { rival = true, mode = "Chase" }).attack.actor == actor, "carrier preference lost")
+	assert(
+		scenario(arenaCode, { blocked = true, revealAt = 0.5, mode = "Search" }).attack.start <= 3,
+		"visible reacquisition delayed"
+	)
+	for _, options in
+		{
+			{ empty = true },
+			{ blocked = true },
+			{ hidden = true },
+			{ phase = "Home" },
+			{ position = v.new(0, 3.45, -40) },
+			{ position = v.new(80, 3.45, 8) },
+			{ mercy = 4 },
+			{ cooldown = 4 },
+		}
+	do
+		assert(
+			not scenario(arenaCode, options).attack,
+			"guardian bypassed aggro/sight/hide/phase/safe/range/mercy/cooldown"
+		)
+	end
+	local cooldown = scenario(arenaCode, { cooldown = 4, seconds = 5 })
+	assert(
+		cooldown.attack and cooldown.attack.disc and cooldown.attack.start >= 4 and cooldown.attack.start <= 4.1,
+		"spent cooldown failed to reopen"
+	)
+	local poke = scenario(arenaCode, { guard = v.new(0, 5.5, 8) })
+	assert(poke.attack and poke.attack.close and not poke.attack.disc, "close poke changed")
+	for _, position in { v.new(-0.4, 3.45, 8), v.new(2.7, 3.45, 8) } do
+		local hill =
+			scenario(arenaCode, { guard = v.new(-44.3, 14, 5.9), position = position, cooldown = 4, seconds = 8 })
+		assert(hill.attack and hill.attack.disc and hill.attack.start < 8, "hill leash recovery/throw >8s")
+		assert(hill.attack.start >= 4, "hill recovery bypassed cooldown")
+		assert((hill.guardian.Position - v.new(8, 9.5, 32)).Magnitude < 0.1, "guardian did not return to camp")
+		local logs = table.concat(transitions, "\n")
+		assert(
+			string.find(logs, "state=Return", 1, true) and string.find(logs, "state=Throw", 1, true),
+			"missing guardian transition logs"
+		)
+	end
+	local stuck = scenario(arenaCode, { guard = v.new(0, 5.5, 8), blocked = true, seconds = 5 })
+	assert((stuck.guardian.Position - v.new(8, 9.5, 32)).Magnitude < 0.1, "failed path did not recover")
+	assert((stuck.pathVersion or 0) >= 2, "failed path recovery did not invalidate paths")
+	local leash =
+		scenario(arenaCode, { guard = v.new(8, 5.5, 0.5), waypoint = v.new(8, 0, -4), blocked = true, seconds = 5 })
+	assert((leash.guardian.Position - v.new(8, 9.5, 32)).Magnitude < 0.1, "waypoint escaped camp leash")
+	local slope = scenario(arenaCode, { guard = v.new(0, 7.5, 23), position = v.new(0, 3.45, 8) })
+	assert(slope.attack and slope.attack.disc, "slope throw failed")
+	local cover = { role = "Cover", x = 0, y = 2.6, z = 14, w = 10, h = 5.2, d = 2 }
+	table.insert(layout.solids, cover)
+	assert(scenario(arenaCode, { guard = v.new(0, 7, 32) }).attack, "low cover top blocked upper-body sight")
+	cover.y, cover.h = 6, 12
+	assert(not scenario(arenaCode, { guard = v.new(0, 7, 32) }).attack, "tall cover wall bypassed")
+	table.remove(layout.solids)
+	print(
+		"PASS production guardian seed="
+			.. seed
+			.. ": reported hill pose recovers/throws <8s; failed navigation recovers; terrace/slope throws; 18 lane cases <=3s; old 24-stud stall; carrier priority/sight/hide/safe/range/mercy/4s cooldown/poke. Navigation frozen; live Studio UNKNOWN."
+	)
+end
+for _, seed in { 101, 202, 303 } do
+	guardianLogicTest(seed)
+end
 -- Match the live preflight's radius/slope envelope using the scalar collision recipe.
 -- This cannot replace Studio raycasts or Humanoid physics.
 local function standable(l, p, edge)

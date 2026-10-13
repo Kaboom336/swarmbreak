@@ -2,9 +2,43 @@
 
 Implemented and rebuilt `guardian-greybox.rbxl` after reading all of ISLAND-V2.md, the previous T1 notes and scripts. Plain parts/UI only. No art, commit or publish. All task edits stay in this prototype folder; unrelated working-tree changes were left alone.
 
-**CHECKED:** Lune compile O0/O1/O2, StyLua format/check, Selene, exact Rojo build, binary source mapping, 50 seeded collision layouts and authoritative item-transition checks. **Round-3 input: OWNER-REPORTED solo FAIL at `Walk east of jump gully`. Rebuilt round-3 Studio solo/PvP: NOT RUN / UNKNOWN.** No Studio integration was callable. Owner entry requires both new runtime gates; old scalar results cannot unlock v2.
+**CHECKED round 5:** three guardian seeds (101, 202, 303), all eight files compile O0/O1/O2, StyLua format/check, Selene (0 errors/warnings/parse errors), exact Rojo 7.4.4 build, binary source/gate checks, existing 50-seed routes and production PvP/item conservation PASS. **OWNER-REPORTED round-4 Studio:** Loop still FAIL; guardian stranded on west hill. **Round-5 Studio: NOT RUN / UNKNOWN.**
 
-## Studio test round 3 - current build
+## Studio test round 5 - current build
+
+**OWNER-REPORTED new diagnosis:** Guardian at world (455.7,14.0,5.9), arena-local (-44.3,14.0,5.9), after following the carrying player up the west hill. Carrier reached local (-0.4..2.7,3.45,8); no normal telegraph within 8s. This supersedes round 4's incomplete acquisition-only diagnosis.
+
+**CHECKED code:** chase had no camp leash, patrol included a distant south waypoint, and failed/blocked/unfinished paths had no bounded recovery. Existing prototype code reused; no dependency or licence change. Only Arena.luau, check.luau, this note, verification.log and the requested rebuilt rbxl were edited for round 5. LoopTest, geometry and Config unchanged; no commit/publish.
+
+- Camp is local (8,4,32), guardian centre (8,9.5,32). A 32-stud horizontal camp leash bounds chase, Search movement and all patrol waypoints. A step beyond it is refused. Already outside it enters Return immediately; two seconds without meaningful navigation progress also enters Return. Return tries normal pathfinding, then resets this NPC to its authored camp after at most 2.5s if navigation fails. Thus off-area recovery is bounded to 2.5s; stuck-path recovery to 4.5s, excluding an already planted 1.2s windup. Player movement/test deadlines are unchanged.
+- Carrier detection and throws share 56-stud range. Upper-body raycast from guardian centre +3 to player root +2 clears small cover tops; tall walls and terrain still block it. Valid throw positions wait for mercy/cooldown without counting that wait as stuck. Projectile collision/interception remains unchanged. Warning 1.2s, throw telegraph 1.2s, 4s cooldown and 8s test limit preserved.
+- Stale asynchronous paths are discarded after warn/return/reset, and path creation/compute errors cannot leave the computing flag stuck after the callback finishes. `[GreyboxGuardian] state=... pos=... target=... range=... reason=...` logs state transitions, including Return and Throw. Positions are arena-local; range is actual 3D distance or -1 without a target.
+- Offline checks execute production Arena.tick with Roblox value types, generated terrain/cover samples and frozen navigation. Each of seeds **101, 202, 303** checks both reported lane endpoints from the actual hill pose, including a spent 4s cooldown, and requires a camp return plus normal red-disc throw before 8s. Each also checks failed navigation, an outward waypoint at the leash boundary, 18 terrace/lane Patrol/Search cases (throws within 3s), slope throws, low-cover tops versus tall walls, carrier priority, and negative sight/hide/Home/safe/range/mercy cases. The old 24-stud acquisition stall still reproduces. Lune's offline guardian proxy derives Position from CFrame to match Studio semantics; offline results are not navmesh/engine physics evidence.
+
+**UNKNOWN:** rebuilt real Studio Loop/PvP, live hill navigation, line-of-sight and projectile collision, replication and feel. Both binary gates remain NOT RUN/false. Open the rebuilt `guardian-greybox.rbxl` in fresh Studio Play; run Loop then PvP using the commands below. See `verification.log` for checked output.
+
+Reference comparison: **Steal an Egg** remains the guarded pickup/return reference: readable warning and a ranged throw should continue after an escape detour. This build adds bounded camp recovery where the previous build could remain on the hill. No played side-by-side comparison or independent runtime critic pass is claimed. Exact Keystone Roblox Process Playbook remains unavailable in searched local files/exposed tools; supplied rules and Roblox production skill applied.
+
+Lessons: When chase can follow terrain, leash it to camp and bound path recovery because acquisition fixes cannot repair a stranded NPC. When an AI waits for cooldown, suspend navigation-stuck timing because intentional waiting is not a failed path. When offline value types omit engine property coupling, model that coupling because a CFrame reset must change observed Position.
+
+## Historical Studio test round 4
+
+
+**OWNER-REPORTED:** `GreyboxPvpTest` PASS (legal Bump/drop/settle/Grab/secure/place with dummy carrier; no duplicate/lost). `GreyboxLoopTest` completed Steal, the jump set, carrying hill climb and west return lane, then failed at `GreyboxLoopTestRunner:281: no normal throw/telegraph >8s`. Carrier stood near island-relative (-0.5..2, 3.45, 8), shield=0, mercy=0, without a red telegraph.
+
+**CHECKED code cause:** new-target detection was limited to 24 studs while normal throws allow 12-36 studs. Camp guardian centre (8,9.5,32) puts that lane beyond 24 studs; even centre (0,7,32) to (0,3.45,8) is just outside 24. After hill sight loss and Search expiry, an open carrier could therefore be throwable but never reacquired without successful patrol movement. Carrier preference applied only after the visibility/detection filter. **INFERRED:** this explains the reported live stall; the exact live guardian pose/state was not captured.
+
+- Visible Run carriers now acquire throughout the existing 36-stud throw range, using the same range constant as throw eligibility. Empty-handed detection stays at 24 studs. Existing 1.2s warning, target lock/preference, sight-loss Search, cover/hide, safe apron/disc rejection, mercy, close pokes, planted windup and 4s throw cooldown stay intact. No geometry, runner, LootRules or config edits; the test still fails after 8s.
+- Offline regression loads actual `Arena.tick` and attack code with Roblox value types, scalar ray samples against the authored terrace/ramp/cover recipe, and frozen navigation. Restoring the old 24-stud filter reproduces no throw through 8s. All 18 combinations of three camp poses, three reported lane X positions and Patrol/Search start a normal red-disc throw within 3s when mercy/cooldown are ready. Carrier priority over a closer empty-handed target and sight reacquisition pass.
+- Negative checks preserve empty-handed aggro, blocked sight, hidden/Home/safe/out-of-range exclusions, mercy and cooldown. A just-spent cooldown still blocks through 3s and reopens at 4s; this is deliberately preserved rather than bypassed to force the timing target. Close range still produces the existing poke. Sight sampling is offline evidence; live engine raycasts/navmesh/replication remain UNKNOWN.
+
+**CHECKED:** eight files compile O0/O1/O2; StyLua format/check PASS; Selene 0 errors/warnings/parse errors; exact Rojo 7.4.4 build PASS; binary source matching and initial NOT RUN/false gates PASS; existing 50-seed route and PvP/item conservation checks PASS. See `verification.log`. Only this prototype folder edited; no commit or publish. Open the rebuilt `guardian-greybox.rbxl` in fresh Studio Play and rerun Loop first, then PvP. The previous owner-reported PvP PASS is retained as evidence for the prior build, not stamped onto this binary.
+
+Reference comparison: **Steal an Egg** remains the guarded pickup/return reference. A visible carrier inside the guardian's actionable throw range should receive readable warning and a locked red disc; the previous detection gap prevented that. Existing code reused, no new dependency/licence. No played reference comparison or independent Studio critic pass is claimed. Exact Keystone Roblox Process Playbook remains unavailable in the local files/exposed tools; supplied greybox rules and Roblox production skill applied.
+
+Lesson: When attack range exceeds acquisition range, align acquisition for priority targets because otherwise valid attacks depend on navigation closing the gap. When diagnosing AI after a terrain detour, freeze navigation in a regression because target reacquisition must work independently of pathfinding.
+
+## Historical Studio test round 3
 
 **OWNER-REPORTED:** real Studio completed portal, nest, camp descent, throw/disc dodge, central/west lanes and carrying ridge steps 4-10, then circled near (-22..-26, 3.45, -10..-14) until `Walk east of jump gully` timed out. **CHECKED:** guardian/arm collision is disabled and the driver already uses Humanoid:Move, not MoveTo. Scalar geometry does not identify a wall at the old (-24,0,-12) goal. **INFERRED:** endpoint oscillation around the former 0.35-stud tolerance is plausible; exact Studio cause remains UNKNOWN.
 
@@ -99,7 +133,7 @@ Eight Luau files compile at O0/O1/O2. StyLua format/check PASS; Selene **0 error
 
 Lune deserializes the binary and verifies matching server/client/config/layout/rules/arena/test sources and both gates initially NOT RUN/false. Fifty seeds check replay, fixed terminals, chunk footprints/nonoverlap, ramp slopes, gap sizes, sampled walking floors, cover clearance, cross-links and the actual typed carrying-test route. Negative layouts reject overlap/steep slopes. Rules checks cover contested nest/Grab winners, short holds, Bump/drop/settle, cancelled-attempt cooldown, shared mercy, reset protections, winner-only secure/place and deliberate duplication/loss corruption.
 
-Build SHA256: **A3D0D83422AEDC241C31EE7C90E69F47BDC6252E753CD4A5C40E83824BAD4E03**. See `verification.log` for the final tool output.
+Build SHA256: **28BF5CC4B7A38553C98072375C6E486792B530F744251D3D43A9E9FEE42C74DD**. See `verification.log` for the final tool output.
 
 **UNKNOWN / NOT RUN:** rebuilt Studio solo/PvP PASS results, guardian hill navigation, 10 distinct carrying walks, hit/drop/cover interception demonstrations, hide opening feel, 2/4/8 actual clients, network races, reset/disconnect/fall under load, native E/X/touch, phone performance and 9:16 clips. Static PASS is not physics or owner acceptance.
 
