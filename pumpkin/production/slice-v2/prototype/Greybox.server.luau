@@ -884,6 +884,9 @@ local api = {
 	enterRun = enterRun,
 	holdAction = holdAction,
 	returnRun = returnRun,
+	returnInRange = function(actor)
+		return arena and near(actor, arena.dock)
+	end,
 	placeItem = placeItem,
 	root = root,
 	floor = function(position)

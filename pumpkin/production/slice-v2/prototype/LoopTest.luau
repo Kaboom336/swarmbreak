@@ -530,7 +530,37 @@ local function expiryExitSteps()
 		{ x = 0, y = 0, z = -40 },
 	}
 end
-local function expiryTest(player, states, pens, world, api, log, walk)
+local function returnPortal(player, states, api, log, navigate, item)
+	local s = states[player]
+	if s.phase == "Run" then
+		local dock = api.arena().dock
+		local floor = assert(api.floor(dock.Position), "return portal floor missing")
+		local reached, reason = navigate(floor + Vector3.new(0, 3, 0), "return portal", item ~= nil)
+		if not reached then
+			return false, reason
+		end
+	end
+	if s.phase == "Run" then
+		assert(api.returnInRange(player), "return portal approach outside action range")
+		act(api, player, "returnRun")
+	end
+	assert(s.phase == "Home" and s.run == nil, "return did not reach Home")
+	if item then
+		assert(
+			s.item == item
+				and item.holder == player
+				and item.state == "Secured"
+				and item.securedAt < item.escapeDeadline,
+			"return lost cargo or missed deadline"
+		)
+	else
+		assert(not s.item, "empty return gained cargo")
+	end
+	api.audit()
+	log(item and "return conserved " .. item.id or "empty return conserved")
+	return true
+end
+local function expiryTest(player, states, pens, world, api, log, walk, navigate)
 	local s = states[player]
 	local count, completed = pens[s.slot].count, s.completed
 	for _, p in homeEntryPoints(pens[s.slot]) do
@@ -559,11 +589,7 @@ local function expiryTest(player, states, pens, world, api, log, walk)
 	-- drop cargo; its original deadline and the actor's location remain legal.
 	walk(checked(at(arena, -4, 4, 18), "expiry wait terrace"), "expiry wait terrace")
 	verifyExpiry(player, states, pens, world, api, log, item, count, completed)
-	for i = 2, #exit do
-		local p = exit[i]
-		walk(at(arena, p.x, p.y, p.z), "empty return after expiry " .. i)
-	end
-	act(api, player, "returnRun")
+	assert(returnPortal(player, states, api, log, navigate))
 end
 local function place(player, states, pens, api, walk, log, item, initialCount)
 	local s = states[player]
@@ -800,10 +826,7 @@ function Test.run(player, states, pens, world, api, log)
 	if expired then
 		verifyExpiry(player, states, pens, world, api, log, item, initialCount, completed)
 		monitor.item = nil
-		local exit = expiryExitSteps()
-		local portal = exit[#exit]
-		assert(navigate(at(arena, portal.x, portal.y, portal.z), "empty return after expiry"))
-		act(api, player, "returnRun")
+		assert(returnPortal(player, states, api, log, navigate))
 		api.audit()
 		return "PASS-with-expiry / conserved loss " .. item.id, "expiry"
 	end
@@ -819,7 +842,8 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 	local initialCount = pens[s.slot].count
 	local checked, preflight = validator(world, log)
 	preflight(homePoints(pens[s.slot]))
-	local walk, _, _, navigate = driver(player, states, api, log, checked)
+	local monitor = {}
+	local walk, _, _, navigate = driver(player, states, api, log, checked, monitor)
 	walk(at(nil, 0, 3, Config.HomePortalApproachZ), "home portal")
 	act(api, player, "enterRun")
 	local arena = api.arena()
@@ -908,23 +932,26 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 	api.audit()
 	SSS:SetAttribute("GreyboxPvpTestItemId", item.id)
 	SSS:SetAttribute("GreyboxPvpTestHandoffs", 1)
-	for i = 2, #routes.Winner do
-		local p = routes.Winner[i]
-		for attempt = 1, Config.TestRecoverRetries do
-			recover(api, player, states, navigate, item, log, checked)
-			if walk(at(arena, p.x, p.y, p.z), "winner " .. p.kind .. " " .. i, false, p.kind == "Return") then
-				break
-			end
-			assert(attempt < Config.TestRecoverRetries, "PvP return retry limit")
+	monitor.item = item
+	for attempt = 1, Config.TestRecoverRetries do
+		if s.phase == "Run" then
+			assert(recover(api, player, states, navigate, item, log, checked), "PvP cargo expired before return")
 		end
+		local reached, reason = returnPortal(player, states, api, log, navigate, item)
+		if reached then
+			break
+		end
+		assert(reason ~= "expiry", "PvP cargo expired before return")
+		assert(attempt < Config.TestRecoverRetries, "PvP return retry limit")
 	end
 	assert(
-		item.securedAt < item.escapeDeadline and item.escapeDeadline == escapeDeadline,
+		item.securedAt < item.escapeDeadline and item.escapeDeadline == escapeDeadline and item.firstPickup == timestamp,
 		"PvP deadline refreshed/late"
 	)
 	place(player, states, pens, api, walk, log, item, initialCount)
+	monitor.item = nil
 	api.pvpCourt(false)
-	expiryTest(player, states, pens, world, api, log, walk)
+	expiryTest(player, states, pens, world, api, log, walk, navigate)
 	return "legal Bump/drop/settle/Grab/secure/place with dummy carrier; no duplicate/lost " .. item.id
 end
 return Test

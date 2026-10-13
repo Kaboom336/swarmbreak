@@ -1234,6 +1234,94 @@ local function loopInterruptionTest()
 	print("PASS shared empty expiry exit across 50 seeds: supported terrace, ramp descent and reachable cyan boundary")
 end
 loopInterruptionTest()
+-- Run the shared return completion code against phase/range/conservation races.
+local function portalReturnTest()
+	local v = require("@lune/roblox").Vector3
+	local source = fs.readFile("LoopTest.luau")
+	local first = assert(source:find("local function returnPortal(", 1, true))
+	local last = assert(source:find("local function expiryTest(", first, true))
+	local finish = luau.load(source:sub(first, last - 1) .. "\nreturn returnPortal", {
+		environment = {
+			Vector3 = v,
+			act = function(api, actor, name)
+				assert(api[name](actor), "illegal return")
+			end,
+		},
+	})()
+	for _, mode in { "manual", "automatic", "already-home", "empty", "out-of-range", "lost", "late", "drop" } do
+		local actor, calls, paths, audits, inRange = {}, 0, 0, 0, false
+		local item = { id = "portal:1", state = "Carried", escapeDeadline = 60, holder = nil }
+		item.holder = actor
+		local s = { phase = "Run", run = 1, item = mode ~= "empty" and item or nil }
+		local function secure()
+			s.phase, s.run = "Home", nil
+			item.state, item.securedAt = "Secured", mode == "late" and 60 or 10
+			if mode == "lost" then
+				s.item = nil
+			end
+		end
+		if mode == "already-home" then
+			secure()
+		end
+		local api = {
+			arena = function()
+				return { dock = { Position = v.new(-24, 80, -302) } }
+			end,
+			floor = function(p)
+				return p - v.new(0, 4, 0)
+			end,
+			returnInRange = function()
+				return inRange
+			end,
+			returnRun = function()
+				assert(s.phase == "Run" and inRange, "phase/range bypass")
+				calls += 1
+				secure()
+				return true
+			end,
+			audit = function()
+				audits += 1
+			end,
+		}
+		local ok, result, reason = pcall(
+			finish,
+			actor,
+			{ [actor] = s },
+			api,
+			function() end,
+			function(goal, _, automatic)
+				paths += 1
+				assert(goal == v.new(-24, 79, -302), "did not pathfind to actual portal floor")
+				assert(automatic == (mode ~= "empty"), "empty return waits for cargo auto-secure")
+				if mode == "drop" then
+					return false, "drop"
+				end
+				inRange = mode ~= "out-of-range"
+				if mode == "automatic" or mode == "lost" or mode == "late" then
+					secure()
+				end
+				return true
+			end,
+			mode ~= "empty" and item or nil
+		)
+		if mode == "out-of-range" or mode == "lost" or mode == "late" then
+			assert(not ok and calls == 0, "invalid return accepted")
+		elseif mode == "drop" then
+			assert(
+				ok and not result and reason == "drop" and calls == 0 and audits == 0,
+				"drop did not interrupt return"
+			)
+		else
+			assert(ok and result and audits == 1, "legal return failed: " .. tostring(result))
+			assert(calls == ((mode == "manual" or mode == "empty") and 1 or 0), "duplicate/missing return action")
+			assert(paths == (mode == "already-home" and 0 or 1), "path after automatic Home")
+		end
+	end
+	print(
+		"PASS shared portal return: live portal path, Run/range guard, automatic/already-Home conservation, empty return, drop retry, lost/late rejection. Navigation mocked."
+	)
+end
+portalReturnTest()
 -- Exercise real recovery follower code with deterministic navmesh/event traces.
 local function pathRecoveryTest()
 	local roblox = require("@lune/roblox")

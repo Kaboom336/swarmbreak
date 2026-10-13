@@ -1,6 +1,24 @@
 # T1 v2 greybox — ARENA-1013 free-placement plots
 
-## Current revision: live-position pathfinding recovery (2026-10-13)
+## Current revision: phase-safe PvP portal return (2026-10-13)
+
+OWNER-REPORTED: GreyboxLoopTest now passes in Studio: `3/3 passed; 0 legal expiries; 3 placed`. GreyboxPvpTest fails with `GreyboxLoopTestRunner:365: illegal refusal returnRun: return boundary/phase`. CHECKED: the winner used scripted Winner segments, while the subsequent PvP expiry regression unconditionally called returnRun at its last empty-return marker (0,0,-40), short of the actual portal (-24,4,-58). The generic act line does not identify which call failed; the exact live failing stage remains UNKNOWN.
+
+Reused the existing shared PathfindingService follower. PvP winner now paths from its live root to the actual portal's grounded approach, with a cargo monitor that detects drop/stumble/expiry and verifies automatic securing even during intermediate path segments. Recover/retry retains the original item, firstPickup and escapeDeadline. Shared return completion skips movement/actions if already Home, verifies same holder/item/Secured/before-deadline and audits conservation. Manual return is attempted only in Run and inside the existing production near() range, exposed read-only to the harness. Production returnRun, safety boundaries, range, guardian, holds, cargo clock and awards are unchanged.
+
+Both PvP's post-placement expiry regression and the solo legal-expiry exit now path to the actual return portal through the same completion helper. Empty returns do not wait for cargo-only automatic securing. The successful solo carry flow and default three-run batch remain unchanged. Placement still rejects duplicate return/place and verifies exactly one physical reward.
+
+CHECKED: all ten Luau files compile at O0/O1/O2; complete pinned Lune check.luau harness PASS, including existing loop/PvP/drop/deadline/pathfinding/batch checks and eight shared-return scenarios (manual, automatic, already Home, empty, out of range, lost cargo, late secure, interrupted drop). Navigation/physics are mocked offline. StyLua --check PASS; Selene 0 errors/0 warnings/0 parse errors; exact requested Rojo build PASS; built runtime sources match all source files. Text edits only through apply_patch; no commit. Pre-existing workspace changes preserved.
+
+Studio retest NOT RUN here: no callable Studio integration is exposed. Reopen the rebuilt guardian-greybox.rbxl in a fresh Studio Play session. Run GreyboxLoopTest (default three runs), then GreyboxPvpTest; the latter also waits the full original 60-second expiry clock and verifies empty return. Confirm same cargo ID through handoff/secure/place, one placed reward, no boundary/phase refusal, and no empty-return award. New Studio outcomes remain UNKNOWN; generated gates retain false/NOT RUN. Keystone Roblox Process Playbook remains unavailable through exposed tools/local copies.
+
+Reference: reused the established guarded-objective/return flow compared with Steal an Egg; this is a harness repair, with no new gameplay/reference superiority claim.
+
+Current build SHA256: 28A2ACFD53740E65DCA00E944D089BABD866A1396454A2A658713BA71E4BF52F
+
+Lesson: When movement may automatically secure cargo, check phase and conservation before requesting return because the boundary can finish the action first. When returning empty-handed, path to the actual portal because cargo-only automatic return will not fire.
+
+## Previous revision: live-position pathfinding recovery (2026-10-13)
 
 OWNER-REPORTED: GreyboxLoopTest 1/3 passed; loop 2 failed immediately after re-grabbing treasure at (-60.74, 3.45, 0.00), with `resume nearest route node 9` / `no reachable recovery/rejoin path`. CHECKED: the existing recovery pathfinder used radius 3/height 6 or walking-only radius 1.5, selected nearest scripted segments, validated navmesh points as authored markers, and never recomputed blocked/stalled paths.
 
