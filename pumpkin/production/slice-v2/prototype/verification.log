@@ -1,0 +1,28 @@
+﻿StyLua format PASS
+StyLua --check PASS
+Results:
+0 errors
+0 warnings
+0 parse errors
+Building project 'GuardianGreybox'
+Built project to guardian-greybox.rbxl
+COMPILE PASS Arena.luau O0/O1/O2
+COMPILE PASS check.luau O0/O1/O2
+COMPILE PASS Greybox.client.luau O0/O1/O2
+COMPILE PASS Greybox.server.luau O0/O1/O2
+COMPILE PASS GreyboxConfig.luau O0/O1/O2
+COMPILE PASS Layout.luau O0/O1/O2
+COMPILE PASS LoopTest.luau O0/O1/O2
+COMPILE PASS LootRules.luau O0/O1/O2
+PASS 50 seeds; replay; 6 bounded recipes; fixed terminals, chunk nonoverlap, 3 walking routes, slopes/gaps
+PASS contested nest/Grab; Bump/drop/settle; cooldown; shared mercy; reset protections; winner-only secure/place; conservation rejects loss/duplication
+PASS offline PvP production range/sight/height/arena/safe adapter; shield/mercy; hold revalidation; Bump/drop/settle/contested Grab/secure/place; same ID/time
+MEASURE simplified nest-to-cyan route 368.62 studs
+PASS 50-seed solo/PvP waypoint 3-stud clearance; bad waypoint negatives; PvP court/pacing/mercy/exit paths
+MEASURE route Grove 256.22 studs (authored points; excludes pad approach)
+MEASURE route Ridge 201.65 studs (authored points; excludes pad approach)
+MEASURE route Quick 70.65 studs (authored points; excludes pad approach)
+PASS 50-seed actual 3D walking-floor, cliff, cover-clearance checks; same segments reversible. Live jump/navmesh UNKNOWN.
+PASS built binary sources; both runtime gates NOT RUN/locked
+SHA256 A3D0D83422AEDC241C31EE7C90E69F47BDC6252E753CD4A5C40E83824BAD4E03
+SUMMARY round 3: compile O0/O1/O2, format, lint, offline solo/PvP geometry and production PvP logic, exact Rojo build PASS. Studio NOT RUN / UNKNOWN. No commit.

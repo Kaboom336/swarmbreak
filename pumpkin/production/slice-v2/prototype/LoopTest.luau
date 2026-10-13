@@ -1,136 +1,410 @@
--- Shared scalar route can be audited in Lune; walking/actions run only in Studio.
-local LoopTest = {}
-
-function LoopTest.route(layout)
-	local points = {}
-	for _, p in layout.pieces do
-		if string.sub(p.id, 1, 3) == "P02" then
-			-- S-turn inside the eight-stud gap between the staggered cover blocks.
-			table.insert(points, { x = 2, z = p.z - 8, name = p.id .. " cover in" })
-			table.insert(points, { x = 0, z = p.z, name = p.id .. " centre" })
-			table.insert(points, { x = -2, z = p.z + 8, name = p.id .. " cover out" })
-		else
-			table.insert(points, { x = 0, z = p.z, name = p.id .. " centre" })
-		end
-	end
-	local nest = layout.pieces[#layout.pieces]
-	table.insert(points, { x = 0, z = nest.z + 12, name = "nest steal range" })
-	return points
+-- Real Humanoid movement/jumping and production actions; no obstacle teleports.
+local Test = {}
+local Layout = require(game:GetService("ReplicatedStorage"):WaitForChild("GreyboxLayout"))
+local SSS = game:GetService("ServerScriptService")
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("GreyboxConfig"))
+local function at(arena, x, y, z)
+	return (arena and arena.origin or Vector3.zero) + Vector3.new(x, y + 3, z)
 end
-
-function LoopTest.run(player, states, pens, world, actions, log)
-	local s = states[player]
-	assert(s and s.counter == 0 and not s.item and pens[s.slot].count == 0, "start a fresh Play session")
-	local character = player.Character
-	local r = character and character:FindFirstChild("HumanoidRootPart")
-	local h = character and character:FindFirstChildOfClass("Humanoid")
-	assert(r and h and h.Health > 0, "fresh character missing")
+-- Resolve against real collidable geometry; never target guessed root heights.
+local function validator(world, log)
+	local function resolve(position, edge)
+		local parts = {}
+		for _, p in world:GetDescendants() do
+			if p:IsA("BasePart") and p.Anchored and p.CanCollide then
+				table.insert(parts, p)
+			end
+		end
+		local params = RaycastParams.new()
+		params.FilterType, params.FilterDescendantsInstances = Enum.RaycastFilterType.Include, parts
+		params.RespectCanCollide = true
+		local function down(x, z)
+			return workspace:Raycast(Vector3.new(x, 45, z), Vector3.new(0, -70, 0), params)
+		end
+		local function walkable(hit)
+			return hit
+				and hit.Normal.Y >= math.cos(math.rad(25.1))
+				and (
+					hit.Instance:GetAttribute("SurfaceRole") == "Floor"
+					or hit.Instance:GetAttribute("SurfaceRole") == nil
+				)
+		end
+		local center = down(position.X, position.Z)
+		assert(walkable(center), "no walkable center floor")
+		assert(
+			math.abs(center.Position.Y - (position.Y - 3)) < 0.7,
+			"authored Y disagrees with " .. center.Instance.Name
+		)
+		-- Half-stud samples across a 3-stud radius, with six studs of head/body space.
+		-- A launch lip requires center support; lower floor beside it is intentional.
+		for ix = -6, 6 do
+			for iz = -6, 6 do
+				if ix * ix + iz * iz <= 36 then
+					local x, z = position.X + ix * 0.5, position.Z + iz * 0.5
+					local hit = down(x, z)
+					assert(walkable(hit), "clearance floor/cover at " .. x .. "," .. z)
+					local rise = hit.Position.Y - center.Position.Y
+					assert(rise <= 1.5 and (edge or rise >= -1.5), "clearance cliff/wall " .. hit.Instance.Name)
+					local overhead =
+						workspace:Raycast(Vector3.new(x, center.Position.Y + 1.55, z), Vector3.new(0, 6, 0), params)
+					assert(not overhead, "head clearance " .. (overhead and overhead.Instance.Name or ""))
+				end
+			end
+		end
+		return Vector3.new(position.X, center.Position.Y + 3, position.Z)
+	end
+	local function checked(position, name, edge)
+		local ok, result = pcall(resolve, position, edge)
+		if not ok then
+			log("BAD WAYPOINT " .. name .. " at " .. tostring(position) .. ": " .. tostring(result))
+		end
+		assert(ok, "bad waypoint " .. name .. ": " .. tostring(result))
+		return result
+	end
+	local function preflight(points)
+		local bad = 0
+		for _, p in points do
+			local ok, reason = pcall(resolve, p.position, p.edge)
+			if not ok then
+				bad += 1
+				log("BAD WAYPOINT " .. p.name .. " at " .. tostring(p.position) .. ": " .. tostring(reason))
+			end
+		end
+		assert(bad == 0, "waypoint preflight: " .. bad .. " bad points")
+		log("waypoint preflight PASS " .. #points .. " points / 3-stud clearance")
+	end
+	return checked, preflight
+end
+local function homePoints(pen)
+	local side = pen.marker.Position.X < 0 and -1 or 1
+	return {
+		{ position = at(nil, 0, 0, -5), name = "home portal" },
+		{ position = at(nil, side * 60, 0, -12), name = "home aisle" },
+		{ position = at(nil, side * 60, 0, pen.marker.Position.Z), name = "own pen aisle" },
+		{ position = Vector3.new(pen.marker.Position.X - side * 5, 3, pen.marker.Position.Z), name = "own pen" },
+	}
+end
+local function driver(actor, states, api, log, checked)
+	local character = actor.Character
+	local r, h = api.root(actor)
+	assert(r and h, "character missing")
 	r:SetNetworkOwner(nil)
-	local function walk(position, name, expectedRun)
-		log("walk " .. name)
-		local started, progressed = os.clock(), os.clock()
-		local bestDistance = math.huge
-		local nextMove = 0
+	local function walk(position, name, jump, autoReturn, takeoff)
+		position = checked(position, name)
+		if takeoff then
+			takeoff = checked(takeoff, "takeoff " .. name, true)
+		end
+		log((jump and "Jump " or "Walk ") .. name)
+		local started, progressed, best, nextLog = os.clock(), os.clock(), math.huge, 0
+		local airborne, landed, launched = false, false, false
+		local expected = states[actor].run
+		if jump then
+			h:Move(Vector3.zero, false)
+			while os.clock() < (states[actor].slowUntil or 0) or h.FloorMaterial == Enum.Material.Air do
+				assert(os.clock() - started < 3, "jump readiness >3s: " .. name)
+				task.wait(0.03)
+			end
+		end
+		-- Continuous movement to a grounded launch marker; no MoveTo re-targeting.
+		local launchDirection = takeoff and Vector3.new(position.X - takeoff.X, 0, position.Z - takeoff.Z).Unit
 		while true do
-			assert(
-				player.Character == character and h.Health > 0 and states[player] == s,
-				"character/player lost at " .. name
-			)
-			assert(s.run == expectedRun, "run reset or escaped unexpectedly at " .. name)
-			local offset = Vector3.new(r.Position.X - position.X, 0, r.Position.Z - position.Z)
-			if offset.Magnitude <= 1.5 then
+			assert(actor.Character == character and h.Health > 0, "character lost")
+			api.audit()
+			if autoReturn and states[actor].phase == "Home" then
 				break
 			end
+			assert(states[actor].run == expected, "unexpected arena reset/return")
 			local now = os.clock()
-			if offset.Magnitude < bestDistance - 0.3 then
-				bestDistance, progressed = offset.Magnitude, now
+			if h.FloorMaterial == Enum.Material.Air then
+				airborne = true
+			elseif airborne then
+				landed = true
+			end
+			local delta = position - r.Position
+			local horizontal = Vector3.new(delta.X, 0, delta.Z).Magnitude
+			local distance = horizontal + math.abs(delta.Y) * 0.2
+			if
+				horizontal <= 0.8
+				and math.abs(delta.Y) < 2
+				and h.FloorMaterial ~= Enum.Material.Air
+				and (not jump or (launched and landed))
+			then
+				break
+			end
+			if distance < best - 0.2 then
+				best, progressed = distance, now
 			end
 			assert(now - progressed <= 8, "stuck >8s at " .. name)
-			assert(now - started <= 30, "waypoint not reached within 30s at " .. name)
-			if now >= nextMove then
-				h:MoveTo(Vector3.new(position.X, r.Position.Y, position.Z))
-				nextMove = now + 1
+			assert(now - started <= 30, "waypoint >30s at " .. name)
+			if now >= nextLog then
+				log(
+					string.format(
+						"progress %s goal=%s distance=%.2f noProgress=%.2fs",
+						name,
+						tostring(position),
+						distance,
+						now - progressed
+					)
+				)
+				nextLog = now + 1
 			end
-			task.wait(0.05)
+			local direction = Vector3.new(delta.X, 0, delta.Z)
+			if jump and not launched then
+				local toEdge = takeoff and takeoff - r.Position or Vector3.zero
+				local remaining = launchDirection and toEdge:Dot(launchDirection) or 0
+				if remaining <= 0.4 then
+					assert(h.FloorMaterial ~= Enum.Material.Air, "jump takeoff not grounded: " .. name)
+					assert(now >= (states[actor].slowUntil or 0), "jump takeoff during stumble: " .. name)
+					h:Move(direction.Unit, false)
+					h.Jump = true
+					h:ChangeState(Enum.HumanoidStateType.Jumping)
+					airborne, landed = false, false
+					launched = true
+					log("takeoff " .. name)
+				end
+			end
+			-- Slow near an endpoint to avoid oscillating over a sub-stud goal.
+			h:Move(direction.Magnitude > 0.05 and direction.Unit * math.min(1, horizontal / 1.5) or Vector3.zero, false)
+			task.wait(0.03)
 		end
-		h:MoveTo(r.Position)
+		h:Move(Vector3.zero, false)
+		log("arrived " .. name)
+		if jump then
+			assert(airborne and landed, "no takeoff/landing")
+			SSS:SetAttribute("GreyboxLoopTestJumpObserved", true)
+		end
 	end
-	local function act(name, ...)
-		local ok, reason = actions[name](player, ...)
-		assert(ok, "legal " .. name .. " refused: " .. tostring(reason))
+	return walk, r, h
+end
+local function act(api, actor, name, ...)
+	local ok, why = api[name](actor, ...)
+	assert(ok, "illegal refusal " .. name .. ": " .. tostring(why))
+end
+local function hold(api, actor, action)
+	act(api, actor, "holdAction", action, "begin")
+	task.wait(Config.HoldSeconds[action] + 0.05)
+	act(api, actor, "holdAction", action, "finish")
+	api.audit()
+end
+local function recoveryPoint(checked, item)
+	-- Danger-floor sockets need only avatar clearance in production. Find a test
+	-- stand point near the same item with our stricter 3-stud clearance and Grab range.
+	for _, offset in
+		{ Vector3.zero, Vector3.new(2, 0, 0), Vector3.new(-2, 0, 0), Vector3.new(0, 0, 2), Vector3.new(0, 0, -2) }
+	do
+		local ok, position = pcall(checked, item.position + Vector3.new(0, 3, 0) + offset, "recover " .. item.id)
+		if ok then
+			return position
+		end
 	end
-	local function at(x, z)
-		return Vector3.new(x, 3, z)
+	error("no standable Grab point for " .. item.id)
+end
+local function recover(api, actor, states, walk, item, log, checked)
+	if states[actor].item == item then
+		return
 	end
-	walk(at(0, -12), "home spawn", nil)
-	walk(at(0, -5), "home portal", nil)
-	act("enterRun")
-	local run = s.run
-	local route = LoopTest.route(run.layout)
-	for _, p in route do
-		walk(run.origin + at(p.x, p.z), p.name, run)
-	end
-	act("stealHold", "begin")
-	local holdStarted = os.clock()
-	task.wait(1)
-	act("stealHold", "finish")
-	local freshToSteal = os.clock() - s.joined
-	game:GetService("ServerScriptService"):SetAttribute("GreyboxLoopTestFreshToSteal", freshToSteal)
-	assert(os.clock() - holdStarted >= 1, "steal hold less than 1s")
-	assert(s.item == run.token and run.grants == 1, "missing item or double grant")
-	assert(not actions.stealHold(player, "finish"), "duplicate steal accepted")
-	assert(run.grants == 1, "double grant after repeated steal")
-	log(string.format("fresh spawn -> steal %.3fs; hold %.3fs", freshToSteal, os.clock() - holdStarted))
-	for i = #route - 1, 1, -1 do
-		local p = route[i]
-		walk(run.origin + at(p.x, p.z), "back " .. p.name, run)
-	end
-	walk(run.origin + at(0, -3), "return portal", run)
-	local portalToPortal, catches = os.clock() - run.started, run.catches
-	local service = game:GetService("ServerScriptService")
-	service:SetAttribute("GreyboxLoopTestPortalToPortal", portalToPortal)
-	service:SetAttribute("GreyboxLoopTestCatches", catches)
-	log(
-		string.format(
-			"portal -> portal %.3fs; catches=%d; chase ticks=%d distance=%.3f",
-			portalToPortal,
-			catches,
-			run.chaseTicks,
-			run.chaseDistance
-		)
-	)
-	assert(run.chaseTicks > 0 and run.chaseDistance > 0.1, "guardian never chasing/moving during chase")
-	assert(run.grants == 1, "double grant")
-	act("returnRun")
 	assert(
-		not s.run and s.phase == "Home" and s.item == run.token and s.completed == 1,
-		"return lost item or escape not counted"
+		states[actor].phase == "Run" and api.rules.active == item and item.state == "Dropped",
+		"loot lost/taken before recovery"
 	)
+	local timestamp = item.firstPickup
+	log("legal drop / recover " .. item.id)
+	walk(recoveryPoint(checked, item), "recover same dropped loot")
+	task.wait(math.max(0, item.settle - os.clock()) + 0.03)
+	hold(api, actor, "Grab")
+	assert(states[actor].item == item and item.firstPickup == timestamp, "recovery identity/timestamp changed")
+	api.audit()
+end
+local function place(player, states, pens, api, walk, log, item, initialCount)
+	local s = states[player]
+	assert(s.phase == "Home" and s.item == item and item.state == "Secured", "return lost loot")
+	assert(not api.returnRun(player), "duplicate return accepted")
 	local pen = pens[s.slot]
 	local side = pen.marker.Position.X < 0 and -1 or 1
-	walk(at(side * 60, -12), "home aisle", nil)
-	walk(at(side * 60, pen.marker.Position.Z), "own pen aisle", nil)
-	walk(at(pen.marker.Position.X - side * 5, pen.marker.Position.Z), "own pen", nil)
-	act("placeItem", s.slot)
-	assert(not s.item and pen.count == 1, "item not placed")
-	assert(not actions.placeItem(player, s.slot), "duplicate placement accepted")
+	walk(at(nil, side * 60, 0, -12), "home aisle")
+	walk(at(nil, side * 60, 0, pen.marker.Position.Z), "own pen aisle")
+	walk(Vector3.new(pen.marker.Position.X - side * 5, 3, pen.marker.Position.Z), "own pen")
+	act(api, player, "placeItem", s.slot)
+	assert(not api.placeItem(player, s.slot), "duplicate place accepted")
+	assert(not s.item and item.state == "Placed" and pen.count == initialCount + 1, "placement loss/duplication")
 	local count = 0
-	for _, child in world:GetChildren() do
-		if child.Name == "Placed_" .. run.token and child:GetAttribute("PenSlot") == s.slot then
+	for _, p in workspace:GetDescendants() do
+		if p:IsA("BasePart") and p:GetAttribute("LootId") == item.id then
 			count += 1
 		end
 	end
-	assert(count == 1 and pen.count == 1 and run.grants == 1, "item not placed exactly once / double grant")
-	log(
-		string.format(
-			"portal -> portal %.3fs; catches=%d; chase ticks=%d distance=%.3f; success=true",
-			portalToPortal,
-			catches,
-			run.chaseTicks,
-			run.chaseDistance
-		)
-	)
-	return { freshToSteal = freshToSteal, portalToPortal = portalToPortal, catches = catches }
+	assert(count == 1, "physical loot duplication/loss: " .. count)
+	api.audit()
+	log("conserved " .. item.id .. " / exactly one placed block")
 end
-
-return LoopTest
+function Test.run(player, states, pens, world, api, log)
+	local s = states[player]
+	assert(s.counter == 0 and not s.item and pens[s.slot].count == 0, "fresh solo Play state required")
+	local checked, preflight = validator(world, log)
+	preflight(homePoints(pens[s.slot]))
+	local walk, r, h = driver(player, states, api, log, checked)
+	walk(at(nil, 0, 0, -5), "home portal")
+	act(api, player, "enterRun")
+	local arena = api.arena()
+	local started = s.started
+	local carrySteps = Layout.loopCarrySteps(arena.layout)
+	local points = {}
+	for _, p in arena.layout.routes.Quick do
+		table.insert(points, { position = at(arena, p.x, p.y, p.z), name = "approach " .. p.kind })
+	end
+	for _, p in carrySteps do
+		table.insert(points, { position = at(arena, p.x, p.y, p.z), name = p.name })
+		if p.takeoff then
+			local t = p.takeoff
+			table.insert(points, { position = at(arena, t.x, t.y, t.z), name = "takeoff " .. p.name, edge = true })
+		end
+	end
+	preflight(points) -- enterRun creates the island; validate before island walking/Steal.
+	for _, p in arena.layout.routes.Quick do
+		walk(at(arena, p.x, p.y, p.z), p.kind .. " approach")
+	end
+	hold(api, player, "Steal")
+	local item = s.item
+	assert(item and item.state == "Carried", "missing nest loot")
+	assert(not api.holdAction(player, "Steal", "finish"), "duplicate nest accepted")
+	SSS:SetAttribute("GreyboxLoopTestFreshToSteal", os.clock() - s.joined)
+	local function dodge()
+		h:Move(Vector3.zero, false)
+		local began = os.clock()
+		local telegraph
+		repeat
+			local t = arena.attack
+			if t and t.disc and t.actor == player and t.start >= began then
+				telegraph = t
+				break
+			end
+			assert(os.clock() - began <= 8, "no normal throw/telegraph >8s")
+			api.audit()
+			task.wait(0.03)
+		until false
+		assert(
+			telegraph.disc.Parent
+				and telegraph.disc:GetAttribute("ImpactDue") - telegraph.disc:GetAttribute("TelegraphStarted")
+					>= 1.19,
+			"telegraph missing/pre-impact delay"
+		)
+		local locked = telegraph.position
+		walk(at(arena, 0, 0, -4), "Dodge locked red disc")
+		assert((Vector3.new(r.Position.X, locked.Y, r.Position.Z) - locked).Magnitude > 4, "failed disc dodge")
+		local deadline = os.clock() + 8
+		while arena.attack == telegraph do
+			assert(os.clock() < deadline, "throw stuck >8s")
+			task.wait(0.03)
+		end
+		assert(arena.throws > 0 and arena.chaseTicks > 0 and arena.chaseDistance > 0.1, "guardian never threw/chased")
+		SSS:SetAttribute("GreyboxLoopTestTelegraphObserved", true)
+	end
+	for _, step in carrySteps do
+		recover(api, player, states, walk, item, log, checked)
+		walk(
+			at(arena, step.x, step.y, step.z),
+			step.kind .. " " .. step.name,
+			step.kind == "Jump",
+			step.kind == "Return",
+			step.takeoff and at(arena, step.takeoff.x, step.takeoff.y, step.takeoff.z)
+		)
+		if step.kind == "Dodge" then
+			dodge()
+		end
+		if s.phase == "Run" then
+			recover(api, player, states, walk, item, log, checked)
+		end
+		if step.kind == "ClimbRamp" then
+			assert(s.item == item, "lost carrying loot on hill/recovery ramp")
+			SSS:SetAttribute("GreyboxLoopTestClimbObserved", true)
+		end
+		if step.kind == "Jump" then
+			assert(s.item == item, "jump lost loot")
+		end
+	end
+	SSS:SetAttribute("GreyboxLoopTestPortalToPortal", os.clock() - started)
+	SSS:SetAttribute("GreyboxLoopTestCatches", s.catches or 0)
+	place(player, states, pens, api, walk, log, item, 0)
+	return "steal, one stone set, one carrying hill, one red-disc dodge, secure/place; conserved " .. item.id
+end
+function Test.pvp(player, states, pens, world, api, log, setDummy)
+	local s = states[player]
+	assert(s.phase == "Home" and not s.item, "PvP requires Home/empty hands")
+	local initialCount = pens[s.slot].count
+	local checked, preflight = validator(world, log)
+	preflight(homePoints(pens[s.slot]))
+	local walk = driver(player, states, api, log, checked)
+	walk(at(nil, 0, 0, -5), "home portal")
+	act(api, player, "enterRun")
+	local arena = api.arena()
+	local routes, points = Layout.pvpRoutes(), {}
+	for name, route in routes do
+		for _, p in route do
+			table.insert(points, { position = at(arena, p.x, p.y, p.z), name = "PvP " .. name })
+		end
+	end
+	preflight(points)
+	local deadline = os.clock() + 8
+	while not api.rules.active or api.rules.active.state ~= "Nest" do
+		assert(os.clock() < deadline, "nest unavailable >8s")
+		task.wait(0.05)
+	end
+	-- Finish the tester approach before pickup: the dummy must not AFK-drop during it.
+	for i = 2, #routes.Tester do
+		local p = routes.Tester[i]
+		walk(at(arena, p.x, p.y, p.z), "PvP court approach " .. i)
+	end
+	local dummy = api.dummy(at(arena, 0, 4, 32))
+	setDummy(dummy)
+	hold(api, dummy, "Steal")
+	local ds = states[dummy]
+	local item = ds.item
+	local timestamp = item.firstPickup
+	-- Consume the real one-time shield by waiting, never altering protection state.
+	local dummyWalk = driver(dummy, states, api, log, checked)
+	for i = 2, #routes.Dummy do
+		local p = routes.Dummy[i]
+		dummyWalk(at(arena, p.x, p.y, p.z), "dummy court approach " .. i)
+	end
+	recover(api, dummy, states, dummyWalk, item, log, checked)
+	-- Keep the dummy moving to avoid the production AFK drop while shield expires.
+	while os.clock() < ds.shield + 0.05 do
+		dummyWalk(at(arena, -64, 0, -54), "dummy shield pacing")
+		dummyWalk(at(arena, -64, 0, -56), "dummy shield pacing")
+		recover(api, dummy, states, dummyWalk, item, log, checked)
+	end
+	walk(at(arena, -62, 0, -56), "within 4 of dummy")
+	local vulnerableDeadline = os.clock() + 8
+	while os.clock() < ds.mercy do
+		assert(os.clock() < vulnerableDeadline, "no legal handoff window >8s")
+		dummyWalk(at(arena, -72, 0, -48), "dummy dodges during impact mercy")
+		dummyWalk(at(arena, -64, 0, -56), "dummy returns to handoff court")
+		recover(api, dummy, states, dummyWalk, item, log, checked)
+	end
+	local pr = api.root(player)
+	local dr = api.root(dummy)
+	assert(ds.item == item and item.holder == dummy and item.state == "Carried", "dummy not carrying at Bump")
+	assert((pr.Position - dr.Position).Magnitude <= 4, "Bump setup outside actual 4-stud root range")
+	log("Bump begin / actual distance " .. (pr.Position - dr.Position).Magnitude)
+	hold(api, player, "Bump")
+	assert(item.state == "Dropped" and not ds.item and not s.item, "Bump directly granted/lost/duplicated")
+	assert(item.firstPickup == timestamp, "handoff rerolled timestamp")
+	assert(not api.holdAction(player, "Grab", "begin"), "settle allowed precharge")
+	dummyWalk(at(arena, -68, 0, -52), "former carrier leaves contest")
+	walk(recoveryPoint(checked, item), "dropped loot")
+	task.wait(math.max(0, item.settle - os.clock()) + 0.03)
+	-- One fresh Grab wins; repeated completion must be rejected.
+	act(api, player, "holdAction", "Grab", "begin")
+	task.wait(0.45)
+	act(api, player, "holdAction", "Grab", "finish")
+	assert(not api.holdAction(player, "Grab", "finish"), "duplicate Grab accepted")
+	assert(s.item == item and item.holder == player and item.state == "Carried", "handoff conservation")
+	api.audit()
+	SSS:SetAttribute("GreyboxPvpTestItemId", item.id)
+	SSS:SetAttribute("GreyboxPvpTestHandoffs", 1)
+	walk(at(arena, -26, 0, -56), "winner west approach")
+	walk(at(arena, -22, 0, -56), "winner auto secure", false, true)
+	place(player, states, pens, api, walk, log, item, initialCount)
+	return "legal Bump/drop/settle/Grab/secure/place with dummy carrier; no duplicate/lost " .. item.id
+end
+return Test

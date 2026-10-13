@@ -1,20 +1,58 @@
 {
-  "name": "GuardianGreybox",
-  "tree": {
-    "$className": "DataModel",
-    "Workspace": { "$properties": { "Gravity": 196.2, "StreamingEnabled": false } },
-    "Lighting": { "$properties": { "ClockTime": 12, "Brightness": 2, "GlobalShadows": false } },
-    "ReplicatedStorage": {
-      "GreyboxConfig": { "$path": "GreyboxConfig.luau" },
-      "GreyboxLayout": { "$path": "Layout.luau" }
-    },
-    "ServerScriptService": {
-      "$attributes": { "GreyboxSelfTest": false, "GreyboxSeed": 0, "GreyboxLoopTest": false, "GreyboxLoopTestResult": "NOT RUN", "GreyboxLoopTestSuccess": false },
-      "GreyboxLoopTestRunner": { "$path": "LoopTest.luau" },
-      "Greybox": { "$path": "Greybox.server.luau" }
-    },
-    "StarterPlayer": {
-      "StarterPlayerScripts": { "Greybox": { "$path": "Greybox.client.luau" } }
-    }
-  }
+    "name":  "GuardianGreybox",
+    "tree":  {
+                 "$className":  "DataModel",
+                 "Workspace":  {
+                                   "$properties":  {
+                                                       "Gravity":  196.2,
+                                                       "StreamingEnabled":  false
+                                                   }
+                               },
+                 "Lighting":  {
+                                  "$properties":  {
+                                                      "ClockTime":  12,
+                                                      "Brightness":  2,
+                                                      "GlobalShadows":  false
+                                                  }
+                              },
+                 "ReplicatedStorage":  {
+                                           "GreyboxConfig":  {
+                                                                 "$path":  "GreyboxConfig.luau"
+                                                             },
+                                           "GreyboxLayout":  {
+                                                                 "$path":  "Layout.luau"
+                                                             },
+                                           "GreyboxLootRules":  {
+                                                                    "$path":  "LootRules.luau"
+                                                                }
+                                       },
+                 "ServerScriptService":  {
+                                             "$attributes":  {
+                                                                 "GreyboxSelfTest":  false,
+                                                                 "GreyboxSeed":  0,
+                                                                 "GreyboxLoopTest":  false,
+                                                                 "GreyboxLoopTestResult":  "NOT RUN",
+                                                                 "GreyboxLoopTestSuccess":  false,
+                                                                 "GreyboxPvpTest":  false,
+                                                                 "GreyboxPvpTestSuccess":  false,
+                                                                 "GreyboxPvpTestResult":  "NOT RUN"
+                                                             },
+                                             "GreyboxLoopTestRunner":  {
+                                                                           "$path":  "LoopTest.luau"
+                                                                       },
+                                             "Greybox":  {
+                                                             "$path":  "Greybox.server.luau"
+                                                         },
+                                             "GreyboxArena":  {
+                                                                  "$path":  "Arena.luau"
+                                                              }
+                                         },
+                 "StarterPlayer":  {
+                                       "StarterPlayerScripts":  {
+                                                                    "Greybox":  {
+                                                                                    "$path":  "Greybox.client.luau"
+                                                                                }
+                                                                }
+                                   }
+             }
 }

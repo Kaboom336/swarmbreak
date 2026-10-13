@@ -2,22 +2,26 @@ local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local SSS = game:GetService("ServerScriptService")
 local RunService = game:GetService("RunService")
-local Pathfinding = game:GetService("PathfindingService")
+local PhysicsService = game:GetService("PhysicsService")
 local PromptService = game:GetService("ProximityPromptService")
 local Config = require(RS:WaitForChild("GreyboxConfig"))
 local Layout = require(RS:WaitForChild("GreyboxLayout"))
+local Rules = require(RS:WaitForChild("GreyboxLootRules"))
+local Arena = require(SSS:WaitForChild("GreyboxArena"))
+local rules = Rules.new(Config)
+local states, pens, slots = rules.actors, {}, {}
 local world = Instance.new("Folder")
-world.Name = "GREYBOX"
-world.Parent = workspace
-local states, pens, slots = {}, {}, {}
-local loopPlayer, loopRunning = nil, false
-local firstPlayer
+world.Name, world.Parent = "GREYBOX", workspace
 local actionRemote = Instance.new("RemoteEvent")
 actionRemote.Name, actionRemote.Parent = "GreyboxAction", RS
+local orange, grey = Color3.fromRGB(255, 160, 40), Color3.fromRGB(125, 135, 145)
+local arena, testRunning, firstPlayer, session = nil, false, nil, 0
+local testLog
 PromptService.Enabled, PromptService.MaxPromptsVisible = true, 8
-local orange = Color3.fromRGB(255, 150, 35)
-local grey = Color3.fromRGB(125, 135, 145)
-
+pcall(function()
+	PhysicsService:RegisterCollisionGroup("GreyboxPlayers")
+end)
+PhysicsService:CollisionGroupSetCollidable("GreyboxPlayers", "GreyboxPlayers", false)
 local function part(parent, name, size, position, color)
 	local p = Instance.new("Part")
 	p.Name, p.Size, p.Position = name, size, position
@@ -78,156 +82,346 @@ local function update(player, text)
 	player:SetAttribute("GreyboxPhase", s and s.phase or "Home")
 end
 
-local function carry(player)
-	local s = states[player]
-	if s.carryVisual then
-		s.carryVisual:Destroy()
-		s.carryVisual = nil
-	end
-	local r, h = root(player)
-	if not r then
-		return
-	end
-	h.WalkSpeed = s.item and Config.CarrySpeed or Config.WalkSpeed
-	if s.item then
-		local ball = part(player.Character, "CarriedTreasure", Vector3.new(2.5, 2.5, 2.5), r.Position, orange)
-		ball.Shape, ball.Material = Enum.PartType.Ball, Enum.Material.Neon
-		ball.Anchored, ball.CanCollide, ball.CanQuery, ball.Massless = false, false, false, true
-		ball.CFrame = r.CFrame * CFrame.new(0, 3.5, 0)
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0, weld.Part1, weld.Parent = r, ball, ball
-		s.carryVisual = ball
+local function goal(actor, text)
+	if actor:IsA("Player") then
+		update(actor, text)
 	end
 end
-
-local function clearRun(s)
-	if s.run then
-		s.run.model:Destroy()
-		s.run = nil
+local function publish(actor)
+	local s = states[actor]
+	actor:SetAttribute("GreyboxCarry", s and s.item ~= nil or false)
+	actor:SetAttribute("GreyboxPhase", s and s.phase or "Home")
+	actor:SetAttribute("GreyboxMercyUntil", s and s.mercy or 0)
+	actor:SetAttribute("GreyboxShieldUntil", s and s.shield or 0)
+end
+local function visual(item)
+	if not item.visual then
+		item.visual = part(world, Config.ItemName, Vector3.new(2.5, 2.5, 2.5), Vector3.zero, orange)
+		item.visual.Material = Enum.Material.Neon
+		item.visual.CanCollide, item.visual.CanQuery, item.visual.Massless = false, false, true
+		item.visual:SetAttribute("LootId", item.id)
+		item.caption = label(item.visual, Config.ItemName)
+		item.caption.Parent.AlwaysOnTop, item.caption.Parent.MaxDistance = false, 32
+	end
+	local p = item.visual
+	if item.weld then
+		item.weld:Destroy()
+		item.weld = nil
+	end
+	p.Anchored, p.Parent, p.Transparency = true, world, 0
+	if item.state == "Carried" or item.state == "Secured" then
+		local r = root(item.holder)
+		if r then
+			p.Parent, p.CFrame, p.Anchored = item.holder.Character, r.CFrame * CFrame.new(0, 3.5, 0), false
+			local w = Instance.new("WeldConstraint")
+			w.Part0, w.Part1, w.Parent = r, p, p
+			item.weld = w
+		end
+	elseif item.state == "Nest" or item.state == "Dropped" then
+		p.Position = item.position + Vector3.new(0, 1.4, 0)
+	elseif item.state == "Placed" then
+		p.Size = Vector3.new(3, 3, 3)
+		p.Position = item.position
+	elseif item.state == "Retired" then
+		p:Destroy()
+		item.visual = nil
+	end
+	if p.Parent then
+		p:SetAttribute("LootState", item.state)
+	end
+	for actor in states do
+		publish(actor)
 	end
 end
-
-local function home(player, escaped)
-	local s = states[player]
-	if not s then
-		return
+local function conservation()
+	Rules.audit(rules)
+	local count = {}
+	for _, p in workspace:GetDescendants() do
+		if p:IsA("BasePart") then
+			local id = p:GetAttribute("LootId")
+			if id and rules.items[id] then
+				count[id] = (count[id] or 0) + 1
+			end
+		end
 	end
-	if escaped then
-		print(
-			string.format(
-				"[Greybox] escape user=%d seed=%d elapsed=%.3fs catches=%d",
-				player.UserId,
-				s.run.seed,
-				os.clock() - s.run.started,
-				s.run.catches
-			)
-		)
-		s.completed += 1
+	for id, item in rules.items do
+		assert((count[id] or 0) == (item.state == "Retired" and 0 or 1), "physical LOOT duplication/loss " .. id)
 	end
-	clearRun(s)
-	s.phase, s.hold = "Home", nil
-	s.slowUntil, s.mercyUntil = 0, 0
-	local r = root(player)
-	if r then
-		player.Character:PivotTo(CFrame.new(0, 4, -12))
-	end
-	carry(player)
-	update(player, s.item and "Return to your marked pen. Place the ball." or "Enter the central portal.")
+	return true
 end
-
 part(world, "Home 240x192", Vector3.new(240, 4, 192), Vector3.new(0, -2, 0))
 local spawn = Instance.new("SpawnLocation")
 spawn.Name, spawn.Size, spawn.Position = "HomeSpawn", Vector3.new(10, 1, 10), Vector3.new(0, 0.5, -12)
 spawn.Anchored, spawn.Neutral, spawn.Duration, spawn.Parent = true, true, 0, world
-local shop = part(world, "Shop", Vector3.new(20, 12, 14), Vector3.new(0, 6, -72))
-label(shop, "GREYBOX SHOP — placeholder")
+label(part(world, "Shop", Vector3.new(20, 12, 14), Vector3.new(0, 6, -72)), "GREYBOX SHOP / placeholder")
 local portal = part(world, "HomePortal", Vector3.new(10, 8, 2), Vector3.new(0, 4, 0), Color3.fromRGB(70, 180, 220))
-label(portal, "GREYBOX — Enter guardian island")
+label(portal, "Enter shared guardian island")
 local enter = prompt(portal, "Enter", "Guardian island")
-
-local function placeItem(player, slot)
-	local s, pen = states[player], pens[slot]
-	if
-		not s
-		or not pen
-		or s.slot ~= slot
-		or s.phase ~= "Home"
-		or not s.item
-		or not near(player, pen.marker)
-		or pen.count >= 8
-	then
-		return false, "place validation (owner/phase/item/range/capacity)"
+local function population()
+	local n = 0
+	for _, s in states do
+		if s.phase == "Run" then
+			n += 1
+		end
 	end
-	local item = s.item
-	s.item = nil -- consume identity before creating the placement; duplicate input cannot replay
-	pen.count += 1
-	local n, position = pen.count - 1, pen.base.Position
-	local ball = part(
-		world,
-		"Placed_" .. item,
-		Vector3.new(3, 3, 3),
-		Vector3.new(position.X - 12 + (n % 4) * 8, 1.7, position.Z - 5 + math.floor(n / 4) * 10),
-		orange
+	return n
+end
+local function refreshLoot()
+	if not arena then
+		return
+	end
+	local item = rules.active
+	arena.steal.Enabled = item ~= nil and item.state == "Nest"
+	arena.grab.Enabled = item ~= nil and item.state == "Dropped" and os.clock() >= item.settle
+	if item and item.state == "Dropped" then
+		arena.groundAction.Position = item.position + Vector3.new(0, 1.5, 0)
+	end
+	for _, s in states do
+		if s.bump then
+			s.bump.Enabled = s.phase == "Run" and s.item ~= nil and s.item.state == "Carried"
+		end
+	end
+end
+local function dropPosition(actor)
+	local r = root(actor)
+	return arena and r and Arena.dropSocket(arena, r.Position) or (states[actor] and states[actor].lastSocket)
+end
+local function drop(actor, reason)
+	local ok, item = Rules.drop(rules, actor, os.clock(), dropPosition(actor))
+	if ok then
+		visual(item)
+		item.bounceAt = os.clock()
+		goal(actor, Config.ItemName .. " DROPPED / Grab after settle")
+		refreshLoot()
+		if testLog then
+			testLog("production drop " .. item.id .. " cause=" .. tostring(reason or "reset/disconnect/cleanup"))
+		end
+	end
+	return ok
+end
+local function hit(actor, from, source)
+	local r = root(actor)
+	if not r or Arena.safe(arena, r.Position) then
+		return false
+	end
+	local s, item = states[actor], states[actor].item
+	local ok, retained = Rules.hit(rules, actor, source or "Guardian", os.clock(), dropPosition(actor))
+	if not ok then
+		return false
+	end
+	s.catches = (s.catches or 0) + 1
+	local away = Vector3.new(r.Position.X - from.X, 0, r.Position.Z - from.Z)
+	if away.Magnitude > 0 then
+		local movement = away.Unit * 3.5
+		local params = RaycastParams.new()
+		params.FilterType, params.FilterDescendantsInstances = Enum.RaycastFilterType.Exclude, { actor.Character }
+		local collision = workspace:Blockcast(r.CFrame, Vector3.new(2, 4, 2), movement, params)
+		local distance = collision and math.max(0, collision.Distance - 0.5) or 3.5
+		r.CFrame += away.Unit * distance
+	end
+	if item then
+		visual(item)
+		if item.state == "Dropped" then
+			item.bounceAt = os.clock()
+		end
+	end
+	goal(
+		actor,
+		retained and "Stumble / first hit: kept " .. Config.ItemName or Config.ItemName .. " DROPPED / 3s mercy"
 	)
-	ball.Shape, ball.Material = Enum.PartType.Ball, Enum.Material.Neon
-	ball:SetAttribute("PenSlot", slot)
-	carry(player)
-	update(player, "Placed! Enter the portal for another run.")
-	print("[Greybox] place user=" .. player.UserId .. " item=" .. item)
-	return true
-end
-
-local function returnRun(player)
-	local s = states[player]
-	if not s or not s.run or s.phase ~= "Run" or not near(player, s.run.dock) then
-		return false, "return validation (run/phase/range)"
+	publish(actor)
+	refreshLoot()
+	if testLog then
+		testLog("production hit " .. tostring(source or "Guardian") .. " retained=" .. tostring(retained))
 	end
-	home(player, s.item ~= nil)
 	return true
 end
-
-local function stealHold(player, stage)
-	local s = states[player]
-	if s and stage == "cancel" then
+local function check(actor, action, target, item)
+	local r = root(actor)
+	if not arena or not r or states[actor].run ~= arena or Arena.safe(arena, r.Position) then
+		return false, "arena/safe"
+	end
+	if action == "Bump" then
+		local victim = states[target]
+		local v = victim and root(target)
+		if not v or victim.run ~= arena or Arena.safe(arena, v.Position) then
+			return false, "victim/safe"
+		end
+		return (r.Position - v.Position).Magnitude <= 4 and math.abs(r.Position.Y - v.Position.Y) <= 3 and Arena.sight(
+			arena,
+			r.Position,
+			v.Position
+		),
+			"Bump range/sight/height"
+	end
+	local position = item.position + Vector3.new(0, 1.5, 0)
+	return (r.Position - position).Magnitude <= (action == "Steal" and 9 or 4) and Arena.sight(
+		arena,
+		r.Position,
+		position
+	),
+		"item range/sight"
+end
+local function bumpTarget(actor)
+	local r = root(actor)
+	if not r then
+		return nil
+	end
+	local nearest, distance = nil, 4.001
+	for other, s in states do
+		local v = root(other)
+		if other ~= actor and s.item and s.phase == "Run" and v then
+			local d = (r.Position - v.Position).Magnitude
+			if d < distance then
+				nearest, distance = other, d
+			end
+		end
+	end
+	return nearest
+end
+local function holdAction(actor, action, stage)
+	if testLog then
+		testLog("hold " .. action .. " / " .. stage)
+	end
+	local s = states[actor]
+	if not s then
+		return false, "no state"
+	end
+	if stage == "cancel" then
 		s.hold = nil
 		return true
 	end
-	local run = s and s.run
-	if not run or s.phase ~= "Run" or s.item or not near(player, run.loot) then
-		return false, "steal validation (run/phase/item/range)"
-	end
 	if stage == "begin" then
-		if s.hold then
-			return false, "hold already active"
+		local target = action == "Bump" and bumpTarget(actor) or nil
+		local now = os.clock()
+		local ok, why = Rules.begin(rules, actor, action, target, now, check)
+		if ok and target then
+			s.combatUntil, states[target].combatUntil = now + 2, now + 2
 		end
-		s.hold = { token = run.token, began = os.clock() }
-		return true
-	elseif stage ~= "finish" then
-		return false, "unknown hold stage"
+		return ok, why
+	end
+	if stage ~= "finish" then
+		return false, "invalid stage"
 	end
 	local hold = s.hold
-	if not hold or hold.token ~= run.token or os.clock() - hold.began < 0.8 then
-		return false, "missing/short hold"
+	if hold and hold.action == action then
+		local remainder = Config.HoldSeconds[action] - (os.clock() - hold.began)
+		if remainder > 0 and remainder < 0.2 then
+			task.wait(remainder)
+		end
 	end
-	-- Native Triggered can arrive just before one server second due to event transit.
-	-- Wait out the remainder, then revalidate; never grant before a full second.
-	local remaining = 1 - (os.clock() - hold.began)
-	if remaining > 0 then
-		task.wait(remaining)
+	local oldItem = rules.active
+	local oldPosition = oldItem and oldItem.position
+	local target = s.hold and s.hold.target
+	local ok, result = Rules.finish(rules, actor, action, os.clock(), check, dropPosition)
+	if not ok then
+		return false, result
 	end
-	if states[player] ~= s or s.run ~= run or s.hold ~= hold or s.item or not near(player, run.loot) then
-		return false, "hold interrupted"
+	if action == "Bump" then
+		local v = root(target)
+		if v then
+			local from = root(actor).Position
+			local delta = Vector3.new(v.Position.X - from.X, 0, v.Position.Z - from.Z)
+			if delta.Magnitude > 0 then
+				local movement = delta.Unit * 3.5
+				local obstruction = workspace:Blockcast(v.CFrame, Vector3.new(2, 4, 2), movement, arena.params)
+				v.CFrame += delta.Unit * (obstruction and math.max(0, obstruction.Distance - 0.5) or 3.5)
+			end
+		end
+		oldItem.bounceAt = os.clock()
+		goal(target, Config.ItemName .. " DROPPED")
+	else
+		s.lastSocket = oldPosition or s.lastSocket
+		if not oldItem.eventTimestamp then
+			oldItem.eventTimestamp = workspace:GetServerTimeNow()
+			oldItem.baseOutcome = "GreyboxPlaceholder" -- No economy or reward reroll in T1.
+		end
+		goal(actor, Config.ItemName .. " is yours when you escape. RUN!")
+		if action == "Steal" then
+			Arena.warn(arena, actor, os.clock())
+		end
 	end
-	s.item, s.hold = run.token, nil
-	run.grants += 1
-	run.steal.Enabled, run.loot.Transparency = false, 1
-	run.mode, run.untilTime = "HeadStart", os.clock() + Config.HeadStartSeconds
-	carry(player)
-	update(player, "Carry 1/1 — dodge around cover, return to the same portal.")
-	print(string.format("[Greybox] steal user=%d seed=%d fresh=%.3fs", player.UserId, run.seed, os.clock() - s.joined))
+	visual(oldItem)
+	refreshLoot()
+	Rules.audit(rules)
 	return true
 end
-
+local function bindHold(q, action)
+	q.PromptButtonHoldBegan:Connect(function(actor)
+		if not testRunning then
+			holdAction(actor, action, "begin")
+		end
+	end)
+	q.PromptButtonHoldEnded:Connect(function(actor)
+		local s = states[actor]
+		local held = s and s.hold
+		task.delay(0.2, function()
+			if s and s.hold == held then
+				s.hold = nil
+			end
+		end)
+	end)
+	q.Triggered:Connect(function(actor)
+		if not testRunning then
+			holdAction(actor, action, "finish")
+		end
+	end)
+end
+local function home(actor)
+	local s = states[actor]
+	if s.hidePocket then
+		s.hidePocket = nil
+	end
+	s.run, s.hold, s.hidden, s.hidePocket = nil, nil, false, nil
+	actor:SetAttribute("GreyboxHidden", false)
+	if actor.Character then
+		actor.Character:PivotTo(CFrame.new(0, 4, -12))
+	end
+	if s.item then
+		visual(s.item)
+	end
+	publish(actor)
+	goal(actor, s.item and "Secured / place in your marked pen" or "Enter the central portal")
+end
+local function returnRun(actor, automatic)
+	local s, r = states[actor], root(actor)
+	if
+		not s
+		or s.phase ~= "Run"
+		or not r
+		or not arena
+		or (not Arena.safe(arena, r.Position) and not (not automatic and near(actor, arena.dock)))
+	then
+		return false, "return boundary/phase"
+	end
+	local ok, why = Rules.secure(rules, actor, os.clock())
+	if ok then
+		home(actor)
+		refreshLoot()
+		Rules.audit(rules)
+	end
+	return ok, why
+end
+local function placeItem(actor, slot)
+	local s, pen = states[actor], pens[slot]
+	if not s or not pen or s.slot ~= slot or not near(actor, pen.marker) or pen.count >= 8 then
+		return false, "pen owner/range/capacity"
+	end
+	local ok, item = Rules.place(rules, actor)
+	if not ok then
+		return false, item
+	end
+	pen.count += 1
+	local n, position = pen.count - 1, pen.base.Position
+	item.position = Vector3.new(position.X - 12 + n % 4 * 8, 1.7, position.Z - 5 + math.floor(n / 4) * 10)
+	visual(item)
+	item.visual.Name = "Placed_" .. item.id
+	item.visual:SetAttribute("PenSlot", slot)
+	goal(actor, "Placed / enter for another run")
+	publish(actor)
+	Rules.audit(rules)
+	return true
+end
 for i = 1, 8 do
 	local x, z = i <= 4 and -88 or 88, -54 + ((i - 1) % 4) * 36
 	local base =
@@ -238,222 +432,168 @@ for i = 1, 8 do
 	part(world, "PenBack", Vector3.new(0.5, 2, 28), Vector3.new(x + (x < 0 and -19 or 19), 1, z))
 	local marker =
 		part(world, "PenMarker" .. i, Vector3.new(2, 3, 2), Vector3.new(x + (x < 0 and 16 or -16), 1.5, z), orange)
-	pens[i] = {
-		base = base,
-		marker = marker,
-		text = label(marker, "Pen " .. i .. " — vacant"),
-		count = 0,
-	}
-	local place = prompt(marker, "Place", "Own pen")
-	place:SetAttribute("PenSlot", i)
-	place.Triggered:Connect(function(player)
-		if not loopRunning then
-			placeItem(player, i)
+	pens[i] = { base = base, marker = marker, text = label(marker, "Pen " .. i .. " / vacant"), count = 0 }
+	local q = prompt(marker, "Place", "Own pen")
+	q:SetAttribute("PenSlot", i)
+	q.Triggered:Connect(function(actor)
+		if not testRunning then
+			placeItem(actor, i)
 		end
 	end)
 end
-
-local function buildPieces(model, layout, origin)
-	local floors = {}
-	local function build(name, size, x, y, z, color)
-		return part(model, name, size, origin + Vector3.new(x, y, z), color)
-	end
-	for i, p in layout.pieces do
-		local floor = build(p.id, Vector3.new(p.width, 4, p.depth), 0, -2, p.z)
-		label(floor, "GREYBOX " .. p.id)
-		floors[i] = floor
-		local pivot = Instance.new("Attachment")
-		pivot.Name, pivot.Position, pivot.Parent = "GroundPivot", Vector3.new(0, 2, 0), floor
-		for _, port in { "In", "Out" } do
-			local value = port == "In" and p.inZ or p.outZ
-			if value then
-				local a = Instance.new("Attachment")
-				a.Name, a.Position, a.Orientation, a.Parent =
-					port, Vector3.new(0, 2, value - p.z), Vector3.new(0, port == "Out" and 180 or 0, 0), floor
-			end
-		end
-		for _, sign in { -1, 1 } do
-			build("Rail", Vector3.new(0.5, 1.5, p.depth), sign * (p.width / 2 - 0.25), 0.75, p.z)
-		end
-		if string.sub(p.id, 1, 3) == "P02" then
-			build("CoverLeft", Vector3.new(8, 8, 4), -8, 4, p.z - 3)
-			build("CoverRight", Vector3.new(8, 8, 4), 8, 4, p.z + 3)
-		elseif p.id == "P07" then
-			for _, x in { -12, 12 } do
-				build("NestCover", Vector3.new(8, 8, 8), x, 4, p.z - 4)
-			end
-		end
-	end
-	for i, floor in floors do
-		local p = layout.pieces[i]
-		assert(floor.Position.Y + floor.Size.Y / 2 == origin.Y, "runtime floor height")
-		assert(floor.Size.X == p.width and floor.Size.Z == p.depth, "runtime piece bounds")
-		if i > 1 then
-			local previous = floors[i - 1].Out
-			assert((previous.WorldPosition - floor.In.WorldPosition).Magnitude < 0.001, "runtime snap gap")
-			assert(
-				previous.WorldCFrame.LookVector:Dot(floor.In.WorldCFrame.LookVector) < -0.999,
-				"runtime connector normals"
-			)
-		end
-	end
-	return floors
-end
-local function assemble(player, seed, first)
-	local s = states[player]
-	local ok, layout = pcall(function()
-		local value = Layout.assemble(Config, seed, first)
-		Layout.validate(Config, value)
-		return value
-	end)
-	if not ok then
-		warn("[Greybox] rejected seed=" .. seed .. " reason=" .. tostring(layout) .. "; safe fallback")
-		layout = Layout.assemble(Config, seed, true)
-		Layout.validate(Config, layout)
-	end
-	local origin = Vector3.new(500 + (s.slot - 1) * 220, 0, 0)
-	local model = Instance.new("Model")
-	model.Name, model.Parent = "RunSlot" .. s.slot, world
-	model:SetAttribute("Seed", seed)
-	model:SetAttribute("RecipeVersion", Config.RecipeVersion)
-	local function at(x, y, z)
-		return origin + Vector3.new(x, y, z)
-	end
-	local function build(name, size, x, y, z, color)
-		return part(model, name, size, at(x, y, z), color)
-	end
-	buildPieces(model, layout, origin)
-	local nest = layout.pieces[#layout.pieces]
-	build("BackRail", Vector3.new(48, 1.5, 0.5), 0, 0.75, nest.z + 23.75)
-	build("EntryRail", Vector3.new(32, 1.5, 0.5), 0, 0.75, -11.75)
-	local safe = build("SafePad", Vector3.new(31, 0.1, 24), 0, 0.05, 0, Color3.fromRGB(80, 190, 160))
-	safe.CanCollide, safe.CanQuery = false, false
-	local dock = build("ReturnPortal", Vector3.new(10, 8, 2), 0, 4, -8, Color3.fromRGB(70, 180, 220))
-	label(dock, "Return home — safe pad")
-	local back = prompt(dock, "Return", "Home")
-	back:SetAttribute("OwnerUserId", player.UserId)
-	local loot = build("Treasure", Vector3.new(3, 3, 3), 0, 1.5, nest.z + 16, orange)
-	loot.Shape, loot.Material = Enum.PartType.Ball, Enum.Material.Neon
-	loot.CanCollide, loot.CanQuery = false, false
-	local steal = prompt(loot, "Steal", "Glowing ball", 1)
-	steal:SetAttribute("OwnerUserId", player.UserId)
-	local guard = build("Guardian", Vector3.new(4, 11, 4), 12, 5.5, nest.z + 8, Color3.fromRGB(150, 100, 100))
-	guard.CanCollide, guard.CanQuery = false, false
-	local warning = label(guard, "GUARDIAN — patrol")
-	local run = {
-		layout = layout,
-		dock = dock,
-		loot = loot,
-		steal = steal,
-		grants = 0,
-		chaseTicks = 0,
-		chaseDistance = 0,
-		model = model,
-		seed = seed,
-		token = s.slot .. ":" .. s.counter,
-		origin = origin,
-		guardian = guard,
-		warning = warning,
-		nestZ = nest.z,
-		started = os.clock(),
-		catches = 0,
-		mode = "Patrol",
-		untilTime = 0,
-		nextPath = 0,
-		points = {},
-		index = 1,
-		patrol = 1,
-	}
-	s.run, s.phase = run, "Run"
-	back.Triggered:Connect(function(p)
-		if p == player and s.run == run and not loopRunning then
-			returnRun(p)
-		end
-	end)
-	steal.PromptButtonHoldBegan:Connect(function(p)
-		if p == player and s.run == run and not loopRunning then
-			stealHold(p, "begin")
-		end
-	end)
-	steal.PromptButtonHoldEnded:Connect(function(p)
-		if p == player and not loopRunning then
-			local hold = s.hold
-			-- Allow the matching Triggered event to consume a completed native hold first.
-			task.delay(0.2, function()
-				if s.run == run and s.hold == hold then
-					stealHold(p, "cancel")
-				end
-			end)
-		end
-	end)
-	steal.Triggered:Connect(function(p)
-		if p == player and s.run == run and not loopRunning then
-			stealHold(p, "finish")
-		end
-	end)
-	player.Character:PivotTo(CFrame.new(at(0, 4, -4)) * CFrame.Angles(0, math.pi, 0))
-	update(player, "Dodge around cover. Hold Steal for 1 second at the glowing ball.")
-	print("[Greybox] assembled slot=" .. s.slot .. " " .. Layout.signature(layout))
-end
-
-local function enterRun(player)
-	local s = states[player]
-	if not s or s.phase ~= "Home" or s.run or not near(player, portal) then
-		return false, "enter validation (phase/run/range)"
-	end
-	if not loopRunning and SSS:GetAttribute("GreyboxLoopTestSuccess") ~= true then
-		update(player, "Build locked: run GreyboxLoopTest on the server before owner play.")
-		return false, "full-loop test has not passed"
-	end
-	if loopRunning and player ~= loopPlayer then
-		return false, "full-loop test owns the build"
-	end
-	if s.item or pens[s.slot].count >= 8 then
-		return false, "place cargo first / pen full"
-	end
-	s.counter += 1
+local function assemble()
+	session += 1
 	local override = SSS:GetAttribute("GreyboxSeed")
 	local fixed = type(override) == "number" and override > 0 and override < 2147483647 and override % 1 == 0
 	local seed = fixed and override
-		or (Config.SessionSeed + s.slot * 1009 + s.counter * 9176 + Config.RecipeVersion * 31) % 2147483647
-	assemble(player, seed, not fixed and s.counter == 1)
+		or (Config.SessionSeed + 1009 + session * 9176 + Config.RecipeVersion * 31) % 2147483647
+	local layout
+	for retry = 1, 8 do
+		local ok, value = pcall(function()
+			local candidate = Layout.assemble(Config, seed + retry - 1, session == 1 and not fixed)
+			Layout.validate(Config, candidate)
+			return candidate
+		end)
+		if ok then
+			layout = value
+			break
+		else
+			warn("[Greybox] recipe rejected: " .. tostring(value))
+		end
+	end
+	if not layout then
+		layout = Layout.assemble(Config, 101, true)
+		Layout.validate(Config, layout)
+	end
+	arena = Arena.build(world, layout, part, label)
+	arena.nest = part(arena.model, "NestAction", Vector3.new(1, 1, 1), arena.origin + Vector3.new(0, 5.5, 32), orange)
+	arena.nest.Transparency, arena.nest.CanCollide, arena.nest.CanQuery = 1, false, false
+	arena.steal = prompt(arena.nest, "Steal", Config.ItemName, Config.HoldSeconds.Steal)
+	bindHold(arena.steal, "Steal")
+	arena.groundAction = part(arena.model, "GroundAction", Vector3.new(1, 1, 1), arena.nest.Position)
+	arena.groundAction.Transparency, arena.groundAction.CanCollide, arena.groundAction.CanQuery = 1, false, false
+	arena.grab = prompt(arena.groundAction, "Grab", Config.ItemName, Config.HoldSeconds.Grab)
+	arena.grab.MaxActivationDistance = 4
+	bindHold(arena.grab, "Grab")
+	local back = prompt(arena.dock, "Return", "Home")
+	back.Triggered:Connect(function(actor)
+		if not testRunning then
+			returnRun(actor)
+		end
+	end)
+	visual(Rules.spawn(rules, arena.origin + Vector3.new(0, 4, 32)))
+	refreshLoot()
+	print("[Greybox] shared arena: " .. Layout.signature(layout))
+end
+local function enterRun(actor)
+	local s = states[actor]
+	if not s or s.phase ~= "Home" or s.item or not near(actor, portal) or (s.slot and pens[s.slot].count >= 8) then
+		return false, "enter phase/range/cargo/full pen"
+	end
+	if
+		not testRunning
+		and (SSS:GetAttribute("GreyboxLoopTestSuccess") ~= true or SSS:GetAttribute("GreyboxPvpTestSuccess") ~= true)
+	then
+		goal(actor, "Locked / run GreyboxLoopTest AND GreyboxPvpTest in Server attributes")
+		return false, "runtime gates not passed"
+	end
+	if population() >= Config.Capacity then
+		return false, "shared island full (8)"
+	end
+	if not arena then
+		assemble()
+	end
+	s.phase, s.run, s.counter, s.started, s.mercy, s.catches =
+		"Run", arena, (s.counter or 0) + 1, os.clock(), os.clock() + 3, 0
+	local arrivals = { -12, 0, 12 }
+	actor.Character:PivotTo(CFrame.new(arena.origin + Vector3.new(arrivals[((population() - 1) % 3) + 1], 4, -58)))
+	publish(actor)
+	goal(actor, "Choose a route / hold Steal at " .. Config.ItemName .. " / escape commits ownership")
 	return true
 end
-
-enter.Triggered:Connect(function(player)
-	if not loopRunning then
-		enterRun(player)
+enter.Triggered:Connect(function(actor)
+	if not testRunning then
+		enterRun(actor)
 	end
 end)
-
--- Client sends only intent. Server selects the current run/own pen and validates all state.
+local function leaveHide(actor)
+	local s = states[actor]
+	if not s or not s.hidden then
+		return false, "not hidden"
+	end
+	s.hidden, s.hideUntil, s.rehideAt = false, nil, os.clock() + 3
+	actor:SetAttribute("GreyboxHidden", false)
+	publish(actor)
+	goal(actor, "RUN!")
+	return true
+end
 local lastAction = {}
-actionRemote.OnServerEvent:Connect(function(player, action, stage)
-	if loopRunning or type(action) ~= "string" then
+actionRemote.OnServerEvent:Connect(function(actor, action, stage)
+	if testRunning or type(action) ~= "string" then
 		return
 	end
 	local now = os.clock()
-	if now - (lastAction[player] or 0) < 0.08 and stage ~= "cancel" then
+	if now - (lastAction[actor] or 0) < 0.08 and stage ~= "cancel" then
 		return
 	end
-	lastAction[player] = now
-	local ok, reason
-	if action == "Enter" then
-		ok, reason = enterRun(player)
+	lastAction[actor] = now
+	local ok, why
+	if Config.HoldSeconds[action] then
+		ok, why = holdAction(actor, action, stage)
+	elseif action == "Enter" then
+		ok, why = enterRun(actor)
 	elseif action == "Return" then
-		ok, reason = returnRun(player)
+		ok, why = returnRun(actor)
 	elseif action == "Place" then
-		local s = states[player]
-		ok, reason = placeItem(player, s and s.slot)
-	elseif action == "Steal" and (stage == "begin" or stage == "finish" or stage == "cancel") then
-		ok, reason = stealHold(player, stage)
+		ok, why = placeItem(actor, states[actor] and states[actor].slot)
+	elseif action == "LeaveHide" then
+		ok, why = leaveHide(actor)
 	else
 		return
 	end
-	actionRemote:FireClient(player, ok, reason)
+	actionRemote:FireClient(actor, ok, why)
 end)
-local function addPlayer(player)
-	if states[player] then
+local function configureCharacter(actor, character)
+	local r = character:WaitForChild("HumanoidRootPart")
+	character:WaitForChild("Humanoid")
+	local s = states[actor]
+	if not s then
+		return
+	end
+	-- Last legal danger socket survives the destroyed character; no provisional home escrow.
+	if s.phase == "Run" then
+		local item = s.item
+		if item then
+			local ok = Rules.drop(rules, actor, os.clock(), s.lastSocket or arena.origin + Vector3.new(0, 0, 8))
+			if ok then
+				visual(item)
+			end
+		end
+		s.phase = "Home"
+	end
+	for _, p in character:GetDescendants() do
+		if p:IsA("BasePart") then
+			p.CollisionGroup = "GreyboxPlayers"
+		end
+	end
+	character.DescendantAdded:Connect(function(p)
+		if p:IsA("BasePart") then
+			p.CollisionGroup = "GreyboxPlayers"
+		end
+	end)
+	if s.bump then
+		s.bump:Destroy()
+	end
+	s.bump = prompt(r, "Bump", "Carrier", Config.HoldSeconds.Bump)
+	s.bump.MaxActivationDistance, s.bump.RequiresLineOfSight = 4, true
+	s.bump:SetAttribute("CarrierUserId", actor.UserId)
+	bindHold(s.bump, "Bump")
+	home(actor)
+	actor:SetAttribute("GreyboxReady", true)
+	refreshLoot()
+end
+local function addPlayer(actor)
+	if states[actor] then
 		return
 	end
 	local slot
@@ -464,284 +604,368 @@ local function addPlayer(player)
 		end
 	end
 	if not slot then
-		update(player, "Eight solo slots occupied. Wait for a free slot.")
+		actor:SetAttribute("GreyboxGoal", "Eight home pens occupied")
 		return
 	end
-	slots[slot] = player
-	firstPlayer = firstPlayer or player
-	states[player] = { slot = slot, counter = 0, completed = 0, phase = "Home", joined = os.clock() }
-	pens[slot].text.Text = "Pen " .. slot .. " — " .. player.DisplayName
-	player:SetAttribute("GreyboxPen", slot)
-	local function characterAdded(character)
-		player:SetAttribute("GreyboxReady", false)
-		character:WaitForChild("HumanoidRootPart")
-		character:WaitForChild("Humanoid")
-		if states[player] then
-			if states[player].counter == 0 then
-				states[player].joined = os.clock()
+	slots[slot], firstPlayer = actor, firstPlayer or actor
+	local s = Rules.actor(rules, actor)
+	s.slot, s.counter, s.joined = slot, 0, os.clock()
+	pens[slot].text.Text = "Pen " .. slot .. " / " .. actor.DisplayName
+	actor:SetAttribute("GreyboxPen", slot)
+	actor.CharacterAdded:Connect(function(character)
+		configureCharacter(actor, character)
+	end)
+	actor.CharacterRemoving:Connect(function()
+		if s.phase == "Run" and s.item then
+			drop(actor)
+		end
+		if s.item and s.item.state == "Secured" and s.item.visual then
+			if s.item.weld then
+				s.item.weld:Destroy()
+				s.item.weld = nil
 			end
-			home(player, false)
-			player:SetAttribute("GreyboxReady", true)
-		end -- committed item stays in session escrow through reset
+			s.item.visual.Parent, s.item.visual.Anchored = world, true
+			s.item.visual.Position = Vector3.new(0, 3, -12)
+		end
+		s.phase, s.run, s.hold, s.hidden = "Home", nil, nil, false
+		actor:SetAttribute("GreyboxReady", false)
+	end)
+	if actor.Character then
+		task.spawn(configureCharacter, actor, actor.Character)
 	end
-	player.CharacterAdded:Connect(characterAdded)
-	if player.Character then
-		task.spawn(characterAdded, player.Character)
-	end
-	update(player, "Enter the central portal.")
 end
 Players.PlayerAdded:Connect(addPlayer)
-for _, player in Players:GetPlayers() do
-	addPlayer(player)
+for _, actor in Players:GetPlayers() do
+	addPlayer(actor)
 end
-Players.PlayerRemoving:Connect(function(player)
-	local s = states[player]
-	lastAction[player] = nil
+Players.PlayerRemoving:Connect(function(actor)
+	local s = states[actor]
 	if not s then
 		return
 	end
-	clearRun(s)
+	if s.phase == "Run" and s.item then
+		drop(actor)
+	end
 	if s.item then
-		print("[Greybox] disconnect: transient item retired " .. s.item .. " (no persistence in T1)")
+		s.item.state, s.item.holder = "Retired", nil
+		visual(s.item)
+		s.item = nil
 	end
-	for _, p in world:GetChildren() do
-		if p:GetAttribute("PenSlot") == s.slot then
-			p:Destroy()
+	for _, item in rules.items do
+		if item.visual and item.visual:GetAttribute("PenSlot") == s.slot then
+			item.state = "Retired"
+			visual(item)
 		end
 	end
-	pens[s.slot].count, pens[s.slot].text.Text = 0, "Pen " .. s.slot .. " — vacant"
-	slots[s.slot], states[player] = nil, nil
+	pens[s.slot].count, pens[s.slot].text.Text = 0, "Pen " .. s.slot .. " / vacant"
+	slots[s.slot], states[actor], lastAction[actor] = nil, nil, nil
 end)
-
-local function startLoopTest()
-	if loopRunning then
-		return
-	end
-	loopRunning = true
-	SSS:SetAttribute("GreyboxLoopTestResult", "RUNNING")
-	SSS:SetAttribute("GreyboxLoopTestSuccess", false)
-	SSS:SetAttribute("GreyboxLoopTestFreshToSteal", nil)
-	SSS:SetAttribute("GreyboxLoopTestPortalToPortal", nil)
-	SSS:SetAttribute("GreyboxLoopTestCatches", nil)
-	task.spawn(function()
-		local function log(message)
-			print("[GreyboxLoopTest] " .. message)
-		end
-		log("START; manual actions locked; guardian unchanged")
-		local ok, result = pcall(function()
-			local deadline = os.clock() + 15
-			repeat
-				loopPlayer = firstPlayer
-				if loopPlayer and loopPlayer:GetAttribute("GreyboxReady") then
-					break
-				end
-				task.wait(0.1)
-			until os.clock() >= deadline
-			assert(loopPlayer and loopPlayer:GetAttribute("GreyboxReady"), "first player not ready within 15s")
-			loopPlayer:SetAttribute("GreyboxLoopTesting", true)
-			return require(SSS:WaitForChild("GreyboxLoopTestRunner")).run(loopPlayer, states, pens, world, {
-				enterRun = enterRun,
-				stealHold = stealHold,
-				returnRun = returnRun,
-				placeItem = placeItem,
-			}, log)
-		end)
-		local r, h
-		if loopPlayer then
-			loopPlayer:SetAttribute("GreyboxLoopTesting", false)
-			r, h = root(loopPlayer)
-		end
-		if r then
-			if h then
-				h:MoveTo(r.Position)
-			end
-			pcall(function()
-				r:SetNetworkOwnershipAuto()
-			end)
-		end
-		loopRunning, loopPlayer = false, nil
-		SSS:SetAttribute("GreyboxLoopTest", false)
-		SSS:SetAttribute("GreyboxLoopTestSuccess", ok)
-		if ok then
-			SSS:SetAttribute("GreyboxLoopTestFreshToSteal", result.freshToSteal)
-			SSS:SetAttribute("GreyboxLoopTestPortalToPortal", result.portalToPortal)
-			SSS:SetAttribute("GreyboxLoopTestCatches", result.catches)
-			SSS:SetAttribute("GreyboxLoopTestResult", "PASS: full loop; guardian chased; one grant and placement")
-			log("PASS — full loop, one grant, one placement; owner play unlocked")
-		else
-			SSS:SetAttribute("GreyboxLoopTestResult", "FAIL: " .. tostring(result))
-			log("FAIL: " .. tostring(result) .. "; success=false; owner play locked")
-		end
-	end)
-end
-SSS:GetAttributeChangedSignal("GreyboxLoopTest"):Connect(function()
-	if SSS:GetAttribute("GreyboxLoopTest") then
-		startLoopTest()
-	end
-end)
-if SSS:GetAttribute("GreyboxLoopTest") then
-	startLoopTest()
-end
-
-local function selfTest()
-	for _, seed in { 101, 202, 303, 101 } do
-		local model = Instance.new("Model")
-		local passed, problem = pcall(function()
-			local layout = Layout.assemble(Config, seed, false)
-			Layout.validate(Config, layout)
-			buildPieces(model, layout, Vector3.zero)
-		end)
-		model:Destroy()
-		if not passed then
-			SSS:SetAttribute("GreyboxSelfTestResult", tostring(problem))
-			warn("[GreyboxSelfTest] runtime assembly FAIL seed=" .. seed .. " " .. tostring(problem))
-			return
-		end
-		print("[GreyboxSelfTest] runtime assembly/snap/bounds PASS seed=" .. seed)
-	end
-	local ok, err = pcall(Layout.selfTest, Config, function(message)
-		print("[GreyboxSelfTest] " .. message)
-	end)
-	SSS:SetAttribute("GreyboxSelfTestResult", ok and "PASS" or tostring(err))
-	if not ok then
-		warn("[GreyboxSelfTest] FAIL " .. tostring(err))
-	end
-end
-SSS:GetAttributeChangedSignal("GreyboxSelfTest"):Connect(function()
-	if SSS:GetAttribute("GreyboxSelfTest") then
-		selfTest()
-		SSS:SetAttribute("GreyboxSelfTest", false)
-	end
-end)
-if SSS:GetAttribute("GreyboxSelfTest") then
-	selfTest()
-end
-
--- Anchored guardian follows server navmesh paths. Sweeps and floor checks prevent clipping/void cuts.
 local accumulator = 0
 RunService.Heartbeat:Connect(function(dt)
 	accumulator += dt
 	if accumulator < 0.05 then
 		return
 	end
-	local step = math.min(accumulator, 0.15)
+	local step, now = math.min(accumulator, 0.15), os.clock()
 	accumulator = 0
-	local now = os.clock()
-	for player, s in states do
-		local run = s.run
-		local r, h = root(player)
-		if not run or not r then
+	for actor, s in states do
+		local r, h = root(actor)
+		if not r then
 			continue
 		end
-		local localPosition = r.Position - run.origin
-		if
-			localPosition.Y < -10
-			or math.abs(localPosition.X) > 60
-			or localPosition.Z < -16
-			or localPosition.Z > run.nestZ + 28
-		then
-			home(player, false)
-			continue
-		end
-		if s.hold and not near(player, run.loot) then
-			s.hold = nil
-		end
+		h.UseJumpPower, h.JumpHeight = false, s.item and Config.CarryJumpHeight or Config.JumpHeight
 		h.WalkSpeed = now < (s.slowUntil or 0) and 5 or (s.item and Config.CarrySpeed or Config.WalkSpeed)
-		local safe = math.abs(localPosition.X) <= 16 and localPosition.Z >= -12 and localPosition.Z <= 12
-		local params = RaycastParams.new()
-		params.FilterType = Enum.RaycastFilterType.Include
-		params.FilterDescendantsInstances = { run.model }
-		local guard = run.guardian
-		local sightStart = guard.Position - Vector3.new(0, 3, 0)
-		local delta = r.Position - sightStart
-		local sight = workspace:Raycast(sightStart, delta, params) == nil
-		if s.item then
-			if run.mode ~= "Chase" and now >= run.untilTime then
-				run.mode = "Chase"
-			end
-		elseif run.mode == "Patrol" and not safe and delta.Magnitude < 30 and sight then
-			run.mode, run.untilTime = "Warn", now + Config.WarningSeconds
-		elseif run.mode == "Warn" and now >= run.untilTime then
-			run.mode = "Approach"
-		elseif run.mode == "Approach" and (safe or delta.Magnitude > 38 or not sight) then
-			run.mode = "Patrol"
-		end
-		local stopped = run.mode == "Warn" or run.mode == "HeadStart"
-		if run.mode == "Chase" then
-			run.chaseTicks += 1
-		end
-		run.warning.Text = run.mode == "Warn" and "WARNING — move around cover!" or "GUARDIAN — " .. run.mode
-		guard.Color = stopped and orange or Color3.fromRGB(150, 100, 100)
-		local aggressive = run.mode == "Chase" or run.mode == "Approach"
-		if
-			aggressive
-			and not safe
-			and now >= (s.mercyUntil or 0)
-			and (r.Position - Vector3.new(guard.Position.X, r.Position.Y, guard.Position.Z)).Magnitude <= Config.CatchRadius
-			and sight
-		then
-			s.slowUntil, s.mercyUntil = now + Config.SlowSeconds, now + Config.SlowSeconds + Config.MercySeconds
-			run.catches += 1
-			update(player, "Caught: slow 1 second, then 3 seconds mercy. Loot kept.")
-			print("[Greybox] catch seed=" .. run.seed .. " lootKept=" .. tostring(s.item ~= nil))
-		end
-		if stopped or now < (s.mercyUntil or 0) then
+		if s.phase ~= "Run" or not arena then
 			continue
 		end
-		local target
-		if aggressive and not safe then
-			target = Vector3.new(r.Position.X, 1, r.Position.Z)
-		else
-			local patrols = {
-				Vector3.new(12, 1, run.nestZ + 8),
-				Vector3.new(-12, 1, run.nestZ + 12),
-				Vector3.new(0, 1, run.nestZ - 14),
-			}
-			target = run.origin + patrols[run.patrol]
-			if (Vector3.new(guard.Position.X, 1, guard.Position.Z) - target).Magnitude < 3 then
-				run.patrol = run.patrol % #patrols + 1
+		local p = r.Position - arena.origin
+		if p.Y < -10 or math.abs(p.X) > Config.IslandSize / 2 + 2 or math.abs(p.Z) > Config.IslandSize / 2 + 2 then
+			if s.item then
+				drop(actor, "outside island fall/recovery")
+			end
+			actor.Character:PivotTo(CFrame.new(arena.origin + Vector3.new(0, 4, -58)))
+			continue
+		end
+		if s.item and Arena.safe(arena, r.Position) then
+			returnRun(actor, true)
+			continue
+		end
+		local socket = Arena.dropSocket(arena, r.Position)
+		if socket then
+			s.lastSocket = socket
+		end
+		if s.hold then
+			local hold = s.hold
+			local ok = Rules.eligible(rules, actor, hold.action, hold.target, now, check)
+			if not ok or rules.active ~= hold.item or hold.item.version ~= hold.version then
+				s.hold = nil
 			end
 		end
-		if now >= run.nextPath and not run.computing then
-			run.nextPath, run.computing = now + 0.7, true
-			task.spawn(function()
-				local path = Pathfinding:CreatePath({
-					AgentRadius = 2.5,
-					AgentHeight = 11,
-					AgentCanJump = false,
-					WaypointSpacing = 3,
-				})
-				local ok = pcall(function()
-					path:ComputeAsync(Vector3.new(guard.Position.X, 1, guard.Position.Z), target)
+		local pocket
+		for _, hide in arena.hides do
+			local d = hide.definition
+			if math.abs(p.X - d.x) <= d.w / 2 and math.abs(p.Z - d.z) <= d.d / 2 and p.Y < 6 then
+				pocket = hide
+				break
+			end
+		end
+		local still = h.MoveDirection.Magnitude < 0.05
+			and Vector3.new(r.AssemblyLinearVelocity.X, 0, r.AssemblyLinearVelocity.Z).Magnitude < 0.7
+			and not h.Jump
+		if not pocket or not still or (s.hidden and now >= s.hideUntil) then
+			if s.hidden then
+				s.rehideAt = now + 3
+			end
+			s.hidden, s.hideStart, s.hidePocket = false, nil, nil
+		elseif not s.hidden and now >= (s.rehideAt or 0) then
+			local occupied = false
+			for other, otherState in states do
+				if other ~= actor and otherState.hidden and otherState.hidePocket == pocket then
+					occupied = true
+				end
+			end
+			if not occupied then
+				s.hideStart = s.hideStart or now
+				if now - s.hideStart >= 0.5 then
+					s.hidden, s.hideUntil, s.hidePocket = true, now + (s.item and 5 or 3600), pocket
+				end
+			end
+		end
+		actor:SetAttribute("GreyboxHidden", s.hidden == true)
+		if s.hidden then
+			goal(actor, "HIDDEN / moving leaves / carrying max 5s")
+		end
+		if s.item then
+			if
+				arena.target == actor
+				or (arena.attack and arena.attack.actor == actor)
+				or now < (s.combatUntil or 0)
+			then
+				s.idleAt = now
+			end
+			if not s.lastPosition or (r.Position - s.lastPosition).Magnitude > 0.4 then
+				s.idleAt, s.lastPosition = now, r.Position
+			end
+			if now - (s.idleAt or now) > 10 then
+				goal(actor, Config.ItemName .. " drops in 2s / move!")
+				if now - s.idleAt > 12 then
+					drop(actor, "idle 10s + warning 2s")
+				end
+			end
+		end
+		-- Shared blue mercy pulse and bounded FIRST RUN label on the single item.
+		if s.item and s.item.visual then
+			s.item.visual.Color = now < s.mercy and Color3.fromRGB(80, 160, 255) or orange
+			s.item.caption.Text = Config.ItemName .. (now < s.shield and " / FIRST RUN" or "")
+		end
+		publish(actor)
+	end
+	if not arena then
+		return
+	end
+	if population() == 0 and not testRunning then
+		Rules.retire(rules)
+		for _, item in rules.items do
+			if item.state == "Retired" and item.visual then
+				visual(item)
+			end
+		end
+		arena.model:Destroy()
+		arena = nil
+		return
+	end
+	if not rules.active and now >= (rules.respawnAt or math.huge) then
+		visual(Rules.spawn(rules, arena.origin + Vector3.new(0, 4, 32)))
+		arena.mode, arena.target = "Patrol", nil
+	end
+	if rules.active and rules.active.state == "Dropped" and rules.active.bounceAt then
+		local item = rules.active
+		local t = math.min(1, (now - item.bounceAt) / Config.SettleSeconds)
+		item.visual.Position = item.position + Vector3.new(0, 1.4 + math.sin(t * math.pi) * 0.7, 0)
+		if t >= 1 then
+			item.bounceAt = nil
+		end
+	end
+	Arena.tick(arena, step, now, states, root, hit, goal)
+	refreshLoot()
+	local ok, why = pcall(conservation)
+	SSS:SetAttribute("GreyboxConservation", ok and "PASS" or "FAIL: " .. tostring(why))
+	if not ok then
+		for _, mode in { "GreyboxLoopTest", "GreyboxPvpTest" } do
+			SSS:SetAttribute(mode .. "Success", false)
+			SSS:SetAttribute(mode .. "Result", "FAIL: conservation " .. tostring(why))
+			warn("[" .. mode .. "] conservation FAIL " .. tostring(why))
+		end
+	end
+end)
+local api = {
+	enterRun = enterRun,
+	holdAction = holdAction,
+	returnRun = returnRun,
+	placeItem = placeItem,
+	root = root,
+	rules = rules,
+	audit = function()
+		conservation()
+	end,
+	arena = function()
+		return arena
+	end,
+}
+-- A test-only dummy actor uses the exact same authoritative hold/hit/item functions.
+function api.dummy(position)
+	local character = Instance.new("Model")
+	character.Name, character.Parent = "PvpDummy", world
+	local r = part(character, "HumanoidRootPart", Vector3.new(2, 2, 1), position)
+	r.Anchored, r.CanCollide, r.Transparency, r.CollisionGroup = false, true, 1, "GreyboxPlayers"
+	local torso = part(character, "Torso", Vector3.new(2, 2, 1), position)
+	torso.Anchored, torso.CollisionGroup = false, "GreyboxPlayers"
+	local function joint(name, a, b, offset)
+		local motor = Instance.new("Motor6D")
+		motor.Name, motor.Part0, motor.Part1, motor.C0, motor.Parent = name, a, b, CFrame.new(offset), a
+	end
+	joint("RootJoint", r, torso, Vector3.zero)
+	for _, definition in
+		{
+			{ "Head", Vector3.new(2, 1, 1), Vector3.new(0, 1.5, 0), "Neck" },
+			{ "Left Arm", Vector3.new(1, 2, 1), Vector3.new(-1.5, 0, 0), "Left Shoulder" },
+			{ "Right Arm", Vector3.new(1, 2, 1), Vector3.new(1.5, 0, 0), "Right Shoulder" },
+			{ "Left Leg", Vector3.new(1, 2, 1), Vector3.new(-0.5, -2, 0), "Left Hip" },
+			{ "Right Leg", Vector3.new(1, 2, 1), Vector3.new(0.5, -2, 0), "Right Hip" },
+		}
+	do
+		local limb = part(character, definition[1], definition[2], position + definition[3])
+		limb.Anchored, limb.CanCollide, limb.CollisionGroup = false, false, "GreyboxPlayers"
+		joint(definition[4], torso, limb, definition[3])
+	end
+	local humanoid = Instance.new("Humanoid")
+	humanoid.RequiresNeck, humanoid.HipHeight, humanoid.Parent = false, 0, character
+	character.PrimaryPart = r
+	local actor = { Character = character, UserId = -1 }
+	local attributes = {}
+	function actor:SetAttribute(key, value)
+		attributes[key] = value
+	end
+	function actor:GetAttribute(key)
+		return attributes[key]
+	end
+	function actor:IsA()
+		return false
+	end
+	local s = Rules.actor(rules, actor)
+	s.phase, s.run, s.joined = "Run", arena, os.clock()
+	r:SetNetworkOwner(nil)
+	return actor
+end
+function api.removeDummy(actor)
+	local s = states[actor]
+	if s and s.item then
+		drop(actor)
+	end
+	states[actor] = nil
+	actor.Character:Destroy()
+end
+local function startTest(mode)
+	if testRunning then
+		return
+	end
+	testRunning = true
+	SSS:SetAttribute(mode .. "Success", false)
+	SSS:SetAttribute(mode .. "Result", "RUNNING")
+	task.spawn(function()
+		local player, dummy
+		local function snapshot(actor, name)
+			local r, h
+			if actor then
+				r, h = root(actor)
+			end
+			-- Logical and physical state together distinguish range misses from legal drops.
+			local s = actor and states[actor]
+			if not r or not s then
+				return name .. "=missing"
+			end
+			local p = arena and s.phase == "Run" and r.Position - arena.origin or r.Position
+			return string.format(
+				"%s pos=(%.2f,%.2f,%.2f) phase=%s carry=%s item=%s shield=%.2f mercy=%.2f floor=%s speed=%.1f",
+				name,
+				p.X,
+				p.Y,
+				p.Z,
+				s.phase,
+				tostring(s.item ~= nil),
+				s.item and (s.item.id .. "/" .. s.item.state) or "none",
+				math.max(0, s.shield - os.clock()),
+				math.max(0, s.mercy - os.clock()),
+				h.FloorMaterial.Name,
+				h.WalkSpeed
+			)
+		end
+		local function log(message)
+			local item = rules.active
+			print(
+				"["
+					.. mode
+					.. "] "
+					.. message
+					.. " | "
+					.. snapshot(player, "player")
+					.. (dummy and (" | " .. snapshot(dummy, "dummy")) or "")
+					.. " | active="
+					.. (item and (item.id .. "/" .. item.state) or "none")
+			)
+		end
+		testLog = log
+		local ok, result = pcall(function()
+			local deadline = os.clock() + 8
+			repeat
+				player = firstPlayer
+				if player and player:GetAttribute("GreyboxReady") then
+					break
+				end
+				task.wait(0.1)
+			until os.clock() >= deadline
+			assert(player and player:GetAttribute("GreyboxReady"), "player not ready >8s")
+			player:SetAttribute("GreyboxLoopTesting", true)
+			local runner = require(SSS:WaitForChild("GreyboxLoopTestRunner"))
+			if mode == "GreyboxPvpTest" then
+				return runner.pvp(player, states, pens, world, api, log, function(value)
+					dummy = value
 				end)
-				if s.run == run and ok and path.Status == Enum.PathStatus.Success then
-					run.points, run.index = path:GetWaypoints(), 2
-				end
-				path:Destroy()
-				run.computing = false
-			end)
+			end
+			return runner.run(player, states, pens, world, api, log)
+		end)
+		log((ok and "PASS: " or "FAIL: ") .. tostring(result))
+		testLog = nil
+		if dummy then
+			api.removeDummy(dummy)
 		end
-		local waypoint = run.points[run.index]
-		if waypoint then
-			local goal = Vector3.new(waypoint.Position.X, 5.5, waypoint.Position.Z)
-			local offset = goal - guard.Position
-			if offset.Magnitude < 0.5 then
-				run.index += 1
-			else
-				local movement = offset.Unit
-					* math.min(offset.Magnitude, (aggressive and Config.CarrySpeed * 0.88 or 7) * step)
-				local nextPosition = guard.Position + movement
-				local wall = workspace:Blockcast(CFrame.new(guard.Position), Vector3.new(4, 10, 4), movement, params)
-				local floor = workspace:Raycast(nextPosition, Vector3.new(0, -8, 0), params)
-				if not wall and floor and nextPosition.Z - run.origin.Z > 14 then
-					if run.mode == "Chase" then
-						run.chaseDistance += movement.Magnitude
-					end
-					guard.Position = nextPosition
-				else
-					run.points, run.nextPath = {}, 0
-				end
+		if player then
+			player:SetAttribute("GreyboxLoopTesting", false)
+			local r, h = root(player)
+			if r then
+				h:Move(Vector3.zero, false)
+				pcall(function()
+					r:SetNetworkOwnershipAuto()
+				end)
 			end
 		end
+		testRunning = false
+		SSS:SetAttribute(mode, false)
+		SSS:SetAttribute(mode .. "Success", ok)
+		SSS:SetAttribute(mode .. "Result", (ok and "PASS: " or "FAIL: ") .. tostring(result))
+	end)
+end
+for _, mode in { "GreyboxLoopTest", "GreyboxPvpTest" } do
+	SSS:GetAttributeChangedSignal(mode):Connect(function()
+		if SSS:GetAttribute(mode) then
+			startTest(mode)
+		end
+	end)
+end
+SSS:GetAttributeChangedSignal("GreyboxSelfTest"):Connect(function()
+	if SSS:GetAttribute("GreyboxSelfTest") then
+		local ok, why = pcall(Layout.selfTest, Config, print)
+		SSS:SetAttribute("GreyboxSelfTestResult", ok and "PASS" or tostring(why))
+		SSS:SetAttribute("GreyboxSelfTest", false)
 	end
 end)

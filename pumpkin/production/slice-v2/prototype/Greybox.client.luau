@@ -6,6 +6,7 @@ local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local remote = RS:WaitForChild("GreyboxAction")
 local world = workspace:WaitForChild("GREYBOX")
+local Config = require(RS:WaitForChild("GreyboxConfig"))
 local controls = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule")):GetControls()
 local function testControls()
 	if player:GetAttribute("GreyboxLoopTesting") then
@@ -59,16 +60,28 @@ local function register(q)
 	if q:IsA("ProximityPrompt") and q:GetAttribute("GreyboxAction") then
 		prompts[q] = true
 		configurePen(q)
+		local function selfBump()
+			if
+				q:GetAttribute("GreyboxAction") == "Bump"
+				and q:GetAttribute("CarrierUserId") == player.UserId
+				and q.Enabled
+			then
+				q.Enabled = false
+			end
+		end
+		selfBump()
+		q:GetAttributeChangedSignal("CarrierUserId"):Connect(selfBump)
+		q:GetPropertyChangedSignal("Enabled"):Connect(selfBump)
 		q:GetAttributeChangedSignal("PenSlot"):Connect(function()
 			configurePen(q)
 		end)
 	end
 end
-world.DescendantAdded:Connect(register)
-world.DescendantRemoving:Connect(function(q)
+workspace.DescendantAdded:Connect(register)
+workspace.DescendantRemoving:Connect(function(q)
 	prompts[q], shown[q] = nil, nil
 end)
-for _, q in world:GetDescendants() do
+for _, q in workspace:GetDescendants() do
 	register(q)
 end
 player:GetAttributeChangedSignal("GreyboxPen"):Connect(function()
@@ -99,19 +112,26 @@ local sentFinish = false
 local began = 0
 local function cancelHold()
 	if holding and not sentFinish then
-		remote:FireServer("Steal", "cancel")
+		remote:FireServer(holding:GetAttribute("GreyboxAction"), "cancel")
 	end
 	holding, heldInput, sentFinish = nil, nil, false
 end
 local function beginHold(input)
-	if not selected or selected:GetAttribute("GreyboxAction") ~= "Steal" or holding then
+	if player:GetAttribute("GreyboxHidden") then
+		return
+	end
+	if not selected or not Config.HoldSeconds[selected:GetAttribute("GreyboxAction")] or holding then
 		return
 	end
 	holding, heldInput, began, sentFinish = selected, input, os.clock(), false
-	remote:FireServer("Steal", "begin")
+	remote:FireServer(selected:GetAttribute("GreyboxAction"), "begin")
 end
 button.Activated:Connect(function()
-	if selected and selected:GetAttribute("GreyboxAction") ~= "Steal" then
+	if player:GetAttribute("GreyboxHidden") then
+		remote:FireServer("LeaveHide")
+		return
+	end
+	if selected and not Config.HoldSeconds[selected:GetAttribute("GreyboxAction")] then
 		remote:FireServer(selected:GetAttribute("GreyboxAction"))
 	end
 end)
@@ -121,11 +141,19 @@ button.InputBegan:Connect(function(input)
 	end
 end)
 UserInputService.InputBegan:Connect(function(input, processed)
+	if
+		not processed
+		and player:GetAttribute("GreyboxHidden")
+		and (input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.ButtonX)
+	then
+		remote:FireServer("LeaveHide")
+		return
+	end
 	if processed or not selected or shown[selected] then
 		return -- native E/X owns input while its prompt is visible
 	end
 	if input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.ButtonX then
-		if selected:GetAttribute("GreyboxAction") == "Steal" then
+		if Config.HoldSeconds[selected:GetAttribute("GreyboxAction")] ~= nil then
 			beginHold(input)
 		else
 			remote:FireServer(selected:GetAttribute("GreyboxAction"))
@@ -167,6 +195,8 @@ RunService.RenderStepped:Connect(function()
 			local legal = (action == "Enter" and phase == "Home" and not carrying)
 				or (action == "Return" and phase == "Run")
 				or (action == "Steal" and phase == "Run" and not carrying)
+				or (action == "Grab" and phase == "Run" and not carrying)
+				or (action == "Bump" and phase == "Run" and not carrying and q:GetAttribute("CarrierUserId") ~= player.UserId)
 				or (action == "Place" and phase == "Home" and carrying and q:GetAttribute("PenSlot") == slot)
 			if
 				legal
@@ -176,26 +206,38 @@ RunService.RenderStepped:Connect(function()
 				and (not owner or owner == player.UserId)
 			then
 				local d = (r.Position - parent.WorldPosition).Magnitude
-				if d <= q.MaxActivationDistance and d < distance then
+				local clear = true
+				if action == "Bump" or action == "Grab" then
+					local params = RaycastParams.new()
+					params.FilterType, params.FilterDescendantsInstances =
+						Enum.RaycastFilterType.Include, { world:FindFirstChild("SharedIsland") }
+					clear = workspace:Raycast(r.Position, parent.WorldPosition - r.Position, params) == nil
+				end
+				if d <= q.MaxActivationDistance and d < distance and clear then
 					nearest, distance = q, d
 				end
 			end
 		end
 	end
-	selected = nearest
+	selected = not player:GetAttribute("GreyboxHidden") and nearest or nil
 	if holding and holding ~= selected then
 		cancelHold()
 	end
-	button.Visible = selected ~= nil and not player:GetAttribute("GreyboxLoopTesting")
+	button.Visible = (selected ~= nil or player:GetAttribute("GreyboxHidden"))
+		and not player:GetAttribute("GreyboxLoopTesting")
+	if player:GetAttribute("GreyboxHidden") and not selected then
+		button.Text = "Leave hide [tap]"
+	end
 	if selected then
 		local action = selected:GetAttribute("GreyboxAction")
-		button.Text = action == "Steal" and "Hold to Steal (1 second)" or action .. " [E / X]"
+		button.Text = Config.HoldSeconds[action] and ("Hold to " .. action .. " [E / X]") or action .. " [E / X]"
 		if holding then
 			local elapsed = os.clock() - began
-			button.Text = string.format("Hold to Steal %d%%", math.min(100, math.floor(elapsed * 100)))
-			if elapsed >= 1 and not sentFinish then
+			button.Text =
+				string.format("Hold %d%%", math.min(100, math.floor(elapsed / Config.HoldSeconds[action] * 100)))
+			if elapsed >= Config.HoldSeconds[action] and not sentFinish then
 				sentFinish = true
-				remote:FireServer("Steal", "finish")
+				remote:FireServer(selected:GetAttribute("GreyboxAction"), "finish")
 			end
 		end
 	end
