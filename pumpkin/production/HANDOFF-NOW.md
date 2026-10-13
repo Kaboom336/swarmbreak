@@ -8,13 +8,14 @@
 - Models approved: Pup A (assetId 98518831184004), Blender Crow (models/crow/blender), pumpkins (now Halloween event loot), pet effects v2 (no disc; Rare+ outline/glow/sparkles; name tags).
 - Usage cap: Codex builds, Claude judges; max 2 rounds per model; one review page per batch. Claude weekly ~86% (reset 10/14 21:00Z); money lanes first.
 
-## Running / next (updated 2026-10-13 ~00:30 UTC)
-- Plan page for Zion (waiting on 'go'): https://claude.ai/artifact/RjiitVJmQswzyYZt4gxTpF (source scratchpad conceptpage/mk6.py + template6.html; content pumpkin/production/treasure/GDD.md, BUILD-PLAN.md, images).
-- Greybox island v2 (prototype/guardian-greybox.rbxl): GreyboxPvpTest PASS in Studio. GreyboxLoopTest passes steal, jump set, carrying hill climb, then FAILS 'no normal throw/telegraph >8s': guardian follows carrier up the west hill and stays there (~44 studs away). Codex round 5 running (task C:\dev\codex-lab\t1f-fix-task.md, output t1f.last.txt): guardian leash + ranged throw + state logs. Then reopen in Studio, run both tests (attributes GreyboxLoopTest / GreyboxPvpTest on ServerScriptService during Play), commit, tell Zion.
-- Fix rounds so far: 5 (over the 2-round cap; Codex only). If round 5 fails, stop and ask Zion.
-- Tomorrow after Zion's go: follow treasure/BUILD-PLAN.md batches, each with a passing Studio test before Zion sees it.
+## Running / next (updated 2026-10-13 ~02:05 UTC)
+- Plan page: https://claude.ai/artifact/RjiitVJmQswzyYZt4gxTpF (GDD v1). References v2 + Meadow top-down map: treasure/v2/ (Zion likes the background floating islands; keep them).
+- Greybox (prototype/): layout rebuilt to refs v1, harder guardian done (offline checks pass). RUNNING: Codex t1i aligns Meadow + home to treasure/v2/meadow-topdown.png (task C:\dev\codex-lab\t1i-topdown-task.md -> t1i.last.txt). RUNNING: Codex design arena on Zion's 10/13 ideas (no hide zones, 1-min portal escape timer, traps before stealing, themed island backdrops/weather, bigger free-placement plots, unique future islands) -> treasure/ARENA-1013.md + revised GDD.md (task arena-1013-task.md -> arena1013.last.txt).
+- NEXT: show Zion the arena keep/change/cut list (max 1 question); build order core loop (guardian, timer, map) -> plots -> backdrops; traps/unique spawns later unless arena says core. Before Zion plays: open guardian-greybox.rbxl in Studio, run GreyboxLoopTest and GreyboxPvpTest (Play, set attributes on ServerScriptService; portal stays locked for players until both pass in that session), capture side-by-side shots with GreyboxCaptureCams vs treasure/v2 images.
+- Claude ~88% weekly (reset 10/14 21:00Z): pause Claude judging at 90%, Codex keeps building; money-lane Codex jobs first. Max 2 Codex rounds per piece.
 
 ## Code
 - Branch pumpkin/patch-panic; commit with -c user.name/email from last commit; only git add pumpkin/giant pumpkin/production pumpkin/tools.
 - Rojo: C:/Users/zerha/.rokit/tool-storage/rojo-rbx/rojo/7.4.4/rojo.exe (shim fails in Codex shell). Blender: C:\dev\codex-lab\tools\blender.
+
 

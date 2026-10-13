@@ -44,3 +44,4 @@ Supplied offline best-in-class anchors, not fresh rankings: BGSI hub clarity ver
 - When generation fixes framing, recheck UI text because correct labels can disappear.
 - When pictures guide a greybox, supply numeric coordinates because generated grids are approximate.
 - When models are approved, instance the meshes because reference-conditioned art still changes proportions.
+- Zion 2026-10-13 01:57: keep the current background floating islands (he likes them).
