@@ -19,3 +19,6 @@
 - Rojo: C:/Users/zerha/.rokit/tool-storage/rojo-rbx/rojo/7.4.4/rojo.exe (shim fails in Codex shell). Blender: C:\dev\codex-lab\tools\blender.
 
 
+
+## Overnight build rule (Zion 2026-10-13 02:15)
+- Keep building batches on Codex: map+guardian -> timer/no-hide (t1j) -> plots (C:/dev/codex-lab/t2-plots-task.md) -> backdrops (t3-backdrops-task.md) -> traps. Each batch: both Studio tests pass. Stop only if Codex weekly used >= 85% (check: grep rate_limits in newest ~/.codex/sessions/*/*/*/*.jsonl; was 22% at 02:20Z) or Zion opinion needed. Claude: light checks only until 10/14 reset.
