@@ -1,0 +1,11 @@
+{
+  "final_round": "redo3",
+  "scores": [6.5, 6.6, 6.5],
+  "threshold": 7,
+  "state": "FAIL",
+  "source_sha256": "997546c8df103526f00f5722db4dcc92ea8d7122e75d7a987e86152825ea8dfc",
+  "critic": "Independent fresh Codex reviewer, no implementation context or prior reviews",
+  "remaining_defects": ["Summit still reads as low platforms", "Valley reads as rectangular planted courts", "Underside reads as a drum with weak visible taper"],
+  "iteration_limit": "Third full comparison round reached; stop under user instruction",
+  "runtime": "UNKNOWN"
+}

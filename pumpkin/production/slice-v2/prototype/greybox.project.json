@@ -3,6 +3,7 @@
     "tree":  {
                  "$className":  "DataModel",
                  "Workspace":  {
+                                   "$attributes": { "UseMeadowV4": true, "MeadowVersion": 4 },
                                    "$properties":  {
                                                        "Gravity":  196.2,
                                                        "StreamingEnabled":  false
@@ -10,12 +11,70 @@
                                },
                  "Lighting":  {
                                   "$properties":  {
-                                                      "ClockTime":  12,
-                                                      "Brightness":  2,
-                                                      "GlobalShadows":  false
-                                                  }
+                                                      "ClockTime":  14,
+                                                      "Brightness":  2.8,
+                                                      "GlobalShadows":  true,
+                                                      "ShadowSoftness": 0.4,
+                                                      "Technology": "Future",
+                                                      "Ambient": [0.541176,0.494118,0.419608],
+                                                      "OutdoorAmbient": [0.686275,0.709804,0.6],
+                                                      "EnvironmentDiffuseScale": 0.8,
+                                                      "EnvironmentSpecularScale": 0.45
+                                                  },
+                                  "LookColorCorrection": {
+                                      "$className": "ColorCorrectionEffect",
+                                      "$properties": { "Brightness": 0.01, "Saturation": 0.16, "Contrast": 0.06, "TintColor": [1,0.972549,0.905882] }
+                                  },
+                                  "LookAtmosphere": {
+                                      "$className": "Atmosphere",
+                                      "$properties": { "Density": 0.22, "Offset": 0.15, "Color": [0.780392,0.878431,1], "Decay": [1,0.886275,0.705882], "Glare": 0.12, "Haze": 0.7 }
+                                  },
+                                  "LookBloom": {
+                                      "$className": "BloomEffect",
+                                      "$properties": { "Intensity": 0.12, "Size": 20, "Threshold": 1.25 }
+                                  },
+                                  "LookSunRays": {
+                                      "$className": "SunRaysEffect",
+                                      "$properties": { "Intensity": 0.035, "Spread": 0.75 }
+                                  }
                               },
                  "ReplicatedStorage":  {
+                                           "TreasureCore": {
+                                               "$className": "Folder",
+                                               "Config": {"$path": "../../prototype/core/Config.luau"},
+                                               "Domain": {"$path": "../../prototype/core/Domain.luau"},
+                                               "Profiles": {"$path": "../../prototype/core/Profiles.luau"},
+                                               "Service": {"$path": "../../prototype/core/Service.luau"},
+                                               "Runtime": {"$path": "../../prototype/core/Runtime.luau"},
+                                               "Tests": {"$path": "../../prototype/core/Tests.luau"}
+                                           },
+                                           "LightingPresets": { "$path": "LightingPresets.luau" },
+                                           "MeadowV4": {
+                                               "$className": "Folder",
+                                               "Builder": {"$path": "../../prototype/meadow-v4/MeadowV4.luau"},
+                                               "Data": {"$path": "../../prototype/meadow-v4/MeadowV4Data.luau"},
+                                               "Loader": {"$path": "../../prototype/meadow-v4/Loader.luau"},
+                                               "RouteData": {"$path": "../../prototype/meadow-v4/RouteData.luau"},
+                                               "Gameplay": {"$path": "../../prototype/meadow-v4/Gameplay.luau"},
+                                               "TunnelPolicy": {"$path": "../../prototype/meadow-v4/TunnelPolicy.luau"},
+                                               "TunnelController": {"$path": "../../prototype/meadow-v4/ProductionTunnelController.luau"},
+                                               "RavinePolicy": {"$path": "../../prototype/meadow-v4/RavinePolicy.luau"}
+                                           },
+                                           "HomeArtGeometry": { "$path": "HomeArtGeometry.luau", "$attributes": { "RevealSoundId": "rbxasset://sounds/electronicpingshort.wav" } },
+                                           "MeadowKeeper": {
+                                               "$className": "Folder",
+                                               "Rig": { "$path": "../../models/meadow-keeper/anim/Rig.luau" },
+                                               "Animator": { "$path": "../../models/meadow-keeper/anim/Animator.luau" },
+                                               "Clips": { "$path": "../../models/meadow-keeper/anim/Clips.luau" },
+                                               "Geometry": { "$path": "../../models/meadow-keeper/anim/Geometry.luau" },
+                                               "Skeleton": { "$path": "../../models/meadow-keeper/anim/Skeleton.luau" },
+                                               "Kinematics": { "$path": "../../models/meadow-keeper/anim/Kinematics.luau" },
+                                               "Attacks": { "$path": "KeeperAttacks.luau" },
+                                               "Effects": { "$path": "KeeperEffects.luau" },
+                                               "Projectiles": { "$path": "KeeperProjectiles.luau" },
+                                               "FXEvent": { "$className": "RemoteEvent" },
+                                               "Pose": { "$path": "KeeperPose.luau" }
+                                           },
                                            "GreyboxTraps": { "$path": "Traps.luau" },
                                            "GreyboxPlacement": { "$path": "Placement.luau" },
                                            "GreyboxConfig":  {
@@ -32,7 +91,16 @@
                                                             }
                                        },
                  "ServerScriptService":  {
+                                             "CoreLoopTestRunner": {"$path": "../../prototype/core/Test.server.luau"},
+                                             "LightingPresets": { "$path": "LightingPresets.luau" },
+                                             "LightingPresetController": { "$path": "LightingPreset.server.luau" },
                                              "$attributes":  {
+                                                                 "CoreLoopTest": false,
+                                                                 "CoreLoopTestSuccess": false,
+                                                                 "CoreLoopTestResult": "NOT RUN",
+                                                                 "CoreUseDataStore": false,
+                                                                 "CoreRequireLegacyGates": false,
+                                                                 "LightingPreset": "GardenWarm",
                                                                  "GreyboxSelfTest":  false,
                                                                  "GreyboxTrapTest": false,
                                                                  "GreyboxTrapTestSuccess": false,
@@ -62,6 +130,10 @@
                                          },
                  "StarterPlayer":  {
                                        "StarterPlayerScripts":  {
+                                                                    "TreasureCoreHud": {"$path": "../../prototype/core/Hud.client.luau"},
+                                                                    "LightingPresetController": { "$path": "LightingPreset.client.luau" },
+                                                                    "HomeArt": { "$path": "HomeArt.client.luau" },
+                                                                    "MeadowKeeper": { "$path": "Keeper.client.luau" },
                                                                     "Greybox":  {
                                                                                     "$path":  "Greybox.client.luau"
                                                                                 }

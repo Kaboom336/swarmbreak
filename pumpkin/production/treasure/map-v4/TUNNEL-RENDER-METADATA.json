@@ -1,0 +1,14 @@
+{
+  "manifest_sha256": "ebc9fbecafd645aed8589cb52711a0bb92586b0c04ab8a633288019615ae9c87",
+  "part_count": 26612,
+  "source": "Actual shipped manifest; offline Cycles, source transparency honored; no Studio claim",
+  "top_scale": 390,
+  "eye_coordinates": "Source X,Z,Y; RGB from native parts",
+  "proof_images": [
+    "entrance",
+    "inside",
+    "near-exit",
+    "south-exit",
+    "from-summit"
+  ]
+}

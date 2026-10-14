@@ -1,0 +1,380 @@
+{
+  "portal-west": {
+    "blender_eye": [
+      0,
+      -116,
+      5.5
+    ],
+    "blender_target": [
+      -82,
+      -70,
+      5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "portal-bridge": {
+    "blender_eye": [
+      0,
+      -116,
+      5.5
+    ],
+    "blender_target": [
+      0,
+      95,
+      36
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "portal-east": {
+    "blender_eye": [
+      0,
+      -116,
+      5.5
+    ],
+    "blender_target": [
+      148,
+      -53,
+      24
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "west": {
+    "blender_eye": [
+      -100,
+      -24,
+      5.5
+    ],
+    "blender_target": [
+      -76,
+      30,
+      5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "bridge": {
+    "blender_eye": [
+      0,
+      -48,
+      5.5
+    ],
+    "blender_target": [
+      0,
+      65,
+      10
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "east": {
+    "blender_eye": [
+      110,
+      -60,
+      25.5
+    ],
+    "blender_target": [
+      110,
+      18,
+      5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "summit": {
+    "blender_eye": [
+      8,
+      108,
+      53.5
+    ],
+    "blender_target": [
+      0,
+      -116,
+      11
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "shelf": {
+    "blender_eye": [
+      104,
+      128,
+      41.5
+    ],
+    "blender_target": [
+      74,
+      128,
+      29
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "recovery": {
+    "blender_eye": [
+      -22,
+      0,
+      -26.5
+    ],
+    "blender_target": [
+      0,
+      -80,
+      -3
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-summit_radial": {
+    "blender_eye": [
+      0,
+      108,
+      53.5
+    ],
+    "blender_target": [
+      30,
+      108,
+      53.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-spiral": {
+    "blender_eye": [
+      -1.8093704908235309,
+      144.83058244756575,
+      38.64634146341464
+    ],
+    "blender_target": [
+      -23.455660114389545,
+      139.6262965520504,
+      31.329268292682933
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-fork_link": {
+    "blender_eye": [
+      -1.125,
+      55.625,
+      5.5
+    ],
+    "blender_target": [
+      -1.734375,
+      53.921875,
+      5.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-shelf": {
+    "blender_eye": [
+      104.66666666666669,
+      125.33333333333334,
+      41.5
+    ],
+    "blender_target": [
+      110.0,
+      128.0,
+      41.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-shelf_link": {
+    "blender_eye": [
+      28.0,
+      53.0,
+      5.5
+    ],
+    "blender_target": [
+      23.608,
+      47.495999999999995,
+      5.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-west": {
+    "blender_eye": [
+      -86.93359375,
+      15.0322265625,
+      5.5
+    ],
+    "blender_target": [
+      -101.1171875,
+      -17.4296875,
+      5.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-bridge": {
+    "blender_eye": [
+      0,
+      30,
+      5.5
+    ],
+    "blender_target": [
+      0,
+      18,
+      9.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-bridge_south": {
+    "blender_eye": [
+      7.0,
+      -65.0,
+      5.5
+    ],
+    "blender_target": [
+      5.0927734375,
+      -74.1845703125,
+      5.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-east": {
+    "blender_eye": [
+      54.1708984375,
+      41.2373046875,
+      5.5
+    ],
+    "blender_target": [
+      66.0576171875,
+      30.1083984375,
+      5.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-east_climb": {
+    "blender_eye": [
+      110,
+      9,
+      5.5
+    ],
+    "blender_target": [
+      110,
+      -15,
+      15.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-east_descent": {
+    "blender_eye": [
+      106.66666666666667,
+      -88.77777777777777,
+      24.66097086361406
+    ],
+    "blender_target": [
+      94.29166666666667,
+      -103.2986111111111,
+      20.116250688988742
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-north_crosslink": {
+    "blender_eye": [
+      -40.6953125,
+      47.78125,
+      5.5
+    ],
+    "blender_target": [
+      -20.05859375,
+      46.1162109375,
+      5.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-south_crosslink": {
+    "blender_eye": [
+      -23.134765625,
+      -99.609375,
+      5.5
+    ],
+    "blender_target": [
+      -4.080078125,
+      -98.671875,
+      5.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-portal_north": {
+    "blender_eye": [
+      4.0,
+      -96.0,
+      5.5
+    ],
+    "blender_target": [
+      2.91015625,
+      -103.353515625,
+      5.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-ravine_ramp": {
+    "blender_eye": [
+      -22,
+      -18,
+      -26.5
+    ],
+    "blender_target": [
+      -22,
+      -88,
+      5.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-ravine_floor_loop": {
+    "blender_eye": [
+      -22,
+      4,
+      -26.5
+    ],
+    "blender_target": [
+      61,
+      4,
+      -26.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-jump_access": {
+    "blender_eye": [
+      128.8,
+      -60,
+      25.5
+    ],
+    "blender_target": [
+      128.8,
+      0,
+      25.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "route-jump_recovery": {
+    "blender_eye": [
+      148,
+      -75,
+      25.5
+    ],
+    "blender_target": [
+      148,
+      -84,
+      25.5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  }
+}

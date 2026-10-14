@@ -1,0 +1,59 @@
+{
+  "idle": {
+    "minimumBootY": -2.076849341392517e-07
+  },
+  "patrol": {
+    "minimumBootY": -1.862645149230957e-07
+  },
+  "chase": {
+    "minimumBootY": -2.427259460091591e-07
+  },
+  "return": {
+    "minimumBootY": -2.375454641878605e-07
+  },
+  "warn": {
+    "minimumBootY": -1.601874828338623e-07
+  },
+  "throw": {
+    "minimumBootY": -2.1047890186309814e-07
+  },
+  "stun": {
+    "minimumBootY": -1.993030309677124e-07
+  },
+  "celebrate": {
+    "minimumBootY": -1.7881393432617188e-07
+  },
+  "lob": {
+    "0.55": {
+      "logBottom": 10.059224128723145,
+      "headHatTop": 9.797532081604004,
+      "overheadMargin": 0.2616920471191406,
+      "socket": [
+        0.0,
+        13.059224128723145,
+        0.5498124957084656
+      ]
+    },
+    "0.62": {
+      "logBottom": 10.009224891662598,
+      "headHatTop": 9.783906936645508,
+      "overheadMargin": 0.22531795501708984,
+      "socket": [
+        -1.1920928955078125e-07,
+        13.009224891662598,
+        1.2498120069503784
+      ]
+    },
+    "minimumBootY": -3.1944364309310913e-07,
+    "heldLogHeadHatTriangleContacts": []
+  },
+  "fan": {
+    "minimumBootY": -2.1047890186309814e-07
+  },
+  "slam": {
+    "minimumBootY": -2.2351741790771484e-07
+  },
+  "dash": {
+    "minimumBootY": -1.7881393432617188e-07
+  }
+}

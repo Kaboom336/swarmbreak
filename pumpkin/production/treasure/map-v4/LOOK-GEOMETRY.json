@@ -1,0 +1,42 @@
+{
+  "state": "PASS",
+  "collision_geometry_byte_data_equal": true,
+  "routes_equal": true,
+  "baseline_parts": 26612,
+  "parts": 34552,
+  "visible_turf_triangular_prisms": 1764,
+  "rock_tones": [
+    [
+      108,
+      104,
+      128
+    ],
+    [
+      124,
+      119,
+      109
+    ],
+    [
+      88,
+      103,
+      91
+    ],
+    [
+      97,
+      107,
+      119
+    ],
+    [
+      143,
+      135,
+      121
+    ]
+  ],
+  "rock_materials": [
+    "Slate",
+    "Rock",
+    "Basalt"
+  ],
+  "scene_sha256": "7b8fffdcb0ab7b90f20ba1f3024a63d2297726eb4f43c65cf3e86a0dacd2d286",
+  "runtime": "UNKNOWN"
+}

@@ -1,0 +1,8 @@
+{
+  "state": "PASS",
+  "new_root_samples": 110,
+  "floating_root_errors": 0,
+  "analytic_trunk_stem_errors": 0,
+  "skylight_intrusions": 0,
+  "scope": "New hill tree/stem/bush/boulder roots against exact native turf Wedge rays, 0.75-stud support/inset tolerance; existing shaft footprint; surface prop and full collision audits remain separate"
+}

@@ -1,0 +1,118 @@
+{
+  "assemblies": 96,
+  "parts_in_prop_audit": 393,
+  "unclassified_prop_parts": 0,
+  "overlap_pairs": 0,
+  "floating": 20,
+  "sunk": 0,
+  "unsupported": 0,
+  "path_intrusions": 6,
+  "flowers_off_path_edge": 0,
+  "construction_clipping_parts": 0,
+  "disconnected_assemblies": 0,
+  "fence_gaps_or_stubs": 0,
+  "main_width_errors": 2,
+  "jump_pad_errors": 0,
+  "overlap_details": [],
+  "floating_details": [
+    {
+      "id": "legacy-25082",
+      "max_gap": 1.529
+    },
+    {
+      "id": "legacy-25084",
+      "max_gap": 2.131
+    },
+    {
+      "id": "legacy-25086",
+      "max_gap": 2.731
+    },
+    {
+      "id": "legacy-25088",
+      "max_gap": 33.8
+    },
+    {
+      "id": "legacy-25090",
+      "max_gap": 34.4
+    },
+    {
+      "id": "legacy-25092",
+      "max_gap": 35.0
+    },
+    {
+      "id": "legacy-25094",
+      "max_gap": 1.8
+    },
+    {
+      "id": "legacy-25096",
+      "max_gap": 2.4
+    },
+    {
+      "id": "legacy-25098",
+      "max_gap": 3.0
+    },
+    {
+      "id": "legacy-25100",
+      "max_gap": 1.8
+    },
+    {
+      "id": "legacy-25102",
+      "max_gap": 2.4
+    },
+    {
+      "id": "legacy-25104",
+      "max_gap": 3.0
+    },
+    {
+      "id": "legacy-25106",
+      "max_gap": 1.518
+    },
+    {
+      "id": "legacy-25108",
+      "max_gap": 2.118
+    },
+    {
+      "id": "legacy-25110",
+      "max_gap": 2.718
+    },
+    {
+      "id": "legacy-25112",
+      "max_gap": 1.8
+    },
+    {
+      "id": "legacy-25114",
+      "max_gap": 2.4
+    },
+    {
+      "id": "legacy-25116",
+      "max_gap": 3.0
+    },
+    {
+      "id": "legacy-25129",
+      "max_gap": 22.825
+    },
+    {
+      "id": "legacy-25131",
+      "max_gap": 24.825
+    }
+  ],
+  "sunk_details": [],
+  "unsupported_details": [],
+  "path_details": [
+    "legacy-25082",
+    "legacy-25084",
+    "legacy-25086",
+    "legacy-25106",
+    "legacy-25108",
+    "legacy-25110"
+  ],
+  "flower_details": [],
+  "construction_details": [],
+  "disconnected_details": [],
+  "fence_details": [],
+  "method": "15-axis OBB cross-assembly overlaps; whole-prop construction OBB checks (0.20-stud contact tolerance); 5 support rays/root with explicit support-category whitelist; assembly connectivity and fence endpoint/incidence checks; projected lane footprints within20-stud headroom; flowers0.3..6 studs outside lanes OR explicit mixed tree+bush+boulder grove membership within22 studs of a member; legacy widths>=18 including tunnels and three actual collidable12x12 pads with13x13 support rays and0.75-stud nominal surface tolerance matching lane audit. Retained access/pad surface lips reach0.441 stud: Studio must confirm jump feel. Wedges use conservative bounding envelopes, not exact triangle solids. Internal connected art joins are deliberate, not independent props. Terrain/cliff vegetation, character/objective/portal, roots and intentionally floating geography/debris are construction. Studio physics/throw arcs UNKNOWN.",
+  "preserved_tunnel_lighting_parts": 20,
+  "tunnel_mushroom_attachment_errors": 0,
+  "scope": "Raw legacy surface-only rules: attached cave-light meshes classified as free ground props; 18-stud width threshold applied to original14-stud tunnels. Kept for honest before/after comparison, not a claim of correct cave fixture classification.",
+  "scene_sha256": "cfa3f5d89fac9be50b975b8f3953b8c3c719e06c0dc6d0021167a351f5c02a1e"
+}

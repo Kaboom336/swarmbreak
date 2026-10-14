@@ -1,0 +1,130 @@
+{
+  "state": "STATIC_PASS",
+  "scene_sha256": "ebc9fbecafd645aed8589cb52711a0bb92586b0c04ab8a633288019615ae9c87",
+  "place_sha256": "e37aefc530f434bf4c7ce6c1271c15ab948a647ca6e758b0865bcecf730ef532",
+  "geometry_parts": 26612,
+  "Lune_assertions": 47,
+  "clearance_violations": 0,
+  "dead_ends": 0,
+  "unreachable_nodes": 0,
+  "guardian_sha256": "9bd153ce675b50ca4f1ab796c156872dfe56c97b59955b82d5faed014d5d0ea2",
+  "guardian_before_sha256": "9bd153ce675b50ca4f1ab796c156872dfe56c97b59955b82d5faed014d5d0ea2",
+  "guardian_before_source": "ROUND5-PROTECTED-HASHES.json recorded before tunnel changes",
+  "protected_guardian_unchanged": true,
+  "files": {
+    "prototype\\meadow-v4.rbxl": "e37aefc530f434bf4c7ce6c1271c15ab948a647ca6e758b0865bcecf730ef532",
+    "prototype\\meadow-v4\\scene.json": "ebc9fbecafd645aed8589cb52711a0bb92586b0c04ab8a633288019615ae9c87",
+    "prototype\\meadow-v4\\TunnelPolicy.luau": "7e4e5a56b883c1d8050ebeba30df577499bf3d29397fc93454ebf4f93861849a",
+    "prototype\\meadow-v4\\TunnelController.luau": "4313e20c296e002088e1360119e6d098d51ba4d8af379daf0bb212940bbf1881",
+    "prototype\\meadow-v4\\Links.server.luau": "09fc9633188f460575685ecba1c2ee59c0945e4c1ee9da7fd453ed8b814c7d73",
+    "prototype\\meadow-v4.project.json": "37be1366d76d80b20f3506c7d81c66d5f85696ec21c46a7afe8b57fddb255be4",
+    "prototype\\meadow-v4\\tunnel-build.py": "28e94a124d7a25f59db87807e1540787113a815dd33263c5da5afbce4d0c260c",
+    "prototype\\meadow-v4\\tunnel-render.py": "c47d3def97794cb2e94d9b2d158939b12c3359c3b7da7f8c015ab2822e57fb94",
+    "prototype\\meadow-v4\\tunnel-test.luau": "caca9ad7c5aac94b79eaf922d93a245b57e70038e6dd9587b3d803a3436bbbea",
+    "prototype\\meadow-v4\\tunnel-overlay.ps1": "9f83701a13e12fd3de7813e833c682767d95227f2d17eb86600f04995c614ebb",
+    "treasure\\map-v4\\TUNNEL.md": "3643f08b38ae46c2dbf96fddf9cf5c3df4036c2b0a6598cc33771be7a6885e94",
+    "prototype\\meadow-v4\\tunnel-contacts.py": "1f65d05bc5ea354580f68faae91f60f53ba5e1907047a4bc8e19d5e4f92295a8",
+    "treasure\\map-v4\\TUNNEL-CONTACTS.json": "162ce5cf88a3bf126f0af93d61bf779ff268899359bb133cc82ab8f2299dd2e9",
+    "prototype\\meadow-v4\\tunnel_look.py": "59166a8a3d20985823c8b24f84a89b3a831d44593cd80325a6a30fe963c27225",
+    "prototype\\meadow-v4\\tunnel-look-sbs.ps1": "52299576da7f03762c0a5c063bf79f04af57c571cb26365ec08b47daf008e849",
+    "treasure\\map-v4\\build-tunnel-sbs.jpg": "6762e1d89db913437b3850a7420dbca7a34f901bd4c308287e8f677b5b999933",
+    "treasure\\map-v4\\TUNNEL-LOOK-CRITIC.json": "1c1111684c13b54dbcc45564fccd111f2cb2c0483f006ebcefb053ba183d2a6c",
+    "prototype\\meadow-v4\\geometry.py": "57ba7105b96bc00011b44c8ce9aee342f64c00e9059edf7c80ddd0d09a3ebdb1",
+    "prototype\\meadow-v4\\tunnel-round2-check.py": "fb09d4ea52226c3d5ab8316775e7cb08e9c399ed67d0047b17adc7f461e72d0a",
+    "treasure\\map-v4\\TUNNEL-ROUND2-CHECK.json": "d8ac016c8c78c87c284316f494067c9d01b47ee242a2d775a15f7491b54a7b17",
+    "treasure\\map-v4\\ROUND5-PLACEMENT-TUNNEL-ROUND2.json": "babb134104215ad8bd28a813faa1b15576f182a58bb9d6bd5b0dbe54225b8c1f",
+    "treasure\\map-v4\\TUNNEL-HILL-CRITIC-1.md": "c00d4f45ff07e56d59644fd5601707c0222c4cfde7511660a94a13bab596fbc3",
+    "treasure\\map-v4\\TUNNEL-HILL-CRITIC-2.md": "3fd739350c7313d840ea28753f0f6a8ab42a4294fbd69ec3640de989c9dd8676",
+    "treasure\\map-v4\\TUNNEL-HILL.md": "15158c68d76fda79ddc65fd35921e7349d91437a27cfafed78221e8a83b5c0fe",
+    "treasure\\map-v4\\TUNNEL-CRITIC.md": "7a38c215bc113b24c75240dcf3c318e67658491a13bbd7d3c9acd952bed71046",
+    "treasure\\map-v4\\build-rtunnel-eye-tunnel-entrance.png": "48aff523ef6c866e0bc044045af8b79161b8c64ce8d3e957a19283e9a4cfa7c1",
+    "treasure\\map-v4\\build-rtunnel-eye-tunnel-inside.png": "bff6b7b0cf732d5226f8dbdc2e5a31ef40e37d0c95b4af78310e2032869970b1",
+    "treasure\\map-v4\\build-rtunnel-eye-tunnel-near-exit.png": "3a366059cf936c103f8931088c8d8f73abf0bca23179c1310c7341dd4b3a9fda",
+    "treasure\\map-v4\\build-rtunnel-eye-tunnel-south-exit.png": "f15932889957be86b6e0dd0df0710497fab830e419168d4aa42033fbda2b70a4",
+    "treasure\\map-v4\\build-rtunnel-eye-tunnel-from-summit.png": "1ad20c46cea1ad723eb5953615272e7f149a464bbf430fe16683f0230e73d971",
+    "treasure\\map-v4\\build-top.jpg": "0634daa1f2f9ad0545f0e6df8d06fd694275f874dc51994281e3b216ff12ee30",
+    "treasure\\map-v4\\build-rtunnel-tunnel-overview.png": "3c8e5597c0c09c93a05b25ab03128ad3bf5bc6f1a8a0d70cf22912aea9de82b7"
+  },
+  "images": "Offline actual shipped manifest renders, not Studio screenshots",
+  "Studio_runtime": "UNKNOWN",
+  "measured_hit_escape_rates": "UNKNOWN",
+  "timing_ESTIMATED": {
+    "west_reference_seconds_ESTIMATED": 7.441608193065322,
+    "near_tunnel_seconds_ESTIMATED": 8.0625,
+    "near_time_saving_seconds_ESTIMATED": -0.6208918069346776
+  },
+  "runtime_state": "RUNTIME_PENDING",
+  "visual_evidence": "Actual offline shipped manifest; supplemental critic disposition tracked separately",
+  "exit_mouth_clusters": 2,
+  "extra_midbranch_surface_contacts": 0,
+  "supplemental_look": {
+    "state": "FAIL",
+    "score": 6.5,
+    "out_of": 10,
+    "rounds": 2,
+    "target": 7,
+    "owner_revision": "Tunnel look round 2: through a grassy hill",
+    "round_1": {
+      "state": "FAIL",
+      "score": 6,
+      "source": "/root/blind_hill_critic_1",
+      "report": "TUNNEL-HILL-CRITIC-1.md"
+    },
+    "round_2": {
+      "state": "FAIL",
+      "score": 6.5,
+      "source": "/root/blind_hill_critic_2",
+      "report": "TUNNEL-HILL-CRITIC-2.md"
+    },
+    "scene_sha256": "ebc9fbecafd645aed8589cb52711a0bb92586b0c04ab8a633288019615ae9c87",
+    "source": "Two independent blind agents; six images only; no source or prior review context",
+    "scope": "Offline shipped-manifest player-eye renders and matched 3/4 overview; Studio runtime UNKNOWN",
+    "finding": "Hill, vegetation, enclosure, skylights and pointed crystals read; terrain shell and rock doorway still look assembled",
+    "remaining": [
+      "Blend projecting grass-panel edges and exposed flat side walls into continuous terrain shoulders",
+      "Break the remaining straight lintel and repeated vertical rock stacks",
+      "Vary the excavated wall/ceiling profile within the unchanged reserved lane",
+      "Strengthen warm light beyond the actual exit rather than relying on amber accents"
+    ],
+    "runtime": "UNKNOWN",
+    "static_checks": "PASS; zero clearance, prop audit, graph and extra-contact errors",
+    "cap_reached": true,
+    "target_achieved": false,
+    "lesson": "When grass exposes thin projecting edges, blend and thicken the shoulder, because the silhouette otherwise reads as a roof"
+  },
+  "hill_revision": {
+    "state": "PASS",
+    "scene_sha256": "ebc9fbecafd645aed8589cb52711a0bb92586b0c04ab8a633288019615ae9c87",
+    "routes_byte_data_equal": true,
+    "protected_sources_and_guardian_equal": true,
+    "ceiling_centerline_samples": 132,
+    "unplanned_ceiling_gaps": 0,
+    "open_skylights": [
+      [
+        -76,
+        -18
+      ],
+      [
+        -76,
+        -46
+      ]
+    ],
+    "scope": "Native collidable roof/hill OBB rays; visible decoration and continuous Studio physics require separate review.",
+    "native_tunnel_lights_checked": 11
+  },
+  "surface_prop_audit": {
+    "unclassified_prop_parts": 0,
+    "overlap_pairs": 0,
+    "floating": 0,
+    "sunk": 0,
+    "unsupported": 0,
+    "path_intrusions": 0,
+    "flowers_off_path_edge": 0,
+    "construction_clipping_parts": 0,
+    "disconnected_assemblies": 0,
+    "fence_gaps_or_stubs": 0,
+    "main_width_errors": 0,
+    "jump_pad_errors": 0,
+    "tunnel_mushroom_attachment_errors": 0
+  }
+}

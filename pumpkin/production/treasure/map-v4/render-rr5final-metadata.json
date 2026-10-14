@@ -1,0 +1,48 @@
+{
+  "manifest_sha256": "22e4cfa972cdca6cd61c4def00bbc6a89414ad9c5231616e973c595731c43c8d",
+  "part_count": 24496,
+  "source": "Exact native parts manifest including WedgePart supports; sRGB converted to linear. Offline Cycles proxy, not Studio. Generated concept camera has no metadata: reconstruction is approximate.",
+  "concept_camera": {
+    "eye": [
+      0,
+      -460,
+      220
+    ],
+    "target": [
+      0,
+      10,
+      -30
+    ],
+    "projection": "perspective",
+    "lens_mm": 46,
+    "sensor_width_mm": 36
+  },
+  "side_camera": {
+    "eye": [
+      -390,
+      -245,
+      72
+    ],
+    "target": [
+      0,
+      35,
+      -14
+    ],
+    "projection": "orthographic",
+    "scale": 490
+  },
+  "top_camera": {
+    "eye": [
+      0,
+      0,
+      600
+    ],
+    "target": [
+      0,
+      0,
+      0
+    ],
+    "projection": "orthographic",
+    "scale": 555
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "C": {
+    "clip": "fan",
+    "recipe": "hand-keyed"
+  },
+  "D": {
+    "clip": "fan",
+    "recipe": "library-derived"
+  }
+}

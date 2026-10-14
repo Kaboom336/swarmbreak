@@ -21,7 +21,11 @@ local function validator(world, log)
 		params.FilterType, params.FilterDescendantsInstances = Enum.RaycastFilterType.Include, parts
 		params.RespectCanCollide = true
 		local function down(x, z)
-			return workspace:Raycast(Vector3.new(x, position.Y + 42, z), Vector3.new(0, -70, 0), params)
+			return workspace:Raycast(
+				Vector3.new(x, position.Y + (Config.MeadowV4 and 9 or 42), z),
+				Vector3.new(0, -70, 0),
+				params
+			)
 		end
 		local function walkable(hit)
 			return hit
@@ -524,6 +528,9 @@ local function verifyExpiry(player, states, pens, world, api, log, item, count, 
 	return replacement
 end
 local function expiryExitSteps()
+	if Config.MeadowV4 then
+		return Layout.loopCarrySteps()
+	end
 	return {
 		{ x = 0, y = 8, z = 32 },
 		{ x = -4, y = 8, z = 18 },
@@ -591,7 +598,13 @@ local function expiryTest(player, states, pens, world, api, log, walk, navigate)
 	local item = assert(s.item, "expiry missing cargo")
 	-- Put the empty-return regression on the terrace before waiting. Hits may
 	-- drop cargo; its original deadline and the actor's location remain legal.
-	walk(checked(at(arena, -4, 8, 18), "expiry wait terrace"), "expiry wait terrace")
+	walk(
+		checked(
+			at(arena, Config.MeadowV4 and 0 or -4, Config.MeadowV4 and 48 or 8, Config.MeadowV4 and 108 or 18),
+			"expiry wait terrace"
+		),
+		"expiry wait terrace"
+	)
 	verifyExpiry(player, states, pens, world, api, log, item, count, completed)
 	assert(returnPortal(player, states, api, log, navigate))
 end
@@ -604,12 +617,13 @@ local function place(player, states, pens, api, walk, log, item, initialCount)
 	-- Secure return is already at this plot's gate. Pick a legal free point,
 	-- rather than treating the logical active count as a pad index.
 	local cx, cz = Placement.center(s.slot)
+	local floorY = Placement.height(s.slot) + 0.2
 	local position
 	for dz = -14, 14, 7 do
 		for dx = -22, 22, 7 do
 			local x, z = cx + dx, cz + dz
 			if Placement.validate(Config, s.slot, x, z, 15, pen.occupied) then
-				position = Vector3.new(x, 0.2, z)
+				position = Vector3.new(x, floorY, z)
 				break
 			end
 		end
@@ -618,9 +632,16 @@ local function place(player, states, pens, api, walk, log, item, initialCount)
 		end
 	end
 	assert(position, "no free plot point")
-	walk(Vector3.new(pen.marker.Position.X - side * 5, 3, cz), "own plot gate")
-	walk(Vector3.new(position.X, 3.2, position.Z), "free plot point")
-	assert(not api.placeItem(player, s.slot, Vector3.new(cx + 40, 0.2, cz), 15), "out-of-bounds accepted")
+	walk(Vector3.new(side * 1.4, 3, cz), "plot stairs approach")
+	for step = 1, math.ceil(Placement.height(s.slot) / 0.5) do
+		walk(
+			Vector3.new(side * (1.4 + step * 0.9), 3 + math.min(step * 0.5, Placement.height(s.slot)), cz),
+			"plot stair"
+		)
+	end
+	walk(Vector3.new(side * 22, floorY + 3, cz), "own plot gate")
+	walk(Vector3.new(position.X, floorY + 3, position.Z), "free plot point")
+	assert(not api.placeItem(player, s.slot, Vector3.new(cx + 40, floorY, cz), 15), "out-of-bounds accepted")
 	-- Reserve a fixture footprint while secured to test overlap before mutation.
 	table.insert(pen.occupied, { x = position.X, z = position.Z, extent = 2 })
 	assert(not api.placeItem(player, s.slot, position, 15), "overlap accepted")
@@ -875,7 +896,7 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 		local p = routes.Tester[i]
 		walk(at(arena, p.x, p.y, p.z), "PvP court approach " .. i)
 	end
-	local dummy = api.dummy(at(arena, 0, 8, 32))
+	local dummy = api.dummy(at(arena, Config.Nest.x, Config.Nest.y, Config.Nest.z))
 	setDummy(dummy)
 	hold(api, dummy, "Steal")
 	local ds = states[dummy]
@@ -893,19 +914,22 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 	log("guardian isolated at camp for PvP court; real shield/mercy/holds unchanged")
 	-- Keep the dummy moving to avoid the production AFK drop while shield expires.
 	while os.clock() < ds.shield + 0.05 do
-		dummyWalk(at(arena, -64, 0, -54), "dummy shield pacing")
-		dummyWalk(at(arena, -64, 0, -56), "dummy shield pacing")
+		local pacing = routes.Pacing
+		dummyWalk(at(arena, pacing[2].x, pacing[2].y, pacing[2].z), "dummy shield pacing")
+		dummyWalk(at(arena, pacing[1].x, pacing[1].y, pacing[1].z), "dummy shield pacing")
 		recover(api, dummy, states, dummyNavigate, item, log, checked)
 	end
 	local handoff = false
 	for attempt = 1, Config.TestRecoverRetries do
 		recover(api, dummy, states, dummyNavigate, item, log, checked)
-		dummyWalk(at(arena, -64, 0, -56), "dummy handoff court")
+		local court = routes.Pacing[1]
+		dummyWalk(at(arena, court.x, court.y, court.z), "dummy handoff court")
 		local vulnerableDeadline = os.clock() + 8
 		while os.clock() < ds.mercy or os.clock() < s.cooldown or not ds.item do
 			assert(os.clock() < vulnerableDeadline, "no legal handoff window >8s")
-			dummyWalk(at(arena, -72, 0, -48), "dummy dodges during impact mercy")
-			dummyWalk(at(arena, -64, 0, -56), "dummy returns to handoff court")
+			local mercy = routes.Mercy[2]
+			dummyWalk(at(arena, mercy.x, mercy.y, mercy.z), "dummy dodges during impact mercy")
+			dummyWalk(at(arena, court.x, court.y, court.z), "dummy returns to handoff court")
 			recover(api, dummy, states, dummyNavigate, item, log, checked)
 		end
 		-- Fixed court goals plus normal walk tolerance do not establish Bump range.
@@ -934,7 +958,8 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 	assert(item.state == "Dropped" and not ds.item and not s.item, "Bump directly granted/lost/duplicated")
 	assert(item.firstPickup == timestamp and item.escapeDeadline == escapeDeadline, "handoff rerolled timestamp")
 	assert(not api.holdAction(player, "Grab", "begin"), "settle allowed precharge")
-	dummyWalk(at(arena, -68, 0, -52), "former carrier leaves contest")
+	local leave = routes.Leave[2]
+	dummyWalk(at(arena, leave.x, leave.y, leave.z), "former carrier leaves contest")
 	-- A fresh production Grab wins; legal interruptions may retry the same item.
 	recover(api, player, states, navigate, item, log, checked)
 	assert(not api.holdAction(player, "Grab", "finish"), "duplicate Grab accepted")

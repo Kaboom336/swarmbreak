@@ -1,0 +1,20 @@
+{
+  "state": "PASS",
+  "scene_sha256": "ebc9fbecafd645aed8589cb52711a0bb92586b0c04ab8a633288019615ae9c87",
+  "routes_byte_data_equal": true,
+  "protected_sources_and_guardian_equal": true,
+  "ceiling_centerline_samples": 132,
+  "unplanned_ceiling_gaps": 0,
+  "open_skylights": [
+    [
+      -76,
+      -18
+    ],
+    [
+      -76,
+      -46
+    ]
+  ],
+  "scope": "Native collidable roof/hill OBB rays; visible decoration and continuous Studio physics require separate review.",
+  "native_tunnel_lights_checked": 11
+}

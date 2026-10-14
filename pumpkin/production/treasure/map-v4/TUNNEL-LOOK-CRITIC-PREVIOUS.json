@@ -1,0 +1,17 @@
+{
+  "state": "FAIL",
+  "score": 5,
+  "out_of": 10,
+  "rounds": 2,
+  "round_1": {"state": "FAIL", "score": 3, "scope": "First revised interior only"},
+  "source": "Independent blind agent /root/blind_look_2; five final images only; no source or prior review context",
+  "scope": "Offline shipped-manifest player-eye renders; Studio runtime UNKNOWN",
+  "finding": "Interior suggests a cave; exterior/summit reads as a freestanding rock arcade or shed",
+  "remaining": [
+    "Embed the rectangular roof and sides in irregular terrain to overcome the building silhouette",
+    "Break vertical slabs and rectangular teeth; improve visible rock tones, moss and roots",
+    "Refine cyan and amber cuboid props; make skylight shafts and warm ambience convincing"
+  ],
+  "runtime": "UNKNOWN",
+  "lesson": "When a cave is visible from above, embed roof and sides in terrain, because its exterior silhouette overrides interior dressing"
+}

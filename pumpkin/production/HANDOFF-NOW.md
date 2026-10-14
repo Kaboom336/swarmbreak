@@ -21,3 +21,20 @@
 ## 2026-10-13 11:50 UTC
 - Zion: KEEP golden acorn (models/golden-acorn). Meadow Keeper rejected ("not nearly as good as the reference"); Codex redo running detached (task C:\dev\codex-labrt1b-keeper-task.md -> art1b.last.txt, compare.jpg in models/meadow-keeper/blender). Next session: check it, send to Zion one question "Keeper: ok / change".
 - 12:36 UTC Zion: Meadow map layout/shape not right or fun for the gameplay. Codex map arena running detached (task C:\dev\codex-lab\map-v3-task.md -> mapv3.last.txt, output treasure/map-v3/): 3 layout concepts + top-downs + judge pick. Next session: show Zion the 3 options (one question: pick), then rebuild the Meadow greybox to the pick with tests passing.
+
+## 2026-10-13 ~15:30 UTC (new thread)
+- Zion APPROVED Keeper redo (models/meadow-keeper). Asked for good animations: 8 done in models/meadow-keeper/anim (2 rounds; throw/chase exaggerated), wired into guardian-greybox.rbxl (backup guardian-greybox.pre-keeper.rbxl). Studio UNTESTED: checklist models/meadow-keeper/WIRING.md. Animations sent to Zion: waiting OK/change.
+- Zion picked layouts "C and B": merged design treasure/map-v4 (352x352, summit +24, main walk ~30 s ESTIMATED). NOT yet shown to Zion (one question at a time; show after animation answer), then greybox it.
+- Rough greyboxes of A/B/C in prototype/meadow-A/B/C.rbxl (not shown; programmer art; escapes only 7-16 s, too short).
+- Home island art pass 3 rounds (backup guardian-greybox.pre-home-art.rbxl), offline critic 6/10, evidence slice-v2/evidence/sbs-home-art.jpg; Studio UNTESTED (slice-v2/HOME-ART.md). Pets still a bit small.
+- Codex CANNOT drive Studio (approval not granted). All 3 Studio tests must be rerun after Keeper + home art changes (Claude after reset, or ask Zion to allow Codex Studio access).
+- Codex binary now C:/Users/zerha/AppData/Local/OpenAI/Codex/bin/8aaf1547b825b104/codex.exe. Codex used ~3%.
+
+## 2026-10-14 ~01:00 UTC
+- Map v4 (+ tunnel through hill, underside, 57 clusters) MERGED into guardian-greybox.rbxl (backup guardian-greybox.pre-v4.rbxl); lighting presets (LightingPreset attribute, treasure/map-v4/LIGHTING.md) + rock variety (backup pre-look). Checklist: prototype/MERGE-V4-STUDIO-CHECKS.md.
+- WATCH: treasure/map-v4/build-look.jpg (merged file render) looks SPARSER than the round-6 lush render: check in Studio that the 57 clusters survived the merge.
+- Keeper: fan mocap retry failed the gate (kept hand-keyed). Lob/slam/chase from mocap rounds. Mocap pack: C:/dev/codex-lab/vendor/quaternius-ual (CC0).
+- Core loop (acorn open -> pets -> coins -> DataStore save -> index) queued on Codex: chain-core.sh -> core.last.txt, prototype/CORE-LOOP.md.
+- Hermes tasks queued: iris-coordination/dispatch/hermes-roblox-01-top-game-refs.md (REFS.md), -02-pets-lore.md (CONTENT.md).
+- Full roadmap: treasure/ROADMAP-TO-LAUNCH.md. Zion: tunnel route approved (balanced, not hide spot); cutscenes + cinematic run later.
+- Codex used ~18%.

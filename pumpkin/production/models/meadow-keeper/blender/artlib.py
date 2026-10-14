@@ -68,9 +68,10 @@ def export(name,obs):
     bpy.context.view_layer.objects.active=obs[0]
     bpy.ops.export_scene.fbx(filepath=str(ROOT/(name+'.fbx')),use_selection=True,object_types={'MESH'},axis_forward='-Z',axis_up='Y',global_scale=1,apply_unit_scale=True,mesh_smooth_type='FACE',bake_anim=False,add_leaf_bones=False)
     parts=[]
-    for mat,h in COLORS.items():
+    for o in obs:
+      for mat,h in COLORS.items():
         v=[]; t=[]
-        for o in obs:
+        if M[mat] in list(o.data.materials):
             o.data.calc_loop_triangles(); indices={}
             for tri in o.data.loop_triangles:
                 if o.data.materials[tri.material_index]!=M[mat]: continue
@@ -81,7 +82,11 @@ def export(name,obs):
                         v.append([round(p.x,7),round(p.z,7),round(-p.y,7)])
                     face.append(indices[i])
                 t.append(face)
-        if v: parts.append(dict(name=mat,color=[int(h[i:i+2],16) for i in (0,2,4)],vertices=v,triangles=t))
+        if v:
+            p=o.location
+            parts.append(dict(name=o.name+'.'+mat,rig_part=o.name,material=mat,
+                pivot=[round(p.x,7),round(p.z,7),round(-p.y,7)],
+                color=[int(h[i:i+2],16) for i in (0,2,4)],vertices=v,triangles=t))
     (ROOT/(name+'_parts.json')).write_text(json.dumps(parts,separators=(',',':')))
     return sum(len(p['triangles']) for p in parts)
 def stats(obs):

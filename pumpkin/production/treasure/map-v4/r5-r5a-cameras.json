@@ -1,0 +1,128 @@
+{
+  "portal-west": {
+    "blender_eye": [
+      0,
+      -116,
+      5.5
+    ],
+    "blender_target": [
+      -82,
+      -70,
+      5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "portal-bridge": {
+    "blender_eye": [
+      0,
+      -116,
+      5.5
+    ],
+    "blender_target": [
+      0,
+      95,
+      36
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "portal-east": {
+    "blender_eye": [
+      0,
+      -116,
+      5.5
+    ],
+    "blender_target": [
+      148,
+      -53,
+      24
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "west": {
+    "blender_eye": [
+      -100,
+      -24,
+      5.5
+    ],
+    "blender_target": [
+      -76,
+      30,
+      5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "bridge": {
+    "blender_eye": [
+      0,
+      -48,
+      5.5
+    ],
+    "blender_target": [
+      0,
+      65,
+      10
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "east": {
+    "blender_eye": [
+      110,
+      -60,
+      25.5
+    ],
+    "blender_target": [
+      110,
+      18,
+      5
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "summit": {
+    "blender_eye": [
+      0,
+      108,
+      53.5
+    ],
+    "blender_target": [
+      0,
+      -116,
+      11
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "shelf": {
+    "blender_eye": [
+      104,
+      128,
+      41.5
+    ],
+    "blender_target": [
+      74,
+      128,
+      29
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  },
+  "recovery": {
+    "blender_eye": [
+      -22,
+      0,
+      -26.5
+    ],
+    "blender_target": [
+      0,
+      -80,
+      -3
+    ],
+    "eye_height_studs": 5.5,
+    "lens_mm": 24
+  }
+}

@@ -1,5 +1,8 @@
 -- Shared footprint contract. Server calls this before consuming secured cargo.
 local Placement = {}
+function Placement.height(slot)
+	return ((slot - 1) % 4) * 3.5
+end
 function Placement.center(slot)
 	return slot <= 4 and -52 or 52, 96 - (slot - 1) % 4 * 64
 end

@@ -1,0 +1,50 @@
+{
+  "round": "redo3",
+  "manifest_sha256": "997546c8df103526f00f5722db4dcc92ea8d7122e75d7a987e86152825ea8dfc",
+  "place_sha256": "8674c9e1df682c6da148d1516c7a29f9db84ad76a4bca4136546a361896b9956",
+  "part_count": 30579,
+  "whole_lane_audit": "PASS",
+  "sample_count": 37310,
+  "flags": 0,
+  "ramp_max_degrees": 24.775140568831922,
+  "min_lane_width": 18,
+  "hat_source_sha256": "c366e2e8384bd668a5ba8a26a762482f33cfd6f51e5bc7c0bd996d8d9def05b3",
+  "rest_hat_xyz_bounds": [
+    [
+      -3.7734303,
+      3.7734303
+    ],
+    [
+      8.9381256,
+      11.0
+    ],
+    [
+      -2.2520473,
+      2.2815742
+    ]
+  ],
+  "conservative_horizontal_hat_diagonal": 8.80390985989149,
+  "hat_diagonal_plus_4_margin": 12.80390985989149,
+  "vertical_reservation": 20,
+  "protected_files_checked": 24,
+  "protected_files_changed_during_task": [
+    "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Arena.luau",
+    "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\check.luau",
+    "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\guardian-greybox.rbxl",
+    "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\keeper-check.luau",
+    "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\keeper-clearance.luau",
+    "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Keeper.client.luau",
+    "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\KeeperAttacks.luau",
+    "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\KeeperPose.luau",
+    "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\kit-check.luau"
+  ],
+  "protected_scope": "No tool mutation in this task targeted these files. Concurrent workspace edits inferred from hash differences; author UNKNOWN. Changes preserved, not restored.",
+  "proof": "Offline native-part/WedgePart manifest proxy; approximate concept camera. No Studio capture.",
+  "UNKNOWN": [
+    "animated Keeper swept clearance",
+    "Studio traversal and jump recovery",
+    "runtime rendering and performance",
+    "actual escape timings"
+  ],
+  "no_commit": true
+}

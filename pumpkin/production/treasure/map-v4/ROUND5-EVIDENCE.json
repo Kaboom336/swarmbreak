@@ -1,0 +1,307 @@
+{
+  "state": "STATIC PASS; visual verdict in ROUND5-CRITIC.md",
+  "scene_sha256": "22e4cfa972cdca6cd61c4def00bbc6a89414ad9c5231616e973c595731c43c8d",
+  "place_sha256": "35cb688c0d75411e1be6d513cddea4f0882bfdb59e4faf521ff144ec68d149ff",
+  "artifact": {
+    "Studio_runtime": "UNKNOWN",
+    "geometry_tolerance_studs": 0.0001,
+    "matched_native_parts": 24496,
+    "non_generated_source_count": 5,
+    "script_sources_byte_equal": true,
+    "state": "PASS"
+  },
+  "parts": 24496,
+  "before": {
+    "assemblies": 3040,
+    "parts_in_prop_audit": 3955,
+    "unclassified_prop_parts": 0,
+    "overlap_pairs": 3116,
+    "floating": 361,
+    "sunk": 226,
+    "unsupported": 111,
+    "path_intrusions": 27,
+    "flowers_off_path_edge": 289,
+    "construction_clipping_parts": 837,
+    "disconnected_assemblies": 0,
+    "fence_gaps_or_stubs": 0,
+    "main_width_errors": 0,
+    "jump_pad_errors": 0
+  },
+  "after": {
+    "assemblies": 76,
+    "parts_in_prop_audit": 373,
+    "unclassified_prop_parts": 0,
+    "overlap_pairs": 0,
+    "floating": 0,
+    "sunk": 0,
+    "unsupported": 0,
+    "path_intrusions": 0,
+    "flowers_off_path_edge": 0,
+    "construction_clipping_parts": 0,
+    "disconnected_assemblies": 0,
+    "fence_gaps_or_stubs": 0,
+    "main_width_errors": 0,
+    "jump_pad_errors": 0
+  },
+  "lane_samples": 55474,
+  "clearance_flags": 0,
+  "nominal_surface_difference_flags": 0,
+  "dead_ends": 0,
+  "unreachable": 0,
+  "original_physical_parts_preserved": 5730,
+  "routes_equal": true,
+  "selected_portal_tree_rays": 4,
+  "selected_throw_tree_chords": 5,
+  "selected_tree_blockers": 0,
+  "tree_check_limits": "Selected straight chords with1.5-stud envelope pad, not every route sample or ballistic/animated throws; terrain occlusion and real Keeper throws require Studio.",
+  "clusters": {
+    "west-oak": 3,
+    "east-spires": 3,
+    "pocket-1": 4,
+    "pocket-2": 5,
+    "pocket-3": 5,
+    "pocket-4": 5,
+    "pocket-5": 5,
+    "pocket-6": 5,
+    "pocket-8": 5,
+    "pocket-9": 5,
+    "pocket-10": 3,
+    "pocket-11": 5,
+    "pocket-13": 3,
+    "west-cover-1": 3,
+    "west-cover-2": 3,
+    "west-cover-3": 3,
+    "flowers-west": 3
+  },
+  "lantern_pairs": [
+    [
+      [
+        -19,
+        -147
+      ],
+      [
+        19,
+        -147
+      ]
+    ],
+    [
+      [
+        16,
+        -30
+      ],
+      [
+        20,
+        -42
+      ]
+    ]
+  ],
+  "protected_files": [
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Arena.luau",
+      "baseline_sha256": "9dae5eb851160b1338cc76eea02909bc5c26c4c0e6280532036c299c5307b592",
+      "final_sha256": "9dae5eb851160b1338cc76eea02909bc5c26c4c0e6280532036c299c5307b592",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\check.luau",
+      "baseline_sha256": "830606c7aad19a5534fbb2c6635b29af8ff99c8d4281c5d387388a31daeffa75",
+      "final_sha256": "830606c7aad19a5534fbb2c6635b29af8ff99c8d4281c5d387388a31daeffa75",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Greybox.client.luau",
+      "baseline_sha256": "08a7ee8d2741378b70b838a85997065ea1dc2699b5b375bc0d57b993ac2020c3",
+      "final_sha256": "08a7ee8d2741378b70b838a85997065ea1dc2699b5b375bc0d57b993ac2020c3",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Greybox.server.luau",
+      "baseline_sha256": "25ca4d8e4b764743f9126733ac5d7f5ed456dcbf5321f4525a29b061aca89751",
+      "final_sha256": "25ca4d8e4b764743f9126733ac5d7f5ed456dcbf5321f4525a29b061aca89751",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\GreyboxConfig.luau",
+      "baseline_sha256": "227d7c0f4b1b0e280e2242aa533b3f80f086a0459b609c406c82aa4f3a508407",
+      "final_sha256": "227d7c0f4b1b0e280e2242aa533b3f80f086a0459b609c406c82aa4f3a508407",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\guardian-greybox.rbxl",
+      "baseline_sha256": "9bd153ce675b50ca4f1ab796c156872dfe56c97b59955b82d5faed014d5d0ea2",
+      "final_sha256": "9bd153ce675b50ca4f1ab796c156872dfe56c97b59955b82d5faed014d5d0ea2",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\home-art-check.luau",
+      "baseline_sha256": "9a0e7e4c8ecf6799a8d810d14c2bd0f1e95582ac0e9c8676dc5da224fe8cbe39",
+      "final_sha256": "9a0e7e4c8ecf6799a8d810d14c2bd0f1e95582ac0e9c8676dc5da224fe8cbe39",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\home-art-export.luau",
+      "baseline_sha256": "26aadffddd9dd98a6fd12fa2153df77d25ef8f15de296a9e53883d340948568a",
+      "final_sha256": "26aadffddd9dd98a6fd12fa2153df77d25ef8f15de296a9e53883d340948568a",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\home-round3-check.luau",
+      "baseline_sha256": "c36c258e5b3f8861cb58516f441fa43ec0dc90400f369bfdb261ef3559df9685",
+      "final_sha256": "c36c258e5b3f8861cb58516f441fa43ec0dc90400f369bfdb261ef3559df9685",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\HomeArt.client.luau",
+      "baseline_sha256": "c10ae5526fa3b23a8be8af91595d8546a7a1d9b0bf4248c856c9cbbc1dd7d7d2",
+      "final_sha256": "c10ae5526fa3b23a8be8af91595d8546a7a1d9b0bf4248c856c9cbbc1dd7d7d2",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\HomeArtGeometry.luau",
+      "baseline_sha256": "534aa8c4eb30721daabaca009f67c09216bf855edc3f9ffe8a6da218c4c48f16",
+      "final_sha256": "534aa8c4eb30721daabaca009f67c09216bf855edc3f9ffe8a6da218c4c48f16",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\keeper-check.luau",
+      "baseline_sha256": "18f3caca363ac8aeb7d9dd9301887c8876a8d8363ffed4ca988b4d30b79efeeb",
+      "final_sha256": "18f3caca363ac8aeb7d9dd9301887c8876a8d8363ffed4ca988b4d30b79efeeb",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\keeper-clearance.luau",
+      "baseline_sha256": "9ebd179fac54f6659181912b93769d9fdd13bdcfca3771d0b44046833c5f27c6",
+      "final_sha256": "9ebd179fac54f6659181912b93769d9fdd13bdcfca3771d0b44046833c5f27c6",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Keeper.client.luau",
+      "baseline_sha256": "1df855060ddc5e77ab6e885c7b9751a2db1853849f290dc6d9eb1f020f584c89",
+      "final_sha256": "1df855060ddc5e77ab6e885c7b9751a2db1853849f290dc6d9eb1f020f584c89",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\KeeperAttacks.luau",
+      "baseline_sha256": "aa7abe28e7b1e13466dd8365d70fbb09c29c4031398434030d7de8f8b82565ec",
+      "final_sha256": "aa7abe28e7b1e13466dd8365d70fbb09c29c4031398434030d7de8f8b82565ec",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\KeeperPose.luau",
+      "baseline_sha256": "c9c6c2b873ecd8a17552651e64f5302d3b4c152cb0149b59464eb668d22383ed",
+      "final_sha256": "c9c6c2b873ecd8a17552651e64f5302d3b4c152cb0149b59464eb668d22383ed",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\kit-check.luau",
+      "baseline_sha256": "633d30655183b13812dfc84134c114ce0aa885eb73ca7b3dde8d1b67f5cdddb6",
+      "final_sha256": "633d30655183b13812dfc84134c114ce0aa885eb73ca7b3dde8d1b67f5cdddb6",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Layout.luau",
+      "baseline_sha256": "656ee40b1841802a9f704a609467314f44d3f7ecf0026632a5c254c4ea8f016d",
+      "final_sha256": "656ee40b1841802a9f704a609467314f44d3f7ecf0026632a5c254c4ea8f016d",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\LoopTest.luau",
+      "baseline_sha256": "bc9204746ac4c881439e32c76f2032c198a8fe06983ec79ea4814d62739ed9e0",
+      "final_sha256": "bc9204746ac4c881439e32c76f2032c198a8fe06983ec79ea4814d62739ed9e0",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\LootRules.luau",
+      "baseline_sha256": "5d819be80950259bb1c23d9f199f4e10898b2b87a64724d884cd6a70f570c2eb",
+      "final_sha256": "5d819be80950259bb1c23d9f199f4e10898b2b87a64724d884cd6a70f570c2eb",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Placement.luau",
+      "baseline_sha256": "44bc03d87ee3ffa82edc205a590f571f2d7fcaedecbbb287642accd9f568b206",
+      "final_sha256": "44bc03d87ee3ffa82edc205a590f571f2d7fcaedecbbb287642accd9f568b206",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Scene.luau",
+      "baseline_sha256": "f6f97e330cf4a352b19124445853e35b7c97b7d5c4beeb4c02f75f69da2fb414",
+      "final_sha256": "f6f97e330cf4a352b19124445853e35b7c97b7d5c4beeb4c02f75f69da2fb414",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Traps.luau",
+      "baseline_sha256": "d09a09946b8124177c2225a9f44743bfe4178a522c282c72b1a754325c9010d9",
+      "final_sha256": "d09a09946b8124177c2225a9f44743bfe4178a522c282c72b1a754325c9010d9",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\TrapTest.luau",
+      "baseline_sha256": "3bb2c4b44393129722dcf8c4052cf16d64ebd6756b55779f04035b8339d9f1c5",
+      "final_sha256": "3bb2c4b44393129722dcf8c4052cf16d64ebd6756b55779f04035b8339d9f1c5",
+      "unchanged": true
+    }
+  ],
+  "protected_animation_scope": "No task command wrote Keeper animation/art files. Exact raw baseline comparison available for24 listed guardian files; animation files were not captured at task start, so whole-animation-directory byte equality is not claimed.",
+  "review_rounds": 3,
+  "image_count": 35,
+  "render_source": "Same exported native manifest; offline Cycles. Main and18 route cameras5.5 above authored nominal route, not engine avatar-camera captures.",
+  "runtime": "UNKNOWN",
+  "hashes": {
+    "treasure\\map-v4\\build-rr5final-concept.png": "a611ca042ccbff34ac2de02fe62cf695b48ec413643e3359b947fd6710f7058f",
+    "treasure\\map-v4\\build-rr5final-side.png": "703d511ae907145f8e4ae9de3e24d9fcb887b46cf76009d9bd6f15f584896e60",
+    "treasure\\map-v4\\build-rr5final-top.png": "9ab0d75160c4c4131a14abd77fc5a179a9680633f99cb2b33a2c8d543f3d279f",
+    "treasure\\map-v4\\build-rr5final-under.png": "b7d4f524b91c324b790157453734875d79866d9bcfe1d4036458f8e7be61318f",
+    "treasure\\map-v4\\build-rr5final-under-south.png": "dc5276270acb8ed701e7544ddb986291acd9a4b615cd3ab1f2f7ca2b95d3edd7",
+    "treasure\\map-v4\\build-rr5final-under-west.png": "976cb36c0078b78dd5e708c8cb21e49a34eb596f66b7000600a5a08b85785451",
+    "treasure\\map-v4\\build-rr5final-under-north.png": "a32477d26914f9d00deb6871ce708f7977a5fdb9de35a4939331eca865786f04",
+    "treasure\\map-v4\\build-rr5final-under-east.png": "aea7df844e0ed3f5cec25e0e6efa7f265effd8461c6ce8f29cfd6c8832ccd6dd",
+    "treasure\\map-v4\\build-rr5final-eye-portal-west.png": "35e303a1f9e66746ae3d9cd1b6272f6383aa70d6e33f08dfd878cdced466e6e9",
+    "treasure\\map-v4\\build-rr5final-eye-portal-bridge.png": "8bc7a5b9255638238caee0de4f94e303989a90f58e6527b4a936c881fb44506b",
+    "treasure\\map-v4\\build-rr5final-eye-portal-east.png": "b71ea1f2570f6de200a455cadf538d649e2546bf4b6111c7716c78519e0c50e0",
+    "treasure\\map-v4\\build-rr5final-eye-west.png": "6014d593902614429c00eff2ddf36cbaa4d05ab219267c3b0753600eb1b6be73",
+    "treasure\\map-v4\\build-rr5final-eye-bridge.png": "4f5d5fb8520d5cf4826a02c5f3ad914327c497a8e66194c2e81ec52a934b2d0b",
+    "treasure\\map-v4\\build-rr5final-eye-east.png": "8378b62a72672e05cc523dca3a5f426a9ff2bc70b3b8f12ac96968d79433f1ad",
+    "treasure\\map-v4\\build-rr5final-eye-summit.png": "3a89cb761a5e70803b7fc9e721eb5ffe562718cfaba8cf6c19a96be67184355b",
+    "treasure\\map-v4\\build-rr5final-eye-shelf.png": "2f77d1c2858e9e58c804c02963dd26ee6d0a522638122b7ff231243d2842e62b",
+    "treasure\\map-v4\\build-rr5final-eye-recovery.png": "fa5094fee418bf8fc20d830a1c9aa822b326b4282b9c2b9c4a432d86320a0a36",
+    "treasure\\map-v4\\build-rr5final-eye-route-summit_radial.png": "007d1c34cae59ffd0da35ef66ad24b3355fd211a2197eff32d00efcc709c49bf",
+    "treasure\\map-v4\\build-rr5final-eye-route-spiral.png": "1c21569920204d7fcf399cf1602947bc8a0c5dcb0b8e3dca4d2735b1fd0995fb",
+    "treasure\\map-v4\\build-rr5final-eye-route-fork_link.png": "7a78e5659bead072d6025c7f832e54b38291cb1f71e26e6d13c5726fc3427442",
+    "treasure\\map-v4\\build-rr5final-eye-route-shelf.png": "fa2ebddc37049c272ece88df9bd520f6cf7d0091a73cf50922d9129039be6c5e",
+    "treasure\\map-v4\\build-rr5final-eye-route-shelf_link.png": "cf24865401e8dcd72333333570ea4ae32090d14177d5fddd1a1f0fe503c5bb63",
+    "treasure\\map-v4\\build-rr5final-eye-route-west.png": "4bdfb0f1289950e4821afd3bc55f65e3796ed7b98e1f67447f393135ff2bcc70",
+    "treasure\\map-v4\\build-rr5final-eye-route-bridge.png": "bf68d27cc304b091b21a9f432d9109d89ee8a9ed6b03bfd00a8eb608b586de4d",
+    "treasure\\map-v4\\build-rr5final-eye-route-bridge_south.png": "b3671ef8b77dd23d34501ff10185ae201d5978d7ba191c9dc1c34aa3f76ffc9c",
+    "treasure\\map-v4\\build-rr5final-eye-route-east.png": "480cb919a329419158f6e28847a8916eb896929c7a38149d0e3a35868ce0139d",
+    "treasure\\map-v4\\build-rr5final-eye-route-east_climb.png": "d61af0167c1f71873c75c79e829d36b7d3854506c5058ff9222ec307a1b9b3d4",
+    "treasure\\map-v4\\build-rr5final-eye-route-east_descent.png": "70c9d1bb9d8fcbb36d5776208e7daa617c85351619efbbc60e085650484363b4",
+    "treasure\\map-v4\\build-rr5final-eye-route-north_crosslink.png": "a4815a357851b7cf8251d65bffd297291697c2e6ecf0e572b6d1b550aff112e8",
+    "treasure\\map-v4\\build-rr5final-eye-route-south_crosslink.png": "3b1db10e81260d688d633fc4cd8be734d43d082438eae5ee8fa5608e8dcc7774",
+    "treasure\\map-v4\\build-rr5final-eye-route-portal_north.png": "6ddc60cb8da68d70b1c99552453ef6daae39cb5c286b8f8f9533d20434803495",
+    "treasure\\map-v4\\build-rr5final-eye-route-ravine_ramp.png": "a4466def2dcd21416417a074d2164c4d931228f2502ca366ab89eea1bd63da0a",
+    "treasure\\map-v4\\build-rr5final-eye-route-ravine_floor_loop.png": "9e7c791da64d877f1f7070d64cf0fc1ef7f0330ca3e1d15ba050a718b0ffc184",
+    "treasure\\map-v4\\build-rr5final-eye-route-jump_access.png": "754544634524fd979652ae2e3735df08e6b4a7992328a50a687bee965cca204f",
+    "treasure\\map-v4\\build-rr5final-eye-route-jump_recovery.png": "9d941f21fc0591ce745737cb2aca8a98e557c273b2f6cf41cfcf012664277eca",
+    "treasure\\map-v4\\build-sbs.jpg": "03be4032b3fafee6a652cbf3c140ac994c70d3ff04665b64bbfa3788f90ff11f",
+    "treasure\\map-v4\\build-top.jpg": "e7e7d589848832b80af35f3454b8ff3f78c93e17d483aae69c9be7a4f71d82c2",
+    "treasure\\map-v4\\build-under.jpg": "6e9f20005cebb1c30f49df15e39df753a883703aec165d1312f559ed383104bb",
+    "treasure\\map-v4\\build-ground.jpg": "77cf6ca8c9cccdef5789c5532aae2018450f8d2c3cabdfe0e236f5500682eea6",
+    "treasure\\map-v4\\build-route-ground.jpg": "0dc9c7970e197868a588db312e0be418cd4b115af39c9e052fbc0bb5651b063e",
+    "treasure\\map-v4\\REVIEW-R5.md": "25c2bf6f349c644b3d3460a6a45c3b0ae11ced4b4580b0feee7bc3a05a09d6d2",
+    "treasure\\map-v4\\ROUND5-CRITIC.md": "e44b197fa9f0473cddb0abf8a0a7d003994e3df5fa85e41d352582017f583a7c",
+    "treasure\\map-v4\\ROUND5-STUDIO-CHECKS.md": "c9ceb1a48ced8243e638ad8fe95f3dfb250010304a082b1bb746d414f032c547",
+    "treasure\\map-v4\\ROUND5-PLACEMENT-BEFORE.json": "510650c28c280fde6cf573f938586d6398159887d04178d3221e92ed9c6bd968",
+    "treasure\\map-v4\\ROUND5-PLACEMENT-AFTER.json": "81b2a3c817bb8c6bb99e9924cb6da8213df3d739df8afdef898b5253e1018af4",
+    "treasure\\map-v4\\ROUND5-ARTIFACT.json": "4ce007008f6713caed35eff65676bb5262fcf389565c006e0dba1453ac78ccf4",
+    "treasure\\map-v4\\ROUND5.md": "080900d2ad5bdf34aec94c4396b59325dddf171bb44219130d7ba560d1aa997c",
+    "treasure\\map-v4\\ROUND5-GEOMETRY.json": "e31cfd37aa2604d7d480715de875a1256949ede80c5eb9d9bc71de5653bc3e6b",
+    "treasure\\map-v4\\r5-r5final-cameras.json": "aedbdfca18977a64a5f932ad9c1872e15e8dcb3a4e4e191ef7efa51d87fc6e86",
+    "prototype\\meadow-v4\\scene.json": "22e4cfa972cdca6cd61c4def00bbc6a89414ad9c5231616e973c595731c43c8d",
+    "prototype\\meadow-v4\\round5.py": "26b1b3e2a4189bd78c621594112f37da5ec808fdcd2d867d3a789f65f805132e",
+    "prototype\\meadow-v4\\placement-audit.py": "88ddac5456d9b276437813427b1381532bd62e840c49911a651298f6d9587ea1",
+    "prototype\\meadow-v4\\render.py": "7f5e07a58c60e33dac9e21f33d62a71ef1220ca8f323dd95b551773a6c5354e2",
+    "prototype\\meadow-v4\\round5-check.luau": "c87a8be7b44c086ff7f6b9f237a6d5c86b3e14bc759237d439e384abddd15f1c",
+    "prototype\\meadow-v4\\round5-evidence.py": "7d71b992f8ef8283d2dea6589b47ac83abe2040435175e6be00a5013b091b510",
+    "prototype\\meadow-v4.rbxl": "35cb688c0d75411e1be6d513cddea4f0882bfdb59e4faf521ff144ec68d149ff"
+  }
+}

@@ -196,10 +196,10 @@ function Scene.pen(parent, x, z, make)
 	-- Open plot, twelve-wide inward gate, no earning pads.
 	for _, dz in { -24, 24 } do
 		for _, y in { 1.4, 3.4 } do
-			cosmetic(make(parent, "PenRail", Vector3.new(64, 0.8, 0.8), Vector3.new(x, y, z + dz), wood))
+			cosmetic(make(parent, "PenRail", Vector3.new(64, 1.05, 1.05), Vector3.new(x, y, z + dz), wood))
 		end
 		for dx = -32, 32, 16 do
-			cosmetic(make(parent, "PenPost", Vector3.new(1.4, 4.5, 1.4), Vector3.new(x + dx, 2.25, z + dz), wood))
+			cosmetic(make(parent, "PenPost", Vector3.new(2.2, 4.5, 2.2), Vector3.new(x + dx, 2.25, z + dz), wood))
 		end
 	end
 	local back = x + (x < 0 and -32 or 32)
@@ -577,6 +577,10 @@ function Scene.surroundings(parent, meadowOrigin, make)
 	end
 end
 function Scene.environment(lighting, meadow)
+	-- The server-selected look owns lighting while the Studio A/B switch is active.
+	if lighting:GetAttribute("AppliedLightingPreset") then
+		return
+	end
 	-- Client-only presets: portal travel cannot change another player's sky.
 	local atmosphere = lighting:FindFirstChild("GreyboxAtmosphere")
 	if not atmosphere then
@@ -588,12 +592,20 @@ function Scene.environment(lighting, meadow)
 		rays = Instance.new("SunRaysEffect")
 		rays.Name, rays.Parent = "GreyboxSunRays", lighting
 	end
-	lighting.ClockTime, lighting.Brightness = meadow and 14.2 or 12, meadow and 2.2 or 2
-	lighting.Ambient = meadow and Color3.fromRGB(126, 139, 107) or Color3.fromRGB(125, 137, 153)
-	lighting.OutdoorAmbient = meadow and Color3.fromRGB(161, 172, 139) or Color3.fromRGB(170, 185, 202)
+	lighting.ClockTime, lighting.Brightness = meadow and 14.2 or 14, meadow and 2.2 or 2.5
+	lighting.GlobalShadows, lighting.ShadowSoftness = true, 0.35
+	lighting.Ambient = meadow and Color3.fromRGB(126, 139, 107) or Color3.fromRGB(135, 125, 108)
+	lighting.OutdoorAmbient = meadow and Color3.fromRGB(161, 172, 139) or Color3.fromRGB(175, 174, 153)
+	local colour = lighting:FindFirstChild("HomeArtColour")
+	if not colour then
+		colour = Instance.new("ColorCorrectionEffect")
+		colour.Name, colour.Parent = "HomeArtColour", lighting
+	end
+	colour.Saturation, colour.Contrast, colour.TintColor, colour.Enabled =
+		0.18, 0.06, Color3.fromRGB(255, 250, 235), not meadow
 	atmosphere.Color = meadow and Color3.fromRGB(222, 235, 203) or Color3.fromRGB(199, 224, 255)
 	atmosphere.Decay = meadow and Color3.fromRGB(145, 168, 133) or Color3.fromRGB(143, 170, 205)
-	atmosphere.Density, atmosphere.Offset = meadow and 0.18 or 0.14, 0.15
+	atmosphere.Density, atmosphere.Offset = meadow and 0.18 or 0.06, 0.15
 	atmosphere.Haze, atmosphere.Glare = meadow and 0.6 or 0.3, meadow and 0.12 or 0.05
 	rays.Intensity, rays.Spread, rays.Enabled = 0.035, 0.65, meadow
 end
@@ -635,14 +647,22 @@ function Scene.captureCams(parent, enabled, meadowOrigin)
 				"HomeReferenceCamera",
 				Vector3.new(0, 150, 260),
 				Vector3.new(0, 4, 0),
-				55,
+				40,
 				"home-island.png",
 				"Home",
 			},
 			{
 				"MeadowReferenceCamera",
-				meadowOrigin + Vector3.new(0, 64, 132),
-				meadowOrigin + Vector3.new(0, 4, -10),
+				meadowOrigin
+					+ (
+						workspace and workspace:GetAttribute("UseMeadowV4") and Vector3.new(0, 180, 320)
+						or Vector3.new(0, 64, 132)
+					),
+				meadowOrigin
+					+ (
+						workspace and workspace:GetAttribute("UseMeadowV4") and Vector3.new(0, 24, -20)
+						or Vector3.new(0, 4, -10)
+					),
 				58,
 				"meadow-island.png",
 				"Meadow",
@@ -657,8 +677,16 @@ function Scene.captureCams(parent, enabled, meadowOrigin)
 			},
 			{
 				"MeadowSurroundingsCamera",
-				meadowOrigin + Vector3.new(0, 38, 145),
-				meadowOrigin + Vector3.new(0, 42, -150),
+				meadowOrigin
+					+ (
+						workspace and workspace:GetAttribute("UseMeadowV4") and Vector3.new(0, 5.5, 130)
+						or Vector3.new(0, 38, 145)
+					),
+				meadowOrigin
+					+ (
+						workspace and workspace:GetAttribute("UseMeadowV4") and Vector3.new(0, 53, -96)
+						or Vector3.new(0, 42, -150)
+					),
 				70,
 				"meadow-island.png",
 				"Meadow",
@@ -676,5 +704,8 @@ function Scene.captureCams(parent, enabled, meadowOrigin)
 		local camera = Instance.new("Camera")
 		camera.Name, camera.CFrame, camera.FieldOfView, camera.Parent = "Camera", p.CFrame, d[4], p
 	end
+end
+if workspace then
+	Scene.meadow = require(game:GetService("ReplicatedStorage").MeadowV4.Loader).wrap(Scene.meadow)
 end
 return Scene

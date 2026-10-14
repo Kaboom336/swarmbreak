@@ -1,0 +1,94 @@
+{
+  "mapping": {
+    "Pelvis": "pelvis",
+    "Torso": "spine_03",
+    "Head": "Head",
+    "Arm.L": "upperarm_l",
+    "Elbow.L": "lowerarm_l",
+    "Wrist.L": "hand_l",
+    "Leg.L": "thigh_l",
+    "Knee.L": "calf_l",
+    "Ankle.L": "foot_l",
+    "Arm.R": "upperarm_r",
+    "Elbow.R": "lowerarm_r",
+    "Wrist.R": "hand_r",
+    "Leg.R": "thigh_r",
+    "Knee.R": "calf_r",
+    "Ankle.R": "foot_r"
+  },
+  "clips": {
+    "idle": {
+      "source": "Idle_Loop",
+      "gap": false,
+      "release": null,
+      "sourceReleasePhase": null
+    },
+    "patrol": {
+      "source": "Walk_Loop",
+      "gap": false,
+      "release": null,
+      "sourceReleasePhase": null
+    },
+    "return": {
+      "source": "Walk_Formal_Loop",
+      "gap": false,
+      "release": null,
+      "sourceReleasePhase": null
+    },
+    "chase": {
+      "source": "Sprint_Loop",
+      "gap": false,
+      "release": null,
+      "sourceReleasePhase": null
+    },
+    "stun": {
+      "source": "Hit_Head",
+      "gap": false,
+      "release": null,
+      "sourceReleasePhase": null
+    },
+    "celebrate": {
+      "source": "Dance_Loop",
+      "gap": true,
+      "release": null,
+      "sourceReleasePhase": null
+    },
+    "warn": {
+      "source": "Spell_Simple_Enter",
+      "gap": true,
+      "release": null,
+      "sourceReleasePhase": null
+    },
+    "dash": {
+      "source": "Sprint_Loop",
+      "gap": true,
+      "release": null,
+      "sourceReleasePhase": null
+    },
+    "fan": {
+      "source": "Spell_Simple_Shoot",
+      "gap": true,
+      "release": 0.62,
+      "sourceReleasePhase": 0.47
+    },
+    "throw": {
+      "source": "Spell_Simple_Shoot",
+      "gap": true,
+      "release": 0.62,
+      "sourceReleasePhase": 0.47
+    },
+    "lob": {
+      "source": "PickUp_Table",
+      "gap": true,
+      "release": 0.62,
+      "sourceReleasePhase": null
+    },
+    "slam": {
+      "source": "Jump_Start",
+      "gap": false,
+      "release": 0.8,
+      "sourceReleasePhase": null
+    }
+  },
+  "note": "CC0 keyframed animation library; recording method UNKNOWN. Mocap-based means library-derived, not verified optical capture."
+}

@@ -22,16 +22,18 @@ local function placementTest()
 	local finish = assert(source:find("\nfor i = 1, 8 do", from, true))
 	for slot = 1, 8 do
 		local cx, cz = Placement.center(slot)
+		local floorY = Placement.height(slot) + 0.2
 		local actor, other = {}, {}
 		local rules = Rules.new(Config)
 		local s = Rules.actor(rules, actor)
 		s.slot = slot
 		local pen = { count = 0, occupied = {}, base = roblox.Instance.new("Part") }
-		local position = v.new(cx - 5.25, 0.2, cz + 10.5)
+		local position = v.new(cx - 5.25, floorY, cz + 10.5)
 		local r = { Position = position + v.new(0, 3, 0) }
 		local missingFloor = false
 		local place = luau.load(source:sub(from, finish - 1) .. "\nreturn placeItem", {
 			environment = {
+				testRunning = true, -- Isolate the existing placement fixture from persistent core profiles.
 				Config = Config,
 				Placement = Placement,
 				Rules = Rules,
@@ -48,7 +50,7 @@ local function placementTest()
 				},
 				workspace = {
 					Raycast = function(_, origin)
-						return not missingFloor and { Position = v.new(origin.X, 0.2, origin.Z) } or nil
+						return not missingFloor and { Position = v.new(origin.X, floorY, origin.Z) } or nil
 					end,
 				},
 				root = function(a)
@@ -81,7 +83,7 @@ local function placementTest()
 		reject(v.new(cx + 40, 0.2, cz), 15, "out of bounds")
 		reject(v.new(cx + 26, 0.2, cz + 10), 45, "out of bounds")
 		reject(v.new(cx + (cx < 0 and 22 or -22), 0.2, cz), 0, "keep entrance clear")
-		reject(v.new(position.X, 4, position.Z), 15, "floor/range")
+		reject(v.new(position.X, floorY + 3.8, position.Z), 15, "floor/range")
 		r.Position = position + v.new(0, 30, 0)
 		reject(position, 15, "floor/range")
 		r.Position = position + v.new(0, 3, 0)
@@ -100,7 +102,7 @@ local function placementTest()
 		reject(position + v.new(5, 0, 0), 15, "overlap")
 		for dz = -14, 14, 7 do
 			for dx = -22, 22, 7 do
-				local p = v.new(cx + dx, 0.2, cz + dz)
+				local p = v.new(cx + dx, floorY, cz + dz)
 				if #pen.occupied < 8 and Placement.validate(Config, slot, p.X, p.Z, 15, pen.occupied) then
 					r.Position = p + v.new(0, 3, 0)
 					assert(place(actor, slot, p, 15), "legal capacity placement rejected")
@@ -324,6 +326,8 @@ local function constructionTest()
 	end
 	arena.attack, arena.target, arena.searchAt = attack, {}, roblox.Vector3.zero
 	arena.mode, arena.points, arena.pathVersion = "Chase", { {} }, 5
+	-- This fixture exercises legacy attack cancellation; Keeper reset/FX is in keeper-check.
+	arena.keeper = false
 	arenaModule.reset(arena)
 	assert(
 		not arena.attack and not arena.target and not arena.searchAt and arena.mode == "Guard",
@@ -458,7 +462,10 @@ local function constructionTest()
 	assert(lighting.GreyboxAtmosphere.Color ~= homeColor, "presets identical")
 	scene.environment(lighting, false)
 	assert(
-		not lighting.GreyboxSunRays.Enabled and lighting.ClockTime == 12 and #lighting:GetChildren() == 2,
+		not lighting.GreyboxSunRays.Enabled
+			and lighting.ClockTime == 14
+			and #lighting:GetChildren() == 3
+			and lighting.HomeArtColour.Enabled,
 		"Home preset reset/duplicate effects"
 	)
 	local volume, emitter = scene.pollen(world)
@@ -1340,7 +1347,7 @@ local function loopInterruptionTest()
 	assert(not source:find("nearestRoute", 1, true), "recovery still selects fixed route nodes")
 	first = assert(source:find("local function expiryExitSteps(", 1, true))
 	last = assert(source:find("local function expiryTest(", first, true))
-	local exit = luau.load(source:sub(first, last - 1) .. "\nreturn expiryExitSteps")()
+	local exit = luau.load(source:sub(first, last - 1) .. "\nreturn expiryExitSteps", {environment={Config=Config,Layout=Layout}})()
 	for seed = 1, 50 do
 		local layout = Layout.assemble(Config, seed, false)
 		local previous
@@ -1965,6 +1972,7 @@ local function gullyRetest()
 				environment = {
 					s = state,
 					r = fallenRoot,
+					Config = Config,
 					actor = fallenActor,
 					arena = {},
 					Vector3 = v,

@@ -3,8 +3,9 @@ local Test = {}
 -- fixture under Lune. Accelerated clock proves lifecycle, not 90s wall time.
 function Test.exercise(Traps, t, a, states, actorFactory, react)
 	local points = {}
-	for x = -66, 66, 12 do
-		for z = 0, 66, 6 do
+	local v4 = a.layout.version == 4
+	for x = v4 and -150 or -66, v4 and 150 or 66, 12 do
+		for z = v4 and -100 or 0, v4 and 120 or 66, 6 do
 			local p = a.origin + Vector3.new(x, 0, -z)
 			local floor = t.arenaAPI.floor(a, p)
 			if floor and Traps.spot(t, a, floor, floor + Vector3.new(0, 3, 0)) then
@@ -99,7 +100,9 @@ function Test.exercise(Traps, t, a, states, actorFactory, react)
 		"elevated placement"
 	)
 	assert(not Traps.spot(t, a, Vector3.new(0 / 0, 0, 0), r), "NaN accepted")
-	for _, point in { { 0, 32 }, { 0, -58 }, { -24, -58 }, { -25, -10 }, { -32, -28 }, { 0, -24 }, { 79, 60 } } do
+	local rejected = v4 and { { 0, 96 }, { 0, -136 }, { -24, -136 }, { 148, -40 }, { 0, 0 }, { 0, 42 }, { 175, 60 } }
+		or { { 0, 32 }, { 0, -58 }, { -24, -58 }, { -25, -10 }, { -32, -28 }, { 0, -24 }, { 79, 60 } }
+	for _, point in rejected do
 		local position = a.origin + Vector3.new(point[1], 0, -point[2])
 		local floor = t.arenaAPI.floor(a, position) or position
 		assert(not Traps.spot(t, a, floor, floor + Vector3.new(0, 3, 0)), "protected/only-route placement accepted")

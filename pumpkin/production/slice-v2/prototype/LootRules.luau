@@ -19,7 +19,12 @@ end
 function Rules.spawn(r, position)
 	assert(not r.active, "unresolved provisional item")
 	r.serial += 1
-	local item = { id = "arena1:" .. r.serial, state = "Nest", position = position, version = 0 }
+	local item = {
+		id = (r.identityPrefix or "arena1") .. ":" .. r.serial,
+		state = "Nest",
+		position = position,
+		version = 0,
+	}
 	r.items[item.id], r.active = item, item
 	return item
 end
@@ -42,7 +47,10 @@ function Rules.audit(r)
 		else
 			assert(carriers == 0 and item.holder == nil, "orphan carrier")
 			assert(
-				item.state == "Nest" or item.state == "Dropped" or item.state == "Placed" or item.state == "Retired",
+				item.state == "Nest"
+					or item.state == "Dropped"
+					or item.state == "Placed"
+					or item.state == "Retired",
 				"lost state"
 			)
 		end
@@ -57,7 +65,7 @@ end
 -- Deadline belongs to the original item through every drop and handoff.
 function Rules.expire(r, now)
 	local item = r.active
-	if not item or not item.escapeDeadline or now < item.escapeDeadline then
+	if not item or item.securePending or not item.escapeDeadline or now < item.escapeDeadline then
 		return false
 	end
 	if item.state ~= "Carried" and item.state ~= "Dropped" then
@@ -78,7 +86,7 @@ function Rules.expire(r, now)
 end
 function Rules.eligible(r, actor, action, target, now, check)
 	local s, item = r.actors[actor], r.active
-	if not s or s.phase ~= "Run" or s.item or not item then
+	if not s or s.phase ~= "Run" or s.item or not item or item.securePending then
 		return false, "hands/arena/Taken"
 	end
 	if item.escapeDeadline and now >= item.escapeDeadline then
@@ -132,11 +140,12 @@ end
 function Rules.drop(r, actor, now, position)
 	local s = r.actors[actor]
 	local item = s and s.item
-	if not item or item.state ~= "Carried" or not position then
+	if not item or item.securePending or item.state ~= "Carried" or not position then
 		return false, "no valid floor/item"
 	end
 	s.item, s.hold = nil, nil
-	item.state, item.holder, item.position, item.settle = "Dropped", nil, position, now + r.config.SettleSeconds
+	item.state, item.holder, item.position, item.settle =
+		"Dropped", nil, position, now + r.config.SettleSeconds
 	item.version += 1
 	return true, item
 end
@@ -200,10 +209,13 @@ function Rules.secure(r, actor, now)
 	end
 	if s.item then
 		local item = s.item
-		if now >= item.escapeDeadline then
+		if not item.securePending and now >= item.escapeDeadline then
 			return false, "escape expired"
 		end
-		assert(item == r.active and item.holder == actor and item.state == "Carried", "secure identity")
+		assert(
+			item == r.active and item.holder == actor and item.state == "Carried",
+			"secure identity"
+		)
 		item.state, item.securedAt, item.firstPup = "Secured", now, s.completed == 0
 		item.version += 1
 		r.active = nil

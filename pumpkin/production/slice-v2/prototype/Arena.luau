@@ -3,11 +3,27 @@ local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Greybo
 local Layout = require(game:GetService("ReplicatedStorage"):WaitForChild("GreyboxLayout"))
 local Scene = require(game:GetService("ReplicatedStorage"):WaitForChild("GreyboxScene"))
 local Arena = {}
+function Arena.fx(a, name, position, radius)
+	local event = game:GetService("ReplicatedStorage"):WaitForChild("MeadowKeeper"):FindFirstChild("FXEvent")
+	if event then
+		event:FireAllClients(a.guardian, name, position, radius)
+	end
+end
 local detectRange, throwRange = Config.GuardianDetectRange, Config.GuardianThrowRange
 local leashRadius, stuckSeconds, returnSeconds =
 	Config.GuardianLeashRadius, Config.GuardianStuckSeconds, Config.GuardianReturnSeconds
 local campOffset =
 	Vector3.new(Config.GuardianGuardOffset.x, Config.GuardianGuardOffset.y, -Config.GuardianGuardOffset.z)
+function Arena.dashLegal(a, position)
+	if Config.MeadowV4 then
+		local p = position - a.origin
+		if require(game:GetService("ReplicatedStorage").MeadowV4.TunnelPolicy).inside(p.X, p.Y, p.Z) then
+			return false
+		end
+	end
+	local camp = a.guardCamp or a.origin + campOffset
+	return Vector3.new(position.X - camp.X, 0, position.Z - camp.Z).Magnitude <= leashRadius
+end
 local cyan, red = Color3.fromRGB(60, 210, 230), Color3.fromRGB(255, 40, 40)
 local function vector(p)
 	return Vector3.new(p.x, p.y, -p.z)
@@ -165,17 +181,52 @@ function Arena.build(world, layout, make, label)
 	a.guardian.CanCollide, a.guardian.CanQuery = false, false
 	a.arm = build("ThrowArm", Vector3.new(2, 6, 2), Vector3.new(11, 11, 32), nil, "Marker")
 	a.arm.CanCollide, a.arm.CanQuery = false, false
+	a.guardian.Transparency, a.arm.Transparency = 1, 1
+	a.guardian.CanTouch, a.arm.CanTouch = false, false
+	a.guardian:SetAttribute("MeadowKeeper", true)
+	a.guardian:SetAttribute("KeeperClip", "idle")
+	a.guardian:SetAttribute("KeeperElapsed", 0)
+	a.keeper = true
 	a.warning = label(a.guardian, "GUARDIAN / guarding")
 	Scene.meadow(model, a.origin, layout, make)
+	if Config.MeadowV4 then
+		a.v4 = model:FindFirstChild("MeadowV4")
+		a.safe.Position = Arena.position(a, 0, 0.04, -136)
+		entryPad.Position = Arena.position(a, 0, 0.08, -136)
+		extension.Transparency = 1 -- v4 has no west safe extension.
+		a.dock.Position = Arena.position(a, 0, 4, -136)
+		a.obstacles = {}
+		for _, p in a.v4:GetDescendants() do
+			if p:IsA("BasePart") and p.CanCollide then
+				local category = p:GetAttribute("MeadowV4Category")
+				if
+					category == "cover"
+					or category == "boulder"
+					or category == "tunnel_rock"
+					or category == "tunnel_roof"
+					or category == "tunnel_hill"
+				then
+					p:SetAttribute("SurfaceRole", "Cover")
+					table.insert(a.obstacles, p)
+				end
+			end
+		end
+	end
 	a.params = RaycastParams.new()
+	a.params.RespectCanCollide = true
 	a.params.FilterType, a.params.FilterDescendantsInstances = Enum.RaycastFilterType.Include, { model }
 	a.wallParams = RaycastParams.new()
 	a.wallParams.FilterType, a.wallParams.FilterDescendantsInstances = Enum.RaycastFilterType.Include, a.obstacles
 	return a
 end
 function Arena.floor(a, position)
-	local hit =
-		workspace:Raycast(Vector3.new(position.X, a.origin.Y + 45, position.Z), Vector3.new(0, -70, 0), a.params)
+	-- Query near the intended surface: below tunnel roofs and bridges, above summit.
+	local height = Config.MeadowV4 and position.Y + 12 or a.origin.Y + 45
+	local hit = workspace:Raycast(
+		Vector3.new(position.X, height, position.Z),
+		Vector3.new(0, Config.MeadowV4 and -90 or -70, 0),
+		a.params
+	)
 	if hit and hit.Instance:GetAttribute("SurfaceRole") == "Floor" and hit.Normal.Y >= math.cos(math.rad(35.1)) then
 		return hit.Position, hit.Normal
 	end
@@ -190,7 +241,9 @@ function Arena.safe(a, position, radius)
 end
 function Arena.outside(a, position)
 	local p = position - a.origin
-	return p.Y < -10 or math.abs(p.X) > Config.IslandSize / 2 + 2 or math.abs(p.Z) > Config.IslandSize / 2 + 2
+	return p.Y < (Config.MeadowV4 and -45 or -10)
+		or math.abs(p.X) > Config.IslandSize / 2 + 2
+		or math.abs(p.Z) > Config.IslandSize / 2 + 2
 end
 local function dropFloor(a, p)
 	local center, normal = Arena.floor(a, p)
@@ -295,6 +348,12 @@ local function attack(a, actor, position, now, close)
 		return
 	end
 	a.nextThrow = now + Config.ThrowCooldown
+	if not close then
+		local facing = Vector3.new(floor.X, a.guardian.Position.Y, floor.Z)
+		if (facing - a.guardian.Position).Magnitude > 0.1 then
+			a.guardian.CFrame = CFrame.lookAt(a.guardian.Position, facing)
+		end
+	end
 	a.attack = {
 		actor = actor,
 		position = floor,
@@ -331,10 +390,7 @@ local function attack(a, actor, position, now, close)
 			segment.CanCollide, segment.CanQuery, segment.Parent = false, false, outline
 		end
 		a.attack.outline = outline
-		local rock = Instance.new("Part")
-		rock.Name, rock.Size, rock.Position = "ThrownRock", Vector3.new(2, 2, 2), a.attack.from
-		rock.Anchored, rock.CanCollide, rock.CanQuery, rock.Parent = true, false, false, a.model
-		a.attack.disc, a.attack.fill, a.attack.rock = disc, ring, rock
+		a.attack.disc, a.attack.fill = disc, ring
 		a.model:SetAttribute("TelegraphStarted", now)
 	else
 		a.warning.Text = "! / close poke"
@@ -343,7 +399,25 @@ local function attack(a, actor, position, now, close)
 		a.guardian.CFrame += Vector3.new(0, -2.5, 0)
 	end
 end
-function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
+local function tick(a, dt, now, actors, root, hitPlayer, goal, loot)
+	if a.tunnelGuard then
+		local t = a.tunnelGuard
+		if t.waiting then
+			local carrier = loot and loot.holder
+			local r = carrier and root(carrier)
+			if
+				r
+				and not Arena.safe(a, r.Position)
+				and (Vector3.new(r.Position.X, t.exit.Y, r.Position.Z) - t.exit).Magnitude < 12
+				and math.abs(r.Position.Y - t.exit.Y) < 10
+			then
+				if hitPlayer(carrier, a.guardian.Position, "TunnelGuard") then
+					a.keeperCelebrateUntil = now + 1.9
+				end
+			end
+		end
+		return
+	end
 	local guard = a.guardian
 	if a.poof then
 		local alpha = math.min(1, now - a.poof.start)
@@ -383,6 +457,11 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 	end
 	logState(a, root)
 	-- Windups stay planted; recovery takes priority after impact.
+	if a.keeperStunUntil and now < a.keeperStunUntil then
+		a.warning.Text = "STUNNED / wall hit"
+		a.progressAt, a.progressPosition = now, guard.Position
+		return
+	end
 	if not a.attack and not a.decoy then
 		if a.progressPosition and (guard.Position - a.progressPosition).Magnitude >= Config.GuardianProgressStuds then
 			a.progressAt, a.progressPosition = now, guard.Position
@@ -425,6 +504,12 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 	local function visible(actor, detect)
 		local s = actors[actor]
 		local r = root(actor)
+		if Config.MeadowV4 and r then
+			local p = r.Position - a.origin
+			if require(game:GetService("ReplicatedStorage").MeadowV4.TunnelPolicy).inside(p.X, p.Y, p.Z) then
+				return false
+			end
+		end
 		if not s or s.phase ~= "Run" or not r or Arena.safe(a, r.Position) then
 			return false
 		end
@@ -439,15 +524,49 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 	if a.attack then
 		a.progressAt, a.progressPosition = nil, nil
 		local t = a.attack
+		if t.kind then
+			local folder = game:GetService("ReplicatedStorage"):WaitForChild("MeadowKeeper")
+			require(folder:WaitForChild("Attacks")).step(
+				a,
+				now,
+				actors,
+				root,
+				hitPlayer,
+				Arena,
+				require(folder:WaitForChild("Pose"))
+			)
+			return
+		end
 		local alpha = math.min(1, (now - t.start) / Config.ThrowSeconds)
-		if t.rock then
-			local nextPoint = t.from:Lerp(t.position + Vector3.new(0, 1, 0), alpha)
-				+ Vector3.new(0, 40 * alpha * (1 - alpha), 0)
+		-- Lock aim at attack creation; spawn exactly once on the authored Release.
+		if not t.close and not t.rock and now - t.start >= 0.620 then
+			if a.keeper then
+				local pose =
+					require(game:GetService("ReplicatedStorage"):WaitForChild("MeadowKeeper"):WaitForChild("Pose"))
+				t.from = pose.release(guard).Position
+			end
+			t.previous = t.from
+			local rock = Instance.new("Part")
+			rock.Name, rock.Size, rock.Position = "ThrownRock", Vector3.new(2, 2, 2), t.from
+			rock.Anchored, rock.CanCollide, rock.CanQuery, rock.CanTouch, rock.Parent =
+				true, false, false, false, a.model
+			t.rock = rock
+			a.model:SetAttribute("KeeperReleaseAt", t.start + 0.620)
+			a.model:SetAttribute("KeeperReleaseObservedAt", now)
+			a.model:SetAttribute("KeeperReleaseOrigin", t.from)
+		end
+		if t.fill then
 			t.fill.Size = Vector3.new(
 				0.1,
 				math.max(0.1, Config.ThrowRadius * 2 * alpha),
 				math.max(0.1, Config.ThrowRadius * 2 * alpha)
 			)
+		end
+		if t.rock then
+			-- Keep the original impact deadline; remaining flight follows release.
+			local flight = math.clamp((now - t.start - 0.620) / (Config.ThrowSeconds - 0.620), 0, 1)
+			local nextPoint = t.from:Lerp(t.position + Vector3.new(0, 1, 0), flight)
+				+ Vector3.new(0, 40 * flight * (1 - flight), 0)
 			local obstruction = workspace:Spherecast(t.previous, 0.9, nextPoint - t.previous, a.params)
 			-- Floor at the locked destination is an impact; other geometry intercepts.
 			if obstruction and (obstruction.Position - t.position).Magnitude > 2 then
@@ -480,7 +599,9 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 							and Arena.sight(a, t.position + Vector3.new(0, 0.5, 0), r.Position)
 							and closeLegal
 						then
-							hitPlayer(actor, guard.Position)
+							if hitPlayer(actor, guard.Position) then
+								a.keeperCelebrateUntil = now + 1.9
+							end
 						end
 					end
 				end
@@ -488,7 +609,9 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 			if t.disc then
 				t.disc:Destroy()
 				t.fill:Destroy()
-				t.rock:Destroy()
+				if t.rock then
+					t.rock:Destroy()
+				end
 				t.outline:Destroy()
 			end
 			if t.standing then
@@ -569,30 +692,54 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 		a.chaseTicks += 1
 		local s, r = actors[target], root(target)
 		destination = r.Position
-		goal(target, "RUN! / dodge the red disc")
+		goal(target, "RUN! / leave red rings; jump amber waves")
 		local distance = (r.Position - guard.Position).Magnitude
 		if now >= s.mercy and now >= a.nextThrow then
-			if distance >= Config.GuardianThrowMinRange and distance <= throwRange then
-				local velocity = r.AssemblyLinearVelocity or Vector3.zero
-				local lead = Vector3.new(velocity.X, 0, velocity.Z) * Config.GuardianLeadSeconds
-				if lead.Magnitude > Config.GuardianLeadMaxStuds then
-					lead = lead.Unit * Config.GuardianLeadMaxStuds
+			if a.keeper then
+				local kit =
+					require(game:GetService("ReplicatedStorage"):WaitForChild("MeadowKeeper"):WaitForChild("Attacks"))
+				local kind = distance <= throwRange and kit.choose(a, target, now, actors, root)
+				if kind then
+					local velocity = r.AssemblyLinearVelocity or Vector3.zero
+					local leadSeconds = kind == "lob" and kit.Tuning.LobLeadSeconds or kit.Tuning.FanLeadSeconds
+					local leadMax = kind == "lob" and kit.Tuning.LobLeadMax or kit.Tuning.FanLeadMax
+					local lead = Vector3.new(velocity.X, 0, velocity.Z) * leadSeconds
+					if lead.Magnitude > leadMax then
+						lead = lead.Unit * leadMax
+					end
+					local predicted = kind == "dash" and r.Position or r.Position + lead
+					if not Arena.floor(a, predicted) then
+						predicted = r.Position
+					end
+					local pose =
+						require(game:GetService("ReplicatedStorage"):WaitForChild("MeadowKeeper"):WaitForChild("Pose"))
+					if kit.begin(a, target, predicted, now, kind, Arena, pose) then
+						return
+					end
 				end
-				local predicted = r.Position + lead
-				if not Arena.floor(a, predicted) or Arena.safe(a, predicted, Config.ThrowRadius) then
-					predicted = r.Position
+			else
+				if distance >= Config.GuardianThrowMinRange and distance <= throwRange then
+					local velocity = r.AssemblyLinearVelocity or Vector3.zero
+					local lead = Vector3.new(velocity.X, 0, velocity.Z) * Config.GuardianLeadSeconds
+					if lead.Magnitude > Config.GuardianLeadMaxStuds then
+						lead = lead.Unit * Config.GuardianLeadMaxStuds
+					end
+					local predicted = r.Position + lead
+					if not Arena.floor(a, predicted) or Arena.safe(a, predicted, Config.ThrowRadius) then
+						predicted = r.Position
+					end
+					attack(a, target, predicted, now, false)
+					logState(a, root)
+					return
 				end
-				attack(a, target, predicted, now, false)
-				logState(a, root)
-				return
-			end
-			local horizontal = (Vector3.new(r.Position.X, guard.Position.Y, r.Position.Z) - guard.Position).Magnitude
-			if
-				horizontal <= Config.CatchRadius
-				and math.abs(r.Position.Y - (guard.Position.Y - 2.5)) <= Config.GuardianPokeVertical
-			then
-				attack(a, target, r.Position, now, true)
-				return
+				local horizontal = (Vector3.new(r.Position.X, guard.Position.Y, r.Position.Z) - guard.Position).Magnitude
+				if
+					horizontal <= Config.CatchRadius
+					and math.abs(r.Position.Y - (guard.Position.Y - 2.5)) <= Config.GuardianPokeVertical
+				then
+					attack(a, target, r.Position, now, true)
+					return
+				end
 			end
 		end
 	elseif a.mode == "Return" then
@@ -654,6 +801,13 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 	end
 	local movement = offset.Unit * math.min(offset.Magnitude, speed * dt)
 	local nextPoint = guard.Position + movement
+	if Config.MeadowV4 then
+		local p = nextPoint - a.origin - Vector3.new(0, 5.5, 0)
+		if require(game:GetService("ReplicatedStorage").MeadowV4.TunnelPolicy).inside(p.X, math.max(0, p.Y), p.Z) then
+			a.points, a.nextPath = {}, 0
+			return
+		end
+	end
 	local floor = Arena.floor(a, nextPoint)
 	local blocked = workspace:Blockcast(guard.CFrame, Vector3.new(4, 10, 4), movement, a.wallParams)
 	if
@@ -672,7 +826,49 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 		a.points, a.nextPath = {}, 0
 	end
 end
+function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
+	local before = a.guardian.Position
+	tick(a, dt, now, actors, root, hitPlayer, goal, loot)
+	if not a.keeper then
+		return
+	end
+	local moved = (a.guardian.Position - before).Magnitude > 0.001
+	local clip = "idle"
+	if a.attack then
+		clip = a.attack.kind or (a.attack.close and "warn" or "throw")
+	elseif a.recoveryStarted or a.mode == "Stun" or a.keeperStunUntil and now < a.keeperStunUntil then
+		clip = "stun"
+	elseif a.mode == "Warn" or a.mode == "DecoyTell" then
+		clip = "warn"
+	elseif a.mode == "Return" then
+		clip = "return"
+	elseif a.keeperCelebrateUntil and now < a.keeperCelebrateUntil or a.mode == "Celebrate" then
+		clip = "celebrate"
+	elseif a.keeperClip == "throw" and now - a.keeperClipStart < 1.4 then
+		clip = "throw"
+	elseif a.mode == "Chase" then
+		clip = "chase"
+	elseif moved or a.mode == "Patrol" then
+		clip = "patrol"
+	end
+	local attackStart = a.attack and a.attack.start
+	if clip ~= a.keeperClip or attackStart and attackStart ~= a.keeperAttackStart then
+		a.keeperClip, a.keeperClipStart, a.keeperAttackStart = clip, attackStart or now, attackStart
+		a.guardian:SetAttribute("KeeperClip", clip)
+		if workspace.GetServerTimeNow then
+			a.guardian:SetAttribute("KeeperStartedAt", workspace:GetServerTimeNow() - (now - a.keeperClipStart))
+		end
+	end
+	a.guardian:SetAttribute("KeeperElapsed", math.max(0, now - a.keeperClipStart))
+	local targetRoot = a.target and root(a.target)
+	a.guardian:SetAttribute("KeeperLookTarget", targetRoot and targetRoot.Position or nil)
+end
 function Arena.reset(a)
+	a.tunnelGeneration = (a.tunnelGeneration or 0) + 1
+	a.tunnelGuard = nil
+	if Config.MeadowV4 then
+		workspace:SetAttribute("TunnelGuardWaiting", false)
+	end
 	a.decoy = nil
 	if a.poof then
 		a.poof.part:Destroy()
@@ -685,13 +881,92 @@ function Arena.reset(a)
 				a.attack[name]:Destroy()
 			end
 		end
+		if a.attack.parts then
+			for _, part in ipairs(a.attack.parts) do
+				part:Destroy()
+			end
+		end
 		if a.attack.standing then
 			a.guardian.Size, a.guardian.CFrame = Vector3.new(4, 11, 4), a.attack.standing
 		end
 	end
 	a.attack, a.target, a.lostTarget, a.searchAt, a.lastSeen = nil, nil, nil, nil, nil
 	a.mode, a.patrol, a.nextThrow = "Guard", 1, 0
+	a.kitCooldowns = nil
+	a.keeperStunUntil = nil
+	if a.keeper then
+		Arena.fx(a, "Reset", a.guardian.Position)
+	end
+	a.keeperClip, a.keeperClipStart, a.keeperAttackStart, a.keeperCelebrateUntil = nil, nil, nil, nil
+	if a.keeper then
+		a.guardian:SetAttribute("KeeperClip", "idle")
+		a.guardian:SetAttribute("KeeperElapsed", 0)
+		a.guardian:SetAttribute("KeeperStartedAt", nil)
+		a.guardian:SetAttribute("KeeperLookTarget", nil)
+	end
 	a.progressAt, a.progressPosition = nil, nil
 	clearPath(a)
+end
+-- Adapter called once per entrant/exit/occupancy epoch. Live rig follows this handle.
+function Arena.intercept(a, exitId, path, holdSeconds, entrant, _epoch)
+	Arena.reset(a)
+	local token = a.tunnelGeneration
+	local t = { waiting = false }
+	a.tunnelGuard = t
+	a.mode = "TunnelIntercept"
+	local function valid()
+		return a.model.Parent and a.tunnelGeneration == token and a.tunnelGuard == t
+	end
+	local function cleanup()
+		if not valid() then
+			return
+		end
+		a.tunnelGuard = nil
+		a.target = nil
+		a.mode = "Guard"
+		a.progressAt = nil
+		clearPath(a)
+		workspace:SetAttribute("TunnelGuardWaiting", false)
+	end
+	task.spawn(function()
+		for i, p in path do
+			local start = a.guardian.Position
+			local target = a.origin + Vector3.new(p.x, 5.5, p.z)
+			local seconds = i == 1 and 0.8 or (target - start).Magnitude / 32
+			local elapsed = 0
+			while elapsed < seconds do
+				elapsed += game:GetService("RunService").Heartbeat:Wait()
+				if not valid() then
+					return
+				end
+				local alpha = math.min(elapsed / math.max(seconds, 0.05), 1)
+				local pos = start:Lerp(target, alpha)
+				if i == 1 then
+					pos += Vector3.new(0, math.sin(alpha * math.pi) * 18, 0)
+				end
+				local forward = Vector3.new(target.X - start.X, 0, target.Z - start.Z)
+				a.guardian.CFrame = forward.Magnitude > 0.01 and CFrame.lookAt(pos, pos + forward)
+					or CFrame.new(pos) * a.guardian.CFrame.Rotation
+			end
+		end
+		if not valid() then
+			return
+		end
+		local e = require(game:GetService("ReplicatedStorage").MeadowV4.TunnelPolicy).Exits[exitId]
+		t.exit = a.origin + Vector3.new(e.x, 0, e.z)
+		t.waiting = true
+		workspace:SetAttribute("TunnelGuardWaiting", true)
+		local deadline = os.clock() + 14
+		local left = false
+		while valid() and os.clock() < deadline do
+			if not left and (not entrant.Parent or entrant:GetAttribute("TunnelInside") ~= true) then
+				left = true
+				deadline = math.min(deadline, os.clock() + holdSeconds)
+			end
+			task.wait(0.05)
+		end
+		cleanup()
+	end)
+	return cleanup
 end
 return Arena

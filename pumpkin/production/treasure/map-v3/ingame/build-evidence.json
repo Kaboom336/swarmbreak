@@ -1,0 +1,186 @@
+{
+  "A": {
+    "file": "prototype/meadow-A.rbxl",
+    "mainRoute": [
+      [
+        0,
+        14,
+        20
+      ],
+      [
+        -12,
+        14,
+        0
+      ],
+      [
+        -12,
+        14,
+        -8
+      ],
+      [
+        -36,
+        0,
+        -32
+      ],
+      [
+        -36,
+        0,
+        -44
+      ],
+      [
+        0,
+        0,
+        -44
+      ],
+      [
+        0,
+        0,
+        -68
+      ]
+    ],
+    "maxSlope": 23.629377730656817,
+    "parts": 625,
+    "routeSegments": 41,
+    "routeStuds": 140.03892517089844,
+    "runtime": "NOT RUN",
+    "studioCapture": "BLOCKED: Computer Use not approved for Roblox Studio",
+    "walkLabel": "ESTIMATED at 15 studs/s; no character walk",
+    "walkSecondsEstimated": 9.335928344726563
+  },
+  "B": {
+    "file": "prototype/meadow-B.rbxl",
+    "mainRoute": [
+      [
+        0,
+        24,
+        26
+      ],
+      [
+        0,
+        24,
+        10
+      ],
+      [
+        0,
+        18,
+        -3
+      ],
+      [
+        0,
+        18,
+        -9
+      ],
+      [
+        0,
+        12,
+        -22
+      ],
+      [
+        0,
+        12,
+        -30
+      ],
+      [
+        0,
+        6,
+        -43
+      ],
+      [
+        0,
+        0,
+        -56
+      ],
+      [
+        0,
+        0,
+        -76
+      ]
+    ],
+    "maxSlope": 24.775140568831922,
+    "parts": 953,
+    "routeSegments": 111,
+    "routeStuds": 107.27128601074219,
+    "runtime": "NOT RUN",
+    "studioCapture": "BLOCKED: Computer Use not approved for Roblox Studio",
+    "walkLabel": "ESTIMATED at 15 studs/s; no character walk",
+    "walkSecondsEstimated": 7.151419067382813
+  },
+  "C": {
+    "file": "prototype/meadow-C.rbxl",
+    "mainRoute": [
+      [
+        0,
+        12,
+        62
+      ],
+      [
+        -15,
+        12,
+        40
+      ],
+      [
+        -23,
+        12,
+        40
+      ],
+      [
+        -50,
+        0,
+        40
+      ],
+      [
+        -50,
+        0,
+        24
+      ],
+      [
+        -16,
+        0,
+        24
+      ],
+      [
+        -16,
+        0,
+        30
+      ],
+      [
+        0,
+        0,
+        30
+      ],
+      [
+        0,
+        6,
+        16
+      ],
+      [
+        0,
+        6,
+        -16
+      ],
+      [
+        0,
+        0,
+        -30
+      ],
+      [
+        0,
+        0,
+        -50
+      ],
+      [
+        0,
+        0,
+        -70
+      ]
+    ],
+    "maxSlope": 23.962488974578182,
+    "parts": 668,
+    "routeSegments": 55,
+    "routeStuds": 238.63672065734863,
+    "runtime": "NOT RUN",
+    "studioCapture": "BLOCKED: Computer Use not approved for Roblox Studio",
+    "walkLabel": "ESTIMATED at 15 studs/s; no character walk",
+    "walkSecondsEstimated": 15.90911471048991
+  }
+}

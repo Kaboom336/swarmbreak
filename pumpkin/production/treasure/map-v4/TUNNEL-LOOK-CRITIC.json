@@ -1,0 +1,25 @@
+{
+  "state": "FAIL",
+  "score": 6.5,
+  "out_of": 10,
+  "rounds": 2,
+  "target": 7,
+  "owner_revision": "Tunnel look round 2: through a grassy hill",
+  "round_1": {"state": "FAIL", "score": 6, "source": "/root/blind_hill_critic_1", "report": "TUNNEL-HILL-CRITIC-1.md"},
+  "round_2": {"state": "FAIL", "score": 6.5, "source": "/root/blind_hill_critic_2", "report": "TUNNEL-HILL-CRITIC-2.md"},
+  "scene_sha256": "ebc9fbecafd645aed8589cb52711a0bb92586b0c04ab8a633288019615ae9c87",
+  "source": "Two independent blind agents; six images only; no source or prior review context",
+  "scope": "Offline shipped-manifest player-eye renders and matched 3/4 overview; Studio runtime UNKNOWN",
+  "finding": "Hill, vegetation, enclosure, skylights and pointed crystals read; terrain shell and rock doorway still look assembled",
+  "remaining": [
+    "Blend projecting grass-panel edges and exposed flat side walls into continuous terrain shoulders",
+    "Break the remaining straight lintel and repeated vertical rock stacks",
+    "Vary the excavated wall/ceiling profile within the unchanged reserved lane",
+    "Strengthen warm light beyond the actual exit rather than relying on amber accents"
+  ],
+  "runtime": "UNKNOWN",
+  "static_checks": "PASS; zero clearance, prop audit, graph and extra-contact errors",
+  "cap_reached": true,
+  "target_achieved": false,
+  "lesson": "When grass exposes thin projecting edges, blend and thicken the shoulder, because the silhouette otherwise reads as a roof"
+}

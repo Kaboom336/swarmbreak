@@ -136,7 +136,8 @@ RunService.RenderStepped:Connect(function()
 	if ray.Direction.Y >= -0.001 then
 		return
 	end
-	local point = ray.Origin + ray.Direction * ((0.2 - ray.Origin.Y) / ray.Direction.Y)
+	local floorY = Placement.height(slot) + 0.2
+	local point = ray.Origin + ray.Direction * ((floorY - ray.Origin.Y) / ray.Direction.Y)
 	local x, z = point.X, point.Z
 	if snap then
 		x, z = math.round(x), math.round(z)
@@ -152,9 +153,9 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 	local valid = Placement.validate(Config, slot, x, z, rotation, occupied)
-	point = Vector3.new(x, 0.2, z)
+	point = Vector3.new(x, floorY, z)
 	valid = valid and (r.Position - point).Magnitude <= 24
-	ghost.CFrame = CFrame.new(x, 0.3, z) * CFrame.Angles(0, math.rad(rotation), 0)
+	ghost.CFrame = CFrame.new(x, floorY + 0.1, z) * CFrame.Angles(0, math.rad(rotation), 0)
 	ghost.Transparency = 0.45
 	ghost.Color = valid and Color3.fromRGB(80, 240, 150) or Color3.fromRGB(255, 70, 70)
 	placeButton.Text = valid and "Place [E / X]" or "Choose a free plot spot"

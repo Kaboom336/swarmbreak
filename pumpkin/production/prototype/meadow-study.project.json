@@ -1,0 +1,9 @@
+{
+  "name": "MeadowLayoutStudy",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": { "$properties": { "Gravity": 196.2, "StreamingEnabled": false } },
+    "Lighting": { "$properties": { "ClockTime": 14.2, "Brightness": 2.2, "GlobalShadows": true } },
+    "StarterPlayer": { "$properties": { "CharacterWalkSpeed": 15, "CharacterUseJumpPower": false, "CharacterJumpHeight": 7.2 } }
+  }
+}

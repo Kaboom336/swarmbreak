@@ -1,0 +1,950 @@
+{
+  "state": "PASS",
+  "scene_sha256": "7b8fffdcb0ab7b90f20ba1f3024a63d2297726eb4f43c65cf3e86a0dacd2d286",
+  "method": "Endpoint-to-centerline snaps <=target half-width and height tolerance0.75; genuine 2D segment intersections with matching height; explicit supported jump pads; portal goal court contracts to one node. Physical full-width clearance independently checked by collision-audit.json. This graph is geometric connectivity, not a Studio locomotion simulation.",
+  "node_count": 24,
+  "edge_count": 37,
+  "dead_end_count": 0,
+  "dead_ends": [],
+  "unreachable_nodes": [],
+  "nodes": [
+    {
+      "id": "SUMMIT",
+      "spec_xzy": [
+        0,
+        108,
+        48
+      ],
+      "reason": "summit treasure objective",
+      "degree": 1
+    },
+    {
+      "id": "N2",
+      "spec_xzy": [
+        30,
+        108,
+        48
+      ],
+      "reason": "route junction",
+      "degree": 3
+    },
+    {
+      "id": "N3",
+      "spec_xzy": [
+        -9.184850993605149e-15,
+        58.0,
+        0
+      ],
+      "reason": "route junction",
+      "degree": 2
+    },
+    {
+      "id": "N4",
+      "spec_xzy": [
+        0,
+        42,
+        0
+      ],
+      "reason": "route junction",
+      "degree": 5
+    },
+    {
+      "id": "N5",
+      "spec_xzy": [
+        37,
+        72,
+        0
+      ],
+      "reason": "route junction",
+      "degree": 2
+    },
+    {
+      "id": "PORTAL",
+      "spec_xzy": [
+        -24,
+        -136,
+        0
+      ],
+      "reason": "portal destination",
+      "degree": 5
+    },
+    {
+      "id": "N7",
+      "spec_xzy": [
+        0,
+        -42,
+        0
+      ],
+      "reason": "route junction",
+      "degree": 2
+    },
+    {
+      "id": "N8",
+      "spec_xzy": [
+        110,
+        18,
+        0
+      ],
+      "reason": "route junction",
+      "degree": 2
+    },
+    {
+      "id": "N9",
+      "spec_xzy": [
+        110,
+        -60,
+        20
+      ],
+      "reason": "route junction",
+      "degree": 4
+    },
+    {
+      "id": "N10",
+      "spec_xzy": [
+        -76.0,
+        27.0,
+        0.0
+      ],
+      "reason": "route junction",
+      "degree": 2
+    },
+    {
+      "id": "N11",
+      "spec_xzy": [
+        69,
+        28,
+        0
+      ],
+      "reason": "route junction",
+      "degree": 3
+    },
+    {
+      "id": "N12",
+      "spec_xzy": [
+        -76.0,
+        -78.0,
+        0.0
+      ],
+      "reason": "route junction",
+      "degree": 2
+    },
+    {
+      "id": "N13",
+      "spec_xzy": [
+        0.0,
+        -78.0,
+        0.0
+      ],
+      "reason": "route junction",
+      "degree": 3
+    },
+    {
+      "id": "N14",
+      "spec_xzy": [
+        -22,
+        0,
+        -32
+      ],
+      "reason": "route junction",
+      "degree": 3
+    },
+    {
+      "id": "N15",
+      "spec_xzy": [
+        0,
+        -100,
+        0
+      ],
+      "reason": "route junction",
+      "degree": 5
+    },
+    {
+      "id": "N16",
+      "spec_xzy": [
+        148,
+        -24,
+        20
+      ],
+      "reason": "route junction",
+      "degree": 2
+    },
+    {
+      "id": "N17",
+      "spec_xzy": [
+        148,
+        -56,
+        24
+      ],
+      "reason": "route junction",
+      "degree": 2
+    },
+    {
+      "id": "N18",
+      "spec_xzy": [
+        -76,
+        -54,
+        0
+      ],
+      "reason": "route junction",
+      "degree": 3
+    },
+    {
+      "id": "N19",
+      "spec_xzy": [
+        -61.8671875,
+        -98.953125,
+        0
+      ],
+      "reason": "route junction",
+      "degree": 3
+    },
+    {
+      "id": "N20",
+      "spec_xzy": [
+        22.06890380318246,
+        46.024271650181205,
+        0.0
+      ],
+      "reason": "route junction",
+      "degree": 6
+    },
+    {
+      "id": "N21",
+      "spec_xzy": [
+        -45.18339409943999,
+        47.420900078712485,
+        0.0
+      ],
+      "reason": "route junction",
+      "degree": 4
+    },
+    {
+      "id": "N22",
+      "spec_xzy": [
+        1.61693124748449,
+        -83.54677767486127,
+        0.0
+      ],
+      "reason": "route junction",
+      "degree": 4
+    },
+    {
+      "id": "N23",
+      "spec_xzy": [
+        3.205204847885009,
+        -102.0361133190589,
+        0.0
+      ],
+      "reason": "route junction",
+      "degree": 4
+    },
+    {
+      "id": "N24",
+      "spec_xzy": [
+        148,
+        -40,
+        22
+      ],
+      "reason": "optional ridge jump landing",
+      "degree": 2
+    }
+  ],
+  "edges": [
+    {
+      "id": "E1",
+      "from": "SUMMIT",
+      "to": "N2",
+      "route": "summit_radial",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "id": "E2",
+      "from": "N2",
+      "to": "N3",
+      "route": "spiral",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        96.0
+      ]
+    },
+    {
+      "id": "E3",
+      "from": "N3",
+      "to": "N4",
+      "route": "fork_link",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        8.0
+      ]
+    },
+    {
+      "id": "E4",
+      "from": "N2",
+      "to": "N5",
+      "route": "shelf",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        37.0
+      ]
+    },
+    {
+      "id": "E5",
+      "from": "N5",
+      "to": "N20",
+      "route": "shelf_link",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        7.648
+      ]
+    },
+    {
+      "id": "E6",
+      "from": "N20",
+      "to": "N4",
+      "route": "shelf_link",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        7.816,
+        15.0
+      ]
+    },
+    {
+      "id": "E7",
+      "from": "N4",
+      "to": "N21",
+      "route": "west",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        8.468
+      ]
+    },
+    {
+      "id": "E8",
+      "from": "N21",
+      "to": "PORTAL",
+      "route": "west",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        8.468,
+        56.0
+      ]
+    },
+    {
+      "id": "E9",
+      "from": "N4",
+      "to": "N7",
+      "route": "bridge",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        5.0
+      ]
+    },
+    {
+      "id": "E10",
+      "from": "N7",
+      "to": "N13",
+      "route": "bridge_south",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        12.608
+      ]
+    },
+    {
+      "id": "E11",
+      "from": "N13",
+      "to": "N22",
+      "route": "bridge_south",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        12.608,
+        13.973
+      ]
+    },
+    {
+      "id": "E12",
+      "from": "N22",
+      "to": "N15",
+      "route": "bridge_south",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        13.973,
+        18.74
+      ]
+    },
+    {
+      "id": "E13",
+      "from": "N15",
+      "to": "PORTAL",
+      "route": "bridge_south",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        18.795,
+        24.0
+      ]
+    },
+    {
+      "id": "E14",
+      "from": "N4",
+      "to": "N20",
+      "route": "east",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        4.345
+      ]
+    },
+    {
+      "id": "E15",
+      "from": "N20",
+      "to": "N11",
+      "route": "east",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        4.345,
+        16
+      ]
+    },
+    {
+      "id": "E16",
+      "from": "N11",
+      "to": "N8",
+      "route": "east",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        16,
+        32.0
+      ]
+    },
+    {
+      "id": "E17",
+      "from": "N8",
+      "to": "N9",
+      "route": "east_climb",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        4.0
+      ]
+    },
+    {
+      "id": "E18",
+      "from": "N9",
+      "to": "PORTAL",
+      "route": "east_descent",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        48.0
+      ]
+    },
+    {
+      "id": "E19",
+      "from": "N10",
+      "to": "N21",
+      "route": "north_crosslink",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        13.019
+      ]
+    },
+    {
+      "id": "E20",
+      "from": "N21",
+      "to": "N20",
+      "route": "north_crosslink",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        13.019,
+        28.967
+      ]
+    },
+    {
+      "id": "E21",
+      "from": "N20",
+      "to": "N11",
+      "route": "north_crosslink",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        28.967,
+        40.0
+      ]
+    },
+    {
+      "id": "E22",
+      "from": "N12",
+      "to": "N19",
+      "route": "south_crosslink",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        6
+      ]
+    },
+    {
+      "id": "E23",
+      "from": "N19",
+      "to": "N15",
+      "route": "south_crosslink",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        6,
+        11.876
+      ]
+    },
+    {
+      "id": "E24",
+      "from": "N15",
+      "to": "N23",
+      "route": "south_crosslink",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        12,
+        12.836
+      ]
+    },
+    {
+      "id": "E25",
+      "from": "N23",
+      "to": "PORTAL",
+      "route": "south_crosslink",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        12.836,
+        28.0
+      ]
+    },
+    {
+      "id": "E26",
+      "from": "N13",
+      "to": "N22",
+      "route": "portal_north",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        3.084
+      ]
+    },
+    {
+      "id": "E27",
+      "from": "N22",
+      "to": "N23",
+      "route": "portal_north",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        3.084,
+        10.472
+      ]
+    },
+    {
+      "id": "E28",
+      "from": "N23",
+      "to": "PORTAL",
+      "route": "portal_north",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        10.472,
+        24.0
+      ]
+    },
+    {
+      "id": "E29",
+      "from": "N14",
+      "to": "N15",
+      "route": "ravine_ramp",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        3.977
+      ]
+    },
+    {
+      "id": "E30",
+      "from": "N14",
+      "to": "N14",
+      "route": "ravine_floor_loop",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        5.0
+      ]
+    },
+    {
+      "id": "E31",
+      "from": "N9",
+      "to": "N16",
+      "route": "jump_access",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        4.0
+      ]
+    },
+    {
+      "id": "E32",
+      "from": "N17",
+      "to": "N9",
+      "route": "jump_recovery",
+      "kind": "walk",
+      "width": 18,
+      "span_indices": [
+        0.0,
+        7.0
+      ]
+    },
+    {
+      "id": "E33",
+      "from": "N10",
+      "to": "N18",
+      "route": "tunnel_trunk",
+      "kind": "walk",
+      "width": 14,
+      "span_indices": [
+        0.0,
+        1
+      ]
+    },
+    {
+      "id": "E34",
+      "from": "N18",
+      "to": "N12",
+      "route": "tunnel_trunk",
+      "kind": "walk",
+      "width": 14,
+      "span_indices": [
+        1,
+        2.0
+      ]
+    },
+    {
+      "id": "E35",
+      "from": "N18",
+      "to": "N19",
+      "route": "tunnel_south",
+      "kind": "walk",
+      "width": 14,
+      "span_indices": [
+        0.0,
+        2.0
+      ]
+    },
+    {
+      "id": "E36",
+      "from": "N16",
+      "to": "N24",
+      "route": "ridge_jumps",
+      "kind": "jump",
+      "gap_studs": 4,
+      "rise_studs": 2
+    },
+    {
+      "id": "E37",
+      "from": "N24",
+      "to": "N17",
+      "route": "ridge_jumps",
+      "kind": "jump",
+      "gap_studs": 4,
+      "rise_studs": 2
+    }
+  ],
+  "endpoint_contacts": [
+    {
+      "endpoint_route": "summit_radial",
+      "endpoint_index": 1,
+      "target_route": "shelf",
+      "horizontal_snap": 0.0,
+      "height_difference": 0,
+      "node": "N2"
+    },
+    {
+      "endpoint_route": "spiral",
+      "endpoint_index": 0,
+      "target_route": "shelf",
+      "horizontal_snap": 0.0,
+      "height_difference": 0,
+      "node": "N2"
+    },
+    {
+      "endpoint_route": "spiral",
+      "endpoint_index": 96,
+      "target_route": "fork_link",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N3"
+    },
+    {
+      "endpoint_route": "fork_link",
+      "endpoint_index": 0,
+      "target_route": "spiral",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N3"
+    },
+    {
+      "endpoint_route": "fork_link",
+      "endpoint_index": 8,
+      "target_route": "bridge",
+      "horizontal_snap": 0.0,
+      "height_difference": 0,
+      "node": "N4"
+    },
+    {
+      "endpoint_route": "shelf",
+      "endpoint_index": 0,
+      "target_route": "spiral",
+      "horizontal_snap": 0.0,
+      "height_difference": 0,
+      "node": "N2"
+    },
+    {
+      "endpoint_route": "shelf",
+      "endpoint_index": 37,
+      "target_route": "shelf_link",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N5"
+    },
+    {
+      "endpoint_route": "shelf_link",
+      "endpoint_index": 0,
+      "target_route": "shelf",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N5"
+    },
+    {
+      "endpoint_route": "shelf_link",
+      "endpoint_index": 15,
+      "target_route": "bridge",
+      "horizontal_snap": 0.0,
+      "height_difference": 0,
+      "node": "N4"
+    },
+    {
+      "endpoint_route": "west",
+      "endpoint_index": 0,
+      "target_route": "bridge",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N4"
+    },
+    {
+      "endpoint_route": "bridge",
+      "endpoint_index": 0,
+      "target_route": "east",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N4"
+    },
+    {
+      "endpoint_route": "bridge",
+      "endpoint_index": 5,
+      "target_route": "bridge_south",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N7"
+    },
+    {
+      "endpoint_route": "bridge_south",
+      "endpoint_index": 0,
+      "target_route": "bridge",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N7"
+    },
+    {
+      "endpoint_route": "east",
+      "endpoint_index": 0,
+      "target_route": "bridge",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N4"
+    },
+    {
+      "endpoint_route": "east",
+      "endpoint_index": 32,
+      "target_route": "east_climb",
+      "horizontal_snap": 0.0,
+      "height_difference": 0,
+      "node": "N8"
+    },
+    {
+      "endpoint_route": "east_climb",
+      "endpoint_index": 0,
+      "target_route": "east",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N8"
+    },
+    {
+      "endpoint_route": "east_climb",
+      "endpoint_index": 4,
+      "target_route": "east_descent",
+      "horizontal_snap": 0.0,
+      "height_difference": 0,
+      "node": "N9"
+    },
+    {
+      "endpoint_route": "east_descent",
+      "endpoint_index": 0,
+      "target_route": "east_climb",
+      "horizontal_snap": 0.0,
+      "height_difference": 0,
+      "node": "N9"
+    },
+    {
+      "endpoint_route": "north_crosslink",
+      "endpoint_index": 0,
+      "target_route": "tunnel_trunk",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N10"
+    },
+    {
+      "endpoint_route": "north_crosslink",
+      "endpoint_index": 40,
+      "target_route": "east",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N11"
+    },
+    {
+      "endpoint_route": "south_crosslink",
+      "endpoint_index": 0,
+      "target_route": "tunnel_trunk",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N12"
+    },
+    {
+      "endpoint_route": "portal_north",
+      "endpoint_index": 0,
+      "target_route": "bridge_south",
+      "horizontal_snap": 3.429,
+      "height_difference": 0.0,
+      "node": "N13"
+    },
+    {
+      "endpoint_route": "ravine_ramp",
+      "endpoint_index": 0,
+      "target_route": "ravine_floor_loop",
+      "horizontal_snap": 0.0,
+      "height_difference": 0,
+      "node": "N14"
+    },
+    {
+      "endpoint_route": "ravine_ramp",
+      "endpoint_index": 4,
+      "target_route": "south_crosslink",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N15"
+    },
+    {
+      "endpoint_route": "ravine_floor_loop",
+      "endpoint_index": 0,
+      "target_route": "ravine_ramp",
+      "horizontal_snap": 0.0,
+      "height_difference": 0,
+      "node": "N14"
+    },
+    {
+      "endpoint_route": "ravine_floor_loop",
+      "endpoint_index": 5,
+      "target_route": "ravine_ramp",
+      "horizontal_snap": 0.0,
+      "height_difference": 0,
+      "node": "N14"
+    },
+    {
+      "endpoint_route": "jump_access",
+      "endpoint_index": 0,
+      "target_route": "east_climb",
+      "horizontal_snap": 0.0,
+      "height_difference": 0,
+      "node": "N9"
+    },
+    {
+      "endpoint_route": "jump_recovery",
+      "endpoint_index": 7,
+      "target_route": "east_climb",
+      "horizontal_snap": 0.0,
+      "height_difference": 0,
+      "node": "N9"
+    },
+    {
+      "endpoint_route": "tunnel_trunk",
+      "endpoint_index": 0,
+      "target_route": "north_crosslink",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N10"
+    },
+    {
+      "endpoint_route": "tunnel_trunk",
+      "endpoint_index": 2,
+      "target_route": "south_crosslink",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N12"
+    },
+    {
+      "endpoint_route": "tunnel_south",
+      "endpoint_index": 0,
+      "target_route": "tunnel_trunk",
+      "horizontal_snap": 0.0,
+      "height_difference": 0,
+      "node": "N18"
+    },
+    {
+      "endpoint_route": "tunnel_south",
+      "endpoint_index": 2,
+      "target_route": "south_crosslink",
+      "horizontal_snap": 0.0,
+      "height_difference": 0.0,
+      "node": "N19"
+    }
+  ]
+}

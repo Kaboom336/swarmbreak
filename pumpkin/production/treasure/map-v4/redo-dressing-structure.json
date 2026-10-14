@@ -1,0 +1,26 @@
+{
+  "stage": "dressing",
+  "terrain_cells": 5731,
+  "heights": [
+    -6,
+    -4,
+    -2,
+    -1,
+    0,
+    2,
+    4,
+    6,
+    8,
+    10,
+    12,
+    14,
+    16,
+    18,
+    20,
+    22,
+    23,
+    24
+  ],
+  "shelf_relocated": "X up to 90, Z55..117: authorised collision repair; original footprint contradicted spiral clearance",
+  "manifest_sha256": "997546c8df103526f00f5722db4dcc92ea8d7122e75d7a987e86152825ea8dfc"
+}

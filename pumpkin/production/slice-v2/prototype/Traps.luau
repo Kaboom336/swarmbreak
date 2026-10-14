@@ -60,7 +60,10 @@ function Traps.spot(t, a, position, rootPosition)
 	if math.abs(x) > t.islandSize / 2 - c.ClearRadius or math.abs(z) > t.islandSize / 2 - c.ClearRadius then
 		return false, "island edge"
 	end
-	if Vector3.new(x, 0, z - 32).Magnitude < c.ProtectedMargin or api.safe(a, position, c.ProtectedMargin) then
+	local nest = a.layout.version == 4 and { x = 0, z = 96 } or { x = 0, z = 32 }
+	if
+		Vector3.new(x - nest.x, 0, z - nest.z).Magnitude < c.ProtectedMargin or api.safe(a, position, c.ProtectedMargin)
+	then
 		return false, "nest/spawn/portal margin"
 	end
 	-- Exclude all jump/recovery footprints and cross-link junctions, not just

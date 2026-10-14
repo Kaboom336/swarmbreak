@@ -1,26 +1,60 @@
-# Meadow Keeper — owner review
+# Meadow Keeper reference rebuild — 2026-10-13
 
-Kept round 3 after three rendered design rounds. Local golden-acorn artlib.py read and reused; authored geometry, no external asset packs or new third-party license obligations. Exporter extended for multi-material anatomical meshes.
+Delivered one candidate after five render/comparison rounds. Owner approval is pending; this is not a claim of reference parity. No commit, game code edits, or changes to the golden acorn.
 
-| Round | Critique / change against approved Crow and Meadow concept |
-|---|---|
-| 1 | Unified bevelled farmer silhouette; face too narrow, eyes too small, hat crown too rectangular. |
-| 2 | Wider face and hat; larger eyes; simple straw edge. Brows read worried and crown remains slab-like. |
-| 3 — kept | Larger eye whites, inward-lowered brows, tapered crown. Smile keeps friendly guardian character. |
+## Reference bar and reused source
 
-Compared with approved Crow: readable white/pupil/glint eyes, chamfered brick volumes and clean flat colour blocks. Keeper is intentionally taller and less head-heavy than Crow; face still reads friendlier than stern. Compared with meadow-island.png: wide straw hat with green band, green bib/straps, brown shirt, broad boots. No granular straw texture or tiny decorative stacks. The brim, crown and broad bib are the defining silhouette/details.
+Primary shape target: `../../../concepts/v7/guardian-sheet.png`, straw-hat Keeper. Composition/action references: `../../../treasure/v2/meadow-island.png`, `../../../treasure/meadow-island.png`, and `../../../treasure/title-card.png`. Approved finish target: `../../crow/blender/final-34.png`.
 
-Independent read-only critic inspected approved Crow, Pup A LEFT, Meadow, containers/open-reveal and both models. Verdict: owner-review-ready candidates, not owner-approved. Acorn caveat: cap simpler and more faceted than reference. Keeper caveats: friendly face, taller proportions, initial square wind-up stance. Final throwing render was revised after that critique: upper-body twist and forward lean, staggered feet, review-only angular stone. That final pose revision was visually self-checked; independent re-review is not claimed.
+Inspected the existing Keeper build, local `artlib.py`, and approved Crow build before rebuilding. Reused the project's original box/mesh, material, stage and export helpers. No third-party model, texture, or kit was imported; no new external asset licence is required. The Keystone service/playbook was unavailable in this session; read the local project `PLAYBOOK.md` and `game/tools/blender/RECIPE.md` instead.
 
-Checked via verify.py: 1,532 triangles (limit 4,000), exactly 11 studs, ten unique RGB colour parts, seven FBX mesh objects. Valid triangle indices/areas, closed outward component surfaces, positive signed volumes. FBX re-import reproduces triangles and vertex positions within 0.000002 studs. JSON uses Y-up studs, front +Z, CCW preserved by x,z,-y rotation. RGB is integer 0–255. Roblox Studio import and runtime animation UNTESTED.
+## Delivered files
 
-Rig-ready grouping: Head, Torso, Arm.L, Arm.R, Leg.L, Leg.R, Hat. Each is separate with origin at its intended joint. L/R refers to Blender X side. Multi-material components joined per anatomical part; JSON intentionally groups disconnected geometry by colour. No armature or skinning authored. Rest-pose blend/FBX/JSON stay neutral; throwing pose saved separately as meadow-keeper-throw.blend. The stone is review scenery and excluded from FBX/JSON and triangle budget.
+- `meadow-keeper.blend`: final neutral source with render stage.
+- `meadow-keeper.fbx`: only seven rigid mesh parts; stage and throwing stone excluded.
+- `meadow-keeper_parts.json`: 32 rig/material sections, world vertices in Y-up studs, each with `rig_part`, `material`, and rig `pivot`. It remains a list of coloured triangle meshes; material sections now preserve rig ownership rather than combining both arms/legs into one colour mesh.
+- `final-front.png`, `final-34.png`, `final-throw.png`: inspected 1000 × 1000 renders.
+- `meadow-keeper-throw.blend`: posed review scene; the gray stone is an intentional studio-only throwing prop.
+- `compare.jpg`: final render next to reference crops, including all four supplied Keeper artworks and approved Crow.
+- `iterations.jpg`: five comparison rounds; detailed sheets are `renders/redo1-compare.jpg` through `redo5-compare.jpg`.
+- `validation.json`, `verify-log.txt`: measured export checks.
 
-Deliverables: meadow-keeper.blend, meadow-keeper.fbx, meadow-keeper_parts.json, final-front.png, final-34.png, final-throw.png, iterations.jpg, validation.json. Scripts and round evidence remain here. No game code edits, commits, publishing, or outside-model-folder writes.
+## Iteration evidence
 
-Keystone Roblox Process Playbook was not available through callable tools or searched local coordination files; followed user-supplied art/reference requirements. Owner approval remains UNKNOWN.
+| Round | Measured triangles | Changes and visual findings |
+| --- | ---: | --- |
+| 1 | 1,644 | Replaced white eyes/smile with dark rectangles and stern brow; cream head/cuffs, gold gloves, brown short legs, wide stepped hat and large patch pocket. Shoulders/eyes still narrow/small. |
+| 2 | 2,788 | Broader torso/arms, shirt/sleeve seams, side utility pockets, patch-pocket border, wider brim and band joins. Independent critic: subjective 7/10; flat brim and head/chest balance still weak. |
+| 3 | 3,052 | Larger rectangular eyes, level mouth, warmer cream/gold and greener canvas, thumb blocks, deeper hat brim and straw courses. Head still dominates chest. |
+| 4 | 3,184 | Wider chest, straps and shoulders, wider boot stance, slightly shorter face, warmer hat, flared/notched brim. Two independent critics: subjective 8/10. Raised cuff/stone obscures brim clearance. |
+| 5 | 3,184 | Stronger underside slope; throwing hand rotated outward, stone positioned at palm, torso leaned and feet spread/tilted. Independent recheck: subjective 8.2/10, visual pass; glove/cuff clears brim visually. |
 
-Lessons:
-- When a farmer hat reads as a slab, taper the crown because silhouette matters more than surface detail.
-- When a throw reads as a wave, twist the torso and stagger the feet because a raised arm alone does not convey action.
-- When rig parts contain several colours, export triangles by their material index because first-material grouping loses colour data.
+All five comparison sheets were created and visually inspected before moving on. Review scores are judgments, not measured quality or owner approval. Remaining visible differences: the hat crown is more tiered and the pocket/body construction cleaner and flatter than the painted concept. The requested stern brow and level mouth deliberately add expression to the reference's minimal face.
+
+## Technical verification — measured PASS
+
+- 3,184 total triangles, below 5,000; exactly 11.0 studs in neutral pose.
+- Parts: `Torso`, `Head`, `Hat`, `Arm.L`, `Arm.R`, `Leg.L`, `Leg.R`.
+- Each mesh has closed edges, positive signed volume, and no unapplied modifiers. Parts contain joined overlapping closed components; this does not assert a single fused shell or an intersection-free interior.
+- JSON triangle indices and areas valid. Vertex correspondence and triangle totals checked separately per rig part.
+- FBX reimport yields the same seven named parts and triangle totals; rig pivots match. Maximum vertex deviation approximately 0.00000102 studs.
+- Front is -Y in Blender, +Z in JSON; up is Z in Blender, Y in JSON. JSON basis `(x,z,-y)` preserves winding. One Blender unit represents one stud.
+- Neutral FBX only: separate rigid parts with useful origins, no skinned armature or animation clip requested.
+- Roblox Studio import/runtime: UNTESTED. Throw clearance checked visually, not with an exact triangle collision solver.
+
+## Reproduce
+
+Use `rebuild_keeper.py`, not the superseded `build_keeper.py`:
+
+```powershell
+& C:/dev/codex-lab/tools/blender/blender.exe -b -t 6 -P pumpkin/production/models/meadow-keeper/blender/rebuild_keeper.py -- 5
+& C:/dev/codex-lab/tools/blender/blender.exe -b -t 6 -P pumpkin/production/models/meadow-keeper/blender/verify.py
+```
+
+Earlier `iter*.blend` and `iter*-log.txt` files belong to the rejected attempt. Current round archives start with `redo`.
+
+## Lessons
+
+- When increasing head size, compare it against shoulder width because a large head can weaken the heavy guardian silhouette.
+- When matching a character reference, reuse its eye shape and colour blocks because importing another character's face changes identity.
+- When posing a wide-hat character, inspect throwing clearance from the final camera because a good neutral pose can still create visible overlaps.

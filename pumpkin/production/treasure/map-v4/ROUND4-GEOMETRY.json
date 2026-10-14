@@ -1,0 +1,22 @@
+{
+    "lights_before":  121,
+    "lights_after":  40,
+    "routes_equal":  true,
+    "baseline_scene_sha256":  "59c7c4706ed45655c54e7b7e76e4db7834daf3a63792c9ebfc47e5d98b80a31c",
+    "parts_after":  29409,
+    "optional_gap_spec_z":  [
+                                [
+                                    -35,
+                                    -29
+                                ],
+                                [
+                                    -51,
+                                    -45
+                                ]
+                            ],
+    "gap_width_x":  [
+                        141,
+                        155
+                    ],
+    "review_fix":  "Added 2270 noncolliding shelf/ridge relief and hanging moss parts; gap silhouettes preserved."
+}

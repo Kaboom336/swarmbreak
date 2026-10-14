@@ -1,0 +1,49 @@
+{
+  "scene_sha256": "f91682ef3a35899fb63c5698c299ec39dcde484b9391e431c3053429e073d81d",
+  "place_sha256": "6bc0f3f1b482c73e38c338fb06854bfb69daee80927ea85c893f8f98f6f515ed",
+  "parts": 29409,
+  "lanterns_before": 121,
+  "lanterns_after": 40,
+  "clearance_flags": 0,
+  "samples": 55474,
+  "dead_ends": 0,
+  "unreachable_nodes": [],
+  "route_metadata_unchanged": true,
+  "original_ravine_parts_preserved": 2986,
+  "protected_files_checked": 24,
+  "concurrent_protected_deltas": [
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\guardian-greybox.rbxl",
+      "baseline_sha256": "9a651c986664709a4fa2c744d2e15761cdd39eaf4aedf5288bf4c69a81561a7b",
+      "current_sha256": "9bd153ce675b50ca4f1ab796c156872dfe56c97b59955b82d5faed014d5d0ea2",
+      "author": "UNKNOWN; concurrent delta preserved"
+    }
+  ],
+  "review_rounds": 2,
+  "critic": "ROUND4-CRITIC.md",
+  "proof": "Offline Blender native-part render; approximately reconstructed concept camera, not Studio.",
+  "runtime": "UNKNOWN",
+  "hashes": {
+    "prototype\\meadow-v4.rbxl": "6bc0f3f1b482c73e38c338fb06854bfb69daee80927ea85c893f8f98f6f515ed",
+    "prototype\\meadow-v4\\scene.json": "f91682ef3a35899fb63c5698c299ec39dcde484b9391e431c3053429e073d81d",
+    "prototype\\meadow-v4\\round4.py": "9bd9c910691535ce3752844b87e8ac065bcbe1281dbdeb02eb3850dbf9ca0371",
+    "prototype\\meadow-v4\\round4-fix.py": "ee424d4cc65f6b47136043a36c88e837ee27b85c1b9b694395f5c184e38d86e8",
+    "prototype\\meadow-v4\\round4-check.luau": "46cd5dcbb50352d72cafe0ad5d634d684aa7273a070790aed67a45dd5c3154bf",
+    "prototype\\meadow-v4\\render.py": "1f9e4b59c0e6126f243fa5848f6486e4c41d166104ca382fad1828ef9609d1a4",
+    "prototype\\meadow-v4\\compare.py": "bec8a473e11347d0010858ddb40a830cd9f395c2946236edaff9582c2aa86c04",
+    "treasure\\map-v4\\build-sbs.jpg": "e28373c5e5687d2df0264fc4acfb3806bcf9d4435b37f0dcf75df1a04f51074f",
+    "treasure\\map-v4\\build-top.jpg": "d0c80ed73b005b20e5ca0a87e5fd471f5d812bd35134a5473497ee84662d9188",
+    "treasure\\map-v4\\collision-audit.json": "3a7fe11e669e7236253c98d291ddd40f851dd5525d41ddda16edafe2a319e7fb",
+    "treasure\\map-v4\\routes-graph.json": "21001d43fed869d631093e31961d3e087e391e7fb92f94294e1b19598569c93f",
+    "treasure\\map-v4\\ROUND4-CRITIC.md": "1a6c8a9c5f49b5adb0022ccfe7385b48d311f60bb91d07eee88511aa01350a03",
+    "treasure\\map-v4\\ROUND4-PRESERVATION.json": "bea72d38dc798818275187f3da014712c43ee8ddc777da30ae6438156da10db3",
+    "treasure\\map-v4\\ROUND4-SCRIPT-PRESERVATION.json": "1c48e0761768ea95e27f25cb9f3b3cd1fec825709121173519850d79c6bb8d2c",
+    "treasure\\map-v4\\ROUND4-PROTECTED-HASHES.json": "4dee7361cb5f6c355653fb561c10f07a619d0047db69328fa6f5d0e9031bc30a",
+    "treasure\\map-v4\\render-rrr4b-metadata.json": "c884b17469d475dae762613f80b5b2b60925703e6c255998615bb09d598c8298",
+    "treasure\\map-v4\\build-rrr4b-concept.png": "07327b5073e409a981b2a5e91161e1e62c24059c5567b3a2aa02341a29e1a95b",
+    "treasure\\map-v4\\build-rrr4b-side.png": "cb7e508154511fcc693e4d5999fb3f827a4d5739b938e4e7ee5cdf66b1cc1df1",
+    "treasure\\map-v4\\build-rrr4b-top.png": "6a99139c9f9d3ee9d01919663feb0d3d682e64c3a5559cbfd9041912f01cceb0",
+    "treasure\\map-v4\\build-rrr4b-top-routes.png": "26b45ace37f03226858112c625e087d6f1b8c4ec859f70acad24fb6746a09a82",
+    "treasure\\map-v4\\build-rrr4b-ridge-jumps.png": "3769f297ac6d4c15acf18d4bc20ab2990fc6f943fda815b90b5b2bd85141ebff"
+  }
+}

@@ -1,0 +1,146 @@
+[
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Arena.luau",
+        "Baseline":  "9DAE5EB851160B1338CC76EEA02909BC5C26C4C0E6280532036C299C5307B592",
+        "Current":  "9DAE5EB851160B1338CC76EEA02909BC5C26C4C0E6280532036C299C5307B592",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\check.luau",
+        "Baseline":  "830606C7AAD19A5534FBB2C6635B29AF8FF99C8D4281C5D387388A31DAEFFA75",
+        "Current":  "830606C7AAD19A5534FBB2C6635B29AF8FF99C8D4281C5D387388A31DAEFFA75",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Greybox.client.luau",
+        "Baseline":  "08A7EE8D2741378B70B838A85997065EA1DC2699B5B375BC0D57B993AC2020C3",
+        "Current":  "08A7EE8D2741378B70B838A85997065EA1DC2699B5B375BC0D57B993AC2020C3",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Greybox.server.luau",
+        "Baseline":  "25CA4D8E4B764743F9126733AC5D7F5ED456DCBF5321F4525A29B061ACA89751",
+        "Current":  "25CA4D8E4B764743F9126733AC5D7F5ED456DCBF5321F4525A29B061ACA89751",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\GreyboxConfig.luau",
+        "Baseline":  "227D7C0F4B1B0E280E2242AA533B3F80F086A0459B609C406C82AA4F3A508407",
+        "Current":  "227D7C0F4B1B0E280E2242AA533B3F80F086A0459B609C406C82AA4F3A508407",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\guardian-greybox.rbxl",
+        "Baseline":  "9BD153CE675B50CA4F1AB796C156872DFE56C97B59955B82D5FAED014D5D0EA2",
+        "Current":  "9BD153CE675B50CA4F1AB796C156872DFE56C97B59955B82D5FAED014D5D0EA2",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\home-art-check.luau",
+        "Baseline":  "9A0E7E4C8ECF6799A8D810D14C2BD0F1E95582AC0E9C8676DC5DA224FE8CBE39",
+        "Current":  "9A0E7E4C8ECF6799A8D810D14C2BD0F1E95582AC0E9C8676DC5DA224FE8CBE39",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\home-art-export.luau",
+        "Baseline":  "26AADFFDDD9DD98A6FD12FA2153DF77D25EF8F15DE296A9E53883D340948568A",
+        "Current":  "26AADFFDDD9DD98A6FD12FA2153DF77D25EF8F15DE296A9E53883D340948568A",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\home-round3-check.luau",
+        "Baseline":  "C36C258E5B3F8861CB58516F441FA43EC0DC90400F369BFDB261EF3559DF9685",
+        "Current":  "C36C258E5B3F8861CB58516F441FA43EC0DC90400F369BFDB261EF3559DF9685",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\HomeArt.client.luau",
+        "Baseline":  "C10AE5526FA3B23A8BE8AF91595D8546A7A1D9B0BF4248C856C9CBBC1DD7D7D2",
+        "Current":  "C10AE5526FA3B23A8BE8AF91595D8546A7A1D9B0BF4248C856C9CBBC1DD7D7D2",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\HomeArtGeometry.luau",
+        "Baseline":  "534AA8C4EB30721DAABACA009F67C09216BF855EDC3F9FFE8A6DA218C4C48F16",
+        "Current":  "534AA8C4EB30721DAABACA009F67C09216BF855EDC3F9FFE8A6DA218C4C48F16",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\keeper-check.luau",
+        "Baseline":  "18F3CACA363AC8AEB7D9DD9301887C8876A8D8363FFED4CA988B4D30B79EFEEB",
+        "Current":  "18F3CACA363AC8AEB7D9DD9301887C8876A8D8363FFED4CA988B4D30B79EFEEB",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\keeper-clearance.luau",
+        "Baseline":  "9EBD179FAC54F6659181912B93769D9FDD13BDCFCA3771D0B44046833C5F27C6",
+        "Current":  "9EBD179FAC54F6659181912B93769D9FDD13BDCFCA3771D0B44046833C5F27C6",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Keeper.client.luau",
+        "Baseline":  "1DF855060DDC5E77AB6E885C7B9751A2DB1853849F290DC6D9EB1F020F584C89",
+        "Current":  "1DF855060DDC5E77AB6E885C7B9751A2DB1853849F290DC6D9EB1F020F584C89",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\KeeperAttacks.luau",
+        "Baseline":  "AA7ABE28E7B1E13466DD8365D70FBB09C29C4031398434030D7DE8F8B82565EC",
+        "Current":  "AA7ABE28E7B1E13466DD8365D70FBB09C29C4031398434030D7DE8F8B82565EC",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\KeeperPose.luau",
+        "Baseline":  "C9C6C2B873ECD8A17552651E64F5302D3B4C152CB0149B59464EB668D22383ED",
+        "Current":  "C9C6C2B873ECD8A17552651E64F5302D3B4C152CB0149B59464EB668D22383ED",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\kit-check.luau",
+        "Baseline":  "633D30655183B13812DFC84134C114CE0AA885EB73CA7B3DDE8D1B67F5CDDDB6",
+        "Current":  "633D30655183B13812DFC84134C114CE0AA885EB73CA7B3DDE8D1B67F5CDDDB6",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Layout.luau",
+        "Baseline":  "656EE40B1841802A9F704A609467314F44D3F7ECF0026632A5C254C4EA8F016D",
+        "Current":  "656EE40B1841802A9F704A609467314F44D3F7ECF0026632A5C254C4EA8F016D",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\LoopTest.luau",
+        "Baseline":  "BC9204746AC4C881439E32C76F2032C198A8FE06983EC79EA4814D62739ED9E0",
+        "Current":  "BC9204746AC4C881439E32C76F2032C198A8FE06983EC79EA4814D62739ED9E0",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\LootRules.luau",
+        "Baseline":  "5D819BE80950259BB1C23D9F199F4E10898B2B87A64724D884CD6A70F570C2EB",
+        "Current":  "5D819BE80950259BB1C23D9F199F4E10898B2B87A64724D884CD6A70F570C2EB",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Placement.luau",
+        "Baseline":  "44BC03D87EE3FFA82EDC205A590F571F2D7FCAEDECBBB287642ACCD9F568B206",
+        "Current":  "44BC03D87EE3FFA82EDC205A590F571F2D7FCAEDECBBB287642ACCD9F568B206",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Scene.luau",
+        "Baseline":  "F6F97E330CF4A352B19124445853E35B7C97B7D5C4BEEB4C02F75F69DA2FB414",
+        "Current":  "F6F97E330CF4A352B19124445853E35B7C97B7D5C4BEEB4C02F75F69DA2FB414",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Traps.luau",
+        "Baseline":  "D09A09946B8124177C2225A9F44743BFE4178A522C282C72B1A754325C9010D9",
+        "Current":  "D09A09946B8124177C2225A9F44743BFE4178A522C282C72B1A754325C9010D9",
+        "Unchanged":  true
+    },
+    {
+        "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\TrapTest.luau",
+        "Baseline":  "3BB2C4B44393129722DCF8C4052CF16D64EBD6756B55779F04035B8339D9F1C5",
+        "Current":  "3BB2C4B44393129722DCF8C4052CF16D64EBD6756B55779F04035B8339D9F1C5",
+        "Unchanged":  true
+    }
+]

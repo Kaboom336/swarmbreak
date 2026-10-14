@@ -226,3 +226,8 @@ Next authorized implementation follows [ARENA-1013](ARENA-1013.md), not conflict
 Owner-only questions, not blocking this document task: **escape before60s or portal opens after60s survival?** Default before60s. **Pets remain where placed or wander?** Default anchored/idle. Both choices require owner verdict before dependent future implementation; see arena for consequences.
 
 Lessons: When owner dislikes a reference mechanic, delete that interaction because a successful reference cannot override their game direction. When cargo changes hands, conserve ID/deadline because refreshed timers invite collusion. When plots grow, separate earning slots from positions because more space should not silently inflate income.
+
+## Backlog (Zion 2026-10-13, after current map + Keeper work is done)
+- Cinematic movement: gradual run start (like Huss Valley), sprint, camera FOV/sway, footstep dust; TikTok-able.
+- Cutscenes: island arrival, Keeper wake/warn, acorn steal, escape portal finish; skippable, short.
+- Cave/tunnel: proposed as a covered ROUTE through rock (two exits, skylights, Keeper follows inside, no throws inside), not a hide spot (hide spots stay out, they stall the 60 s chase). Pending Zion's OK.

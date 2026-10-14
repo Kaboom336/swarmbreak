@@ -1,0 +1,88 @@
+{
+  "scene_sha256": "59c7c4706ed45655c54e7b7e76e4db7834daf3a63792c9ebfc47e5d98b80a31c",
+  "place_sha256": "d0708b07ceccfd85c760aa0f260eeb04ca679fec8ebe353afd8cb6ba35d13738",
+  "part_count": 25359,
+  "clearance_flags": 0,
+  "full_width_samples": 55474,
+  "headroom_studs": 20,
+  "max_grade_degrees": 24.567171320601314,
+  "graph_nodes": 23,
+  "graph_edges": 37,
+  "dead_ends": 0,
+  "unreachable_nodes": [],
+  "routes_ESTIMATED": {
+    "west": {
+      "studs": 524.2,
+      "seconds_at_16": 32.8
+    },
+    "bridge": {
+      "studs": 405.0,
+      "seconds_at_16": 25.3
+    },
+    "east": {
+      "studs": 581.3,
+      "seconds_at_16": 36.3
+    },
+    "ravine_exit": {
+      "studs": 131.1,
+      "seconds_at_16": 8.2
+    }
+  },
+  "protected_files_checked": 24,
+  "protected_hash_changes_preserved_author_UNKNOWN": [
+    "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\guardian-greybox.rbxl"
+  ],
+  "protected_deltas": [
+    {
+      "path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\guardian-greybox.rbxl",
+      "baseline_sha256": "058293f0482cc29f3e2e23822b0cc170a1fdc1ff6d4f574b2a7a9b1c07b66938",
+      "current_sha256": "9a651c986664709a4fa2c744d2e15761cdd39eaf4aedf5288bf4c69a81561a7b",
+      "author": "UNKNOWN; concurrent change preserved"
+    }
+  ],
+  "blind_reviews": {
+    "rounds": 3,
+    "static_flow": "PASS",
+    "look": "FAIL: east jump gaps weak at decision points; major rock forms too uniform",
+    "runtime": "PENDING"
+  },
+  "proof": "Offline Blender render of exported native parts; approximate reconstructed concept camera, not Studio.",
+  "static_behavior_tests": "14 executed Lune policy assertions; final place six Luau containers compile; runtime behavior not executed.",
+  "UNKNOWN": [
+    "Studio walking/jumps/fall survival",
+    "real rim retrieval by competing players",
+    "actual traversal times",
+    "Keeper animation/guardian merge",
+    "multiplayer",
+    "device performance"
+  ],
+  "hashes": {
+    "prototype\\meadow-v4.rbxl": "d0708b07ceccfd85c760aa0f260eeb04ca679fec8ebe353afd8cb6ba35d13738",
+    "prototype\\meadow-v4.project.json": "0366e95d3caae4fd5554cdfc0d72e8c46e083cad3df02529b641fa52ddd554d1",
+    "prototype\\meadow-v4\\scene.json": "59c7c4706ed45655c54e7b7e76e4db7834daf3a63792c9ebfc47e5d98b80a31c",
+    "prototype\\meadow-v4\\round3.py": "9a12d97427c5c8f0d1f94903d7d535d14ebc55e0757591ba16c7d4d449e36c6a",
+    "prototype\\meadow-v4\\Links.server.luau": "c138ab1334c38e71558604af68a6324243ffd5913f88b1069ff5630e56dedaa4",
+    "prototype\\meadow-v4\\RavinePolicy.luau": "570c63159f8e8604539d31853d29924f21370ffffdf5c9067c6a225ea7c1e9b9",
+    "prototype\\meadow-v4\\routes-check.py": "1075f79000f59614caeb81974d97c371697d77365097d19a67e51e7d37ffc548",
+    "prototype\\meadow-v4\\render.py": "a756af652f0187d9e9ba1f7a964f6fc2140ed08763e9902b45d9173ab21aef18",
+    "prototype\\meadow-v4\\compare.py": "5566771368f87042f18eb7eabe1c2ce26b088b746ad5a510cbede8affc34f61d",
+    "treasure\\map-v4\\build-sbs.jpg": "691c9211cf111a359e67232e7ad9fc8a63b412a98c551ecd36c077d1898e2e4e",
+    "treasure\\map-v4\\build-top.jpg": "ad27613969c5c798caaef70bde46c886b851c95ecdfd9157765adb0e556ed687",
+    "treasure\\map-v4\\collision-audit.json": "8bf17335bb0dc21219bbe5baa0e380be19ee055b27077527ed5bf9ce53e83224",
+    "treasure\\map-v4\\routes-graph.json": "20b26c782c67f0bc36936f9f3a05bceb2b90d7acf0a63f2270c4cdebe165924d",
+    "treasure\\map-v4\\ROUND3-ARTIFACT-CHECK.log": "b3cbec4dcb7378ff3758875fba389a5983ace06db294aeb618efdbba295642da",
+    "treasure\\map-v4\\ROUND3-POLICY-CHECK.log": "d239bb7ecccf1c0496910e5484a82422d8375b66be4494d627b803cc8084a246",
+    "treasure\\map-v4\\build-rrr3final-concept.png": "3a29e671efb6b7776550dfa79649d59d3341e785d8a3b3455cf09821790ae56c",
+    "treasure\\map-v4\\build-rrr3final-side.png": "1961591bcc08d7a5a50e5fa4020ac3ece898d3cb4939bab38eef2f62d387f4ef",
+    "treasure\\map-v4\\build-rrr3final-top.png": "9b4eabc06e49a57e3ed10ac572707a4c164c69eba16f6e5320def3b91bf4980e",
+    "treasure\\map-v4\\build-rrr3final-top-routes.png": "3655be33849a8d1ea625b23a3512816d2099fd28812c795bff2fd83dc138d728",
+    "treasure\\map-v4\\build-rrr3final-portal.png": "9872a13fff23f224723afc565536c936748e5d60ec51dc652699cc109c92fd01",
+    "treasure\\map-v4\\build-rrr3final-summit.png": "0d33206ac70058ab2da10392d221a3b24c08d48fc027f6e012be9823660a80a4",
+    "treasure\\map-v4\\build-rrr3final-portal-west.png": "526370bf092ec7bcd03879c74750f045a73b23d7fdc6e16798095d0dfedfe463",
+    "treasure\\map-v4\\build-rrr3final-portal-east.png": "d01c6a9072c224f336979e16a2f0a6cf43babda9c64edb5cf095916440528418",
+    "treasure\\map-v4\\build-rrr3final-summit-east.png": "f2adc4a43fb6fec31d99c0c0dddc5faf4a85d665485a581780fb552796dfa255",
+    "treasure\\map-v4\\render-rrr3final-metadata.json": "1a4574ce9e25c6c68f6e96b1050015b43652787bf9786332b6eca267f1764935",
+    "treasure\\map-v4\\ROUTES-CHECK.md": "fd49575fce473983a618f34a7d353434b4b2ec3d73b09c1004b74d1ae26816ea",
+    "treasure\\map-v4\\ROUND3-CRITIC.md": "276a8da47f73cb44e4cbd21dce35f957a65447f51eb5ee02613d76c5f0f800a9"
+  }
+}

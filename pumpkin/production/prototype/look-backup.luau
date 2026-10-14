@@ -1,0 +1,10 @@
+local fs = require("@lune/fs")
+local rb = require("@lune/roblox")
+local path = "prototype/guardian-greybox.pre-look.rbxl"
+assert(not fs.isFile(path), "Refusing to replace the pre-look backup")
+local bytes = fs.readFile("prototype/guardian-greybox.rbxl")
+rb.deserializePlace(bytes)
+fs.writeFile(path, bytes)
+fs.writeFile("prototype/meadow-v4/look-baseline-scene.json", fs.readFile("prototype/meadow-v4/scene.json"))
+assert(fs.readFile(path) == bytes, "Backup differs")
+print("PASS pre-look backup byte equality and deserialization")

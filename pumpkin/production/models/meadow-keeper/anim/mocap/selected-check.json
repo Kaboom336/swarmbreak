@@ -1,0 +1,71 @@
+{
+  "idle": {
+    "minimumBootY": 0.0009909551590681076,
+    "checkedSamples": 658
+  },
+  "patrol": {
+    "minimumBootY": 0.0006945296190679073,
+    "checkedSamples": 217
+  },
+  "chase": {
+    "minimumBootY": 0.018970273435115814,
+    "checkedSamples": 239
+  },
+  "return": {
+    "minimumBootY": 0.0008247961523011327,
+    "checkedSamples": 232
+  },
+  "warn": {
+    "minimumBootY": -1.044684648513794,
+    "checkedSamples": 218
+  },
+  "throw": {
+    "minimumBootY": 0.0,
+    "checkedSamples": 278
+  },
+  "stun": {
+    "minimumBootY": 0.0009565120562911034,
+    "checkedSamples": 272
+  },
+  "celebrate": {
+    "minimumBootY": -3.259629011154175e-08,
+    "checkedSamples": 314
+  },
+  "lob": {
+    "0.55": {
+      "logBottom": 10.027764320373535,
+      "headHatTop": 10.07033920288086,
+      "overheadMargin": -0.04257488250732422,
+      "socket": [
+        5.960464477539062e-07,
+        13.027764320373535,
+        0.5819051265716553
+      ]
+    },
+    "0.62": {
+      "logBottom": 9.937243461608887,
+      "headHatTop": 10.306889533996582,
+      "overheadMargin": -0.3696460723876953,
+      "socket": [
+        -5.960464477539062e-07,
+        12.937243461608887,
+        2.439739227294922
+      ]
+    },
+    "minimumBootY": 0.015000118874013424,
+    "checkedSamples": 222,
+    "heldLogHeadHatTriangleContacts": []
+  },
+  "fan": {
+    "minimumBootY": 0.0,
+    "checkedSamples": 278
+  },
+  "slam": {
+    "minimumBootY": -0.006292179226875305,
+    "checkedSamples": 299
+  },
+  "dash": {
+    "minimumBootY": -0.9227890372276306,
+    "checkedSamples": 134
+  }
+}

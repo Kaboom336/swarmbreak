@@ -1,11 +1,21 @@
 {
   "meadow-keeper": {
-    "triangles": 1532,
-    "limit": 4000,
+    "triangles": 3184,
+    "limit": 5000,
     "height_studs": 11.0,
-    "color_parts": 10,
+    "rig_material_parts": 32,
+    "rig_triangles": {
+      "Arm.L": 352,
+      "Arm.R": 352,
+      "Hat": 632,
+      "Head": 264,
+      "Leg.L": 176,
+      "Leg.R": 176,
+      "Torso": 1232
+    },
     "fbx_meshes": 7,
-    "fbx_max_position_error_studs": 1.0941957953036763e-06,
+    "rig_pivots_roundtrip": "PASS",
+    "fbx_max_position_error_studs": 1.0185245855609537e-06,
     "json_basis": "x,z,-y (Y-up, front +Z, determinant +1 preserves CCW)",
     "closed_outward_meshes": [
       {

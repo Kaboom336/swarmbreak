@@ -1,0 +1,18 @@
+﻿{
+    "state":  "PASS",
+    "backup_sha256":  "FAA80323531F8E690D624C973129413C53DE1C342B72A629EA6637294C8C1954",
+    "place_sha256":  "AED7A19D4382C1888DF20120B08F09D6F9120A8811140710A97AE3C4030C53EF",
+    "scene_sha256":  "7B8FFFDCB0AB7B90F20BA1F3024A63D2297726EB4F43C65CF3E86A0DACD2D286",
+    "collision_violations":  0,
+    "merge_audit_state":  "PASS",
+    "render_manifest_sha256":  "7b8fffdcb0ab7b90f20ba1f3024a63d2297726eb4f43c65cf3e86a0dacd2d286",
+    "before_after_jpg_sha256":  "309581B368282CC0F98585651316BCAA7C9027F892C63D4F2E2C0618C4CFC7D9",
+    "unchanged_live_test_expectations":  [
+                                             "LoopTest.run",
+                                             "LoopTest.pvp",
+                                             "TrapTest.exercise"
+                                         ],
+    "live_tests":  "UNKNOWN / NOT RUN",
+    "commit":  "NONE",
+    "publish":  "NONE"
+}

@@ -1,0 +1,18 @@
+{
+  "M": {
+    "arm": "Punch_Cross",
+    "legs": "Walk_Loop",
+    "sourceExtensionPhase": 0.44,
+    "libraryArmWeight": 0.35,
+    "release": 0.62,
+    "rigidParts": 7
+  },
+  "Q": {
+    "arm": "Sword_Attack",
+    "legs": "Walk_Loop",
+    "sourceExtensionPhase": 0.28,
+    "libraryArmWeight": 0.35,
+    "release": 0.62,
+    "rigidParts": 7
+  }
+}

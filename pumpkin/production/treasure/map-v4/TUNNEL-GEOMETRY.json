@@ -1,0 +1,13 @@
+{
+  "scene_sha256": "ebc9fbecafd645aed8589cb52711a0bb92586b0c04ab8a633288019615ae9c87",
+  "baseline_sha256": "22e4cfa972cdca6cd61c4def00bbc6a89414ad9c5231616e973c595731c43c8d",
+  "guardian_sha256": "9bd153ce675b50ca4f1ab796c156872dfe56c97b59955b82d5faed014d5d0ea2",
+  "parts": 26612,
+  "wall_voxels": 204,
+  "west_reference_studs": 119.06573108904516,
+  "west_reference_seconds_ESTIMATED": 7.441608193065322,
+  "near_tunnel_studs": 105,
+  "near_tunnel_seconds_ESTIMATED": 8.0625,
+  "near_time_saving_seconds_ESTIMATED": -0.6208918069346776,
+  "rate_status": "UNKNOWN measured hit/escape rates; targets only"
+}

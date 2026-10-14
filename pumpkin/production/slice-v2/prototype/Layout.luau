@@ -371,4 +371,7 @@ function Layout.selfTest(config, log)
 	end
 	log("PASS 50 seeds; fixed v2 contract; measured 3 walking routes; slopes/gaps")
 end
+if workspace and workspace:GetAttribute("UseMeadowV4") == true then
+	require(game:GetService("ReplicatedStorage").MeadowV4.Gameplay).install(Layout)
+end
 return Layout

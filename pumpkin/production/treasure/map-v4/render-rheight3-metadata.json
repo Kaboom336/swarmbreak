@@ -1,0 +1,48 @@
+{
+  "manifest_sha256": "8e0221953434b78f64f83ef2c80e7842ba541365dd8f41262971f0dee6d4fff3",
+  "part_count": 23213,
+  "source": "Exact native parts manifest; material sRGB converted to scene linear; opaque box faces plus native sphere/cylinder geometry. Offline Cycles proxy, not Studio.",
+  "concept_camera": {
+    "eye": [
+      0,
+      -420,
+      205
+    ],
+    "target": [
+      0,
+      30,
+      -15
+    ],
+    "projection": "perspective",
+    "lens_mm": 43,
+    "sensor_width_mm": 36
+  },
+  "side_camera": {
+    "eye": [
+      -390,
+      -245,
+      72
+    ],
+    "target": [
+      0,
+      35,
+      -14
+    ],
+    "projection": "orthographic",
+    "scale": 425
+  },
+  "top_camera": {
+    "eye": [
+      0,
+      0,
+      600
+    ],
+    "target": [
+      0,
+      0,
+      0
+    ],
+    "projection": "orthographic",
+    "scale": 410
+  }
+}

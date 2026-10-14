@@ -1,0 +1,45 @@
+return {
+	Schema = 1,
+	Store = "TreasureQA_Core_v1",
+	Lease = 180,
+	Autosave = 45,
+	Retries = 3,
+	OpenHold = 0.6,
+	RevealSeconds = 2.2,
+	MaxPets = 8,
+	Rarities = {
+		{
+			name = "Common",
+			weight = 70,
+			pet = "Pup",
+			model = "Pup",
+			rate = 1,
+			color = { 165, 255, 103 },
+		},
+		{
+			name = "Rare",
+			weight = 25,
+			pet = "Crow",
+			model = "Crow",
+			rate = 4,
+			color = { 66, 190, 255 },
+		},
+		{
+			name = "Epic",
+			weight = 5,
+			pet = "Golden Pup",
+			model = "Pup",
+			rate = 8,
+			color = { 188, 103, 255 },
+		},
+		-- GDD Meadow has no Legendary drop. Explicit zero weight keeps its contract.
+		{
+			name = "Legendary",
+			weight = 0,
+			pet = "Golden Crow",
+			model = "Crow",
+			rate = 16,
+			color = { 255, 205, 65 },
+		},
+	},
+}

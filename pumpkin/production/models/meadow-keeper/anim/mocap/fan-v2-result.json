@@ -1,0 +1,26 @@
+{
+  "selected": "T",
+  "productionChanged": false,
+  "gate": 6,
+  "scores": {
+    "M": [
+      6.2,
+      5
+    ],
+    "Q": [
+      5.7,
+      6
+    ],
+    "T": [
+      5,
+      4
+    ]
+  },
+  "unchangedSources": {
+    "clips.json": "644b865b89e0d1c6e3135418e0fe35ec808e65ded1ba59f85587cac6097de7a9",
+    "Clips.luau": "8a80a1a261090e3250a275cea7a703c522a668042b2a8d98807b3b058af3c1ce",
+    "MeadowKeeperAnimations.rbxmx": "a9d1e4f3936680716a7702622fe6c83a88df6b23c2aa531a88b2d4e4df5be8cb"
+  },
+  "preview": "fan-v2.gif",
+  "strip": "fan-v2-comparison.jpg"
+}

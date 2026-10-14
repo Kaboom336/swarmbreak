@@ -1,0 +1,56 @@
+{
+  "Studio_continuous_sweep": "UNKNOWN",
+  "clips": {
+    "chase": {
+      "max_height": 11.223766326904297,
+      "max_width": 10.513020038604736,
+      "swept_horizontal_diameter": 12.727380542571499
+    },
+    "dash": {
+      "max_height": 11.050000190734863,
+      "max_width": 11.528416633605957,
+      "swept_horizontal_diameter": 14.536455137559534
+    },
+    "fan": {
+      "max_height": 11.052515983581543,
+      "max_width": 10.157962799072266,
+      "swept_horizontal_diameter": 14.090604230493641
+    },
+    "idle": {
+      "max_height": 10.86653995513916,
+      "max_width": 8.558895349502563,
+      "swept_horizontal_diameter": 12.294219688648663
+    },
+    "lob": {
+      "max_height": 12.23220157623291,
+      "max_width": 10.635839462280273,
+      "swept_horizontal_diameter": 13.438082363295669
+    },
+    "patrol": {
+      "max_height": 11.255297660827637,
+      "max_width": 8.42433786392212,
+      "swept_horizontal_diameter": 12.259279733930796
+    },
+    "return": {
+      "max_height": 11.423924446105957,
+      "max_width": 8.430572032928467,
+      "swept_horizontal_diameter": 11.392998147397403
+    },
+    "slam": {
+      "max_height": 14.430150985717773,
+      "max_width": 11.955224990844727,
+      "swept_horizontal_diameter": 17.83644895822216
+    },
+    "warn": {
+      "max_height": 11.364309310913086,
+      "max_width": 13.277187824249268,
+      "swept_horizontal_diameter": 16.178441170670833
+    }
+  },
+  "navigation_body": {
+    "agent_radius": 2,
+    "height": 11,
+    "width": 4
+  },
+  "sampled_poses_per_clip": 123
+}

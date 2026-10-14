@@ -1,0 +1,113 @@
+{
+  "state": "PASS",
+  "method": "Exact vertical OBB intervals; full width at <=1 stud sample spacing; nominal support tolerance0.75 and 20 stud headroom. Intersecting shoulder/junction slabs remain FAIL even if potentially walkable; Studio motion cannot be inferred. Does not simulate NPC swept bounds or continuous physics.",
+  "manifest_sha256": "7b8fffdcb0ab7b90f20ba1f3024a63d2297726eb4f43c65cf3e86a0dacd2d286",
+  "part_count": 34552,
+  "sample_count": 57893,
+  "violation_count_recorded": 0,
+  "nominal_surface_difference_count": 0,
+  "max_ramp_degrees": 24.567171320601314,
+  "routes": {
+    "summit_radial": {
+      "length_studs": 30.0,
+      "seconds_at_16_ESTIMATED": 1.875,
+      "width": 18
+    },
+    "spiral": {
+      "length_studs": 196.847,
+      "seconds_at_16_ESTIMATED": 12.303,
+      "width": 18
+    },
+    "fork_link": {
+      "length_studs": 16.589,
+      "seconds_at_16_ESTIMATED": 1.037,
+      "width": 18
+    },
+    "shelf": {
+      "length_studs": 257.889,
+      "seconds_at_16_ESTIMATED": 16.118,
+      "width": 18
+    },
+    "shelf_link": {
+      "length_studs": 53.664,
+      "seconds_at_16_ESTIMATED": 3.354,
+      "width": 18
+    },
+    "west": {
+      "length_studs": 280.724,
+      "seconds_at_16_ESTIMATED": 17.545,
+      "width": 18
+    },
+    "bridge": {
+      "length_studs": 85.298,
+      "seconds_at_16_ESTIMATED": 5.331,
+      "width": 18
+    },
+    "bridge_south": {
+      "length_studs": 76.265,
+      "seconds_at_16_ESTIMATED": 4.767,
+      "width": 18
+    },
+    "east": {
+      "length_studs": 119.405,
+      "seconds_at_16_ESTIMATED": 7.463,
+      "width": 18
+    },
+    "east_climb": {
+      "length_studs": 82.0,
+      "seconds_at_16_ESTIMATED": 5.125,
+      "width": 18
+    },
+    "east_descent": {
+      "length_studs": 136.505,
+      "seconds_at_16_ESTIMATED": 8.532,
+      "width": 18
+    },
+    "north_crosslink": {
+      "length_studs": 160.161,
+      "seconds_at_16_ESTIMATED": 10.01,
+      "width": 18
+    },
+    "south_crosslink": {
+      "length_studs": 133.657,
+      "seconds_at_16_ESTIMATED": 8.354,
+      "width": 18
+    },
+    "portal_north": {
+      "length_studs": 58.948,
+      "seconds_at_16_ESTIMATED": 3.684,
+      "width": 18
+    },
+    "ravine_ramp": {
+      "length_studs": 131.058,
+      "seconds_at_16_ESTIMATED": 8.191,
+      "width": 18
+    },
+    "ravine_floor_loop": {
+      "length_studs": 182.0,
+      "seconds_at_16_ESTIMATED": 11.375,
+      "width": 18
+    },
+    "jump_access": {
+      "length_studs": 122.0,
+      "seconds_at_16_ESTIMATED": 7.625,
+      "width": 18
+    },
+    "jump_recovery": {
+      "length_studs": 90.77,
+      "seconds_at_16_ESTIMATED": 5.673,
+      "width": 18
+    },
+    "tunnel_trunk": {
+      "length_studs": 105.0,
+      "seconds_at_16_ESTIMATED": 6.562,
+      "width": 14
+    },
+    "tunnel_south": {
+      "length_studs": 49.305,
+      "seconds_at_16_ESTIMATED": 3.082,
+      "width": 14
+    }
+  },
+  "violations": []
+}

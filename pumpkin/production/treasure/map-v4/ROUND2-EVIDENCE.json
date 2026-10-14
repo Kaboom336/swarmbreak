@@ -1,0 +1,97 @@
+{
+  "manifest_sha256": "f99e2375986f80071222a227ca1fcde8a4c8f9f715ada655a4bc509e9bcd35bb",
+  "place_sha256": "778c59796ed31097d01a96ab3986b779e04d7c8658ecfb41e3c97a4389d02f3d",
+  "comparison_sha256": "10a72de632b18b800eb4a733a2eb4aa4b8d68014c7ce910036b4dfe590195aec",
+  "part_count": 25941,
+  "audit": "PASS",
+  "flags": 0,
+  "samples": 55360,
+  "ramp_max_degrees": 23.198590513648185,
+  "min_clear_lane_width": 18,
+  "headroom_studs": 20,
+  "route_estimates": {
+    "West main": {
+      "studs_ESTIMATED": 524.2,
+      "seconds_at_16_ESTIMATED": 32.8
+    },
+    "Centre bridge": {
+      "studs_ESTIMATED": 405.0,
+      "seconds_at_16_ESTIMATED": 25.3
+    },
+    "East walking": {
+      "studs_ESTIMATED": 581.3,
+      "seconds_at_16_ESTIMATED": 36.3
+    },
+    "Shelf walking + west": {
+      "studs_ESTIMATED": 622.3,
+      "seconds_at_16_ESTIMATED": 38.9
+    },
+    "Shelf walking + bridge": {
+      "studs_ESTIMATED": 503.1,
+      "seconds_at_16_ESTIMATED": 31.4
+    }
+  },
+  "portal_visibility_static_OBB": {
+    "Keeper hat": {
+      "eye_XYZ": [
+        0,
+        5,
+        128
+      ],
+      "target_XYZ": [
+        -7,
+        61,
+        -114
+      ],
+      "blocking_boxes": [],
+      "state": "CLEAR"
+    },
+    "Camp banner left": {
+      "eye_XYZ": [
+        0,
+        5,
+        128
+      ],
+      "target_XYZ": [
+        -12,
+        60,
+        -126
+      ],
+      "blocking_boxes": [],
+      "state": "CLEAR"
+    },
+    "Camp banner right": {
+      "eye_XYZ": [
+        0,
+        5,
+        128
+      ],
+      "target_XYZ": [
+        16,
+        60,
+        -126
+      ],
+      "blocking_boxes": [],
+      "state": "CLEAR"
+    }
+  },
+  "protected_checked": 24,
+  "protected_hash_changes": [
+    "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\keeper-check.luau",
+    "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\keeper-clearance.luau",
+    "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\Keeper.client.luau"
+  ],
+  "protected_mutation_scope": "Only prototype/meadow-v4, prototype/meadow-v4.rbxl and treasure/map-v4 were written. Concurrent changes, if any, preserved; author UNKNOWN.",
+  "proof": "Offline Blender render of the exported native-part manifest. Approximate reconstructed concept camera; not Studio.",
+  "UNKNOWN": [
+    "Studio traversal and actual timing",
+    "animated Keeper clearance",
+    "cargo camera",
+    "multiplayer",
+    "device performance"
+  ],
+  "lessons": [
+    "When doubling heights, lengthen ramps before dressing because lane intersections otherwise obstruct headroom.",
+    "When a camera reference has no metadata, compare whole-object framing because matching one landmark can crop the rest."
+  ]
+}

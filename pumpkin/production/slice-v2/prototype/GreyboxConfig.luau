@@ -1,4 +1,4 @@
-return {
+local config = {
 	ItemName = "LOOT", -- The only display-name source.
 	RecipeVersion = 7,
 	HomeSpawnZ = 16,
@@ -89,3 +89,15 @@ return {
 		I11 = { width = 36, depth = 32 }, -- Two 12 decks + 10 gap need at least 34.
 	},
 }
+if workspace and workspace:GetAttribute("UseMeadowV4") == true then
+	config.MeadowV4 = true
+	config.ItemName = "Golden Acorn"
+	config.IslandSize = 352
+	config.GuardianLeashRadius = 330
+	config.GuardianGuardOffset = { x = -7, y = 48, z = 99 }
+	config.Nest = { x = 0, y = 48, z = 96 }
+	config.EntryZ = -136
+end
+config.Nest = config.Nest or { x = 0, y = 8, z = 32 }
+config.EntryZ = config.EntryZ or -58
+return config

@@ -1,0 +1,5 @@
+﻿{
+    "render_sha256":  "c836b1bd6cbc2bf9919c7f9f89e468a5ff0b2a23351fd6b4ea5500892bf6404e",
+    "scene_sha256":  "ebc9fbecafd645aed8589cb52711a0bb92586b0c04ab8a633288019615ae9c87",
+    "method":  "Native System.Drawing over actual orthographic scene render, source X,Z,Y centerline mapping"
+}

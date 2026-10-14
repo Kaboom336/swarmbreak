@@ -1,0 +1,8 @@
+{
+  "Studio_runtime": "UNKNOWN",
+  "assertions": 47,
+  "existing_sources": "byte-equal except documented isolated Links adapter and below-roof drop ray",
+  "matched_native_parts": 26612,
+  "state": "PASS",
+  "tolerance_studs": 0.0001
+}

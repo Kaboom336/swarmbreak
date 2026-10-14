@@ -1,0 +1,48 @@
+{
+  "state": "PASS",
+  "scene_sha256": "ebc9fbecafd645aed8589cb52711a0bb92586b0c04ab8a633288019615ae9c87",
+  "method": "Route graph centerline contacts; endpoint cluster tolerance1stud. Two exits excluding entrance. Full-width static collision audit separate; Studio continuous egress UNKNOWN.",
+  "exit_mouth_clusters": 2,
+  "extra_midbranch_surface_contacts": 0,
+  "contacts": [
+    {
+      "point": [
+        -76.0,
+        27.0,
+        0.0
+      ],
+      "routes": [
+        "north_crosslink",
+        "tunnel_trunk"
+      ],
+      "cluster": "entrance",
+      "distance_to_cluster": 0.0
+    },
+    {
+      "point": [
+        -76.0,
+        -78.0,
+        0.0
+      ],
+      "routes": [
+        "south_crosslink",
+        "tunnel_trunk"
+      ],
+      "cluster": "near",
+      "distance_to_cluster": 0.0
+    },
+    {
+      "point": [
+        -61.8671875,
+        -98.953125,
+        0
+      ],
+      "routes": [
+        "south_crosslink",
+        "tunnel_south"
+      ],
+      "cluster": "south",
+      "distance_to_cluster": 0.0
+    }
+  ]
+}

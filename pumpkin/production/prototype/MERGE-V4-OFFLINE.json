@@ -1,0 +1,134 @@
+{
+  "Studio_runtime": "UNKNOWN",
+  "compiled_containers": 36,
+  "graph_dead_ends": 0,
+  "graph_unreachable": 0,
+  "max_grade": 24.567171320601314,
+  "merged_geometry_parts": 34538,
+  "parts": 34552,
+  "routes": {
+    "bridge": {
+      "carry_ESTIMATED": 6.318386761581262,
+      "length": 85.29822128134704,
+      "walk_ESTIMATED": 5.33113883008419,
+      "width": 18
+    },
+    "bridge_south": {
+      "carry_ESTIMATED": 5.649275590331598,
+      "length": 76.26522046947657,
+      "walk_ESTIMATED": 4.766576279342286,
+      "width": 18
+    },
+    "east": {
+      "carry_ESTIMATED": 8.844850264089247,
+      "length": 119.40547856520483,
+      "walk_ESTIMATED": 7.462842410325302,
+      "width": 18
+    },
+    "east_climb": {
+      "carry_ESTIMATED": 6.074074074074074,
+      "length": 82,
+      "walk_ESTIMATED": 5.125,
+      "width": 18
+    },
+    "east_descent": {
+      "carry_ESTIMATED": 10.111487581117215,
+      "length": 136.5050823450824,
+      "walk_ESTIMATED": 8.53156764656765,
+      "width": 18
+    },
+    "fork_link": {
+      "carry_ESTIMATED": 1.2288276655337256,
+      "length": 16.589173484705295,
+      "walk_ESTIMATED": 1.036823342794081,
+      "width": 18
+    },
+    "jump_access": {
+      "carry_ESTIMATED": 9.037037037037036,
+      "length": 122,
+      "walk_ESTIMATED": 7.625,
+      "width": 18
+    },
+    "jump_recovery": {
+      "carry_ESTIMATED": 6.723728119575481,
+      "length": 90.770329614269,
+      "walk_ESTIMATED": 5.673145600891813,
+      "width": 18
+    },
+    "north_crosslink": {
+      "carry_ESTIMATED": 11.86381080120444,
+      "length": 160.16144581625994,
+      "walk_ESTIMATED": 10.010090363516246,
+      "width": 18
+    },
+    "portal_north": {
+      "carry_ESTIMATED": 4.366545528306035,
+      "length": 58.94836463213147,
+      "walk_ESTIMATED": 3.684272789508217,
+      "width": 18
+    },
+    "ravine_floor_loop": {
+      "carry_ESTIMATED": 13.481481481481481,
+      "length": 182,
+      "walk_ESTIMATED": 11.375,
+      "width": 18
+    },
+    "ravine_ramp": {
+      "carry_ESTIMATED": 9.708018344737033,
+      "length": 131.05824765394993,
+      "walk_ESTIMATED": 8.19114047837187,
+      "width": 18
+    },
+    "shelf": {
+      "carry_ESTIMATED": 19.102896531728717,
+      "length": 257.8891031783377,
+      "walk_ESTIMATED": 16.118068948646105,
+      "width": 18
+    },
+    "shelf_link": {
+      "carry_ESTIMATED": 3.9751267349403423,
+      "length": 53.66421092169462,
+      "walk_ESTIMATED": 3.3540131826059136,
+      "width": 18
+    },
+    "south_crosslink": {
+      "carry_ESTIMATED": 9.90053105346239,
+      "length": 133.65716922174227,
+      "walk_ESTIMATED": 8.353573076358892,
+      "width": 18
+    },
+    "spiral": {
+      "carry_ESTIMATED": 14.581228539452551,
+      "length": 196.84658528260945,
+      "walk_ESTIMATED": 12.30291158016309,
+      "width": 18
+    },
+    "summit_radial": {
+      "carry_ESTIMATED": 2.2222222222222223,
+      "length": 30,
+      "walk_ESTIMATED": 1.875,
+      "width": 18
+    },
+    "tunnel_south": {
+      "carry_ESTIMATED": 3.6521978092549428,
+      "length": 49.304670424941726,
+      "walk_ESTIMATED": 3.081541901558858,
+      "width": 14
+    },
+    "tunnel_trunk": {
+      "carry_ESTIMATED": 7.777777777777778,
+      "length": 105,
+      "walk_ESTIMATED": 6.5625,
+      "width": 14
+    },
+    "west": {
+      "carry_ESTIMATED": 20.7943723277885,
+      "length": 280.72402642514476,
+      "walk_ESTIMATED": 17.545251651571547,
+      "width": 18
+    }
+  },
+  "samples": 60101,
+  "state": "PASS",
+  "violations": {}
+}

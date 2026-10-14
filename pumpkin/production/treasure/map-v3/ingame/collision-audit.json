@@ -1,0 +1,127 @@
+{
+  "A": {
+    "conflicts": [
+      {
+        "height": 1,
+        "lane": "Workspace.MeadowA.JumpRecoveryEast",
+        "obstacle": "Workspace.MeadowA.OptionalJumpCutWithWalkingBypass.LandingWalkingRamp",
+        "offset": -2,
+        "position": [
+          -14,
+          -3,
+          -76
+        ]
+      },
+      {
+        "height": 1,
+        "lane": "Workspace.MeadowA.OptionalJumpCutWithWalkingBypass.GroundBypass",
+        "obstacle": "Workspace.MeadowA.JumpRecoveryWest",
+        "offset": -2,
+        "position": [
+          -38,
+          -3,
+          -76
+        ]
+      },
+      {
+        "height": 1,
+        "lane": "Workspace.MeadowA.OptionalJumpCutWithWalkingBypass.GroundBypass",
+        "obstacle": "Workspace.MeadowA.OptionalJumpCutWithWalkingBypass.LandingWalkingRamp",
+        "offset": -2,
+        "position": [
+          -20,
+          -3,
+          -76
+        ]
+      },
+      {
+        "height": 1,
+        "lane": "Workspace.MeadowA.OptionalJumpCutWithWalkingBypass.GroundBypass",
+        "obstacle": "Workspace.MeadowA.JumpRecoveryEast",
+        "offset": -2,
+        "position": [
+          -10,
+          -3,
+          -76
+        ]
+      }
+    ],
+    "method": "Static sampled lane volume, hat width11 and height11.5; not physics/NPC proof"
+  },
+  "B": {
+    "conflicts": [
+      {
+        "height": 1,
+        "lane": "Workspace.MeadowB.OrangeShelfDescent.OrangeShelfDescent7",
+        "obstacle": "Workspace.MeadowB.GreenSpiral16Wide_OneAndQuarterTurns.Spiral.Spiral25",
+        "offset": 2,
+        "position": [
+          0,
+          10.5,
+          33.25
+        ]
+      },
+      {
+        "height": 1,
+        "lane": "Workspace.MeadowB.WestFootHill.WestFootHillNorthRamp",
+        "obstacle": "Workspace.MeadowB.GreenSpiral16Wide_OneAndQuarterTurns.Spiral.Spiral17Skirt2",
+        "offset": 2,
+        "position": [
+          -58,
+          0,
+          1
+        ]
+      },
+      {
+        "height": 1,
+        "lane": "Workspace.MeadowB.Height12CrossLink.Height12CrossLink9",
+        "obstacle": "Workspace.MeadowB.Height12CrossLink.Height12CrossLink8",
+        "offset": -2,
+        "position": [
+          39.33333206176758,
+          12.666666984558105,
+          30
+        ]
+      },
+      {
+        "height": 1,
+        "lane": "Workspace.MeadowB.OptionalJumpCutWithWalkingBypass.GroundBypass",
+        "obstacle": "Workspace.MeadowB.JumpRecoveryWest",
+        "offset": -2,
+        "position": [
+          38,
+          -3,
+          -88
+        ]
+      },
+      {
+        "height": 1,
+        "lane": "Workspace.MeadowB.OptionalJumpCutWithWalkingBypass.GroundBypass",
+        "obstacle": "Workspace.MeadowB.OptionalJumpCutWithWalkingBypass.LandingWalkingRamp",
+        "offset": -2,
+        "position": [
+          56,
+          -3,
+          -88
+        ]
+      }
+    ],
+    "method": "Static sampled lane volume, hat width11 and height11.5; not physics/NPC proof"
+  },
+  "C": {
+    "conflicts": [
+      {
+        "height": 1,
+        "lane": "Workspace.MeadowC.WestCoveredCauseway18.WestCoveredCauseway187",
+        "obstacle": "Workspace.MeadowC.WestHill.WestHillSouthRamp",
+        "offset": -2,
+        "position": [
+          -67.66666412353516,
+          -0.6666667461395264,
+          8
+        ]
+      }
+    ],
+    "method": "Static sampled lane volume, hat width11 and height11.5; not physics/NPC proof"
+  }
+}
