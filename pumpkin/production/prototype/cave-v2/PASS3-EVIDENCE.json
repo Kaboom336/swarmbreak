@@ -1,0 +1,34 @@
+{
+    "utc":  "2026-10-15T01:49:10.1160107Z",
+    "artifact":  "prototype/cave-v2.rbxl",
+    "backup":  "prototype/cave-v2/pass3-backup-20261014-214253",
+    "checked":  [
+                    "Rojo + documented Lune build; all embedded scripts O0/O1/O2 and binary roundtrip",
+                    "production drive mocks: normal/delayed frames; jump/fall/intact span; approach repair lock; repeated reset; retained injected error",
+                    "backed-up pre-fix production reproduction: 0.3-second frames -\u003e End at ~48s and Dock without Flight/Landing",
+                    "production board cooldown/weld mocks",
+                    "real runner PASS/FAIL/watchdog + LoopTest/CartRideTest reset/snapshot cleanup mocks",
+                    "shared core and main joint drop regressions",
+                    "artifact-only scene/mount/kit/query/floor/policy check",
+                    "runtime Selene: 0 errors, 0 warnings"
+                ],
+    "liveStudio":  "UNKNOWN after patch; prior PASS/FAIL supplied by owner",
+    "hashes":  [
+                   {
+                       "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\cave-v2.rbxl",
+                       "Hash":  "D2F09D511A9813E802D7DF899BB16B3EE6F346C5A5309D6FB7E74E48896EECC9"
+                   },
+                   {
+                       "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\cave-v2\\pass3-backup-20261014-214253\\cave-v2.rbxl",
+                       "Hash":  "5B1B0C517419B0E9A22FDED57639EA96981C258F1C17A35D9383F644362B7947"
+                   },
+                   {
+                       "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\slice-v2\\prototype\\guardian-greybox.rbxl",
+                       "Hash":  "FB8308C4AB4CD75C822F4ABFD3E739F15B1E03BF8D0D07A0F5BE6415A83175F3"
+                   },
+                   {
+                       "Path":  "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4.rbxl",
+                       "Hash":  "CD7E5DC4475F504F84F3B92814837A7B5D577DE7293C1BC213A83A0118B1B134"
+                   }
+               ]
+}

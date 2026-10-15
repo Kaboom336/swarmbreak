@@ -1,0 +1,580 @@
+local S = script.Parent
+local Http = game:GetService("HttpService")
+local Run = game:GetService("RunService")
+if not Run:IsStudio() then
+	return
+end
+local map = workspace.CaveV2
+local Drops = require(S.CaveDrops)
+local D = require(S.CaveReachableDrops)
+local P = require(S.CavePolicy)
+local Plan = require(S.KitPlan)
+local data = require(game.ReplicatedStorage.CaveRouteData)
+local function vec(p)
+	return Vector3.new(p[1], p[3], -p[2])
+end
+local function await(predicate, seconds, label)
+	local deadline = os.clock() + seconds
+	repeat
+		local result = predicate()
+		if result then
+			return result
+		end
+		task.wait(0.05)
+	until os.clock() > deadline
+	error("timeout: " .. label)
+end
+local function ready()
+	await(function()
+		return map:GetAttribute("KitSwapVersion") == 2
+	end, 180, "kits2 swap")
+	local templates = game.ServerStorage:FindFirstChild("KitTemplates")
+	assert(templates and templates:GetAttribute("Loaded") == 74, "kits2 must load 74/74")
+	Drops.refresh()
+end
+local failures, total, logged = {}, 0, 0
+local function failure(reason, fields)
+	total += 1
+	fields = fields or {}
+	fields.reason = tostring(reason)
+	if #failures < 30 then
+		table.insert(failures, fields)
+	end
+	if logged < 30 then
+		warn("[CaveStudioPass] " .. Http:JSONEncode(fields))
+		logged += 1
+	end
+end
+local function player()
+	local players = game.Players:GetPlayers()
+	assert(#players == 1, "one Studio player required")
+	local pl = players[1]
+	assert(pl.Character, "character required")
+	return pl, pl.Character:WaitForChild("HumanoidRootPart"), pl.Character:FindFirstChildOfClass("Humanoid")
+end
+local function move(root, hum, goal)
+	local untilTime = os.clock() + 30
+	repeat
+		assert(hum.Health > 0, "avatar died")
+		hum:MoveTo(goal)
+		task.wait(0.1)
+		assert(os.clock() < untilTime, "walk/recovery >30s at " .. tostring(goal))
+	until (Vector3.new(root.Position.X, 0, root.Position.Z) - Vector3.new(goal.X, 0, goal.Z)).Magnitude < 2.5
+		and math.abs(root.Position.Y - goal.Y) < 4.5
+end
+local function walk(root, hum, points)
+	for i = 2, #points do
+		local a, b = vec(points[i - 1]), vec(points[i])
+		local n = math.max(1, math.ceil((b - a).Magnitude / 6))
+		for j = 1, n do
+			move(root, hum, a:Lerp(b, j / n) + Vector3.new(0, 3, 0))
+			task.wait()
+		end
+	end
+end
+local suites = {}
+function suites.SelfTest()
+	ready()
+	local lanes = Drops.refresh()
+	assert(#lanes > 0, "no strict floors")
+	for i, p in map:GetDescendants() do
+		if p:GetAttribute("WalkableLaneFloor") then
+			assert(
+				p.Parent == map
+					and p:GetAttribute("CaveCategory") == "lane"
+					and p.CanCollide
+					and not p:GetAttribute("KitAssemblyId"),
+				"forged floor " .. p.Name
+			)
+		end
+		if i % 100 == 0 then
+			task.wait()
+		end
+	end
+	assert(Plan.laneClear(map.CaveKitDressing:GetDescendants(), lanes), "kit lane encroachment")
+	local fences = 0
+	for _, model in map.CaveKitDressing:GetChildren() do
+		if model.Name:find("kenney_nature-kit__fence_simple", 1, true) then
+			assert(model:GetAttribute("FenceEndpoints") == 2, "fence missing joint posts")
+			fences += 1
+		end
+	end
+	assert(fences > 0, "no safe kit fences mounted")
+	for _, p in map.CaveKitDressing:GetDescendants() do
+		if p:IsA("BasePart") then
+			assert(not p.CanQuery and not p.CanCollide, "kit physics/query")
+		end
+	end
+	local fake = { name = "main1", category = "rock", collidable = true }
+	assert(not D.isLane(fake, { main = {} }), "rock forged lane accepted")
+	-- Upper deck 1.8 studs above feet must not steal floor selection.
+	local lower = {
+		GetAttribute = function()
+			return true
+		end,
+	}
+	local ray = function(o)
+		local y = o.Y >= 1.8 and 1.8 or o.Y >= 0 and 0 or nil
+		return y and { Position = Vector3.new(0, y, 0), Normal = Vector3.yAxis, Instance = lower }
+	end
+	assert(D.floor(Vector3.new(0, 3, 0), ray, Vector3).Y == 0, "stacked floor selection")
+end
+function suites.DropSampleTest()
+	ready()
+	-- Exact owner-reported pass-2 main1/main2 joint, including both knock sides.
+	local joint = Vector3.new(150.625, 51, -115)
+	local jointFloor = assert(Drops.floor(joint), "main joint carrier floor")
+	for _, knock in { -20, 0, 20 } do
+		local socket = Drops.socket(joint + Vector3.new(0, 0, knock), jointFloor, joint)
+		assert(socket and D.valid(socket, jointFloor.Y, Drops.laneRay, Drops.solidRay, Vector3), "main joint repeatable socket")
+	end
+	local samples = 0
+	local n = math.clamp(S:GetAttribute("DropSampleTestN") or 8, 2, 64)
+	for name, points in data.routes do
+		if name ~= "cartRail" then
+			for i = 2, #points do
+				local a, b = vec(points[i - 1]), vec(points[i])
+				local side = Vector3.new(-(b - a).Z, 0, (b - a).X).Unit
+				for j = 0, n - 1 do
+					for _, edge in { -5, 0, 5 } do
+						local carrier = a:Lerp(b, (j + 0.5) / n) + side * edge + Vector3.new(0, 3, 0)
+						local floor = Drops.floor(carrier)
+						for _, knock in { -20, 0, 20 } do
+							samples += 1
+							local socket, why
+							if floor then
+								socket, why = Drops.socket(carrier + side * knock, floor, carrier)
+							end
+							if not socket or not D.valid(socket, floor.Y, Drops.laneRay, Drops.solidRay, Vector3) then
+								local hit = Drops.solidRay(carrier + Vector3.new(0, 8, 0), Vector3.new(0, -16, 0))
+								failure(why or "missing carrier floor", {
+									laneId = name .. ":" .. i,
+									position = { carrier.X, carrier.Y, carrier.Z },
+									landingInstance = hit and hit.Instance:GetFullName() or "NONE",
+									landingY = hit and hit.Position.Y or "UNKNOWN",
+									knock = knock,
+									socket = socket and { socket.X, socket.Y, socket.Z } or "NONE",
+								})
+							end
+							S:SetAttribute("DropSampleTestSamples", samples)
+							if samples % 16 == 0 then
+								task.wait()
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	assert(total == 0, tostring(total) .. " unreachable drops")
+end
+local function loopRoute(name, points)
+	local pl, root, hum = player()
+	local api = S:WaitForChild("CaveLoopActions")
+	api:Invoke("reset", pl)
+	pl:SetAttribute("CaveSecured", nil)
+	root.CFrame = CFrame.new(160, 51, -120)
+	root.AssemblyLinearVelocity = Vector3.zero
+	hum.WalkSpeed = 16
+	task.wait(0.3)
+	local id = api:Invoke("take", pl)
+	assert(id, "steal failed")
+	-- Actual forced drop + physical recovery, preserving the item and clock.
+	local _, _, started = api:Invoke("status")
+	assert(api:Invoke("drop", pl, root.Position + Vector3.new(20, 0, 0)), "drop failed")
+	move(root, hum, map.Geode.Position + Vector3.new(0, 1.5, 0))
+	task.wait(0.65)
+	assert(api:Invoke("recover", pl) == id, "recover same item")
+	local _, _, after = api:Invoke("status")
+	assert(after == started, "recovery reset deadline")
+	walk(root, hum, points)
+	move(root, hum, Vector3.new(-150, 3, 120))
+	await(function()
+		return pl:GetAttribute("CaveSecured") == id
+	end, 3, name .. " secure original")
+	assert(api:Invoke("open", pl), "place/open original")
+	S:SetAttribute("LoopTestRoute_" .. name, "PASS")
+end
+-- cart route is a physical cart escape; separate suite also exercises its fail path.
+local function boardCart(index)
+	local pl, root, hum = player()
+	local cart = map["RideableCart" .. index]
+	await(function()
+		return cart:GetAttribute("State") == "Dock"
+	end, 60, "cart dock")
+	root.CFrame = cart.OreCart.CFrame * CFrame.new(0, 3, 7)
+	root.AssemblyLinearVelocity = Vector3.zero
+	task.wait(0.2)
+	local ok, seatName = S.CaveCartActions:Invoke("board", index, pl)
+	assert(ok, "boarding: " .. tostring(pl:GetAttribute("CaveBoardingReason")))
+	local seat = assert(cart:FindFirstChild(seatName), "board action returned no seat")
+	local weld = seat:FindFirstChild("SeatWeld")
+	assert(seat.Occupant == hum and hum.SeatPart == seat and weld and weld.Part0 == seat
+		and weld.Part1 and weld.Part1:IsDescendantOf(pl.Character), "board action lost rider attachment")
+	assert(not root.Anchored and not hum.PlatformStand and not seat.Disabled
+		and hum:GetStateEnabled(Enum.HumanoidStateType.Seated), "boarding readiness")
+	assert(cart:GetAttribute("State") == "Dock", "departed before boarding returned")
+	return pl, root, hum, seat
+end
+function suites.BoardingTest()
+	ready()
+	S:SetAttribute("BoardingTestCargo", "NOT RUN")
+	S:SetAttribute("BoardingTestEmpty", "NOT RUN")
+	local pl, root, hum = player()
+	local carts, cargo = S.CaveCartActions, S.CaveLoopActions
+	cargo:Invoke("reset", pl)
+	for _, carrying in { false, true } do
+		carts:Invoke("resetAll")
+		task.wait(0.3)
+		local id
+		if carrying then
+			root.CFrame = CFrame.new(160, 51, -120)
+			task.wait(0.3)
+			id = assert(cargo:Invoke("take", pl), "boarding cargo steal")
+			assert(cargo:Invoke("drop", pl, root.Position + Vector3.new(20, 0, 0)), "boarding cargo drop")
+			move(root, hum, map.Geode.Position + Vector3.new(0, 1.5, 0))
+			task.wait(0.65)
+			assert(cargo:Invoke("recover", pl) == id, "boarding recovered cargo identity")
+		end
+		assert((pl:GetAttribute("CaveItemID") ~= nil) == carrying, "boarding cargo fixture")
+		-- Touching a seat without the prompt must never arm departure.
+		local cart = map.RideableCart1
+		root.CFrame = cart.DriverSeat.CFrame * CFrame.new(0, 2, 0)
+		task.wait(3.2)
+		assert(cart:GetAttribute("State") == "Dock" and cart:GetAttribute("TrackDistance") == 0,
+			"unrequested boarding departed")
+		local _, _, _, seat = boardCart(1)
+		await(function()
+			if id then
+				assert(pl:GetAttribute("CaveItemID") == id, "boarding lost cargo")
+			end
+			assert(seat.Occupant == hum and hum.SeatPart == seat and seat:FindFirstChild("SeatWeld"),
+				"boarding attachment lost before departure")
+			return cart:GetAttribute("State") == "Track"
+		end, 8, "confirmed occupied departure")
+		local trace = Http:JSONDecode(cart:GetAttribute("CartLastRide"))
+		assert(trace.boarding.success and trace.boarding.reason == "confirmed", "missing boarding evidence")
+		S:SetAttribute(carrying and "BoardingTestCargo" or "BoardingTestEmpty", "PASS")
+		S:SetAttribute(carrying and "BoardingTestCargoTrace" or "BoardingTestEmptyTrace", cart:GetAttribute("CartLastRide"))
+		carts:Invoke("resetAll")
+		task.wait(0.3)
+		cargo:Invoke("reset", pl)
+	end
+end
+local function ride(speed, carry, index, expectedPath)
+	index = index or 1
+	local pl, root, hum = player()
+	local cart = map["RideableCart" .. index]
+	local actions = S:WaitForChild("CaveCartActions")
+	if expectedPath then
+		assert(not map.BreakableSpan.CanCollide, "jump test requires production blast gap")
+	end
+	-- Approach the prompt from beside the cart; production owns the seating
+	-- teleport, cooldown retry and confirmed SeatWeld (no test-only Sit).
+	local seat
+	pl, root, hum, seat = boardCart(index)
+	if speed == 12 then
+		assert(actions:Invoke("toggle", index, pl) == 12, "brake")
+	end
+	local seen = {}
+	local endDistance
+	local highest = -math.huge
+	local deadline = os.clock() + 70
+	repeat
+		local state = cart:GetAttribute("State")
+		seen[state] = true
+		if carry then
+			assert(pl:GetAttribute("CaveItemID") == carry, "cart lost original cargo during " .. state)
+		end
+		if state == "Track" or state == "Flight" or state == "Landing" or state == "Fall" then
+			assert(seat.Occupant == hum and hum.SeatPart == seat and seat:FindFirstChild("SeatWeld"), "rider left seat: " .. state)
+			assert((root.Position - seat.Position).Magnitude < 6, "cart moved without rider: " .. state)
+		end
+		if state == "Flight" then
+			highest = math.max(highest, root.Position.Y)
+		end
+		assert(hum.Health > 0, "cart rider died")
+		-- End is the production arrival contract. An intact span legitimately
+		-- completes without Flight/Landing; never wait for those until Dock resets.
+		if state == "End" then
+			-- A delayed observer may first see End after production has ejected
+			-- this rider. The two engine properties can clear on different ticks.
+			-- Reject a replacement; require complete dismount below before success.
+			assert((seat.Occupant == hum or seat.Occupant == nil)
+				and (hum.SeatPart == seat or hum.SeatPart == nil), "wrong rider at End")
+			endDistance = cart:GetAttribute("TrackDistance")
+			break
+		end
+		task.wait(0.05)
+		if os.clock() >= deadline then
+			actions:Invoke("snapshot", index, "ride timeout; expected Track/End/dismount")
+			error("ride timeout; see CartLastRide on cart/ServerScriptService")
+		end
+	until false
+	assert(seen.Track, "no track ride")
+	local exit = vec(data.routes.railWalkBypass[#data.routes.railWalkBypass])
+	await(function()
+		assert(hum.Health > 0, "cart rider died during dismount")
+		if carry then
+			assert(pl:GetAttribute("CaveItemID") == carry, "cart lost original cargo during dismount")
+		end
+		local offset = root.Position - exit
+		return hum.SeatPart == nil and seat.Occupant == nil
+			and (expectedPath == "Fall" or (Vector3.new(offset.X, 0, offset.Z).Magnitude < 6
+				and math.abs(offset.Y - 3) < 4.5))
+	end, 5, "ride dismount at exit platform")
+	if expectedPath == "Flight" then
+		assert(seen.Flight and seen.Landing, "no big-air landing")
+		assert(highest > 35, "no visible jump arc")
+	end
+	if expectedPath == "Fall" then
+		assert(seen.Fall, "no slow-speed fall")
+		local pitOffset = root.Position - Vector3.new(0, -10, 25)
+		assert(Vector3.new(pitOffset.X, 0, pitOffset.Z).Magnitude < 8
+			and root.Position.Y < 0, "failed jump missed pit")
+		move(root, hum, vec(data.routes.pitRecovery[1]) + Vector3.new(0, 3, 0))
+		walk(root, hum, data.routes.pitRecovery)
+	else
+		assert(not seen.Fall and not seen.Siding, "cart did not reach track exit")
+		assert(endDistance >= data.length, "cart ended before exit")
+	end
+	if carry then
+		assert(pl:GetAttribute("CaveItemID") == carry, "cart lost original cargo")
+	end
+	return pl, root, hum
+end
+function suites.CartRideTest()
+	ready()
+	local label = map.JumpReady:FindFirstChildOfClass("SurfaceGui"):FindFirstChildOfClass("TextLabel")
+	assert(label.Text:find("JUMP READY"), "missing JUMP READY")
+	S.CaveCartActions:Invoke("blast")
+	await(function()
+		return not map.BreakableSpan.CanCollide
+	end, 8, "blast gap")
+	assert(label.Text == "JUMP READY / 24", "production blast did not arm JUMP READY")
+	ride(24, nil, 1, "Flight")
+	-- Repair waits until the pit envelope is empty; re-arm only after minimum age.
+	local _, root = player()
+	root.CFrame = CFrame.new(160, 51, -120)
+	await(function()
+		return map.BreakableSpan.CanCollide
+	end, 65, "safe repair")
+	S.CaveCartActions:Invoke("blast")
+	await(function()
+		return not map.BreakableSpan.CanCollide
+	end, 8, "second gap")
+	local pl = player()
+	local cargo = S.CaveLoopActions
+	cargo:Invoke("reset", pl)
+	root.CFrame = CFrame.new(160, 51, -120)
+	task.wait(0.3)
+	local id = assert(cargo:Invoke("take", pl), "fall cargo steal")
+	local _, _, started = cargo:Invoke("status")
+	ride(12, id, 2, "Fall")
+	local retained, dropped, after = cargo:Invoke("status")
+	assert(retained == id and not dropped and after == started, "fall changed cargo identity/deadline")
+	cargo:Invoke("reset", pl)
+end
+-- Override the cart branch with the full approach/ride/secure path.
+function suites.LoopTest()
+	ready()
+	S:SetAttribute("LoopTestCartExit", nil)
+	loopRoute("main", data.routes.main)
+	local pl, root, hum = player()
+	local api = S.CaveLoopActions
+	api:Invoke("reset", pl)
+	pl:SetAttribute("CaveSecured", nil)
+	root.CFrame = CFrame.new(160, 51, -120)
+	task.wait(0.3)
+	local id = api:Invoke("take", pl)
+	assert(id, "cart steal failed")
+	walk(root, hum, data.routes.cartApproach)
+	ride(24, id)
+	S:SetAttribute("LoopTestCartExit", Http:JSONEncode({ rider = pl.Name, cargo = id,
+		position = { root.Position.X, root.Position.Y, root.Position.Z }, dismounted = hum.SeatPart == nil }))
+	move(root, hum, Vector3.new(-150, 3, 120))
+	await(function()
+		return pl:GetAttribute("CaveSecured") == id
+	end, 3, "cart secure")
+	assert(api:Invoke("open", pl), "cart place/open")
+	S:SetAttribute("LoopTestRoute_cart", "PASS")
+	loopRoute("cave", data.routes.cave)
+end
+function suites.BlastPolicyTest()
+	assert(P.flight(24) == "Flight" and P.flight(12) == "Fall", "committed speed policy")
+	assert(
+		P.canBlast(0, 0, 20, false)
+			and not P.canBlast(1, 0, 20, false)
+			and not P.canBlast(0, 0, 19, false)
+			and not P.canBlast(0, 0, 20, true),
+		"blast occupancy/cooldown/arming"
+	)
+	assert(
+		P.canRepair(0, false, 20)
+			and not P.canRepair(1, false, 20)
+			and not P.canRepair(0, true, 20)
+			and not P.canRepair(0, false, 19),
+		"repair age/occupancy"
+	)
+	assert(P.previews.TNTHook.stages[1] == 1 and P.previews.TNTHook.cooldown == 15, "TNT tell/cooldown")
+	assert(
+		P.previews.DynamiteGuardianHook.stages[1] == 1.5 and P.previews.DynamiteGuardianHook.stages[2] == 1,
+		"guardian preview tell/fuse"
+	)
+	for _, p in map:GetDescendants() do
+		assert(not p:IsA("Explosion"), "unexpected damaging Explosion")
+	end
+	local pl, root, hum = player()
+	local api = S.CaveLoopActions
+	api:Invoke("reset", pl)
+	root.CFrame = CFrame.new(160, 51, -120)
+	task.wait(0.3)
+	local id = api:Invoke("take", pl)
+	local health = hum.Health
+	for _, name in { "TNTHook", "DynamiteGuardianHook", "ShatterCavernHook" } do
+		local hook = map[name]
+		local prompt = hook:FindFirstChildOfClass("ProximityPrompt")
+		await(function()
+			return prompt.Enabled
+		end, 35, name .. " cooldown")
+		local begin = os.clock()
+		assert(api:Invoke("preview", pl, name), name .. " preview action")
+		await(function()
+			assert(hum.Health == health and pl:GetAttribute("CaveItemID") == id, "preview damaged rider/cargo")
+			return hook:GetAttribute("PayoffPreview") or hook:GetAttribute("Cluster1Burst")
+		end, 5, name .. " visible payoff")
+		local tell = name == "DynamiteGuardianHook" and 2.5 or 1
+		assert(os.clock() - begin >= tell - 0.05, name .. " payoff before tell")
+		assert(not prompt.Enabled, name .. " cooldown missing")
+	end
+end
+local running = false
+local order = { "SelfTest", "DropSampleTest", "BoardingTest", "LoopTest", "CartRideTest", "BlastPolicyTest" }
+local function run(name)
+	failures, total, logged = {}, 0, 0
+	S:SetAttribute(name .. "Result", "RUNNING")
+	S:SetAttribute(name .. "Success", false)
+	S:SetAttribute(name .. "Failures", "[]")
+	S:SetAttribute(name .. "FailureCount", 0)
+	S:SetAttribute(name .. "Error", "")
+	if name == "DropSampleTest" then
+		S:SetAttribute("DropSampleTestSamples", 0)
+	end
+	local done, ok, err = false, false, nil
+	local worker = task.spawn(function()
+		ok, err = xpcall(function()
+			if name == "BoardingTest" or name == "LoopTest" or name == "CartRideTest" then
+				assert(S:WaitForChild("CaveCartActions"):Invoke("resetAll"), "cart fixture reset")
+				task.wait(0.3)
+			end
+			suites[name]()
+		end, debug.traceback)
+		done = true
+	end)
+	local deadline = os.clock() + (name == "DropSampleTest" and 900 or 360)
+	repeat
+		task.wait(0.1)
+	until done or os.clock() > deadline
+	if not done then
+		task.cancel(worker)
+		ok = false
+		err = "suite watchdog: " .. name
+	end
+	if not ok and total == 0 then
+		failure(err, { suite = name, lastDrop = S:GetAttribute("LoopTestLastDrop") or "UNKNOWN" })
+	end
+	if not ok then
+		S:SetAttribute(name .. "Error", tostring(err))
+	end
+	if name == "BoardingTest" or name == "LoopTest" or name == "CartRideTest" then
+		local carts = S:FindFirstChild("CaveCartActions")
+		if carts then
+			for index = 1, 2 do
+				carts:Invoke("snapshot", index, not ok and tostring(err) or nil)
+			end
+			S:SetAttribute(name .. "CartLastRide", S:GetAttribute("CartLastRide"))
+			carts:Invoke("resetAll")
+		end
+	end
+	S:SetAttribute(name .. "Failures", Http:JSONEncode(failures))
+	S:SetAttribute(name .. "FailureCount", total)
+	S:SetAttribute(name .. "Success", ok)
+	S:SetAttribute(name .. "Result", ok and "PASS" or "FAIL")
+	print("[CaveStudioPass] " .. name .. " " .. (ok and "PASS" or "FAIL"))
+	return ok
+end
+local function execute(name)
+	if running then
+		S:SetAttribute(name, false)
+		return
+	end
+	running = true
+	S:SetAttribute(name, false)
+	local pl, root, hum
+	local cf, speed
+	if #game.Players:GetPlayers() == 1 then
+		pl, root, hum = player()
+		cf = root.CFrame
+		speed = hum.WalkSpeed
+	end
+	local fixture = name == "StudioPassAll" or name == "BoardingTest" or name == "LoopTest" or name == "CartRideTest" or name == "BlastPolicyTest"
+	if fixture then
+		assert(
+			pl and S:WaitForChild("CaveLoopActions"):Invoke("pristine", pl),
+			"fresh Play with one empty cave profile required"
+		)
+	end
+	local ok = true
+	if name == "StudioPassAll" then
+		S:SetAttribute(name .. "Result", "RUNNING")
+		S:SetAttribute(name .. "Success", false)
+		for _, suite in order do
+			S:SetAttribute(suite .. "Result", "NOT RUN")
+			S:SetAttribute(suite .. "Failures", "[]")
+		end
+		for _, suite in order do
+			if not run(suite) then
+				ok = false
+				break
+			end
+			task.wait()
+		end
+		S:SetAttribute(name .. "Result", ok and "PASS" or "FAIL")
+		S:SetAttribute(name .. "Success", ok)
+		S:SetAttribute(name .. "Failures", Http:JSONEncode(failures))
+		S:SetAttribute(name .. "FailureCount", total)
+	else
+		ok = run(name)
+	end
+	if fixture and pl and S:FindFirstChild("CaveLoopActions") then
+		S.CaveLoopActions:Invoke("reset", pl)
+	end
+	if root and root.Parent then
+		hum.Sit = false
+		task.wait(0.2)
+		root.CFrame = cf
+		root.AssemblyLinearVelocity = Vector3.zero
+		hum.WalkSpeed = speed
+	end
+	running = false
+end
+local function trigger(name)
+	local ok, err = xpcall(function()
+		execute(name)
+	end, debug.traceback)
+	if not ok then
+		failure(err, { suite = name })
+		S:SetAttribute(name .. "Result", "FAIL")
+		S:SetAttribute(name .. "Success", false)
+		S:SetAttribute(name .. "Failures", Http:JSONEncode(failures))
+		S:SetAttribute(name .. "FailureCount", total)
+		running = false
+	end
+end
+for _, name in { "SelfTest", "DropSampleTest", "BoardingTest", "LoopTest", "CartRideTest", "BlastPolicyTest", "StudioPassAll" } do
+	S:GetAttributeChangedSignal(name):Connect(function()
+		if S:GetAttribute(name) == true then
+			task.spawn(trigger, name)
+		end
+	end)
+end

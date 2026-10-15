@@ -1,110 +1,741 @@
 -- Server-driven deterministic cart path. This prototype has no ram or blast damage.
-local RunService=game:GetService('RunService')
-local data=require(game.ReplicatedStorage.CaveRouteData)
-local map=workspace.CaveV2
-local function vec(a) return Vector3.new(a[1],a[3],-a[2]) end
-local points=data.routes.cartRail
+local RunService = game:GetService("RunService")
+local data = require(game.ReplicatedStorage.CaveRouteData)
+local map = workspace.CaveV2
+local Policy = require(script.Parent.CavePolicy)
+local actions = {}
+local Http = game:GetService("HttpService")
+local traces = {}
+local blastGeneration = 0
+local switchGeneration = 0
+local function vec(a)
+	return Vector3.new(a[1], a[3], -a[2])
+end
+local points = data.routes.cartRail
 local function at(distance)
- local remaining=distance
- for i=1,#points-1 do local a,b=vec(points[i]),vec(points[i+1]);local length=(b-a).Magnitude
-  if remaining<=length then local p=a:Lerp(b,math.clamp(remaining/length,0,1));return p,(b-a).Unit end
-  remaining-=length
- end
- return vec(points[#points]),(vec(points[#points])-vec(points[#points-1])).Unit
+	local remaining = distance
+	for i = 1, #points - 1 do
+		local a, b = vec(points[i]), vec(points[i + 1])
+		local length = (b - a).Magnitude
+		if remaining <= length then
+			local p = a:Lerp(b, math.clamp(remaining / length, 0, 1))
+			return p, (b - a).Unit, i
+		end
+		remaining -= length
+	end
+	return vec(points[#points]), (vec(points[#points]) - vec(points[#points - 1])).Unit, #points - 1
 end
-local broken=false;local busy=0;local lastBreak=-100
-local span=map.BreakableSpan
-local hook=map.SupportBlastHook
-local prompt=Instance.new('ProximityPrompt');prompt.ActionText='Blast support (1s fuse + 2s cracks)';prompt.HoldDuration=.4;prompt.MaxActivationDistance=14;prompt.Parent=hook
-local ready=map.JumpReady:FindFirstChildOfClass('SurfaceGui'):FindFirstChildOfClass('TextLabel')
+local broken = false
+local busy = 0
+local lastBreak = -100
+local span = map.BreakableSpan
+local hook = map.SupportBlastHook
+local prompt = Instance.new("ProximityPrompt")
+prompt.ActionText = "Blast support (1s fuse + 2s cracks)"
+prompt.HoldDuration = 0.4
+prompt.MaxActivationDistance = 14
+prompt.Parent = hook
+local ready = map.JumpReady:FindFirstChildOfClass("SurfaceGui"):FindFirstChildOfClass("TextLabel")
 local function occupiedRepairVolume()
- if busy>0 then return true end
- for _,player in game.Players:GetPlayers() do local root=player.Character and player.Character:FindFirstChild('HumanoidRootPart');if root and (root.Position-Vector3.new(0,4,25)).Magnitude<52 then return true end end
- return false
+	if busy > 0 then
+		return true
+	end
+	for _, player in game.Players:GetPlayers() do
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if root and (root.Position - Vector3.new(0, 4, 25)).Magnitude < 52 then
+			return true
+		end
+	end
+	return false
 end
-prompt.Triggered:Connect(function()
- if busy>0 or os.clock()-lastBreak<20 or hook:GetAttribute('Armed') then return end
- hook:SetAttribute('Armed',true);prompt.Enabled=false;ready.Text='1s FUSE';task.wait(1);ready.Text='2s CRACKS';task.wait(2)
- -- Do not change the gap beneath any cart in the reserved approach/flight envelope.
- if busy>0 then ready.Text='WAIT: CART COMMITTED';repeat task.wait(.1) until busy==0 end
- broken=true;lastBreak=os.clock();span.CanCollide=false;span.Transparency=1;map.SpanBearingBeam.CanCollide=false;map.SpanBearingBeam.Transparency=1;hook:SetAttribute('Armed',false);ready.Text='JUMP READY / 24';task.wait(20)
- repeat task.wait(.2) until not occupiedRepairVolume()
- broken=false;span.CanCollide=true;span.Transparency=0;map.SpanBearingBeam.CanCollide=true;map.SpanBearingBeam.Transparency=0;prompt.Enabled=true;ready.Text='JUMP READY'
-end)
+local function blast()
+	if not Policy.canBlast(busy, lastBreak, os.clock(), hook:GetAttribute("Armed")) then
+		return false
+	end
+	local generation = blastGeneration
+	hook:SetAttribute("Armed", true)
+	prompt.Enabled = false
+	ready.Text = "1s FUSE"
+	task.wait(1)
+	if generation ~= blastGeneration then return false end
+	ready.Text = "2s CRACKS"
+	task.wait(2)
+	if generation ~= blastGeneration then return false end
+	-- Do not change the gap beneath any cart in the reserved approach/flight envelope.
+	if busy > 0 then
+		ready.Text = "WAIT: CART COMMITTED"
+		repeat
+			task.wait(0.1)
+		until busy == 0 or generation ~= blastGeneration
+	end
+	if generation ~= blastGeneration then return false end
+	broken = true
+	lastBreak = os.clock()
+	span.CanCollide = false
+	span.Transparency = 1
+	map.SpanBearingBeam.CanCollide = false
+	map.SpanBearingBeam.Transparency = 1
+	hook:SetAttribute("Armed", false)
+	ready.Text = "JUMP READY / 24"
+	task.wait(20)
+	if generation ~= blastGeneration then return false end
+	repeat
+		task.wait(0.2)
+	until generation ~= blastGeneration or Policy.canRepair(busy, occupiedRepairVolume(), os.clock() - lastBreak)
+	if generation ~= blastGeneration then return false end
+	broken = false
+	span.CanCollide = true
+	span.Transparency = 0
+	map.SpanBearingBeam.CanCollide = true
+	map.SpanBearingBeam.Transparency = 0
+	prompt.Enabled = true
+	ready.Text = "JUMP READY"
+end
+prompt.Triggered:Connect(blast)
 local function buildCart(index)
- local model=Instance.new('Model');model.Name='RideableCart'..index;model.Parent=map
- local function p(name,size,offset,color,class)
-  local part=Instance.new(class or 'Part');part.Name=name;part.Size=size;part.Anchored=true;part.CanCollide=false;part.Color=color;part.CFrame=CFrame.new(vec(points[1])+offset);part.Parent=model;return part
- end
- local base=p('OreCart',Vector3.new(8,1,10),Vector3.new(0,2,0),Color3.fromRGB(71,79,92));model.PrimaryPart=base
- local seats={p('DriverSeat',Vector3.new(3,1,3),Vector3.new(-2,3,0),Color3.fromRGB(103,72,44),'Seat'),p('PassengerSeat',Vector3.new(3,1,3),Vector3.new(2,3,0),Color3.fromRGB(103,72,44),'Seat')}
- local gauge=Instance.new('BillboardGui');gauge.Size=UDim2.fromOffset(230,60);gauge.StudsOffset=Vector3.new(0,6,0);gauge.AlwaysOnTop=true;gauge.Parent=base
- local gaugeText=Instance.new('TextLabel');gaugeText.Size=UDim2.fromScale(1,1);gaugeText.BackgroundColor3=Color3.fromRGB(28,32,46);gaugeText.TextScaled=true;gaugeText.TextColor3=Color3.new(1,1,1);gaugeText.Parent=gauge
- for side=-1,1,2 do p('CartSide',Vector3.new(.7,3,10),Vector3.new(side*4,3,0),Color3.fromRGB(85,96,109));for z=-3,3,6 do local w=p('Wheel',Vector3.new(1.2,2,2),Vector3.new(side*4,1,z),Color3.fromRGB(39,42,53));w.Shape=Enum.PartType.Cylinder end end
- local board=Instance.new('ProximityPrompt');board.ActionText='Ride cart';board.HoldDuration=.3;board.MaxActivationDistance=12;board.Parent=base
- board.Triggered:Connect(function(player) local humanoid=player.Character and player.Character:FindFirstChildOfClass('Humanoid');if humanoid then for _,seat in seats do if not seat.Occupant then seat:Sit(humanoid);break end end end end)
- local speed=24;local brake=Instance.new('ProximityPrompt');brake.ActionText='Toggle speed 24 / 12 (red = pit if committed)';brake.MaxActivationDistance=9;brake.Parent=seats[1]
- local distance,state,elapsed,waitTime,committed,flightSpeed=0,'Dock',0,0,false,24
- local diverted=false
- local override=Instance.new('ProximityPrompt');override.ActionText='Override amber switch';override.MaxActivationDistance=9;override.Parent=seats[1]
- override.Triggered:Connect(function(player) if seats[1].Occupant and seats[1].Occupant.Parent==player.Character and not diverted then map.RailSwitchHook:SetAttribute('DivertNext',false);map.RailSwitchHook:SetAttribute('Warning',false) end end)
- local function bypassPosition(d)
-  local pos=at(d);local nearest,best=nil,math.huge
-  local pts=data.routes.railWalkBypass
-  for i=1,#pts-1 do local a,b=vec(pts[i]),vec(pts[i+1]);local t=math.clamp((pos-a):Dot(b-a)/(b-a):Dot(b-a),0,1);local q=a:Lerp(b,t);local l=(q-pos).Magnitude;if l<best then nearest,best=q,l end end
-  return nearest+Vector3.new(0,4,0)
- end
- brake.Triggered:Connect(function(player) if not committed and seats[1].Occupant and seats[1].Occupant.Parent==player.Character then speed=speed==24 and 12 or 24;ready.Text=speed>=24 and 'JUMP READY / 24' or 'RED: STOP / BAIL / 12' end end)
- local bail=Instance.new('ProximityPrompt');bail.ActionText='Emergency dismount to bypass';bail.MaxActivationDistance=9;bail.Parent=seats[2]
- local function exitHumanoid(h,pos) if h then h.Sit=false;local root=h.Parent:FindFirstChild('HumanoidRootPart');if root then task.defer(function() root.CFrame=CFrame.new(pos) end) end end end
- bail.Triggered:Connect(function(player)
-  for _,seat in seats do if seat.Occupant and seat.Occupant.Parent==player.Character then if state=='Flight' or state=='Fall' then player:SetAttribute('CaveDismountDeferred',true) else exitHumanoid(seat.Occupant,bypassPosition(distance)) end end end
- end)
- local function reserve(on) if on and not committed then busy+=1;committed=true elseif not on and committed then busy-=1;committed=false end end
- -- Defer ordinary seat jumping as well as the explicit emergency-dismount
- -- prompt during a committed flight. Studio must verify replication behavior.
- for _,seat in seats do local previous=nil;seat:GetPropertyChangedSignal('Occupant'):Connect(function()
-  local current=seat.Occupant
-  if previous and not current and (state=='Flight' or state=='Fall' or state=='Landing') then local deferred=previous;task.defer(function() if deferred.Parent then seat:Sit(deferred) end end) end
-  previous=current
- end) end
- local function pivot(pos,dir) model:PivotTo(CFrame.lookAt(pos+Vector3.new(0,2,0),pos+Vector3.new(0,2,0)+dir)) end
- RunService.Heartbeat:Connect(function(dt)
-  dt=math.min(dt,.1);model:SetAttribute('State',state);model:SetAttribute('Speed',speed);model:SetAttribute('TrackDistance',distance);gaugeText.Text=string.format('CART %d | %d | %s',index,speed,(committed and flightSpeed or speed)>=24 and 'JUMP READY' or 'RED / BAIL');gaugeText.TextColor3=(committed and flightSpeed or speed)>=24 and Color3.fromRGB(128,255,150) or Color3.fromRGB(255,121,111)
-  if state=='Dock' then
-   if seats[1].Occupant or seats[2].Occupant then waitTime+=dt;if waitTime>=2+(index-1)*1 then state='Track';board.Enabled=false;waitTime=0 end end
-  elseif state=='Track' then
-   local nextDistance=distance+speed*dt
-   if distance<data.gapStart-22 and nextDistance>=data.gapStart-22 then
-    if hook:GetAttribute('Armed') then return end
-    reserve(true);flightSpeed=speed
-   end
-   if broken and nextDistance>=data.gapStart and distance<data.gapStart then state=flightSpeed>=24 and 'Flight' or 'Fall';elapsed=0;distance=data.gapStart
-   else distance=nextDistance
-    local position,dir=at(distance);pivot(position,dir)
-    if distance>data.gapEnd+24 then reserve(false) end
-    if distance>=data.length then state='End';elapsed=0 end
-    if distance>data.gapEnd+65 and map.RailSwitchHook:GetAttribute('DivertNext') and not diverted then diverted=true;map.RailSwitchHook:SetAttribute('DivertNext',false);state='Siding';elapsed=0 end
-   end
-  elseif state=='Flight' then
-   elapsed+=dt;local t=math.clamp(elapsed/(16/flightSpeed),0,1);local a,dir=at(data.gapStart);local b=at(data.gapEnd);pivot(a:Lerp(b,t)+Vector3.new(0,12*4*t*(1-t),0),dir)
-   if t>=1 then distance=data.gapEnd+.05;state='Landing';elapsed=0 end
-  elseif state=='Landing' then
-   distance+=flightSpeed*dt;local pos,dir=at(distance);pivot(pos,dir);elapsed+=dt
-   if elapsed>=1 then reserve(false);state='Track';for _,s in seats do local h=s.Occupant;local pl=h and game.Players:GetPlayerFromCharacter(h.Parent);if pl and pl:GetAttribute('CaveDismountDeferred') then pl:SetAttribute('CaveDismountDeferred',false);exitHumanoid(h,bypassPosition(distance)) end end end
-  elseif state=='Fall' then
-   elapsed+=dt;local t=math.clamp(elapsed/1.2,0,1);local a,dir=at(data.gapStart);local pit=Vector3.new(0,-14,25);pivot(a:Lerp(pit,t),dir)
-   if t>=1 then for _,s in seats do exitHumanoid(s.Occupant,pit+Vector3.new(0,4,0)) end;reserve(false);state='End';elapsed=0 end
-  elseif state=='Siding' then
-   elapsed+=dt;local pos,dir=at(distance);pivot(pos:Lerp(Vector3.new(-94,8,50),math.min(elapsed/3.5,1)),dir);if elapsed>=3.5 then for _,s in seats do exitHumanoid(s.Occupant,Vector3.new(-94,12,50)) end;state='End';elapsed=0 end
-  elseif state=='End' then
-   elapsed+=dt;if elapsed>.5 then for _,s in seats do exitHumanoid(s.Occupant,bypassPosition(distance)) end end
-   if elapsed>4 then reserve(false);distance=0;state='Dock';diverted=false;speed=24;board.Enabled=true;local pos,dir=at(0);pivot(pos+Vector3.new(index==2 and 12 or 0,0,0),dir) end
-  end
- end)
- local pos,dir=at(0);pivot(pos+Vector3.new(index==2 and 12 or 0,0,0),dir)
+	local model = Instance.new("Model")
+	model.Name = "RideableCart" .. index
+	model.Parent = map
+	local function p(name, size, offset, color, class)
+		local part = Instance.new(class or "Part")
+		part.Name = name
+		part.Size = size
+		part.Anchored = true
+		part.CanCollide = false
+		part.Color = color
+		part.CFrame = CFrame.new(vec(points[1]) + offset)
+		part.Parent = model
+		return part
+	end
+	local base = p("OreCart", Vector3.new(8, 1, 10), Vector3.new(0, 2, 0), Color3.fromRGB(71, 79, 92))
+	model.PrimaryPart = base
+	local seats = {
+		p("DriverSeat", Vector3.new(3, 1, 3), Vector3.new(-2, 3, 0), Color3.fromRGB(103, 72, 44), "Seat"),
+		p("PassengerSeat", Vector3.new(3, 1, 3), Vector3.new(2, 3, 0), Color3.fromRGB(103, 72, 44), "Seat"),
+	}
+	for _, seat in seats do
+		seat.CanCollide = true
+		-- Boarding is prompt-only; walking across a seat must not arm a ride.
+		seat.CanTouch = false
+		seat.Disabled = false
+	end
+	local gauge = Instance.new("BillboardGui")
+	gauge.Size = UDim2.fromOffset(230, 60)
+	gauge.StudsOffset = Vector3.new(0, 6, 0)
+	gauge.AlwaysOnTop = true
+	gauge.Parent = base
+	local gaugeText = Instance.new("TextLabel")
+	gaugeText.Size = UDim2.fromScale(1, 1)
+	gaugeText.BackgroundColor3 = Color3.fromRGB(28, 32, 46)
+	gaugeText.TextScaled = true
+	gaugeText.TextColor3 = Color3.new(1, 1, 1)
+	gaugeText.Parent = gauge
+	for side = -1, 1, 2 do
+		p("CartSide", Vector3.new(0.7, 3, 10), Vector3.new(side * 4, 3, 0), Color3.fromRGB(85, 96, 109))
+		for z = -3, 3, 6 do
+			local w = p("Wheel", Vector3.new(1.2, 2, 2), Vector3.new(side * 4, 1, z), Color3.fromRGB(39, 42, 53))
+			w.Shape = Enum.PartType.Cylinder
+		end
+	end
+	-- One anchored assembly root drives both seats and their engine SeatWelds.
+	-- Independently anchored cart parts do not form one moving assembly.
+	for _, part in model:GetChildren() do
+		if part:IsA("BasePart") and part ~= base then
+			part.Anchored = false
+			part.Massless = true
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = base
+			weld.Part1 = part
+			weld.Parent = part
+		end
+	end
+	local board = Instance.new("ProximityPrompt")
+	board.ActionText = "Ride cart (cargo welcome)"
+	board.HoldDuration = 0.3
+	board.MaxActivationDistance = 12
+	board.RequiresLineOfSight = false
+	board.Parent = base
+	local distance, state, elapsed, waitTime, committed, flightSpeed = 0, "Dock", 0, 0, false, 24
+	local arrivalReleased = false
+	local boarding = {}
+	local confirmed = {}
+	local riding = {}
+	local function lockRider(h)
+		if riding[h] then return end
+		riding[h] = { jumping = h:GetStateEnabled(Enum.HumanoidStateType.Jumping), retry = -math.huge }
+		h:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+		h:SetAttribute("CaveCartRiding", true)
+		if not h.Parent:FindFirstChild("CaveRiderControls") then
+			local controls = script.CaveRiderControls:Clone()
+			controls.Parent = h.Parent
+			controls.Enabled = true
+		end
+	end
+	local function unlockRider(h)
+		local saved = riding[h]
+		if not saved then return end
+		riding[h] = nil
+		h:SetAttribute("CaveCartRiding", false)
+		h:SetStateEnabled(Enum.HumanoidStateType.Jumping, saved.jumping)
+	end
+	local boardGeneration = 0
+	local function attached(seat, humanoid)
+		local weld = seat:FindFirstChild("SeatWeld")
+		return humanoid ~= nil and humanoid.Parent ~= nil and humanoid.Health > 0
+			and seat.Occupant == humanoid and humanoid.SeatPart == seat
+			and weld ~= nil and weld:IsA("Weld") and weld.Part0 == seat
+			and weld.Part1 ~= nil and weld.Part1:IsDescendantOf(humanoid.Parent)
+	end
+	local function departureReady()
+		if next(boarding) then return false end
+		for seat, humanoid in confirmed do
+			if attached(seat, humanoid) then return true end
+		end
+		return false
+	end
+	local approachReserved = false
+	local trace = { cart = index, ride = 0, transitions = {}, samples = {}, lastError = "" }
+	local lastSample, lastState = -math.huge, nil
+	local function diagnostic(event, err)
+		local now = os.clock()
+		local _, _, segment = at(distance)
+		local occupants, welds, riders, attachedRiders = {}, {}, {}, {}
+		for i, seat in seats do
+			occupants[i] = seat.Occupant and seat.Occupant.Parent.Name or "NONE"
+			welds[i] = seat:FindFirstChild("SeatWeld") ~= nil
+			riders[i] = confirmed[seat] and confirmed[seat].Parent and confirmed[seat].Parent.Name or "NONE"
+			attachedRiders[i] = attached(seat, confirmed[seat])
+		end
+		if err then
+			trace.lastError = tostring(err)
+		end
+		local sample = { t = now, state = state, TrackDistance = distance, Occupant = occupants,
+			seatWeld = welds, rider = riders, riderAttached = attachedRiders,
+			speed = model:GetAttribute("Speed") or 24, segment = segment,
+			jump = state == "Flight" or state == "Fall" or state == "Landing",
+			broken = broken, armed = hook:GetAttribute("Armed") == true, committed = committed, reserved = approachReserved }
+		trace.current = sample
+		if event or state ~= lastState then
+			table.insert(trace.transitions, { t = now, state = state, event = event or "transition", distance = distance })
+			if #trace.transitions > 40 then
+				table.remove(trace.transitions, 1)
+			end
+		end
+		local airborne = state == "Flight" or state == "Landing" or state == "Fall"
+		if event or state ~= lastState or (state ~= "Dock" and now - lastSample >= (airborne and 0.1 or 0.5)) then
+			if airborne then
+				print("CaveCart seat sample", index, state, occupants[1], occupants[2], welds[1], welds[2])
+			end
+			table.insert(trace.samples, sample)
+			if #trace.samples > 80 then
+				table.remove(trace.samples, 1)
+			end
+			lastSample = now
+			traces[index] = trace
+			model:SetAttribute("CartLastRide", Http:JSONEncode(trace))
+			script.Parent:SetAttribute("CartLastRide", Http:JSONEncode({ carts = traces }))
+		end
+		lastState = state
+		model:SetAttribute("CartLastError", trace.lastError)
+	end
+	local function boardPlayer(player)
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local attempt = { t = os.clock(), rider = player.Name, cargo = player:GetAttribute("CaveItemID") or "NONE",
+			attempts = 0, reason = "pending", success = false }
+		local function result(ok, reason, seat)
+			attempt.success, attempt.reason = ok, reason
+			attempt.finished = os.clock()
+			attempt.seat = seat and seat.Name or "NONE"
+			attempt.occupant = seat and seat.Occupant == humanoid or false
+			attempt.weld = seat and attached(seat, humanoid) or false
+			attempt.humanoidState = humanoid and humanoid:GetState().Name or "NONE"
+			attempt.platformStand = humanoid and humanoid.PlatformStand or false
+			attempt.anchored = root and root.Anchored or false
+			attempt.seatedEnabled = humanoid and humanoid:GetStateEnabled(Enum.HumanoidStateType.Seated) or false
+			attempt.seatDisabled = seat and seat.Disabled or false
+			attempt.seatRange = seat and root and (root.Position - seat.Position).Magnitude or -1
+			trace.boarding = attempt
+			player:SetAttribute("CaveBoardingReason", reason)
+			board.ActionText = ok and "Ride cart (cargo welcome)" or ("Ride cart: " .. reason)
+			diagnostic(ok and "boarded" or "board failed", not ok and reason or nil)
+			return ok, attempt.seat
+		end
+		if not humanoid or not root or humanoid.Health <= 0 then
+			return result(false, "living avatar required")
+		end
+		for _, seat in seats do
+			if confirmed[seat] == humanoid and attached(seat, humanoid) then
+				return result(true, "already boarded", seat)
+			end
+		end
+		if state ~= "Dock" then return result(false, "wait for dock") end
+		if (root.Position - base.Position).Magnitude > 14 then return result(false, "move closer") end
+		if humanoid.SeatPart then return result(false, "leave current seat first") end
+		-- These effects are not authored by the cave prototype. Refuse rather
+		-- than silently overriding a combat controller's active stun/mercy lock.
+		for _, owner in { player, character, humanoid } do
+			for _, flag in { "Ragdoll", "Ragdolled", "Stunned", "Mercy" } do
+				if owner:GetAttribute(flag) then return result(false, "wait: " .. flag) end
+			end
+		end
+		for _, pending in boarding do
+			if pending == humanoid then
+				return result(false, "boarding in progress")
+			end
+		end
+		for _, seat in seats do
+			if seat.Occupant or boarding[seat] then
+				continue
+			end
+			boarding[seat] = humanoid
+			local generation = boardGeneration
+			if not seats[1].Occupant and not seats[2].Occupant then
+				trace = { cart = index, ride = trace.ride + 1, transitions = {}, samples = {}, lastError = "" }
+			end
+			trace.boarding = attempt
+			diagnostic("boarding")
+			for _, part in character:GetDescendants() do
+				if part:IsA("BasePart") then
+					part.Anchored = false
+				end
+			end
+			humanoid.PlatformStand = false
+			humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+			humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+			seat.Disabled = false
+			humanoid:MoveTo(root.Position)
+			humanoid.Jump = false
+			humanoid.Sit = false
+			-- Retry through the engine's per-avatar/seat cooldown, and report
+			-- success only after a real SeatWeld and Occupant are established.
+			local deadline = os.clock() + 4.5
+			repeat
+				-- Once Occupant is present, let the engine finish its weld. Moving
+				-- the root or repeating Sit at that point can interrupt attachment.
+				if not seat.Occupant then
+					root.CFrame = seat.CFrame * CFrame.new(0, 2, 0)
+					root.AssemblyLinearVelocity = Vector3.zero
+					root.AssemblyAngularVelocity = Vector3.zero
+					seat:Sit(humanoid)
+					attempt.attempts += 1
+				end
+				task.wait(0.1)
+			until attached(seat, humanoid) or os.clock() >= deadline or humanoid.Health <= 0
+				or not character.Parent or generation ~= boardGeneration or state ~= "Dock"
+			if generation ~= boardGeneration then return result(false, "boarding reset", seat) end
+			boarding[seat] = nil
+			local seated = attached(seat, humanoid) and state == "Dock"
+			confirmed[seat] = seated and humanoid or nil
+			if seated then
+				lockRider(humanoid)
+			end
+			waitTime = 0
+			return result(seated, seated and "confirmed" or "SeatWeld/Occupant timeout", seat)
+		end
+		return result(false, "cart full")
+	end
+	board.Triggered:Connect(boardPlayer)
+	local speed = 24
+	local brake = Instance.new("ProximityPrompt")
+	brake.ActionText = "Toggle speed 24 / 12 (red = pit if committed)"
+	brake.MaxActivationDistance = 9
+	brake.Parent = seats[1]
+	local diverted = false
+	local override = Instance.new("ProximityPrompt")
+	override.ActionText = "Override amber switch"
+	override.MaxActivationDistance = 9
+	override.Parent = seats[1]
+	override.Triggered:Connect(function(player)
+		if seats[1].Occupant and seats[1].Occupant.Parent == player.Character and not diverted then
+			map.RailSwitchHook:SetAttribute("DivertNext", false)
+			map.RailSwitchHook:SetAttribute("Warning", false)
+		end
+	end)
+	local function bypassPosition(d)
+		local pos = at(d)
+		local nearest, best = nil, math.huge
+		local pts = data.routes.railWalkBypass
+		for i = 1, #pts - 1 do
+			local a, b = vec(pts[i]), vec(pts[i + 1])
+			local t = math.clamp((pos - a):Dot(b - a) / (b - a):Dot(b - a), 0, 1)
+			local q = a:Lerp(b, t)
+			local l = (q - pos).Magnitude
+			if l < best then
+				nearest, best = q, l
+			end
+		end
+		return nearest + Vector3.new(0, 4, 0)
+	end
+	local function toggle(player)
+		if not committed and seats[1].Occupant and seats[1].Occupant.Parent == player.Character then
+			speed = speed == 24 and 12 or 24
+			ready.Text = speed >= 24 and "JUMP READY / 24" or "RED: STOP / BAIL / 12"
+			return speed
+		end
+	end
+	brake.Triggered:Connect(toggle)
+	actions[index] = { board = boardPlayer, toggle = toggle }
+	local bail = Instance.new("ProximityPrompt")
+	bail.ActionText = "Emergency dismount to bypass"
+	bail.MaxActivationDistance = 9
+	bail.Parent = seats[2]
+	local exiting = {}
+	local function exitHumanoid(h, pos)
+		if h then
+			exiting[h] = true
+			for seat, rider in confirmed do
+				if rider == h then
+					confirmed[seat] = nil
+				end
+			end
+			unlockRider(h)
+			local seat = h.SeatPart
+			local weld = seat and seat:FindFirstChild("SeatWeld")
+			if weld then
+				weld:Destroy()
+			end
+			h.Sit = false
+			local root = h.Parent:FindFirstChild("HumanoidRootPart")
+			task.defer(function()
+				if root and root.Parent then
+					root.CFrame = CFrame.new(pos)
+					root.AssemblyLinearVelocity = Vector3.zero
+				end
+				exiting[h] = nil
+			end)
+		end
+	end
+	bail.Triggered:Connect(function(player)
+		for _, seat in seats do
+			if seat.Occupant and seat.Occupant.Parent == player.Character then
+				if state == "Flight" or state == "Fall" then
+					player:SetAttribute("CaveDismountDeferred", true)
+				else
+					exitHumanoid(seat.Occupant, bypassPosition(distance))
+				end
+			end
+		end
+	end)
+	local function reserve(on, approachOnly)
+		if on and not committed then
+			if not approachReserved then
+				busy += 1
+				approachReserved = true
+			end
+			if not approachOnly then
+				committed = true
+			end
+		elseif not on and approachReserved then
+			busy -= 1
+			committed = false
+			approachReserved = false
+		end
+	end
+	-- Defer ordinary seat jumping as well as the explicit emergency-dismount
+	-- prompt during a committed flight. Keep the confirmed rider even if the
+	-- engine temporarily clears Occupant; never substitute a respawned avatar.
+	for _, seat in seats do
+		seat:GetPropertyChangedSignal("Occupant"):Connect(function()
+			local h = confirmed[seat]
+			if h and seat.Occupant ~= h and state == "Dock" then
+				confirmed[seat] = nil
+				unlockRider(h)
+			end
+		end)
+	end
+	local function retainRiders()
+		for seat, h in confirmed do
+			local player = h.Parent and game.Players:GetPlayerFromCharacter(h.Parent)
+			if not h.Parent or h.Health <= 0 or not player or player.Character ~= h.Parent then
+				confirmed[seat] = nil
+				unlockRider(h)
+				diagnostic("rider invalidated", "boarded avatar died or was replaced")
+			elseif riding[h] and not exiting[h] then
+				h.Jump = false
+				h:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+				if not attached(seat, h) and state ~= "Dock" and os.clock() - riding[h].retry >= 0.25 then
+					riding[h].retry = os.clock()
+					if not seat.Occupant and not h.SeatPart and not seat:FindFirstChild("SeatWeld") then
+						local root = h.Parent:FindFirstChild("HumanoidRootPart")
+						if root then
+							root.CFrame = seat.CFrame * CFrame.new(0, 2, 0)
+						end
+					end
+					if not seat.Occupant or seat.Occupant == h then
+						seat:Sit(h)
+					end
+					diagnostic("re-sit " .. h.Parent.Name)
+					print("CaveCart re-sit", index, state, h.Parent.Name, attached(seat, h))
+				end
+			end
+		end
+	end
+	local function pivot(pos, dir)
+		-- One bulk transform includes external character parts. Model:PivotTo
+		-- includes only descendants of the cart, which excludes its SeatWeld rider.
+		local target = CFrame.lookAt(pos + Vector3.new(0, 2, 0), pos + Vector3.new(0, 2, 0) + dir)
+		local delta = target * model:GetPivot():Inverse()
+		local parts, frames = {}, {}
+		local function include(container)
+			for _, part in container:GetDescendants() do
+				if part:IsA("BasePart") then
+					table.insert(parts, part)
+					table.insert(frames, delta * part.CFrame)
+				end
+			end
+		end
+		include(model)
+		for _, h in confirmed do
+			if riding[h] and h.Parent and h.Health > 0 then
+				include(h.Parent)
+			end
+		end
+		workspace:BulkMoveTo(parts, frames, Enum.BulkMoveMode.FireCFrameChanged)
+	end
+	local function step(dt)
+		retainRiders()
+		gaugeText.Text = string.format(
+			"CART %d | %d | %s",
+			index,
+			speed,
+			(committed and flightSpeed or speed) >= 24 and "JUMP READY" or "RED / BAIL"
+		)
+		gaugeText.TextColor3 = (committed and flightSpeed or speed) >= 24 and Color3.fromRGB(128, 255, 150)
+			or Color3.fromRGB(255, 121, 111)
+		if state == "Dock" then
+			if departureReady() then
+				waitTime += dt
+				if waitTime >= 2 + (index - 1) * 1 and not hook:GetAttribute("Armed") then
+					-- Lock span state for the whole approach, including slow Studio frames.
+					reserve(true, true)
+					state = "Track"
+					board.Enabled = false
+					waitTime = 0
+				end
+			else
+				waitTime = 0
+			end
+		elseif state == "Track" then
+			local nextDistance = distance + speed * dt
+			if distance < data.gapStart - 22 and nextDistance >= data.gapStart - 22 then
+				if hook:GetAttribute("Armed") then
+					return
+				end
+				reserve(true)
+				flightSpeed = speed
+			end
+			if broken and nextDistance >= data.gapStart and distance < data.gapStart then
+				state = Policy.flight(flightSpeed)
+				elapsed = 0
+				distance = data.gapStart
+			else
+				distance = nextDistance
+				local position, dir = at(distance)
+				pivot(position, dir)
+				if distance > data.gapEnd + 24 then
+					reserve(false)
+				end
+				if distance >= data.length then
+					state = "End"
+					elapsed = 0
+				end
+				if distance > data.gapEnd + 65 and map.RailSwitchHook:GetAttribute("DivertNext") and not diverted then
+					diverted = true
+					map.RailSwitchHook:SetAttribute("DivertNext", false)
+					state = "Siding"
+					elapsed = 0
+				end
+			end
+		elseif state == "Flight" then
+			elapsed += dt
+			local t = math.clamp(elapsed / (16 / flightSpeed), 0, 1)
+			local a, dir = at(data.gapStart)
+			local b = at(data.gapEnd)
+			pivot(a:Lerp(b, t) + Vector3.new(0, 12 * 4 * t * (1 - t), 0), dir)
+			if t >= 1 then
+				distance = data.gapEnd + 0.05
+				state = "Landing"
+				elapsed = 0
+			end
+		elseif state == "Landing" then
+			distance += flightSpeed * dt
+			local pos, dir = at(distance)
+			pivot(pos, dir)
+			elapsed += dt
+			if elapsed >= 1 then
+				reserve(false)
+				state = "Track"
+				for _, s in seats do
+					local h = confirmed[s] or s.Occupant
+					local pl = h and game.Players:GetPlayerFromCharacter(h.Parent)
+					if pl and pl:GetAttribute("CaveDismountDeferred") then
+						pl:SetAttribute("CaveDismountDeferred", false)
+						exitHumanoid(h, bypassPosition(distance))
+					end
+				end
+			end
+		elseif state == "Fall" then
+			elapsed += dt
+			local t = math.clamp(elapsed / 1.2, 0, 1)
+			local a, dir = at(data.gapStart)
+			local pit = Vector3.new(0, -14, 25)
+			pivot(a:Lerp(pit, t), dir)
+			if t >= 1 then
+				arrivalReleased = true
+				for _, s in seats do
+					-- Deliberately eject into the pit, preserving carried cargo and
+					-- its existing recovery/expiry rule. End must not move it to bypass.
+					exitHumanoid(confirmed[s] or s.Occupant, pit + Vector3.new(0, 4, 0))
+				end
+				reserve(false)
+				state = "End"
+				elapsed = 0
+			end
+		elseif state == "Siding" then
+			elapsed += dt
+			local pos, dir = at(distance)
+			pivot(pos:Lerp(Vector3.new(-94, 8, 50), math.min(elapsed / 3.5, 1)), dir)
+			if elapsed >= 3.5 then
+				arrivalReleased = true
+				for _, s in seats do
+					exitHumanoid(confirmed[s] or s.Occupant, Vector3.new(-94, 12, 50))
+				end
+				state = "End"
+				elapsed = 0
+			end
+		elseif state == "End" then
+			elapsed += dt
+			if elapsed > 0.5 and not arrivalReleased then
+				arrivalReleased = true
+				for _, s in seats do
+					exitHumanoid(confirmed[s] or s.Occupant, bypassPosition(distance))
+				end
+			end
+			if elapsed > 4 then
+				reserve(false)
+				distance = 0
+				state = "Dock"
+				arrivalReleased = false
+				diverted = false
+				speed = 24
+				board.Enabled = true
+				local pos, dir = at(0)
+				pivot(pos + Vector3.new(index == 2 and 12 or 0, 0, 0), dir)
+			end
+		end
+		-- Publish after transitions/ejections so diagnostics observe one tick's
+		-- actual state rather than a stale Fall label on an already ejected rider.
+		model:SetAttribute("State", state)
+		model:SetAttribute("Speed", speed)
+		model:SetAttribute("TrackDistance", distance)
+		diagnostic()
+	end
+	RunService.Heartbeat:Connect(function(dt)
+		local ok, err = xpcall(function()
+			-- Consume all real elapsed time in bounded integration steps. A cap on
+			-- dt alone slows travel while the cargo/repair deadlines keep advancing.
+			while dt > 0 do
+				local slice = math.min(dt, 0.1)
+				step(slice)
+				dt -= slice
+			end
+		end, debug.traceback)
+		if not ok then
+			diagnostic("Heartbeat error", err)
+		end
+	end)
+	actions[index].snapshot = function(message)
+		diagnostic("snapshot", message)
+		return model:GetAttribute("CartLastRide")
+	end
+	actions[index].reset = function()
+		boardGeneration += 1
+		for _, seat in seats do
+			exitHumanoid(confirmed[seat] or seat.Occupant, bypassPosition(distance))
+		end
+		table.clear(confirmed)
+		table.clear(boarding)
+		reserve(false)
+		distance, state, elapsed, waitTime, diverted, speed, flightSpeed = 0, "Dock", 0, 0, false, 24, 24
+		arrivalReleased = false
+		board.Enabled = true
+		local dock, direction = at(0)
+		pivot(dock + Vector3.new(index == 2 and 12 or 0, 0, 0), direction)
+		model:SetAttribute("State", state)
+		model:SetAttribute("Speed", speed)
+		model:SetAttribute("TrackDistance", distance)
+		diagnostic("reset")
+		return true
+	end
+	local pos, dir = at(0)
+	pivot(pos + Vector3.new(index == 2 and 12 or 0, 0, 0), dir)
+	diagnostic("created")
 end
-for i=1,2 do buildCart(i) end
+for i = 1, 2 do
+	buildCart(i)
+end
+if RunService:IsStudio() then
+	local api = Instance.new("BindableFunction")
+	api.Name = "CaveCartActions"
+	api.Parent = script.Parent
+	api.OnInvoke = function(action, index, player)
+		if action == "resetAll" then
+			blastGeneration += 1
+			switchGeneration += 1
+			broken, lastBreak = false, -100
+			for _, cart in actions do
+				cart.reset()
+			end
+			span.CanCollide, span.Transparency = true, 0
+			map.SpanBearingBeam.CanCollide, map.SpanBearingBeam.Transparency = true, 0
+			hook:SetAttribute("Armed", false)
+			prompt.Enabled = true
+			ready.Text = "JUMP READY"
+			map.RailSwitchHook:SetAttribute("DivertNext", false)
+			map.RailSwitchHook:SetAttribute("Warning", false)
+			map.RailSwitchHook.Color = Color3.fromRGB(226, 123, 58)
+			for _, rider in game.Players:GetPlayers() do
+				rider:SetAttribute("CaveDismountDeferred", false)
+			end
+			local switchPrompt = map.RailSwitchHook:FindFirstChildOfClass("ProximityPrompt")
+			if switchPrompt then
+				switchPrompt.Enabled = true
+			end
+			return true
+		end
+		if action == "blast" then
+			task.spawn(blast)
+			return true
+		end
+		local cart = actions[index]
+		if cart and cart[action] then
+			return cart[action](player)
+		end
+	end
+end
 -- Switch hook demonstrates its complete 2s warning, 12s lock and harmless siding.
-local switch=map.RailSwitchHook;local sw=Instance.new('ProximityPrompt');sw.ActionText='Switch next cart';sw.HoldDuration=.4;sw.Parent=switch
-sw.Triggered:Connect(function() if switch:GetAttribute('DivertNext') or not sw.Enabled then return end;sw.Enabled=false;switch:SetAttribute('Warning',true);switch.Color=Color3.fromRGB(255,190,34);task.wait(2);local active=switch:GetAttribute('Warning');switch:SetAttribute('Warning',false);switch:SetAttribute('DivertNext',active);task.wait(12);switch.Color=Color3.fromRGB(226,123,58);sw.Enabled=true end)
+local switch = map.RailSwitchHook
+local sw = Instance.new("ProximityPrompt")
+sw.ActionText = "Switch next cart"
+sw.HoldDuration = 0.4
+sw.Parent = switch
+sw.Triggered:Connect(function()
+	if switch:GetAttribute("DivertNext") or not sw.Enabled then
+		return
+	end
+	sw.Enabled = false
+	local generation = switchGeneration
+	switch:SetAttribute("Warning", true)
+	switch.Color = Color3.fromRGB(255, 190, 34)
+	task.wait(2)
+	if generation ~= switchGeneration then return end
+	local active = switch:GetAttribute("Warning")
+	switch:SetAttribute("Warning", false)
+	switch:SetAttribute("DivertNext", active)
+	task.wait(12)
+	if generation ~= switchGeneration then return end
+	switch.Color = Color3.fromRGB(226, 123, 58)
+	sw.Enabled = true
+end)

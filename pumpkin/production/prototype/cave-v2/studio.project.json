@@ -1,0 +1,17 @@
+{
+  "name": "CaveStudioSources",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "KitLibrary": {"$path": "../kits/KitLibrary.luau", "Manifest": {"$path": "../kits/Manifest.model.json"}},
+      "KitPlan": {"$path": "KitPlan.luau"},
+      "CaveKits": {"$path": "Kits.server.luau"},
+      "CaveCart": {"$path": "Cart.server.luau", "CaveRiderControls": {"$path": "RiderControls.client.luau"}},
+      "CaveLoop": {"$path": "Loop.server.luau"},
+      "CaveDrops": {"$path": "Drops.luau"},
+      "CaveReachableDrops": {"$path": "ReachableDrops.luau"},
+      "CavePolicy": {"$path": "Policy.luau"},
+      "CaveStudioPass": {"$path": "StudioPass.server.luau"}
+    }
+  }
+}

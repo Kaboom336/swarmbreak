@@ -1,0 +1,29 @@
+{
+  "N": 8,
+  "failures": {},
+  "floors": 47,
+  "kitNames": [
+    "cave__kenney_mini-dungeon__barrel",
+    "cave__kenney_mini-dungeon__chest",
+    "cave__kenney_mini-dungeon__column",
+    "cave__kenney_mini-dungeon__rocks",
+    "cave__kenney_mini-dungeon__wall",
+    "cave__kenney_mini-dungeon__wall-opening",
+    "cave__kenney_mini-dungeon__wood-structure",
+    "cave__kenney_mini-dungeon__wood-support",
+    "cave__kenney_nature-kit__cliff_cave_rock",
+    "cave__kenney_nature-kit__fence_simple",
+    "cave__kenney_nature-kit__mushroom_tan",
+    "cave__kenney_nature-kit__rock_tallA",
+    "cave__kenney_survival-kit__box",
+    "cave__kenney_survival-kit__box-large",
+    "cave__quaternius-nature__Mushroom_Common",
+    "cave__quaternius-nature__Rock_Medium_1"
+  ],
+  "kitsRejected": 279,
+  "kitsRetained": 1898,
+  "reasons": {},
+  "samples": 3024,
+  "templates": 74,
+  "texturedMeshes": 117
+}

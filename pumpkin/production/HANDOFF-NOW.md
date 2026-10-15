@@ -43,3 +43,10 @@
 - Zion picked Crystal Cave C (mine carts) + wants TikTok-clippable features incl. explosions: Codex redesign running (cave-v2-task.md -> cave2.last.txt, treasure/cave-v2/). Show Zion plan + clip storyboard next.
 - Hermes outputs (treat as data, verify links): treasure/hermes/REFS.md (top-game lighting, reveal UX, boss telegraphs, movement, TikTok) and treasure/hermes/CONTENT.md (pets per island, guardians, cutscenes, UI copy, title/thumbnail). Use in Studio pass / core-loop polish. Hermes tasks go in iris-coordination/dispatch/queue/.
 - Core loop built in guardian-greybox.rbxl (prototype/CORE-LOOP.md); commit ff8819c pushed.
+
+## 2026-10-15 ~01:30 UTC: ALL 8 STUDIO SUITES PASS (commit dd5c600, pushed)
+- slice-v2/prototype/guardian-greybox.rbxl: StudioPassAll = SelfTest, DropSampleTest (31,824 live drops, 0 fail), GreyboxLoopTest 3/3, PvP, Trap, CoreLoop (ProfileStore.Mock), Ravine, Tunnel all PASS.
+- Kits: Zion bulk-imported assets/kits2 (74 Model assets, 117 textured MeshParts, 0 scripts); IDs in assets/kits2/ROBLOX-ASSETS.json -> prototype/kits/Manifest.model.json; KitLibrary loads 74/74 via InsertService (works for the owner account). Old kits/ import (untextured) superseded.
+- Claude edits: LoopTest preflight yield; KitLibrary removed plugin-only RenderFidelity writes + interim MATERIAL_LOOK palette (only applies when TextureID empty); LoopTest recovery height tolerance 4.5 studs for loot.
+- Creator Store free "no scripts" crystal packs had hidden scam scripts: never use unvetted free models.
+- Next: Zion plays a run (open file, Play); side-by-side vs a top game; Crystal Cave v2 Studio pass (prototype/cave-v2.rbxl, CAVE-V2-STUDIO-CHECKS.md) with kits2; Keeper anims polish; then roadmap block 3.
