@@ -1,0 +1,32 @@
+{
+  "before": {
+    "ends": 532,
+    "unconnected": 22,
+    "gaps": 22,
+    "overlaps": 503,
+    "fence_ends": 0,
+    "method": "nearest compatible OBB at beam/profile center; visual before face mismatches are crops, not falsely precise full-profile counts"
+  },
+  "after": {
+    "ledger_records": 4850,
+    "path_pieces": 1356,
+    "rail_pieces": 126,
+    "fence_ends": 3116,
+    "grounded_trestles": 126,
+    "unconnected": 0,
+    "gaps": 0,
+    "overlaps": 0
+  },
+  "failures": [],
+  "overlaps": [],
+  "vertex_tolerance": 0.001,
+  "minimum_size_clamps": 36,
+  "maximum_dimension_change": 0.000989217708495397,
+  "scope": "Visible modular infrastructure, closed span; accepted invisible collision-floor overlaps intentionally preserved. Designed interfaces and rail profiles 0.0001 stud; serialized facet vertices 0.001 stud after engine minimum-size normalization, below owner 0.05-stud overlap limit. Excess overlap area threshold .0025 square stud; beam contact OBB. Runtime UNKNOWN.",
+  "preservation": {
+    "collider_geometry": true,
+    "routes": true,
+    "hooks": true,
+    "crystal_geometry_color": true
+  }
+}

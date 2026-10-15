@@ -6,6 +6,8 @@ local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local config = require(RS:WaitForChild("TreasureCore").Config)
 local event = RS:WaitForChild("TreasureCoreEvent")
+local feel = require(RS.TreasureCore.Feel).new()
+script.Destroying:Connect(function() feel:Destroy() end)
 local gui = Instance.new("ScreenGui")
 gui.Name, gui.ResetOnSpawn, gui.DisplayOrder, gui.Parent =
 	"TreasureCoreHud", false, 20, player:WaitForChild("PlayerGui")
@@ -180,12 +182,13 @@ skip.Activated:Connect(function()
 	card.Visible = false
 end)
 local revealGeneration = 0
-event.OnClientEvent:Connect(function(kind, a, b, c)
+feel.trove:Connect(event.OnClientEvent, function(kind, a, b, c)
 	if kind == "Reveal" then
 		revealGeneration += 1
 		local generation = revealGeneration
 		card.Text = a .. "\n" .. b .. "  /  +" .. c .. " Coins/s\n"
 		card.Visible = true
+		feel:pop(card)
 		task.delay(config.RevealSeconds, function()
 			if generation == revealGeneration then
 				card.Visible = false
@@ -200,6 +203,7 @@ event.OnClientEvent:Connect(function(kind, a, b, c)
 			"+" .. a .. " Coins"
 		)
 		pop.TextColor3 = Color3.fromRGB(255, 221, 80)
+		feel:pop(pop)
 		TweenService:Create(pop, TweenInfo.new(0.8), {
 			Position = UDim2.new(0.5, -100, 0.3, 0),
 			TextTransparency = 1,
@@ -211,17 +215,16 @@ event.OnClientEvent:Connect(function(kind, a, b, c)
 	end
 end)
 local function update()
-	counter.Text = "Coins "
-		.. tostring(player:GetAttribute("Coins") or 0)
-		.. "\n"
-		.. tostring(player:GetAttribute("CoinsPerSecond") or 0)
-		.. " Coins/s"
+	feel:counter(counter, player:GetAttribute("Coins") or 0, function(value)
+		counter.Text = "Coins " .. tostring(math.floor(value + .5)) .. "\n"
+			.. tostring(player:GetAttribute("CoinsPerSecond") or 0) .. " Coins/s"
+	end)
 	status.Text = (player:GetAttribute("CoreSaveStatus") or "Loading")
 		.. " / plot "
 		.. tostring(player:GetAttribute("PlotCoins") or 0)
 	indexText()
 end
 for _, attribute in { "Coins", "CoinsPerSecond", "PlotCoins", "CoreSaveStatus", "PetDiscoveries" } do
-	player:GetAttributeChangedSignal(attribute):Connect(update)
+	feel.trove:Connect(player:GetAttributeChangedSignal(attribute), update)
 end
 update()

@@ -1,0 +1,19 @@
+{
+  "method": "OBB SAT contact graph tolerance0.06stud rooted ONLY in deepest underside collider component; checks every mass/support/roof/floor collider. Contact proves geometric attachment, not load-bearing strength. Cave upper envelope bottom6.1 top23.9 sampled <=2stud lateral -7/0/7,4stud width. Flight and red-fall65 samples ORIENTED8x7.8x10 envelopes; broken span+beam excluded. Track cart <=2stud samples ORIENTED to exact track dir; center=pivot(worldY+2)+normal*4, wheels ground contact excluded. Floor rays <=2stud lateral -7/0/7 accept floor within3stud predicted centerline; report max snap. Runtime, continuous sweep and dismount UNKNOWN.",
+  "mountain_connected_components": 1,
+  "floating_collider_parts": 0,
+  "floating_parts": [],
+  "cave_24_headroom_hits": 0,
+  "cave_samples": 897,
+  "headroom_violations": [],
+  "green_flight_envelope_hits": 0,
+  "flight_violations": [],
+  "red_fall_envelope_hits": 0,
+  "fall_violations": [],
+  "track_cart_envelope_hits": 0,
+  "cart_violations": [],
+  "floor_ray_missing_hits": 0,
+  "floor_samples": 3291,
+  "max_floor_snap_studs": 2.6565,
+  "floor_gaps": []
+}

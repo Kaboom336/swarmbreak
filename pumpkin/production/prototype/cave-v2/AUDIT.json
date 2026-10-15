@@ -1,0 +1,10 @@
+{
+  "method": "<=2-stud longitudinal samples; lateral avatar centers -7/0/+7 plus cardinal 2 radius at body heights3.5/6.8 =18-stud tested corridor. Against all native collision OBBs. Noncolliders excluded. Footstep seams, full headroom, cart and jump envelopes remain UNKNOWN.",
+  "clearance_hits": 0,
+  "samples": 3291,
+  "maximum_grade_degrees": 22.83,
+  "unreachable_route_nodes": 0,
+  "dead_ends": "0 unreachable graph nodes is connectivity only; physical movement pending",
+  "float_clip": "UNKNOWN: geometric support and seam audit pending",
+  "violations": []
+}

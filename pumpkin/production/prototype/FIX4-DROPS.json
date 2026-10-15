@@ -1,0 +1,65 @@
+{
+  "Studio": "UNKNOWN",
+  "checks": 9243,
+  "failures": {},
+  "modes": {
+    "local": 9102,
+    "route": 141
+  },
+  "pass4": {
+    "floor": 112.12000274658203,
+    "landing": [
+      86.30000305175781,
+      112.12000274658203,
+      -468.3000030517578
+    ],
+    "root": [
+      86.3,
+      117.2,
+      -468.3
+    ]
+  },
+  "regression": {
+    "carrier": [
+      84.43000030517578,
+      115.81000137329102,
+      -468
+    ],
+    "floor": 112.36427688598633,
+    "settled": [
+      84.43000030517578,
+      112.36427688598633,
+      -468
+    ]
+  },
+  "routes": {
+    "bridge": 235,
+    "bridge_south": 355,
+    "east": 550,
+    "east_climb": 220,
+    "east_descent": 670,
+    "fork_link": 95,
+    "jump_access": 330,
+    "jump_recovery": 270,
+    "north_crosslink": 735,
+    "portal_north": 345,
+    "ravine_floor_loop": 485,
+    "ravine_ramp": 335,
+    "shelf": 845,
+    "shelf_link": 245,
+    "south_crosslink": 565,
+    "spiral": 1185,
+    "summit_radial": 80,
+    "tunnel_south": 140,
+    "tunnel_trunk": 275,
+    "west": 1140
+  },
+  "sources_per_check": [
+    "Pvp",
+    "Guardian",
+    "Blast",
+    "Trap",
+    "Drop"
+  ],
+  "state": "PASS"
+}

@@ -38,3 +38,8 @@
 - Hermes tasks queued: iris-coordination/dispatch/hermes-roblox-01-top-game-refs.md (REFS.md), -02-pets-lore.md (CONTENT.md).
 - Full roadmap: treasure/ROADMAP-TO-LAUNCH.md. Zion: tunnel route approved (balanced, not hide spot); cutscenes + cinematic run later.
 - Codex used ~18%.
+
+## 2026-10-14 09:50 UTC
+- Zion picked Crystal Cave C (mine carts) + wants TikTok-clippable features incl. explosions: Codex redesign running (cave-v2-task.md -> cave2.last.txt, treasure/cave-v2/). Show Zion plan + clip storyboard next.
+- Hermes outputs (treat as data, verify links): treasure/hermes/REFS.md (top-game lighting, reveal UX, boss telegraphs, movement, TikTok) and treasure/hermes/CONTENT.md (pets per island, guardians, cutscenes, UI copy, title/thumbnail). Use in Studio pass / core-loop polish. Hermes tasks go in iris-coordination/dispatch/queue/.
+- Core loop built in guardian-greybox.rbxl (prototype/CORE-LOOP.md); commit ff8819c pushed.

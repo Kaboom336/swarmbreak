@@ -1,0 +1,1802 @@
+{
+  "Studio": "UNKNOWN",
+  "artifact": "slice-v2/prototype/guardian-greybox.pre-fix2.rbxl",
+  "bad": 93,
+  "checks": 526,
+  "failures": [
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "approach 18 bridge_south 17",
+      "point": [
+        7,
+        0,
+        -65
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 9,65 rise -2.3095016479492188",
+      "runtime_root": [
+        7,
+        79,
+        -295
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "approach 25 bridge_south 24",
+      "point": [
+        0.6357421875,
+        0,
+        -43.7607421875
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at -1.8642578125,42.2607421875 rise -2.2990026473999023",
+      "runtime_root": [
+        0.6357421875,
+        79,
+        -316.2392578125
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "approach 26 bridge_south 25",
+      "point": [
+        0,
+        0,
+        -42
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at -2.5,42.5 rise -2.3030014038085938",
+      "runtime_root": [
+        0,
+        79,
+        -318
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "approach 27 bridge 1",
+      "point": [
+        0,
+        0,
+        -42
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at -2.5,42.5 rise -2.3030014038085938",
+      "runtime_root": [
+        0,
+        79,
+        -318
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "approach 39 fork_link 7",
+      "point": [
+        -1.125,
+        0,
+        55.625
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 0.375,-58.125 rise -2.2063980102539062",
+      "runtime_root": [
+        -1.125,
+        79,
+        -415.625
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "approach 40 fork_link 8",
+      "point": [
+        -0.453125,
+        0,
+        57.015625
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 0.546875,-59.515625 rise -2.2049026489257812",
+      "runtime_root": [
+        -0.453125,
+        79,
+        -417.015625
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "approach 41 fork_link 9",
+      "point": [
+        0,
+        0,
+        58
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 0.5,-60.5 rise -2.2033920288085938",
+      "runtime_root": [
+        0,
+        79,
+        -418
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "approach 42 spiral 1",
+      "point": [
+        -9.184850993605149e-15,
+        0,
+        58
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 0.49999999999999084,-60.5 rise -2.2033920288085938",
+      "runtime_root": [
+        -9.184850891462946e-15,
+        79,
+        -418
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "approach 43 spiral 2",
+      "point": [
+        -2.4431612842193564,
+        0,
+        58.26830957645078
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 0.5568387508392334,-58.268310546875 rise -2.2033920288085938",
+      "runtime_root": [
+        -2.4431612491607666,
+        79,
+        -418.268310546875
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral79",
+        "ny": 0.2567901611328125,
+        "y": 5.314038276672363
+      },
+      "name": "approach 58 spiral 17",
+      "point": [
+        -32.998316455372226,
+        4.487804878048779,
+        75.00168354462778
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at -34.99831771850586,-76.5016860961914",
+      "runtime_root": [
+        -32.99831771850586,
+        83.48780488967896,
+        -435.0016860961914
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral69",
+        "ny": 0.26788270473480225,
+        "y": 11.397540092468262
+      },
+      "name": "approach 68 spiral 27",
+      "point": [
+        -42.663589968060975,
+        10.58536585365854,
+        95.05814147240523
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at -44.66358947753906,-97.05814361572266",
+      "runtime_root": [
+        -42.66358947753906,
+        89.58536624908447,
+        -455.05814361572266
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral59",
+        "ny": 0.27990955114364624,
+        "y": 17.489585876464844
+      },
+      "name": "approach 78 spiral 37",
+      "point": [
+        -41.683374417137294,
+        16.682926829268293,
+        116.29133868568546
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at -42.18337631225586,-118.79133605957031",
+      "runtime_root": [
+        -41.68337631225586,
+        95.68292617797852,
+        -476.2913360595703
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral57",
+        "ny": 0.2824389934539795,
+        "y": 18.6980037689209
+      },
+      "name": "approach 82 spiral 41",
+      "point": [
+        -38.494980521303624,
+        19.121951219512194,
+        123.94514301521207
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at -40.99497985839844,-122.94514465332031",
+      "runtime_root": [
+        -38.49497985839844,
+        98.12195205688477,
+        -483.9451446533203
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral55",
+        "ny": 0.2850201725959778,
+        "y": 19.920650482177734
+      },
+      "name": "approach 83 spiral 42",
+      "point": [
+        -37.47788944407608,
+        19.731707317073177,
+        125.72572158179713
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at -38.97789001464844,-126.72572326660156",
+      "runtime_root": [
+        -37.47789001464844,
+        98.7317066192627,
+        -485.72572326660156
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral47",
+        "ny": 0.2957906424999237,
+        "y": 24.80604362487793
+      },
+      "name": "approach 91 spiral 50",
+      "point": [
+        -26.722450078287608,
+        24.609756097560982,
+        137.48368019641606
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at -27.722450256347656,-138.98367309570312",
+      "runtime_root": [
+        -26.722450256347656,
+        103.60975646972656,
+        -497.4836730957031
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral40",
+        "ny": 0.3058601915836334,
+        "y": 29.04854965209961
+      },
+      "name": "approach 98 spiral 57",
+      "point": [
+        -14.669531573995107,
+        28.878048780487802,
+        143.41538207959934
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at -15.16953182220459,-145.41537475585938",
+      "runtime_root": [
+        -14.66953182220459,
+        107.87804794311523,
+        -503.4153747558594
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral30",
+        "ny": 0.3214104175567627,
+        "y": 35.15675354003906
+      },
+      "name": "approach 109 spiral 68",
+      "point": [
+        5.288410850162004,
+        35.585365853658544,
+        143.6515700466473
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 3.7884106636047363,-144.6515655517578",
+      "runtime_root": [
+        5.288410663604736,
+        114.58536529541016,
+        -503.6515655517578
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral27",
+        "ny": 0.3263692557811737,
+        "y": 36.98539352416992
+      },
+      "name": "approach 110 spiral 69",
+      "point": [
+        6.990736538911258,
+        36.19512195121951,
+        143.14480588111576
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 8.990736484527588,-143.14480590820312",
+      "runtime_root": [
+        6.990736484527588,
+        115.19512176513672,
+        -503.1448059082031
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral14",
+        "ny": 0.3496113717556,
+        "y": 44.89046859741211
+      },
+      "name": "approach 124 spiral 83",
+      "point": [
+        25.444927423190087,
+        44.73170731707317,
+        128.88211227038667
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 27.944927215576172,-130.38211059570312",
+      "runtime_root": [
+        25.444927215576172,
+        123.73170852661133,
+        -488.8821105957031
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "carry 8 shelf 5",
+      "point": [
+        99.83333333333333,
+        36,
+        108.16666666666669
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 100.33333587646484,-106.16666412353516 rise -24.216609954833984",
+      "runtime_root": [
+        99.83333587646484,
+        115,
+        -468.16666412353516
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "carry 9 shelf 6",
+      "point": [
+        101.33333333333336,
+        36,
+        108.66666666666667
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 100.33333587646484,-106.16666412353516 rise -24.21810531616211",
+      "runtime_root": [
+        101.33333587646484,
+        115,
+        -468.66666412353516
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "carry 10 shelf 7",
+      "point": [
+        102.5,
+        36,
+        109.5
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 102,-107.5 rise -24.219600677490234",
+      "runtime_root": [
+        102.5,
+        115,
+        -469.5
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "carry 11 shelf 8",
+      "point": [
+        103.33333333333334,
+        36,
+        110.66666666666666
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 103.33333587646484,-108.66666412353516 rise -24.219600677490234",
+      "runtime_root": [
+        103.33333587646484,
+        115,
+        -470.66666412353516
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "carry 12 shelf 9",
+      "point": [
+        103.83333333333334,
+        36,
+        112.16666666666666
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 104.33333587646484,-110.16666412353516 rise -24.213497161865234",
+      "runtime_root": [
+        103.83333587646484,
+        115,
+        -472.16666412353516
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "carry 15 shelf 12",
+      "point": [
+        104.16666666666667,
+        36,
+        123.83333333333334
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 101.66666412353516,-124.33333587646484 rise -24.217998504638672",
+      "runtime_root": [
+        104.16666412353516,
+        115,
+        -483.83333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "carry 16 shelf 13",
+      "point": [
+        104.66666666666669,
+        36,
+        125.33333333333334
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 102.16666412353516,-126.83333587646484 rise -24.21950912475586",
+      "runtime_root": [
+        104.66666412353516,
+        115,
+        -485.33333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "carry 17 shelf 14",
+      "point": [
+        105.5,
+        36,
+        126.5
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 102.5,-126.5 rise -24.221004486083984",
+      "runtime_root": [
+        105.5,
+        115,
+        -486.5
+      ]
+    },
+    {
+      "decision": "MAP",
+      "name": "carry 18 shelf 15",
+      "point": [
+        106.66666666666667,
+        36,
+        127.33333333333334
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 104.16666412353516,-127.83333587646484",
+      "runtime_root": [
+        106.66666412353516,
+        115,
+        -487.33333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "name": "carry 19 shelf 16",
+      "point": [
+        108.16666666666667,
+        36,
+        127.83333333333334
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 105.66666412353516,-129.33333587646484",
+      "runtime_root": [
+        108.16666412353516,
+        115,
+        -487.83333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "name": "carry 22 shelf 19",
+      "point": [
+        119.83333333333334,
+        36,
+        127.83333333333334
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 120.33333587646484,-130.33333587646484",
+      "runtime_root": [
+        119.83333587646484,
+        115,
+        -487.83333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "name": "carry 23 shelf 20",
+      "point": [
+        121.33333333333334,
+        36,
+        127.33333333333336
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 120.33333587646484,-129.83333587646484",
+      "runtime_root": [
+        121.33333587646484,
+        115,
+        -487.33333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "name": "carry 24 shelf 21",
+      "point": [
+        122.5,
+        36,
+        126.5
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 122,-128.5",
+      "runtime_root": [
+        122.5,
+        115,
+        -486.5
+      ]
+    },
+    {
+      "decision": "MAP",
+      "name": "carry 25 shelf 22",
+      "point": [
+        123.33333333333334,
+        36,
+        125.33333333333334
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 123.33333587646484,-127.33333587646484",
+      "runtime_root": [
+        123.33333587646484,
+        115,
+        -485.33333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "name": "carry 26 shelf 23",
+      "point": [
+        123.83333333333334,
+        36,
+        123.83333333333334
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 124.33333587646484,-125.83333587646484",
+      "runtime_root": [
+        123.83333587646484,
+        115,
+        -483.83333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -3.814697265625e-6
+      },
+      "name": "carry 30 shelf 27",
+      "point": [
+        124,
+        24,
+        77.5
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 125.5,-75.5 rise -24.234203338623047",
+      "runtime_root": [
+        124,
+        103,
+        -437.5
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -3.814697265625e-6
+      },
+      "name": "carry 31 shelf 28",
+      "point": [
+        123.84722222222224,
+        24.000000000000004,
+        75.81944444444446
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 124.84722137451172,-73.81944274902344 rise -24.235698699951172",
+      "runtime_root": [
+        123.84722137451172,
+        103,
+        -435.81944274902344
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -3.814697265625e-6
+      },
+      "name": "carry 32 shelf 29",
+      "point": [
+        123.3888888888889,
+        24.000000000000004,
+        74.44444444444446
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 123.88888549804688,-71.94444274902344 rise -24.23720932006836",
+      "runtime_root": [
+        123.38888549804688,
+        103,
+        -434.44444274902344
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -3.814697265625e-6
+      },
+      "name": "carry 33 shelf 30",
+      "point": [
+        122.625,
+        24,
+        73.375
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 122.125,-71.375 rise -24.23720932006836",
+      "runtime_root": [
+        122.625,
+        103,
+        -433.375
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -3.814697265625e-6
+      },
+      "name": "carry 34 shelf 31",
+      "point": [
+        121.55555555555557,
+        24,
+        72.61111111111111
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 120.55555725097656,-70.61111450195312 rise -24.233898162841797",
+      "runtime_root": [
+        121.55555725097656,
+        103,
+        -432.6111145019531
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -3.814697265625e-6
+      },
+      "name": "carry 35 shelf 32",
+      "point": [
+        120.18055555555554,
+        24,
+        72.15277777777777
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 120.68055725097656,-70.15277862548828 rise -24.235408782958984",
+      "runtime_root": [
+        120.18055725097656,
+        103,
+        -432.1527786254883
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -3.814697265625e-6
+      },
+      "name": "carry 36 shelf 33",
+      "point": [
+        118.5,
+        24,
+        72
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 120.5,-70.5 rise -24.23690414428711",
+      "runtime_root": [
+        118.5,
+        103,
+        -432
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "carry 41 shelf 38",
+      "point": [
+        37,
+        0,
+        72
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 34.5,-73.5 rise -2.2437057495117188",
+      "runtime_root": [
+        37,
+        79,
+        -432
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "carry 42 shelf_link 1",
+      "point": [
+        37,
+        0,
+        72
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 34.5,-73.5 rise -2.2437057495117188",
+      "runtime_root": [
+        37,
+        79,
+        -432
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "carry 63 bridge 6",
+      "point": [
+        0,
+        0,
+        -42
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at -2.5,42.5 rise -2.3030014038085938",
+      "runtime_root": [
+        0,
+        79,
+        -318
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "carry 64 bridge_south 1",
+      "point": [
+        0,
+        0,
+        -42
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at -2.5,42.5 rise -2.3030014038085938",
+      "runtime_root": [
+        0,
+        79,
+        -318
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "carry 65 bridge_south 2",
+      "point": [
+        0.6357421875,
+        0,
+        -43.7607421875
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at -1.8642578125,42.2607421875 rise -2.2990026473999023",
+      "runtime_root": [
+        0.6357421875,
+        79,
+        -316.2392578125
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "carry 72 bridge_south 9",
+      "point": [
+        7,
+        0,
+        -65
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 9,65 rise -2.3095016479492188",
+      "runtime_root": [
+        7,
+        79,
+        -295
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "empty expiry exit 8",
+      "point": [
+        99.83333333333333,
+        36,
+        108.16666666666669
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 100.33333587646484,-106.16666412353516 rise -24.216609954833984",
+      "runtime_root": [
+        99.83333587646484,
+        115,
+        -468.16666412353516
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "empty expiry exit 9",
+      "point": [
+        101.33333333333336,
+        36,
+        108.66666666666667
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 100.33333587646484,-106.16666412353516 rise -24.21810531616211",
+      "runtime_root": [
+        101.33333587646484,
+        115,
+        -468.66666412353516
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "empty expiry exit 10",
+      "point": [
+        102.5,
+        36,
+        109.5
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 102,-107.5 rise -24.219600677490234",
+      "runtime_root": [
+        102.5,
+        115,
+        -469.5
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "empty expiry exit 11",
+      "point": [
+        103.33333333333334,
+        36,
+        110.66666666666666
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 103.33333587646484,-108.66666412353516 rise -24.219600677490234",
+      "runtime_root": [
+        103.33333587646484,
+        115,
+        -470.66666412353516
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "empty expiry exit 12",
+      "point": [
+        103.83333333333334,
+        36,
+        112.16666666666666
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 104.33333587646484,-110.16666412353516 rise -24.213497161865234",
+      "runtime_root": [
+        103.83333587646484,
+        115,
+        -472.16666412353516
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "empty expiry exit 15",
+      "point": [
+        104.16666666666667,
+        36,
+        123.83333333333334
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 101.66666412353516,-124.33333587646484 rise -24.217998504638672",
+      "runtime_root": [
+        104.16666412353516,
+        115,
+        -483.83333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "empty expiry exit 16",
+      "point": [
+        104.66666666666669,
+        36,
+        125.33333333333334
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 102.16666412353516,-126.83333587646484 rise -24.21950912475586",
+      "runtime_root": [
+        104.66666412353516,
+        115,
+        -485.33333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": 11.999996185302734
+      },
+      "name": "empty expiry exit 17",
+      "point": [
+        105.5,
+        36,
+        126.5
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 102.5,-126.5 rise -24.221004486083984",
+      "runtime_root": [
+        105.5,
+        115,
+        -486.5
+      ]
+    },
+    {
+      "decision": "MAP",
+      "name": "empty expiry exit 18",
+      "point": [
+        106.66666666666667,
+        36,
+        127.33333333333334
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 104.16666412353516,-127.83333587646484",
+      "runtime_root": [
+        106.66666412353516,
+        115,
+        -487.33333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "name": "empty expiry exit 19",
+      "point": [
+        108.16666666666667,
+        36,
+        127.83333333333334
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 105.66666412353516,-129.33333587646484",
+      "runtime_root": [
+        108.16666412353516,
+        115,
+        -487.83333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "name": "empty expiry exit 22",
+      "point": [
+        119.83333333333334,
+        36,
+        127.83333333333334
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 120.33333587646484,-130.33333587646484",
+      "runtime_root": [
+        119.83333587646484,
+        115,
+        -487.83333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "name": "empty expiry exit 23",
+      "point": [
+        121.33333333333334,
+        36,
+        127.33333333333336
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 120.33333587646484,-129.83333587646484",
+      "runtime_root": [
+        121.33333587646484,
+        115,
+        -487.33333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "name": "empty expiry exit 24",
+      "point": [
+        122.5,
+        36,
+        126.5
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 122,-128.5",
+      "runtime_root": [
+        122.5,
+        115,
+        -486.5
+      ]
+    },
+    {
+      "decision": "MAP",
+      "name": "empty expiry exit 25",
+      "point": [
+        123.33333333333334,
+        36,
+        125.33333333333334
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 123.33333587646484,-127.33333587646484",
+      "runtime_root": [
+        123.33333587646484,
+        115,
+        -485.33333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "name": "empty expiry exit 26",
+      "point": [
+        123.83333333333334,
+        36,
+        123.83333333333334
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 124.33333587646484,-125.83333587646484",
+      "runtime_root": [
+        123.83333587646484,
+        115,
+        -483.83333587646484
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -3.814697265625e-6
+      },
+      "name": "empty expiry exit 30",
+      "point": [
+        124,
+        24,
+        77.5
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 125.5,-75.5 rise -24.234203338623047",
+      "runtime_root": [
+        124,
+        103,
+        -437.5
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -3.814697265625e-6
+      },
+      "name": "empty expiry exit 31",
+      "point": [
+        123.84722222222224,
+        24.000000000000004,
+        75.81944444444446
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 124.84722137451172,-73.81944274902344 rise -24.235698699951172",
+      "runtime_root": [
+        123.84722137451172,
+        103,
+        -435.81944274902344
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -3.814697265625e-6
+      },
+      "name": "empty expiry exit 32",
+      "point": [
+        123.3888888888889,
+        24.000000000000004,
+        74.44444444444446
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 123.88888549804688,-71.94444274902344 rise -24.23720932006836",
+      "runtime_root": [
+        123.38888549804688,
+        103,
+        -434.44444274902344
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -3.814697265625e-6
+      },
+      "name": "empty expiry exit 33",
+      "point": [
+        122.625,
+        24,
+        73.375
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 122.125,-71.375 rise -24.23720932006836",
+      "runtime_root": [
+        122.625,
+        103,
+        -433.375
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -3.814697265625e-6
+      },
+      "name": "empty expiry exit 34",
+      "point": [
+        121.55555555555557,
+        24,
+        72.61111111111111
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 120.55555725097656,-70.61111450195312 rise -24.233898162841797",
+      "runtime_root": [
+        121.55555725097656,
+        103,
+        -432.6111145019531
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -3.814697265625e-6
+      },
+      "name": "empty expiry exit 35",
+      "point": [
+        120.18055555555554,
+        24,
+        72.15277777777777
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 120.68055725097656,-70.15277862548828 rise -24.235408782958984",
+      "runtime_root": [
+        120.18055725097656,
+        103,
+        -432.1527786254883
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -3.814697265625e-6
+      },
+      "name": "empty expiry exit 36",
+      "point": [
+        118.5,
+        24,
+        72
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 120.5,-70.5 rise -24.23690414428711",
+      "runtime_root": [
+        118.5,
+        103,
+        -432
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "empty expiry exit 41",
+      "point": [
+        37,
+        0,
+        72
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 34.5,-73.5 rise -2.2437057495117188",
+      "runtime_root": [
+        37,
+        79,
+        -432
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "empty expiry exit 42",
+      "point": [
+        37,
+        0,
+        72
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 34.5,-73.5 rise -2.2437057495117188",
+      "runtime_root": [
+        37,
+        79,
+        -432
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "empty expiry exit 63",
+      "point": [
+        0,
+        0,
+        -42
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at -2.5,42.5 rise -2.3030014038085938",
+      "runtime_root": [
+        0,
+        79,
+        -318
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "empty expiry exit 64",
+      "point": [
+        0,
+        0,
+        -42
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at -2.5,42.5 rise -2.3030014038085938",
+      "runtime_root": [
+        0,
+        79,
+        -318
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "empty expiry exit 65",
+      "point": [
+        0.6357421875,
+        0,
+        -43.7607421875
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at -1.8642578125,42.2607421875 rise -2.2990026473999023",
+      "runtime_root": [
+        0.6357421875,
+        79,
+        -316.2392578125
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "empty expiry exit 72",
+      "point": [
+        7,
+        0,
+        -65
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 9,65 rise -2.3095016479492188",
+      "runtime_root": [
+        7,
+        79,
+        -295
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral14",
+        "ny": 0.3496113717556,
+        "y": 44.89046859741211
+      },
+      "name": "pvp Dummy 19",
+      "point": [
+        25.444927423190087,
+        44.73170731707317,
+        128.88211227038667
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 27.944927215576172,-130.38211059570312",
+      "runtime_root": [
+        25.444927215576172,
+        123.73170852661133,
+        -488.8821105957031
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral27",
+        "ny": 0.3263692557811737,
+        "y": 36.98539352416992
+      },
+      "name": "pvp Dummy 33",
+      "point": [
+        6.990736538911258,
+        36.19512195121951,
+        143.14480588111576
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 8.990736484527588,-143.14480590820312",
+      "runtime_root": [
+        6.990736484527588,
+        115.19512176513672,
+        -503.1448059082031
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral30",
+        "ny": 0.3214104175567627,
+        "y": 35.15675354003906
+      },
+      "name": "pvp Dummy 34",
+      "point": [
+        5.288410850162004,
+        35.585365853658544,
+        143.6515700466473
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at 3.7884106636047363,-144.6515655517578",
+      "runtime_root": [
+        5.288410663604736,
+        114.58536529541016,
+        -503.6515655517578
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral40",
+        "ny": 0.3058601915836334,
+        "y": 29.04854965209961
+      },
+      "name": "pvp Dummy 45",
+      "point": [
+        -14.669531573995107,
+        28.878048780487802,
+        143.41538207959934
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at -15.16953182220459,-145.41537475585938",
+      "runtime_root": [
+        -14.66953182220459,
+        107.87804794311523,
+        -503.4153747558594
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral47",
+        "ny": 0.2957906424999237,
+        "y": 24.80604362487793
+      },
+      "name": "pvp Dummy 52",
+      "point": [
+        -26.722450078287608,
+        24.609756097560982,
+        137.48368019641606
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at -27.722450256347656,-138.98367309570312",
+      "runtime_root": [
+        -26.722450256347656,
+        103.60975646972656,
+        -497.4836730957031
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral55",
+        "ny": 0.2850201725959778,
+        "y": 19.920650482177734
+      },
+      "name": "pvp Dummy 60",
+      "point": [
+        -37.47788944407608,
+        19.731707317073177,
+        125.72572158179713
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at -38.97789001464844,-126.72572326660156",
+      "runtime_root": [
+        -37.47789001464844,
+        98.7317066192627,
+        -485.72572326660156
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral57",
+        "ny": 0.2824389934539795,
+        "y": 18.6980037689209
+      },
+      "name": "pvp Dummy 61",
+      "point": [
+        -38.494980521303624,
+        19.121951219512194,
+        123.94514301521207
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at -40.99497985839844,-122.94514465332031",
+      "runtime_root": [
+        -38.49497985839844,
+        98.12195205688477,
+        -483.9451446533203
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral59",
+        "ny": 0.27990955114364624,
+        "y": 17.489585876464844
+      },
+      "name": "pvp Dummy 65",
+      "point": [
+        -41.683374417137294,
+        16.682926829268293,
+        116.29133868568546
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at -42.18337631225586,-118.79133605957031",
+      "runtime_root": [
+        -41.68337631225586,
+        95.68292617797852,
+        -476.2913360595703
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral69",
+        "ny": 0.26788270473480225,
+        "y": 11.397540092468262
+      },
+      "name": "pvp Dummy 75",
+      "point": [
+        -42.663589968060975,
+        10.58536585365854,
+        95.05814147240523
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at -44.66358947753906,-97.05814361572266",
+      "runtime_root": [
+        -42.66358947753906,
+        89.58536624908447,
+        -455.05814361572266
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "spiral79",
+        "ny": 0.2567901611328125,
+        "y": 5.314038276672363
+      },
+      "name": "pvp Dummy 85",
+      "point": [
+        -32.998316455372226,
+        4.487804878048779,
+        75.00168354462778
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:20: clearance floor/cover at -34.99831771850586,-76.5016860961914",
+      "runtime_root": [
+        -32.99831771850586,
+        83.48780488967896,
+        -435.0016860961914
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "pvp Dummy 100",
+      "point": [
+        -2.4431612842193564,
+        0,
+        58.26830957645078
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 0.5568387508392334,-58.268310546875 rise -2.2033920288085938",
+      "runtime_root": [
+        -2.4431612491607666,
+        79,
+        -418.268310546875
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "pvp Dummy 101",
+      "point": [
+        -9.184850993605149e-15,
+        0,
+        58
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 0.49999999999999084,-60.5 rise -2.2033920288085938",
+      "runtime_root": [
+        -9.184850891462946e-15,
+        79,
+        -418
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "pvp Dummy 102",
+      "point": [
+        0,
+        0,
+        58
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 0.5,-60.5 rise -2.2033920288085938",
+      "runtime_root": [
+        0,
+        79,
+        -418
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "pvp Dummy 103",
+      "point": [
+        -0.453125,
+        0,
+        57.015625
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 0.546875,-59.515625 rise -2.2049026489257812",
+      "runtime_root": [
+        -0.453125,
+        79,
+        -417.015625
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "pvp Dummy 104",
+      "point": [
+        -1.125,
+        0,
+        55.625
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at 0.375,-58.125 rise -2.2063980102539062",
+      "runtime_root": [
+        -1.125,
+        79,
+        -415.625
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "pvp Dummy 143",
+      "point": [
+        -98.44921875,
+        0,
+        -3.3857421875
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at -100.94921875,2.3857421875 rise -2.2705917358398438",
+      "runtime_root": [
+        -98.44921875,
+        79,
+        -356.6142578125
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "pvp Dummy 144",
+      "point": [
+        -100,
+        0,
+        -8
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at -102,7.5 rise -2.2721023559570312",
+      "runtime_root": [
+        -100,
+        79,
+        -352
+      ]
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "pvp Dummy 146",
+      "point": [
+        -101.1171875,
+        0,
+        -17.4296875
+      ],
+      "reason": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\meadow-v4\\Clearance:23: clearance cliff/wall SolidMountainStone at -104.1171875,17.4296875 rise -2.2750940322875977",
+      "runtime_root": [
+        -101.1171875,
+        79,
+        -342.5703125
+      ]
+    }
+  ],
+  "loop_bad": 75,
+  "preflight_bad": 93,
+  "pvp_bad": 18,
+  "state": "FAIL"
+}

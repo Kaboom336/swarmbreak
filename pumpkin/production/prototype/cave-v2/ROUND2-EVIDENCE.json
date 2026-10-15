@@ -1,0 +1,60 @@
+{
+  "protected_count": 652,
+  "protected_changed": [],
+  "route_dictionaries_equal": true,
+  "hooks_equal": true,
+  "runtime": "UNKNOWN; offline native geometry proof",
+  "static_zero_checks": {
+    "floating_collider_parts": 0,
+    "cave_24_headroom_hits": 0,
+    "green_flight_envelope_hits": 0,
+    "red_fall_envelope_hits": 0,
+    "track_cart_envelope_hits": 0,
+    "floor_ray_missing_hits": 0
+  },
+  "clearance_hits": 0,
+  "native_check": {
+    "compiled_scripts": 9,
+    "maximum_native_transform_error": 7.629394545460855e-06,
+    "parts": 20979,
+    "placeholder_hooks": 5,
+    "point_lights": 195,
+    "runtime": "UNKNOWN; static binary inspection"
+  },
+  "critic_scores": [
+    4.5,
+    4,
+    5.5
+  ],
+  "visual_target_met": false,
+  "hashes": {
+    "prototype\\cave-v2.rbxl": "4623d9d0bfb239a5654e87ffc1b053fe047af7ce8d7e542c03de9da1cf46cda0",
+    "prototype\\cave-v2\\scene.json": "14fbb5804b9e6dc7b691f161d8c68ccf92b5ca73e78a411d79ab9f684d01e8f7",
+    "prototype\\cave-v2\\build.luau": "dc851de4bf43cbab1db421d3e5b6c83515f05e82052916f5a056c6fce14895ee",
+    "prototype\\cave-v2\\render.py": "a75800e91282b9f2d7071ed83b4df5eed1f53faf164239a7f7c80d6b7d5bad5a",
+    "prototype\\cave-v2\\audit.py": "f5c73f4bab5845d3f1a7e7f5d2c4f6b16fea3d3562b38efaf88812ebb8cb8c76",
+    "prototype\\cave-v2\\structural-audit.py": "03746aaf00bbccfbd1772ea75d6da9e0c1dbc949cc5ec5d6149d296fcfc055ac",
+    "prototype\\cave-v2\\AUDIT.json": "4962ef20a3197a2f682cba07b73edd764f464f67e8c063dcee8529df049d818c",
+    "prototype\\cave-v2\\STRUCTURAL-AUDIT.json": "c9bc63b9c4d6cfd8364163d11a0c4a3251dcc5ca6985b7bb1632fdd681dbbdb7",
+    "prototype\\cave-v2\\ROUND2-NATIVE-CHECK.json": "b6c668754c24e6c2f0dd0e50fa67e33199e9d73708e8e9d403aa895f9cbe5f8b",
+    "prototype\\cave-v2\\CONCEPT-COMPARE.png": "ed48b19dab4442bbe43b81badd22a7438fdcae8caf989b3265aaf9223029f261",
+    "prototype\\cave-v2\\render-rr2-final-metadata.json": "46d8ed995e8f98c58f529b57737e44a8e3ee2418b71bfac4ea3ec8c5ab8e7ca7",
+    "prototype\\cave-v2\\build-rr2-dressing-concept.png": "77a2b2735670b85e692116877e9f73bddcf8d0874d7db2f975db6b0f5d93f890",
+    "prototype\\cave-v2\\build-rr2-dressing-side.png": "e4ac898e1b1870269ee5e42981f86e6cf27ff3885080700240a69f7dbc862810",
+    "prototype\\cave-v2\\build-rr2-dressing-top.png": "2960c81e0ab6ba009b4cf3543976745c44cf1bf77d783698ec546dc3acd359a3",
+    "prototype\\cave-v2\\build-rr2-final-concept.png": "6f2b0b7684b564d8fc31a31d9f5a91152b02f1d39d2469cf4b5e40913ff03ad3",
+    "prototype\\cave-v2\\build-rr2-final-side.png": "205cc24ff247bdf436e2c9af28b1077786088c0bfa7c33513948cf3ed65d1d3c",
+    "prototype\\cave-v2\\build-rr2-final-top.png": "e3c9ed259e7e08e3231a1116568072901e41fe989e59998e757d5cde405e78e6",
+    "prototype\\cave-v2\\build-rr2-height-concept.png": "973c8a9efa8c23036ab2644404acf509871a18c237009740f74122cfbd87321e",
+    "prototype\\cave-v2\\build-rr2-height-final-concept.png": "9a3939134990da4686ec8720a1c7471b81ab0c980c0a8bff40836d60865c67e4",
+    "prototype\\cave-v2\\build-rr2-height-final-side.png": "6284f29630706ed956cb7111ebc5268f5e1ead1301ad192438b977f702bd654c",
+    "prototype\\cave-v2\\build-rr2-height-side.png": "a2cba683a056c8a1af938edfe3a61bc320b26470f05856b68d6316de8255b629",
+    "prototype\\cave-v2\\build-rr2-review2-concept.png": "9e875114d9e888f2ede5309e07b30fb0517077b4f45ec193edc8940ae2037f42",
+    "prototype\\cave-v2\\build-rr2-review2-side.png": "12f33e6f4e87760d3014e55be50ad0381dc9b86881aeb0a989042067ac3c6296",
+    "prototype\\cave-v2\\build-rr2-review2-top.png": "53e2822bc9c7f5b50e9e22bd182dd874f51a444f2e469b881d9dc22ce487939c",
+    "prototype\\cave-v2\\build-rr2-shape-concept.png": "f6d39bc11b80a0f48d45e7052cefde71649980ed3f2e9a4f97a815224a0c9fa6",
+    "prototype\\cave-v2\\build-rr2-shape-final-concept.png": "7e57ad7188c0fb6c4fb1c5f0c22a2d99e44b2a3397156bebdbaee321cd2612d0",
+    "prototype\\cave-v2\\build-rr2-shape-final-side.png": "5c38f646162727836df26f1a86da98c108c660b8cafb7dece5e0c3bf26fa16b7",
+    "prototype\\cave-v2\\build-rr2-shape-side.png": "9abefa0635e47c881283db288b5058893bb27b678f9ece20dde775e3ed52a302"
+  }
+}

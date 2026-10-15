@@ -1,0 +1,464 @@
+{
+  "status": "PASS",
+  "exports": 74,
+  "meshes": 117,
+  "studioImport": "UNKNOWN: pending Zion bulk import",
+  "checks": [
+    "FBX reimport",
+    "exact mesh names and counts",
+    "source material partitions",
+    "embedded PNG albedo",
+    "linked albedo UVs",
+    "original scale extents",
+    "shared base pivot",
+    "triangles under 10k",
+    "palette colours",
+    "applied transforms"
+  ],
+  "models": [
+    {
+      "file": "assets/kits2/meadow/kenney_mini-dungeon__barrel__meadow.fbx",
+      "meshes": 2,
+      "triangles": 148,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/cave/kenney_mini-dungeon__barrel__cave.fbx",
+      "meshes": 2,
+      "triangles": 148,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_mini-dungeon__chest__meadow.fbx",
+      "meshes": 2,
+      "triangles": 284,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/cave/kenney_mini-dungeon__chest__cave.fbx",
+      "meshes": 2,
+      "triangles": 284,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/cave/kenney_mini-dungeon__column__cave.fbx",
+      "meshes": 1,
+      "triangles": 104,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_mini-dungeon__rocks__meadow.fbx",
+      "meshes": 1,
+      "triangles": 190,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_mini-dungeon__rocks__cave.fbx",
+      "meshes": 1,
+      "triangles": 190,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_mini-dungeon__stairs__cave.fbx",
+      "meshes": 1,
+      "triangles": 124,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_mini-dungeon__wall-half__cave.fbx",
+      "meshes": 1,
+      "triangles": 148,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_mini-dungeon__wall-opening__cave.fbx",
+      "meshes": 1,
+      "triangles": 200,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_mini-dungeon__wall__cave.fbx",
+      "meshes": 1,
+      "triangles": 186,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_mini-dungeon__wood-structure__cave.fbx",
+      "meshes": 1,
+      "triangles": 256,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_mini-dungeon__wood-support__cave.fbx",
+      "meshes": 1,
+      "triangles": 104,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__bridge_wood__meadow.fbx",
+      "meshes": 3,
+      "triangles": 220,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/cave/kenney_nature-kit__bridge_wood__cave.fbx",
+      "meshes": 3,
+      "triangles": 220,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__cliff_block_rock__meadow.fbx",
+      "meshes": 2,
+      "triangles": 12,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/cave/kenney_nature-kit__cliff_block_rock__cave.fbx",
+      "meshes": 2,
+      "triangles": 12,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__cliff_cave_rock__meadow.fbx",
+      "meshes": 1,
+      "triangles": 64,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_nature-kit__cliff_cave_rock__cave.fbx",
+      "meshes": 1,
+      "triangles": 64,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__cliff_corner_rock__meadow.fbx",
+      "meshes": 1,
+      "triangles": 12,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_nature-kit__cliff_corner_rock__cave.fbx",
+      "meshes": 1,
+      "triangles": 12,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__fence_corner__meadow.fbx",
+      "meshes": 2,
+      "triangles": 116,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_nature-kit__fence_corner__cave.fbx",
+      "meshes": 2,
+      "triangles": 116,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__fence_simple__meadow.fbx",
+      "meshes": 2,
+      "triangles": 64,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_nature-kit__fence_simple__cave.fbx",
+      "meshes": 2,
+      "triangles": 64,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__flower_yellowA__meadow.fbx",
+      "meshes": 2,
+      "triangles": 56,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__log__meadow.fbx",
+      "meshes": 2,
+      "triangles": 100,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__mushroom_tan__meadow.fbx",
+      "meshes": 2,
+      "triangles": 48,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_nature-kit__mushroom_tan__cave.fbx",
+      "meshes": 2,
+      "triangles": 48,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__path_stone__meadow.fbx",
+      "meshes": 3,
+      "triangles": 136,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_nature-kit__path_stone__cave.fbx",
+      "meshes": 3,
+      "triangles": 136,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__plant_bush__meadow.fbx",
+      "meshes": 1,
+      "triangles": 16,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__rock_largeA__meadow.fbx",
+      "meshes": 2,
+      "triangles": 80,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/cave/kenney_nature-kit__rock_largeA__cave.fbx",
+      "meshes": 2,
+      "triangles": 80,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__rock_largeC__meadow.fbx",
+      "meshes": 2,
+      "triangles": 72,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/cave/kenney_nature-kit__rock_largeC__cave.fbx",
+      "meshes": 2,
+      "triangles": 72,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__rock_tallA__meadow.fbx",
+      "meshes": 3,
+      "triangles": 136,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/cave/kenney_nature-kit__rock_tallA__cave.fbx",
+      "meshes": 3,
+      "triangles": 136,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__stone_largeA__meadow.fbx",
+      "meshes": 1,
+      "triangles": 80,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_nature-kit__stone_largeA__cave.fbx",
+      "meshes": 1,
+      "triangles": 80,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__stump_round__meadow.fbx",
+      "meshes": 2,
+      "triangles": 56,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__tree_oak__meadow.fbx",
+      "meshes": 2,
+      "triangles": 196,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_nature-kit__tree_pineTallA__meadow.fbx",
+      "meshes": 2,
+      "triangles": 78,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_survival-kit__barrel-open__meadow.fbx",
+      "meshes": 2,
+      "triangles": 380,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/cave/kenney_survival-kit__barrel-open__cave.fbx",
+      "meshes": 2,
+      "triangles": 380,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_survival-kit__barrel__meadow.fbx",
+      "meshes": 2,
+      "triangles": 412,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/cave/kenney_survival-kit__barrel__cave.fbx",
+      "meshes": 2,
+      "triangles": 412,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_survival-kit__box-large__meadow.fbx",
+      "meshes": 1,
+      "triangles": 124,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_survival-kit__box-large__cave.fbx",
+      "meshes": 1,
+      "triangles": 124,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_survival-kit__box__meadow.fbx",
+      "meshes": 1,
+      "triangles": 124,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_survival-kit__box__cave.fbx",
+      "meshes": 1,
+      "triangles": 124,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_survival-kit__fence__meadow.fbx",
+      "meshes": 1,
+      "triangles": 48,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_survival-kit__fence__cave.fbx",
+      "meshes": 1,
+      "triangles": 48,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_survival-kit__rock-a__meadow.fbx",
+      "meshes": 1,
+      "triangles": 104,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_survival-kit__rock-a__cave.fbx",
+      "meshes": 1,
+      "triangles": 104,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_survival-kit__structure__cave.fbx",
+      "meshes": 1,
+      "triangles": 80,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_survival-kit__tent__meadow.fbx",
+      "meshes": 1,
+      "triangles": 124,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/kenney_survival-kit__tent__cave.fbx",
+      "meshes": 1,
+      "triangles": 124,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/kenney_survival-kit__tree-log__meadow.fbx",
+      "meshes": 1,
+      "triangles": 88,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/quaternius-nature__Bush_Common__meadow.fbx",
+      "meshes": 1,
+      "triangles": 900,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/quaternius-nature__Bush_Common_Flowers__meadow.fbx",
+      "meshes": 2,
+      "triangles": 1368,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/quaternius-nature__CommonTree_1__meadow.fbx",
+      "meshes": 2,
+      "triangles": 6265,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/quaternius-nature__DeadTree_1__meadow.fbx",
+      "meshes": 1,
+      "triangles": 6169,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/quaternius-nature__DeadTree_1__cave.fbx",
+      "meshes": 1,
+      "triangles": 6169,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/quaternius-nature__Flower_3_Group__meadow.fbx",
+      "meshes": 2,
+      "triangles": 755,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/quaternius-nature__Mushroom_Common__meadow.fbx",
+      "meshes": 1,
+      "triangles": 880,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/quaternius-nature__Mushroom_Common__cave.fbx",
+      "meshes": 1,
+      "triangles": 880,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/quaternius-nature__Pebble_Round_1__meadow.fbx",
+      "meshes": 1,
+      "triangles": 136,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/quaternius-nature__Pebble_Round_1__cave.fbx",
+      "meshes": 1,
+      "triangles": 136,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/quaternius-nature__Pine_1__meadow.fbx",
+      "meshes": 2,
+      "triangles": 3947,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/meadow/quaternius-nature__Rock_Medium_1__meadow.fbx",
+      "meshes": 1,
+      "triangles": 342,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/cave/quaternius-nature__Rock_Medium_1__cave.fbx",
+      "meshes": 1,
+      "triangles": 342,
+      "embeddedPalettes": 1
+    },
+    {
+      "file": "assets/kits2/meadow/quaternius-nature__TwistedTree_1__meadow.fbx",
+      "meshes": 2,
+      "triangles": 9564,
+      "embeddedPalettes": 2
+    },
+    {
+      "file": "assets/kits2/cave/quaternius-nature__TwistedTree_1__cave.fbx",
+      "meshes": 2,
+      "triangles": 9564,
+      "embeddedPalettes": 2
+    }
+  ]
+}

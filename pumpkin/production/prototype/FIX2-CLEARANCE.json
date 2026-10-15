@@ -1,0 +1,14 @@
+{
+  "Studio": "UNKNOWN",
+  "artifact": "slice-v2/prototype/guardian-greybox.rbxl",
+  "bad": 0,
+  "checks": 12743,
+  "columns": 5279,
+  "failures": {},
+  "lane_parts": 562,
+  "loop_bad": 0,
+  "preflight_bad": 0,
+  "pvp_bad": 0,
+  "ramp_wedges": 116,
+  "state": "PASS"
+}

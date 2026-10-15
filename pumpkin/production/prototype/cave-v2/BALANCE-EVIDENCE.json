@@ -1,0 +1,162 @@
+{
+  "native": {
+    "collision_geometry_equal": true,
+    "compiled_scripts": 9,
+    "exposure": 0.15000000596046448,
+    "gameplay_sources_equal": true,
+    "max_transform_error": 1.2874603271484375e-05,
+    "native_hook_attributes_equal": true,
+    "native_parts": 50195,
+    "point_lights": 410,
+    "routes_equal": true,
+    "runtime": "UNKNOWN; static native binary inspection",
+    "terrain_height_mass_equal": true
+  },
+  "all_crystal_clearance": {
+    "collision_geometry_equal": true,
+    "routes_equal": true,
+    "hooks_equal": true,
+    "new_crystal_margin_hits": [],
+    "minimum_conservative_new_crystal_path_margin": 5.472998389206328,
+    "new_landmark_walkway_body_hits": [],
+    "new_part_start": 45735
+  },
+  "same_six_cameras": true,
+  "zero_checks": {
+    "clearance_hits": 0,
+    "unreachable_route_nodes": 0,
+    "floating_collider_parts": 0,
+    "cave_24_headroom_hits": 0,
+    "green_flight_envelope_hits": 0,
+    "red_fall_envelope_hits": 0,
+    "track_cart_envelope_hits": 0,
+    "floor_ray_missing_hits": 0
+  },
+  "mountain_components": 1,
+  "camera_metadata": {
+    "manifest_sha256": "0b49a6a58ac652a2a70b22e51c01e4b2d33542073a129a28a621a99d96c80708",
+    "views": {
+      "portal": {
+        "eye": [
+          -144,
+          -171,
+          18
+        ],
+        "target": [
+          -90,
+          -54,
+          32
+        ],
+        "lens_mm": 18,
+        "ortho_scale": null,
+        "coordinates": "Blender x, authored z, elevation"
+      },
+      "main-eye": {
+        "eye": [
+          -150,
+          -103,
+          5.5
+        ],
+        "target": [
+          -150,
+          -60,
+          9
+        ],
+        "lens_mm": 22,
+        "ortho_scale": null,
+        "coordinates": "Blender x, authored z, elevation"
+      },
+      "cart-eye": {
+        "eye": [
+          -126,
+          -99,
+          5.5
+        ],
+        "target": [
+          -85,
+          -71,
+          16
+        ],
+        "lens_mm": 22,
+        "ortho_scale": null,
+        "coordinates": "Blender x, authored z, elevation"
+      },
+      "cave-eye": {
+        "eye": [
+          -121,
+          -120,
+          5.5
+        ],
+        "target": [
+          -80,
+          -110,
+          6
+        ],
+        "lens_mm": 22,
+        "ortho_scale": null,
+        "coordinates": "Blender x, authored z, elevation"
+      },
+      "far": {
+        "eye": [
+          -620,
+          -750,
+          350
+        ],
+        "target": [
+          0,
+          0,
+          -35
+        ],
+        "lens_mm": 46,
+        "ortho_scale": null,
+        "coordinates": "Blender x, authored z, elevation"
+      },
+      "top-routes": {
+        "eye": [
+          0,
+          0,
+          800
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "lens_mm": 24,
+        "ortho_scale": 640,
+        "coordinates": "Blender x, authored z, elevation"
+      }
+    },
+    "source": "Native-part offline Cycles proof; lighting approximate; top-routes lines review-only"
+  },
+  "before_binary_sha256": "0c4c5f3cbe7f4029359158f2888d75d99abd0039ce889df35b3b27df62e9cb5d",
+  "before_scene_sha256": "9cceeedef6d34d8009342aee67307966e3375e5bcf3d091c563f1600631efcc0",
+  "before_view01_sha256": "2f9ed71537c4dcb320fdc00d3af06da7201abcbad22802e541034419960abfed",
+  "concept_reference_sha256": "2c808382dd33d90aef9c9a97c1d2e45c080cff113f825f47387368f29017d822",
+  "hashes": {
+    "prototype\\cave-v2.rbxl": "8afe99cfd06cf5de0e208f18bcf0192dc9722c5a4a0316211e835c9a2eb4c762",
+    "prototype\\cave-v2\\scene.json": "0b49a6a58ac652a2a70b22e51c01e4b2d33542073a129a28a621a99d96c80708",
+    "prototype\\cave-v2\\build.luau": "79d223d5e93ab95ee0a7be2c9d318aaff17237d304d3dd7a7ea40ca94a47ae3c",
+    "prototype\\cave-v2\\balance-art.luau": "947cced80bb35796a2aa172a143dbebb318fac3ad993ae0e052d9beaaec3f211",
+    "prototype\\cave-v2\\balance-render.py": "040bfd6b0b4fcd160c8d4c3a4ba6e972f3be1dce163659c46d3c767fa56870ea",
+    "prototype\\cave-v2\\balance-check.luau": "cfa6c2a76034eed6ae6bebd26f5635c0f39146f0b86f74630087ad5e2bbd57e6",
+    "prototype\\cave-v2\\balance-audit.py": "1337a092e8833a7a7182e0424bd52719d03a52bc2dd16b2f5adb553157cea651",
+    "prototype\\cave-v2\\balance-sheet.ps1": "01dc8d1c23f8a86f88e03c5b363421969d87100ca35beedafd15cff9b32bd5b0",
+    "prototype\\cave-v2\\balance-evidence.py": "44bd0de71c7f772efb8018d386d8be9699e844a832f1b3aae24314967c7df4b5",
+    "prototype\\cave-v2\\BALANCE.md": "8440bfb726ff5177c98a37b32b5f079629feaf55bd44f04405bc0c9ede9ca90d",
+    "prototype\\cave-v2\\READABILITY.md": "e5f3a920e16b23a888097e5e6a59cba956f35d07e6478c479897ebdfffea3cd8",
+    "prototype\\cave-v2\\READABLE-SHEET.jpg": "ccb41ee592b6ba65cfa1716a88a3ff00fd659242e52f38126d1944beb5382c82",
+    "prototype\\cave-v2\\BALANCE-BEFORE-AFTER-01.jpg": "8f59facc191d7d7e0f9eed7637f08bc86e7dc9d112c48fe0b2f55073c86aaa64",
+    "prototype\\cave-v2\\BALANCE-NATIVE-CHECK.json": "dbc93c32a5629ad9733719ef5949c4a7cf21adb33cdf9d3be4c6b92e6e8eb9fb",
+    "prototype\\cave-v2\\BALANCE-ALL-CRYSTAL-AUDIT.json": "f15c5111ac30e509504f423bc57abf6eb7ca8b5b7b94b4d3973e3abebf35274b",
+    "prototype\\cave-v2\\BALANCE-CRITIC-R1.md": "d97413f52fd58b81cd00bfee45113a3a50876cca7a7e937983d05af2f3e75a69",
+    "prototype\\cave-v2\\BALANCE-CRITIC-R2.md": "818c27946052f2e9d2757ef8412e0b71e45d4569f674a437ccf8e998443a1999",
+    "prototype\\cave-v2\\readable-balance-final-portal.png": "d0c3e963aeccaebd0a0a121a5970b93755481ac19cdc6b0829f452a1c46fa050",
+    "prototype\\cave-v2\\readable-balance-final-main-eye.png": "cb32a213834dccd917515b118fcbdb569d57987a1e47eae783dbdfb8af3e64c7",
+    "prototype\\cave-v2\\readable-balance-final-cart-eye.png": "a75f5638c7ef058347e110469ae1fb1fc6d00cb3df12cb1e41af7a6f7a267c52",
+    "prototype\\cave-v2\\readable-balance-final-cave-eye.png": "3a1daabf97e75b966551ca73f92733349b1411c67c20d4b2cf561c1f9b00e1db",
+    "prototype\\cave-v2\\readable-balance-final-far.png": "bf772542313c33fe083cc1ca21bd19b1ac2167b1f2b90a8f74dc907f3a562ae7",
+    "prototype\\cave-v2\\readable-balance-final-top-routes.png": "fac42caf97b5ed5d74d8093c7ba9b8879a35e65abca61671e73452b046eb94d5"
+  },
+  "limits": "Offline native-manifest Cycles render; sky, material appearance and illumination approximate Roblox. Top route lines review-only. Studio runtime and measured 3-second new-player navigation UNKNOWN."
+}

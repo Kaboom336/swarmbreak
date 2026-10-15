@@ -1,11 +1,15 @@
 -- Isolated native geometry; no dependency on guardian/Keeper code.
 local MeadowV4 = {}
 local data = require(script.Parent.Data)
+local art = require(script.Parent.Fix1Art)
+local routes = require(script.Parent.RouteData)
+local fix2 = require(script.Parent.Fix2Routes)
+local drops = require(script.Parent.ReachableDrops)
 function MeadowV4.build(parent: Instance, origin: Vector3?): Model
 	local model = Instance.new("Model")
 	model.Name = "MeadowV4"
 	local offset = origin or Vector3.zero
-	for _, item in data do
+	for _, item in fix2.transform(art.transform(data, routes), routes) do
 		local p = Instance.new(if item.shape == "Wedge" then "WedgePart" else "Part")
 		p.Name = item.name
 		p.Anchored = true
@@ -13,13 +17,36 @@ function MeadowV4.build(parent: Instance, origin: Vector3?): Model
 		p.Size = Vector3.new(unpack(item.size))
 		p.Color = Color3.fromRGB(unpack(item.color))
 		p.Material = Enum.Material[item.material]
-		if p:IsA("Part") then p.Shape = Enum.PartType[item.shape] end
+		if p:IsA("Part") then
+			p.Shape = Enum.PartType[item.shape]
+		end
 		p.Transparency = item.transparency
 		local r, v = item.rotation, item.position
-		p.CFrame = CFrame.new(v[1] + offset.X, v[2] + offset.Y, v[3] + offset.Z,
-			r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9])
+		p.CFrame = CFrame.new(
+			v[1] + offset.X,
+			v[2] + offset.Y,
+			v[3] + offset.Z,
+			r[1],
+			r[2],
+			r[3],
+			r[4],
+			r[5],
+			r[6],
+			r[7],
+			r[8],
+			r[9]
+		)
 		p:SetAttribute("MeadowV4Category", item.category)
-		p:SetAttribute("SurfaceRole", if item.collidable then (if item.category == "cover" then "Cover" else "Floor") else "Scenery")
+		p:SetAttribute("WalkableLaneFloor", drops.isLane(item, routes))
+		if drops.isLane(item, routes) then
+			p:AddTag("AuthoredLaneFloor")
+			p:SetAttribute("LaneId", item.name:match("^Fix2Lane_(.-)_%d+$")
+				or item.name:match("^Fix2Junction_(.-)_%d+$") or item.name:match("^(.-)%d+$") or item.name)
+		end
+		p:SetAttribute(
+			"SurfaceRole",
+			if item.collidable then (if item.category == "cover" then "Cover" else "Floor") else "Scenery"
+		)
 		p.Parent = model
 		if item.category == "light" then
 			local light = Instance.new("PointLight")

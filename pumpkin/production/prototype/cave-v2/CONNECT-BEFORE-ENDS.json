@@ -1,0 +1,7982 @@
+[
+  {
+    "kind": "path",
+    "part": 12292,
+    "name": "crosslinkNorth1",
+    "end": -1,
+    "target": 12293,
+    "target_name": "crosslinkNorth2",
+    "point": [
+      45.02716048873455,
+      23.0,
+      -64.70123441594887
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.5987648211116721
+  },
+  {
+    "kind": "path",
+    "part": 12292,
+    "name": "crosslinkNorth1",
+    "end": 1,
+    "target": 12801,
+    "target_name": "main3",
+    "point": [
+      39.97283951126545,
+      23.0,
+      -120.29876558405113
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2939991456991322
+  },
+  {
+    "kind": "path",
+    "part": 12293,
+    "name": "crosslinkNorth2",
+    "end": -1,
+    "target": 12294,
+    "target_name": "crosslinkNorth3",
+    "point": [
+      45.0,
+      23.0,
+      -19.700000762939453
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999992370605469
+  },
+  {
+    "kind": "path",
+    "part": 12293,
+    "name": "crosslinkNorth2",
+    "end": 1,
+    "target": 12292,
+    "target_name": "crosslinkNorth1",
+    "point": [
+      45.0,
+      23.0,
+      -65.29999923706055
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.5987695688049826
+  },
+  {
+    "kind": "path",
+    "part": 12294,
+    "name": "crosslinkNorth3",
+    "end": -1,
+    "target": 12295,
+    "target_name": "crosslinkNorth4",
+    "point": [
+      105.29999923706055,
+      23.0,
+      -20.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.7742844839075929
+  },
+  {
+    "kind": "path",
+    "part": 12294,
+    "name": "crosslinkNorth3",
+    "end": 1,
+    "target": 12293,
+    "target_name": "crosslinkNorth2",
+    "point": [
+      44.70000076293945,
+      23.0,
+      -20.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999992370605469
+  },
+  {
+    "kind": "path",
+    "part": 12295,
+    "name": "crosslinkNorth4",
+    "end": -1,
+    "target": 12296,
+    "target_name": "crosslinkNorth5",
+    "point": [
+      124.96518636641372,
+      -1.0390498250833389,
+      34.90427204219725
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2076935266304929
+  },
+  {
+    "kind": "path",
+    "part": 12295,
+    "name": "crosslinkNorth4",
+    "end": 1,
+    "target": 12294,
+    "target_name": "crosslinkNorth3",
+    "point": [
+      104.77547525468003,
+      23.188605031382167,
+      -20.61743541805174
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.524523982380515
+  },
+  {
+    "kind": "path",
+    "part": 12296,
+    "name": "crosslinkNorth5",
+    "end": -1,
+    "target": 13630,
+    "target_name": "cave5",
+    "point": [
+      140.21213203532187,
+      -1.0,
+      50.21213203532187
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.39486771517324115
+  },
+  {
+    "kind": "path",
+    "part": 12296,
+    "name": "crosslinkNorth5",
+    "end": 1,
+    "target": 12295,
+    "target_name": "crosslinkNorth4",
+    "point": [
+      124.78786796467813,
+      -1.0,
+      34.78786796467813
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.17210147349554816
+  },
+  {
+    "kind": "path",
+    "part": 12526,
+    "name": "railWalkBypass1",
+    "end": -1,
+    "target": 12527,
+    "target_name": "railWalkBypass2",
+    "point": [
+      84.9966786829782,
+      30.955978378652617,
+      -59.997790308667504
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.4500629190426011
+  },
+  {
+    "kind": "path",
+    "part": 12526,
+    "name": "railWalkBypass1",
+    "end": 1,
+    "target": 14152,
+    "target_name": "cartApproach1",
+    "point": [
+      130.47539773303743,
+      47.126190200448946,
+      -90.31693747453562
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.8602651833476287
+  },
+  {
+    "kind": "path",
+    "part": 12527,
+    "name": "railWalkBypass2",
+    "end": -1,
+    "target": 12293,
+    "target_name": "crosslinkNorth2",
+    "point": [
+      44.8889721958227,
+      22.96784485972981,
+      -19.888972195822703
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.1889714328832497
+  },
+  {
+    "kind": "path",
+    "part": 12527,
+    "name": "railWalkBypass2",
+    "end": 1,
+    "target": 12526,
+    "target_name": "railWalkBypass1",
+    "point": [
+      85.30905636863042,
+      31.05186186634441,
+      -60.30905636863042
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.44200384075931964
+  },
+  {
+    "kind": "path",
+    "part": 12528,
+    "name": "railWalkBypass3",
+    "end": -1,
+    "target": 12529,
+    "target_name": "railWalkBypass4",
+    "point": [
+      -30.299999237060547,
+      23.0,
+      -20.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.49205257926223567
+  },
+  {
+    "kind": "path",
+    "part": 12528,
+    "name": "railWalkBypass3",
+    "end": 1,
+    "target": 12293,
+    "target_name": "crosslinkNorth2",
+    "point": [
+      45.29999923706055,
+      23.0,
+      -20.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999992370605469
+  },
+  {
+    "kind": "path",
+    "part": 12529,
+    "name": "railWalkBypass4",
+    "end": -1,
+    "target": 12530,
+    "target_name": "railWalkBypass5",
+    "point": [
+      -55.19205433118623,
+      23.0,
+      10.230465906442987
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.8105584619857487
+  },
+  {
+    "kind": "path",
+    "part": 12529,
+    "name": "railWalkBypass4",
+    "end": 1,
+    "target": 12528,
+    "target_name": "railWalkBypass3",
+    "point": [
+      -29.807945668813772,
+      23.0,
+      -20.230465906442987
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.4920535682467744
+  },
+  {
+    "kind": "path",
+    "part": 12530,
+    "name": "railWalkBypass5",
+    "end": -1,
+    "target": 12531,
+    "target_name": "railWalkBypass6",
+    "point": [
+      -69.95635351439279,
+      6.96186513779395,
+      44.89816139053255
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.19816158126741357
+  },
+  {
+    "kind": "path",
+    "part": 12530,
+    "name": "railWalkBypass5",
+    "end": 1,
+    "target": 12529,
+    "target_name": "railWalkBypass4",
+    "point": [
+      -54.73845544556815,
+      23.19428949477441,
+      9.389733812104168
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.805710482064478
+  },
+  {
+    "kind": "path",
+    "part": 12531,
+    "name": "railWalkBypass6",
+    "end": -1,
+    "target": 12532,
+    "target_name": "railWalkBypass7",
+    "point": [
+      -70.0,
+      7.0,
+      65.30000019073486
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.6689711122005946
+  },
+  {
+    "kind": "path",
+    "part": 12531,
+    "name": "railWalkBypass6",
+    "end": 1,
+    "target": 12530,
+    "target_name": "railWalkBypass5",
+    "point": [
+      -70.0,
+      7.0,
+      44.69999980926514
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.16683908688759175
+  },
+  {
+    "kind": "path",
+    "part": 12532,
+    "name": "railWalkBypass7",
+    "end": -1,
+    "target": 12533,
+    "target_name": "railWalkBypass8",
+    "point": [
+      -105.09659004964567,
+      -1.0350552979932957,
+      100.09659004964567
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.37681106263097774
+  },
+  {
+    "kind": "path",
+    "part": 12532,
+    "name": "railWalkBypass7",
+    "end": 1,
+    "target": 12531,
+    "target_name": "railWalkBypass6",
+    "point": [
+      -69.67776297769808,
+      7.060676712177866,
+      64.67776297769808
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.622237213036783
+  },
+  {
+    "kind": "path",
+    "part": 12533,
+    "name": "railWalkBypass8",
+    "end": -1,
+    "target": 14220,
+    "target_name": "SafetyApron",
+    "point": [
+      -126.29470127072113,
+      -1.0000001192092896,
+      95.9438663856375
+    ],
+    "gap": 4.056133614362494,
+    "inside_depth": 0
+  },
+  {
+    "kind": "path",
+    "part": 12533,
+    "name": "railWalkBypass8",
+    "end": 1,
+    "target": 12532,
+    "target_name": "railWalkBypass7",
+    "point": [
+      -104.70529872927887,
+      -1.0000001192092896,
+      100.0561336143625
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.306975314274311
+  },
+  {
+    "kind": "path",
+    "part": 12799,
+    "name": "main1",
+    "end": -1,
+    "target": 12800,
+    "target_name": "main2",
+    "point": [
+      109.70000076293945,
+      47.0,
+      -120.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.8486488310871891
+  },
+  {
+    "kind": "path",
+    "part": 12799,
+    "name": "main1",
+    "end": 1,
+    "target": 13626,
+    "target_name": "cave1",
+    "point": [
+      160.29999923706055,
+      47.0,
+      -120.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.5999994277954102
+  },
+  {
+    "kind": "path",
+    "part": 12800,
+    "name": "main2",
+    "end": -1,
+    "target": 12292,
+    "target_name": "crosslinkNorth1",
+    "point": [
+      40.04054129768065,
+      22.95675663956115,
+      -120.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.303672828669157
+  },
+  {
+    "kind": "path",
+    "part": 12800,
+    "name": "main2",
+    "end": 1,
+    "target": 12799,
+    "target_name": "main1",
+    "point": [
+      110.60810982536623,
+      47.15135188094666,
+      -120.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.8486481190533368
+  },
+  {
+    "kind": "path",
+    "part": 12801,
+    "name": "main3",
+    "end": -1,
+    "target": 12802,
+    "target_name": "main4",
+    "point": [
+      -50.29816255481683,
+      23.0,
+      -109.96687063859005
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.568721131136023
+  },
+  {
+    "kind": "path",
+    "part": 12801,
+    "name": "main3",
+    "end": 1,
+    "target": 12292,
+    "target_name": "crosslinkNorth1",
+    "point": [
+      40.29816255481683,
+      23.0,
+      -120.03312936140995
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2940034560752238
+  },
+  {
+    "kind": "path",
+    "part": 12802,
+    "name": "main4",
+    "end": -1,
+    "target": 12803,
+    "target_name": "main5",
+    "point": [
+      -120.25235227389908,
+      23.0,
+      -64.83777335978425
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.7650675255413191
+  },
+  {
+    "kind": "path",
+    "part": 12802,
+    "name": "main4",
+    "end": 1,
+    "target": 12801,
+    "target_name": "main3",
+    "point": [
+      -49.74764772610092,
+      23.0,
+      -110.16222664021575
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.5687216733253351
+  },
+  {
+    "kind": "path",
+    "part": 12803,
+    "name": "main5",
+    "end": -1,
+    "target": 12804,
+    "target_name": "main6",
+    "point": [
+      -150.03128967698535,
+      6.958642732747137,
+      0.0677890443259912
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.48559161863376943
+  },
+  {
+    "kind": "path",
+    "part": 12803,
+    "name": "main5",
+    "end": 1,
+    "target": 12802,
+    "target_name": "main4",
+    "point": [
+      -119.7859100300459,
+      23.08951209818548,
+      -65.46386906141583
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.7309268471488792
+  },
+  {
+    "kind": "path",
+    "part": 12804,
+    "name": "main6",
+    "end": -1,
+    "target": 12805,
+    "target_name": "main7",
+    "point": [
+      -150.0,
+      -1.0275965785540961,
+      70.18451142639037
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.4845116171252357
+  },
+  {
+    "kind": "path",
+    "part": 12804,
+    "name": "main6",
+    "end": 1,
+    "target": 12803,
+    "target_name": "main5",
+    "point": [
+      -150.0,
+      7.040531263307514,
+      -0.41160798400755993
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.45545162433337794
+  },
+  {
+    "kind": "path",
+    "part": 12805,
+    "name": "main7",
+    "end": -1,
+    "target": 14220,
+    "target_name": "SafetyApron",
+    "point": [
+      -150.0,
+      -1.0,
+      100.30000019073486
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000001907348633
+  },
+  {
+    "kind": "path",
+    "part": 12805,
+    "name": "main7",
+    "end": 1,
+    "target": 12804,
+    "target_name": "main6",
+    "point": [
+      -150.0,
+      -1.0,
+      69.69999980926514
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.48450846364848843
+  },
+  {
+    "kind": "path",
+    "part": 13308,
+    "name": "pitRecovery1",
+    "end": -1,
+    "target": 13309,
+    "target_name": "pitRecovery2",
+    "point": [
+      -15.300000190734863,
+      -17.0,
+      25.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999992370605469
+  },
+  {
+    "kind": "path",
+    "part": 13308,
+    "name": "pitRecovery1",
+    "end": 1,
+    "target": 14221,
+    "target_name": "PitFloor",
+    "point": [
+      0.3000001907348633,
+      -17.0,
+      25.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 1.0
+  },
+  {
+    "kind": "path",
+    "part": 13309,
+    "name": "pitRecovery2",
+    "end": -1,
+    "target": 13310,
+    "target_name": "pitRecovery3",
+    "point": [
+      -15.0,
+      -17.0,
+      -10.299999237060547
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000001907348633
+  },
+  {
+    "kind": "path",
+    "part": 13309,
+    "name": "pitRecovery2",
+    "end": 1,
+    "target": 13308,
+    "target_name": "pitRecovery1",
+    "point": [
+      -15.0,
+      -17.0,
+      25.299999237060547
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000001907348633
+  },
+  {
+    "kind": "path",
+    "part": 13310,
+    "name": "pitRecovery3",
+    "end": -1,
+    "target": 13311,
+    "target_name": "pitRecovery4",
+    "point": [
+      -25.300000190734863,
+      -17.0,
+      -10.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2809534288867894
+  },
+  {
+    "kind": "path",
+    "part": 13310,
+    "name": "pitRecovery3",
+    "end": 1,
+    "target": 13309,
+    "target_name": "pitRecovery2",
+    "point": [
+      -14.699999809265137,
+      -17.0,
+      -10.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999992370605469
+  },
+  {
+    "kind": "path",
+    "part": 13311,
+    "name": "pitRecovery4",
+    "end": -1,
+    "target": 13312,
+    "target_name": "pitRecovery5",
+    "point": [
+      -100.59050069314594,
+      7.139008096257385,
+      -10.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3652084724472324
+  },
+  {
+    "kind": "path",
+    "part": 13311,
+    "name": "pitRecovery4",
+    "end": 1,
+    "target": 13310,
+    "target_name": "pitRecovery3",
+    "point": [
+      -25.019049782928278,
+      -17.043856195012268,
+      -10.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.28095040780658564
+  },
+  {
+    "kind": "path",
+    "part": 13312,
+    "name": "pitRecovery5",
+    "end": -1,
+    "target": 13313,
+    "target_name": "pitRecovery6",
+    "point": [
+      -105.03312936801592,
+      7.0,
+      35.29816345761901
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.4688856437468729
+  },
+  {
+    "kind": "path",
+    "part": 13312,
+    "name": "pitRecovery5",
+    "end": 1,
+    "target": 13311,
+    "target_name": "pitRecovery4",
+    "point": [
+      -99.96687063198408,
+      7.0,
+      -10.298163457619012
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.6363297811236066
+  },
+  {
+    "kind": "path",
+    "part": 13313,
+    "name": "pitRecovery6",
+    "end": -1,
+    "target": 12531,
+    "target_name": "railWalkBypass6",
+    "point": [
+      -69.77222268141634,
+      7.0,
+      65.19523730401443
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.10476288672043665
+  },
+  {
+    "kind": "path",
+    "part": 13313,
+    "name": "pitRecovery6",
+    "end": 1,
+    "target": 13312,
+    "target_name": "pitRecovery5",
+    "point": [
+      -105.22777731858366,
+      7.0,
+      34.80476269598557
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.4688879597390425
+  },
+  {
+    "kind": "path",
+    "part": 13479,
+    "name": "crosslinkSouth1",
+    "end": -1,
+    "target": 13312,
+    "target_name": "pitRecovery5",
+    "point": [
+      -104.7631948374659,
+      7.0,
+      35.18418255613767
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.14309328828824874
+  },
+  {
+    "kind": "path",
+    "part": 13479,
+    "name": "crosslinkSouth1",
+    "end": 1,
+    "target": 12803,
+    "target_name": "main5",
+    "point": [
+      -150.2368051625341,
+      7.0,
+      -0.18418255613767087
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.1482439984863504
+  },
+  {
+    "kind": "path",
+    "part": 13480,
+    "name": "crosslinkSouth2",
+    "end": -1,
+    "target": 12531,
+    "target_name": "railWalkBypass6",
+    "point": [
+      -69.77222268141634,
+      7.0,
+      65.19523730401443
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.10476288672043665
+  },
+  {
+    "kind": "path",
+    "part": 13480,
+    "name": "crosslinkSouth2",
+    "end": 1,
+    "target": 13312,
+    "target_name": "pitRecovery5",
+    "point": [
+      -105.22777731858366,
+      7.0,
+      34.80476269598557
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.4688879597390425
+  },
+  {
+    "kind": "path",
+    "part": 13481,
+    "name": "crosslinkSouth3",
+    "end": -1,
+    "target": 13482,
+    "target_name": "crosslinkSouth4",
+    "point": [
+      -59.69999980926514,
+      7.0,
+      65.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.8660561032550333
+  },
+  {
+    "kind": "path",
+    "part": 13481,
+    "name": "crosslinkSouth3",
+    "end": 1,
+    "target": 12531,
+    "target_name": "railWalkBypass6",
+    "point": [
+      -70.30000019073486,
+      7.0,
+      65.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000001907348633
+  },
+  {
+    "kind": "path",
+    "part": 13482,
+    "name": "crosslinkSouth4",
+    "end": -1,
+    "target": 13483,
+    "target_name": "crosslinkSouth5",
+    "point": [
+      -35.01289826919651,
+      -1.043948055371061,
+      69.99742030544957
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.28710192153835123
+  },
+  {
+    "kind": "path",
+    "part": 13482,
+    "name": "crosslinkSouth4",
+    "end": 1,
+    "target": 13481,
+    "target_name": "crosslinkSouth3",
+    "point": [
+      -60.57425993392849,
+      7.135687709912077,
+      64.88514805392543
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.8643122900879234
+  },
+  {
+    "kind": "path",
+    "part": 13483,
+    "name": "crosslinkSouth5",
+    "end": -1,
+    "target": 13633,
+    "target_name": "cave8",
+    "point": [
+      -19.699999809265137,
+      -1.0,
+      70.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.5846010944716227
+  },
+  {
+    "kind": "path",
+    "part": 13483,
+    "name": "crosslinkSouth5",
+    "end": 1,
+    "target": 13482,
+    "target_name": "crosslinkSouth4",
+    "point": [
+      -35.30000019073486,
+      -1.0,
+      70.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2812866425742868
+  },
+  {
+    "kind": "path",
+    "part": 13626,
+    "name": "cave1",
+    "end": -1,
+    "target": 13627,
+    "target_name": "cave2",
+    "point": [
+      190.30000019073486,
+      47.0,
+      -120.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.5211439048584339
+  },
+  {
+    "kind": "path",
+    "part": 13626,
+    "name": "cave1",
+    "end": 1,
+    "target": 12799,
+    "target_name": "main1",
+    "point": [
+      159.69999980926514,
+      47.0,
+      -120.0
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.5999994277954102
+  },
+  {
+    "kind": "path",
+    "part": 13627,
+    "name": "cave2",
+    "end": -1,
+    "target": 13628,
+    "target_name": "cave3",
+    "point": [
+      214.22114602365082,
+      47.0,
+      -97.79728256460976
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.8429693545774217
+  },
+  {
+    "kind": "path",
+    "part": 13627,
+    "name": "cave2",
+    "end": 1,
+    "target": 13626,
+    "target_name": "cave1",
+    "point": [
+      189.77885397634918,
+      47.0,
+      -120.20271743539024
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.5211462143856807
+  },
+  {
+    "kind": "path",
+    "part": 13628,
+    "name": "cave3",
+    "end": -1,
+    "target": 13629,
+    "target_name": "cave4",
+    "point": [
+      214.0,
+      14.961948811592265,
+      -22.11156724947159
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.5060925867757717
+  },
+  {
+    "kind": "path",
+    "part": 13628,
+    "name": "cave3",
+    "end": 1,
+    "target": 13627,
+    "target_name": "cave2",
+    "point": [
+      214.0,
+      47.194781840263204,
+      -98.66454816800888
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.7490491101486398
+  },
+  {
+    "kind": "path",
+    "part": 13629,
+    "name": "cave4",
+    "end": -1,
+    "target": 13630,
+    "target_name": "cave5",
+    "point": [
+      190.00137897739705,
+      -1.0440256038646112,
+      24.997284265574535
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2975514778649355
+  },
+  {
+    "kind": "path",
+    "part": 13629,
+    "name": "cave4",
+    "end": 1,
+    "target": 13628,
+    "target_name": "cave3",
+    "point": [
+      214.26250652064982,
+      15.130059424970568,
+      -22.514089675959667
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.43621453805489807
+  },
+  {
+    "kind": "path",
+    "part": 13630,
+    "name": "cave5",
+    "end": -1,
+    "target": 12296,
+    "target_name": "crosslinkNorth5",
+    "point": [
+      139.73167299371676,
+      -1.0000001192092896,
+      50.13416350314162
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3948682907843857
+  },
+  {
+    "kind": "path",
+    "part": 13630,
+    "name": "cave5",
+    "end": 1,
+    "target": 13629,
+    "target_name": "cave4",
+    "point": [
+      190.26832700628324,
+      -1.0000001192092896,
+      24.86583649685838
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.24098778167603996
+  },
+  {
+    "kind": "path",
+    "part": 13631,
+    "name": "cave6",
+    "end": -1,
+    "target": 13632,
+    "target_name": "cave7",
+    "point": [
+      79.70895853438265,
+      -1.0000001192092896,
+      34.92723963359566
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.4123410769535525
+  },
+  {
+    "kind": "path",
+    "part": 13631,
+    "name": "cave6",
+    "end": 1,
+    "target": 12296,
+    "target_name": "crosslinkNorth5",
+    "point": [
+      140.29104146561735,
+      -1.0000001192092896,
+      50.07276036640434
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.04275363152076039
+  },
+  {
+    "kind": "path",
+    "part": 13632,
+    "name": "cave7",
+    "end": -1,
+    "target": 13633,
+    "target_name": "cave8",
+    "point": [
+      39.82354955612459,
+      -1.0,
+      90.24261910474638
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3906685986874905
+  },
+  {
+    "kind": "path",
+    "part": 13632,
+    "name": "cave7",
+    "end": 1,
+    "target": 13631,
+    "target_name": "cave6",
+    "point": [
+      80.17645044387541,
+      -1.0,
+      34.75738089525362
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.4123380254534972
+  },
+  {
+    "kind": "path",
+    "part": 13633,
+    "name": "cave8",
+    "end": -1,
+    "target": 13483,
+    "target_name": "crosslinkSouth5",
+    "point": [
+      -20.284606375249496,
+      -1.0000001192092896,
+      69.90513120825017
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.5846065659843589
+  },
+  {
+    "kind": "path",
+    "part": 13633,
+    "name": "cave8",
+    "end": 1,
+    "target": 13632,
+    "target_name": "cave7",
+    "point": [
+      40.284606375249496,
+      -1.0000001192092896,
+      90.09486879174983
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.39067625910246306
+  },
+  {
+    "kind": "path",
+    "part": 13634,
+    "name": "cave9",
+    "end": -1,
+    "target": 13635,
+    "target_name": "cave10",
+    "point": [
+      -70.23426065489048,
+      -1.0,
+      110.18740852391238
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.5644681335800463
+  },
+  {
+    "kind": "path",
+    "part": 13634,
+    "name": "cave9",
+    "end": 1,
+    "target": 13483,
+    "target_name": "crosslinkSouth5",
+    "point": [
+      -19.765739345109523,
+      -1.0,
+      69.81259147608762
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.06573953584438641
+  },
+  {
+    "kind": "path",
+    "part": 13635,
+    "name": "cave10",
+    "end": -1,
+    "target": 14220,
+    "target_name": "SafetyApron",
+    "point": [
+      -124.2949847649636,
+      -1.0,
+      120.05462693088725
+    ],
+    "gap": 1.7050152350363987,
+    "inside_depth": 0
+  },
+  {
+    "kind": "path",
+    "part": 13635,
+    "name": "cave10",
+    "end": 1,
+    "target": 13634,
+    "target_name": "cave9",
+    "point": [
+      -69.7050152350364,
+      -1.0,
+      109.94537306911275
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.5644680439949568
+  },
+  {
+    "kind": "path",
+    "part": 14152,
+    "name": "cartApproach1",
+    "end": -1,
+    "target": 12526,
+    "target_name": "railWalkBypass1",
+    "point": [
+      129.7878687693012,
+      47.0,
+      -89.78786876930121
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.8657741154543324
+  },
+  {
+    "kind": "path",
+    "part": 14152,
+    "name": "cartApproach1",
+    "end": 1,
+    "target": 12799,
+    "target_name": "main1",
+    "point": [
+      160.2121312306988,
+      47.0,
+      -120.21213123069879
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.0878680063617594
+  },
+  {
+    "kind": "rail",
+    "part": 14223,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14226,
+    "target_name": "SteelRail",
+    "point": [
+      130.15880052561442,
+      48.29904480656842,
+      -86.5003227360703
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999888403574862
+  },
+  {
+    "kind": "rail",
+    "part": 14223,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14226,
+    "target_name": "SteelRail",
+    "point": [
+      132.79176099782308,
+      49.23522643366596,
+      -88.25561293287501
+    ],
+    "gap": 2.9999992564554248,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14224,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14227,
+    "target_name": "SteelRail",
+    "point": [
+      126.83058397288005,
+      48.29904480656842,
+      -91.49260178880468
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999949275982492
+  },
+  {
+    "kind": "rail",
+    "part": 14224,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14227,
+    "target_name": "SteelRail",
+    "point": [
+      129.4635444450887,
+      49.23522643366596,
+      -93.24789198560939
+    ],
+    "gap": 2.9999931692146617,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14226,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14229,
+    "target_name": "SteelRail",
+    "point": [
+      127.76518480295817,
+      47.44798584660748,
+      -84.90458909349218
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000071020797752
+  },
+  {
+    "kind": "rail",
+    "part": 14226,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14223,
+    "target_name": "SteelRail",
+    "point": [
+      130.39814527516683,
+      48.38416747370502,
+      -86.65987929029689
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999888403574862
+  },
+  {
+    "kind": "rail",
+    "part": 14227,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14230,
+    "target_name": "SteelRail",
+    "point": [
+      124.43697587961833,
+      47.44798584660748,
+      -89.89686814622655
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14227,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14224,
+    "target_name": "SteelRail",
+    "point": [
+      127.06993635182698,
+      48.38416747370502,
+      -91.65215834303126
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999949275982492
+  },
+  {
+    "kind": "rail",
+    "part": 14229,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14232,
+    "target_name": "SteelRail",
+    "point": [
+      125.37159196848552,
+      46.59692688664654,
+      -83.30885545091405
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14229,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14226,
+    "target_name": "SteelRail",
+    "point": [
+      128.00455244069417,
+      47.53310851374408,
+      -85.06414564771876
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000071020797752
+  },
+  {
+    "kind": "rail",
+    "part": 14230,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14233,
+    "target_name": "SteelRail",
+    "point": [
+      122.04337541575114,
+      46.59692688664654,
+      -88.30113450364843
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14230,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14227,
+    "target_name": "SteelRail",
+    "point": [
+      124.6763358879598,
+      47.53310851374408,
+      -90.05642470045314
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14232,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14235,
+    "target_name": "SteelRail",
+    "point": [
+      122.97799150461833,
+      45.745867926685605,
+      -81.71312180833593
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14232,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14229,
+    "target_name": "SteelRail",
+    "point": [
+      125.61095197682698,
+      46.682049553783145,
+      -83.46841200514064
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14233,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14236,
+    "target_name": "SteelRail",
+    "point": [
+      119.64977495188396,
+      45.745867926685605,
+      -86.7054008610703
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14233,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14230,
+    "target_name": "SteelRail",
+    "point": [
+      122.2827354240926,
+      46.682049553783145,
+      -88.46069105787501
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14235,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14238,
+    "target_name": "SteelRail",
+    "point": [
+      120.58439104075114,
+      44.89480896672467,
+      -80.1173881657578
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999888403574862
+  },
+  {
+    "kind": "rail",
+    "part": 14235,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14232,
+    "target_name": "SteelRail",
+    "point": [
+      123.2173515129598,
+      45.83099059382221,
+      -81.87267836256251
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14236,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14239,
+    "target_name": "SteelRail",
+    "point": [
+      117.25617448801677,
+      44.89480896672467,
+      -85.10966721849218
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999888403574862
+  },
+  {
+    "kind": "rail",
+    "part": 14236,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14233,
+    "target_name": "SteelRail",
+    "point": [
+      119.88913496022542,
+      45.83099059382221,
+      -86.86495741529689
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14238,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14241,
+    "target_name": "SteelRail",
+    "point": [
+      118.1907753180949,
+      44.04375000676373,
+      -78.52165452317968
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000131893205382
+  },
+  {
+    "kind": "rail",
+    "part": 14238,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14235,
+    "target_name": "SteelRail",
+    "point": [
+      120.82373579030354,
+      44.97993163386127,
+      -80.27694471998439
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999888403574862
+  },
+  {
+    "kind": "rail",
+    "part": 14239,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14242,
+    "target_name": "SteelRail",
+    "point": [
+      114.86255876536052,
+      44.04375000676373,
+      -83.51393357591405
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000131893205382
+  },
+  {
+    "kind": "rail",
+    "part": 14239,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14236,
+    "target_name": "SteelRail",
+    "point": [
+      117.49551923756917,
+      44.97993163386127,
+      -85.26922377271876
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999888403574862
+  },
+  {
+    "kind": "rail",
+    "part": 14241,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14244,
+    "target_name": "SteelRail",
+    "point": [
+      115.79719011301677,
+      43.19269104680279,
+      -76.92592088060155
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14241,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14238,
+    "target_name": "SteelRail",
+    "point": [
+      118.43015058522542,
+      44.12887267390033,
+      -78.68121107740626
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000131893205382
+  },
+  {
+    "kind": "rail",
+    "part": 14242,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14245,
+    "target_name": "SteelRail",
+    "point": [
+      112.4689735602824,
+      43.19269104680279,
+      -81.91819993333593
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14242,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14239,
+    "target_name": "SteelRail",
+    "point": [
+      115.10193403249104,
+      44.12887267390033,
+      -83.67349013014064
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000131893205382
+  },
+  {
+    "kind": "rail",
+    "part": 14244,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14247,
+    "target_name": "SteelRail",
+    "point": [
+      113.40358964914958,
+      42.341632086841855,
+      -75.33018723802343
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999888403574862
+  },
+  {
+    "kind": "rail",
+    "part": 14244,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14241,
+    "target_name": "SteelRail",
+    "point": [
+      116.03655012135823,
+      43.277813713939395,
+      -77.08547743482814
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14245,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14248,
+    "target_name": "SteelRail",
+    "point": [
+      110.0753730964152,
+      42.341632086841855,
+      -80.3224662907578
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999888403574862
+  },
+  {
+    "kind": "rail",
+    "part": 14245,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14242,
+    "target_name": "SteelRail",
+    "point": [
+      112.70833356862386,
+      43.277813713939395,
+      -82.07775648756251
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14247,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14250,
+    "target_name": "SteelRail",
+    "point": [
+      111.00997392649333,
+      41.49057312688092,
+      -73.7344535954453
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.300005343626339
+  },
+  {
+    "kind": "rail",
+    "part": 14247,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14244,
+    "target_name": "SteelRail",
+    "point": [
+      113.64293439870198,
+      42.42675475397846,
+      -75.48974379225001
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999888403574862
+  },
+  {
+    "kind": "rail",
+    "part": 14248,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14251,
+    "target_name": "SteelRail",
+    "point": [
+      107.68175737375896,
+      41.49057312688092,
+      -78.72673264817968
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.300005343626339
+  },
+  {
+    "kind": "rail",
+    "part": 14248,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14245,
+    "target_name": "SteelRail",
+    "point": [
+      110.3147178459676,
+      42.42675475397846,
+      -80.48202284498439
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999888403574862
+  },
+  {
+    "kind": "rail",
+    "part": 14250,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14253,
+    "target_name": "SteelRail",
+    "point": [
+      108.61637346262614,
+      40.63952942570904,
+      -72.13871995286718
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14250,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14247,
+    "target_name": "SteelRail",
+    "point": [
+      111.2493339348348,
+      41.57571105280658,
+      -73.89401014967189
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.300005343626339
+  },
+  {
+    "kind": "rail",
+    "part": 14251,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14254,
+    "target_name": "SteelRail",
+    "point": [
+      105.28815690989177,
+      40.63952942570904,
+      -77.13099900560155
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14251,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14248,
+    "target_name": "SteelRail",
+    "point": [
+      107.92111738210042,
+      41.57571105280658,
+      -78.88628920240626
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.300005343626339
+  },
+  {
+    "kind": "rail",
+    "part": 14253,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14256,
+    "target_name": "SteelRail",
+    "point": [
+      106.22277299875896,
+      39.788470465748105,
+      -70.54298631028905
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999928985956051
+  },
+  {
+    "kind": "rail",
+    "part": 14253,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14250,
+    "target_name": "SteelRail",
+    "point": [
+      108.8557334709676,
+      40.724652092845645,
+      -72.29827650709376
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14254,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14257,
+    "target_name": "SteelRail",
+    "point": [
+      102.89455644602458,
+      39.788470465748105,
+      -75.53526536302343
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999928985956051
+  },
+  {
+    "kind": "rail",
+    "part": 14254,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14251,
+    "target_name": "SteelRail",
+    "point": [
+      105.52751691823323,
+      40.724652092845645,
+      -77.29055555982814
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14256,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14259,
+    "target_name": "SteelRail",
+    "point": [
+      103.82917253489177,
+      38.93741150578717,
+      -68.94723740892186
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14256,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14253,
+    "target_name": "SteelRail",
+    "point": [
+      106.46213300710042,
+      39.87359313288471,
+      -70.70252760572657
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999928985956051
+  },
+  {
+    "kind": "rail",
+    "part": 14257,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14260,
+    "target_name": "SteelRail",
+    "point": [
+      100.5009559821574,
+      38.93741150578717,
+      -73.93951646165624
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14257,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14254,
+    "target_name": "SteelRail",
+    "point": [
+      103.13391645436604,
+      39.87359313288471,
+      -75.69480665846095
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999928985956051
+  },
+  {
+    "kind": "rail",
+    "part": 14259,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14262,
+    "target_name": "SteelRail",
+    "point": [
+      101.43557207102458,
+      38.08635254582623,
+      -67.35150376634374
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14259,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14256,
+    "target_name": "SteelRail",
+    "point": [
+      104.06853254323323,
+      39.02253417292377,
+      -69.10679396314845
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14260,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14263,
+    "target_name": "SteelRail",
+    "point": [
+      98.1073555182902,
+      38.08635254582623,
+      -72.34378281907811
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14260,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14257,
+    "target_name": "SteelRail",
+    "point": [
+      100.74031599049886,
+      39.02253417292377,
+      -74.09907301588282
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14262,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14265,
+    "target_name": "SteelRail",
+    "point": [
+      99.0419716071574,
+      37.23529358586529,
+      -65.75577012376561
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14262,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14259,
+    "target_name": "SteelRail",
+    "point": [
+      101.67493207936604,
+      38.17147521296283,
+      -67.51106032057032
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14263,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14266,
+    "target_name": "SteelRail",
+    "point": [
+      95.71375505442302,
+      37.23529358586529,
+      -70.74804917649999
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14263,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14260,
+    "target_name": "SteelRail",
+    "point": [
+      98.34671552663167,
+      38.17147521296283,
+      -72.5033393733047
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14265,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14268,
+    "target_name": "SteelRail",
+    "point": [
+      96.6483711432902,
+      36.384234625904355,
+      -64.16003648118749
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14265,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14262,
+    "target_name": "SteelRail",
+    "point": [
+      99.28133161549886,
+      37.320416253001895,
+      -65.9153266779922
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14266,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14269,
+    "target_name": "SteelRail",
+    "point": [
+      93.32015459055583,
+      36.384234625904355,
+      -69.15231553392186
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14266,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14263,
+    "target_name": "SteelRail",
+    "point": [
+      95.95311506276448,
+      37.320416253001895,
+      -70.90760573072657
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14268,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14271,
+    "target_name": "SteelRail",
+    "point": [
+      94.25477067942302,
+      35.53317566594342,
+      -62.564302838609365
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14268,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14265,
+    "target_name": "SteelRail",
+    "point": [
+      96.88773115163167,
+      36.46935729304096,
+      -64.31959303541407
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14269,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14272,
+    "target_name": "SteelRail",
+    "point": [
+      90.92655412668864,
+      35.53317566594342,
+      -67.55658189134374
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14269,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14266,
+    "target_name": "SteelRail",
+    "point": [
+      93.5595145988973,
+      36.46935729304096,
+      -69.31187208814845
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14271,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14274,
+    "target_name": "SteelRail",
+    "point": [
+      91.86117021555583,
+      34.68211670598248,
+      -60.96856919603124
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999888403574862
+  },
+  {
+    "kind": "rail",
+    "part": 14271,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14268,
+    "target_name": "SteelRail",
+    "point": [
+      94.49413068776448,
+      35.61829833308002,
+      -62.72385939283595
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14272,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14275,
+    "target_name": "SteelRail",
+    "point": [
+      88.53295366282146,
+      34.68211670598248,
+      -65.96084824876561
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999888403574862
+  },
+  {
+    "kind": "rail",
+    "part": 14272,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14269,
+    "target_name": "SteelRail",
+    "point": [
+      91.1659141350301,
+      35.61829833308002,
+      -67.71613844557032
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000010148390122
+  },
+  {
+    "kind": "rail",
+    "part": 14274,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14277,
+    "target_name": "SteelRail",
+    "point": [
+      89.46755449289958,
+      33.83105774602154,
+      -59.372835553453115
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000131893205382
+  },
+  {
+    "kind": "rail",
+    "part": 14274,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14271,
+    "target_name": "SteelRail",
+    "point": [
+      92.10051496510823,
+      34.76723937311908,
+      -61.12812575025782
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999888403574862
+  },
+  {
+    "kind": "rail",
+    "part": 14275,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14278,
+    "target_name": "SteelRail",
+    "point": [
+      86.1393379401652,
+      33.83105774602154,
+      -64.36511460618749
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000131893205382
+  },
+  {
+    "kind": "rail",
+    "part": 14275,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14272,
+    "target_name": "SteelRail",
+    "point": [
+      88.77229841237386,
+      34.76723937311908,
+      -66.1204048029922
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999888403574862
+  },
+  {
+    "kind": "rail",
+    "part": 14277,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14280,
+    "target_name": "SteelRail",
+    "point": [
+      87.07396928782146,
+      32.979998786060605,
+      -57.77710191087499
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.21490693113743375
+  },
+  {
+    "kind": "rail",
+    "part": 14277,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14274,
+    "target_name": "SteelRail",
+    "point": [
+      89.7069297600301,
+      33.916180413158145,
+      -59.5323921076797
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000131893205382
+  },
+  {
+    "kind": "rail",
+    "part": 14278,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14281,
+    "target_name": "SteelRail",
+    "point": [
+      83.74575273508708,
+      32.979998786060605,
+      -62.769380963609365
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.17014217987711733
+  },
+  {
+    "kind": "rail",
+    "part": 14278,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14275,
+    "target_name": "SteelRail",
+    "point": [
+      86.37871320729573,
+      33.916180413158145,
+      -64.52467116041407
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000131893205382
+  },
+  {
+    "kind": "rail",
+    "part": 14280,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14283,
+    "target_name": "SteelRail",
+    "point": [
+      85.88690034628235,
+      32.561064914227245,
+      -56.64423982382141
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14280,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14277,
+    "target_name": "SteelRail",
+    "point": [
+      88.19734342813172,
+      33.023163601397755,
+      -58.95468290567078
+    ],
+    "gap": 0.032955569662110336,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14281,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14284,
+    "target_name": "SteelRail",
+    "point": [
+      81.64425508261047,
+      32.561064914227245,
+      -60.88688508749328
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14281,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14278,
+    "target_name": "SteelRail",
+    "point": [
+      83.95469816445984,
+      33.023163601397755,
+      -63.197328169342654
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.08481693693525472
+  },
+  {
+    "kind": "rail",
+    "part": 14283,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14286,
+    "target_name": "SteelRail",
+    "point": [
+      83.78648225546203,
+      32.14099045133662,
+      -54.543821733001096
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14283,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14280,
+    "target_name": "SteelRail",
+    "point": [
+      86.0969253373114,
+      32.60308913850713,
+      -56.85426481485047
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14284,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14287,
+    "target_name": "SteelRail",
+    "point": [
+      79.54383699179016,
+      32.14099045133662,
+      -58.78646699667297
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14284,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14281,
+    "target_name": "SteelRail",
+    "point": [
+      81.85428007363953,
+      32.60308913850713,
+      -61.09691007852234
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14286,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14289,
+    "target_name": "SteelRail",
+    "point": [
+      81.68604890585266,
+      31.720900729656933,
+      -52.44340364218078
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000103459347967
+  },
+  {
+    "kind": "rail",
+    "part": 14286,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14283,
+    "target_name": "SteelRail",
+    "point": [
+      83.99649198770203,
+      32.18299941682744,
+      -54.753846724030154
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14287,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14290,
+    "target_name": "SteelRail",
+    "point": [
+      77.44340364218078,
+      31.720900729656933,
+      -56.68604890585266
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000103459347967
+  },
+  {
+    "kind": "rail",
+    "part": 14287,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14284,
+    "target_name": "SteelRail",
+    "point": [
+      79.75384672403015,
+      32.18299941682744,
+      -58.99649198770203
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14289,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14292,
+    "target_name": "SteelRail",
+    "point": [
+      79.58564607382141,
+      31.300811007977245,
+      -50.34298555136047
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999911162191067
+  },
+  {
+    "kind": "rail",
+    "part": 14289,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14286,
+    "target_name": "SteelRail",
+    "point": [
+      81.89608915567078,
+      31.762909695147755,
+      -52.65342863320984
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000103459347967
+  },
+  {
+    "kind": "rail",
+    "part": 14290,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14293,
+    "target_name": "SteelRail",
+    "point": [
+      75.34300081014953,
+      31.300811007977245,
+      -54.585630815032346
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999911162191067
+  },
+  {
+    "kind": "rail",
+    "part": 14290,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14287,
+    "target_name": "SteelRail",
+    "point": [
+      77.6534438919989,
+      31.762909695147755,
+      -56.89607389688172
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000103459347967
+  },
+  {
+    "kind": "rail",
+    "part": 14292,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14295,
+    "target_name": "SteelRail",
+    "point": [
+      77.48521272421203,
+      30.88073654508662,
+      -48.24256746054016
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14292,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14289,
+    "target_name": "SteelRail",
+    "point": [
+      79.7956558060614,
+      31.34283523225713,
+      -50.55301054238953
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999911162191067
+  },
+  {
+    "kind": "rail",
+    "part": 14293,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14296,
+    "target_name": "SteelRail",
+    "point": [
+      73.24256746054016,
+      30.88073654508662,
+      -52.48521272421203
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14293,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14290,
+    "target_name": "SteelRail",
+    "point": [
+      75.55301054238953,
+      31.34283523225713,
+      -54.795655806061404
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999911162191067
+  },
+  {
+    "kind": "rail",
+    "part": 14295,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14298,
+    "target_name": "SteelRail",
+    "point": [
+      75.38479463339172,
+      30.460646823406933,
+      -46.142149369719846
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14295,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14292,
+    "target_name": "SteelRail",
+    "point": [
+      77.69523771524109,
+      30.922745510577442,
+      -48.45259245156922
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14296,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14299,
+    "target_name": "SteelRail",
+    "point": [
+      71.14214936971985,
+      30.460646823406933,
+      -50.38479463339172
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14296,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14293,
+    "target_name": "SteelRail",
+    "point": [
+      73.45259245156922,
+      30.922745510577442,
+      -52.69523771524109
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14298,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14301,
+    "target_name": "SteelRail",
+    "point": [
+      73.28437654257141,
+      30.040557101727245,
+      -44.04173127889953
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14298,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14295,
+    "target_name": "SteelRail",
+    "point": [
+      75.59481962442078,
+      30.502655788897755,
+      -46.352174360748904
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14299,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14302,
+    "target_name": "SteelRail",
+    "point": [
+      69.04173127889953,
+      30.040557101727245,
+      -48.28437654257141
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14299,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14296,
+    "target_name": "SteelRail",
+    "point": [
+      71.3521743607489,
+      30.502655788897755,
+      -50.59481962442078
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14301,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14304,
+    "target_name": "SteelRail",
+    "point": [
+      71.1839584517511,
+      29.62048263883662,
+      -41.94131318807922
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14301,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14298,
+    "target_name": "SteelRail",
+    "point": [
+      73.49440153360047,
+      30.08258132600713,
+      -44.25175626992859
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14302,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14305,
+    "target_name": "SteelRail",
+    "point": [
+      66.94131318807922,
+      29.62048263883662,
+      -46.183958451751096
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14302,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14299,
+    "target_name": "SteelRail",
+    "point": [
+      69.25175626992859,
+      30.08258132600713,
+      -48.49440153360047
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14304,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14307,
+    "target_name": "SteelRail",
+    "point": [
+      69.08354036093078,
+      29.200392917156933,
+      -39.840879838469846
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14304,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14301,
+    "target_name": "SteelRail",
+    "point": [
+      71.39398344278015,
+      29.662491604327442,
+      -42.15132292031922
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14305,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14308,
+    "target_name": "SteelRail",
+    "point": [
+      64.84089509725891,
+      29.200392917156933,
+      -44.08352510214172
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14305,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14302,
+    "target_name": "SteelRail",
+    "point": [
+      67.15133817910828,
+      29.662491604327442,
+      -46.39396818399109
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14307,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14310,
+    "target_name": "SteelRail",
+    "point": [
+      66.98312227011047,
+      28.780318454266308,
+      -37.74046174764953
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14307,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14304,
+    "target_name": "SteelRail",
+    "point": [
+      69.29356535195984,
+      29.242417141436817,
+      -40.050904829498904
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14308,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14311,
+    "target_name": "SteelRail",
+    "point": [
+      62.740477006438596,
+      28.780318454266308,
+      -41.98310701132141
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14308,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14305,
+    "target_name": "SteelRail",
+    "point": [
+      65.05092008828797,
+      29.242417141436817,
+      -44.29355009317078
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14310,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14313,
+    "target_name": "SteelRail",
+    "point": [
+      64.8826889205011,
+      28.36022873258662,
+      -35.64004365682922
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14310,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14307,
+    "target_name": "SteelRail",
+    "point": [
+      67.19313200235047,
+      28.82232741975713,
+      -37.95048673867859
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14311,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14314,
+    "target_name": "SteelRail",
+    "point": [
+      60.64004365682922,
+      28.36022873258662,
+      -39.882688920501096
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14311,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14308,
+    "target_name": "SteelRail",
+    "point": [
+      62.95048673867859,
+      28.82232741975713,
+      -42.19313200235047
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14313,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14316,
+    "target_name": "SteelRail",
+    "point": [
+      62.78227082968078,
+      27.940139010906933,
+      -33.53962556600891
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14313,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14310,
+    "target_name": "SteelRail",
+    "point": [
+      65.09271391153015,
+      28.402237698077442,
+      -35.85006864785828
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14314,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14317,
+    "target_name": "SteelRail",
+    "point": [
+      58.53962556600891,
+      27.940139010906933,
+      -37.78227082968078
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14314,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14311,
+    "target_name": "SteelRail",
+    "point": [
+      60.85006864785828,
+      28.402237698077442,
+      -40.092713911530154
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14316,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14319,
+    "target_name": "SteelRail",
+    "point": [
+      60.68185273886047,
+      27.520064548016308,
+      -31.439207475188596
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14316,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14313,
+    "target_name": "SteelRail",
+    "point": [
+      62.99229582070984,
+      27.982163235186817,
+      -33.74965055703797
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14317,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14320,
+    "target_name": "SteelRail",
+    "point": [
+      56.439207475188596,
+      27.520064548016308,
+      -35.68185273886047
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14317,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14314,
+    "target_name": "SteelRail",
+    "point": [
+      58.74965055703797,
+      27.982163235186817,
+      -37.99229582070984
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14319,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14322,
+    "target_name": "SteelRail",
+    "point": [
+      58.58143464804016,
+      27.09997482633662,
+      -29.338789384368283
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14319,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14316,
+    "target_name": "SteelRail",
+    "point": [
+      60.89187772988953,
+      27.56207351350713,
+      -31.649232466217654
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14320,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14323,
+    "target_name": "SteelRail",
+    "point": [
+      54.33878938436828,
+      27.09997482633662,
+      -33.58143464804016
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14320,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14317,
+    "target_name": "SteelRail",
+    "point": [
+      56.649232466217654,
+      27.56207351350713,
+      -35.89187772988953
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14322,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14325,
+    "target_name": "SteelRail",
+    "point": [
+      56.481016557219846,
+      26.679885104656933,
+      -27.238356034758908
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999911162191067
+  },
+  {
+    "kind": "rail",
+    "part": 14322,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14319,
+    "target_name": "SteelRail",
+    "point": [
+      58.79145963906922,
+      27.141983791827442,
+      -29.54879911660828
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14323,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14326,
+    "target_name": "SteelRail",
+    "point": [
+      52.23837129354797,
+      26.679885104656933,
+      -31.481001298430783
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999911162191067
+  },
+  {
+    "kind": "rail",
+    "part": 14323,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14320,
+    "target_name": "SteelRail",
+    "point": [
+      54.54881437539734,
+      27.141983791827442,
+      -33.791444380280154
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998897953228987
+  },
+  {
+    "kind": "rail",
+    "part": 14325,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14328,
+    "target_name": "SteelRail",
+    "point": [
+      54.38058320761047,
+      26.259810641766308,
+      -25.137937943938596
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14325,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14322,
+    "target_name": "SteelRail",
+    "point": [
+      56.69102628945984,
+      26.721909328936817,
+      -27.448381025787967
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999911162191067
+  },
+  {
+    "kind": "rail",
+    "part": 14326,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14329,
+    "target_name": "SteelRail",
+    "point": [
+      50.137937943938596,
+      26.259810641766308,
+      -29.38058320761047
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14326,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14323,
+    "target_name": "SteelRail",
+    "point": [
+      52.44838102578797,
+      26.721909328936817,
+      -31.691026289459842
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999911162191067
+  },
+  {
+    "kind": "rail",
+    "part": 14328,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14331,
+    "target_name": "SteelRail",
+    "point": [
+      52.28016511679016,
+      25.83972092008662,
+      -23.037519853118283
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14328,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14325,
+    "target_name": "SteelRail",
+    "point": [
+      54.59060819863953,
+      26.30181960725713,
+      -25.347962934967654
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14329,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14332,
+    "target_name": "SteelRail",
+    "point": [
+      48.03751985311828,
+      25.83972092008662,
+      -27.280165116790158
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14329,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14326,
+    "target_name": "SteelRail",
+    "point": [
+      50.347962934967654,
+      26.30181960725713,
+      -29.59060819863953
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14331,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14334,
+    "target_name": "SteelRail",
+    "point": [
+      50.179747025969846,
+      25.419646457195995,
+      -20.93710176229797
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14331,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14328,
+    "target_name": "SteelRail",
+    "point": [
+      52.49019010781922,
+      25.881745144366505,
+      -23.247544844147342
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14332,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14335,
+    "target_name": "SteelRail",
+    "point": [
+      45.93710176229797,
+      25.419646457195995,
+      -25.179747025969846
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14332,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14329,
+    "target_name": "SteelRail",
+    "point": [
+      48.24754484414734,
+      25.881745144366505,
+      -27.490190107819217
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000017994203601
+  },
+  {
+    "kind": "rail",
+    "part": 14334,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14337,
+    "target_name": "SteelRail",
+    "point": [
+      48.07932893514953,
+      24.999556735516308,
+      -18.836683671477658
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14334,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14331,
+    "target_name": "SteelRail",
+    "point": [
+      50.389772016998904,
+      25.461655422686817,
+      -21.14712675332703
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14335,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14338,
+    "target_name": "SteelRail",
+    "point": [
+      43.83668367147766,
+      24.999556735516308,
+      -23.079328935149533
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14335,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14332,
+    "target_name": "SteelRail",
+    "point": [
+      46.14712675332703,
+      25.461655422686817,
+      -25.389772016998904
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14337,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14340,
+    "target_name": "SteelRail",
+    "point": [
+      45.97891084432922,
+      24.57946701383662,
+      -16.736265580657346
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.03438398968204459
+  },
+  {
+    "kind": "rail",
+    "part": 14337,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14334,
+    "target_name": "SteelRail",
+    "point": [
+      48.28935392617859,
+      25.04156570100713,
+      -19.046708662506717
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14338,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14341,
+    "target_name": "SteelRail",
+    "point": [
+      41.736265580657346,
+      24.57946701383662,
+      -20.97891084432922
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.03438398968204459
+  },
+  {
+    "kind": "rail",
+    "part": 14338,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14335,
+    "target_name": "SteelRail",
+    "point": [
+      44.04670866250672,
+      25.04156570100713,
+      -23.289353926178592
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999996627335433
+  },
+  {
+    "kind": "rail",
+    "part": 14340,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14343,
+    "target_name": "SteelRail",
+    "point": [
+      45.95459520118493,
+      24.800003051757812,
+      -16.711949937513054
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14340,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14334,
+    "target_name": "SteelRail",
+    "point": [
+      48.288050062486946,
+      24.800003051757812,
+      -19.04540479881507
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.16107562734717853
+  },
+  {
+    "kind": "rail",
+    "part": 14341,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14344,
+    "target_name": "SteelRail",
+    "point": [
+      41.711949937513054,
+      24.800003051757812,
+      -20.95459520118493
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14341,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14335,
+    "target_name": "SteelRail",
+    "point": [
+      44.04540479881507,
+      24.800003051757812,
+      -23.288050062486946
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.16107562734717853
+  },
+  {
+    "kind": "rail",
+    "part": 14343,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14346,
+    "target_name": "SteelRail",
+    "point": [
+      43.83327256934899,
+      24.800003051757812,
+      -14.590627305677117
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14343,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14337,
+    "target_name": "SteelRail",
+    "point": [
+      46.16672743065101,
+      24.800003051757812,
+      -16.924082166979133
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.218835865697168
+  },
+  {
+    "kind": "rail",
+    "part": 14344,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14347,
+    "target_name": "SteelRail",
+    "point": [
+      39.59062730567712,
+      24.800003051757812,
+      -18.833272569348992
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14344,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14338,
+    "target_name": "SteelRail",
+    "point": [
+      41.92408216697913,
+      24.800003051757812,
+      -21.166727430651008
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.218835865697168
+  },
+  {
+    "kind": "rail",
+    "part": 14346,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14349,
+    "target_name": "SteelRail",
+    "point": [
+      41.711949937513054,
+      24.800003051757812,
+      -12.46930467384118
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000186190241434
+  },
+  {
+    "kind": "rail",
+    "part": 14346,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14343,
+    "target_name": "SteelRail",
+    "point": [
+      44.04540479881507,
+      24.800003051757812,
+      -14.802759535143196
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14347,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14350,
+    "target_name": "SteelRail",
+    "point": [
+      37.46930467384118,
+      24.800003051757812,
+      -16.711949937513054
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000186190241434
+  },
+  {
+    "kind": "rail",
+    "part": 14347,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14344,
+    "target_name": "SteelRail",
+    "point": [
+      39.802759535143196,
+      24.800003051757812,
+      -19.04540479881507
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14349,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14352,
+    "target_name": "SteelRail",
+    "point": [
+      39.59064256446618,
+      24.800003051757812,
+      -10.347997300794304
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14349,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14346,
+    "target_name": "SteelRail",
+    "point": [
+      41.924097425768196,
+      24.800003051757812,
+      -12.68145216209632
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000186190241434
+  },
+  {
+    "kind": "rail",
+    "part": 14350,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14353,
+    "target_name": "SteelRail",
+    "point": [
+      35.347997300794304,
+      24.800003051757812,
+      -14.59064256446618
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14350,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14347,
+    "target_name": "SteelRail",
+    "point": [
+      37.68145216209632,
+      24.800003051757812,
+      -16.924097425768196
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000186190241434
+  },
+  {
+    "kind": "rail",
+    "part": 14352,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14355,
+    "target_name": "SteelRail",
+    "point": [
+      37.46931993263024,
+      24.800003051757812,
+      -8.226674668958367
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14352,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14349,
+    "target_name": "SteelRail",
+    "point": [
+      39.80277479393226,
+      24.800003051757812,
+      -10.560129530260383
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14353,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14356,
+    "target_name": "SteelRail",
+    "point": [
+      33.22667466895837,
+      24.800003051757812,
+      -12.469319932630242
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14353,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14350,
+    "target_name": "SteelRail",
+    "point": [
+      35.56012953026038,
+      24.800003051757812,
+      -14.802774793932258
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14355,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14358,
+    "target_name": "SteelRail",
+    "point": [
+      35.347997300794304,
+      24.800003051757812,
+      -6.1053520371224295
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14355,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14352,
+    "target_name": "SteelRail",
+    "point": [
+      37.68145216209632,
+      24.800003051757812,
+      -8.438806898424446
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14356,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14359,
+    "target_name": "SteelRail",
+    "point": [
+      31.10535203712243,
+      24.800003051757812,
+      -10.347997300794304
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14356,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14353,
+    "target_name": "SteelRail",
+    "point": [
+      33.438806898424446,
+      24.800003051757812,
+      -12.68145216209632
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14358,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14361,
+    "target_name": "SteelRail",
+    "point": [
+      33.22667466895837,
+      24.800003051757812,
+      -3.984029405286492
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14358,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14355,
+    "target_name": "SteelRail",
+    "point": [
+      35.56012953026038,
+      24.800003051757812,
+      -6.317484266588508
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14359,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14362,
+    "target_name": "SteelRail",
+    "point": [
+      28.984029405286492,
+      24.800003051757812,
+      -8.226674668958367
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14359,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14356,
+    "target_name": "SteelRail",
+    "point": [
+      31.317484266588508,
+      24.800003051757812,
+      -10.560129530260383
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14361,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14364,
+    "target_name": "SteelRail",
+    "point": [
+      31.10535203712243,
+      24.800003051757812,
+      -1.8627067734505545
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14361,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14358,
+    "target_name": "SteelRail",
+    "point": [
+      33.438806898424446,
+      24.800003051757812,
+      -4.1961616347525705
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14362,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14365,
+    "target_name": "SteelRail",
+    "point": [
+      26.862706773450554,
+      24.800003051757812,
+      -6.1053520371224295
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14362,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14359,
+    "target_name": "SteelRail",
+    "point": [
+      29.19616163475257,
+      24.800003051757812,
+      -8.438806898424446
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14364,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14367,
+    "target_name": "SteelRail",
+    "point": [
+      28.984029405286492,
+      24.800003051757812,
+      0.25861585838538304
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14364,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14361,
+    "target_name": "SteelRail",
+    "point": [
+      31.317484266588508,
+      24.800003051757812,
+      -2.074839002916633
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14365,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14368,
+    "target_name": "SteelRail",
+    "point": [
+      24.741384141614617,
+      24.800003051757812,
+      -3.984029405286492
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14365,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14362,
+    "target_name": "SteelRail",
+    "point": [
+      27.074839002916633,
+      24.800003051757812,
+      -6.317484266588508
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14367,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14370,
+    "target_name": "SteelRail",
+    "point": [
+      26.862706773450554,
+      24.800003051757812,
+      2.3799384902213205
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14367,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14364,
+    "target_name": "SteelRail",
+    "point": [
+      29.19616163475257,
+      24.800003051757812,
+      0.046483628919304465
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14368,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14371,
+    "target_name": "SteelRail",
+    "point": [
+      22.62006150977868,
+      24.800003051757812,
+      -1.8627067734505545
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14368,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14365,
+    "target_name": "SteelRail",
+    "point": [
+      24.953516371080696,
+      24.800003051757812,
+      -4.1961616347525705
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14370,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14373,
+    "target_name": "SteelRail",
+    "point": [
+      24.74139940040368,
+      24.800003051757812,
+      4.501261122057258
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14370,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14367,
+    "target_name": "SteelRail",
+    "point": [
+      27.074854261705696,
+      24.800003051757812,
+      2.167806260755242
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14371,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14374,
+    "target_name": "SteelRail",
+    "point": [
+      20.498754136731804,
+      24.800003051757812,
+      0.25861585838538304
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14371,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14368,
+    "target_name": "SteelRail",
+    "point": [
+      22.83220899803382,
+      24.800003051757812,
+      -2.074839002916633
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14373,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14376,
+    "target_name": "SteelRail",
+    "point": [
+      22.620076768567742,
+      24.800003051757812,
+      6.622568495104133
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14373,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14370,
+    "target_name": "SteelRail",
+    "point": [
+      24.953531629869758,
+      24.800003051757812,
+      4.289113633802117
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14374,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14377,
+    "target_name": "SteelRail",
+    "point": [
+      18.377431504895867,
+      24.800003051757812,
+      2.379923231432258
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14374,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14371,
+    "target_name": "SteelRail",
+    "point": [
+      20.710886366197883,
+      24.800003051757812,
+      0.046468370130241965
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14376,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14379,
+    "target_name": "SteelRail",
+    "point": [
+      20.498754136731804,
+      24.800003051757812,
+      8.74389112694007
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14376,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14373,
+    "target_name": "SteelRail",
+    "point": [
+      22.83220899803382,
+      24.800003051757812,
+      6.4104362656380545
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14377,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14380,
+    "target_name": "SteelRail",
+    "point": [
+      16.25610887305993,
+      24.800003051757812,
+      4.5012458632681955
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14377,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14374,
+    "target_name": "SteelRail",
+    "point": [
+      18.589563734361946,
+      24.800003051757812,
+      2.1677910019661795
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14379,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14382,
+    "target_name": "SteelRail",
+    "point": [
+      18.377431504895867,
+      24.800003051757812,
+      10.865213758776008
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14379,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14376,
+    "target_name": "SteelRail",
+    "point": [
+      20.710886366197883,
+      24.800003051757812,
+      8.531758897473992
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14380,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14383,
+    "target_name": "SteelRail",
+    "point": [
+      14.134786241223992,
+      24.800003051757812,
+      6.622568495104133
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14380,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14377,
+    "target_name": "SteelRail",
+    "point": [
+      16.468241102526008,
+      24.800003051757812,
+      4.289113633802117
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14382,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14385,
+    "target_name": "SteelRail",
+    "point": [
+      16.25610887305993,
+      24.800003051757812,
+      12.986536390611946
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.32499998807907104
+  },
+  {
+    "kind": "rail",
+    "part": 14382,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14379,
+    "target_name": "SteelRail",
+    "point": [
+      18.589563734361946,
+      24.800003051757812,
+      10.65308152930993
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14383,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14386,
+    "target_name": "SteelRail",
+    "point": [
+      12.013463609388054,
+      24.800003051757812,
+      8.74389112694007
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.32499998807907104
+  },
+  {
+    "kind": "rail",
+    "part": 14383,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14380,
+    "target_name": "SteelRail",
+    "point": [
+      14.34691847069007,
+      24.800003051757812,
+      6.4104362656380545
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14385,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14388,
+    "target_name": "SteelRail",
+    "point": [
+      15.95459520118493,
+      24.800003051757812,
+      13.288050062486946
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14385,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14382,
+    "target_name": "SteelRail",
+    "point": [
+      18.288050062486946,
+      24.800003051757812,
+      10.95459520118493
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.32499998807907104
+  },
+  {
+    "kind": "rail",
+    "part": 14386,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14389,
+    "target_name": "SteelRail",
+    "point": [
+      11.711949937513054,
+      24.800003051757812,
+      9.04540479881507
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14386,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14383,
+    "target_name": "SteelRail",
+    "point": [
+      14.04540479881507,
+      24.800003051757812,
+      6.7119499375130545
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.32499998807907104
+  },
+  {
+    "kind": "rail",
+    "part": 14388,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14391,
+    "target_name": "SteelRail",
+    "point": [
+      13.833272569348992,
+      24.800003051757812,
+      15.409372694322883
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14388,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14385,
+    "target_name": "SteelRail",
+    "point": [
+      16.166727430651008,
+      24.800003051757812,
+      13.075917833020867
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14389,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14392,
+    "target_name": "SteelRail",
+    "point": [
+      9.590627305677117,
+      24.800003051757812,
+      11.166727430651008
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14389,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14386,
+    "target_name": "SteelRail",
+    "point": [
+      11.924082166979133,
+      24.800003051757812,
+      8.833272569348992
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14391,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14394,
+    "target_name": "SteelRail",
+    "point": [
+      11.711949937513054,
+      24.800003051757812,
+      17.53069532615882
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14391,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14388,
+    "target_name": "SteelRail",
+    "point": [
+      14.04540479881507,
+      24.800003051757812,
+      15.197240464856804
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14392,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14395,
+    "target_name": "SteelRail",
+    "point": [
+      7.4693046738411795,
+      24.800003051757812,
+      13.288050062486946
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14392,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14389,
+    "target_name": "SteelRail",
+    "point": [
+      9.802759535143196,
+      24.800003051757812,
+      10.95459520118493
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14394,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14397,
+    "target_name": "SteelRail",
+    "point": [
+      9.59064256446618,
+      24.800003051757812,
+      19.652017957994758
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14394,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14391,
+    "target_name": "SteelRail",
+    "point": [
+      11.924097425768196,
+      24.800003051757812,
+      17.318563096692742
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14395,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14398,
+    "target_name": "SteelRail",
+    "point": [
+      5.3479973007943045,
+      24.800003051757812,
+      15.409372694322883
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14395,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14392,
+    "target_name": "SteelRail",
+    "point": [
+      7.6814521620963205,
+      24.800003051757812,
+      13.075917833020867
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14397,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14394,
+    "target_name": "SteelRail",
+    "point": [
+      7.469319932630242,
+      24.800003051757812,
+      21.773340589830696
+    ],
+    "gap": 3.000010031950609,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14397,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14394,
+    "target_name": "SteelRail",
+    "point": [
+      9.802774793932258,
+      24.800003051757812,
+      19.43988572852868
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14398,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14395,
+    "target_name": "SteelRail",
+    "point": [
+      3.226674668958367,
+      24.800003051757812,
+      17.53069532615882
+    ],
+    "gap": 3.000010031950609,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14398,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14395,
+    "target_name": "SteelRail",
+    "point": [
+      5.560129530260383,
+      24.800003051757812,
+      15.197240464856804
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14400,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14403,
+    "target_name": "SteelRail",
+    "point": [
+      -5.258615858385383,
+      24.800003051757812,
+      34.50126112205726
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14400,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14403,
+    "target_name": "SteelRail",
+    "point": [
+      -2.925160997083367,
+      24.800003051757812,
+      32.16780626075524
+    ],
+    "gap": 2.9999992423457513,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14401,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14404,
+    "target_name": "SteelRail",
+    "point": [
+      -9.501261122057258,
+      24.800003051757812,
+      30.258615858385383
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14401,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14404,
+    "target_name": "SteelRail",
+    "point": [
+      -7.167806260755242,
+      24.800003051757812,
+      27.925160997083367
+    ],
+    "gap": 2.9999992423457513,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14403,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14406,
+    "target_name": "SteelRail",
+    "point": [
+      -7.379923231432258,
+      24.800003051757812,
+      36.622583753893196
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14403,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14400,
+    "target_name": "SteelRail",
+    "point": [
+      -5.046468370130242,
+      24.800003051757812,
+      34.28912889259118
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14404,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14407,
+    "target_name": "SteelRail",
+    "point": [
+      -11.622568495104133,
+      24.800003051757812,
+      32.37993849022132
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14404,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14401,
+    "target_name": "SteelRail",
+    "point": [
+      -9.289113633802117,
+      24.800003051757812,
+      30.046483628919304
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14406,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14409,
+    "target_name": "SteelRail",
+    "point": [
+      -9.501245863268196,
+      24.800003051757812,
+      38.74389112694007
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14406,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14403,
+    "target_name": "SteelRail",
+    "point": [
+      -7.1677910019661795,
+      24.800003051757812,
+      36.410436265638054
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14407,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14410,
+    "target_name": "SteelRail",
+    "point": [
+      -13.74389112694007,
+      24.800003051757812,
+      34.501245863268196
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14407,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14404,
+    "target_name": "SteelRail",
+    "point": [
+      -11.410436265638054,
+      24.800003051757812,
+      32.16779100196618
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000782941928583
+  },
+  {
+    "kind": "rail",
+    "part": 14409,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14412,
+    "target_name": "SteelRail",
+    "point": [
+      -11.622568495104133,
+      24.800003051757812,
+      40.86521375877601
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14409,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14406,
+    "target_name": "SteelRail",
+    "point": [
+      -9.289113633802117,
+      24.800003051757812,
+      38.53175889747399
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14410,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14413,
+    "target_name": "SteelRail",
+    "point": [
+      -15.865213758776008,
+      24.800003051757812,
+      36.62256849510413
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14410,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14407,
+    "target_name": "SteelRail",
+    "point": [
+      -13.531758897473992,
+      24.800003051757812,
+      34.28911363380212
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14412,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14415,
+    "target_name": "SteelRail",
+    "point": [
+      -13.74389112694007,
+      24.800003051757812,
+      42.986536390611946
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.08747081572543697
+  },
+  {
+    "kind": "rail",
+    "part": 14412,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14409,
+    "target_name": "SteelRail",
+    "point": [
+      -11.410436265638054,
+      24.800003051757812,
+      40.65308152930993
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14413,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14419,
+    "target_name": "SteelRail",
+    "point": [
+      -17.986536390611946,
+      24.800003051757812,
+      38.74389112694007
+    ],
+    "gap": 0.27377809237335016,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14413,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14410,
+    "target_name": "SteelRail",
+    "point": [
+      -15.65308152930993,
+      24.800003051757812,
+      36.410436265638054
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999703981442827
+  },
+  {
+    "kind": "rail",
+    "part": 14415,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14418,
+    "target_name": "SteelRail",
+    "point": [
+      -15.226565530152584,
+      24.800003051757812,
+      43.41632231657786
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14415,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14412,
+    "target_name": "SteelRail",
+    "point": [
+      -12.236141989378666,
+      24.800003051757812,
+      42.02081147248464
+    ],
+    "gap": 0.05826942648384853,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14416,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14419,
+    "target_name": "SteelRail",
+    "point": [
+      -17.763858010621334,
+      24.800003051757812,
+      37.97918852751536
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14416,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14410,
+    "target_name": "SteelRail",
+    "point": [
+      -14.773434469847416,
+      24.800003051757812,
+      36.58367768342214
+    ],
+    "gap": 0.4195053971150903,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14418,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14421,
+    "target_name": "SteelRail",
+    "point": [
+      -17.94511716589477,
+      24.800003051757812,
+      44.6849838156013
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000339322705116
+  },
+  {
+    "kind": "rail",
+    "part": 14418,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14415,
+    "target_name": "SteelRail",
+    "point": [
+      -14.954693625120854,
+      24.800003051757812,
+      43.289472971508076
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14419,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14422,
+    "target_name": "SteelRail",
+    "point": [
+      -20.48240964636352,
+      24.800003051757812,
+      39.2478500265388
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000339322705116
+  },
+  {
+    "kind": "rail",
+    "part": 14419,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14413,
+    "target_name": "SteelRail",
+    "point": [
+      -17.491986105589604,
+      24.800003051757812,
+      37.852339182445576
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.044277119707503754
+  },
+  {
+    "kind": "rail",
+    "part": 14421,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14424,
+    "target_name": "SteelRail",
+    "point": [
+      -20.66366880163696,
+      24.800003051757812,
+      45.953630055835674
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14421,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14418,
+    "target_name": "SteelRail",
+    "point": [
+      -17.67324526086304,
+      24.800003051757812,
+      44.55811921174245
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000339322705116
+  },
+  {
+    "kind": "rail",
+    "part": 14422,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14425,
+    "target_name": "SteelRail",
+    "point": [
+      -23.20096128210571,
+      24.800003051757812,
+      40.516496266773174
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14422,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14419,
+    "target_name": "SteelRail",
+    "point": [
+      -20.21053774133179,
+      24.800003051757812,
+      39.12098542267995
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000339322705116
+  },
+  {
+    "kind": "rail",
+    "part": 14424,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14427,
+    "target_name": "SteelRail",
+    "point": [
+      -23.382220437379146,
+      24.800003051757812,
+      47.22229155485911
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14424,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14421,
+    "target_name": "SteelRail",
+    "point": [
+      -20.39179689660523,
+      24.800003051757812,
+      45.82678071076589
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14425,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14428,
+    "target_name": "SteelRail",
+    "point": [
+      -25.919512917847896,
+      24.800003051757812,
+      41.78515776579661
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14425,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14422,
+    "target_name": "SteelRail",
+    "point": [
+      -22.92908937707398,
+      24.800003051757812,
+      40.38964692170339
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14427,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14430,
+    "target_name": "SteelRail",
+    "point": [
+      -26.100772073121334,
+      24.800003051757812,
+      48.49095305388255
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000172205733165
+  },
+  {
+    "kind": "rail",
+    "part": 14427,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14424,
+    "target_name": "SteelRail",
+    "point": [
+      -23.110348532347416,
+      24.800003051757812,
+      47.095442209789326
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14428,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14431,
+    "target_name": "SteelRail",
+    "point": [
+      -28.638064553590084,
+      24.800003051757812,
+      43.05381926482005
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000172205733165
+  },
+  {
+    "kind": "rail",
+    "part": 14428,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14425,
+    "target_name": "SteelRail",
+    "point": [
+      -25.647641012816166,
+      24.800003051757812,
+      41.658308420726826
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14430,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14433,
+    "target_name": "SteelRail",
+    "point": [
+      -28.81930845007446,
+      24.800003051757812,
+      49.759599294116924
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14430,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14427,
+    "target_name": "SteelRail",
+    "point": [
+      -25.82888490930054,
+      24.800003051757812,
+      48.3640884500237
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000172205733165
+  },
+  {
+    "kind": "rail",
+    "part": 14431,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14434,
+    "target_name": "SteelRail",
+    "point": [
+      -31.35660093054321,
+      24.800003051757812,
+      44.322465505054424
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14431,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14428,
+    "target_name": "SteelRail",
+    "point": [
+      -28.36617738976929,
+      24.800003051757812,
+      42.9269546609612
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000172205733165
+  },
+  {
+    "kind": "rail",
+    "part": 14433,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14436,
+    "target_name": "SteelRail",
+    "point": [
+      -31.537860085816646,
+      24.800003051757812,
+      51.02826079314036
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14433,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14430,
+    "target_name": "SteelRail",
+    "point": [
+      -28.54743654504273,
+      24.800003051757812,
+      49.63274994904714
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14434,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14437,
+    "target_name": "SteelRail",
+    "point": [
+      -34.0751525662854,
+      24.800003051757812,
+      45.59112700407786
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14434,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14431,
+    "target_name": "SteelRail",
+    "point": [
+      -31.08472902551148,
+      24.800003051757812,
+      44.19561615998464
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14436,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14439,
+    "target_name": "SteelRail",
+    "point": [
+      -34.256411721558834,
+      24.800003051757812,
+      52.2969222921638
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000339322705116
+  },
+  {
+    "kind": "rail",
+    "part": 14436,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14433,
+    "target_name": "SteelRail",
+    "point": [
+      -31.265988180784916,
+      24.800003051757812,
+      50.901411448070576
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14437,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14440,
+    "target_name": "SteelRail",
+    "point": [
+      -36.793704202027584,
+      24.800003051757812,
+      46.8597885031013
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000339322705116
+  },
+  {
+    "kind": "rail",
+    "part": 14437,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14434,
+    "target_name": "SteelRail",
+    "point": [
+      -33.803280661253666,
+      24.800003051757812,
+      45.464277659008076
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14439,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14442,
+    "target_name": "SteelRail",
+    "point": [
+      -36.97496335730102,
+      24.800003051757812,
+      53.565568532398174
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14439,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14436,
+    "target_name": "SteelRail",
+    "point": [
+      -33.9845398165271,
+      24.800003051757812,
+      52.17005768830495
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000339322705116
+  },
+  {
+    "kind": "rail",
+    "part": 14440,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14443,
+    "target_name": "SteelRail",
+    "point": [
+      -39.51225583776977,
+      24.800003051757812,
+      48.128434743335674
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14440,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14437,
+    "target_name": "SteelRail",
+    "point": [
+      -36.52183229699585,
+      24.800003051757812,
+      46.73292389924245
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000339322705116
+  },
+  {
+    "kind": "rail",
+    "part": 14442,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14445,
+    "target_name": "SteelRail",
+    "point": [
+      -39.69351499304321,
+      24.800003051757812,
+      54.83423003142161
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14442,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14439,
+    "target_name": "SteelRail",
+    "point": [
+      -36.70309145226929,
+      24.800003051757812,
+      53.43871918732839
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14443,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14446,
+    "target_name": "SteelRail",
+    "point": [
+      -42.23080747351196,
+      24.800003051757812,
+      49.39709624235911
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14443,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14440,
+    "target_name": "SteelRail",
+    "point": [
+      -39.24038393273804,
+      24.800003051757812,
+      48.00158539826589
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14445,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14448,
+    "target_name": "SteelRail",
+    "point": [
+      -42.4120666287854,
+      24.800003051757812,
+      56.10289153044505
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000172205733165
+  },
+  {
+    "kind": "rail",
+    "part": 14445,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14442,
+    "target_name": "SteelRail",
+    "point": [
+      -39.42164308801148,
+      24.800003051757812,
+      54.707380686351826
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14446,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14449,
+    "target_name": "SteelRail",
+    "point": [
+      -44.94935910925415,
+      24.800003051757812,
+      50.66575774138255
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000172205733165
+  },
+  {
+    "kind": "rail",
+    "part": 14446,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14443,
+    "target_name": "SteelRail",
+    "point": [
+      -41.95893556848023,
+      24.800003051757812,
+      49.270246897289326
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999694055859294
+  },
+  {
+    "kind": "rail",
+    "part": 14448,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14451,
+    "target_name": "SteelRail",
+    "point": [
+      -45.13060300573852,
+      24.800003051757812,
+      57.371537770679424
+    ],
+    "gap": 0.23705801729875908,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14448,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14445,
+    "target_name": "SteelRail",
+    "point": [
+      -42.1401794649646,
+      24.800003051757812,
+      55.9760269265862
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000172205733165
+  },
+  {
+    "kind": "rail",
+    "part": 14449,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14452,
+    "target_name": "SteelRail",
+    "point": [
+      -47.66789548620727,
+      24.800003051757812,
+      51.934403981616924
+    ],
+    "gap": 0.30411553093063937,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14449,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14446,
+    "target_name": "SteelRail",
+    "point": [
+      -44.67747194543335,
+      24.800003051757812,
+      50.5388931375237
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000172205733165
+  },
+  {
+    "kind": "rail",
+    "part": 14451,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14454,
+    "target_name": "SteelRail",
+    "point": [
+      -45.46503980660964,
+      23.856263744961325,
+      57.48217162257424
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14451,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14448,
+    "target_name": "SteelRail",
+    "point": [
+      -42.858766956085674,
+      25.524290454257425,
+      56.33540955418357
+    ],
+    "gap": 0.3242873965391482,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14452,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14455,
+    "target_name": "SteelRail",
+    "point": [
+      -47.88148267770339,
+      23.856263744961325,
+      51.99028929835549
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14452,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14449,
+    "target_name": "SteelRail",
+    "point": [
+      -45.275209827179424,
+      25.524290454257425,
+      50.84352722996482
+    ],
+    "gap": 0.3242873965391482,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14454,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14457,
+    "target_name": "SteelRail",
+    "point": [
+      -47.83437879586745,
+      22.339891064297262,
+      58.52468260890237
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14454,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14451,
+    "target_name": "SteelRail",
+    "point": [
+      -45.228105945343486,
+      24.007917773593363,
+      57.377920540511695
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14455,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14458,
+    "target_name": "SteelRail",
+    "point": [
+      -50.2508216669612,
+      22.339891064297262,
+      53.03280028468362
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14455,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14452,
+    "target_name": "SteelRail",
+    "point": [
+      -47.644548816437236,
+      24.007917773593363,
+      51.886038216292945
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14457,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14460,
+    "target_name": "SteelRail",
+    "point": [
+      -50.203717785125264,
+      20.8235183836332,
+      59.56719359523049
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998358340227815
+  },
+  {
+    "kind": "rail",
+    "part": 14457,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14454,
+    "target_name": "SteelRail",
+    "point": [
+      -47.5974449346013,
+      22.4915450929293,
+      58.42043152683982
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14458,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14461,
+    "target_name": "SteelRail",
+    "point": [
+      -52.620160656219014,
+      20.8235183836332,
+      54.07531127101174
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998358340227815
+  },
+  {
+    "kind": "rail",
+    "part": 14458,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14455,
+    "target_name": "SteelRail",
+    "point": [
+      -50.01388780569505,
+      22.4915450929293,
+      52.92854920262107
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14460,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14463,
+    "target_name": "SteelRail",
+    "point": [
+      -52.57307203317214,
+      19.307130444180075,
+      60.60970458155862
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14460,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14457,
+    "target_name": "SteelRail",
+    "point": [
+      -49.966799182648174,
+      20.975157153476175,
+      59.462942513167945
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998358340227815
+  },
+  {
+    "kind": "rail",
+    "part": 14461,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14464,
+    "target_name": "SteelRail",
+    "point": [
+      -54.98951490426589,
+      19.307130444180075,
+      55.11782225733987
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14461,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14458,
+    "target_name": "SteelRail",
+    "point": [
+      -52.383242053741924,
+      20.975157153476175,
+      53.971060188949195
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29998358340227815
+  },
+  {
+    "kind": "rail",
+    "part": 14463,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14466,
+    "target_name": "SteelRail",
+    "point": [
+      -54.94241102242995,
+      17.790757763516012,
+      61.65221556788674
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14463,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14460,
+    "target_name": "SteelRail",
+    "point": [
+      -52.336138171905986,
+      19.458784472812113,
+      60.50545349949607
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14464,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14467,
+    "target_name": "SteelRail",
+    "point": [
+      -57.3588538935237,
+      17.790757763516012,
+      56.16033324366799
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14464,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14461,
+    "target_name": "SteelRail",
+    "point": [
+      -54.752581042999736,
+      19.458784472812113,
+      55.01357117527732
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14466,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14469,
+    "target_name": "SteelRail",
+    "point": [
+      -57.311750011687764,
+      16.27438508285195,
+      62.69472655421487
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999563448356303
+  },
+  {
+    "kind": "rail",
+    "part": 14466,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14463,
+    "target_name": "SteelRail",
+    "point": [
+      -54.7054771611638,
+      17.94241179214805,
+      61.547964485824195
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14467,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14470,
+    "target_name": "SteelRail",
+    "point": [
+      -59.728192882781514,
+      16.27438508285195,
+      57.20284422999612
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999563448356303
+  },
+  {
+    "kind": "rail",
+    "part": 14467,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14464,
+    "target_name": "SteelRail",
+    "point": [
+      -57.12192003225755,
+      17.94241179214805,
+      56.056082161605445
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14469,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14472,
+    "target_name": "SteelRail",
+    "point": [
+      -59.681089000945576,
+      14.757997143398825,
+      63.73723754054299
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14469,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14466,
+    "target_name": "SteelRail",
+    "point": [
+      -57.07481615042161,
+      16.426023852694925,
+      62.59047547215232
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999563448356303
+  },
+  {
+    "kind": "rail",
+    "part": 14470,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14473,
+    "target_name": "SteelRail",
+    "point": [
+      -62.097531872039326,
+      14.757997143398825,
+      58.24535521632424
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14470,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14467,
+    "target_name": "SteelRail",
+    "point": [
+      -59.49125902151536,
+      16.426023852694925,
+      57.09859314793357
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999563448356303
+  },
+  {
+    "kind": "rail",
+    "part": 14472,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14475,
+    "target_name": "SteelRail",
+    "point": [
+      -62.05042799020339,
+      13.241624462734762,
+      64.77974852687112
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14472,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14469,
+    "target_name": "SteelRail",
+    "point": [
+      -59.444155139679424,
+      14.909651172030863,
+      63.632986458480445
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14473,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14476,
+    "target_name": "SteelRail",
+    "point": [
+      -64.46687086129714,
+      13.241624462734762,
+      59.28786620265237
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14473,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14470,
+    "target_name": "SteelRail",
+    "point": [
+      -61.860598010773174,
+      14.909651172030863,
+      58.141104134261695
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14475,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14478,
+    "target_name": "SteelRail",
+    "point": [
+      -64.4197669794612,
+      11.7252517820707,
+      65.82225951319924
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999563448356303
+  },
+  {
+    "kind": "rail",
+    "part": 14475,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14472,
+    "target_name": "SteelRail",
+    "point": [
+      -61.813494128937236,
+      13.3932784913668,
+      64.67549744480857
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14476,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14479,
+    "target_name": "SteelRail",
+    "point": [
+      -66.83620985055495,
+      11.7252517820707,
+      60.33037718898049
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999563448356303
+  },
+  {
+    "kind": "rail",
+    "part": 14476,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14473,
+    "target_name": "SteelRail",
+    "point": [
+      -64.22993700003099,
+      13.3932784913668,
+      59.18361512058982
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000033472314647
+  },
+  {
+    "kind": "rail",
+    "part": 14478,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14481,
+    "target_name": "SteelRail",
+    "point": [
+      -66.78910596871901,
+      10.208863842617575,
+      66.86477049952737
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000937277210715
+  },
+  {
+    "kind": "rail",
+    "part": 14478,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14475,
+    "target_name": "SteelRail",
+    "point": [
+      -64.18283311819505,
+      11.876890551913675,
+      65.7180084311367
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999563448356303
+  },
+  {
+    "kind": "rail",
+    "part": 14479,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14482,
+    "target_name": "SteelRail",
+    "point": [
+      -69.20554883981276,
+      10.208863842617575,
+      61.37288817530862
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000937277210715
+  },
+  {
+    "kind": "rail",
+    "part": 14479,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14476,
+    "target_name": "SteelRail",
+    "point": [
+      -66.5992759892888,
+      11.876890551913675,
+      60.226126106917945
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999563448356303
+  },
+  {
+    "kind": "rail",
+    "part": 14481,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14484,
+    "target_name": "SteelRail",
+    "point": [
+      -69.1584373285823,
+      8.692491161953512,
+      67.90728148585549
+    ],
+    "gap": 0.024170499463975925,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14481,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14478,
+    "target_name": "SteelRail",
+    "point": [
+      -66.55216447805833,
+      10.360517871249613,
+      66.76051941746482
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000937277210715
+  },
+  {
+    "kind": "rail",
+    "part": 14482,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14485,
+    "target_name": "SteelRail",
+    "point": [
+      -71.57488019967604,
+      8.692491161953512,
+      62.41539916163674
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.1697024786511387
+  },
+  {
+    "kind": "rail",
+    "part": 14482,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14479,
+    "target_name": "SteelRail",
+    "point": [
+      -68.96860734915208,
+      10.360517871249613,
+      61.26863709324607
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30000937277210715
+  },
+  {
+    "kind": "rail",
+    "part": 14484,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14487,
+    "target_name": "SteelRail",
+    "point": [
+      -69.1207053971757,
+      8.526473239888219,
+      68.36335066084757
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14484,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14481,
+    "target_name": "SteelRail",
+    "point": [
+      -66.8171608137618,
+      9.053025051127406,
+      66.05980607743368
+    ],
+    "gap": 0.8595418750744027,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14485,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14488,
+    "target_name": "SteelRail",
+    "point": [
+      -73.36335066084757,
+      8.526473239888219,
+      64.1207053971757
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14485,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14482,
+    "target_name": "SteelRail",
+    "point": [
+      -71.05980607743368,
+      9.053025051127406,
+      61.8171608137618
+    ],
+    "gap": 0.01513684120993708,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14487,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14490,
+    "target_name": "SteelRail",
+    "point": [
+      -71.21485212569132,
+      8.047805026997594,
+      70.4574973893632
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14487,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14484,
+    "target_name": "SteelRail",
+    "point": [
+      -68.91130754227743,
+      8.574356838236781,
+      68.1539528059493
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14488,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14491,
+    "target_name": "SteelRail",
+    "point": [
+      -75.4574973893632,
+      8.047805026997594,
+      66.21485212569132
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14488,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14485,
+    "target_name": "SteelRail",
+    "point": [
+      -73.1539528059493,
+      8.574356838236781,
+      63.91130754227743
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14490,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14493,
+    "target_name": "SteelRail",
+    "point": [
+      -73.30899885420695,
+      7.569152072896031,
+      72.55164411787882
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14490,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14487,
+    "target_name": "SteelRail",
+    "point": [
+      -71.00545427079305,
+      8.095703884135219,
+      70.24809953446493
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14491,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14494,
+    "target_name": "SteelRail",
+    "point": [
+      -77.55164411787882,
+      7.569152072896031,
+      68.30899885420695
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14491,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14488,
+    "target_name": "SteelRail",
+    "point": [
+      -75.24809953446493,
+      8.095703884135219,
+      66.00545427079305
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14493,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14496,
+    "target_name": "SteelRail",
+    "point": [
+      -75.40314558272257,
+      7.090483860005406,
+      74.64579084639445
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14493,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14490,
+    "target_name": "SteelRail",
+    "point": [
+      -73.09960099930868,
+      7.617035671244594,
+      72.34224626298055
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14494,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14497,
+    "target_name": "SteelRail",
+    "point": [
+      -79.64579084639445,
+      7.090483860005406,
+      70.40314558272257
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14494,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14491,
+    "target_name": "SteelRail",
+    "point": [
+      -77.34224626298055,
+      7.617035671244594,
+      68.09960099930868
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14496,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14499,
+    "target_name": "SteelRail",
+    "point": [
+      -77.4972923112382,
+      6.611830905903844,
+      76.73993757491007
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30001572336792304
+  },
+  {
+    "kind": "rail",
+    "part": 14496,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14493,
+    "target_name": "SteelRail",
+    "point": [
+      -75.1937477278243,
+      7.138382717143031,
+      74.43639299149618
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14497,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14500,
+    "target_name": "SteelRail",
+    "point": [
+      -81.73993757491007,
+      6.611830905903844,
+      72.4972923112382
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30001572336792304
+  },
+  {
+    "kind": "rail",
+    "part": 14497,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14494,
+    "target_name": "SteelRail",
+    "point": [
+      -79.43639299149618,
+      7.138382717143031,
+      70.1937477278243
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14499,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14502,
+    "target_name": "SteelRail",
+    "point": [
+      -79.59142378096476,
+      6.133162693013219,
+      78.83406904463664
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14499,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14496,
+    "target_name": "SteelRail",
+    "point": [
+      -77.28787919755086,
+      6.659714504252406,
+      76.53052446122274
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30001572336792304
+  },
+  {
+    "kind": "rail",
+    "part": 14500,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14503,
+    "target_name": "SteelRail",
+    "point": [
+      -83.83406904463664,
+      6.133162693013219,
+      74.59142378096476
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14500,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14497,
+    "target_name": "SteelRail",
+    "point": [
+      -81.53052446122274,
+      6.659714504252406,
+      72.28787919755086
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30001572336792304
+  },
+  {
+    "kind": "rail",
+    "part": 14502,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14505,
+    "target_name": "SteelRail",
+    "point": [
+      -81.68557050948039,
+      5.654509738911656,
+      80.92821577315226
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14502,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14499,
+    "target_name": "SteelRail",
+    "point": [
+      -79.38202592606649,
+      6.181061550150844,
+      78.62467118973836
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14503,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14506,
+    "target_name": "SteelRail",
+    "point": [
+      -85.92821577315226,
+      5.654509738911656,
+      76.68557050948039
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14503,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14500,
+    "target_name": "SteelRail",
+    "point": [
+      -83.62467118973836,
+      6.181061550150844,
+      74.38202592606649
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14505,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14508,
+    "target_name": "SteelRail",
+    "point": [
+      -83.77971723799601,
+      5.175841526021031,
+      83.02236250166789
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14505,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14502,
+    "target_name": "SteelRail",
+    "point": [
+      -81.47617265458211,
+      5.702393337260219,
+      80.71881791825399
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14506,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14509,
+    "target_name": "SteelRail",
+    "point": [
+      -88.02236250166789,
+      5.175841526021031,
+      78.77971723799601
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14506,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14503,
+    "target_name": "SteelRail",
+    "point": [
+      -85.71881791825399,
+      5.702393337260219,
+      76.47617265458211
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14508,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14511,
+    "target_name": "SteelRail",
+    "point": [
+      -85.87386396651164,
+      4.697173313130406,
+      85.11650923018351
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14508,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14505,
+    "target_name": "SteelRail",
+    "point": [
+      -83.57031938309774,
+      5.223725124369594,
+      82.81296464676961
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14509,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14512,
+    "target_name": "SteelRail",
+    "point": [
+      -90.11650923018351,
+      4.697173313130406,
+      80.87386396651164
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14509,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14506,
+    "target_name": "SteelRail",
+    "point": [
+      -87.81296464676961,
+      5.223725124369594,
+      78.57031938309774
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14511,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14514,
+    "target_name": "SteelRail",
+    "point": [
+      -87.96801069502726,
+      4.218520359028844,
+      87.21065595869914
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14511,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14508,
+    "target_name": "SteelRail",
+    "point": [
+      -85.66446611161336,
+      4.745072170268031,
+      84.90711137528524
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14512,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14515,
+    "target_name": "SteelRail",
+    "point": [
+      -92.21065595869914,
+      4.218520359028844,
+      82.96801069502726
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14512,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14509,
+    "target_name": "SteelRail",
+    "point": [
+      -89.90711137528524,
+      4.745072170268031,
+      80.66446611161336
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14514,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14517,
+    "target_name": "SteelRail",
+    "point": [
+      -90.06215742354289,
+      3.739852146138219,
+      89.30480268721476
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14514,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14511,
+    "target_name": "SteelRail",
+    "point": [
+      -87.75861284012899,
+      4.266403957377406,
+      87.00125810380086
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14515,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14518,
+    "target_name": "SteelRail",
+    "point": [
+      -94.30480268721476,
+      3.739852146138219,
+      85.06215742354289
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14515,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14512,
+    "target_name": "SteelRail",
+    "point": [
+      -92.00125810380086,
+      4.266403957377406,
+      82.75861284012899
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14517,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14520,
+    "target_name": "SteelRail",
+    "point": [
+      -92.15630415205851,
+      3.2611991920366563,
+      91.39894941573039
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000050720644678
+  },
+  {
+    "kind": "rail",
+    "part": 14517,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14514,
+    "target_name": "SteelRail",
+    "point": [
+      -89.85275956864461,
+      3.7877510032758437,
+      89.09540483231649
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14518,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14521,
+    "target_name": "SteelRail",
+    "point": [
+      -96.39894941573039,
+      3.2611991920366563,
+      87.15630415205851
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000050720644678
+  },
+  {
+    "kind": "rail",
+    "part": 14518,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14515,
+    "target_name": "SteelRail",
+    "point": [
+      -94.09540483231649,
+      3.7877510032758437,
+      84.85275956864461
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14520,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14523,
+    "target_name": "SteelRail",
+    "point": [
+      -94.25045088057414,
+      2.7825309791460313,
+      93.49308088545695
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000075067745085
+  },
+  {
+    "kind": "rail",
+    "part": 14520,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14517,
+    "target_name": "SteelRail",
+    "point": [
+      -91.94690629716024,
+      3.3090827903852187,
+      91.18953630204305
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000050720644678
+  },
+  {
+    "kind": "rail",
+    "part": 14521,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14524,
+    "target_name": "SteelRail",
+    "point": [
+      -98.49309614424601,
+      2.7825309791460313,
+      89.25043562178507
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000075067745085
+  },
+  {
+    "kind": "rail",
+    "part": 14521,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14518,
+    "target_name": "SteelRail",
+    "point": [
+      -96.18955156083211,
+      3.3090827903852187,
+      86.94689103837118
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000050720644678
+  },
+  {
+    "kind": "rail",
+    "part": 14523,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14526,
+    "target_name": "SteelRail",
+    "point": [
+      -96.3445823503007,
+      2.303878025044469,
+      95.58722761397257
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14523,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14520,
+    "target_name": "SteelRail",
+    "point": [
+      -94.0410377668868,
+      2.830429836283656,
+      93.28368303055868
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000075067745085
+  },
+  {
+    "kind": "rail",
+    "part": 14524,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14527,
+    "target_name": "SteelRail",
+    "point": [
+      -100.58722761397257,
+      2.303878025044469,
+      91.3445823503007
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14524,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14521,
+    "target_name": "SteelRail",
+    "point": [
+      -98.28368303055868,
+      2.830429836283656,
+      89.0410377668868
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000075067745085
+  },
+  {
+    "kind": "rail",
+    "part": 14526,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14529,
+    "target_name": "SteelRail",
+    "point": [
+      -98.43872907881632,
+      1.8252098121538438,
+      97.6813743424882
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14526,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14523,
+    "target_name": "SteelRail",
+    "point": [
+      -96.13518449540243,
+      2.351761623393031,
+      95.3778297590743
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14527,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14530,
+    "target_name": "SteelRail",
+    "point": [
+      -102.6813743424882,
+      1.8252098121538438,
+      93.43872907881632
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14527,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14524,
+    "target_name": "SteelRail",
+    "point": [
+      -100.3778297590743,
+      2.351761623393031,
+      91.13518449540243
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14529,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14532,
+    "target_name": "SteelRail",
+    "point": [
+      -100.53287580733195,
+      1.3465415992632188,
+      99.77552107100382
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14529,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14526,
+    "target_name": "SteelRail",
+    "point": [
+      -98.22933122391805,
+      1.8730934105024062,
+      97.47197648758993
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14530,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14533,
+    "target_name": "SteelRail",
+    "point": [
+      -104.77552107100382,
+      1.3465415992632188,
+      95.53287580733195
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14530,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14527,
+    "target_name": "SteelRail",
+    "point": [
+      -102.47197648758993,
+      1.8730934105024062,
+      93.22933122391805
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999442076101257
+  },
+  {
+    "kind": "rail",
+    "part": 14532,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14535,
+    "target_name": "SteelRail",
+    "point": [
+      -102.62702253584757,
+      0.8678886451616563,
+      101.86966779951945
+    ],
+    "gap": 1.6454228654315437,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14532,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14529,
+    "target_name": "SteelRail",
+    "point": [
+      -100.32347795243368,
+      1.3944404564008437,
+      99.56612321610555
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14533,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14539,
+    "target_name": "SteelRail",
+    "point": [
+      -106.86966779951945,
+      0.8678886451616563,
+      97.62702253584757
+    ],
+    "gap": 0.6938019975803491,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14533,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14530,
+    "target_name": "SteelRail",
+    "point": [
+      -104.56612321610555,
+      1.3944404564008437,
+      95.32347795243368
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999685547105326
+  },
+  {
+    "kind": "rail",
+    "part": 14535,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14538,
+    "target_name": "SteelRail",
+    "point": [
+      -107.1822257761396,
+      0.8000030517578125,
+      102.63829117267414
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999594718644906
+  },
+  {
+    "kind": "rail",
+    "part": 14535,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14532,
+    "target_name": "SteelRail",
+    "point": [
+      -103.94048540550102,
+      0.8000030517578125,
+      103.25578231365398
+    ],
+    "gap": 1.8952389219874939,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14536,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14533,
+    "target_name": "SteelRail",
+    "point": [
+      -106.05951459449898,
+      0.8000030517578125,
+      96.74421768634602
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.14197163153734116
+  },
+  {
+    "kind": "rail",
+    "part": 14536,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14530,
+    "target_name": "SteelRail",
+    "point": [
+      -102.8177742238604,
+      0.8000030517578125,
+      97.36170882732586
+    ],
+    "gap": 2.3575599421679376,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14538,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14541,
+    "target_name": "SteelRail",
+    "point": [
+      -110.1292472605146,
+      0.8000030517578125,
+      102.0769508406429
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999988023886322
+  },
+  {
+    "kind": "rail",
+    "part": 14538,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14535,
+    "target_name": "SteelRail",
+    "point": [
+      -106.88750688987602,
+      0.8000030517578125,
+      102.69444198162273
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999594718644906
+  },
+  {
+    "kind": "rail",
+    "part": 14539,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14542,
+    "target_name": "SteelRail",
+    "point": [
+      -109.00653607887398,
+      0.8000030517578125,
+      96.18287735431477
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999988023886322
+  },
+  {
+    "kind": "rail",
+    "part": 14539,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14533,
+    "target_name": "SteelRail",
+    "point": [
+      -105.7647957082354,
+      0.8000030517578125,
+      96.8003684952946
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.11505554932806583
+  },
+  {
+    "kind": "rail",
+    "part": 14541,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14544,
+    "target_name": "SteelRail",
+    "point": [
+      -113.0762687448896,
+      0.8000030517578125,
+      101.5156257674007
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30001093659045686
+  },
+  {
+    "kind": "rail",
+    "part": 14541,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14538,
+    "target_name": "SteelRail",
+    "point": [
+      -109.83452837425102,
+      0.8000030517578125,
+      102.13311690838054
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999988023886322
+  },
+  {
+    "kind": "rail",
+    "part": 14542,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14545,
+    "target_name": "SteelRail",
+    "point": [
+      -111.95355756324898,
+      0.8000030517578125,
+      95.62155228107258
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30001093659045686
+  },
+  {
+    "kind": "rail",
+    "part": 14542,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14539,
+    "target_name": "SteelRail",
+    "point": [
+      -108.7118171926104,
+      0.8000030517578125,
+      96.23904342205242
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999988023886322
+  },
+  {
+    "kind": "rail",
+    "part": 14544,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14547,
+    "target_name": "SteelRail",
+    "point": [
+      -116.02327497047554,
+      0.8000030517578125,
+      100.95428543536946
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999594718644906
+  },
+  {
+    "kind": "rail",
+    "part": 14544,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14541,
+    "target_name": "SteelRail",
+    "point": [
+      -112.78153459983696,
+      0.8000030517578125,
+      101.5717765763493
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30001093659045686
+  },
+  {
+    "kind": "rail",
+    "part": 14545,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14548,
+    "target_name": "SteelRail",
+    "point": [
+      -114.90056378883492,
+      0.8000030517578125,
+      95.06021194904133
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999594718644906
+  },
+  {
+    "kind": "rail",
+    "part": 14545,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14542,
+    "target_name": "SteelRail",
+    "point": [
+      -111.65882341819633,
+      0.8000030517578125,
+      95.67770309002117
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30001093659045686
+  },
+  {
+    "kind": "rail",
+    "part": 14547,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14550,
+    "target_name": "SteelRail",
+    "point": [
+      -118.97029645485054,
+      0.8000030517578125,
+      100.3929451033382
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30001093659045686
+  },
+  {
+    "kind": "rail",
+    "part": 14547,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14544,
+    "target_name": "SteelRail",
+    "point": [
+      -115.72855608421196,
+      0.8000030517578125,
+      101.01043624431804
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999594718644906
+  },
+  {
+    "kind": "rail",
+    "part": 14548,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14551,
+    "target_name": "SteelRail",
+    "point": [
+      -117.84758527320992,
+      0.8000030517578125,
+      94.49887161701008
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30001093659045686
+  },
+  {
+    "kind": "rail",
+    "part": 14548,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14545,
+    "target_name": "SteelRail",
+    "point": [
+      -114.60584490257133,
+      0.8000030517578125,
+      95.11636275798992
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29999594718644906
+  },
+  {
+    "kind": "rail",
+    "part": 14550,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14553,
+    "target_name": "SteelRail",
+    "point": [
+      -121.91730268043648,
+      0.8000030517578125,
+      99.83160477130696
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999988023886322
+  },
+  {
+    "kind": "rail",
+    "part": 14550,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14547,
+    "target_name": "SteelRail",
+    "point": [
+      -118.6755623097979,
+      0.8000030517578125,
+      100.4490959122868
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30001093659045686
+  },
+  {
+    "kind": "rail",
+    "part": 14551,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14554,
+    "target_name": "SteelRail",
+    "point": [
+      -120.79459149879585,
+      0.8000030517578125,
+      93.93753128497883
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999988023886322
+  },
+  {
+    "kind": "rail",
+    "part": 14551,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14548,
+    "target_name": "SteelRail",
+    "point": [
+      -117.55285112815727,
+      0.8000030517578125,
+      94.55502242595867
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30001093659045686
+  },
+  {
+    "kind": "rail",
+    "part": 14553,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14556,
+    "target_name": "SteelRail",
+    "point": [
+      -124.86432416481148,
+      0.8000030517578125,
+      99.27027969806477
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.30004476968865723
+  },
+  {
+    "kind": "rail",
+    "part": 14553,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14550,
+    "target_name": "SteelRail",
+    "point": [
+      -121.6225837941729,
+      0.8000030517578125,
+      99.8877708390446
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999988023886322
+  },
+  {
+    "kind": "rail",
+    "part": 14554,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14557,
+    "target_name": "SteelRail",
+    "point": [
+      -123.74161298317085,
+      0.8000030517578125,
+      93.37620621173664
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999548332646105
+  },
+  {
+    "kind": "rail",
+    "part": 14554,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14551,
+    "target_name": "SteelRail",
+    "point": [
+      -120.49987261253227,
+      0.8000030517578125,
+      93.99369735271648
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.2999988023886322
+  },
+  {
+    "kind": "rail",
+    "part": 14556,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14553,
+    "target_name": "SteelRail",
+    "point": [
+      -127.81129987281929,
+      0.8000030517578125,
+      98.70896454303511
+    ],
+    "gap": 3.0000077362984037,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14556,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14553,
+    "target_name": "SteelRail",
+    "point": [
+      -124.56955950218071,
+      0.8000030517578125,
+      99.32640533001177
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.3000362043149385
+  },
+  {
+    "kind": "rail",
+    "part": 14557,
+    "name": "SteelRail",
+    "end": -1,
+    "target": 14554,
+    "target_name": "SteelRail",
+    "point": [
+      -126.68868024391304,
+      0.8000030517578125,
+      92.81489105670698
+    ],
+    "gap": 3.0000976727224504,
+    "inside_depth": 0
+  },
+  {
+    "kind": "rail",
+    "part": 14557,
+    "name": "SteelRail",
+    "end": 1,
+    "target": 14554,
+    "target_name": "SteelRail",
+    "point": [
+      -123.44693987327446,
+      0.8000030517578125,
+      93.43233184368364
+    ],
+    "gap": 0.0,
+    "inside_depth": 0.29994626789089174
+  }
+]

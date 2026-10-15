@@ -10,14 +10,16 @@ local function run()
 	SSS:SetAttribute("CoreLoopTestSuccess", false)
 	SSS:SetAttribute("CoreLoopTestResult", "RUNNING")
 	local ok, result = pcall(function()
-		return require(folder.Tests).run(
+		local suite = require(folder.Tests).run(
 			require(folder.Config),
 			require(folder.Domain),
 			require(folder.Profiles),
 			require(RS.GreyboxLootRules),
 			require(RS.GreyboxConfig),
-			require(folder.Service)
+			require(folder.Service),
+			require(folder.MockStore)
 		)
+		return suite .. "; " .. require(folder.StudioStoreTest)(folder)
 	end)
 	SSS:SetAttribute("CoreLoopTestSuccess", ok)
 	SSS:SetAttribute("CoreLoopTestResult", (ok and "PASS: " or "FAIL: ") .. tostring(result))

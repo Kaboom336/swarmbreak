@@ -1,0 +1,257 @@
+{
+  "joints": {
+    "ledger_records": 4850,
+    "path_pieces": 1356,
+    "rail_pieces": 126,
+    "fence_ends": 3116,
+    "grounded_trestles": 126,
+    "unconnected": 0,
+    "gaps": 0,
+    "overlaps": 0
+  },
+  "before": {
+    "ends": 532,
+    "unconnected": 22,
+    "gaps": 22,
+    "overlaps": 503,
+    "fence_ends": 0,
+    "method": "nearest compatible OBB at beam/profile center; visual before face mismatches are crops, not falsely precise full-profile counts"
+  },
+  "riser_ends": 172,
+  "native": {
+    "collision_geometry_equal": true,
+    "compiled_scripts": 10,
+    "exposure": 0.15000000596046448,
+    "gameplay_sources_equal": true,
+    "max_transform_error": 1.2874603271484375e-05,
+    "native_hook_attributes_equal": true,
+    "native_parts": 64658,
+    "point_lights": 410,
+    "routes_equal": true,
+    "runtime": "UNKNOWN; static native binary inspection",
+    "terrain_height_mass_equal": true
+  },
+  "artifacts": {
+    "cave-v2.rbxl": {
+      "bytes": 1166473,
+      "sha256": "2d0c36cf7fbacd7699830525f31fc4c3b4d3a18c96b5e586af342b330600464a"
+    },
+    "cave-v2\\connect-before.rbxl": {
+      "bytes": 814583,
+      "sha256": "8afe99cfd06cf5de0e208f18bcf0192dc9722c5a4a0316211e835c9a2eb4c762"
+    },
+    "cave-v2\\connect-before-scene.json": {
+      "bytes": 32369827,
+      "sha256": "0b49a6a58ac652a2a70b22e51c01e4b2d33542073a129a28a621a99d96c80708"
+    },
+    "cave-v2\\scene.json": {
+      "bytes": 42591030,
+      "sha256": "6ed8d4ff8714a84dbdcd69dc4c5c34daa6d33f18cc6c992fe66d91c37dfb3812"
+    },
+    "cave-v2\\connect-generate.py": {
+      "bytes": 20891,
+      "sha256": "388410bdc4ccf4e322c2c0052cb34d242d2d19cdf98e20cfb3a7369f912cbb22"
+    },
+    "cave-v2\\connect-art.luau": {
+      "bytes": 2393,
+      "sha256": "5188c529c14dcc31b8a14907e4b244cf90ef73a13585af68370c9607c23171a0"
+    },
+    "cave-v2\\ConnectArt.server.luau": {
+      "bytes": 931,
+      "sha256": "a07b9314842b19550a017b76cc0f700d9b02bd950213ea489d82759f3fdf3188"
+    },
+    "cave-v2\\build.luau": {
+      "bytes": 28925,
+      "sha256": "292c2136c93c288799f2baf110bd9db3f574ad51ef103339705f83e526d8f7c6"
+    },
+    "cave-v2\\connect-check.luau": {
+      "bytes": 3402,
+      "sha256": "9023a0d37910537fd1b6f2daa660e7501e0b9447a49176cd7f1cf1f8c87f9679"
+    },
+    "cave-v2\\connect-audit.py": {
+      "bytes": 8767,
+      "sha256": "5e45ba04718623a5d35eb0dc5855887d22e2af88bbd5bc57bcac6218d98b6d43"
+    },
+    "cave-v2\\connect-riser-check.py": {
+      "bytes": 5221,
+      "sha256": "4175683481db59dd2c4a92f29c79e2e615fb2780aab8201fc58a94e5f5f84999"
+    },
+    "cave-v2\\connect-render.py": {
+      "bytes": 4069,
+      "sha256": "6dbe37be3a2beb2ee0c08721d73921b1fb6f9731973ba326a1f495815d49b40b"
+    },
+    "cave-v2\\connect-sheet.ps1": {
+      "bytes": 2799,
+      "sha256": "45ff3ae888d28a8deef510b9b90290e1b5265a6e1af845f536b47ca1071feaaa"
+    },
+    "cave-v2\\CONNECT-KIT.json": {
+      "bytes": 14903585,
+      "sha256": "4a37cb5550d9f7c069cef06fb367b16fd5ffea1721c9d24fad5857da2baca479"
+    },
+    "cave-v2\\CONNECT-PLACED.json": {
+      "bytes": 14021889,
+      "sha256": "03820aedd54b08465144a838a4d784e1a2273e6e97ed1f02971151749584d729"
+    },
+    "cave-v2\\CONNECT-AUDIT.json": {
+      "bytes": 1152,
+      "sha256": "1c02d2872f626e6520822db67058efa025996b68df8c9e1d30b1d7f5e8c45cfc"
+    },
+    "cave-v2\\CONNECT-ENDS.json": {
+      "bytes": 3650085,
+      "sha256": "651ae8aec85cdde1a122c1653d57276b38f71c164b1f8a84a3593360d548065f"
+    },
+    "cave-v2\\CONNECT-BEFORE-ENDS.json": {
+      "bytes": 163526,
+      "sha256": "90f16c7f35bfd9c34495876aef9fb4fe5b4a3db05e0c32aac475ea7c8bb7271c"
+    },
+    "cave-v2\\CONNECT-RISERS.json": {
+      "bytes": 70367,
+      "sha256": "655010e980aee4b4f7abd43a82cd2306dbc68dbb1078f4da8b7e2f524ff76ca6"
+    },
+    "cave-v2\\CONNECT-NATIVE-CHECK.json": {
+      "bytes": 389,
+      "sha256": "f47f01ab1ac5653d8e7e7bf4d0c1a343884bd514f41caf4f8f6273deaac4b280"
+    },
+    "cave-v2\\AUDIT.json": {
+      "bytes": 578,
+      "sha256": "4962ef20a3197a2f682cba07b73edd764f464f67e8c063dcee8529df049d818c"
+    },
+    "cave-v2\\STRUCTURAL-AUDIT.json": {
+      "bytes": 1135,
+      "sha256": "c9bc63b9c4d6cfd8364163d11a0c4a3251dcc5ca6985b7bb1632fdd681dbbdb7"
+    },
+    "cave-v2\\CONNECT-SHEET.jpg": {
+      "bytes": 1575066,
+      "sha256": "ed3d2822a8a892e057fe1b427ea9632f0585c30471f8a1bf7de660e368845105"
+    },
+    "cave-v2\\CONNECT-JOINTS.jpg": {
+      "bytes": 884187,
+      "sha256": "73f002e8dc9328b27563490a9629fd55373ffd04611717098ebb11ea09ac06b3"
+    },
+    "cave-v2\\CONNECT-BLIND-B.jpg": {
+      "bytes": 504357,
+      "sha256": "68735bca176784bd322fff3469b3b73747b49dd83a724b50493b19193678c37a"
+    },
+    "cave-v2\\CONNECT-CRITIC.md": {
+      "bytes": 2620,
+      "sha256": "7e25d89424c6d4ba2cc00ad47bdb283df60fb58116009f916869d7c3da342469"
+    },
+    "cave-v2\\CONNECT-CRITIC-R1.md": {
+      "bytes": 4155,
+      "sha256": "c31cee3c18f2a8adb512cd204ca2eede6a207711dcddda21ee4741b9072b3d4c"
+    },
+    "cave-v2\\connect-r1-joint-5.png": {
+      "bytes": 1277187,
+      "sha256": "4a5012e0b5d0b37e4229db2f00bc4b58e2eb3c6a93acbe6350d4fb60adc2f7c9"
+    },
+    "cave-v2\\connect-r1-joint-6.png": {
+      "bytes": 1133791,
+      "sha256": "a6790cbd5c580b45d2dd8b6af1ce5542c935fcb77b1f3b3dfc5a0a37eb672e2b"
+    },
+    "cave-v2\\CONNECT.md": {
+      "bytes": 11263,
+      "sha256": "3659d18e6028018a4c2f99ddb1e6b55f227de6b61f5baca7ded952702336b663"
+    },
+    "cave-v2\\readable-connect-final-cameras.json": {
+      "bytes": 1848,
+      "sha256": "eb5d69d94c1a06fe24d60dac9e57e43a3b33fc793278c4884530c6693c08fb70"
+    },
+    "cave-v2\\readable-connect-before-portal.png": {
+      "bytes": 1237310,
+      "sha256": "c53134afbd6103f0932d92613a55a4624b80fd5e6dd28b11abf836434c3bd933"
+    },
+    "cave-v2\\readable-connect-before-main-eye.png": {
+      "bytes": 1202217,
+      "sha256": "2ff8ef2a683fe58e46590d0b6f9ff7a9992ad7b04b0f8f176302dd685747a48a"
+    },
+    "cave-v2\\readable-connect-before-cart-eye.png": {
+      "bytes": 1170510,
+      "sha256": "22e5af283b9eba3d71c832eb9f77e9fd21f38f2326b0d5ef2e9435e5baf35827"
+    },
+    "cave-v2\\readable-connect-before-cave-eye.png": {
+      "bytes": 1218424,
+      "sha256": "90aaebab0f818471617ee8c4525ffaeacff64021b665d0f9a4196c773f1f7d85"
+    },
+    "cave-v2\\readable-connect-before-far.png": {
+      "bytes": 1299693,
+      "sha256": "f030019b10b472827c8fb39010608c450f89ce8c4a6f0a9acc0ff7c0ee5f39fc"
+    },
+    "cave-v2\\readable-connect-before-top-routes.png": {
+      "bytes": 1322089,
+      "sha256": "3d9d8601bfde67c81d8188a3e6abbf2519f70b648fc98693b9cde012b249a159"
+    },
+    "cave-v2\\readable-connect-before-joint-1.png": {
+      "bytes": 1156296,
+      "sha256": "48ff2bfee37a634ea5f7ccc0233431a9b5bfd404af5af8b579684068d40c6929"
+    },
+    "cave-v2\\readable-connect-before-joint-2.png": {
+      "bytes": 1144292,
+      "sha256": "e4bd98b9eeb34337c47dad305840ed0e61308eb675d950e3b33793b8399a3e17"
+    },
+    "cave-v2\\readable-connect-before-joint-3.png": {
+      "bytes": 1262431,
+      "sha256": "abb6a2a1c82096afe878a988fe29692bdfa9f3665df11513d5bec185cade6be7"
+    },
+    "cave-v2\\readable-connect-before-joint-4.png": {
+      "bytes": 1168926,
+      "sha256": "0727a49e58d7f88b8facb699584f9abb6e846abbe0e204623322c56b5a43b714"
+    },
+    "cave-v2\\readable-connect-before-joint-5.png": {
+      "bytes": 1111891,
+      "sha256": "51840811addc5ef5a829362b5e28128b8e7265ef3ef2970a4f88b9c7d4aaeb6c"
+    },
+    "cave-v2\\readable-connect-before-joint-6.png": {
+      "bytes": 1180709,
+      "sha256": "de0ede8c32664e350787d7b3f9d6b89f66ea4a5a0c9515df8862dcdd18939e90"
+    },
+    "cave-v2\\readable-connect-final-portal.png": {
+      "bytes": 1286819,
+      "sha256": "3ee08abb33da254eb5c22c4b8c2339d0df74ad55ddd139b1e046dd48487a8cf0"
+    },
+    "cave-v2\\readable-connect-final-main-eye.png": {
+      "bytes": 1254118,
+      "sha256": "7bb007cf2ca93e8b08ac3f26c6e7c73cb2370791640374f32d7d30b35b5e640c"
+    },
+    "cave-v2\\readable-connect-final-cart-eye.png": {
+      "bytes": 1190338,
+      "sha256": "ca387cf23e190221763db46532167ae85d2a32496fc0b45ff624b179a87c66fe"
+    },
+    "cave-v2\\readable-connect-final-cave-eye.png": {
+      "bytes": 1277187,
+      "sha256": "22920900ba8b63d4354e242372137e03e0d0fe2146424c1baeeb4f02a2b593d9"
+    },
+    "cave-v2\\readable-connect-final-far.png": {
+      "bytes": 1310103,
+      "sha256": "fe146d2d6080f76d25b8f05ca2be346e5a1657ab56b05e5424e17c5236a3d353"
+    },
+    "cave-v2\\readable-connect-final-top-routes.png": {
+      "bytes": 1335980,
+      "sha256": "02678b10ee88be8ccea97f6302021c995aec61b8308b239161f60ff6fd3012b2"
+    },
+    "cave-v2\\readable-connect-final-joint-1.png": {
+      "bytes": 1120651,
+      "sha256": "5104e50a4925c874bf57ef4b867c096fa9c0d2fed6f271d05b38e2cc9e8b4839"
+    },
+    "cave-v2\\readable-connect-final-joint-2.png": {
+      "bytes": 1211446,
+      "sha256": "454633ee1d57837d4de320c3d3994304dbfdc2aae9ad2220279bf32f56284267"
+    },
+    "cave-v2\\readable-connect-final-joint-3.png": {
+      "bytes": 1308734,
+      "sha256": "b5c5d27e268cecb94d629c9f12106fab6d7af471421307adb326e87cd9947f9c"
+    },
+    "cave-v2\\readable-connect-final-joint-4.png": {
+      "bytes": 1229872,
+      "sha256": "5396fbd34261e0e0ba6a709bb4bd8646d50b55e76451992642587bf9ba51d8c0"
+    },
+    "cave-v2\\readable-connect-final-joint-5.png": {
+      "bytes": 1266503,
+      "sha256": "df8896ba63af3583d43f10ab1cee586f8ca2b0c467d3493d8f201a0c4543ee5d"
+    },
+    "cave-v2\\readable-connect-final-joint-6.png": {
+      "bytes": 1192625,
+      "sha256": "45c77f1c5a1227ebb8ee32613fde2c91bbe06f40b2d16424171367d04d1e66f6"
+    }
+  },
+  "studio": "UNKNOWN; final look judged in Studio"
+}

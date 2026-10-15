@@ -1,0 +1,9 @@
+{
+  "collision_geometry_equal": true,
+  "routes_equal": true,
+  "hooks_equal": true,
+  "new_crystal_margin_hits": [],
+  "minimum_conservative_new_crystal_path_margin": 5.472998389206328,
+  "new_landmark_walkway_body_hits": [],
+  "new_part_start": 45735
+}

@@ -1,0 +1,72 @@
+{
+  "Studio": "UNKNOWN",
+  "artifact": "prototype/fix2-rojo.rbxl",
+  "bad": 4,
+  "checks": 926,
+  "failures": [
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "carry 117 shelf 105",
+      "point": [
+        37,
+        0,
+        72
+      ],
+      "reason": "[string \"luau.load(...)\"]:23: clearance cliff/wall SolidMountainStone at 35,-74 rise -2.1200027465820312"
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "carry 118 shelf_link 1",
+      "point": [
+        37,
+        0,
+        72
+      ],
+      "reason": "[string \"luau.load(...)\"]:23: clearance cliff/wall SolidMountainStone at 35,-74 rise -2.1200027465820312"
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "empty expiry exit 117",
+      "point": [
+        37,
+        0,
+        72
+      ],
+      "reason": "[string \"luau.load(...)\"]:23: clearance cliff/wall SolidMountainStone at 35,-74 rise -2.1200027465820312"
+    },
+    {
+      "decision": "MAP",
+      "hit": {
+        "name": "SolidMountainStone",
+        "ny": 1,
+        "y": -2
+      },
+      "name": "empty expiry exit 118",
+      "point": [
+        37,
+        0,
+        72
+      ],
+      "reason": "[string \"luau.load(...)\"]:23: clearance cliff/wall SolidMountainStone at 35,-74 rise -2.1200027465820312"
+    }
+  ],
+  "loop_bad": 4,
+  "preflight_bad": 4,
+  "pvp_bad": 0,
+  "state": "FAIL"
+}

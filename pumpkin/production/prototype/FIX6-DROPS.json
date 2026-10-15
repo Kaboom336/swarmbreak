@@ -1,0 +1,13 @@
+{
+  "Studio": "UNKNOWN",
+  "bounds": "conservative whole-model boxes per material; actual imported geometry UNKNOWN",
+  "categories": {},
+  "droppedPlacements": 94,
+  "failures": {},
+  "keptPlacements": 200,
+  "kits2Templates": 74,
+  "samples": 31824,
+  "spawnAttempts": 294,
+  "state": "PASS",
+  "validCacheHits": 41822
+}

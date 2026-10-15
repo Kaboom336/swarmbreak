@@ -3,7 +3,7 @@ local config = {
 	RecipeVersion = 7,
 	HomeSpawnZ = 16,
 	HomePortalApproachZ = 8,
-	HomeAisleX = 18,
+	HomeAisleX = 16.5, -- 3-stud waypoint radius clears |x|=20; player lane also clears terrace stairs.
 	PlotWidth = 64,
 	PlotDepth = 48,
 	PlotInset = 4,

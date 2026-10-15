@@ -1,0 +1,26 @@
+{
+  "checked": "2026-10-14",
+  "routeArithmetic": "independently recalculated 3D centerline lengths",
+  "mainSecondsEstimated": 29.5,
+  "caveSecondsEstimated": 33,
+  "cartSecondsEstimated": {
+    "min": 19.5,
+    "max": 23.5
+  },
+  "bypassSecondsEstimated": 25,
+  "maxWalkingGradesDegrees": {
+    "main": 18.92,
+    "cave": 22.79,
+    "crosslinkNorth": 25,
+    "crosslinkSouth": 9.05,
+    "pitRecovery": 19.44,
+    "railWalkBypass": 16.48
+  },
+  "main25to35": true,
+  "gradesAtMost25": true,
+  "visualQA": "final blueprint, concept, storyboard, exact plan and contact sheet inspected; generated blueprint drift explicitly documented",
+  "blindCritic": "one independent read-only review, one correction pass; no independent post-fix acceptance",
+  "runtime": "NOT RUN",
+  "scope": "task-authored writes only treasure/cave-v2; no game code or commit",
+  "concurrentChanges": "HANDOFF-NOW.md became dirty during task; not authored or modified by this task"
+}

@@ -1,0 +1,86 @@
+{
+  "status": "DESIGN ARITHMETIC ONLY, NOT A COLLISION AUDIT",
+  "checks": [
+    {
+      "layout": "A",
+      "route": "West lantern tunnel / MAIN",
+      "length": 544.7,
+      "seconds": 34,
+      "slope": 23.9,
+      "mainBudget": true,
+      "envelope": true
+    },
+    {
+      "layout": "A",
+      "route": "Bowl shortcut",
+      "length": 370.8,
+      "seconds": 23.2,
+      "slope": 23.9,
+      "mainBudget": true,
+      "envelope": true
+    },
+    {
+      "layout": "A",
+      "route": "East high shelf",
+      "length": 482.2,
+      "seconds": 30.1,
+      "slope": 23.9,
+      "mainBudget": true,
+      "envelope": true
+    },
+    {
+      "layout": "B",
+      "route": "West buttress causeway / MAIN",
+      "length": 525.9,
+      "seconds": 32.9,
+      "slope": 22.5,
+      "mainBudget": true,
+      "envelope": true
+    },
+    {
+      "layout": "B",
+      "route": "Fracture bridge shortcut",
+      "length": 407.2,
+      "seconds": 25.5,
+      "slope": 22.5,
+      "mainBudget": true,
+      "envelope": true
+    },
+    {
+      "layout": "B",
+      "route": "East skylight tunnel",
+      "length": 569.8,
+      "seconds": 35.6,
+      "slope": 22.5,
+      "mainBudget": true,
+      "envelope": true
+    },
+    {
+      "layout": "C",
+      "route": "North terrace causeway / MAIN",
+      "length": 556.2,
+      "seconds": 34.8,
+      "slope": 16.5,
+      "mainBudget": true,
+      "envelope": true
+    },
+    {
+      "layout": "C",
+      "route": "South skylight tunnel",
+      "length": 581.2,
+      "seconds": 36.3,
+      "slope": 16.5,
+      "mainBudget": true,
+      "envelope": true
+    },
+    {
+      "layout": "C",
+      "route": "Cart walking bypass",
+      "length": 393.5,
+      "seconds": 24.6,
+      "slope": 16.5,
+      "mainBudget": true,
+      "envelope": true
+    }
+  ]
+}

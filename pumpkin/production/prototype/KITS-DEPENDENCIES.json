@@ -1,0 +1,41 @@
+{
+  "checked": "2026-10-14",
+  "normalization": "CRLF/LF and trailing whitespace only",
+  "modules": [
+    {
+      "module": "Spring",
+      "byteIdentical": false,
+      "copiedHash": "9ED98ECFF13288F8A196F9C3D6879752F6BEAC0BCB0B75EEE2FCE588D7417660",
+      "vendorHash": "D47E6F7667BC24C4A9A52905ABDFFBB7D55347DC2B7AD4360D7DEBD5C3D0AD8F",
+      "sourceEquivalent": true
+    },
+    {
+      "module": "Trove",
+      "byteIdentical": false,
+      "copiedHash": "6037D12780509F4D7B6119C437B29918F230C2B90344247D591C58179ECEF4B1",
+      "vendorHash": "75C968CB9336D88EBFF62786187D475970B4ADE7531ADDA493EB89349600E299",
+      "sourceEquivalent": true
+    },
+    {
+      "module": "Signal",
+      "byteIdentical": false,
+      "copiedHash": "A2C3A044AD291F1B8EA7D9AB38147D0CA8807C22532A45F31F33C79B89B74124",
+      "vendorHash": "7E1F02FC1FADD682243811996078E60F69FEE0FF3E04461F4926DDB2581695F6",
+      "sourceEquivalent": true
+    },
+    {
+      "module": "Shake",
+      "byteIdentical": false,
+      "copiedHash": "20A395F69FAB19B27F0EDA9297685470D78B30167E916F371173D931A5CF508C",
+      "vendorHash": "C70276251DDDCFBBE0B73028893E26DADCF439194988AE9FB6168C16191E1022",
+      "sourceEquivalent": true
+    },
+    {
+      "module": "ProfileStore",
+      "byteIdentical": false,
+      "copiedHash": "5675CA974C65A0F98809062176E4E8BD91911E016310E6247869B8649740F8B8",
+      "vendorHash": "799263DC0D281F360432E172F57EF337761EC38482575273B3CB079D114ECF71",
+      "sourceEquivalent": true
+    }
+  ]
+}

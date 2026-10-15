@@ -1,0 +1,60 @@
+{
+  "protected_changed": [],
+  "routes_equal": true,
+  "hooks_equal": true,
+  "collision_volumes_equal": true,
+  "terrain_height_and_mass_equal": true,
+  "crystal_shafts_before": 121,
+  "crystal_shafts_after": 1154,
+  "crystal_multiplier": 9.537190082644628,
+  "point_lights": 527,
+  "clearance_hits": 0,
+  "unreachable_route_nodes": 0,
+  "static_zero_checks": {
+    "floating_collider_parts": 0,
+    "cave_24_headroom_hits": 0,
+    "green_flight_envelope_hits": 0,
+    "red_fall_envelope_hits": 0,
+    "track_cart_envelope_hits": 0,
+    "floor_ray_missing_hits": 0
+  },
+  "runtime": "UNKNOWN; offline native geometry proof",
+  "same_camera": true,
+  "native_check": {
+    "compiled_scripts": 9,
+    "maximum_native_transform_error": 7.629394545460855e-06,
+    "parts": 48961,
+    "placeholder_hooks": 5,
+    "point_lights": 527,
+    "runtime": "UNKNOWN; static binary inspection"
+  },
+  "native_preservation": {
+    "bloom": 0.6499999761581421,
+    "brightness": 2.299999952316284,
+    "exposure": 0.3499999940395355,
+    "gameplay_script_sources_equal": true,
+    "native_hook_attributes_equal": true
+  },
+  "critic_scores": [
+    6,
+    7
+  ],
+  "visual_target_met": true,
+  "audit_binding": "Final collidable name/category/position/size/rotation sequence equals baseline exactly. Final audit runs ignore noncollidable decoration; final subsequent changes move background art only.",
+  "hashes": {
+    "prototype\\cave-v2.rbxl": "7d956329f703a4e22d7a3e61f98d4dbca189090ebb46b59c0daba2734e19c38c",
+    "prototype\\cave-v2\\scene.json": "bc1f67661eb7ddb405204067abfaaf520841edc8412cddf1a8a919da24003771",
+    "prototype\\cave-v2\\build.luau": "a973effd5f0367242d665037f350bd8cec0c953176c4bdffd22e43a7725c8c46",
+    "prototype\\cave-v2\\round3-art.luau": "cbaa3330e523e3580c7d403b5f6653f9f9e88e8c878746a03163f8dc8211b982",
+    "prototype\\cave-v2\\render.py": "c4927af77fddb4a0505870bd5dcca083ee47e7ca3378300131d8c6969beba959",
+    "prototype\\cave-v2\\AUDIT.json": "4962ef20a3197a2f682cba07b73edd764f464f67e8c063dcee8529df049d818c",
+    "prototype\\cave-v2\\STRUCTURAL-AUDIT.json": "c9bc63b9c4d6cfd8364163d11a0c4a3251dcc5ca6985b7bb1632fdd681dbbdb7",
+    "prototype\\cave-v2\\ROUND3-NATIVE-CHECK.json": "a64aaee3675b2d722708b5e482aff412372f1a20976ee6e4e784d6696ac53389",
+    "prototype\\cave-v2\\ROUND3-SCRIPT-CHECK.json": "f20d836417d182331da7e8dd53458563b853536158e34da9269f7fdeb6b985d5",
+    "prototype\\cave-v2\\CONCEPT-COMPARE.png": "cc7e3a9c839862b98b3b947d2a4619a5f891d7f1452c67f17a36a242f0b824fe",
+    "prototype\\cave-v2\\render-rr3-final-metadata.json": "64c17f2ed6c8c40208df7376b924612df963ecce5a91d25bb44e1b55d6b89ba7",
+    "prototype\\cave-v2\\build-rr3-final-concept.png": "bc12e3a5668d537d52cbd7f02500767d940932f0903ec6290be710833df3d942",
+    "prototype\\cave-v2\\build-rr3-final-side.png": "f16beff2a65e93eea3c7b87e5a572312984e7ca2cbfc41a64338980a2b386d35",
+    "prototype\\cave-v2\\build-rr3-final-top.png": "d4e899b14d99456139fec77f0ede606aaa44fd53f200de3f9ea302fb92586ff5"
+  }
+}

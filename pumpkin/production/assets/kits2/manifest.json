@@ -1,0 +1,3223 @@
+{
+  "formatVersion": 2,
+  "metresToStuds": 3.571428571428571,
+  "axisUp": "Y",
+  "palettes": {
+    "meadow": {
+      "leaf": [
+        102,
+        156,
+        62
+      ],
+      "wood": [
+        119,
+        78,
+        43
+      ],
+      "stone": [
+        125,
+        133,
+        110
+      ],
+      "flower": [
+        247,
+        192,
+        72
+      ],
+      "accent": [
+        210,
+        111,
+        166
+      ]
+    },
+    "cave": {
+      "leaf": [
+        77,
+        106,
+        115
+      ],
+      "wood": [
+        104,
+        68,
+        43
+      ],
+      "stone": [
+        88,
+        92,
+        122
+      ],
+      "flower": [
+        54,
+        224,
+        245
+      ],
+      "accent": [
+        167,
+        83,
+        255
+      ]
+    }
+  },
+  "exports": [
+    {
+      "name": "barrel",
+      "pack": "kenney_mini-dungeon",
+      "file": "kenney/kenney_mini-dungeon/Models/FBX format/barrel.fbx",
+      "use": "storage",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_mini-dungeon/Models/OBJ format/barrel.obj",
+      "sizeStuds": [
+        1.8486671447753906,
+        1.700679898262024,
+        1.8486673831939697
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_mini-dungeon__barrel__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_mini-dungeon__barrel__meadow_stone",
+          "sourceMaterial": "colormap",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 56,
+          "texture": "_palette/meadow_stone.png"
+        },
+        {
+          "mesh": "kenney_mini-dungeon__barrel__meadow_wood",
+          "sourceMaterial": "colormap",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 92,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 148
+    },
+    {
+      "name": "barrel",
+      "pack": "kenney_mini-dungeon",
+      "file": "kenney/kenney_mini-dungeon/Models/FBX format/barrel.fbx",
+      "use": "storage",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_mini-dungeon/Models/OBJ format/barrel.obj",
+      "sizeStuds": [
+        1.8486671447753906,
+        1.700679898262024,
+        1.8486673831939697
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_mini-dungeon__barrel__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_mini-dungeon__barrel__cave_stone",
+          "sourceMaterial": "colormap",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 56,
+          "texture": "_palette/cave_stone.png"
+        },
+        {
+          "mesh": "kenney_mini-dungeon__barrel__cave_wood",
+          "sourceMaterial": "colormap",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 92,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 148
+    },
+    {
+      "name": "chest",
+      "pack": "kenney_mini-dungeon",
+      "file": "kenney/kenney_mini-dungeon/Models/FBX format/chest.fbx",
+      "use": "storage",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_mini-dungeon/Models/OBJ format/chest.obj",
+      "sizeStuds": [
+        1.7857142686843872,
+        1.6071429252624512,
+        1.7857142686843872
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_mini-dungeon__chest__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_mini-dungeon__chest__meadow_stone",
+          "sourceMaterial": "colormap",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 234,
+          "texture": "_palette/meadow_stone.png"
+        },
+        {
+          "mesh": "kenney_mini-dungeon__chest__meadow_wood",
+          "sourceMaterial": "colormap",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 50,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 284
+    },
+    {
+      "name": "chest",
+      "pack": "kenney_mini-dungeon",
+      "file": "kenney/kenney_mini-dungeon/Models/FBX format/chest.fbx",
+      "use": "storage",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_mini-dungeon/Models/OBJ format/chest.obj",
+      "sizeStuds": [
+        1.7857142686843872,
+        1.6071429252624512,
+        1.7857142686843872
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_mini-dungeon__chest__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_mini-dungeon__chest__cave_stone",
+          "sourceMaterial": "colormap",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 234,
+          "texture": "_palette/cave_stone.png"
+        },
+        {
+          "mesh": "kenney_mini-dungeon__chest__cave_wood",
+          "sourceMaterial": "colormap",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 50,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 284
+    },
+    {
+      "name": "column",
+      "pack": "kenney_mini-dungeon",
+      "file": "kenney/kenney_mini-dungeon/Models/FBX format/column.fbx",
+      "use": "dungeon",
+      "islands": [
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_mini-dungeon/Models/OBJ format/column.obj",
+      "sizeStuds": [
+        1.7857142686843872,
+        3.9285714626312256,
+        1.7857147455215454
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_mini-dungeon__column__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_mini-dungeon__column__cave_stone",
+          "sourceMaterial": "colormap",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 104,
+          "texture": "_palette/cave_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 104
+    },
+    {
+      "name": "rocks",
+      "pack": "kenney_mini-dungeon",
+      "file": "kenney/kenney_mini-dungeon/Models/FBX format/rocks.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_mini-dungeon/Models/OBJ format/rocks.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        1.7857147455215454,
+        3.5714285373687744
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_mini-dungeon__rocks__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_mini-dungeon__rocks__meadow_stone",
+          "sourceMaterial": "colormap",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 190,
+          "texture": "_palette/meadow_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 190
+    },
+    {
+      "name": "rocks",
+      "pack": "kenney_mini-dungeon",
+      "file": "kenney/kenney_mini-dungeon/Models/FBX format/rocks.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_mini-dungeon/Models/OBJ format/rocks.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        1.7857147455215454,
+        3.5714285373687744
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_mini-dungeon__rocks__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_mini-dungeon__rocks__cave_stone",
+          "sourceMaterial": "colormap",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 190,
+          "texture": "_palette/cave_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 190
+    },
+    {
+      "name": "stairs",
+      "pack": "kenney_mini-dungeon",
+      "file": "kenney/kenney_mini-dungeon/Models/FBX format/stairs.fbx",
+      "use": "dungeon",
+      "islands": [
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_mini-dungeon/Models/OBJ format/stairs.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        3.2142858505249023,
+        3.5714285373687744
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_mini-dungeon__stairs__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_mini-dungeon__stairs__cave_stone",
+          "sourceMaterial": "colormap",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 124,
+          "texture": "_palette/cave_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 124
+    },
+    {
+      "name": "wall-half",
+      "pack": "kenney_mini-dungeon",
+      "file": "kenney/kenney_mini-dungeon/Models/FBX format/wall-half.fbx",
+      "use": "dungeon",
+      "islands": [
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_mini-dungeon/Models/OBJ format/wall-half.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        3.5714285373687744,
+        3.5714285373687744
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_mini-dungeon__wall-half__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_mini-dungeon__wall-half__cave_stone",
+          "sourceMaterial": "colormap",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 148,
+          "texture": "_palette/cave_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 148
+    },
+    {
+      "name": "wall-opening",
+      "pack": "kenney_mini-dungeon",
+      "file": "kenney/kenney_mini-dungeon/Models/FBX format/wall-opening.fbx",
+      "use": "dungeon",
+      "islands": [
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_mini-dungeon/Models/OBJ format/wall-opening.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        3.5714285373687744,
+        3.749999761581421
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_mini-dungeon__wall-opening__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_mini-dungeon__wall-opening__cave_stone",
+          "sourceMaterial": "colormap",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 200,
+          "texture": "_palette/cave_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 200
+    },
+    {
+      "name": "wall",
+      "pack": "kenney_mini-dungeon",
+      "file": "kenney/kenney_mini-dungeon/Models/FBX format/wall.fbx",
+      "use": "dungeon",
+      "islands": [
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_mini-dungeon/Models/OBJ format/wall.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        3.9285714626312256,
+        3.5714285373687744
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_mini-dungeon__wall__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_mini-dungeon__wall__cave_stone",
+          "sourceMaterial": "colormap",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 186,
+          "texture": "_palette/cave_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 186
+    },
+    {
+      "name": "wood-structure",
+      "pack": "kenney_mini-dungeon",
+      "file": "kenney/kenney_mini-dungeon/Models/FBX format/wood-structure.fbx",
+      "use": "dungeon",
+      "islands": [
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_mini-dungeon/Models/OBJ format/wood-structure.obj",
+      "sizeStuds": [
+        3.885892868041992,
+        3.5714285373687744,
+        3.885892868041992
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_mini-dungeon__wood-structure__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_mini-dungeon__wood-structure__cave_wood",
+          "sourceMaterial": "colormap",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 256,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 256
+    },
+    {
+      "name": "wood-support",
+      "pack": "kenney_mini-dungeon",
+      "file": "kenney/kenney_mini-dungeon/Models/FBX format/wood-support.fbx",
+      "use": "dungeon",
+      "islands": [
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_mini-dungeon/Models/OBJ format/wood-support.obj",
+      "sizeStuds": [
+        3.885892868041992,
+        3.5714285373687744,
+        0.850178599357605
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_mini-dungeon__wood-support__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_mini-dungeon__wood-support__cave_wood",
+          "sourceMaterial": "colormap",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 104,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 104
+    },
+    {
+      "name": "bridge_wood",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/bridge_wood.fbx",
+      "use": "path",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/bridge_wood.obj",
+      "sizeStuds": [
+        3.7142856121063232,
+        1.4285717010498047,
+        3.7142856121063232
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__bridge_wood__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__bridge_wood__meadow_stone",
+          "sourceMaterial": "stone",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 34,
+          "texture": "_palette/meadow_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__bridge_wood__meadow_wood_wood",
+          "sourceMaterial": "wood",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 44,
+          "texture": "_palette/meadow_wood.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__bridge_wood__meadow_woodbark_wood",
+          "sourceMaterial": "woodBark",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 142,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 3,
+      "triangles": 220
+    },
+    {
+      "name": "bridge_wood",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/bridge_wood.fbx",
+      "use": "path",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/bridge_wood.obj",
+      "sizeStuds": [
+        3.7142856121063232,
+        1.4285717010498047,
+        3.7142856121063232
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_nature-kit__bridge_wood__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__bridge_wood__cave_stone",
+          "sourceMaterial": "stone",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 34,
+          "texture": "_palette/cave_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__bridge_wood__cave_wood_wood",
+          "sourceMaterial": "wood",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 44,
+          "texture": "_palette/cave_wood.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__bridge_wood__cave_woodbark_wood",
+          "sourceMaterial": "woodBark",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 142,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 3,
+      "triangles": 220
+    },
+    {
+      "name": "cliff_block_rock",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/cliff_block_rock.fbx",
+      "use": "cliff",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/cliff_block_rock.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        3.5714285373687744,
+        3.5714285373687744
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__cliff_block_rock__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__cliff_block_rock__meadow_stone",
+          "sourceMaterial": "dirt",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 10,
+          "texture": "_palette/meadow_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__cliff_block_rock__meadow_leaf",
+          "sourceMaterial": "grass",
+          "material": "meadow_leaf",
+          "colour": [
+            102,
+            156,
+            62
+          ],
+          "triangles": 2,
+          "texture": "_palette/meadow_leaf.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 12
+    },
+    {
+      "name": "cliff_block_rock",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/cliff_block_rock.fbx",
+      "use": "cliff",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/cliff_block_rock.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        3.5714285373687744,
+        3.5714285373687744
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_nature-kit__cliff_block_rock__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__cliff_block_rock__cave_stone",
+          "sourceMaterial": "dirt",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 10,
+          "texture": "_palette/cave_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__cliff_block_rock__cave_leaf",
+          "sourceMaterial": "grass",
+          "material": "cave_leaf",
+          "colour": [
+            77,
+            106,
+            115
+          ],
+          "triangles": 2,
+          "texture": "_palette/cave_leaf.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 12
+    },
+    {
+      "name": "cliff_cave_rock",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/cliff_cave_rock.fbx",
+      "use": "cliff",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/cliff_cave_rock.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        3.5714285373687744,
+        0.6017859578132629
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__cliff_cave_rock__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__cliff_cave_rock__meadow_stone",
+          "sourceMaterial": "dirt",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 64,
+          "texture": "_palette/meadow_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 64
+    },
+    {
+      "name": "cliff_cave_rock",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/cliff_cave_rock.fbx",
+      "use": "cliff",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/cliff_cave_rock.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        3.5714285373687744,
+        0.6017859578132629
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_nature-kit__cliff_cave_rock__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__cliff_cave_rock__cave_stone",
+          "sourceMaterial": "dirt",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 64,
+          "texture": "_palette/cave_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 64
+    },
+    {
+      "name": "cliff_corner_rock",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/cliff_corner_rock.fbx",
+      "use": "cliff",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/cliff_corner_rock.obj",
+      "sizeStuds": [
+        0.6017857193946838,
+        3.5714285373687744,
+        0.6017859578132629
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__cliff_corner_rock__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__cliff_corner_rock__meadow_stone",
+          "sourceMaterial": "dirt",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 12,
+          "texture": "_palette/meadow_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 12
+    },
+    {
+      "name": "cliff_corner_rock",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/cliff_corner_rock.fbx",
+      "use": "cliff",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/cliff_corner_rock.obj",
+      "sizeStuds": [
+        0.6017857193946838,
+        3.5714285373687744,
+        0.6017859578132629
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_nature-kit__cliff_corner_rock__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__cliff_corner_rock__cave_stone",
+          "sourceMaterial": "dirt",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 12,
+          "texture": "_palette/cave_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 12
+    },
+    {
+      "name": "fence_corner",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/fence_corner.fbx",
+      "use": "fence",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/fence_corner.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        1.2322405576705933,
+        3.5714285373687744
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__fence_corner__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__fence_corner__meadow_wood_wood",
+          "sourceMaterial": "wood",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 100,
+          "texture": "_palette/meadow_wood.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__fence_corner__meadow_wooddark_wood",
+          "sourceMaterial": "woodDark",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 16,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 116
+    },
+    {
+      "name": "fence_corner",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/fence_corner.fbx",
+      "use": "fence",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/fence_corner.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        1.2322405576705933,
+        3.5714285373687744
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_nature-kit__fence_corner__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__fence_corner__cave_wood_wood",
+          "sourceMaterial": "wood",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 100,
+          "texture": "_palette/cave_wood.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__fence_corner__cave_wooddark_wood",
+          "sourceMaterial": "woodDark",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 16,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 116
+    },
+    {
+      "name": "fence_simple",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/fence_simple.fbx",
+      "use": "fence",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/fence_simple.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        1.2322403192520142,
+        0.25000008940696716
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__fence_simple__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__fence_simple__meadow_wood_wood",
+          "sourceMaterial": "wood",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 56,
+          "texture": "_palette/meadow_wood.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__fence_simple__meadow_wooddark_wood",
+          "sourceMaterial": "woodDark",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 8,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 64
+    },
+    {
+      "name": "fence_simple",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/fence_simple.fbx",
+      "use": "fence",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/fence_simple.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        1.2322403192520142,
+        0.25000008940696716
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_nature-kit__fence_simple__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__fence_simple__cave_wood_wood",
+          "sourceMaterial": "wood",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 56,
+          "texture": "_palette/cave_wood.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__fence_simple__cave_wooddark_wood",
+          "sourceMaterial": "woodDark",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 8,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 64
+    },
+    {
+      "name": "flower_yellowA",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/flower_yellowA.fbx",
+      "use": "flower",
+      "islands": [
+        "meadow"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/flower_yellowA.obj",
+      "sizeStuds": [
+        0.5682054162025452,
+        0.6875,
+        0.6466395258903503
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__flower_yellowA__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__flower_yellowA__meadow_flower",
+          "sourceMaterial": "colorYellow",
+          "material": "meadow_flower",
+          "colour": [
+            247,
+            192,
+            72
+          ],
+          "triangles": 28,
+          "texture": "_palette/meadow_flower.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__flower_yellowA__meadow_leaf",
+          "sourceMaterial": "grass",
+          "material": "meadow_leaf",
+          "colour": [
+            102,
+            156,
+            62
+          ],
+          "triangles": 28,
+          "texture": "_palette/meadow_leaf.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 56
+    },
+    {
+      "name": "log",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/log.fbx",
+      "use": "tree",
+      "islands": [
+        "meadow"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/log.obj",
+      "sizeStuds": [
+        0.8355753421783447,
+        0.6185898780822754,
+        2.5357141494750977
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__log__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__log__meadow_woodbark_wood",
+          "sourceMaterial": "woodBark",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 41,
+          "texture": "_palette/meadow_wood.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__log__meadow_woodinner_wood",
+          "sourceMaterial": "woodInner",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 59,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 100
+    },
+    {
+      "name": "mushroom_tan",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/mushroom_tan.fbx",
+      "use": "flower",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/mushroom_tan.obj",
+      "sizeStuds": [
+        0.6834425330162048,
+        0.5496300458908081,
+        0.7891714572906494
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__mushroom_tan__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__mushroom_tan__meadow_defaultmat_flower",
+          "sourceMaterial": "_defaultMat",
+          "material": "meadow_flower",
+          "colour": [
+            247,
+            192,
+            72
+          ],
+          "triangles": 32,
+          "texture": "_palette/meadow_flower.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__mushroom_tan__meadow_colortan_flower",
+          "sourceMaterial": "colorTan",
+          "material": "meadow_flower",
+          "colour": [
+            247,
+            192,
+            72
+          ],
+          "triangles": 16,
+          "texture": "_palette/meadow_flower.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 48
+    },
+    {
+      "name": "mushroom_tan",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/mushroom_tan.fbx",
+      "use": "flower",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/mushroom_tan.obj",
+      "sizeStuds": [
+        0.6834425330162048,
+        0.5496300458908081,
+        0.7891714572906494
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_nature-kit__mushroom_tan__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__mushroom_tan__cave_defaultmat_flower",
+          "sourceMaterial": "_defaultMat",
+          "material": "cave_flower",
+          "colour": [
+            54,
+            224,
+            245
+          ],
+          "triangles": 32,
+          "texture": "_palette/cave_flower.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__mushroom_tan__cave_colortan_flower",
+          "sourceMaterial": "colorTan",
+          "material": "cave_flower",
+          "colour": [
+            54,
+            224,
+            245
+          ],
+          "triangles": 16,
+          "texture": "_palette/cave_flower.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 48
+    },
+    {
+      "name": "path_stone",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/path_stone.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/path_stone.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        0.17857158184051514,
+        2.0593316555023193
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__path_stone__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__path_stone__meadow_defaultmat_stone",
+          "sourceMaterial": "_defaultMat",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 16,
+          "texture": "_palette/meadow_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__path_stone__meadow_stone_stone",
+          "sourceMaterial": "stone",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 32,
+          "texture": "_palette/meadow_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__path_stone__meadow_stonedark_stone",
+          "sourceMaterial": "stoneDark",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 88,
+          "texture": "_palette/meadow_stone.png"
+        }
+      ],
+      "meshParts": 3,
+      "triangles": 136
+    },
+    {
+      "name": "path_stone",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/path_stone.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/path_stone.obj",
+      "sizeStuds": [
+        3.5714285373687744,
+        0.17857158184051514,
+        2.0593316555023193
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_nature-kit__path_stone__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__path_stone__cave_defaultmat_stone",
+          "sourceMaterial": "_defaultMat",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 16,
+          "texture": "_palette/cave_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__path_stone__cave_stone_stone",
+          "sourceMaterial": "stone",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 32,
+          "texture": "_palette/cave_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__path_stone__cave_stonedark_stone",
+          "sourceMaterial": "stoneDark",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 88,
+          "texture": "_palette/cave_stone.png"
+        }
+      ],
+      "meshParts": 3,
+      "triangles": 136
+    },
+    {
+      "name": "plant_bush",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/plant_bush.fbx",
+      "use": "bush",
+      "islands": [
+        "meadow"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/plant_bush.obj",
+      "sizeStuds": [
+        1.414285659790039,
+        0.8730128407478333,
+        1.414285659790039
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__plant_bush__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__plant_bush__meadow_leaf",
+          "sourceMaterial": "grass",
+          "material": "meadow_leaf",
+          "colour": [
+            102,
+            156,
+            62
+          ],
+          "triangles": 16,
+          "texture": "_palette/meadow_leaf.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 16
+    },
+    {
+      "name": "rock_largeA",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/rock_largeA.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/rock_largeA.obj",
+      "sizeStuds": [
+        2.8032379150390625,
+        0.9277716279029846,
+        3.62664794921875
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__rock_largeA__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__rock_largeA__meadow_stone",
+          "sourceMaterial": "dirt",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 71,
+          "texture": "_palette/meadow_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__rock_largeA__meadow_leaf",
+          "sourceMaterial": "grass",
+          "material": "meadow_leaf",
+          "colour": [
+            102,
+            156,
+            62
+          ],
+          "triangles": 9,
+          "texture": "_palette/meadow_leaf.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 80
+    },
+    {
+      "name": "rock_largeA",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/rock_largeA.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/rock_largeA.obj",
+      "sizeStuds": [
+        2.8032379150390625,
+        0.9277716279029846,
+        3.62664794921875
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_nature-kit__rock_largeA__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__rock_largeA__cave_stone",
+          "sourceMaterial": "dirt",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 71,
+          "texture": "_palette/cave_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__rock_largeA__cave_leaf",
+          "sourceMaterial": "grass",
+          "material": "cave_leaf",
+          "colour": [
+            77,
+            106,
+            115
+          ],
+          "triangles": 9,
+          "texture": "_palette/cave_leaf.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 80
+    },
+    {
+      "name": "rock_largeC",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/rock_largeC.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/rock_largeC.obj",
+      "sizeStuds": [
+        3.8014636039733887,
+        1.1468287706375122,
+        3.627364158630371
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__rock_largeC__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__rock_largeC__meadow_stone",
+          "sourceMaterial": "dirt",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 64,
+          "texture": "_palette/meadow_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__rock_largeC__meadow_leaf",
+          "sourceMaterial": "grass",
+          "material": "meadow_leaf",
+          "colour": [
+            102,
+            156,
+            62
+          ],
+          "triangles": 8,
+          "texture": "_palette/meadow_leaf.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 72
+    },
+    {
+      "name": "rock_largeC",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/rock_largeC.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/rock_largeC.obj",
+      "sizeStuds": [
+        3.8014636039733887,
+        1.1468287706375122,
+        3.627364158630371
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_nature-kit__rock_largeC__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__rock_largeC__cave_stone",
+          "sourceMaterial": "dirt",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 64,
+          "texture": "_palette/cave_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__rock_largeC__cave_leaf",
+          "sourceMaterial": "grass",
+          "material": "cave_leaf",
+          "colour": [
+            77,
+            106,
+            115
+          ],
+          "triangles": 8,
+          "texture": "_palette/cave_leaf.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 72
+    },
+    {
+      "name": "rock_tallA",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/rock_tallA.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/rock_tallA.obj",
+      "sizeStuds": [
+        3.510960102081299,
+        3.556878089904785,
+        2.4400384426116943
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__rock_tallA__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__rock_tallA__meadow_defaultmat_stone",
+          "sourceMaterial": "_defaultMat",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 12,
+          "texture": "_palette/meadow_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__rock_tallA__meadow_dirt_stone",
+          "sourceMaterial": "dirt",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 98,
+          "texture": "_palette/meadow_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__rock_tallA__meadow_leaf",
+          "sourceMaterial": "grass",
+          "material": "meadow_leaf",
+          "colour": [
+            102,
+            156,
+            62
+          ],
+          "triangles": 26,
+          "texture": "_palette/meadow_leaf.png"
+        }
+      ],
+      "meshParts": 3,
+      "triangles": 136
+    },
+    {
+      "name": "rock_tallA",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/rock_tallA.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/rock_tallA.obj",
+      "sizeStuds": [
+        3.510960102081299,
+        3.556878089904785,
+        2.4400384426116943
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_nature-kit__rock_tallA__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__rock_tallA__cave_defaultmat_stone",
+          "sourceMaterial": "_defaultMat",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 12,
+          "texture": "_palette/cave_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__rock_tallA__cave_dirt_stone",
+          "sourceMaterial": "dirt",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 98,
+          "texture": "_palette/cave_stone.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__rock_tallA__cave_leaf",
+          "sourceMaterial": "grass",
+          "material": "cave_leaf",
+          "colour": [
+            77,
+            106,
+            115
+          ],
+          "triangles": 26,
+          "texture": "_palette/cave_leaf.png"
+        }
+      ],
+      "meshParts": 3,
+      "triangles": 136
+    },
+    {
+      "name": "stone_largeA",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/stone_largeA.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/stone_largeA.obj",
+      "sizeStuds": [
+        2.8032379150390625,
+        0.9277716279029846,
+        3.62664794921875
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__stone_largeA__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__stone_largeA__meadow_stone",
+          "sourceMaterial": "stone",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 80,
+          "texture": "_palette/meadow_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 80
+    },
+    {
+      "name": "stone_largeA",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/stone_largeA.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/stone_largeA.obj",
+      "sizeStuds": [
+        2.8032379150390625,
+        0.9277716279029846,
+        3.62664794921875
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_nature-kit__stone_largeA__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__stone_largeA__cave_stone",
+          "sourceMaterial": "stone",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 80,
+          "texture": "_palette/cave_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 80
+    },
+    {
+      "name": "stump_round",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/stump_round.fbx",
+      "use": "tree",
+      "islands": [
+        "meadow"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/stump_round.obj",
+      "sizeStuds": [
+        1.1474835872650146,
+        0.7375000715255737,
+        1.3249999284744263
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__stump_round__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__stump_round__meadow_woodbark_wood",
+          "sourceMaterial": "woodBark",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 40,
+          "texture": "_palette/meadow_wood.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__stump_round__meadow_woodinner_wood",
+          "sourceMaterial": "woodInner",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 16,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 56
+    },
+    {
+      "name": "tree_oak",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/tree_oak.fbx",
+      "use": "tree",
+      "islands": [
+        "meadow"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/tree_oak.obj",
+      "sizeStuds": [
+        2.2876925468444824,
+        4.379428863525391,
+        2.6415998935699463
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__tree_oak__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__tree_oak__meadow_leaf",
+          "sourceMaterial": "leafsGreen",
+          "material": "meadow_leaf",
+          "colour": [
+            102,
+            156,
+            62
+          ],
+          "triangles": 64,
+          "texture": "_palette/meadow_leaf.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__tree_oak__meadow_trunk_wood",
+          "sourceMaterial": "woodBark",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 132,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 196
+    },
+    {
+      "name": "tree_pineTallA",
+      "pack": "kenney_nature-kit",
+      "file": "kenney/kenney_nature-kit/Models/FBX format/tree_pineTallA.fbx",
+      "use": "tree",
+      "islands": [
+        "meadow"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_nature-kit/Models/OBJ format/tree_pineTallA.obj",
+      "sizeStuds": [
+        1.379546046257019,
+        5.462878227233887,
+        1.399821400642395
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_nature-kit__tree_pineTallA__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_nature-kit__tree_pineTallA__meadow_leaf",
+          "sourceMaterial": "leafsDark",
+          "material": "meadow_leaf",
+          "colour": [
+            102,
+            156,
+            62
+          ],
+          "triangles": 68,
+          "texture": "_palette/meadow_leaf.png"
+        },
+        {
+          "mesh": "kenney_nature-kit__tree_pineTallA__meadow_trunk_wood",
+          "sourceMaterial": "woodBarkDark",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 10,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 78
+    },
+    {
+      "name": "barrel-open",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/barrel-open.fbx",
+      "use": "storage",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/barrel-open.obj",
+      "sizeStuds": [
+        0.8446428179740906,
+        1.2285714149475098,
+        0.8446429371833801
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_survival-kit__barrel-open__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__barrel-open__meadow_stone",
+          "sourceMaterial": "colormap",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 58,
+          "texture": "_palette/meadow_stone.png"
+        },
+        {
+          "mesh": "kenney_survival-kit__barrel-open__meadow_wood",
+          "sourceMaterial": "colormap",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 322,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 380
+    },
+    {
+      "name": "barrel-open",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/barrel-open.fbx",
+      "use": "storage",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/barrel-open.obj",
+      "sizeStuds": [
+        0.8446428179740906,
+        1.2285714149475098,
+        0.8446429371833801
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_survival-kit__barrel-open__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__barrel-open__cave_stone",
+          "sourceMaterial": "colormap",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 58,
+          "texture": "_palette/cave_stone.png"
+        },
+        {
+          "mesh": "kenney_survival-kit__barrel-open__cave_wood",
+          "sourceMaterial": "colormap",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 322,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 380
+    },
+    {
+      "name": "barrel",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/barrel.fbx",
+      "use": "storage",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/barrel.obj",
+      "sizeStuds": [
+        0.8446428179740906,
+        1.2285714149475098,
+        0.8446429371833801
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_survival-kit__barrel__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__barrel__meadow_stone",
+          "sourceMaterial": "colormap",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 46,
+          "texture": "_palette/meadow_stone.png"
+        },
+        {
+          "mesh": "kenney_survival-kit__barrel__meadow_wood",
+          "sourceMaterial": "colormap",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 366,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 412
+    },
+    {
+      "name": "barrel",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/barrel.fbx",
+      "use": "storage",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/barrel.obj",
+      "sizeStuds": [
+        0.8446428179740906,
+        1.2285714149475098,
+        0.8446429371833801
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_survival-kit__barrel__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__barrel__cave_stone",
+          "sourceMaterial": "colormap",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 46,
+          "texture": "_palette/cave_stone.png"
+        },
+        {
+          "mesh": "kenney_survival-kit__barrel__cave_wood",
+          "sourceMaterial": "colormap",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 366,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 412
+    },
+    {
+      "name": "box-large",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/box-large.fbx",
+      "use": "storage",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/box-large.obj",
+      "sizeStuds": [
+        0.8928571343421936,
+        0.8928573727607727,
+        1.7857142686843872
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_survival-kit__box-large__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__box-large__meadow_wood",
+          "sourceMaterial": "colormap",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 124,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 124
+    },
+    {
+      "name": "box-large",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/box-large.fbx",
+      "use": "storage",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/box-large.obj",
+      "sizeStuds": [
+        0.8928571343421936,
+        0.8928573727607727,
+        1.7857142686843872
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_survival-kit__box-large__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__box-large__cave_wood",
+          "sourceMaterial": "colormap",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 124,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 124
+    },
+    {
+      "name": "box",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/box.fbx",
+      "use": "storage",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/box.obj",
+      "sizeStuds": [
+        0.8928571343421936,
+        0.8928571343421936,
+        0.8928571343421936
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_survival-kit__box__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__box__meadow_wood",
+          "sourceMaterial": "colormap",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 124,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 124
+    },
+    {
+      "name": "box",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/box.fbx",
+      "use": "storage",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/box.obj",
+      "sizeStuds": [
+        0.8928571343421936,
+        0.8928571343421936,
+        0.8928571343421936
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_survival-kit__box__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__box__cave_wood",
+          "sourceMaterial": "colormap",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 124,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 124
+    },
+    {
+      "name": "fence",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/fence.fbx",
+      "use": "fence",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/fence.obj",
+      "sizeStuds": [
+        1.7857142686843872,
+        1.8480956554412842,
+        0.15278570353984833
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_survival-kit__fence__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__fence__meadow_wood",
+          "sourceMaterial": "colormap",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 48,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 48
+    },
+    {
+      "name": "fence",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/fence.fbx",
+      "use": "fence",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/fence.obj",
+      "sizeStuds": [
+        1.7857142686843872,
+        1.8480956554412842,
+        0.15278570353984833
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_survival-kit__fence__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__fence__cave_wood",
+          "sourceMaterial": "colormap",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 48,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 48
+    },
+    {
+      "name": "rock-a",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/rock-a.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/rock-a.obj",
+      "sizeStuds": [
+        1.9827919006347656,
+        1.402500033378601,
+        2.219926118850708
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_survival-kit__rock-a__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__rock-a__meadow_stone",
+          "sourceMaterial": "colormap",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 104,
+          "texture": "_palette/meadow_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 104
+    },
+    {
+      "name": "rock-a",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/rock-a.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/rock-a.obj",
+      "sizeStuds": [
+        1.9827919006347656,
+        1.402500033378601,
+        2.219926118850708
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_survival-kit__rock-a__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__rock-a__cave_stone",
+          "sourceMaterial": "colormap",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 104,
+          "texture": "_palette/cave_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 104
+    },
+    {
+      "name": "structure",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/structure.fbx",
+      "use": "dungeon",
+      "islands": [
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/structure.obj",
+      "sizeStuds": [
+        1.7857142686843872,
+        1.7857142686843872,
+        1.7857142686843872
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_survival-kit__structure__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__structure__cave_wood",
+          "sourceMaterial": "colormap",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 80,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 80
+    },
+    {
+      "name": "tent",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/tent.fbx",
+      "use": "camp",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/tent.obj",
+      "sizeStuds": [
+        2.0027222633361816,
+        1.754887342453003,
+        2.0035712718963623
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_survival-kit__tent__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__tent__meadow_wood",
+          "sourceMaterial": "colormap",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 124,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 124
+    },
+    {
+      "name": "tent",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/tent.fbx",
+      "use": "camp",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/tent.obj",
+      "sizeStuds": [
+        2.0027222633361816,
+        1.754887342453003,
+        2.0035712718963623
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/kenney_survival-kit__tent__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__tent__cave_wood",
+          "sourceMaterial": "colormap",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 124,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 124
+    },
+    {
+      "name": "tree-log",
+      "pack": "kenney_survival-kit",
+      "file": "kenney/kenney_survival-kit/Models/FBX format/tree-log.fbx",
+      "use": "tree",
+      "islands": [
+        "meadow"
+      ],
+      "island": "meadow",
+      "actualSource": "kenney/kenney_survival-kit/Models/OBJ format/tree-log.obj",
+      "sizeStuds": [
+        0.8910256624221802,
+        0.9897748231887817,
+        3.5714285373687744
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/kenney_survival-kit__tree-log__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "kenney_survival-kit__tree-log__meadow_wood",
+          "sourceMaterial": "colormap",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 88,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 88
+    },
+    {
+      "name": "Bush_Common",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/Bush_Common.fbx",
+      "use": "bush",
+      "islands": [
+        "meadow"
+      ],
+      "island": "meadow",
+      "actualSource": "quaternius-nature/OBJ/Bush_Common.obj",
+      "sizeStuds": [
+        6.8387322425842285,
+        5.649235725402832,
+        7.0183610916137695
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/quaternius-nature__Bush_Common__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__Bush_Common__meadow_leaf",
+          "sourceMaterial": "Leaves_TwistedTree",
+          "material": "meadow_leaf",
+          "colour": [
+            102,
+            156,
+            62
+          ],
+          "triangles": 900,
+          "texture": "_palette/meadow_leaf.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 900
+    },
+    {
+      "name": "Bush_Common_Flowers",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/Bush_Common_Flowers.fbx",
+      "use": "bush",
+      "islands": [
+        "meadow"
+      ],
+      "island": "meadow",
+      "actualSource": "quaternius-nature/OBJ/Bush_Common_Flowers.obj",
+      "sizeStuds": [
+        6.8387322425842285,
+        5.649235725402832,
+        7.0183610916137695
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/quaternius-nature__Bush_Common_Flowers__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__Bush_Common_Flowers__meadow_flower",
+          "sourceMaterial": "Flowers",
+          "material": "meadow_flower",
+          "colour": [
+            247,
+            192,
+            72
+          ],
+          "triangles": 468,
+          "texture": "_palette/meadow_flower.png"
+        },
+        {
+          "mesh": "quaternius-nature__Bush_Common_Flowers__meadow_leaf",
+          "sourceMaterial": "Leaves_NormalTree",
+          "material": "meadow_leaf",
+          "colour": [
+            102,
+            156,
+            62
+          ],
+          "triangles": 900,
+          "texture": "_palette/meadow_leaf.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 1368
+    },
+    {
+      "name": "CommonTree_1",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/CommonTree_1.fbx",
+      "use": "tree",
+      "islands": [
+        "meadow"
+      ],
+      "island": "meadow",
+      "actualSource": "quaternius-nature/OBJ/CommonTree_1.obj",
+      "sizeStuds": [
+        15.397940635681152,
+        25.945661544799805,
+        16.34897804260254
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/quaternius-nature__CommonTree_1__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__CommonTree_1__meadow_trunk_wood",
+          "sourceMaterial": "Bark_NormalTree",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 4345,
+          "texture": "_palette/meadow_wood.png"
+        },
+        {
+          "mesh": "quaternius-nature__CommonTree_1__meadow_leaf",
+          "sourceMaterial": "Leaves_NormalTree",
+          "material": "meadow_leaf",
+          "colour": [
+            102,
+            156,
+            62
+          ],
+          "triangles": 1920,
+          "texture": "_palette/meadow_leaf.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 6265
+    },
+    {
+      "name": "DeadTree_1",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/DeadTree_1.fbx",
+      "use": "tree",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "quaternius-nature/OBJ/DeadTree_1.obj",
+      "sizeStuds": [
+        21.960487365722656,
+        33.912418365478516,
+        20.53095817565918
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/quaternius-nature__DeadTree_1__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__DeadTree_1__meadow_trunk_wood",
+          "sourceMaterial": "Bark_DeadTree",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 6169,
+          "texture": "_palette/meadow_wood.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 6169
+    },
+    {
+      "name": "DeadTree_1",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/DeadTree_1.fbx",
+      "use": "tree",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "quaternius-nature/OBJ/DeadTree_1.obj",
+      "sizeStuds": [
+        21.960487365722656,
+        33.912418365478516,
+        20.53095817565918
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/quaternius-nature__DeadTree_1__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__DeadTree_1__cave_trunk_wood",
+          "sourceMaterial": "Bark_DeadTree",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 6169,
+          "texture": "_palette/cave_wood.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 6169
+    },
+    {
+      "name": "Flower_3_Group",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/Flower_3_Group.fbx",
+      "use": "flower",
+      "islands": [
+        "meadow"
+      ],
+      "island": "meadow",
+      "actualSource": "quaternius-nature/OBJ/Flower_3_Group.obj",
+      "sizeStuds": [
+        5.315985679626465,
+        7.338699817657471,
+        5.682596206665039
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/quaternius-nature__Flower_3_Group__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__Flower_3_Group__meadow_flower",
+          "sourceMaterial": "Flowers",
+          "material": "meadow_flower",
+          "colour": [
+            247,
+            192,
+            72
+          ],
+          "triangles": 45,
+          "texture": "_palette/meadow_flower.png"
+        },
+        {
+          "mesh": "quaternius-nature__Flower_3_Group__meadow_leaf",
+          "sourceMaterial": "Leaves",
+          "material": "meadow_leaf",
+          "colour": [
+            102,
+            156,
+            62
+          ],
+          "triangles": 710,
+          "texture": "_palette/meadow_leaf.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 755
+    },
+    {
+      "name": "Mushroom_Common",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/Mushroom_Common.fbx",
+      "use": "flower",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "quaternius-nature/OBJ/Mushroom_Common.obj",
+      "sizeStuds": [
+        2.0132176876068115,
+        1.6552891731262207,
+        2.782546281814575
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/quaternius-nature__Mushroom_Common__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__Mushroom_Common__meadow_flower",
+          "sourceMaterial": "Mushrooms",
+          "material": "meadow_flower",
+          "colour": [
+            247,
+            192,
+            72
+          ],
+          "triangles": 880,
+          "texture": "_palette/meadow_flower.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 880
+    },
+    {
+      "name": "Mushroom_Common",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/Mushroom_Common.fbx",
+      "use": "flower",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "quaternius-nature/OBJ/Mushroom_Common.obj",
+      "sizeStuds": [
+        2.0132176876068115,
+        1.6552891731262207,
+        2.782546281814575
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/quaternius-nature__Mushroom_Common__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__Mushroom_Common__cave_flower",
+          "sourceMaterial": "Mushrooms",
+          "material": "cave_flower",
+          "colour": [
+            54,
+            224,
+            245
+          ],
+          "triangles": 880,
+          "texture": "_palette/cave_flower.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 880
+    },
+    {
+      "name": "Pebble_Round_1",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/Pebble_Round_1.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "quaternius-nature/OBJ/Pebble_Round_1.obj",
+      "sizeStuds": [
+        1.7858535051345825,
+        0.34098923206329346,
+        1.3107963800430298
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/quaternius-nature__Pebble_Round_1__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__Pebble_Round_1__meadow_stone",
+          "sourceMaterial": "PathRocks",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 136,
+          "texture": "_palette/meadow_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 136
+    },
+    {
+      "name": "Pebble_Round_1",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/Pebble_Round_1.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "quaternius-nature/OBJ/Pebble_Round_1.obj",
+      "sizeStuds": [
+        1.7858535051345825,
+        0.34098923206329346,
+        1.3107963800430298
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/quaternius-nature__Pebble_Round_1__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__Pebble_Round_1__cave_stone",
+          "sourceMaterial": "PathRocks",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 136,
+          "texture": "_palette/cave_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 136
+    },
+    {
+      "name": "Pine_1",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/Pine_1.fbx",
+      "use": "tree",
+      "islands": [
+        "meadow"
+      ],
+      "island": "meadow",
+      "actualSource": "quaternius-nature/OBJ/Pine_1.obj",
+      "sizeStuds": [
+        17.659635543823242,
+        26.13184928894043,
+        16.208585739135742
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/quaternius-nature__Pine_1__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__Pine_1__meadow_trunk_wood",
+          "sourceMaterial": "Bark_NormalTree",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 3177,
+          "texture": "_palette/meadow_wood.png"
+        },
+        {
+          "mesh": "quaternius-nature__Pine_1__meadow_leaf",
+          "sourceMaterial": "Leaves_Pine",
+          "material": "meadow_leaf",
+          "colour": [
+            102,
+            156,
+            62
+          ],
+          "triangles": 770,
+          "texture": "_palette/meadow_leaf.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 3947
+    },
+    {
+      "name": "Rock_Medium_1",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/Rock_Medium_1.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "quaternius-nature/OBJ/Rock_Medium_1.obj",
+      "sizeStuds": [
+        11.518385887145996,
+        8.070700645446777,
+        10.675485610961914
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/quaternius-nature__Rock_Medium_1__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__Rock_Medium_1__meadow_stone",
+          "sourceMaterial": "Rocks",
+          "material": "meadow_stone",
+          "colour": [
+            125,
+            133,
+            110
+          ],
+          "triangles": 342,
+          "texture": "_palette/meadow_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 342
+    },
+    {
+      "name": "Rock_Medium_1",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/Rock_Medium_1.fbx",
+      "use": "rock",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "quaternius-nature/OBJ/Rock_Medium_1.obj",
+      "sizeStuds": [
+        11.518385887145996,
+        8.070700645446777,
+        10.675485610961914
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/quaternius-nature__Rock_Medium_1__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__Rock_Medium_1__cave_stone",
+          "sourceMaterial": "Rocks",
+          "material": "cave_stone",
+          "colour": [
+            88,
+            92,
+            122
+          ],
+          "triangles": 342,
+          "texture": "_palette/cave_stone.png"
+        }
+      ],
+      "meshParts": 1,
+      "triangles": 342
+    },
+    {
+      "name": "TwistedTree_1",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/TwistedTree_1.fbx",
+      "use": "tree",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "meadow",
+      "actualSource": "quaternius-nature/OBJ/TwistedTree_1.obj",
+      "sizeStuds": [
+        48.27055358886719,
+        59.73391342163086,
+        41.24773025512695
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/meadow/quaternius-nature__TwistedTree_1__meadow.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__TwistedTree_1__meadow_trunk_wood",
+          "sourceMaterial": "Bark_TwistedTree",
+          "material": "meadow_wood",
+          "colour": [
+            119,
+            78,
+            43
+          ],
+          "triangles": 7212,
+          "texture": "_palette/meadow_wood.png"
+        },
+        {
+          "mesh": "quaternius-nature__TwistedTree_1__meadow_leaf",
+          "sourceMaterial": "Leaves_TwistedTree",
+          "material": "meadow_leaf",
+          "colour": [
+            102,
+            156,
+            62
+          ],
+          "triangles": 2352,
+          "texture": "_palette/meadow_leaf.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 9564
+    },
+    {
+      "name": "TwistedTree_1",
+      "pack": "quaternius-nature",
+      "file": "quaternius-nature/FBX/TwistedTree_1.fbx",
+      "use": "tree",
+      "islands": [
+        "meadow",
+        "cave"
+      ],
+      "island": "cave",
+      "actualSource": "quaternius-nature/OBJ/TwistedTree_1.obj",
+      "sizeStuds": [
+        48.27055358886719,
+        59.73391342163086,
+        41.24773025512695
+      ],
+      "origin": "shared source bounding-box base",
+      "scale": 3.571428571428571,
+      "output": "assets/kits2/cave/quaternius-nature__TwistedTree_1__cave.fbx",
+      "meshes": [
+        {
+          "mesh": "quaternius-nature__TwistedTree_1__cave_trunk_wood",
+          "sourceMaterial": "Bark_TwistedTree",
+          "material": "cave_wood",
+          "colour": [
+            104,
+            68,
+            43
+          ],
+          "triangles": 7212,
+          "texture": "_palette/cave_wood.png"
+        },
+        {
+          "mesh": "quaternius-nature__TwistedTree_1__cave_leaf",
+          "sourceMaterial": "Leaves_TwistedTree",
+          "material": "cave_leaf",
+          "colour": [
+            77,
+            106,
+            115
+          ],
+          "triangles": 2352,
+          "texture": "_palette/cave_leaf.png"
+        }
+      ],
+      "meshParts": 2,
+      "triangles": 9564
+    }
+  ]
+}

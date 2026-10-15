@@ -1,0 +1,13 @@
+{
+  "collision_geometry_equal": true,
+  "compiled_scripts": 9,
+  "exposure": 0.6499999761581421,
+  "gameplay_sources_equal": true,
+  "max_transform_error": 0.000012874603271484375,
+  "native_hook_attributes_equal": true,
+  "native_parts": 45746,
+  "point_lights": 357,
+  "routes_equal": true,
+  "runtime": "UNKNOWN; static native binary inspection",
+  "terrain_height_mass_equal": true
+}

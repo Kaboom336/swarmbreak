@@ -1287,10 +1287,10 @@ local function loopInterruptionTest()
 	end
 	interrupted("secure", false, false)
 	interrupted("home", false, false)
-	first = assert(source:find("local function recover(", 1, true))
+	first = assert(source:find("local function recoverAttempt(", 1, true))
 	last = assert(source:find("-- Live production expiry:", first, true))
 	local actor, time, item =
-		{}, 10, { id = "recover:1", state = "Dropped", escapeDeadline = 60, firstPickup = 0, settle = 11 }
+		{}, 10, { id = "recover:1", state = "Dropped", escapeDeadline = 60, firstPickup = 0, settle = 11, position = v.zero }
 	local s = { phase = "Run", slowUntil = 12 }
 	local states, rules = { [actor] = s }, { active = item }
 	local walks, holds = 0, 0
@@ -1314,8 +1314,12 @@ local function loopInterruptionTest()
 	}
 	local recover = luau.load(source:sub(first, last - 1) .. "\nreturn recover", {
 		environment = {
+			updateDrop = function(fields) assert(type(fields.reason)=="string", "persisted recovery reason") end,
 			Config = Config,
 			Vector3 = v,
+			Enum = require("@lune/roblox").Enum,
+			RaycastParams = {new = function() return {} end},
+			workspace = {Raycast = function() return nil end},
 			os = {
 				clock = function()
 					return time
@@ -1531,6 +1535,7 @@ local function pathRecoveryTest()
 				Vector3 = v,
 				Enum = roblox.Enum,
 				SSS = { SetAttribute = function() end },
+				updateDrop = function(fields) assert(fields.reason and fields.recoverPath, "persisted recovery path") end,
 				game = {
 					GetService = function()
 						return service
@@ -1718,10 +1723,21 @@ local function retestRound3()
 				Vector3 = v,
 				Enum = roblox.Enum,
 				world = {},
+				states = {},
+				arena = {},
+				game = {GetService = function(_, name)
+					if name == "HttpService" then return {JSONEncode=function(_,data) assert(data.reason, "drop snapshot"); return "{}" end} end
+					return {SetAttribute=function(_,key,value) assert(key=="GreyboxLoopTestLastDrop" and type(value)=="string", "drop attribute") end}
+				end},
 				root = function()
 					return { Position = v.zero }
 				end,
 				Arena = {
+					carrierFloor = function() return v.zero end,
+					dropDiagnostic = function(_, position, floor, label)
+						assert(position and floor == v.zero and label:match("^drop "), "drop diagnostic fields")
+						return {reason=label}
+					end,
 					outside = function()
 						return fallen
 					end,
@@ -1896,6 +1912,7 @@ local function gullyRetest()
 				HumanoidStateType = { Jumping = "Jumping" },
 				PathStatus = { Success = "Success" },
 			},
+			updateDrop = function(fields) assert(fields.reason and fields.recoverPath, "persisted recovery path") end,
 			game = {
 				GetService = function()
 					return {

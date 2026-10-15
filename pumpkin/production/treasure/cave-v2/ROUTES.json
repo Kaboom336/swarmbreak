@@ -1,0 +1,313 @@
+{
+  "status": "PROPOSED; times ESTIMATED; not shortest-path or runtime measurements",
+  "coordinateOrder": "X,Z,Y; north +Z",
+  "footSpeedAssumed": 16,
+  "railSpeedAssumed": 24,
+  "routeCenterlines": {
+    "main": [
+      [
+        160,
+        120,
+        48
+      ],
+      [
+        110,
+        120,
+        48
+      ],
+      [
+        40,
+        120,
+        24
+      ],
+      [
+        -50,
+        110,
+        24
+      ],
+      [
+        -120,
+        65,
+        24
+      ],
+      [
+        -150,
+        0,
+        8
+      ],
+      [
+        -150,
+        -70,
+        0
+      ],
+      [
+        -150,
+        -100,
+        0
+      ]
+    ],
+    "cave": [
+      [
+        160,
+        120,
+        48
+      ],
+      [
+        190,
+        50,
+        16
+      ],
+      [
+        190,
+        -25,
+        0
+      ],
+      [
+        140,
+        -50,
+        0
+      ],
+      [
+        80,
+        -35,
+        0
+      ],
+      [
+        40,
+        -90,
+        0
+      ],
+      [
+        -20,
+        -70,
+        0
+      ],
+      [
+        -70,
+        -110,
+        0
+      ],
+      [
+        -124,
+        -120,
+        0
+      ]
+    ],
+    "cartApproach": [
+      [
+        160,
+        120,
+        48
+      ],
+      [
+        130,
+        90,
+        48
+      ]
+    ],
+    "cartRail": [
+      [
+        130,
+        90,
+        48
+      ],
+      [
+        85,
+        60,
+        32
+      ],
+      [
+        45,
+        20,
+        24
+      ],
+      [
+        15,
+        -10,
+        24
+      ],
+      [
+        -15,
+        -40,
+        24
+      ],
+      [
+        -70,
+        -65,
+        8
+      ],
+      [
+        -105,
+        -100,
+        0
+      ],
+      [
+        -126,
+        -96,
+        0
+      ]
+    ],
+    "crosslinkNorth": [
+      [
+        40,
+        120,
+        24
+      ],
+      [
+        45,
+        65,
+        24
+      ],
+      [
+        45,
+        20,
+        24
+      ],
+      [
+        90,
+        -5,
+        0
+      ],
+      [
+        140,
+        -50,
+        0
+      ]
+    ],
+    "crosslinkSouth": [
+      [
+        -150,
+        0,
+        8
+      ],
+      [
+        -105,
+        -35,
+        8
+      ],
+      [
+        -70,
+        -65,
+        8
+      ],
+      [
+        -20,
+        -70,
+        0
+      ]
+    ],
+    "pitRecovery": [
+      [
+        0,
+        -25,
+        -16
+      ],
+      [
+        -15,
+        -25,
+        -16
+      ],
+      [
+        -70,
+        -65,
+        8
+      ]
+    ],
+    "railWalkBypass": [
+      [
+        130,
+        90,
+        48
+      ],
+      [
+        85,
+        60,
+        32
+      ],
+      [
+        45,
+        20,
+        24
+      ],
+      [
+        -30,
+        20,
+        24
+      ],
+      [
+        -55,
+        -10,
+        24
+      ],
+      [
+        -70,
+        -65,
+        8
+      ],
+      [
+        -105,
+        -100,
+        0
+      ],
+      [
+        -126,
+        -96,
+        0
+      ]
+    ]
+  },
+  "stats": {
+    "main": {
+      "lengthStuds": 471.6,
+      "walkSecondsEstimated": 29.5
+    },
+    "cave": {
+      "lengthStuds": 527.2,
+      "walkSecondsEstimated": 33
+    },
+    "cartApproach": {
+      "lengthStuds": 42.4,
+      "walkSecondsEstimated": 2.7
+    },
+    "cartRail": {
+      "lengthStuds": 332.4,
+      "walkSecondsEstimated": 20.8
+    },
+    "crosslinkNorth": {
+      "lengthStuds": 224.3,
+      "walkSecondsEstimated": 14
+    },
+    "crosslinkSouth": {
+      "lengthStuds": 154,
+      "walkSecondsEstimated": 9.6
+    },
+    "pitRecovery": {
+      "lengthStuds": 87.1,
+      "walkSecondsEstimated": 5.4
+    },
+    "railWalkBypass": {
+      "lengthStuds": 358.3,
+      "walkSecondsEstimated": 22.4
+    }
+  },
+  "cartSecondsEstimated": {
+    "min": 19.5,
+    "max": 23.5
+  },
+  "gap": {
+    "center": [
+      0,
+      -25,
+      24
+    ],
+    "lengthStuds": 16,
+    "pitFloorY": -16
+  },
+  "heightContract": {
+    "camp": 48,
+    "shoulder": 24,
+    "pit": -16,
+    "exit": 0
+  },
+  "deadlineSeconds": 60
+}

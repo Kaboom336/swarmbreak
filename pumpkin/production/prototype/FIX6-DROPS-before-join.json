@@ -1,0 +1,2437 @@
+{
+  "Studio": "UNKNOWN",
+  "bounds": "conservative whole-model boxes per material; actual imported geometry UNKNOWN",
+  "categories": {
+    "landing differs from carrier lane / blocked surface": 269
+  },
+  "droppedPlacements": 94,
+  "failures": [
+    {
+      "label": "south_crosslink/7/2/-5/-20",
+      "position": [
+        -43.58997344970703,
+        0.12000274658203125,
+        93.64498901367188
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/2/0/-20",
+      "position": [
+        -47.59681701660156,
+        0.12000274658203125,
+        93.63584899902344
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/3/-5/-20",
+      "position": [
+        -43.27051544189453,
+        0.12000274658203125,
+        94.07296752929688
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/3/0/-20",
+      "position": [
+        -47.27735900878906,
+        0.12000274658203125,
+        94.06382751464844
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/4/-5/-20",
+      "position": [
+        -42.95105743408203,
+        0.12000274658203125,
+        93.50094604492188
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/4/0/-20",
+      "position": [
+        -46.95790100097656,
+        0.12000274658203125,
+        93.49180603027344
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/4/5/-20",
+      "position": [
+        -50.964744567871094,
+        0.12000274658203125,
+        93.48265075683594
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/5/-5/-20",
+      "position": [
+        -42.63159942626953,
+        0.12000274658203125,
+        93.92892456054688
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/5/0/-20",
+      "position": [
+        -46.63844299316406,
+        0.12000274658203125,
+        93.91978454589844
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/5/5/-20",
+      "position": [
+        -50.645286560058594,
+        0.12000274658203125,
+        93.91062927246094
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/6/-5/-20",
+      "position": [
+        -42.31214141845703,
+        0.12000274658203125,
+        94.35690307617188
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/6/0/-20",
+      "position": [
+        -47.31898498535156,
+        0.12000274658203125,
+        93.34776306152344
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/6/5/-20",
+      "position": [
+        -50.325828552246094,
+        0.12000274658203125,
+        93.33860778808594
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/7/-5/-20",
+      "position": [
+        -41.99268341064453,
+        0.12000274658203125,
+        93.78488159179688
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/7/0/-20",
+      "position": [
+        -45.99952697753906,
+        0.12000274658203125,
+        93.77574157714844
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/7/7/5/-20",
+      "position": [
+        -50.006370544433594,
+        0.12000274658203125,
+        93.76658630371094
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/0/5/-20",
+      "position": [
+        -59.0810546875,
+        0.12000274658203125,
+        102.431640625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/0/5/0",
+      "position": [
+        -59.506736755371094,
+        0.12000274658203125,
+        104.01683044433594
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/1/-5/0",
+      "position": [
+        -54.260841369628906,
+        0.12000274658203125,
+        94.15113830566406
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/1/-5/20",
+      "position": [
+        -50.78584289550781,
+        0.12000274658203125,
+        104.14424896240234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/1/0/0",
+      "position": [
+        -54.39208984375,
+        0.12000274658203125,
+        99.1494140625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/1/0/20",
+      "position": [
+        -54.39208984375,
+        0.12000274658203125,
+        99.1494140625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/1/5/-20",
+      "position": [
+        -59.0810546875,
+        0.12000274658203125,
+        102.431640625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/1/5/0",
+      "position": [
+        -54.523338317871094,
+        0.12000274658203125,
+        104.14768981933594
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/2/-5/-20",
+      "position": [
+        -49.40869140625,
+        0.12000274658203125,
+        99.2802734375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/2/-5/0",
+      "position": [
+        -49.277442932128906,
+        0.12000274658203125,
+        94.28199768066406
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/2/-5/20",
+      "position": [
+        -45.80244445800781,
+        0.12000274658203125,
+        106.27510833740234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/2/0/0",
+      "position": [
+        -49.40869140625,
+        0.12000274658203125,
+        99.2802734375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/2/0/20",
+      "position": [
+        -49.40869140625,
+        0.12000274658203125,
+        99.2802734375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/2/5/0",
+      "position": [
+        -49.539939880371094,
+        0.12000274658203125,
+        104.27854919433594
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/2/5/20",
+      "position": [
+        -49.40869140625,
+        0.12000274658203125,
+        99.2802734375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/3/-5/-20",
+      "position": [
+        -44.42529296875,
+        0.12000274658203125,
+        99.4111328125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/3/-5/0",
+      "position": [
+        -44.294044494628906,
+        0.12000274658203125,
+        94.41285705566406
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/3/-5/20",
+      "position": [
+        -44.81904602050781,
+        0.12000274658203125,
+        106.40596771240234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/3/0/-20",
+      "position": [
+        -44.42529296875,
+        0.12000274658203125,
+        99.4111328125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/3/0/0",
+      "position": [
+        -44.42529296875,
+        0.12000274658203125,
+        99.4111328125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/3/0/20",
+      "position": [
+        -44.42529296875,
+        0.12000274658203125,
+        99.4111328125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/3/5/-20",
+      "position": [
+        -45.03153991699219,
+        0.12000274658203125,
+        93.41629791259766
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/3/5/0",
+      "position": [
+        -44.556541442871094,
+        0.12000274658203125,
+        104.40940856933594
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/3/5/20",
+      "position": [
+        -44.42529296875,
+        0.12000274658203125,
+        99.4111328125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/4/-5/-20",
+      "position": [
+        -39.44189453125,
+        0.12000274658203125,
+        99.5419921875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/4/-5/0",
+      "position": [
+        -39.310646057128906,
+        0.12000274658203125,
+        94.54371643066406
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/4/-5/20",
+      "position": [
+        -42.83564758300781,
+        0.12000274658203125,
+        106.53682708740234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/4/0/-20",
+      "position": [
+        -39.44189453125,
+        0.12000274658203125,
+        99.5419921875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/4/0/0",
+      "position": [
+        -39.44189453125,
+        0.12000274658203125,
+        99.5419921875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/4/0/20",
+      "position": [
+        -39.44189453125,
+        0.12000274658203125,
+        99.5419921875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/4/5/-20",
+      "position": [
+        -40.04814147949219,
+        0.12000274658203125,
+        93.54715728759766
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/4/5/0",
+      "position": [
+        -39.573143005371094,
+        0.12000274658203125,
+        104.54026794433594
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/4/5/20",
+      "position": [
+        -39.44189453125,
+        0.12000274658203125,
+        99.5419921875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/5/-5/-20",
+      "position": [
+        -34.45849609375,
+        0.12000274658203125,
+        99.6728515625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/5/-5/0",
+      "position": [
+        -34.327247619628906,
+        0.12000274658203125,
+        94.67457580566406
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/5/-5/20",
+      "position": [
+        -33.85224914550781,
+        0.12000274658203125,
+        105.66768646240234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/5/0/-20",
+      "position": [
+        -34.45849609375,
+        0.12000274658203125,
+        99.6728515625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/5/0/0",
+      "position": [
+        -34.45849609375,
+        0.12000274658203125,
+        99.6728515625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/5/0/20",
+      "position": [
+        -34.45849609375,
+        0.12000274658203125,
+        99.6728515625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/5/5/-20",
+      "position": [
+        -35.06474304199219,
+        0.12000274658203125,
+        93.67801666259766
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/5/5/0",
+      "position": [
+        -34.589744567871094,
+        0.12000274658203125,
+        104.67112731933594
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/5/5/20",
+      "position": [
+        -34.458492279052734,
+        0.12000274658203125,
+        99.6728515625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/6/-5/20",
+      "position": [
+        -28.868846893310547,
+        0.12000274658203125,
+        105.79854583740234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/6/5/0",
+      "position": [
+        -29.606348037719727,
+        0.12000274658203125,
+        104.80198669433594
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/7/-5/20",
+      "position": [
+        -23.885448455810547,
+        0.12000274658203125,
+        105.92940521240234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "south_crosslink/8/7/5/0",
+      "position": [
+        -24.622949600219727,
+        0.12000274658203125,
+        104.93284606933594
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "bridge_south/21/0/5/20",
+      "position": [
+        -24.50295066833496,
+        0.12000274658203125,
+        102.55540466308594
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "bridge_south/21/1/5/20",
+      "position": [
+        -24.49355125427246,
+        0.12000274658203125,
+        103.02330017089844
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "bridge_south/21/2/5/20",
+      "position": [
+        -24.48415184020996,
+        0.12000274658203125,
+        102.49119567871094
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "bridge_south/21/3/5/20",
+      "position": [
+        -24.47475242614746,
+        0.12000274658203125,
+        102.95909118652344
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "bridge_south/21/4/5/20",
+      "position": [
+        -24.46535301208496,
+        0.12000274658203125,
+        103.42698669433594
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "bridge_south/21/5/5/20",
+      "position": [
+        -25.45595359802246,
+        0.12000274658203125,
+        103.89488220214844
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "bridge_south/21/6/5/20",
+      "position": [
+        -25.44655418395996,
+        0.12000274658203125,
+        104.36277770996094
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "bridge_south/21/7/5/20",
+      "position": [
+        -25.43715476989746,
+        0.12000274658203125,
+        104.83067321777344
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "bridge_south/22/0/5/20",
+      "position": [
+        -25.412647247314453,
+        0.12000274658203125,
+        105.6988525390625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "bridge_south/22/1/5/20",
+      "position": [
+        -25.396411895751953,
+        0.12000274658203125,
+        105.142333984375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/2/-5/-20",
+      "position": [
+        -43.58997344970703,
+        0.12000274658203125,
+        93.64498901367188
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/2/0/-20",
+      "position": [
+        -47.59681701660156,
+        0.12000274658203125,
+        93.63584899902344
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/3/-5/-20",
+      "position": [
+        -43.27051544189453,
+        0.12000274658203125,
+        94.07296752929688
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/3/0/-20",
+      "position": [
+        -47.27735900878906,
+        0.12000274658203125,
+        94.06382751464844
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/4/-5/-20",
+      "position": [
+        -42.95105743408203,
+        0.12000274658203125,
+        93.50094604492188
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/4/0/-20",
+      "position": [
+        -46.95790100097656,
+        0.12000274658203125,
+        93.49180603027344
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/4/5/-20",
+      "position": [
+        -50.964744567871094,
+        0.12000274658203125,
+        93.48265075683594
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/5/-5/-20",
+      "position": [
+        -42.63159942626953,
+        0.12000274658203125,
+        93.92892456054688
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/5/0/-20",
+      "position": [
+        -46.63844299316406,
+        0.12000274658203125,
+        93.91978454589844
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/5/5/-20",
+      "position": [
+        -50.645286560058594,
+        0.12000274658203125,
+        93.91062927246094
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/6/-5/-20",
+      "position": [
+        -42.31214141845703,
+        0.12000274658203125,
+        94.35690307617188
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/6/0/-20",
+      "position": [
+        -47.31898498535156,
+        0.12000274658203125,
+        93.34776306152344
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/6/5/-20",
+      "position": [
+        -50.325828552246094,
+        0.12000274658203125,
+        93.33860778808594
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/7/-5/-20",
+      "position": [
+        -41.99268341064453,
+        0.12000274658203125,
+        93.78488159179688
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/7/0/-20",
+      "position": [
+        -45.99952697753906,
+        0.12000274658203125,
+        93.77574157714844
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/47/7/5/-20",
+      "position": [
+        -50.006370544433594,
+        0.12000274658203125,
+        93.76658630371094
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/0/-5/-20",
+      "position": [
+        -42.180423736572266,
+        0.12000274658203125,
+        93.54180145263672
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/0/0/-20",
+      "position": [
+        -46.082950592041016,
+        0.12000274658203125,
+        93.66754913330078
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/0/0/0",
+      "position": [
+        -61.69305419921875,
+        0.12000274658203125,
+        99.1705322265625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/0/0/20",
+      "position": [
+        -61.69305419921875,
+        0.12000274658203125,
+        99.1705322265625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/0/5/-20",
+      "position": [
+        -49.985477447509766,
+        0.12000274658203125,
+        93.79329681396484
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/0/5/20",
+      "position": [
+        -61.69305419921875,
+        0.12000274658203125,
+        99.1705322265625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/1/-5/-20",
+      "position": [
+        -41.832157135009766,
+        0.12000274658203125,
+        93.97661590576172
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/1/0/-20",
+      "position": [
+        -45.734683990478516,
+        0.12000274658203125,
+        94.10236358642578
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/1/0/0",
+      "position": [
+        -61.34478759765625,
+        0.12000274658203125,
+        99.6053466796875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/1/0/20",
+      "position": [
+        -61.34478759765625,
+        0.12000274658203125,
+        99.6053466796875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/1/5/-20",
+      "position": [
+        -51.637210845947266,
+        0.12000274658203125,
+        93.22811126708984
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/1/5/20",
+      "position": [
+        -61.34478759765625,
+        0.12000274658203125,
+        99.6053466796875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/2/-5/-20",
+      "position": [
+        -44.483890533447266,
+        0.12000274658203125,
+        93.41143035888672
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/2/0/-20",
+      "position": [
+        -45.386417388916016,
+        0.12000274658203125,
+        93.53717803955078
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/2/0/0",
+      "position": [
+        -60.99652099609375,
+        0.12000274658203125,
+        100.0401611328125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/2/0/20",
+      "position": [
+        -60.99652099609375,
+        0.12000274658203125,
+        100.0401611328125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/2/5/-20",
+      "position": [
+        -49.288944244384766,
+        0.12000274658203125,
+        93.66292572021484
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/2/5/20",
+      "position": [
+        -60.99652099609375,
+        0.12000274658203125,
+        100.0401611328125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/3/-5/-20",
+      "position": [
+        -41.135623931884766,
+        0.12000274658203125,
+        93.84624481201172
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/3/0/-20",
+      "position": [
+        -45.038150787353516,
+        0.12000274658203125,
+        93.97199249267578
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/3/0/0",
+      "position": [
+        -60.64825439453125,
+        0.12000274658203125,
+        100.4749755859375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/3/0/20",
+      "position": [
+        -60.64825439453125,
+        0.12000274658203125,
+        100.4749755859375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/3/5/-20",
+      "position": [
+        -48.940677642822266,
+        0.12000274658203125,
+        94.09774017333984
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/3/5/20",
+      "position": [
+        -60.64825439453125,
+        0.12000274658203125,
+        100.4749755859375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/4/-5/-20",
+      "position": [
+        -40.787357330322266,
+        0.12000274658203125,
+        94.28105926513672
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/4/0/-20",
+      "position": [
+        -44.689884185791016,
+        0.12000274658203125,
+        93.40680694580078
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/4/0/0",
+      "position": [
+        -60.29998779296875,
+        0.12000274658203125,
+        100.9097900390625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/4/0/20",
+      "position": [
+        -60.29998779296875,
+        0.12000274658203125,
+        100.9097900390625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/4/5/-20",
+      "position": [
+        -48.592411041259766,
+        0.12000274658203125,
+        93.53255462646484
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/4/5/20",
+      "position": [
+        -60.29998779296875,
+        0.12000274658203125,
+        100.9097900390625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/5/-5/-20",
+      "position": [
+        -40.439090728759766,
+        0.12000274658203125,
+        93.71587371826172
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/5/0/-20",
+      "position": [
+        -44.341617584228516,
+        0.12000274658203125,
+        93.84162139892578
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/5/0/0",
+      "position": [
+        -59.95172119140625,
+        0.12000274658203125,
+        101.3446044921875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/5/0/20",
+      "position": [
+        -59.95172119140625,
+        0.12000274658203125,
+        101.3446044921875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/5/5/-20",
+      "position": [
+        -48.244144439697266,
+        0.12000274658203125,
+        93.96736907958984
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/5/5/20",
+      "position": [
+        -59.95172119140625,
+        0.12000274658203125,
+        101.3446044921875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/6/-5/-20",
+      "position": [
+        -40.090824127197266,
+        0.12000274658203125,
+        94.15068817138672
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/6/0/-20",
+      "position": [
+        -43.993350982666016,
+        0.12000274658203125,
+        94.27643585205078
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/6/0/0",
+      "position": [
+        -59.60345458984375,
+        0.12000274658203125,
+        101.7794189453125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/6/0/20",
+      "position": [
+        -59.60345458984375,
+        0.12000274658203125,
+        101.7794189453125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/6/5/-20",
+      "position": [
+        -47.895877838134766,
+        0.12000274658203125,
+        93.40218353271484
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/6/5/20",
+      "position": [
+        -59.60345458984375,
+        0.12000274658203125,
+        101.7794189453125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/7/-5/-20",
+      "position": [
+        -39.742557525634766,
+        0.12000274658203125,
+        93.58550262451172
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/7/0/-20",
+      "position": [
+        -43.645084381103516,
+        0.12000274658203125,
+        93.71125030517578
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/7/0/0",
+      "position": [
+        -59.25518798828125,
+        0.12000274658203125,
+        102.2142333984375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/7/0/20",
+      "position": [
+        -59.25518798828125,
+        0.12000274658203125,
+        102.2142333984375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/7/5/-20",
+      "position": [
+        -47.547611236572266,
+        0.12000274658203125,
+        93.83699798583984
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/48/7/5/20",
+      "position": [
+        -59.25518798828125,
+        0.12000274658203125,
+        102.2142333984375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/0/-5/-20",
+      "position": [
+        -39.96604919433594,
+        0.12000274658203125,
+        94.31632232666016
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/0/0/-20",
+      "position": [
+        -58.88848876953125,
+        0.12000274658203125,
+        102.6546630859375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/0/0/0",
+      "position": [
+        -58.88848876953125,
+        0.12000274658203125,
+        102.6546630859375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/0/0/20",
+      "position": [
+        -58.88848876953125,
+        0.12000274658203125,
+        102.6546630859375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/0/5/-20",
+      "position": [
+        -58.88848876953125,
+        0.12000274658203125,
+        102.6546630859375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/0/5/20",
+      "position": [
+        -58.88848876953125,
+        0.12000274658203125,
+        102.6546630859375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/1/-5/-20",
+      "position": [
+        -39.58091735839844,
+        0.12000274658203125,
+        93.76236724853516
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/1/-5/0",
+      "position": [
+        -54.718868255615234,
+        0.12000274658203125,
+        99.83303833007812
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/1/0/-20",
+      "position": [
+        -58.50335693359375,
+        0.12000274658203125,
+        103.1007080078125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/1/0/0",
+      "position": [
+        -58.50335693359375,
+        0.12000274658203125,
+        103.1007080078125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/1/0/20",
+      "position": [
+        -58.50335693359375,
+        0.12000274658203125,
+        103.1007080078125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/1/5/-20",
+      "position": [
+        -53.14989471435547,
+        0.12000274658203125,
+        103.2977066040039
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/1/5/20",
+      "position": [
+        -58.50335693359375,
+        0.12000274658203125,
+        103.1007080078125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/2/-5/-20",
+      "position": [
+        -39.19578552246094,
+        0.12000274658203125,
+        94.20841217041016
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/2/-5/0",
+      "position": [
+        -54.333736419677734,
+        0.12000274658203125,
+        100.27908325195312
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/2/0/-20",
+      "position": [
+        -58.11822509765625,
+        0.12000274658203125,
+        103.5467529296875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/2/0/0",
+      "position": [
+        -58.11822509765625,
+        0.12000274658203125,
+        103.5467529296875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/2/0/20",
+      "position": [
+        -58.11822509765625,
+        0.12000274658203125,
+        103.5467529296875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/2/5/-20",
+      "position": [
+        -49.76476287841797,
+        0.12000274658203125,
+        104.7437515258789
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/2/5/0",
+      "position": [
+        -61.902713775634766,
+        0.12000274658203125,
+        106.81442260742188
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/2/5/20",
+      "position": [
+        -58.11822509765625,
+        0.12000274658203125,
+        103.5467529296875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/3/-5/-20",
+      "position": [
+        -38.81065368652344,
+        0.12000274658203125,
+        93.65445709228516
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/3/-5/0",
+      "position": [
+        -53.948604583740234,
+        0.12000274658203125,
+        100.72512817382812
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/3/0/-20",
+      "position": [
+        -57.73309326171875,
+        0.12000274658203125,
+        103.9927978515625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/3/0/0",
+      "position": [
+        -57.73309326171875,
+        0.12000274658203125,
+        103.9927978515625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/3/0/20",
+      "position": [
+        -57.73309326171875,
+        0.12000274658203125,
+        103.9927978515625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/3/5/-20",
+      "position": [
+        -51.37963104248047,
+        0.12000274658203125,
+        104.1897964477539
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/3/5/0",
+      "position": [
+        -61.517581939697266,
+        0.12000274658203125,
+        107.26046752929688
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/3/5/20",
+      "position": [
+        -57.73309326171875,
+        0.12000274658203125,
+        103.9927978515625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/4/-5/-20",
+      "position": [
+        -38.42552185058594,
+        0.12000274658203125,
+        94.10050201416016
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/4/-5/0",
+      "position": [
+        -53.563472747802734,
+        0.12000274658203125,
+        101.17117309570312
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/4/0/-20",
+      "position": [
+        -57.34796142578125,
+        0.12000274658203125,
+        104.4388427734375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/4/0/0",
+      "position": [
+        -57.34796142578125,
+        0.12000274658203125,
+        104.4388427734375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/4/0/20",
+      "position": [
+        -57.34796142578125,
+        0.12000274658203125,
+        104.4388427734375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/4/5/-20",
+      "position": [
+        -49.99449920654297,
+        0.12000274658203125,
+        104.6358413696289
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/4/5/0",
+      "position": [
+        -61.132450103759766,
+        0.12000274658203125,
+        107.70651245117188
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/4/5/20",
+      "position": [
+        -57.34796142578125,
+        0.12000274658203125,
+        104.4388427734375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/5/-5/-20",
+      "position": [
+        -40.04039001464844,
+        0.12000274658203125,
+        93.54654693603516
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/5/-5/0",
+      "position": [
+        -53.178340911865234,
+        0.12000274658203125,
+        101.61721801757812
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/5/0/-20",
+      "position": [
+        -56.96282958984375,
+        0.12000274658203125,
+        104.8848876953125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/5/0/0",
+      "position": [
+        -56.96282958984375,
+        0.12000274658203125,
+        104.8848876953125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/5/0/20",
+      "position": [
+        -56.96282958984375,
+        0.12000274658203125,
+        104.8848876953125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/5/5/-20",
+      "position": [
+        -49.60936737060547,
+        0.12000274658203125,
+        105.0818862915039
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/5/5/20",
+      "position": [
+        -56.96282958984375,
+        0.12000274658203125,
+        104.8848876953125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/6/-5/-20",
+      "position": [
+        -37.65525817871094,
+        0.12000274658203125,
+        93.99259185791016
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/6/-5/0",
+      "position": [
+        -52.793209075927734,
+        0.12000274658203125,
+        102.06326293945312
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/6/0/-20",
+      "position": [
+        -56.57769775390625,
+        0.12000274658203125,
+        105.3309326171875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/6/0/0",
+      "position": [
+        -56.57769775390625,
+        0.12000274658203125,
+        105.3309326171875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/6/0/20",
+      "position": [
+        -56.57769775390625,
+        0.12000274658203125,
+        105.3309326171875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/6/5/-20",
+      "position": [
+        -50.22423553466797,
+        0.12000274658203125,
+        104.5279312133789
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/6/5/20",
+      "position": [
+        -56.57769775390625,
+        0.12000274658203125,
+        105.3309326171875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/7/-5/-20",
+      "position": [
+        -37.27012634277344,
+        0.12000274658203125,
+        94.43863677978516
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/7/-5/0",
+      "position": [
+        -52.408077239990234,
+        0.12000274658203125,
+        102.50930786132812
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/7/0/-20",
+      "position": [
+        -56.19256591796875,
+        0.12000274658203125,
+        105.7769775390625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/7/0/0",
+      "position": [
+        -56.19256591796875,
+        0.12000274658203125,
+        105.7769775390625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/7/0/20",
+      "position": [
+        -56.19256591796875,
+        0.12000274658203125,
+        105.7769775390625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/7/5/-20",
+      "position": [
+        -49.83910369873047,
+        0.12000274658203125,
+        104.9739761352539
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/49/7/5/20",
+      "position": [
+        -56.19256591796875,
+        0.12000274658203125,
+        105.7769775390625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/0/-5/-20",
+      "position": [
+        -37.59587097167969,
+        0.12000274658203125,
+        94.07670593261719
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/0/-5/0",
+      "position": [
+        -52.13694763183594,
+        0.12000274658203125,
+        102.80831146240234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/0/0/-20",
+      "position": [
+        -55.772216796875,
+        0.12000274658203125,
+        106.2412109375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/0/0/0",
+      "position": [
+        -55.772216796875,
+        0.12000274658203125,
+        106.2412109375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/0/0/20",
+      "position": [
+        -55.772216796875,
+        0.12000274658203125,
+        106.2412109375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/0/5/-20",
+      "position": [
+        -49.86640930175781,
+        0.12000274658203125,
+        104.9425048828125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/0/5/20",
+      "position": [
+        -55.772216796875,
+        0.12000274658203125,
+        106.2412109375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/1/-5/-20",
+      "position": [
+        -39.14030456542969,
+        0.12000274658203125,
+        93.55912780761719
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/1/-5/0",
+      "position": [
+        -51.68138122558594,
+        0.12000274658203125,
+        103.29073333740234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/1/0/-20",
+      "position": [
+        -55.316650390625,
+        0.12000274658203125,
+        106.7236328125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/1/0/0",
+      "position": [
+        -55.316650390625,
+        0.12000274658203125,
+        106.7236328125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/1/0/20",
+      "position": [
+        -55.316650390625,
+        0.12000274658203125,
+        106.7236328125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/1/5/-20",
+      "position": [
+        -48.41084289550781,
+        0.12000274658203125,
+        105.4249267578125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/1/5/20",
+      "position": [
+        -55.316650390625,
+        0.12000274658203125,
+        106.7236328125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/2/-5/-20",
+      "position": [
+        -36.68473815917969,
+        0.12000274658203125,
+        94.04154968261719
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/2/-5/0",
+      "position": [
+        -51.22581481933594,
+        0.12000274658203125,
+        103.77315521240234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/2/0/-20",
+      "position": [
+        -54.861083984375,
+        0.12000274658203125,
+        107.2060546875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/2/0/0",
+      "position": [
+        -54.861083984375,
+        0.12000274658203125,
+        107.2060546875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/2/0/20",
+      "position": [
+        -54.861083984375,
+        0.12000274658203125,
+        107.2060546875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/2/5/-20",
+      "position": [
+        -47.95527648925781,
+        0.12000274658203125,
+        105.9073486328125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/2/5/20",
+      "position": [
+        -54.861083984375,
+        0.12000274658203125,
+        107.2060546875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/3/-5/-20",
+      "position": [
+        -54.405517578125,
+        0.12000274658203125,
+        107.6884765625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/3/-5/0",
+      "position": [
+        -50.77024841308594,
+        0.12000274658203125,
+        104.25557708740234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/3/0/-20",
+      "position": [
+        -54.405517578125,
+        0.12000274658203125,
+        107.6884765625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/3/0/0",
+      "position": [
+        -54.405517578125,
+        0.12000274658203125,
+        107.6884765625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/3/0/20",
+      "position": [
+        -54.405517578125,
+        0.12000274658203125,
+        107.6884765625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/3/5/-20",
+      "position": [
+        -48.49971008300781,
+        0.12000274658203125,
+        105.3897705078125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/3/5/20",
+      "position": [
+        -54.405517578125,
+        0.12000274658203125,
+        107.6884765625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/4/-5/0",
+      "position": [
+        -50.31468200683594,
+        0.12000274658203125,
+        104.73799896240234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/4/5/-20",
+      "position": [
+        -45.04414367675781,
+        0.12000274658203125,
+        106.8721923828125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/5/-5/0",
+      "position": [
+        -49.85911560058594,
+        0.12000274658203125,
+        105.22042083740234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/5/5/-20",
+      "position": [
+        -46.58857727050781,
+        0.12000274658203125,
+        106.3546142578125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/6/-5/0",
+      "position": [
+        -49.40354919433594,
+        0.12000274658203125,
+        105.70284271240234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/6/5/-20",
+      "position": [
+        -45.13301086425781,
+        0.12000274658203125,
+        106.8370361328125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/7/-5/0",
+      "position": [
+        -48.94798278808594,
+        0.12000274658203125,
+        106.18526458740234
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/50/7/5/-20",
+      "position": [
+        -44.67744445800781,
+        0.12000274658203125,
+        107.3194580078125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/51/0/-5/0",
+      "position": [
+        -48.5781364440918,
+        0.12000274658203125,
+        106.56214904785156
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/51/0/5/-20",
+      "position": [
+        -43.556182861328125,
+        0.12000274658203125,
+        107.44230651855469
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/51/1/-5/0",
+      "position": [
+        -48.0454216003418,
+        0.12000274658203125,
+        107.08753967285156
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/51/1/5/-20",
+      "position": [
+        -45.023468017578125,
+        0.12000274658203125,
+        106.96769714355469
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/51/2/-5/0",
+      "position": [
+        -47.5127067565918,
+        0.12000274658203125,
+        107.61293029785156
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/51/2/5/-20",
+      "position": [
+        -43.490753173828125,
+        0.12000274658203125,
+        107.49308776855469
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/51/3/-5/0",
+      "position": [
+        -46.9799919128418,
+        0.12000274658203125,
+        108.13832092285156
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/51/3/5/-20",
+      "position": [
+        -44.958038330078125,
+        0.12000274658203125,
+        107.01847839355469
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/51/4/5/-20",
+      "position": [
+        -43.425323486328125,
+        0.12000274658203125,
+        107.54386901855469
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/51/5/5/-20",
+      "position": [
+        -44.892608642578125,
+        0.12000274658203125,
+        107.06925964355469
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/51/6/5/-20",
+      "position": [
+        -43.359893798828125,
+        0.12000274658203125,
+        107.59465026855469
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/51/7/5/-20",
+      "position": [
+        -43.827178955078125,
+        0.12000274658203125,
+        108.12004089355469
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/52/0/5/-20",
+      "position": [
+        -43.511810302734375,
+        0.12000274658203125,
+        107.42388153076172
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/52/1/5/-20",
+      "position": [
+        -42.934173583984375,
+        0.12000274658203125,
+        107.96880340576172
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/52/2/5/-20",
+      "position": [
+        -44.356536865234375,
+        0.12000274658203125,
+        107.51372528076172
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "west/52/3/5/-20",
+      "position": [
+        -43.778900146484375,
+        0.12000274658203125,
+        108.05864715576172
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/0/-5/-20",
+      "position": [
+        -35.266963958740234,
+        0.12000274658203125,
+        93.79647064208984
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/0/0/-20",
+      "position": [
+        -40.23691177368164,
+        0.12000274658203125,
+        94.24909210205078
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/1/-5/-20",
+      "position": [
+        -35.500362396240234,
+        0.12000274658203125,
+        93.91561126708984
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/1/0/-20",
+      "position": [
+        -40.47031021118164,
+        0.12000274658203125,
+        94.36823272705078
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/1/5/-20",
+      "position": [
+        -45.44025802612305,
+        0.12000274658203125,
+        93.82085418701172
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/2/-5/-20",
+      "position": [
+        -35.733760833740234,
+        0.12000274658203125,
+        94.03475189208984
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/2/0/-20",
+      "position": [
+        -41.70370864868164,
+        0.12000274658203125,
+        93.48737335205078
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/3/-5/-20",
+      "position": [
+        -35.967159271240234,
+        0.12000274658203125,
+        94.15389251708984
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/3/0/-20",
+      "position": [
+        -40.93710708618164,
+        0.12000274658203125,
+        93.60651397705078
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/4/-5/-20",
+      "position": [
+        -36.200557708740234,
+        0.12000274658203125,
+        94.27303314208984
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/4/0/-20",
+      "position": [
+        -41.17050552368164,
+        0.12000274658203125,
+        93.72565460205078
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/5/-5/-20",
+      "position": [
+        -36.433956146240234,
+        0.12000274658203125,
+        96.39217376708984
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/5/0/-20",
+      "position": [
+        -41.40390396118164,
+        0.12000274658203125,
+        95.84479522705078
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/6/-5/-20",
+      "position": [
+        -36.667354583740234,
+        0.12000274658203125,
+        98.51131439208984
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/6/0/-20",
+      "position": [
+        -41.63730239868164,
+        0.12000274658203125,
+        97.96393585205078
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/7/-5/-20",
+      "position": [
+        -36.900753021240234,
+        0.12000274658203125,
+        100.63045501708984
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/7/0/-20",
+      "position": [
+        -41.87070083618164,
+        0.12000274658203125,
+        100.08307647705078
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "tunnel_south/3/7/5/-20",
+      "position": [
+        -46.84064865112305,
+        0.12000274658203125,
+        99.53569793701172
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "ravine_ramp/4/4/5/20",
+      "position": [
+        -47,
+        0.12000274658203125,
+        95.875
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "ravine_ramp/4/5/5/20",
+      "position": [
+        -47,
+        0.12000274658203125,
+        97.625
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "ravine_ramp/4/6/5/20",
+      "position": [
+        -47,
+        0.12000274658203125,
+        99.375
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "ravine_ramp/4/7/-5/20",
+      "position": [
+        -26,
+        0.12000274658203125,
+        105.125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    },
+    {
+      "label": "ravine_ramp/4/7/5/20",
+      "position": [
+        -47,
+        0.12000274658203125,
+        101.125
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    }
+  ],
+  "keptPlacements": 200,
+  "kits2Templates": 74,
+  "samples": 31824,
+  "spawnAttempts": 294,
+  "state": "FAIL",
+  "validCacheHits": 41808
+}

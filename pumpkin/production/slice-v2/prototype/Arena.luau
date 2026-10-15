@@ -268,7 +268,7 @@ local function dropFloor(a, p)
 	end
 	return center
 end
-function Arena.dropSocket(a, position)
+function Arena.rimDropSocket(a, position)
 	if not a.dropPoints then
 		a.dropPoints, a.dropFloors = Layout.dropPoints(a.layout), {}
 	end
@@ -287,6 +287,99 @@ function Arena.dropSocket(a, position)
 	end
 	assert(best, "arena has no reachable drop floor")
 	return best
+end
+local function laneQueries(a)
+	if not a.laneParams then
+		local parts = {}
+		for _, p in a.v4:GetDescendants() do
+			if p:IsA("BasePart") and p.Parent == a.v4 and p.CanCollide
+				and p:HasTag("AuthoredLaneFloor") and p:GetAttribute("WalkableLaneFloor") == true
+				and p:GetAttribute("KitAssemblyId") == nil then
+				table.insert(parts, p)
+			end
+		end
+		a.laneParams = RaycastParams.new()
+		a.laneParams.FilterType = Enum.RaycastFilterType.Include
+		a.laneParams.RespectCanCollide = true
+		a.laneParams.FilterDescendantsInstances = parts
+		a.laneCenters = {}
+		local routes = require(game:GetService("ReplicatedStorage").MeadowV4.RouteData)
+		a.laneGraph = require(game:GetService("ReplicatedStorage").MeadowV4.ReachableDrops).graph(routes, Vector3, a.origin)
+		for _, route in routes do
+			for i = 2, #route do
+				local u, v = route[i - 1], route[i]
+				local from, to = Vector3.new(u.x, u.y, -u.z), Vector3.new(v.x, v.y, -v.z)
+				local count = math.max(1, math.ceil((to - from).Magnitude))
+				for j = 0, count do
+					table.insert(a.laneCenters, a.origin + from:Lerp(to, j / count))
+				end
+			end
+		end
+	end
+	return function(o, d)
+		return workspace:Raycast(o, d, a.laneParams)
+	end
+end
+function Arena.dropDiagnostic(a, position, carrierFloor, label, carrierPos)
+	local laneRay = laneQueries(a)
+	local o, d = position + Vector3.new(0, 0.2, 0), Vector3.new(0, -30, 0)
+	local lane, solid = laneRay(o, d), workspace:Raycast(o, d, a.params)
+	local function describe(h)
+		if not h then return "NONE" end
+		local p = h.Instance
+		return string.format("%s Walkable=%s WalkableLaneFloor=%s tag=%s landingY=%.3f lane=%s",
+			p:GetFullName(), tostring(p:GetAttribute("Walkable")), tostring(p:GetAttribute("WalkableLaneFloor")),
+			tostring(p:HasTag("AuthoredLaneFloor")), h.Position.Y, tostring(p:GetAttribute("LaneId")))
+	end
+	local function xyz(p)
+		return p and {p.X, p.Y, p.Z} or "UNKNOWN"
+	end
+	return {
+		carrierPos = xyz(carrierPos), carrierFloorY = carrierFloor and carrierFloor.Y or "UNKNOWN",
+		laneId = lane and lane.Instance:GetAttribute("LaneId") or "UNKNOWN",
+		landingInstance = solid and solid.Instance:GetFullName() or "NONE",
+		landingY = solid and solid.Position.Y or "UNKNOWN", lootPos = xyz(position),
+		recoverPath = {}, reason = label, laneSurface = describe(lane), solidSurface = describe(solid),
+	}
+end
+function Arena.carrierFloor(a, position)
+	if not Config.MeadowV4 then
+		return Arena.floor(a, position)
+	end
+	local drops = require(game:GetService("ReplicatedStorage").MeadowV4.ReachableDrops)
+	return drops.floor(position, laneQueries(a), Vector3)
+end
+function Arena.dropSocket(a, position, carrierFloor)
+	if not Config.MeadowV4 then
+		return Arena.rimDropSocket(a, position)
+	end
+	local laneRay = laneQueries(a)
+	local drops = require(game:GetService("ReplicatedStorage").MeadowV4.ReachableDrops)
+	local floor = carrierFloor or Arena.carrierFloor(a, position)
+	if not floor then return nil, "no grounded carrier lane" end
+	local point, why = drops.settle(
+		position,
+		floor and floor.Y or position.Y - 3,
+		a.laneCenters,
+		laneRay,
+		function(o, d)
+			return workspace:Raycast(o, d, a.params)
+		end,
+		Vector3,
+		a.laneGraph,
+		floor
+	)
+	if not point and not a.samplingDrops then
+		a.dropFailureLogs = (a.dropFailureLogs or 0) + 1
+		if a.dropFailureLogs <= 30 then
+			warn("[DropDiagnostic] FAIL " .. tostring(why))
+		end
+	end
+	if point and not a.samplingDrops then
+		-- Retain the pre-displacement carrier reference without logging successes.
+		a.lastDropResolution = {position=point, carrierPos=position, floor=floor, reason=why}
+	end
+	return point, why -- No floor means refuse the drop; never park loot on scenery.
 end
 local function logState(a, root)
 	local state = a.attack and (a.attack.close and "Poke" or "Throw") or a.mode

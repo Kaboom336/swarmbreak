@@ -1,0 +1,21 @@
+{
+  "manifest_sha256": "d5140e9a87fef38c358e6670b0dd92c6136605163f340fcd8ac52cad9845c913",
+  "views": {
+    "portal": {
+      "eye": [
+        -144,
+        -171,
+        18
+      ],
+      "target": [
+        -90,
+        -54,
+        32
+      ],
+      "lens_mm": 18,
+      "ortho_scale": null,
+      "coordinates": "Blender x, authored z, elevation"
+    }
+  },
+  "source": "Native-part offline Cycles proof; lighting approximate; top-routes lines review-only"
+}

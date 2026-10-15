@@ -1,0 +1,162 @@
+{
+  "routes_equal": true,
+  "hooks_equal": true,
+  "all_collision_geometry_equal": true,
+  "terrain_height_mass_equal": true,
+  "zero_checks": {
+    "clearance_hits": 0,
+    "unreachable_route_nodes": 0,
+    "floating_collider_parts": 0,
+    "cave_24_headroom_hits": 0,
+    "green_flight_envelope_hits": 0,
+    "red_fall_envelope_hits": 0,
+    "track_cart_envelope_hits": 0,
+    "floor_ray_missing_hits": 0
+  },
+  "landmark_walkway_body_hits": 0,
+  "mountain_components": 1,
+  "native_check": {
+    "collision_geometry_equal": true,
+    "compiled_scripts": 9,
+    "exposure": 0.6499999761581421,
+    "gameplay_sources_equal": true,
+    "max_transform_error": 1.2874603271484375e-05,
+    "native_hook_attributes_equal": true,
+    "native_parts": 45746,
+    "point_lights": 357,
+    "routes_equal": true,
+    "runtime": "UNKNOWN; static native binary inspection",
+    "terrain_height_mass_equal": true
+  },
+  "before_parts": 48961,
+  "after_parts": 45746,
+  "before_point_lights": 527,
+  "after_point_lights": 357,
+  "camera_metadata": {
+    "manifest_sha256": "9cceeedef6d34d8009342aee67307966e3375e5bcf3d091c563f1600631efcc0",
+    "views": {
+      "portal": {
+        "eye": [
+          -144,
+          -171,
+          18
+        ],
+        "target": [
+          -90,
+          -54,
+          32
+        ],
+        "lens_mm": 18,
+        "ortho_scale": null,
+        "coordinates": "Blender x, authored z, elevation"
+      },
+      "main-eye": {
+        "eye": [
+          -150,
+          -103,
+          5.5
+        ],
+        "target": [
+          -150,
+          -60,
+          9
+        ],
+        "lens_mm": 22,
+        "ortho_scale": null,
+        "coordinates": "Blender x, authored z, elevation"
+      },
+      "cart-eye": {
+        "eye": [
+          -126,
+          -99,
+          5.5
+        ],
+        "target": [
+          -85,
+          -71,
+          16
+        ],
+        "lens_mm": 22,
+        "ortho_scale": null,
+        "coordinates": "Blender x, authored z, elevation"
+      },
+      "cave-eye": {
+        "eye": [
+          -121,
+          -120,
+          5.5
+        ],
+        "target": [
+          -80,
+          -110,
+          6
+        ],
+        "lens_mm": 22,
+        "ortho_scale": null,
+        "coordinates": "Blender x, authored z, elevation"
+      },
+      "far": {
+        "eye": [
+          -620,
+          -750,
+          350
+        ],
+        "target": [
+          0,
+          0,
+          -35
+        ],
+        "lens_mm": 46,
+        "ortho_scale": null,
+        "coordinates": "Blender x, authored z, elevation"
+      },
+      "top-routes": {
+        "eye": [
+          0,
+          0,
+          800
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "lens_mm": 24,
+        "ortho_scale": 640,
+        "coordinates": "Blender x, authored z, elevation"
+      }
+    },
+    "source": "Native-part offline Cycles proof; lighting approximate; top-routes lines review-only"
+  },
+  "runtime": "UNKNOWN; offline render and sampled static/native audits, not Studio play or actual three-second user test",
+  "blind_reviews": {
+    "READABILITY-CRITIC-R1.md": "# Independent blind visual review \u2014 R1\n\nEvidence: inspected only `readable-r1-portal.png`, `readable-r1-main-eye.png`, `readable-r1-cart-eye.png`, `readable-r1-cave-eye.png`, and `readable-r1-far.png`. Portal image inspected first, without implementation or other documents. The three-second judgment is visual inference, **not a real user test**.\n\n## Unlabeled portal: FAIL for knowing where to go in three seconds\n\nThe immediate, strongest attraction is the large cyan spiral portal. A new player could reasonably walk into it rather than start any of the routes behind it. Three possible routes are visible: a pale walkway climbing left beneath a blank green board, orange rails climbing near the center behind the portal, and a pale walkway passing through a cyan gate on the right toward a dark opening. The image does not communicate which route is the intended first action or what each route offers.\n\nThe left walkway is easiest to trace locally because its warm lamps and pale surface make a continuous line. Its destination is visually weak. The cart route has distinctive rails, but the portal uprights obscure its starting connection and the central yellow board is largely hidden. The right route has a distinctive cyan gate and dark tunnel, but its path disappears behind foreground portal geometry and other supports. The bright distant pink crystal is recognizable, but it cannot establish the relationship between these route choices by itself. Blank colored boards look like missing information, not directional cues.\n\n## Other views\n\n- **Main eye:** The pale path and lamps read clearly as walkable. The broad bend/junction offers a right branch and an uphill continuation without a visible reason to choose either. A huge blank green board occupies the upper left. The stepped rock mound ahead reads as a block pyramid; its dark inset is too small and weak to establish a destination.\n- **Cart eye:** Rails clearly identify the cart route, and warm orange decking distinguishes it from walking paths. The huge yellow sign and two posts block the uphill view and much of the pink landmark. Its empty face offers no compensation for that obstruction. The cave entrance at right is clearer than the rail destination.\n- **Cave eye:** Best local destination clarity. Pale walkway and successive warm lamps lead into a recognizable dark tunnel. The cyan gate pillar masks the left edge of the entrance from this angle. The surrounding empty blue space weakens the sense of entering a substantial cave.\n- **Far:** The course is visibly interconnected, with a strong central rail climb and a tall pink terminal landmark. This overhead view reveals topology that the portal view does not. Many crossings and similarly lit branches still make the intended sequence ambiguous. The floating crystal island is more convincing than the ground-level mine environment.\n\n## Visual look\n\nThe cool purple stone, pale wood, dark rail metal, warm lamps, and cyan/pink crystal palette are coherent. The cave mouth has useful shadow depth and repeated supports. However, much of the rock is regular square tiling and terrace steps, giving the mounds an engineered pyramid shape instead of fractured stone. A few faceted chunks near the cave show a more convincing direction; that variation is not yet carried across the terrain.\n\nCrystals frame the underside well in the far view. At eye level, isolated floating crystal/stone pieces hang against a flat blue backdrop and read as decoration suspended in space. The tall pink crystal is a strong landmark, but signs and the portal conceal it in the critical starting views. Cyan portal glow competes with that destination, while warm lamps mark all routes equally. Ambient light is sufficiently bright to expose paths but flattens most rock volume; tunnel blacks are abrupt relative to the exterior.\n\n## Highest-value changes\n\n1. Expose all three route starts from the portal: move or shrink the portal uprights and oversized sign boards that interrupt sightlines.\n2. Give each route one legible destination cue at its entrance; make the intended first route visually dominant. Blank boards cannot explain the choices.\n3. Preserve a visible line toward the pink landmark from the rail entrance; lower the yellow board or place it beside the tracks.\n4. Use a smaller number of larger, irregular rock masses around the cave and mounds. Break the stair-pyramid silhouettes before adding more decoration.\n5. Connect hanging formations visually to a ceiling or intentionally present the scene as a floating crystal island. The current eye views do not establish an enclosing mine cave.\n\nLessons: When a foreground landmark is brightest, treat it as the implied action because players may stop there. When route signs cover destinations, move them beside paths because the obstruction outweighs their color cue. When an overhead layout looks readable, still check eye-level junctions because height hides conflicting crossings.\n",
+    "READABILITY-CRITIC-R2.md": "# Independent visual readability critic \u2014 R2\n\nEvidence: inspected only the five supplied final PNGs (portal, main-eye, cart-eye, cave-eye, far). No source, implementation history, documents or earlier reviews were read.\n\n## Three-second portal result: PASS, with a weak middle choice\n\nThis is visual inference from a still image, **not a real new-player test**. A new player can plausibly identify three destinations within three seconds: green MAIN / CAMP on the left, yellow CART STATION in the middle, cyan CAVE on the right. The image does not establish which destination the game wants first; that requires task context or a player test.\n\n| Choice | Route-mouth landmark | Traceability / obstruction |\n|---|---|---|\n| Main / camp | Large green sign above the left boardwalk | Strong: wide pale path rises left and remains visible. The sign post interrupts its center slightly but does not hide the entrance. |\n| Cart station | Yellow sign and brown rails | Weakest: the yellow sign sits behind a crossing walkway, while the rails begin lower and farther right. A player must connect the label to the track rather than see one unmistakable mouth. Crates, posts and intersecting paths add clutter. |\n| Cave | Cyan sign, bright cyan rectangular gateway, dark rock tunnel | Strong: gateway surrounds a visible pale entry path. The CAVE sign is offset toward the neighboring rail ramp, but the gateway and tunnel make the destination clear. |\n\nThe portal crop partly cuts off the arrival portal on the left, but it does not obstruct the three exits. Path intersections are visually busy; none of the three mouths is completely hidden. The main-eye view confirms a continuous, well-lit boardwalk. The cart-eye view confirms rails continuing up the ramp, though the huge foreground sign post blocks part of the destination and the station lacks an instantly recognizable cart/platform focal object. The cave-eye view is the cleanest destination entrance: broad path, luminous frame, tunnel lights visible inside.\n\n## Look and coherence\n\n- **Working:** warm pale walkways separate cleanly from cool blue-gray stone. Amber path lamps establish a consistent mine language. Brown rails provide a useful third material and direction cue. The tall magenta crystal gives the island a strong distant landmark.\n- **Lighting:** traversal surfaces are bright and easy to read, but large pure-black gaps under bridges and inside the cave feel harsh against the evenly lit sky and stone. Bright yellow lamp cubes and cyan gateway strips look almost self-lit and compete with the crystals. The scene reads more like a stylized floating level than an enclosed cavern.\n- **Crystal framing:** the far view has a distinctive cyan/magenta crystal fringe under the island and an effective tall summit crystal. At player height, several crystals dangle in empty sky under detached stepped rock caps; these feel like repeated decorations rather than mineral growth connected to a rock mass. They clutter the skyline without helping route choice.\n- **Rock/mine coherence:** the far silhouette convincingly presents a floating rocky mine with a connected boardwalk network. At eye level, tiled stair-step hills resemble stacked masonry, while the cave is made of larger angular slabs. This scale/style difference is noticeable. The cyan doorway reads as a technological portal more than a timber-supported mine entrance; acceptable for a magical mine, less coherent for a natural cave.\n\n## Highest-value corrections\n\n1. Put the yellow station marker directly at the rail mouth, or add one visible cart/platform shape there. The label-to-route connection is the weakest of the three.\n2. Reduce the visual bulk of nearby sign posts; the cart-eye post dominates the view and masks the scene beyond.\n3. Add low ambient light to black voids and attach more skyline crystals visibly to stone. This would improve depth and material coherence without changing the route layout.\n\nLessons: When several paths cross, anchor each destination marker to its actual mouth because labels alone do not prove the route. When bright crystals define the theme, reduce competing emissive fixtures because every luminous element competes for attention. When rock styles change scale, transition them gradually because masonry-like hills and slab-like tunnels otherwise read as separate kits.\n",
+    "READABILITY-CRITIC-R3.md": "# Independent blind visual review\n\nEvidence: inspected only the five supplied saved images, portal first. Findings are visual inference; no player timing test, movement test, source inspection, or prior review.\n\n## Portal route readability \u2014 PASS\n\nBy visual inference, a new player can identify the available routes within roughly three seconds. This does not establish which destination is the required first objective.\n\n- Left: the broad pale rising path and green MAIN / CAMP sign make a clear walking route.\n- Centre: the yellow CART STATION sign sits over the narrower connecting platform beside the brown rail approach. It is identifiable, though the sign-to-mouth relationship is less immediate than the other two.\n- Right: the cyan CAVE sign and matching doorway frame mark a separate pale walking approach to the dark cave entrance.\n- Landmarks: the giant magenta crystal gives the upper island a strong reference point; cyan marks the cave and portal; warm lamps trace the walkways.\n- Continuity: pale decking separates routes from grey rock. The left ascent and centre rail ramp remain easy to follow. The cave approach continues behind the cyan frame, but its bend and the dark opening partially hide the next segment.\n- Obscuration: signs and posts overlap parts of the junction; the rail ramp sits close to the cave sign, so the sign initially could seem to label the uphill rail. The cave frame resolves this ambiguity. The bright portal occupies the left foreground but does not hide the route choices.\n\n## Look and route confirmation\n\n- Lighting: warm path lamps contrast effectively with cold stone and cyan/magenta crystals. Pale paths are visible against the rocks. Some lamp faces are nearly featureless yellow, and cave shadows collapse to black, reducing depth and detail.\n- Crystal framing: the tall crystal is a strong destination landmark. Hanging crystals make the floating island silhouette distinctive in the far view. At ground level the scene has much empty blue-grey space; the floating fragments read as decoration more than an enclosing cavern.\n- Coherence: repeating stone, timber rails, lamps, crates, and the dark supported tunnel communicate a stylized floating mine island. The cyan rectangular gateway looks more technological than the mine construction, but its route-marking role is visually clear.\n- Main eye: continuous broad path, lamps, and a visible upper bend support navigation. The oversized near sign is clipped at the top and its post consumes considerable view space. The end destination itself is not strongly distinguished from rock and crates.\n- Cart eye: rails clearly lead uphill. Brown block objects sit in or beside the track and may read as obstacles rather than a usable cart station. This image alone does not establish where or how a player boards.\n- Cave eye: cyan frame, pale path, dark mouth, and lamps continuing inside establish a clear entrance. The roof and pillars obscure much of the interior; illumination should reveal the first interior turn or stopping point more clearly.\n- Far view: the path network, central rail, cave mass, and tall crystal form one coherent island. The rail and pale footpaths remain distinct. Black roof gaps and shadows make the cave structure look somewhat unfinished from above.\n\n## Concrete remaining concerns\n\n1. Move or orient the CAVE sign so it unmistakably belongs to the cyan doorway rather than the adjacent rail ascent.\n2. Give CART STATION a visibly recognizable boarding point or cart; signs alone carry its function.\n3. Reduce nearby sign/post bulk and reveal a little more cave interior detail without losing the dark entrance contrast.\n\nLesson: when several routes meet, match each sign physically to its entrance because colour and labels alone can leave overlapping route ownership ambiguous.\n"
+  },
+  "hashes": {
+    "prototype\\cave-v2.rbxl": "0c4c5f3cbe7f4029359158f2888d75d99abd0039ce889df35b3b27df62e9cb5d",
+    "prototype\\cave-v2\\scene.json": "9cceeedef6d34d8009342aee67307966e3375e5bcf3d091c563f1600631efcc0",
+    "prototype\\cave-v2\\build.luau": "b51806c67f29fbdc4ca0a7dfe075297d99f176c9dcb9b9537d7bbb489e63fc7c",
+    "prototype\\cave-v2\\readability-art.luau": "021c2af014e1f296026e9ea4dc632f30d2e7097c7f28070a3d689a39c692d731",
+    "prototype\\cave-v2\\readability-render.py": "8399581a1bd8c9fc5d79a028d38dfce7114041f6d109e07a218ed0b7337d93c0",
+    "prototype\\cave-v2\\READABLE-SHEET.jpg": "bab65ff17bf2eeef9f0a031bd086926d6646542cc94b5ce91689c3363bb622ef",
+    "prototype\\cave-v2\\READABILITY-BEFORE-AFTER.jpg": "118aa974a794214348f55814aba883b903a7f9f4d0ebb91a499db76f38b6243f",
+    "prototype\\cave-v2\\AUDIT.json": "4962ef20a3197a2f682cba07b73edd764f464f67e8c063dcee8529df049d818c",
+    "prototype\\cave-v2\\STRUCTURAL-AUDIT.json": "c9bc63b9c4d6cfd8364163d11a0c4a3251dcc5ca6985b7bb1632fdd681dbbdb7",
+    "prototype\\cave-v2\\READABILITY-NATIVE-CHECK.json": "dc6bea78cf149e3cd5f111077a211debb54c2f211a70c9087249b68050854fbf",
+    "prototype\\cave-v2\\readable-r3-final-portal.png": "2f9ed71537c4dcb320fdc00d3af06da7201abcbad22802e541034419960abfed",
+    "prototype\\cave-v2\\readable-r3-final-main-eye.png": "16cc0b08da62aaf7717dfee5caed4710e29f443f804f5309e3f399d88f68af4c",
+    "prototype\\cave-v2\\readable-r3-final-cart-eye.png": "e24e99f300c53c4d52f59ff387fa9c5693dee9f40e346a997b5ccccba1b1bbad",
+    "prototype\\cave-v2\\readable-r3-final-cave-eye.png": "23ac0552625393430eb8088a6f10fb48f60dcee21b9db8f91088f01b4031f7d1",
+    "prototype\\cave-v2\\readable-r3-final-far.png": "416beb5ee242591efe07fbfc9a3d88a8bd18539e8de85d1bd9e28bf4246810b9",
+    "prototype\\cave-v2\\readable-r3-final-top-routes.png": "711087193364f661ef13177ce36b7c309a678b9a94052c78676e1a8dbbe04ef1",
+    "prototype\\cave-v2\\READABILITY-CRITIC-R1.md": "4f3cfbfaf0c7d0072a83c9aba8984569694ebb2a555a73820de71b5af362d63b",
+    "prototype\\cave-v2\\READABILITY-CRITIC-R2.md": "ec2d3a65c3e64123cb8c6ae3e910b9615a0f8930142bd8c205526d1f60350e6d",
+    "prototype\\cave-v2\\READABILITY-CRITIC-R3.md": "58acb330aba2c6732f2a5854afbc732f76f48c3f6327c059172e5fc09defc6d1",
+    "prototype\\cave-v2\\READABILITY.md": "ada3876cd65c9b64b1dbb99d583ada38fdf2124e6ea5163121d04f6a4aabde0d",
+    "prototype\\cave-v2\\readability-check.luau": "6f6bc663bfde6fcf88c9132faaf2081ac1f4789c731f855cd0b9247baf316353",
+    "prototype\\cave-v2\\readability-sheet.ps1": "ed2398072fa0f7397ba552f3444b0b5d230a3ad8a561f8454432cf85d8b6ae2a",
+    "prototype\\cave-v2\\readability-evidence.py": "5b01ce94a1b196d5f09c9146770d95e2cdd9b6e2dae839c0575304cd557c724a"
+  }
+}

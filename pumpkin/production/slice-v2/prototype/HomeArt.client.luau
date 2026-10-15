@@ -1,11 +1,11 @@
 -- HOME-only presentation. Never creates LootId, consumes cargo, or delays input.
 local RS = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local AssetService = game:GetService("AssetService")
+local Blocks = require(RS:WaitForChild("NativeBlocks"))
 local Data = require(RS:WaitForChild("HomeArtGeometry"))
 local CoreConfig = require(RS:WaitForChild("TreasureCore").Config)
 local world = workspace:WaitForChild("GREYBOX")
-local templates, retained, pending, active = {}, {}, {}, {}
+local templates, pending, active = {}, {}, {}
 local PET_SCALE = 1.6 -- >=4-stud pet height, inside the existing placement footprint.
 local replacedHome = {
 	CentralStonePath = true,
@@ -48,21 +48,18 @@ local function petCaption(root, model, kind)
 			local outline = Instance.new("Highlight")
 			outline.FillColor, outline.OutlineColor = text.TextColor3, text.TextColor3
 			outline.FillTransparency, outline.OutlineTransparency = 0.92, 0.15
-			outline.DepthMode, outline.Adornee, outline.Parent =
-				Enum.HighlightDepthMode.Occluded, model, model
+			outline.DepthMode, outline.Adornee, outline.Parent = Enum.HighlightDepthMode.Occluded, model, model
 			local socket = Instance.new("Attachment")
 			socket.Parent = root
 			socket.Name = "CoreRaritySparkles"
 			local particles = Instance.new("ParticleEmitter")
 			particles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-			particles.Rate, particles.Lifetime, particles.Speed =
-				3, NumberRange.new(0.7, 1.2), NumberRange.new(1, 2)
+			particles.Rate, particles.Lifetime, particles.Speed = 3, NumberRange.new(0.7, 1.2), NumberRange.new(1, 2)
 			particles.Size = NumberSequence.new(0.2)
 			particles.Color, particles.LightEmission = ColorSequence.new(text.TextColor3), 0.5
 			particles.Parent = socket
 			local light = Instance.new("PointLight")
-			light.Color, light.Brightness, light.Range, light.Parent =
-				text.TextColor3, 0.35, 6, socket
+			light.Color, light.Brightness, light.Range, light.Parent = text.TextColor3, 0.35, 6, socket
 		end
 		return
 	end
@@ -86,7 +83,7 @@ local function template(name)
 	if templates[name] then
 		return templates[name]
 	end
-	-- Serialize template creation, since mesh API calls yield.
+	-- Cache one native template per asset; every instance clones it.
 	while pending[name] do
 		task.wait()
 	end
@@ -96,48 +93,44 @@ local function template(name)
 	pending[name] = true
 	local model = Instance.new("Model")
 	model.Name = "HomeArt_" .. name
-	local meshes = {}
 	local ok, err = pcall(function()
+		local count = 0
 		for _, section in ipairs(Data[name]) do
-			local mesh =
-				assert(AssetService:CreateEditableMesh(), "EditableMesh memory unavailable")
-			table.insert(meshes, mesh)
-			local lo, hi =
-				Vector3.new(math.huge, math.huge, math.huge),
-				Vector3.new(-math.huge, -math.huge, -math.huge)
-			for _, vertex in ipairs(section.vertices) do
-				local v = Vector3.new(table.unpack(vertex))
-				lo, hi = lo:Min(v), hi:Max(v)
-			end
-			local centre, ids = (lo + hi) / 2, {}
-			for i, vertex in ipairs(section.vertices) do
-				ids[i] = mesh:AddVertex(Vector3.new(table.unpack(vertex)) - centre)
-			end
-			for _, tri in ipairs(section.triangles) do
-				mesh:AddTriangle(ids[tri[1] + 1], ids[tri[2] + 1], ids[tri[3] + 1])
-			end
-			local part = AssetService:CreateMeshPartAsync(Content.fromObject(mesh))
-			part.Name, part.Color = section.name, Color3.fromRGB(table.unpack(section.color))
 			local neon = section.name == "PortalLight"
 				or section.name == "PortalGreen"
 				or section.name == "Cyan"
 				or section.name == "LampLight"
 				or section.name == "Lava"
-			part.Material = neon and Enum.Material.Neon or Enum.Material.SmoothPlastic
-			part.Anchored, part.CanCollide, part.CanQuery, part.CanTouch = true, false, false, false
-			part.CFrame, part.Parent = CFrame.new(centre), model
+			local material = Enum.Material.SmoothPlastic
+			if name == "Decor" then
+				local id = section.name:lower()
+				material = (id:find("wood") or id:find("brown")) and Enum.Material.WoodPlanks
+					or (id:find("grass") or id:find("leaf") or id:find("green")) and Enum.Material.Grass
+					or id:find("path") and Enum.Material.Cobblestone
+					or Enum.Material.Slate
+			end
+			count += Blocks.section(section, model, CFrame.identity, neon and Enum.Material.Neon or material)
 		end
 		model.WorldPivot = CFrame.identity -- JSON origin is the feet, not bounding centre.
+		Blocks.log("HomeArt " .. name, count)
 	end)
 	pending[name] = nil
 	if not ok then
 		model:Destroy()
-		for _, mesh in ipairs(meshes) do
-			mesh:Destroy()
+		warn("[HomeArt] " .. name .. " geometry failed: " .. tostring(err) .. "; using emergency block build")
+		model = Instance.new("Model")
+		model.Name = "HomeArt_" .. name
+		for _, section in ipairs(Data[name] or {}) do
+			Blocks.section(
+				{ name = section.name, color = section.color, vertices = section.vertices, triangles = {} },
+				model,
+				CFrame.identity,
+				Enum.Material.Slate
+			)
 		end
-		error(err)
+		model.WorldPivot = CFrame.identity
 	end
-	templates[name], retained[name] = model, meshes
+	templates[name] = model
 	return model
 end
 local function clone(name)
@@ -172,8 +165,7 @@ local function burst(root)
 	local sound = Instance.new("Sound")
 	sound.Name, sound.Volume, sound.RollOffMaxDistance = "HomeRevealPop", 0.45, 48
 	-- Owner can set a cleared sound ID on HomeArtGeometry in Studio; no upload needed.
-	sound.SoundId = RS.HomeArtGeometry:GetAttribute("RevealSoundId")
-		or "rbxasset://sounds/electronicpingshort.wav"
+	sound.SoundId = RS.HomeArtGeometry:GetAttribute("RevealSoundId") or "rbxasset://sounds/electronicpingshort.wav"
 	sound.Parent = socket
 	if sound.SoundId ~= "" then
 		sound:Play()
@@ -209,11 +201,8 @@ local function observe(root)
 			return
 		end
 		local isCore = root:GetAttribute("CoreState") ~= nil
-		local isPet = isCore and root:GetAttribute("CoreState") == "Pet"
-			or not isCore and state == "Placed"
-		local kind = isPet
-				and (root:GetAttribute("PetModel") or species(root:GetAttribute("LootId")))
-			or "Acorn"
+		local isPet = isCore and root:GetAttribute("CoreState") == "Pet" or not isCore and state == "Placed"
+		local kind = isPet and (root:GetAttribute("PetModel") or species(root:GetAttribute("LootId"))) or "Acorn"
 		entry.kind = kind
 		for _, caption in ipairs(root:GetDescendants()) do
 			if caption:IsA("TextLabel") then
@@ -225,10 +214,7 @@ local function observe(root)
 				and isPet
 				and root:GetAttribute("RevealAt")
 				and workspace:GetServerTimeNow() - root:GetAttribute("RevealAt") < 1
-			or not isCore
-				and state == "Secured"
-				and entry.previous ~= nil
-				and entry.previous ~= "Secured"
+			or not isCore and state == "Secured" and entry.previous ~= nil and entry.previous ~= "Secured"
 		entry.isPet = isPet
 		entry.previous = state
 		task.spawn(function()
@@ -237,11 +223,7 @@ local function observe(root)
 				warn("[HomeArt] mesh loader failed: " .. tostring(model))
 				return
 			end
-			if
-				active[root] ~= entry
-				or generation ~= entry.generation
-				or not root:IsDescendantOf(workspace)
-			then
+			if active[root] ~= entry or generation ~= entry.generation or not root:IsDescendantOf(workspace) then
 				model:Destroy()
 				return
 			end
@@ -249,10 +231,7 @@ local function observe(root)
 			entry.fragments = {}
 			if reveal then
 				for _, piece in model:GetChildren() do
-					if
-						piece:IsA("BasePart")
-						and (piece.Name == "CapBrown" or piece.Name == "StemBrown")
-					then
+					if piece:IsA("BasePart") and (piece.Name == "CapBrown" or piece.Name == "StemBrown") then
 						entry.fragments[piece] = model:GetPivot():ToObjectSpace(piece.CFrame)
 					end
 				end
@@ -260,8 +239,7 @@ local function observe(root)
 			if isPet and not reveal then
 				model:ScaleTo(PET_SCALE)
 				local pad = Instance.new("Part")
-				pad.Name, pad.Size, pad.Position =
-					"CosmeticPetPad", Vector3.new(5, 0.2, 5), Vector3.new(0, -0.1, 0)
+				pad.Name, pad.Size, pad.Position = "CosmeticPetPad", Vector3.new(5, 0.2, 5), Vector3.new(0, -0.1, 0)
 				pad.Color, pad.Material = Color3.fromRGB(103, 119, 130), Enum.Material.Slate
 				pad.Anchored, pad.CanCollide, pad.CanQuery, pad.CanTouch = true, false, false, false
 				if not isCore then
@@ -280,10 +258,7 @@ local function observe(root)
 			model.Parent = world
 			root.LocalTransparencyModifier = 1
 			for _, child in root:GetDescendants() do
-				if
-					child:IsA("BasePart")
-					and (child.Name == "AcornCap" or child.Name == "AcornStem")
-				then
+				if child:IsA("BasePart") and (child.Name == "AcornCap" or child.Name == "AcornStem") then
 					child.LocalTransparencyModifier = 1
 				end
 			end
@@ -354,12 +329,10 @@ task.spawn(function()
 	for i, name in ipairs({ "Crystal Cave", "Frost Peak", "Volcano", "Ocean" }) do
 		local anchor = Instance.new("Part")
 		anchor.Name, anchor.Size, anchor.Transparency = "HomePortalName", Vector3.one, 1
-		anchor.Anchored, anchor.CanCollide, anchor.CanQuery, anchor.CanTouch =
-			true, false, false, false
+		anchor.Anchored, anchor.CanCollide, anchor.CanQuery, anchor.CanTouch = true, false, false, false
 		anchor.Position, anchor.Parent = Vector3.new(-66 + (i - 1) * 44, 36, -145), decor
 		local gui = Instance.new("BillboardGui")
-		gui.Size, gui.Adornee, gui.MaxDistance, gui.Parent =
-			UDim2.fromOffset(145, 26), anchor, 700, anchor
+		gui.Size, gui.Adornee, gui.MaxDistance, gui.Parent = UDim2.fromOffset(145, 26), anchor, 700, anchor
 		local text = Instance.new("TextLabel")
 		text.Size, text.BackgroundTransparency = UDim2.fromScale(1, 1), 1
 		text.Text, text.Font, text.TextSize = name, Enum.Font.GothamBold, 16

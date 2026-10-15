@@ -1,27 +1,8 @@
 -- Runs in Studio AND Lune; store fixtures never touch player/live records.
 local Tests = {}
-function Tests.run(config, domain, profiles, rules, lootConfig, service)
+function Tests.run(config, domain, profiles, rules, lootConfig, service, mockStore)
 	local now = 1000
-	local store = { records = {}, calls = 0, failBefore = 0, failAfter = 0 }
-	function store:UpdateAsync(key, callback)
-		self.calls += 1
-		if self.onWrite then
-			self.onWrite()
-		end
-		if self.failBefore > 0 then
-			self.failBefore -= 1
-			error("mock unavailable before write")
-		end
-		local result = callback(domain.copy(self.records[key]))
-		if result then
-			self.records[key] = domain.copy(result)
-		end
-		if self.failAfter > 0 then
-			self.failAfter -= 1
-			error("mock response lost after write")
-		end
-		return domain.copy(result)
-	end
+	local store = mockStore.new(domain)
 	local function session(token)
 		return profiles.new(store, config, domain, token, function()
 			return now
@@ -53,6 +34,14 @@ function Tests.run(config, domain, profiles, rules, lootConfig, service)
 		"handoff reroll"
 	)
 	local winner = session("winner")
+	store.records.future = {data={version=999},revision=0}
+	assert(not winner:load("future"), "future save overwritten")
+	assert(store.records.future.data.version==999, "rejected save was replaced")
+	store.records.malformed = {unexpected=true}
+	assert(not winner:load("malformed"), "malformed envelope accepted")
+	store.legacy=function() error("legacy read unavailable") end
+	assert(not winner:load("migration"), "failed migration created default")
+	store.legacy=nil
 	assert(winner:load("fixture"))
 	assert(not session("rival"):load("fixture"), "session lock not enforced")
 	item.securePending = true
@@ -108,7 +97,8 @@ function Tests.run(config, domain, profiles, rules, lootConfig, service)
 		"placement persistence"
 	)
 	now += config.Lease + 1
-	assert(not restored:transaction("fixture", domain.collect), "expired lease wrote")
+	store.active.fixture:EndSession()
+	assert(not restored:transaction("fixture", domain.collect), "ended session wrote")
 	local stolen = session("new-owner")
 	assert(stolen:load("fixture"))
 	assert(not restored:save("fixture", false), "old owner overwrote new session")
@@ -193,6 +183,6 @@ function Tests.run(config, domain, profiles, rules, lootConfig, service)
 		"yielding save erased online ticks"
 	)
 	assert(adapter:save(actor, true), "adapter release")
-	return "acorn handoff -> secure -> Open -> Pup -> Coins -> mock save/load; replay, lease, unknown-write, capacity PASS"
+	return "acorn handoff -> secure -> Open -> Pup -> Coins -> ProfileStore contract save/load; replay, session fencing, unknown-write, schema, migration, capacity PASS"
 end
 return Tests

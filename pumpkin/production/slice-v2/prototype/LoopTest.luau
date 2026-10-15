@@ -2,8 +2,22 @@
 local Test = {}
 local Layout = require(game:GetService("ReplicatedStorage"):WaitForChild("GreyboxLayout"))
 local SSS = game:GetService("ServerScriptService")
+local function updateDrop(fields)
+	local http = game:GetService("HttpService")
+	local ok, data = pcall(function()
+		return http:JSONDecode(SSS:GetAttribute("GreyboxLoopTestLastDrop") or "{}")
+	end)
+	if not ok then
+		data = {}
+	end
+	for key, value in fields do
+		data[key] = value
+	end
+	SSS:SetAttribute("GreyboxLoopTestLastDrop", http:JSONEncode(data))
+end
 local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("GreyboxConfig"))
 local Placement = require(game:GetService("ReplicatedStorage"):WaitForChild("GreyboxPlacement"))
+local Clearance = require(game:GetService("ReplicatedStorage"):WaitForChild("MeadowV4"):WaitForChild("Clearance"))
 local function at(arena, x, y, z)
 	return (arena and arena.origin or Vector3.zero) + Vector3.new(x, y + 3, arena and -z or z)
 end
@@ -20,48 +34,9 @@ local function validator(world, log)
 		local params = RaycastParams.new()
 		params.FilterType, params.FilterDescendantsInstances = Enum.RaycastFilterType.Include, parts
 		params.RespectCanCollide = true
-		local function down(x, z)
-			return workspace:Raycast(
-				Vector3.new(x, position.Y + (Config.MeadowV4 and 9 or 42), z),
-				Vector3.new(0, -70, 0),
-				params
-			)
-		end
-		local function walkable(hit)
-			return hit
-				and hit.Normal.Y >= math.cos(math.rad(35.1))
-				and (
-					hit.Instance:GetAttribute("SurfaceRole") == "Floor"
-					or hit.Instance:GetAttribute("SurfaceRole") == nil
-				)
-		end
-		local center = down(position.X, position.Z)
-		assert(walkable(center), "no walkable center floor")
-		assert(
-			math.abs(center.Position.Y - (position.Y - 3)) < 0.7,
-			"authored Y disagrees with " .. center.Instance.Name
-		)
-		-- Half-stud samples across a 3-stud radius, with six studs of head/body space.
-		-- A launch lip requires center support; lower floor beside it is intentional.
-		for ix = -6, 6 do
-			for iz = -6, 6 do
-				if ix * ix + iz * iz <= (radius * 2) ^ 2 then
-					local x, z = position.X + ix * 0.5, position.Z + iz * 0.5
-					local hit = down(x, z)
-					assert(walkable(hit), "clearance floor/cover at " .. x .. "," .. z)
-					local rise = hit.Position.Y - center.Position.Y
-					local tolerance = (center.Normal.Y < 0.999 or hit.Normal.Y < 0.999) and 2.15 or 1.5
-					assert(
-						rise <= tolerance and (edge or rise >= -tolerance),
-						"clearance cliff/wall " .. hit.Instance.Name
-					)
-					local overhead =
-						workspace:Raycast(Vector3.new(x, center.Position.Y + 2.2, z), Vector3.new(0, 6, 0), params)
-					assert(not overhead, "head clearance " .. (overhead and overhead.Instance.Name or ""))
-				end
-			end
-		end
-		return Vector3.new(position.X, center.Position.Y + 3, position.Z)
+		return Clearance.resolve(position, edge, radius, function(origin, direction)
+			return workspace:Raycast(origin, direction, params)
+		end, Config.MeadowV4, Vector3)
 	end
 	local function checked(position, name, edge, radius)
 		local ok, result = pcall(resolve, position, edge, radius)
@@ -73,7 +48,10 @@ local function validator(world, log)
 	end
 	local function preflight(points)
 		local bad = 0
-		for _, p in points do
+		for i, p in points do
+			if i % 8 == 0 then
+				task.wait() -- Yield so long routes cannot trip Roblox's script timeout.
+			end
 			local ok, reason = pcall(resolve, p.position, p.edge)
 			if not ok then
 				bad += 1
@@ -232,7 +210,8 @@ local function driver(actor, states, api, log, checked, monitor)
 			if
 				not autoReturn -- Return legs finish only after the production boundary handler secures cargo.
 				and arrived
-				and math.abs(delta.Y) < 2
+				-- Loot recovery goals sit on the acorn, which stands ~2.5 studs off its floor.
+				and math.abs(delta.Y) < (name:find("^recover") and 4.5 or 2)
 				and h.FloorMaterial ~= Enum.Material.Air
 				and (not jump or (launched and landed))
 			then
@@ -299,7 +278,10 @@ local function driver(actor, states, api, log, checked, monitor)
 			then
 				return false, "expiry"
 			end
-			assert(os.clock() - started < 30, "path recovery >30s: " .. name)
+			if os.clock() - started >= 30 then
+				updateDrop({reason="path recovery >30s: " .. name})
+				error("path recovery >30s: " .. name)
+			end
 			local path = game:GetService("PathfindingService"):CreatePath({
 				AgentRadius = 2,
 				AgentHeight = 5,
@@ -311,6 +293,7 @@ local function driver(actor, states, api, log, checked, monitor)
 				path:ComputeAsync(r.Position, position)
 			end)
 			if not computed or path.Status ~= Enum.PathStatus.Success then
+				updateDrop({recoverPath={}, reason="path retry: " .. tostring(problem or path.Status)})
 				log("path retry from live position / " .. name .. " / " .. tostring(problem or path.Status))
 				path:Destroy()
 				task.wait(0.2)
@@ -325,6 +308,11 @@ local function driver(actor, states, api, log, checked, monitor)
 			local reached, reason = true, nil
 			local ok, followProblem = pcall(function()
 				local waypoints = path:GetWaypoints()
+				local points = {}
+				for _, waypoint in waypoints do
+					table.insert(points, {position={waypoint.Position.X, waypoint.Position.Y, waypoint.Position.Z}, action=tostring(waypoint.Action)})
+				end
+				updateDrop({recoverPath=points, reason="following path: " .. name})
 				for i = 2, #waypoints do
 					local waypoint = waypoints[i]
 					navigation.index = i
@@ -420,7 +408,7 @@ local function closeToDummy(api, walk, player, dummy)
 		walk(floor + Vector3.new(0, 3, 0), "close to live dummy within 3 studs")
 	end
 end
-local function recover(api, actor, states, walk, item, log, checked)
+local function recoverAttempt(api, actor, states, walk, item, log, checked)
 	local _, humanoid = api.root(actor)
 	humanoid:Move(Vector3.zero, false)
 	while os.clock() < (states[actor].slowUntil or 0) do
@@ -481,6 +469,29 @@ local function recover(api, actor, states, walk, item, log, checked)
 	)
 	api.audit()
 	return true
+end
+local function recover(api, actor, states, walk, item, log, checked)
+	local result = table.pack(pcall(recoverAttempt, api, actor, states, walk, item, log, checked))
+	if not result[1] or result[2] == false then
+		updateDrop({lootPos={item.position.X, item.position.Y, item.position.Z}, reason=tostring(result[2])})
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = actor.Character and {actor.Character} or {}
+		params.RespectCanCollide = true
+		local h = workspace:Raycast(item.position + Vector3.new(0, 2, 0), Vector3.new(0, -30, 0), params)
+		local p = h and h.Instance
+		log("RECOVER FAILURE underLoot=" .. (p and p:GetFullName() or "NONE")
+			.. " landingY=" .. tostring(h and h.Position.Y) .. " Walkable=" .. tostring(p and p:GetAttribute("Walkable"))
+			.. " WalkableLaneFloor=" .. tostring(p and p:GetAttribute("WalkableLaneFloor"))
+			.. " tag=" .. tostring(p and p:HasTag("AuthoredLaneFloor")) .. " lane=" .. tostring(p and p:GetAttribute("LaneId")))
+	end
+	if result[1] and result[2] ~= false then
+		updateDrop({reason="recovered same loot"})
+	end
+	if not result[1] then
+		error(result[2], 0)
+	end
+	return table.unpack(result, 2, result.n)
 end
 -- Live production expiry: no shortened clock, immunity, teleport or synthetic award.
 local function verifyExpiry(player, states, pens, world, api, log, item, count, completed)

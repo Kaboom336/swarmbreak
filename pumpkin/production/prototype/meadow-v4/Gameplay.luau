@@ -1,6 +1,7 @@
 -- Production coordinate contract, derived from the reviewed v4 scene.
 local G = {}
-local R = require(script.Parent.RouteData)
+-- Regenerate test/navigation stations from the same centerlines used by Builder.
+local R = require(script.Parent.Fix2Routes).waypoints(require(script.Parent.RouteData))
 G.Nest = { x = 0, y = 48, z = 96 }
 G.Camp = { x = -7, y = 48, z = 99 }
 G.Portal = { x = 0, y = 0, z = -136 }

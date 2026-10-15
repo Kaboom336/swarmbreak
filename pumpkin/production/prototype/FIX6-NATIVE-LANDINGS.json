@@ -1,0 +1,17 @@
+{
+  "examples": {
+    "TunnelValleyJoin tag=false delta=0.000": {
+      "label": "south_crosslink/7/2/-5/-20",
+      "position": [
+        -43.58997344970703,
+        0.12000274658203124,
+        93.64498901367188
+      ],
+      "reason": "landing differs from carrier lane / blocked surface"
+    }
+  },
+  "nativeLandingCounts": {
+    "TunnelValleyJoin tag=false delta=0.000": 269
+  },
+  "source": "pre-fix6 backup native geometry; failed sockets from kits2 sweep"
+}

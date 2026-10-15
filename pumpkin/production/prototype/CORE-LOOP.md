@@ -1,5 +1,7 @@
 # Steal a Treasure — core loop
 
+Current update (2026-10-14): saves now use vendored ProfileStore, not the custom lease adapter described in the original delivery record below. Schema 1 is unchanged; the new store is TreasureQA_Core_v1_ProfileStore with read-only legacy migration after old-session expiry. Studio uses ProfileStore.Mock; inaccessible real QA mode refuses volatile fallback. CoreLoopTest includes offline contract fixtures plus the actual ProfileStore.Mock Studio check. Shake/Spring/Trove/Signal power the new client effects. See [KIT-SWAP.md](KIT-SWAP.md) for current behavior, import plan, limits and offline evidence. Original delivery notes below are historical evidence, not current save architecture.
+
 Local deliverable: `prototype/guardian-greybox.rbxl`. Original preserved byte-for-byte in `guardian-greybox.pre-core.rbxl`. No commit, upload, account changes or publication. Authored edits use apply_patch; Rojo/Lune generate binary artifacts. The existing canonical `slice-v2/prototype/guardian-greybox.rbxl` receives the same built bytes.
 
 ## Contract and scope

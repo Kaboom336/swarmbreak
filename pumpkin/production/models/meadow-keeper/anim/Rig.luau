@@ -1,5 +1,5 @@
 -- Approved JSON's pivots, not MeshPart bounding-box centres, drive all joints.
-local AssetService = game:GetService("AssetService")
+local Blocks = require(game:GetService("ReplicatedStorage"):WaitForChild("NativeBlocks"))
 local Data = require(script.Parent.Geometry)
 local Skeleton = require(script.Parent.Skeleton)
 local Kinematics = require(script.Parent.Kinematics)
@@ -57,34 +57,33 @@ function Rig.build(placement)
 	local pivots = Skeleton.pivots
 	local rig = skeleton(model, placement or CFrame.identity, pivots)
 	local ok, err = pcall(function()
+		local count = 0
 		for _, section in ipairs(Data) do
-			local editable = assert(AssetService:CreateEditableMesh(), "EditableMesh memory unavailable")
-			table.insert(rig.meshes, editable) -- Retain references for the rig's lifetime.
-			local ids = {}
-			local minV, maxV =
-				Vector3.new(math.huge, math.huge, math.huge), Vector3.new(-math.huge, -math.huge, -math.huge)
-			for _, v in ipairs(section.vertices) do
-				local p = Vector3.new(table.unpack(v))
-				minV, maxV = minV:Min(p), maxV:Max(p)
-			end
-			local centre = (minV + maxV) / 2
-			for i, v in ipairs(section.vertices) do
-				ids[i] = editable:AddVertex(Vector3.new(table.unpack(v)) - centre)
-			end
-			for _, tri in ipairs(section.triangles) do
-				editable:AddTriangle(ids[tri[1] + 1], ids[tri[2] + 1], ids[tri[3] + 1])
-			end
-			local part = AssetService:CreateMeshPartAsync(Content.fromObject(editable))
-			part.Name, part.Color, part.Material =
-				section.name, Color3.fromRGB(table.unpack(section.color)), Enum.Material.SmoothPlastic
-			part.CFrame = rig.root.CFrame * CFrame.new(centre)
-			part.Parent = model
-			weld(part, rig.carriers[section.rig_part])
+			count += Blocks.section(section, model, rig.root.CFrame, Enum.Material.SmoothPlastic, function(part)
+				weld(part, assert(rig.carriers[section.rig_part], section.rig_part))
+			end)
 		end
+		model:SetAttribute("KeeperGeometry", "NativeBlocks")
+		Blocks.log("MeadowKeeper", count)
 	end)
 	if not ok then
-		Rig.destroy(rig)
-		error("Keeper geometry creation failed; no settings were changed: " .. tostring(err))
+		warn("[MeadowKeeper] geometry creation failed: " .. tostring(err) .. "; using emergency coloured block rig")
+		for _, child in model:GetChildren() do
+			if child:IsA("BasePart") and child.Name ~= "KeeperRoot" and not child.Name:match("^Pivot_") then
+				child:Destroy()
+			end
+		end
+		for _, section in ipairs(Data) do
+			Blocks.section(
+				{ name = section.name, color = section.color, vertices = section.vertices, triangles = {} },
+				model,
+				rig.root.CFrame,
+				Enum.Material.SmoothPlastic,
+				function(part)
+					weld(part, rig.carriers[section.rig_part])
+				end
+			)
+		end
 	end
 	return rig
 end

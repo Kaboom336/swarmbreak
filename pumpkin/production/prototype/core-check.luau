@@ -14,7 +14,7 @@ local config, domain, profiles, tests =
 local rules = require("../slice-v2/prototype/LootRules")
 local loot = require("../slice-v2/prototype/GreyboxConfig")
 print("PASS Luau syntax O0/O1/O2")
-print(tests.run(config, domain, profiles, rules, loot, require("./core/Service")))
+print(tests.run(config, domain, profiles, rules, loot, require("./core/Service"), require("./core/MockStore")))
 local old = rb.deserializePlace(fs.readFile("prototype/guardian-greybox.pre-core.rbxl"))
 local new = rb.deserializePlace(fs.readFile("prototype/guardian-greybox.rbxl"))
 local allowed = {

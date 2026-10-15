@@ -1,0 +1,96 @@
+{
+  "manifest_sha256": "6ed8d4ff8714a84dbdcd69dc4c5c34daa6d33f18cc6c992fe66d91c37dfb3812",
+  "views": {
+    "portal": {
+      "eye": [
+        -144,
+        -171,
+        18
+      ],
+      "target": [
+        -90,
+        -54,
+        32
+      ],
+      "lens_mm": 18,
+      "ortho_scale": null,
+      "coordinates": "Blender x, authored z, elevation"
+    },
+    "main-eye": {
+      "eye": [
+        -150,
+        -103,
+        5.5
+      ],
+      "target": [
+        -150,
+        -60,
+        9
+      ],
+      "lens_mm": 22,
+      "ortho_scale": null,
+      "coordinates": "Blender x, authored z, elevation"
+    },
+    "cart-eye": {
+      "eye": [
+        -126,
+        -99,
+        5.5
+      ],
+      "target": [
+        -85,
+        -71,
+        16
+      ],
+      "lens_mm": 22,
+      "ortho_scale": null,
+      "coordinates": "Blender x, authored z, elevation"
+    },
+    "cave-eye": {
+      "eye": [
+        -121,
+        -120,
+        5.5
+      ],
+      "target": [
+        -80,
+        -110,
+        6
+      ],
+      "lens_mm": 22,
+      "ortho_scale": null,
+      "coordinates": "Blender x, authored z, elevation"
+    },
+    "far": {
+      "eye": [
+        -620,
+        -750,
+        350
+      ],
+      "target": [
+        0,
+        0,
+        -35
+      ],
+      "lens_mm": 46,
+      "ortho_scale": null,
+      "coordinates": "Blender x, authored z, elevation"
+    },
+    "top-routes": {
+      "eye": [
+        0,
+        0,
+        800
+      ],
+      "target": [
+        0,
+        0,
+        0
+      ],
+      "lens_mm": 24,
+      "ortho_scale": 640,
+      "coordinates": "Blender x, authored z, elevation"
+    }
+  },
+  "source": "Native-part offline Cycles proof; lighting approximate; top view shows actual geometry without route overlays"
+}

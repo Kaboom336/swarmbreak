@@ -3,17 +3,123 @@
   "tree": {
     "$className": "DataModel",
     "Workspace": {
-      "$properties": {"Gravity": 196.2, "StreamingEnabled": false},
-      "MeadowV4": {"$path": "meadow-v4/meadow-v4.rbxmx"},
-      "HomeStubSpawn": {"$className": "SpawnLocation", "$properties": {"Anchored": true, "Neutral": true, "Size": [12,1,12], "Position": [0,0.5,246], "Color": [0.35,0.7,0.4]}}
+      "$properties": {
+        "Gravity": 196.2,
+        "StreamingEnabled": false
+      },
+      "MeadowV4": {
+        "$path": "meadow-v4/meadow-v4.rbxmx"
+      },
+      "HomeStubSpawn": {
+        "$className": "SpawnLocation",
+        "$properties": {
+          "Anchored": true,
+          "Neutral": true,
+          "Size": [
+            12,
+            1,
+            12
+          ],
+          "Position": [
+            0,
+            0.5,
+            246
+          ],
+          "Color": [
+            0.35,
+            0.7,
+            0.4
+          ]
+        }
+      }
     },
     "Lighting": {
-      "$properties": {"ClockTime": 14.2, "Brightness": 2.8, "GlobalShadows": true, "Ambient": [0.48,0.53,0.4], "OutdoorAmbient": [0.65,0.7,0.58], "Technology": "Future"},
-      "WarmMeadow": {"$className":"ColorCorrectionEffect", "$properties":{"Saturation":0.12,"Contrast":0.05,"TintColor":[1,0.98,0.92]}},
-      "SoftGlow": {"$className":"BloomEffect", "$properties":{"Intensity":0.18,"Size":18,"Threshold":1.4}}
+      "$properties": {
+        "ClockTime": 14.2,
+        "Brightness": 2.8,
+        "GlobalShadows": true,
+        "Ambient": [
+          0.48,
+          0.53,
+          0.4
+        ],
+        "OutdoorAmbient": [
+          0.65,
+          0.7,
+          0.58
+        ],
+        "Technology": "Future"
+      },
+      "WarmMeadow": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Saturation": 0.12,
+          "Contrast": 0.05,
+          "TintColor": [
+            1,
+            0.98,
+            0.92
+          ]
+        }
+      },
+      "SoftGlow": {
+        "$className": "BloomEffect",
+        "$properties": {
+          "Intensity": 0.18,
+          "Size": 18,
+          "Threshold": 1.4
+        }
+      }
     },
-    "ReplicatedStorage": {"MeadowV4": {"$className":"Folder", "Builder":{"$path":"meadow-v4/MeadowV4.luau"}, "Data":{"$path":"meadow-v4/MeadowV4Data.luau"}, "Loader":{"$path":"meadow-v4/Loader.luau"}, "RavinePolicy":{"$path":"meadow-v4/RavinePolicy.luau"}, "TunnelPolicy":{"$path":"meadow-v4/TunnelPolicy.luau"}, "TunnelController":{"$path":"meadow-v4/TunnelController.luau"}}},
-    "ServerScriptService": {"MeadowV4Links":{"$path":"meadow-v4/Links.server.luau"}},
-    "StarterPlayer": {"$properties":{"CharacterWalkSpeed":16}, "StarterPlayerScripts":{"MeadowV4Camera":{"$path":"meadow-v4/Camera.client.luau"}}}
+    "ReplicatedStorage": {
+      "MeadowV4": {
+        "$className": "Folder",
+        "Builder": {
+          "$path": "meadow-v4/MeadowV4.luau"
+        },
+        "Data": {
+          "$path": "meadow-v4/MeadowV4Data.luau"
+        },
+        "Loader": {
+          "$path": "meadow-v4/Loader.luau"
+        },
+        "RavinePolicy": {
+          "$path": "meadow-v4/RavinePolicy.luau"
+        },
+        "TunnelPolicy": {
+          "$path": "meadow-v4/TunnelPolicy.luau"
+        },
+        "TunnelController": {
+          "$path": "meadow-v4/TunnelController.luau"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "MeadowV4Links": {
+        "$path": "meadow-v4/Links.server.luau"
+      },
+      "KitLibrary": {
+        "$path": "kits/KitLibrary.luau",
+        "Manifest": {
+          "$path": "kits/Manifest.model.json"
+        }
+      },
+      "KitPlan": {
+        "$path": "kits/Plan.luau"
+      },
+      "KitSwap": {
+        "$path": "kits/Swap.server.luau"
+      }
+    },
+    "StarterPlayer": {
+      "$properties": {
+        "CharacterWalkSpeed": 16
+      },
+      "StarterPlayerScripts": {
+        "MeadowV4Camera": {
+          "$path": "meadow-v4/Camera.client.luau"
+        }
+      }
+    }
   }
 }

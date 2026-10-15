@@ -1,4 +1,4 @@
--- Upload-free local EditableMesh visuals; gameplay and projectile stay on server.
+-- Upload-free native block visuals; gameplay and projectile stay on server.
 local RunService = game:GetService("RunService")
 local folder = game:GetService("ReplicatedStorage"):WaitForChild("MeadowKeeper")
 local Rig = require(folder.Rig)
@@ -46,8 +46,8 @@ local function attach(guard)
 		local ok, rig = pcall(Rig.build, Pose.ground(guard))
 		loading[guard] = nil
 		if not ok then
-			warn("[MeadowKeeper] EditableMesh loader failed: " .. tostring(rig))
-			return -- Do not change settings or silently substitute a stand-in.
+			warn("[MeadowKeeper] native block rig failed: " .. tostring(rig))
+			return
 		end
 		if not guard:IsDescendantOf(workspace) then
 			Rig.destroy(rig)

@@ -1,0 +1,40 @@
+{
+  "sourceRevision": "ff8819c3beac3d4332b06b1f1a0576e3597fd581",
+  "workspaceDirty": true,
+  "committedByThisTask": false,
+  "verificationCommand": "C:/Users/zerha/.rokit/tool-storage/lune-org/lune/0.10.5/lune.exe run prototype/cave-v2/tests.luau",
+  "exitCode": 0,
+  "testOutput": "PASS shared core same-item idempotence, refusal, place/open/repeat; native sloped slab endpoint",
+  "hashes": [
+    {
+      "Path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\cave-v2.rbxl",
+      "Hash": "42B9410B8A4F9A3E74656AA089D39EE444D61B998A719CA79557EB90008BE8B4"
+    },
+    {
+      "Path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\cave-v2\\build.luau",
+      "Hash": "40F46AEF8224C2E2CAC0AC70642E201B7A9AA4DAF66401201E1F202F04227B99"
+    },
+    {
+      "Path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\cave-v2\\Cart.server.luau",
+      "Hash": "A592349660B292607B8780229DFBB8991662AFB73A16A15150E57737782E6375"
+    },
+    {
+      "Path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\cave-v2\\Loop.server.luau",
+      "Hash": "4795C5A9AF58B9C5025BFE7DE6E547EC58E15B5FB8BC0F8458637F19BA7DA529"
+    },
+    {
+      "Path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\cave-v2\\scene.json",
+      "Hash": "3D5FA97134A182EE8D48C0FCAECED488CEBF7CE62BDAAA976D31C73E7979F266"
+    },
+    {
+      "Path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\cave-v2\\AUDIT.json",
+      "Hash": "4962EF20A3197A2F682CBA07B73EDD764F464F67E8C063DCEE8529DF049D818C"
+    },
+    {
+      "Path": "C:\\dev\\codex-lab\\pumpkin-loop\\pumpkin\\production\\prototype\\cave-v2\\STRUCTURAL-AUDIT.json",
+      "Hash": "C9BC63B9C4D6CFD8364163D11A0C4A3251DCC5CA6985B7BB1632FDD681DBBDB7"
+    }
+  ],
+  "runtime": "UNKNOWN; no Studio session",
+  "protectedFileEvidence": "PRESERVATION.md"
+}
