@@ -1,0 +1,17 @@
+{
+  "walk": {
+    "S2_visible_percent": 0.0,
+    "timber_lantern_percent": 0.0,
+    "timber_lantern_horizontal_span_percent": 0
+  },
+  "mouth": {
+    "S2_visible_percent": 0.0,
+    "timber_lantern_percent": 0.0,
+    "timber_lantern_horizontal_span_percent": 0
+  },
+  "overview": {
+    "S2_visible_percent": 0.0,
+    "timber_lantern_percent": 0.0,
+    "timber_lantern_horizontal_span_percent": 0
+  }
+}

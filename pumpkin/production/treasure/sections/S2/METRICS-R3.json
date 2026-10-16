@@ -1,0 +1,80 @@
+{
+  "coverage": {
+    "walk": {
+      "S2_visible_percent": 18.66753472222222,
+      "timber_lantern_percent": 4.115125868055555,
+      "timber_lantern_horizontal_span_percent": 39.296875,
+      "pale_grey_albedo_visible_percent": 0.8772786458333333
+    },
+    "mouth": {
+      "S2_visible_percent": 21.298719618055557,
+      "timber_lantern_percent": 17.05740017361111,
+      "timber_lantern_horizontal_span_percent": 81.484375,
+      "pale_grey_albedo_visible_percent": 2.243923611111111
+    },
+    "overview": {
+      "S2_visible_percent": 1.698459201388889,
+      "timber_lantern_percent": 0.4593098958333333,
+      "timber_lantern_horizontal_span_percent": 11.875,
+      "pale_grey_albedo_visible_percent": 6.201171875
+    }
+  },
+  "flat_wall_definition": "Largest 4-connected occlusion-aware source-colour wall region / full 1280x720 frame. Three wall albedo ID masks, including retained solid planes; original kit FBX occludes wall pixels. No light/shadow fragmentation.",
+  "wall_color_largest_connected_percent": {
+    "5": 1.7679036458333333,
+    "6": 6.665907118055555,
+    "7": 6.556423611111111
+  },
+  "flat_wall_share_percent": 6.665907118055555,
+  "lanterns": {
+    "walk": {
+      "count": 6,
+      "visible_core_pixels": {
+        "r3-after-walk-id100-0001.png": 619,
+        "r3-after-walk-id101-0001.png": 106,
+        "r3-after-walk-id102-0001.png": 328,
+        "r3-after-walk-id103-0001.png": 0,
+        "r3-after-walk-id104-0001.png": 208,
+        "r3-after-walk-id105-0001.png": 0,
+        "r3-after-walk-id106-0001.png": 140,
+        "r3-after-walk-id107-0001.png": 0,
+        "r3-after-walk-id108-0001.png": 103,
+        "r3-after-walk-id109-0001.png": 0
+      }
+    },
+    "mouth": {
+      "count": 8,
+      "visible_core_pixels": {
+        "r3-after-mouth-id100-0001.png": 2630,
+        "r3-after-mouth-id101-0001.png": 1871,
+        "r3-after-mouth-id102-0001.png": 760,
+        "r3-after-mouth-id103-0001.png": 5,
+        "r3-after-mouth-id104-0001.png": 333,
+        "r3-after-mouth-id105-0001.png": 0,
+        "r3-after-mouth-id106-0001.png": 227,
+        "r3-after-mouth-id107-0001.png": 308,
+        "r3-after-mouth-id108-0001.png": 204,
+        "r3-after-mouth-id109-0001.png": 0
+      }
+    }
+  },
+  "lantern_definition": "Individual shipped lantern glass core ID with >=1 visible pixel after actual geometry occlusion; destination glow is excluded.",
+  "destination_bright_pixels_fixed_R2_ROI": 1286,
+  "goals": {
+    "walk_ge10": true,
+    "mouth_ge18": true,
+    "span_ge25": true,
+    "flat_wall_le12": true,
+    "mouth_lanterns_4_to8": true,
+    "walk_lanterns_4_to8": true,
+    "bright_destination": true,
+    "pale_grey_at_most_half_R1": true,
+    "facade_in_frame": true
+  },
+  "facade_projected_bounds_xyxy": [
+    110.84080120776059,
+    49.004774556704035,
+    1154.0953402385576,
+    313.99861647753033
+  ]
+}

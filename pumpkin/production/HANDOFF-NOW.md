@@ -65,3 +65,9 @@
 - Offline: 67 scripts compile O0/O1/O2; 64 unrelated sources (including all eight suite implementations) preserved. Serialized Workspace parity; rebuilt physical geometry/floor tags unchanged. Full-footprint support and actual route buffer checks pass. A low bed uses the outer apron shoulder with a 32-stud central corridor reserved; apron floors/tags unchanged. No other section rebuilt.
 - Runtime UNKNOWN: no Studio connection available. Do not inherit old eight-suite green. Run `treasure/sections/S1/STUDIO-CHECKS.md` with owner account, mock persistence, and save real arrival/overview shots. Offline proof includes original S1 FBX meshes; other-section kits and Roblox effects remain proxies. No commit/publish.
 - Lesson: when detailing a scene, judge its player camera first, because a tidy overview can hide blocked sight lines and invisible detail.
+
+## Section rule (coordinator steering, 2026-10-16)
+- Before each round: reference image next to the latest Studio shot; list the 3 biggest gaps; fix only those 3.
+- Max 4 rounds per section. If not at the bar: Keystone lesson on what blocked it, mark for revisit, move to the next section.
+- Speedrun: Codex builds, Claude judges. S2 round 4 is its last round; next is S3.
+- Codex Windows path: C:\Users\zerha\AppData\Local\OpenAI\Codex\bin\9614f1d9b40d9c4f\codex.exe (launch with PowerShell Start-Process; Bash tool fails ENAMETOOLONG).

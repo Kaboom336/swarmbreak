@@ -1,0 +1,57 @@
+[
+  {
+    "id": "HarvestBarrel",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      2.1999969482421875,
+      3.4000000953674316,
+      2.1999969482421875
+    ]
+  },
+  {
+    "id": "HarvestCrate",
+    "base_error": 0.0,
+    "uniform_scale": 2.2399997222900736,
+    "fitted": false,
+    "actual_size_studs": [
+      2.0,
+      2.0,
+      2.0
+    ]
+  },
+  {
+    "id": "OrchardRockA",
+    "base_error": 0.0,
+    "uniform_scale": 0.17363543986071092,
+    "fitted": false,
+    "actual_size_studs": [
+      2.0,
+      1.4013596773147583,
+      1.8536376953125
+    ]
+  },
+  {
+    "id": "OrchardRockB",
+    "base_error": 0.0,
+    "uniform_scale": 0.11286303176967061,
+    "fitted": false,
+    "actual_size_studs": [
+      1.3000030517578125,
+      0.9108837246894836,
+      1.204864501953125
+    ]
+  },
+  {
+    "id": "OrchardRockC",
+    "base_error": 0.0,
+    "uniform_scale": 0.14759012802139576,
+    "fitted": false,
+    "actual_size_studs": [
+      1.6999969482421875,
+      1.1911557912826538,
+      1.575592041015625
+    ]
+  }
+]

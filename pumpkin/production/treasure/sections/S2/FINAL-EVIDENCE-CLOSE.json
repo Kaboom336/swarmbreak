@@ -1,0 +1,1160 @@
+﻿{
+    "state":  "PASS",
+    "section_status":  "REVISIT; four-round cap; round 3 plus cosmetic fixes",
+    "source":  {
+                   "StudioPassAll":  "UNKNOWN; nine live suites not run",
+                   "compiled_O0_O1_O2":  72,
+                   "physics_floor_tags_equal":  true,
+                   "unrelated_sources_preserved":  70,
+                   "workspace_equal":  true
+               },
+    "signatures":  {
+                       "status":  "PASS",
+                       "r3_exact_restore_native_parts":  34793,
+                       "r3_exact_restore_evidence":  "Before cosmetic edits, duplicate-sensitive all-part Counter equality was executed on close-before/close-after: PASS 34793. close-before is rebuilt directly from pre-s2r4.rbxl.",
+                       "protected_physical_query_touch_floor_lane_tags_exact":  true,
+                       "cosmetic_removed_or_replaced":  [
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              137.00000703334808,
+                                                                              125.00000014901161,
+                                                                              107.00000122189522
+                                                                          ],
+                                                                "material":  "Rock",
+                                                                "name":  "S2_RockAnchor3_1",
+                                                                "position":  [
+                                                                                 -75.70429992675781,
+                                                                                 9.45599365234375,
+                                                                                 118.30000305175781
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             0.5915069580078125,
+                                                                             2.9120025634765625,
+                                                                             1.82000732421875
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  1
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              95.00000193715096,
+                                                                              91.00000217556953,
+                                                                              83.00000265240669
+                                                                          ],
+                                                                "material":  "Rock",
+                                                                "name":  "S2_RockAnchor3_2",
+                                                                "position":  [
+                                                                                 -75.10000610351562,
+                                                                                 13.100006103515625,
+                                                                                 116
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             1.8000030517578125,
+                                                                             4.1999969482421875,
+                                                                             4.600006103515625
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  1
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              112.000000923872,
+                                                                              105.00000134110451,
+                                                                              94.0000019967556
+                                                                          ],
+                                                                "material":  "Rock",
+                                                                "name":  "S2_RockAnchor3_3",
+                                                                "position":  [
+                                                                                 -75.18099975585938,
+                                                                                 15.910995483398438,
+                                                                                 118
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             1.63800048828125,
+                                                                             3.8220062255859375,
+                                                                             4.186004638671875
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  1
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              95.00000193715096,
+                                                                              91.00000217556953,
+                                                                              83.00000265240669
+                                                                          ],
+                                                                "material":  "Rock",
+                                                                "name":  "S2_RockAnchor4_1",
+                                                                "position":  [
+                                                                                 -80.40000915527344,
+                                                                                 7.100006103515625,
+                                                                                 120.90000915527344
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             4.600006103515625,
+                                                                             4.1999969482421875,
+                                                                             1.8000030517578125
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  1
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              112.000000923872,
+                                                                              105.00000134110451,
+                                                                              94.0000019967556
+                                                                          ],
+                                                                "material":  "Rock",
+                                                                "name":  "S2_RockAnchor4_2",
+                                                                "position":  [
+                                                                                 -77.69999694824219,
+                                                                                 9.910995483398438,
+                                                                                 120.81900024414062
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             4.186004638671875,
+                                                                             3.8220062255859375,
+                                                                             1.63800048828125
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  1
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              137.00000703334808,
+                                                                              125.00000014901161,
+                                                                              107.00000122189522
+                                                                          ],
+                                                                "material":  "Rock",
+                                                                "name":  "S2_RockAnchor4_3",
+                                                                "position":  [
+                                                                                 -80,
+                                                                                 12.600006103515625,
+                                                                                 120.32499694824219
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             2,
+                                                                             3.1999969482421875,
+                                                                             0.649993896484375
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  1
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              137.00000703334808,
+                                                                              125.00000014901161,
+                                                                              107.00000122189522
+                                                                          ],
+                                                                "material":  "Rock",
+                                                                "name":  "S2_RockAnchor6_1",
+                                                                "position":  [
+                                                                                 -52.54600524902344,
+                                                                                 9.45599365234375,
+                                                                                 76.30000305175781
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             1.0919952392578125,
+                                                                             2.9120025634765625,
+                                                                             2.9120025634765625
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  1
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              95.00000193715096,
+                                                                              91.00000217556953,
+                                                                              83.00000265240669
+                                                                          ],
+                                                                "material":  "Rock",
+                                                                "name":  "S2_RockAnchor6_2",
+                                                                "position":  [
+                                                                                 -52.54600524902344,
+                                                                                 15.45599365234375,
+                                                                                 76
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             1.0919952392578125,
+                                                                             2.9120025634765625,
+                                                                             2.9120025634765625
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  1
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              112.000000923872,
+                                                                              105.00000134110451,
+                                                                              94.0000019967556
+                                                                          ],
+                                                                "material":  "Rock",
+                                                                "name":  "S2_RockAnchor6_3",
+                                                                "position":  [
+                                                                                 -52.54600524902344,
+                                                                                 21.45599365234375,
+                                                                                 76.19999694824219
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             1.0919952392578125,
+                                                                             2.9120025634765625,
+                                                                             2.9120025634765625
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  1
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              95.00000193715096,
+                                                                              91.00000217556953,
+                                                                              83.00000265240669
+                                                                          ],
+                                                                "material":  "Rock",
+                                                                "name":  "S2_RockAnchor7_1",
+                                                                "position":  [
+                                                                                 -56.40000915527344,
+                                                                                 6.600006103515625,
+                                                                                 66.32499694824219
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             2,
+                                                                             3.1999969482421875,
+                                                                             0.649993896484375
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  1
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              112.000000923872,
+                                                                              105.00000134110451,
+                                                                              94.0000019967556
+                                                                          ],
+                                                                "material":  "Rock",
+                                                                "name":  "S2_RockAnchor7_2",
+                                                                "position":  [
+                                                                                 -56,
+                                                                                 12.600006103515625,
+                                                                                 66.32499694824219
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             2,
+                                                                             3.1999969482421875,
+                                                                             0.649993896484375
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  1
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              137.00000703334808,
+                                                                              125.00000014901161,
+                                                                              107.00000122189522
+                                                                          ],
+                                                                "material":  "Rock",
+                                                                "name":  "S2_RockAnchor7_3",
+                                                                "position":  [
+                                                                                 -56.30000305175781,
+                                                                                 18.600006103515625,
+                                                                                 66.32499694824219
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             2,
+                                                                             3.1999969482421875,
+                                                                             0.649993896484375
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  1
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "RouteLabel":  "SHORTCUT",
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              157.0000058412552,
+                                                                              102.00000151991844,
+                                                                              50.000000819563866
+                                                                          ],
+                                                                "label":  "SHORTCUT",
+                                                                "material":  "Wood",
+                                                                "name":  "S2_ShortcutBoard",
+                                                                "position":  [
+                                                                                 -63.84019470214844,
+                                                                                 10.875,
+                                                                                 93.72459411621094
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 0.8983917236328125,
+                                                                                 0,
+                                                                                 0.439208984375,
+                                                                                 0,
+                                                                                 1,
+                                                                                 0,
+                                                                                 -0.439208984375,
+                                                                                 0,
+                                                                                 0.8983917236328125
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             9,
+                                                                             1.25,
+                                                                             0.350006103515625
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  0
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              62.00000010430813,
+                                                                              55.00000052154064,
+                                                                              42.000001296401024
+                                                                          ],
+                                                                "material":  "Wood",
+                                                                "name":  "S2_SignHanger",
+                                                                "position":  [
+                                                                                 -66.59025573730469,
+                                                                                 11.550003051757812,
+                                                                                 94.929931640625
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 0.89837646484375,
+                                                                                 0.163116455078125,
+                                                                                 0.4077911376953125,
+                                                                                 0,
+                                                                                 0.9284820556640625,
+                                                                                 -0.37139892578125,
+                                                                                 -0.439208984375,
+                                                                                 0.333648681640625,
+                                                                                 0.8341217041015625
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             0.1199951171875,
+                                                                             0.1199951171875,
+                                                                             0.269256591796875
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  0
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "Cosmetic":  true,
+                                                                                   "Section":  "S2"
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              62.00000010430813,
+                                                                              55.00000052154064,
+                                                                              42.000001296401024
+                                                                          ],
+                                                                "material":  "Wood",
+                                                                "name":  "S2_SignHanger",
+                                                                "position":  [
+                                                                                 -61.199951171875,
+                                                                                 11.550003051757812,
+                                                                                 92.294677734375
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 0.89837646484375,
+                                                                                 0.163116455078125,
+                                                                                 0.4077911376953125,
+                                                                                 0,
+                                                                                 0.9284820556640625,
+                                                                                 -0.37139892578125,
+                                                                                 -0.439208984375,
+                                                                                 0.333648681640625,
+                                                                                 0.8341217041015625
+                                                                             ],
+                                                                "section":  "S2",
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             0.1199951171875,
+                                                                             0.1199951171875,
+                                                                             0.269256591796875
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  0
+                                                            },
+                                                            {
+                                                                "attributes":  {
+                                                                                   "OutsmartCue":  true
+                                                                               },
+                                                                "collidable":  false,
+                                                                "color":  [
+                                                                              163.00000548362732,
+                                                                              162.00000554323196,
+                                                                              165.00000536441803
+                                                                          ],
+                                                                "material":  "Plastic",
+                                                                "name":  "OutsmartCorner",
+                                                                "position":  [
+                                                                                 0,
+                                                                                 0,
+                                                                                 0
+                                                                             ],
+                                                                "query":  false,
+                                                                "rotation":  [
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1,
+                                                                                 0,
+                                                                                 0,
+                                                                                 0,
+                                                                                 1
+                                                                             ],
+                                                                "shape":  "Block",
+                                                                "size":  [
+                                                                             0.1999969482421875,
+                                                                             0.1999969482421875,
+                                                                             0.1999969482421875
+                                                                         ],
+                                                                "tags":  {
+
+                                                                         },
+                                                                "touch":  false,
+                                                                "transparency":  1
+                                                            }
+                                                        ],
+                       "cosmetic_added_or_replaced":  [
+                                                          {
+                                                              "attributes":  {
+                                                                                 "Cosmetic":  true,
+                                                                                 "RouteLabel":  "SHORTCUT",
+                                                                                 "Section":  "S2"
+                                                                             },
+                                                              "collidable":  false,
+                                                              "color":  [
+                                                                            157.0000058412552,
+                                                                            102.00000151991844,
+                                                                            50.000000819563866
+                                                                        ],
+                                                              "label":  "SHORTCUT",
+                                                              "material":  "Wood",
+                                                              "name":  "S2_ShortcutBoard",
+                                                              "position":  [
+                                                                               -63.51078796386719,
+                                                                               10,
+                                                                               94.39839172363281
+                                                                           ],
+                                                              "query":  false,
+                                                              "rotation":  [
+                                                                               0.8983917236328125,
+                                                                               0,
+                                                                               0.439208984375,
+                                                                               0,
+                                                                               1,
+                                                                               0,
+                                                                               -0.439208984375,
+                                                                               0,
+                                                                               0.8983917236328125
+                                                                           ],
+                                                              "section":  "S2",
+                                                              "shape":  "Block",
+                                                              "size":  [
+                                                                           9,
+                                                                           1.25,
+                                                                           0.350006103515625
+                                                                       ],
+                                                              "tags":  {
+
+                                                                       },
+                                                              "touch":  false,
+                                                              "transparency":  0
+                                                          },
+                                                          {
+                                                              "attributes":  {
+                                                                                 "Cosmetic":  true,
+                                                                                 "Section":  "S2"
+                                                                             },
+                                                              "collidable":  false,
+                                                              "color":  [
+                                                                            62.00000010430813,
+                                                                            55.00000052154064,
+                                                                            42.000001296401024
+                                                                        ],
+                                                              "material":  "Wood",
+                                                              "name":  "S2_SignHanger",
+                                                              "position":  [
+                                                                               -66.42555236816406,
+                                                                               11.112503051757812,
+                                                                               95.26683044433594
+                                                                           ],
+                                                              "query":  false,
+                                                              "rotation":  [
+                                                                               0.8983917236328125,
+                                                                               0.306610107421875,
+                                                                               0.3144683837890625,
+                                                                               0,
+                                                                               0.71600341796875,
+                                                                               -0.6981048583984375,
+                                                                               -0.439208984375,
+                                                                               0.627166748046875,
+                                                                               0.64324951171875
+                                                                           ],
+                                                              "section":  "S2",
+                                                              "shape":  "Block",
+                                                              "size":  [
+                                                                           0.1199951171875,
+                                                                           0.1199951171875,
+                                                                           1.3966522216796875
+                                                                       ],
+                                                              "tags":  {
+
+                                                                       },
+                                                              "touch":  false,
+                                                              "transparency":  0
+                                                          },
+                                                          {
+                                                              "attributes":  {
+                                                                                 "Cosmetic":  true,
+                                                                                 "Section":  "S2"
+                                                                             },
+                                                              "collidable":  false,
+                                                              "color":  [
+                                                                            62.00000010430813,
+                                                                            55.00000052154064,
+                                                                            42.000001296401024
+                                                                        ],
+                                                              "material":  "Wood",
+                                                              "name":  "S2_SignHanger",
+                                                              "position":  [
+                                                                               -61.035247802734375,
+                                                                               11.112503051757812,
+                                                                               92.63157653808594
+                                                                           ],
+                                                              "query":  false,
+                                                              "rotation":  [
+                                                                               0.8983917236328125,
+                                                                               0.306610107421875,
+                                                                               0.3144683837890625,
+                                                                               0,
+                                                                               0.71600341796875,
+                                                                               -0.6981048583984375,
+                                                                               -0.439208984375,
+                                                                               0.627166748046875,
+                                                                               0.64324951171875
+                                                                           ],
+                                                              "section":  "S2",
+                                                              "shape":  "Block",
+                                                              "size":  [
+                                                                           0.1199951171875,
+                                                                           0.1199951171875,
+                                                                           1.3966522216796875
+                                                                       ],
+                                                              "tags":  {
+
+                                                                       },
+                                                              "touch":  false,
+                                                              "transparency":  0
+                                                          }
+                                                      ],
+                       "removed_upper_stack_kits":  [
+                                                        {
+                                                            "attachment":  "S2_RockAnchor3_1",
+                                                            "color":  [
+                                                                          137,
+                                                                          125,
+                                                                          107
+                                                                      ],
+                                                            "fit":  true,
+                                                            "id":  "RockCluster3_1",
+                                                            "island":  "meadow",
+                                                            "name":  "quaternius-nature__Rock_Medium_1",
+                                                            "size":  [
+                                                                         0.5914999842643738,
+                                                                         2.9119999408721924,
+                                                                         1.8200000524520874
+                                                                     ],
+                                                            "x":  -75.7043,
+                                                            "y":  8,
+                                                            "z":  118.3
+                                                        },
+                                                        {
+                                                            "attachment":  "S2_RockAnchor3_2",
+                                                            "color":  [
+                                                                          95,
+                                                                          91,
+                                                                          83
+                                                                      ],
+                                                            "fit":  true,
+                                                            "id":  "RockCluster3_2",
+                                                            "island":  "meadow",
+                                                            "name":  "quaternius-nature__Rock_Medium_1",
+                                                            "size":  [
+                                                                         1.7999999523162842,
+                                                                         4.199999809265137,
+                                                                         4.599999904632568
+                                                                     ],
+                                                            "x":  -75.1,
+                                                            "y":  11,
+                                                            "z":  116
+                                                        },
+                                                        {
+                                                            "attachment":  "S2_RockAnchor3_3",
+                                                            "color":  [
+                                                                          112,
+                                                                          105,
+                                                                          94
+                                                                      ],
+                                                            "fit":  true,
+                                                            "id":  "RockCluster3_3",
+                                                            "island":  "meadow",
+                                                            "name":  "quaternius-nature__Rock_Medium_1",
+                                                            "size":  [
+                                                                         1.6380000114440918,
+                                                                         3.822000026702881,
+                                                                         4.185999870300293
+                                                                     ],
+                                                            "x":  -75.181,
+                                                            "y":  14,
+                                                            "z":  118
+                                                        },
+                                                        {
+                                                            "attachment":  "S2_RockAnchor4_1",
+                                                            "color":  [
+                                                                          95,
+                                                                          91,
+                                                                          83
+                                                                      ],
+                                                            "fit":  true,
+                                                            "id":  "RockCluster4_1",
+                                                            "island":  "meadow",
+                                                            "name":  "quaternius-nature__Rock_Medium_1",
+                                                            "size":  [
+                                                                         4.599999904632568,
+                                                                         4.199999809265137,
+                                                                         1.7999999523162842
+                                                                     ],
+                                                            "x":  -80.4,
+                                                            "y":  5,
+                                                            "z":  120.9
+                                                        },
+                                                        {
+                                                            "attachment":  "S2_RockAnchor4_2",
+                                                            "color":  [
+                                                                          112,
+                                                                          105,
+                                                                          94
+                                                                      ],
+                                                            "fit":  true,
+                                                            "id":  "RockCluster4_2",
+                                                            "island":  "meadow",
+                                                            "name":  "quaternius-nature__Rock_Medium_1",
+                                                            "size":  [
+                                                                         4.185999870300293,
+                                                                         3.822000026702881,
+                                                                         1.6380000114440918
+                                                                     ],
+                                                            "x":  -77.7,
+                                                            "y":  8,
+                                                            "z":  120.819
+                                                        },
+                                                        {
+                                                            "attachment":  "S2_RockAnchor4_3",
+                                                            "color":  [
+                                                                          137,
+                                                                          125,
+                                                                          107
+                                                                      ],
+                                                            "fit":  true,
+                                                            "id":  "RockCluster4_3",
+                                                            "island":  "meadow",
+                                                            "name":  "quaternius-nature__Rock_Medium_1",
+                                                            "size":  [
+                                                                         2,
+                                                                         3.200000047683716,
+                                                                         0.6499999761581421
+                                                                     ],
+                                                            "x":  -80,
+                                                            "y":  11,
+                                                            "z":  120.325
+                                                        },
+                                                        {
+                                                            "attachment":  "S2_RockAnchor6_1",
+                                                            "color":  [
+                                                                          137,
+                                                                          125,
+                                                                          107
+                                                                      ],
+                                                            "fit":  true,
+                                                            "id":  "RockCluster6_1",
+                                                            "island":  "meadow",
+                                                            "name":  "quaternius-nature__Rock_Medium_1",
+                                                            "size":  [
+                                                                         1.0920000076293945,
+                                                                         2.9119999408721924,
+                                                                         2.9119999408721924
+                                                                     ],
+                                                            "x":  -52.546,
+                                                            "y":  8,
+                                                            "z":  76.3
+                                                        },
+                                                        {
+                                                            "attachment":  "S2_RockAnchor6_2",
+                                                            "color":  [
+                                                                          95,
+                                                                          91,
+                                                                          83
+                                                                      ],
+                                                            "fit":  true,
+                                                            "id":  "RockCluster6_2",
+                                                            "island":  "meadow",
+                                                            "name":  "quaternius-nature__Rock_Medium_1",
+                                                            "size":  [
+                                                                         1.0920000076293945,
+                                                                         2.9119999408721924,
+                                                                         2.9119999408721924
+                                                                     ],
+                                                            "x":  -52.546,
+                                                            "y":  14,
+                                                            "z":  76
+                                                        },
+                                                        {
+                                                            "attachment":  "S2_RockAnchor6_3",
+                                                            "color":  [
+                                                                          112,
+                                                                          105,
+                                                                          94
+                                                                      ],
+                                                            "fit":  true,
+                                                            "id":  "RockCluster6_3",
+                                                            "island":  "meadow",
+                                                            "name":  "quaternius-nature__Rock_Medium_1",
+                                                            "size":  [
+                                                                         1.0920000076293945,
+                                                                         2.9119999408721924,
+                                                                         2.9119999408721924
+                                                                     ],
+                                                            "x":  -52.546,
+                                                            "y":  20,
+                                                            "z":  76.2
+                                                        },
+                                                        {
+                                                            "attachment":  "S2_RockAnchor7_1",
+                                                            "color":  [
+                                                                          95,
+                                                                          91,
+                                                                          83
+                                                                      ],
+                                                            "fit":  true,
+                                                            "id":  "RockCluster7_1",
+                                                            "island":  "meadow",
+                                                            "name":  "quaternius-nature__Rock_Medium_1",
+                                                            "size":  [
+                                                                         2,
+                                                                         3.200000047683716,
+                                                                         0.6499999761581421
+                                                                     ],
+                                                            "x":  -56.4,
+                                                            "y":  5,
+                                                            "z":  66.325
+                                                        },
+                                                        {
+                                                            "attachment":  "S2_RockAnchor7_2",
+                                                            "color":  [
+                                                                          112,
+                                                                          105,
+                                                                          94
+                                                                      ],
+                                                            "fit":  true,
+                                                            "id":  "RockCluster7_2",
+                                                            "island":  "meadow",
+                                                            "name":  "quaternius-nature__Rock_Medium_1",
+                                                            "size":  [
+                                                                         2,
+                                                                         3.200000047683716,
+                                                                         0.6499999761581421
+                                                                     ],
+                                                            "x":  -56,
+                                                            "y":  11,
+                                                            "z":  66.325
+                                                        },
+                                                        {
+                                                            "attachment":  "S2_RockAnchor7_3",
+                                                            "color":  [
+                                                                          137,
+                                                                          125,
+                                                                          107
+                                                                      ],
+                                                            "fit":  true,
+                                                            "id":  "RockCluster7_3",
+                                                            "island":  "meadow",
+                                                            "name":  "quaternius-nature__Rock_Medium_1",
+                                                            "size":  [
+                                                                         2,
+                                                                         3.200000047683716,
+                                                                         0.6499999761581421
+                                                                     ],
+                                                            "x":  -56.3,
+                                                            "y":  17,
+                                                            "z":  66.325
+                                                        }
+                                                    ],
+                       "all_other_kits_exact":  true,
+                       "board_top_below_header_bottom":  true,
+                       "artifact_sha256":  "9c414286a840d293abc3f85777b6e79a66e996f6bd2ffb1c5775a58d4aff0008",
+                       "backup_sha256":  "80ad0169d01730de831223d2b2e8838c11268d08f8b25bcf7d7a2c85ac6978c9",
+                       "live_StudioPassAll":  "UNKNOWN; nine live suites not run"
+                   },
+    "contact":  {
+                    "native_parts_checked":  242,
+                    "kits_checked":  18,
+                    "physical_penetrations":  [
+
+                                              ],
+                    "kit_physical_penetrations":  [
+
+                                                  ],
+                    "kit_support_errors":  [
+
+                                           ],
+                    "floating_assemblies":  [
+
+                                            ],
+                    "tolerance_studs":  0.035,
+                    "method":  "Conservative OBB/SAT physical penetration; assembly contact graph to physical world; botanical/assembly joints separate from unintended clipping.",
+                    "lane_buffer_errors":  [
+
+                                           ],
+                    "lane_buffer_studs":  1,
+                    "lane_headroom_studs":  7
+                },
+    "drop_samples":  31824,
+    "drop_routes":  [
+                        "bridge",
+                        "bridge_south",
+                        "east",
+                        "east_climb",
+                        "east_descent",
+                        "fork_link",
+                        "jump_access",
+                        "jump_recovery",
+                        "north_crosslink",
+                        "portal_north",
+                        "ravine_floor_loop",
+                        "ravine_ramp",
+                        "shelf",
+                        "shelf_link",
+                        "south_crosslink",
+                        "spiral",
+                        "summit_radial",
+                        "tunnel_south",
+                        "tunnel_trunk",
+                        "west"
+                    ],
+    "artifact_hashes":  {
+                            "slice-v2/prototype/guardian-greybox.rbxl":  "9C414286A840D293ABC3F85777B6E79A66E996F6BD2FFB1C5775A58D4AFF0008",
+                            "slice-v2/prototype/guardian-greybox.pre-s2close.rbxl":  "80AD0169D01730DE831223D2B2E8838C11268D08F8B25BCF7D7A2C85AC6978C9",
+                            "slice-v2/prototype/guardian-greybox.pre-s2r4.rbxl":  "9C11A9FDA760C972A3DA954C7805E9AD12094FA8587A91937120961533E22565",
+                            "prototype/meadow-v4/Section2.luau":  "0757B54C3E451B131C66D1265C832FBC09B889DFFD64D7B988348DF6B65888D7",
+                            "prototype/meadow-v4/Outsmart.luau":  "426B2DD0F7F96DB2F5B1F9762AA9118C3A75DE39ECFAA9CA95C4FD9831CCFAC6",
+                            "treasure/sections/S2/close-rojo.rbxl":  "AEFFA0970886E61CF428E8B3D2154B927E450709E5E0C62BEE933006D98D0D71",
+                            "treasure/sections/S2/close-after.json":  "53AC3969CE4C0CC331B59DFE631FDB058EF41371AA27EE3D3222486CE5C7B3A6",
+                            "treasure/sections/S2/close-after-mouth.png":  "8E67355962017A4B288CF5B89F700477BD7301E0283F9CA100421CBEC174196D",
+                            "treasure/sections/S2/CLOSE-SIGNATURES.json":  "704E26FADE60F629678BAD056C4562204395CEFE97EF845BE956C1EED4F20AC8",
+                            "treasure/sections/S2/close-AUDIT.json":  "E3E8D44835825A174FCDB57FC30297AE0338426FF790456A8AD5C233ECA35C92",
+                            "treasure/sections/S2/close-after-physical-contact.json":  "D6EB91485D4BB49FB180AB0C234C8D4C277CA60C9CE14AD3A4DDB465D57680CC",
+                            "treasure/sections/S2/close-contracts.log":  "1DA86AAE0679DBE35FE27915228F916FCA3CB45164CC193F5421DE2BAFDDAC0C",
+                            "treasure/sections/S2/close-50-seed.log":  "151A472FB5895EE5EFF0F239D57050763A8FA163887AD0EAC9F98AF5618EAD09",
+                            "treasure/sections/S2/close-behavior.log":  "42A4BD6C17A0C64C71F47585F02DFEA47CC068975EB37BD6DAA9203064BF18CD",
+                            "treasure/sections/S2/close-DROPS.json":  "25C08F2A6ADEAD9A9947747B1D0AB4FAC29CEADF898E01BBC34FC397421407B4",
+                            "treasure/sections/S2/close-DROPS-1.json":  "3CA0F9FDE02B8615F9B5A161088E6325C1DE7D1C862BA6D1F49B0444773DA75B",
+                            "treasure/sections/S2/close-DROPS-2.json":  "59B1D5450FAD5CF86EF6C48E9B0B39457756A7E7E37F1BF65B2179C93B4A903F",
+                            "treasure/sections/S2/close-DROPS-3.json":  "5F0B216DF1AD9E006F6B0E032ADDF867A9377436748056C3A52C9995328700EA",
+                            "treasure/sections/S2/RESULT.md":  "A0C29BA7DDBF30BE72832D2B3BAFA96140565C3305EA641FE12177E366E2A0C8",
+                            "treasure/sections/LESSONS.md":  "BCEEB677FE2456149239B4DDE455178005C8212DE7F87970C9B700995A754EE2"
+                        },
+    "mouth_camera":  "Inspected offline render; full SHORTCUT readable",
+    "owner_report":  "Claude judged R4 in live Studio: not better than R3",
+    "live_StudioPassAll":  "UNKNOWN; all nine not run",
+    "commit":  "NONE",
+    "publish":  "NONE"
+}

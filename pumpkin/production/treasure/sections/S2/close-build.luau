@@ -1,0 +1,7 @@
+local fs,luau=require('@lune/fs'),require('@lune/luau')
+local src=fs.readFile('treasure/sections/S2/build.luau')
+src=src:gsub('guardian%-greybox.pre%-s2r3.rbxl','guardian-greybox.pre-s2r4.rbxl')
+src=src:gsub("H%.%.='r3%-'", "H..='close-'")
+src=src:gsub("if r2 and not p:GetAttribute%('WalkableLaneFloor'%) and table.find", "if false and table.find")
+src=src:gsub("if r2 then allowed={[^\n]+", "if r2 then allowed={['ReplicatedStorage.MeadowV4.Section2']=true,['ReplicatedStorage.MeadowV4.Outsmart']=true} end")
+luau.load(src,{environment=getfenv(),injectGlobals=true})()

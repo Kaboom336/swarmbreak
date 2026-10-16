@@ -1,0 +1,477 @@
+﻿{
+    "artifact_hashes":  {
+                            "slice-v2/prototype/guardian-greybox.rbxl":  "9C11A9FDA760C972A3DA954C7805E9AD12094FA8587A91937120961533E22565",
+                            "slice-v2/prototype/guardian-greybox.pre-s2r3.rbxl":  "3BE9EE241A7D19E3E32F827C3E96C48EBDB73FE6CB1CD7948883B79BCAC03DFC",
+                            "prototype/meadow-v4/Section2.luau":  "7B5E639B9ECF272F3DB821B702D98DB44B851C70EEF7B704388E69E47E15B0F7",
+                            "treasure/sections/S2/r3-rojo.rbxl":  "C6AEA2A9FC8A79DF887F5F8FDE6DBA9B5D61B92984B4384B0093F5AD4995FC1B",
+                            "treasure/sections/S2/r3-before.json":  "873F1B626986CD8F6500114AC27061876A950131C6A777A34CE0B37AD58B10C4",
+                            "treasure/sections/S2/r3-after.json":  "57A07F7A343523BC32BFC86EE481B2390BCE188526273CD720329F09255D33B9",
+                            "treasure/sections/S2/METRICS-R3.json":  "2B6E8473CF5704AE0EF738CCD9519CBB3E6AD0D47348CE533C16DA8368E863AF",
+                            "treasure/sections/S2/REMOVED-R3.json":  "8DCAB1074370A03E4C5892D2766F177B944EECAC83D342D64D0A0D954D2F82C0",
+                            "treasure/sections/S2/CRITIC-R3.md":  "F107A068C3E2A8D8D1914FA6538CE0EF3694C8DC527F9DACE5F8A7D3BD813C03",
+                            "treasure/sections/S2/RESULT.md":  "6DCCFA7D7672FB0F4A82752B8B7F842EEC54CAD5D4575117A189AC01E7D1A6AD",
+                            "treasure/sections/S2/SBS-R3.jpg":  "BEE167758A69FCDB67F06E98F993353108A6AA1F5078636208B1CCC814C25028",
+                            "treasure/sections/S2/TARGET.png":  "6087D409E493996D8D701009A7B054E8ECFAAC591685342AF4D252A42FFFA7D8",
+                            "treasure/sections/S2/r3-deliver.log":  "F6B6F62340E50E1F2B23B835C3E525ABF9A826D0F47C443F28A428295F4281AA",
+                            "treasure/sections/S2/r3-behavior.log":  "42A4BD6C17A0C64C71F47585F02DFEA47CC068975EB37BD6DAA9203064BF18CD",
+                            "treasure/sections/S2/r3-contracts.log":  "1DA86AAE0679DBE35FE27915228F916FCA3CB45164CC193F5421DE2BAFDDAC0C",
+                            "treasure/sections/S2/r3-50-seed.log":  "151A472FB5895EE5EFF0F239D57050763A8FA163887AD0EAC9F98AF5618EAD09"
+                        },
+    "compile_and_preservation":  {
+                                     "StudioPassAll":  "UNKNOWN; nine live suites not run",
+                                     "compiled_O0_O1_O2":  72,
+                                     "physics_floor_tags_equal":  true,
+                                     "unrelated_sources_preserved":  71,
+                                     "workspace_equal":  true
+                                 },
+    "contact":  {
+                    "native_parts_checked":  254,
+                    "kits_checked":  30,
+                    "physical_penetrations":  [
+
+                                              ],
+                    "kit_physical_penetrations":  [
+
+                                                  ],
+                    "kit_support_errors":  [
+
+                                           ],
+                    "floating_assemblies":  [
+
+                                            ],
+                    "tolerance_studs":  0.035,
+                    "method":  "Conservative OBB/SAT physical penetration; assembly contact graph to physical world; botanical/assembly joints separate from unintended clipping.",
+                    "lane_buffer_errors":  [
+
+                                           ],
+                    "lane_buffer_studs":  1,
+                    "lane_headroom_studs":  7
+                },
+    "mesh":  {
+                 "value":  [
+                               {
+                                   "id":  "HarvestBarrel",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             2.1999969482421875,
+                                                             3.4000000953674316,
+                                                             2.1999969482421875
+                                                         ]
+                               },
+                               {
+                                   "id":  "HarvestCrate",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  2.2399997222900736,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             2.0,
+                                                             2.0,
+                                                             2.0
+                                                         ]
+                               },
+                               {
+                                   "id":  "OrchardRockA",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  0.17363543986071092,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             2.0,
+                                                             1.4013596773147583,
+                                                             1.8536376953125
+                                                         ]
+                               },
+                               {
+                                   "id":  "OrchardRockB",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  0.11286303176967061,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.3000030517578125,
+                                                             0.9108837246894836,
+                                                             1.204864501953125
+                                                         ]
+                               },
+                               {
+                                   "id":  "OrchardRockC",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  0.14759012802139576,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.6999969482421875,
+                                                             1.1911557912826538,
+                                                             1.575592041015625
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster1_1",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.63800048828125,
+                                                             3.822000026702881,
+                                                             4.186004638671875
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster1_2",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.8000030517578125,
+                                                             4.199999809265137,
+                                                             4.600006103515625
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster1_3",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.63800048828125,
+                                                             3.822000503540039,
+                                                             4.186004638671875
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster2_1",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             4.186004638671875,
+                                                             3.822000026702881,
+                                                             1.63800048828125
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster2_2",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             3.1999969482421875,
+                                                             3.1999998092651367,
+                                                             1.1999969482421875
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster2_3",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             4.186004638671875,
+                                                             3.822000503540039,
+                                                             1.63800048828125
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster3_1",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             0.5915069580078125,
+                                                             2.9119997024536133,
+                                                             1.82000732421875
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster3_2",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.8000030517578125,
+                                                             4.199999809265137,
+                                                             4.600006103515625
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster3_3",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.63800048828125,
+                                                             3.822000503540039,
+                                                             4.186004638671875
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster4_1",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             4.600006103515625,
+                                                             4.199999809265137,
+                                                             1.8000030517578125
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster4_2",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             4.186004638671875,
+                                                             3.822000503540039,
+                                                             1.63800048828125
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster4_3",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             2.0,
+                                                             3.1999998092651367,
+                                                             0.649993896484375
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster5_1",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.63800048828125,
+                                                             3.822000026702881,
+                                                             4.186004638671875
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster5_2",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.1999969482421875,
+                                                             3.1999998092651367,
+                                                             3.1999969482421875
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster5_3",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.0919952392578125,
+                                                             2.9119997024536133,
+                                                             2.9120025634765625
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster5_4",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.1999969482421875,
+                                                             3.1999998092651367,
+                                                             3.1999969482421875
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster5_5",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.0919952392578125,
+                                                             2.9120006561279297,
+                                                             2.9120025634765625
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster5_6",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.1999969482421875,
+                                                             3.200000762939453,
+                                                             3.1999969482421875
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster5_7",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.0919952392578125,
+                                                             2.9120006561279297,
+                                                             2.9120025634765625
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster6_1",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.0920028686523438,
+                                                             2.9119997024536133,
+                                                             2.9120025634765625
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster6_2",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.0920028686523438,
+                                                             2.9120006561279297,
+                                                             2.9120025634765625
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster6_3",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             1.0920028686523438,
+                                                             2.9120006561279297,
+                                                             2.9120025634765625
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster7_1",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             2.0,
+                                                             3.1999998092651367,
+                                                             0.649993896484375
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster7_2",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             2.0,
+                                                             3.1999998092651367,
+                                                             0.649993896484375
+                                                         ]
+                               },
+                               {
+                                   "id":  "RockCluster7_3",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             2.0,
+                                                             3.200000762939453,
+                                                             0.649993896484375
+                                                         ]
+                               }
+                           ],
+                 "Count":  30
+             },
+    "metrics":  {
+                    "coverage":  {
+                                     "walk":  {
+                                                  "S2_visible_percent":  18.66753472222222,
+                                                  "timber_lantern_percent":  4.115125868055555,
+                                                  "timber_lantern_horizontal_span_percent":  39.296875,
+                                                  "pale_grey_albedo_visible_percent":  0.8772786458333333
+                                              },
+                                     "mouth":  {
+                                                   "S2_visible_percent":  21.298719618055557,
+                                                   "timber_lantern_percent":  17.05740017361111,
+                                                   "timber_lantern_horizontal_span_percent":  81.484375,
+                                                   "pale_grey_albedo_visible_percent":  2.243923611111111
+                                               },
+                                     "overview":  {
+                                                      "S2_visible_percent":  1.698459201388889,
+                                                      "timber_lantern_percent":  0.4593098958333333,
+                                                      "timber_lantern_horizontal_span_percent":  11.875,
+                                                      "pale_grey_albedo_visible_percent":  6.201171875
+                                                  }
+                                 },
+                    "flat_wall_definition":  "Largest 4-connected occlusion-aware source-colour wall region / full 1280x720 frame. Three wall albedo ID masks, including retained solid planes; original kit FBX occludes wall pixels. No light/shadow fragmentation.",
+                    "wall_color_largest_connected_percent":  {
+                                                                 "5":  1.7679036458333333,
+                                                                 "6":  6.665907118055555,
+                                                                 "7":  6.556423611111111
+                                                             },
+                    "flat_wall_share_percent":  6.665907118055555,
+                    "lanterns":  {
+                                     "walk":  {
+                                                  "count":  6,
+                                                  "visible_core_pixels":  {
+                                                                              "r3-after-walk-id100-0001.png":  619,
+                                                                              "r3-after-walk-id101-0001.png":  106,
+                                                                              "r3-after-walk-id102-0001.png":  328,
+                                                                              "r3-after-walk-id103-0001.png":  0,
+                                                                              "r3-after-walk-id104-0001.png":  208,
+                                                                              "r3-after-walk-id105-0001.png":  0,
+                                                                              "r3-after-walk-id106-0001.png":  140,
+                                                                              "r3-after-walk-id107-0001.png":  0,
+                                                                              "r3-after-walk-id108-0001.png":  103,
+                                                                              "r3-after-walk-id109-0001.png":  0
+                                                                          }
+                                              },
+                                     "mouth":  {
+                                                   "count":  8,
+                                                   "visible_core_pixels":  {
+                                                                               "r3-after-mouth-id100-0001.png":  2630,
+                                                                               "r3-after-mouth-id101-0001.png":  1871,
+                                                                               "r3-after-mouth-id102-0001.png":  760,
+                                                                               "r3-after-mouth-id103-0001.png":  5,
+                                                                               "r3-after-mouth-id104-0001.png":  333,
+                                                                               "r3-after-mouth-id105-0001.png":  0,
+                                                                               "r3-after-mouth-id106-0001.png":  227,
+                                                                               "r3-after-mouth-id107-0001.png":  308,
+                                                                               "r3-after-mouth-id108-0001.png":  204,
+                                                                               "r3-after-mouth-id109-0001.png":  0
+                                                                           }
+                                               }
+                                 },
+                    "lantern_definition":  "Individual shipped lantern glass core ID with \u003e=1 visible pixel after actual geometry occlusion; destination glow is excluded.",
+                    "destination_bright_pixels_fixed_R2_ROI":  1286,
+                    "goals":  {
+                                  "walk_ge10":  true,
+                                  "mouth_ge18":  true,
+                                  "span_ge25":  true,
+                                  "flat_wall_le12":  true,
+                                  "mouth_lanterns_4_to8":  true,
+                                  "walk_lanterns_4_to8":  true,
+                                  "bright_destination":  true,
+                                  "pale_grey_at_most_half_R1":  true,
+                                  "facade_in_frame":  true
+                              },
+                    "facade_projected_bounds_xyxy":  [
+                                                         110.84080120776059,
+                                                         49.004774556704035,
+                                                         1154.0953402385576,
+                                                         313.99861647753033
+                                                     ]
+                },
+    "solid_palette_edits":  139,
+    "independent_blind_reviews":  1,
+    "visual_correction_rounds":  1,
+    "sole_changed_mounted_source":  "ReplicatedStorage.MeadowV4.Section2",
+    "protected_solids_all_other_fields_equal":  true,
+    "lanes_floor_tags_and_palettes_equal":  true,
+    "live_StudioPassAll":  "UNKNOWN: all nine not run",
+    "owner_visual_acceptance":  "UNKNOWN",
+    "qualitative_limits":  "Protected rectangular wall silhouettes and diagonal opening remain; mounted timber corbels rather than grounded posts; orchard crops tightly in the locked walk camera",
+    "render_limits":  "Native materials lack Roblox Rock/Slate/Wood texture; point lights, text and shafts approximate; older kits use native proxies, new kits use original FBX",
+    "commit":  "NONE by this agent",
+    "publish":  "NONE"
+}

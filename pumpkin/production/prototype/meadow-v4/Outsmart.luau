@@ -63,7 +63,7 @@ function O.build(model, origin)
 		label.Font, label.TextStrokeTransparency, label.Parent = Enum.Font.GothamBold, 0.2, gui
 	end
 	local cyan, gold = Color3.fromRGB(80, 235, 240), Color3.fromRGB(255, 213, 85)
-	cue("OutsmartCorner", Vector3.new(-73, 11, 113), "CHARGE → CUT ASIDE", gold)
+	-- S2 close-out: this floating cue clipped into the mouth; the wooden SHORTCUT board is the landmark.
 	-- S2 removes the debug-like floating return cue at the mine mouth.
 	-- The physical route and cyan portal remain the return landmarks.
 	cue("OutsmartFork", Vector3.new(0, 5, -42), "← TUNNEL / BRIDGE AHEAD", cyan)

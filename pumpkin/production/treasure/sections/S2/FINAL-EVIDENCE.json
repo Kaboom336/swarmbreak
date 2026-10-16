@@ -1,0 +1,92 @@
+﻿{
+    "artifact_hashes":  {
+                            "slice-v2/prototype/guardian-greybox.rbxl":  "2D67D5562C3C8031089890205AA504D902079082D21727481C97907F92485C7D",
+                            "slice-v2/prototype/guardian-greybox.pre-s2.rbxl":  "D8B2A0CA1E25BB9FE534D6056B4FB7F6AC3B35C1B9A8F3E818ECF69292D34C71",
+                            "prototype/meadow-v4/Section2.luau":  "A5C6584AEE758C1C65E7426C443A36CB3E908D58B87207F63F365077A1DED0F8",
+                            "prototype/meadow-v4/Outsmart.luau":  "3CC425F53244546B6B98403B7AD2A6AFAB3BEFF1167557C131033B604B2313A5",
+                            "prototype/kits/Swap.server.luau":  "5B67B45F882D92E8D16C6B875BA4D3127B98F9FAAA65450B4F2311A0B39AD832",
+                            "treasure/sections/S2/before.json":  "C879DF2DC651383853BD7D96F797CCF6B0B0F2A1B3A8248A17756E711669472D",
+                            "treasure/sections/S2/after.json":  "18FD25EBA43CC7C2EF92DD28566575B1CE90BE080B136B7D07EB6C5EAD361020",
+                            "treasure/sections/S2/TARGET.png":  "6087D409E493996D8D701009A7B054E8ECFAAC591685342AF4D252A42FFFA7D8",
+                            "treasure/sections/S2/REFS.jpg":  "D7D13559FB8678C52ADFA72435C99C7D7D47659A749C0587CD0F93A00B26D93E",
+                            "treasure/sections/S2/REFS-review.jpg":  "AA3E2B5496F1D8C916EE74D4935935766D6664F72BEEFBC7D211E34E57EA5BD4",
+                            "treasure/sections/S2/SBS.jpg":  "2E6D916DB4BAF1664B11630708148255FB5A27DBBB6FBE4520DA93A983B817E4",
+                            "treasure/sections/S2/RESULT.md":  "27C2EB406B2A09598F61CC4C36EEF9DE2A5842E950D38989C164FD5DCD7C1951"
+                        },
+    "compile_and_preservation":  {
+                                     "StudioPassAll":  "UNKNOWN; nine live suites not run",
+                                     "compiled_O0_O1_O2":  72,
+                                     "physics_floor_tags_equal":  true,
+                                     "unrelated_sources_preserved":  69,
+                                     "workspace_equal":  true
+                                 },
+    "contact":  {
+                    "native_parts_checked":  121,
+                    "kits_checked":  5,
+                    "physical_penetrations":  [
+
+                                              ],
+                    "kit_physical_penetrations":  [
+
+                                                  ],
+                    "kit_support_errors":  [
+
+                                           ],
+                    "floating_assemblies":  [
+
+                                            ],
+                    "tolerance_studs":  0.035,
+                    "method":  "Conservative OBB/SAT physical penetration; assembly contact graph to physical world; botanical/assembly joints separate from unintended clipping.",
+                    "lane_buffer_errors":  [
+
+                                           ],
+                    "lane_buffer_studs":  1,
+                    "lane_headroom_studs":  7
+                },
+    "coverage":  {
+                     "walk":  {
+                                  "S2_visible_percent":  12.26953125,
+                                  "timber_lantern_percent":  2.0550130208333335,
+                                  "timber_lantern_horizontal_span_percent":  30.859375
+                              },
+                     "mouth":  {
+                                   "S2_visible_percent":  8.090494791666666,
+                                   "timber_lantern_percent":  5.155056423611111,
+                                   "timber_lantern_horizontal_span_percent":  77.03125
+                               },
+                     "overview":  {
+                                      "S2_visible_percent":  1.1649305555555556,
+                                      "timber_lantern_percent":  0.20160590277777776,
+                                      "timber_lantern_horizontal_span_percent":  7.8125
+                                  }
+                 },
+    "contracts":  {
+                      "StudioPassAll_suite_names":  [
+                                                        "GreyboxSelfTest",
+                                                        "DropSampleTest",
+                                                        "GreyboxLoopTest",
+                                                        "GreyboxPvpTest",
+                                                        "GreyboxTrapTest",
+                                                        "CoreLoopTest",
+                                                        "RavineTest",
+                                                        "TunnelTest",
+                                                        "OutsmartTest"
+                                                    ],
+                      "cosmetic_query_false":  true,
+                      "failed_section_warns_and_keeps_island":  true,
+                      "late_kits_origin_once":  true,
+                      "live_results":  "UNKNOWN",
+                      "offset_origin_once":  true
+                  },
+    "visual_goal_walk_percent":  10,
+    "visual_goal_mouth_percent":  18,
+    "visual_goal_mouth_frame_span_percent":  25,
+    "live_StudioPassAll":  "UNKNOWN: all nine not run",
+    "independent_reviews":  2,
+    "correction_rounds":  2,
+    "commit":  "NONE by this agent",
+    "publish":  "NONE",
+    "beam_render":  "labelled transparent effect proxy",
+    "light_render":  "approximation from actual PointLight metadata",
+    "font_render":  "Comic Sans Bold local proxy; runtime shared FredokaOne/UIStroke"
+}

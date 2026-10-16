@@ -1,0 +1,168 @@
+{
+  "coverage": {
+    "walk": {
+      "S2_visible_percent": 17.15082465277778,
+      "timber_lantern_percent": 4.000325520833333,
+      "timber_lantern_horizontal_span_percent": 42.109375,
+      "pale_grey_albedo_visible_percent": 5.046549479166667
+    },
+    "mouth": {
+      "S2_visible_percent": 17.33159722222222,
+      "timber_lantern_percent": 15.321289062499998,
+      "timber_lantern_horizontal_span_percent": 81.484375,
+      "pale_grey_albedo_visible_percent": 3.1131727430555554
+    },
+    "overview": {
+      "S2_visible_percent": 1.8993055555555554,
+      "timber_lantern_percent": 0.7278645833333333,
+      "timber_lantern_horizontal_span_percent": 18.359375,
+      "pale_grey_albedo_visible_percent": 6.646809895833333
+    }
+  },
+  "flat_wall_definition": "Largest 4-connected occlusion-aware source-colour wall region / full 1280x720 frame. Three wall albedo ID masks, including retained solid planes; original kit FBX occludes wall pixels. No light/shadow fragmentation.",
+  "wall_color_largest_connected_percent": {
+    "5": 1.9154730902777777,
+    "6": 7.373697916666666,
+    "7": 6.556423611111111
+  },
+  "flat_wall_share_percent": 7.373697916666666,
+  "lanterns": {
+    "walk": {
+      "count": 6,
+      "visible_core_pixels": {
+        "r4-after-walk-id100-0001.png": 601,
+        "r4-after-walk-id101-0001.png": 41,
+        "r4-after-walk-id102-0001.png": 328,
+        "r4-after-walk-id103-0001.png": 0,
+        "r4-after-walk-id104-0001.png": 208,
+        "r4-after-walk-id105-0001.png": 0,
+        "r4-after-walk-id106-0001.png": 140,
+        "r4-after-walk-id107-0001.png": 0,
+        "r4-after-walk-id108-0001.png": 103,
+        "r4-after-walk-id109-0001.png": 0
+      }
+    },
+    "mouth": {
+      "count": 7,
+      "visible_core_pixels": {
+        "r4-after-mouth-id100-0001.png": 2559,
+        "r4-after-mouth-id101-0001.png": 288,
+        "r4-after-mouth-id102-0001.png": 760,
+        "r4-after-mouth-id103-0001.png": 0,
+        "r4-after-mouth-id104-0001.png": 333,
+        "r4-after-mouth-id105-0001.png": 0,
+        "r4-after-mouth-id106-0001.png": 227,
+        "r4-after-mouth-id107-0001.png": 308,
+        "r4-after-mouth-id108-0001.png": 204,
+        "r4-after-mouth-id109-0001.png": 0
+      }
+    }
+  },
+  "lantern_definition": "Individual shipped lantern glass core ID with >=1 visible pixel after actual geometry occlusion; destination glow is excluded.",
+  "destination_bright_pixels_fixed_R2_ROI": 1284,
+  "goals": {
+    "walk_ge10": true,
+    "mouth_ge18": false,
+    "span_ge25": true,
+    "flat_wall_le12": true,
+    "mouth_lanterns_4_to8": true,
+    "walk_lanterns_4_to8": true,
+    "bright_destination": true,
+    "pale_grey_at_most_half_R1": true,
+    "facade_in_frame": true,
+    "walk_sky_ge8": false,
+    "arched_beveled_opening": true
+  },
+  "facade_projected_bounds_xyxy": [
+    110.84080120776059,
+    49.004774556704035,
+    1154.0953402385576,
+    313.99861647753033
+  ],
+  "walk_sky_percent": 2.0977647569444446,
+  "sky_definition": "Full-frame primary-camera background pixels, measured from render Depth >2000 studs; geometry occlusion includes original FBX. Locked WALK camera.",
+  "arch_bevels": [
+    {
+      "attributes": {
+        "Cosmetic": true,
+        "Section": "S2"
+      },
+      "collidable": false,
+      "color": [
+        112.000000923872,
+        105.00000134110451,
+        94.0000019967556
+      ],
+      "material": "Rock",
+      "name": "S2_MineArchBevel",
+      "position": [
+        -73.486083984375,
+        11.550003051757812,
+        97.38291931152344
+      ],
+      "query": false,
+      "rotation": [
+        0.439208984375,
+        0,
+        -0.8983917236328125,
+        0,
+        1,
+        0,
+        0.8983917236328125,
+        0,
+        0.439208984375
+      ],
+      "section": "S2",
+      "shape": "Wedge",
+      "size": [
+        0.600006103515625,
+        4.1999969482421875,
+        4.8000030517578125
+      ],
+      "tags": {},
+      "touch": false,
+      "transparency": 0
+    },
+    {
+      "attributes": {
+        "Cosmetic": true,
+        "Section": "S2"
+      },
+      "collidable": false,
+      "color": [
+        112.000000923872,
+        105.00000134110451,
+        94.0000019967556
+      ],
+      "material": "Rock",
+      "name": "S2_MineArchBevel",
+      "position": [
+        -55.02880859375,
+        11.550003051757812,
+        88.35935974121094
+      ],
+      "query": false,
+      "rotation": [
+        -0.439208984375,
+        0,
+        0.8983917236328125,
+        0,
+        1,
+        0,
+        -0.8983917236328125,
+        0,
+        -0.439208984375
+      ],
+      "section": "S2",
+      "shape": "Wedge",
+      "size": [
+        0.600006103515625,
+        4.1999969482421875,
+        4.8000030517578125
+      ],
+      "tags": {},
+      "touch": false,
+      "transparency": 0
+    }
+  ]
+}

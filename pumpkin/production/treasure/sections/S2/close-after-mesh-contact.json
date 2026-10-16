@@ -1,0 +1,200 @@
+[
+  {
+    "id": "HarvestBarrel",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      2.1999969482421875,
+      3.4000000953674316,
+      2.1999969482421875
+    ]
+  },
+  {
+    "id": "HarvestCrate",
+    "base_error": 0.0,
+    "uniform_scale": 2.2399997222900736,
+    "fitted": false,
+    "actual_size_studs": [
+      2.0,
+      2.0,
+      2.0
+    ]
+  },
+  {
+    "id": "OrchardRockA",
+    "base_error": 0.0,
+    "uniform_scale": 0.17363543986071092,
+    "fitted": false,
+    "actual_size_studs": [
+      2.0,
+      1.4013596773147583,
+      1.8536376953125
+    ]
+  },
+  {
+    "id": "OrchardRockB",
+    "base_error": 0.0,
+    "uniform_scale": 0.11286303176967061,
+    "fitted": false,
+    "actual_size_studs": [
+      1.3000030517578125,
+      0.9108837246894836,
+      1.204864501953125
+    ]
+  },
+  {
+    "id": "OrchardRockC",
+    "base_error": 0.0,
+    "uniform_scale": 0.14759012802139576,
+    "fitted": false,
+    "actual_size_studs": [
+      1.6999969482421875,
+      1.1911557912826538,
+      1.575592041015625
+    ]
+  },
+  {
+    "id": "RockCluster1_1",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      1.63800048828125,
+      3.822000026702881,
+      4.186004638671875
+    ]
+  },
+  {
+    "id": "RockCluster1_2",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      1.8000030517578125,
+      4.199999809265137,
+      4.600006103515625
+    ]
+  },
+  {
+    "id": "RockCluster1_3",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      1.63800048828125,
+      3.822000503540039,
+      4.186004638671875
+    ]
+  },
+  {
+    "id": "RockCluster2_1",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      4.186004638671875,
+      3.822000026702881,
+      1.63800048828125
+    ]
+  },
+  {
+    "id": "RockCluster2_2",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      3.1999969482421875,
+      3.1999998092651367,
+      1.1999969482421875
+    ]
+  },
+  {
+    "id": "RockCluster2_3",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      4.186004638671875,
+      3.822000503540039,
+      1.63800048828125
+    ]
+  },
+  {
+    "id": "RockCluster5_1",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      1.63800048828125,
+      3.822000026702881,
+      4.186004638671875
+    ]
+  },
+  {
+    "id": "RockCluster5_2",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      1.1999969482421875,
+      3.1999998092651367,
+      3.1999969482421875
+    ]
+  },
+  {
+    "id": "RockCluster5_3",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      1.0919952392578125,
+      2.9119997024536133,
+      2.9120025634765625
+    ]
+  },
+  {
+    "id": "RockCluster5_4",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      1.1999969482421875,
+      3.1999998092651367,
+      3.1999969482421875
+    ]
+  },
+  {
+    "id": "RockCluster5_5",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      1.0919952392578125,
+      2.9120006561279297,
+      2.9120025634765625
+    ]
+  },
+  {
+    "id": "RockCluster5_6",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      1.1999969482421875,
+      3.200000762939453,
+      3.1999969482421875
+    ]
+  },
+  {
+    "id": "RockCluster5_7",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      1.0919952392578125,
+      2.9120006561279297,
+      2.9120025634765625
+    ]
+  }
+]

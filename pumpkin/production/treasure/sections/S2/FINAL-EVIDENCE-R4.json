@@ -1,0 +1,477 @@
+﻿{
+    "artifact_hashes":  {
+                            "slice-v2/prototype/guardian-greybox.rbxl":  "80AD0169D01730DE831223D2B2E8838C11268D08F8B25BCF7D7A2C85AC6978C9",
+                            "slice-v2/prototype/guardian-greybox.pre-s2r4.rbxl":  "9C11A9FDA760C972A3DA954C7805E9AD12094FA8587A91937120961533E22565",
+                            "prototype/meadow-v4/Section2.luau":  "DC18069AD5A1FDD8439DD9BDD41491B424D19A807CD968007AEE87103CE69E1B",
+                            "treasure/sections/S2/r4-rojo.rbxl":  "3B03DCB79744D1C6808BF9BC73E529197B06C188931F0796FE911A2988F22846",
+                            "treasure/sections/S2/r4-after.json":  "EE5639FC30C59E963B004E30E68CF5374E3CA6294414D6BAC8F9E182B0BDD8E5",
+                            "treasure/sections/S2/METRICS-R4.json":  "36A4CB890F0B68133CCBEFEB882AB10783D1FA065B2C300272104BF872D2F211",
+                            "treasure/sections/S2/REMOVED-R4.json":  "383E64E2DE66B867B5D294C06FFD30E7949E7F610A02B587006C2301F627270C",
+                            "treasure/sections/S2/CRITIC-R4.md":  "F7C32645B498E3D8CAB64EC5EC1BA8E7F3B88764C160C877DA7552257859F0DB",
+                            "treasure/sections/S2/RESULT.md":  "45A75ADB1629D13F342CB679646B96EFF78448ABDA0A87A8A4DFBD44BC1AA1CD",
+                            "treasure/sections/S2/SBS-R4.jpg":  "6ED3D23C885EBF63EF9FC18DFAA225DC58D9674985881CA473CB89AE779D40E1",
+                            "treasure/sections/S2/r4-DROPS.json":  "28715CA38EC40B93A1900FE0E395C6FDEA277612D8F7A4E08F1249E93E45F68C",
+                            "treasure/sections/S2/r4-drop-final.log":  "42D9A3015DA02042852EA4F34250FCB46F546196509F8DC6A8759DE016A3EF70",
+                            "treasure/sections/S2/r4-CLEARANCE.json":  "7D2B677F9B49F4FC4A1D79967EDFF80BEA960B8BF7ECD6F6FBE67789DDE40CE7",
+                            "treasure/sections/S2/r4-ENCLOSURE.json":  "A8375583C5FD21376607C5EFDBD178F88232625E91F002EC789B8DA21A100186",
+                            "treasure/sections/S2/r4-CLIMB.json":  "DA7C937DC31F6FF370F16C3D08082EE5C211F17E60CA4A8F7943E116574241D0",
+                            "treasure/sections/S2/r4-DROP-PARITY.json":  "ACEDE74565DF9A94769E8DC66CC32D5E47BA628CC26D968FA43DCDFC4F9C4B90",
+                            "treasure/sections/S2/r4-DROP-INPUT.json":  "9827D4B66F014F92DBFBF33701AC8EE393E5FFEB842C9C2496907B114F79AC59",
+                            "treasure/sections/S2/r4-drop-input.rbxl":  "80AD0169D01730DE831223D2B2E8838C11268D08F8B25BCF7D7A2C85AC6978C9",
+                            "treasure/sections/S2/r4-DROPS-1.json":  "B2622F79B58901532BF31A8DA13B41A60C0BF39A6F01407DA825339C5FDF8692",
+                            "treasure/sections/S2/r4-DROPS-2.json":  "BB62439AEB305997D16C9B1BE44C9F4F547A31D02C3A254523456E3B3B25A185",
+                            "treasure/sections/S2/r4-DROPS-3.json":  "3969BE71CF82D3E915D83B68C9E0B6402A6E889C31A6760341977BC1E38D48F5",
+                            "treasure/sections/S2/r4-drop-1.log":  "BB45DB9C53DD9981E0579C77EDACD4344B13B0D4350BEA41E4F361DFE08A1FCE",
+                            "treasure/sections/S2/r4-drop-2.log":  "720DAE06E57E37C048B743AA836EACB368B8E4C936F438B225F3525E5387FA2B",
+                            "treasure/sections/S2/r4-drop-3.log":  "7BF238CE90D0E35E24433C3725591169B3FD1B01AFF0A4F4759C6CE44DA71ED5"
+                        },
+    "source_audit":  {
+                         "StudioPassAll":  "UNKNOWN; nine live suites not run",
+                         "all_non_hill_physics_floor_tags_equal":  true,
+                         "compiled_O0_O1_O2":  72,
+                         "unrelated_sources_preserved":  71,
+                         "workspace_equal":  true
+                     },
+    "preservation_summary":  {
+                                 "unchanged_inner_blockers":  true,
+                                 "protected_parts":  7342,
+                                 "hill_removals":  112,
+                                 "hill_edits":  68,
+                                 "unchanged_lanes_floors_cover_court":  true
+                             },
+    "contact":  {
+                    "native_parts_checked":  234,
+                    "kits_checked":  29,
+                    "physical_penetrations":  [
+
+                                              ],
+                    "kit_physical_penetrations":  [
+
+                                                  ],
+                    "kit_support_errors":  [
+
+                                           ],
+                    "floating_assemblies":  [
+
+                                            ],
+                    "tolerance_studs":  0.035,
+                    "method":  "Conservative OBB/SAT physical penetration; assembly contact graph to physical world; botanical/assembly joints separate from unintended clipping.",
+                    "lane_buffer_errors":  [
+
+                                           ],
+                    "lane_buffer_studs":  1,
+                    "lane_headroom_studs":  7
+                },
+    "enclosure":  {
+                      "seeds":  50,
+                      "keeper_segments_compared":  4050,
+                      "interior_upward_closure_rays":  450,
+                      "baseline_upward_misses_unchanged":  25,
+                      "failures":  [
+
+                                   ],
+                      "definition":  "Exact convex box/wedge segment intersections on collidable/query geometry; policy Surface points at Y3 to jittered tunnel interior at Y3; upward closure behind existing mouth plane. No simulation of Humanoid/navmesh or real rendered line of sight.",
+                      "runtime_Keeper_visibility_climbing":  "UNKNOWN"
+                  },
+    "clearance":  {
+                      "Studio":  "UNKNOWN",
+                      "artifact":  "slice-v2/prototype/guardian-greybox.rbxl",
+                      "bad":  0,
+                      "checks":  12667,
+                      "columns":  5279,
+                      "failures":  {
+
+                                   },
+                      "lane_parts":  562,
+                      "loop_bad":  0,
+                      "preflight_bad":  0,
+                      "pvp_bad":  0,
+                      "ramp_wedges":  116,
+                      "state":  "PASS"
+                  },
+    "drops":  {
+                  "state":  "PASS",
+                  "samples":  31824,
+                  "failures":  [
+
+                               ],
+                  "categories":  {
+
+                                 },
+                  "workers":  [
+                                  {
+                                      "Studio":  "UNKNOWN",
+                                      "allRouteNames":  [
+                                                            "north_crosslink",
+                                                            "summit_radial",
+                                                            "bridge",
+                                                            "east",
+                                                            "jump_access",
+                                                            "shelf_link",
+                                                            "south_crosslink",
+                                                            "bridge_south",
+                                                            "east_climb",
+                                                            "east_descent",
+                                                            "west",
+                                                            "tunnel_trunk",
+                                                            "shelf",
+                                                            "ravine_floor_loop",
+                                                            "spiral",
+                                                            "tunnel_south",
+                                                            "fork_link",
+                                                            "jump_recovery",
+                                                            "ravine_ramp",
+                                                            "portal_north"
+                                                        ],
+                                      "bounds":  "conservative whole-model boxes per material; actual imported geometry UNKNOWN",
+                                      "categories":  {
+
+                                                     },
+                                      "droppedPlacements":  61,
+                                      "failures":  {
+
+                                                   },
+                                      "keptPlacements":  177,
+                                      "kits2Templates":  74,
+                                      "samples":  14904,
+                                      "shardRoutes":  [
+                                                          "bridge",
+                                                          "east",
+                                                          "east_descent",
+                                                          "spiral",
+                                                          "tunnel_south",
+                                                          "portal_north"
+                                                      ],
+                                      "spawnAttempts":  238,
+                                      "state":  "PASS",
+                                      "validCacheHits":  7425,
+                                      "worker":  1
+                                  },
+                                  {
+                                      "Studio":  "UNKNOWN",
+                                      "allRouteNames":  [
+                                                            "north_crosslink",
+                                                            "summit_radial",
+                                                            "bridge",
+                                                            "east",
+                                                            "jump_access",
+                                                            "shelf_link",
+                                                            "south_crosslink",
+                                                            "bridge_south",
+                                                            "east_climb",
+                                                            "east_descent",
+                                                            "west",
+                                                            "tunnel_trunk",
+                                                            "shelf",
+                                                            "ravine_floor_loop",
+                                                            "spiral",
+                                                            "tunnel_south",
+                                                            "fork_link",
+                                                            "jump_recovery",
+                                                            "ravine_ramp",
+                                                            "portal_north"
+                                                        ],
+                                      "bounds":  "conservative whole-model boxes per material; actual imported geometry UNKNOWN",
+                                      "categories":  {
+
+                                                     },
+                                      "droppedPlacements":  61,
+                                      "failures":  {
+
+                                                   },
+                                      "keptPlacements":  177,
+                                      "kits2Templates":  74,
+                                      "samples":  8280,
+                                      "shardRoutes":  [
+                                                          "summit_radial",
+                                                          "jump_access",
+                                                          "south_crosslink",
+                                                          "bridge_south",
+                                                          "west",
+                                                          "tunnel_trunk"
+                                                      ],
+                                      "spawnAttempts":  238,
+                                      "state":  "PASS",
+                                      "validCacheHits":  15315,
+                                      "worker":  2
+                                  },
+                                  {
+                                      "Studio":  "UNKNOWN",
+                                      "allRouteNames":  [
+                                                            "north_crosslink",
+                                                            "summit_radial",
+                                                            "bridge",
+                                                            "east",
+                                                            "jump_access",
+                                                            "shelf_link",
+                                                            "south_crosslink",
+                                                            "bridge_south",
+                                                            "east_climb",
+                                                            "east_descent",
+                                                            "west",
+                                                            "tunnel_trunk",
+                                                            "shelf",
+                                                            "ravine_floor_loop",
+                                                            "spiral",
+                                                            "tunnel_south",
+                                                            "fork_link",
+                                                            "jump_recovery",
+                                                            "ravine_ramp",
+                                                            "portal_north"
+                                                        ],
+                                      "bounds":  "conservative whole-model boxes per material; actual imported geometry UNKNOWN",
+                                      "categories":  {
+
+                                                     },
+                                      "droppedPlacements":  61,
+                                      "failures":  {
+
+                                                   },
+                                      "keptPlacements":  177,
+                                      "kits2Templates":  74,
+                                      "samples":  8640,
+                                      "shardRoutes":  [
+                                                          "north_crosslink",
+                                                          "shelf_link",
+                                                          "east_climb",
+                                                          "shelf",
+                                                          "ravine_floor_loop",
+                                                          "fork_link",
+                                                          "jump_recovery",
+                                                          "ravine_ramp"
+                                                      ],
+                                      "spawnAttempts":  238,
+                                      "state":  "PASS",
+                                      "validCacheHits":  18115,
+                                      "worker":  3
+                                  }
+                              ],
+                  "all_routes_executed_exactly_once":  [
+                                                           "bridge",
+                                                           "bridge_south",
+                                                           "east",
+                                                           "east_climb",
+                                                           "east_descent",
+                                                           "fork_link",
+                                                           "jump_access",
+                                                           "jump_recovery",
+                                                           "north_crosslink",
+                                                           "portal_north",
+                                                           "ravine_floor_loop",
+                                                           "ravine_ramp",
+                                                           "shelf",
+                                                           "shelf_link",
+                                                           "south_crosslink",
+                                                           "spiral",
+                                                           "summit_radial",
+                                                           "tunnel_south",
+                                                           "tunnel_trunk",
+                                                           "west"
+                                                       ],
+                  "method":  "Same existing production Swap/resolver N8 lattice; route-name ASCII sum modulo 3 partitions routes, without changing a route, segment, eight along-segment samples, three edge offsets or three knock offsets.",
+                  "Studio":  "UNKNOWN"
+              },
+    "camera":  {
+                   "coverage":  {
+                                    "walk":  {
+                                                 "S2_visible_percent":  17.15082465277778,
+                                                 "timber_lantern_percent":  4.000325520833333,
+                                                 "timber_lantern_horizontal_span_percent":  42.109375,
+                                                 "pale_grey_albedo_visible_percent":  5.046549479166667
+                                             },
+                                    "mouth":  {
+                                                  "S2_visible_percent":  17.33159722222222,
+                                                  "timber_lantern_percent":  15.321289062499998,
+                                                  "timber_lantern_horizontal_span_percent":  81.484375,
+                                                  "pale_grey_albedo_visible_percent":  3.1131727430555554
+                                              },
+                                    "overview":  {
+                                                     "S2_visible_percent":  1.8993055555555554,
+                                                     "timber_lantern_percent":  0.7278645833333333,
+                                                     "timber_lantern_horizontal_span_percent":  18.359375,
+                                                     "pale_grey_albedo_visible_percent":  6.646809895833333
+                                                 }
+                                },
+                   "flat_wall_definition":  "Largest 4-connected occlusion-aware source-colour wall region / full 1280x720 frame. Three wall albedo ID masks, including retained solid planes; original kit FBX occludes wall pixels. No light/shadow fragmentation.",
+                   "wall_color_largest_connected_percent":  {
+                                                                "5":  1.9154730902777777,
+                                                                "6":  7.373697916666666,
+                                                                "7":  6.556423611111111
+                                                            },
+                   "flat_wall_share_percent":  7.373697916666666,
+                   "lanterns":  {
+                                    "walk":  {
+                                                 "count":  6,
+                                                 "visible_core_pixels":  {
+                                                                             "r4-after-walk-id100-0001.png":  601,
+                                                                             "r4-after-walk-id101-0001.png":  41,
+                                                                             "r4-after-walk-id102-0001.png":  328,
+                                                                             "r4-after-walk-id103-0001.png":  0,
+                                                                             "r4-after-walk-id104-0001.png":  208,
+                                                                             "r4-after-walk-id105-0001.png":  0,
+                                                                             "r4-after-walk-id106-0001.png":  140,
+                                                                             "r4-after-walk-id107-0001.png":  0,
+                                                                             "r4-after-walk-id108-0001.png":  103,
+                                                                             "r4-after-walk-id109-0001.png":  0
+                                                                         }
+                                             },
+                                    "mouth":  {
+                                                  "count":  7,
+                                                  "visible_core_pixels":  {
+                                                                              "r4-after-mouth-id100-0001.png":  2559,
+                                                                              "r4-after-mouth-id101-0001.png":  288,
+                                                                              "r4-after-mouth-id102-0001.png":  760,
+                                                                              "r4-after-mouth-id103-0001.png":  0,
+                                                                              "r4-after-mouth-id104-0001.png":  333,
+                                                                              "r4-after-mouth-id105-0001.png":  0,
+                                                                              "r4-after-mouth-id106-0001.png":  227,
+                                                                              "r4-after-mouth-id107-0001.png":  308,
+                                                                              "r4-after-mouth-id108-0001.png":  204,
+                                                                              "r4-after-mouth-id109-0001.png":  0
+                                                                          }
+                                              }
+                                },
+                   "lantern_definition":  "Individual shipped lantern glass core ID with \u003e=1 visible pixel after actual geometry occlusion; destination glow is excluded.",
+                   "destination_bright_pixels_fixed_R2_ROI":  1284,
+                   "goals":  {
+                                 "walk_ge10":  true,
+                                 "mouth_ge18":  false,
+                                 "span_ge25":  true,
+                                 "flat_wall_le12":  true,
+                                 "mouth_lanterns_4_to8":  true,
+                                 "walk_lanterns_4_to8":  true,
+                                 "bright_destination":  true,
+                                 "pale_grey_at_most_half_R1":  true,
+                                 "facade_in_frame":  true,
+                                 "walk_sky_ge8":  false,
+                                 "arched_beveled_opening":  true
+                             },
+                   "facade_projected_bounds_xyxy":  [
+                                                        110.84080120776059,
+                                                        49.004774556704035,
+                                                        1154.0953402385576,
+                                                        313.99861647753033
+                                                    ],
+                   "walk_sky_percent":  2.0977647569444446,
+                   "sky_definition":  "Full-frame primary-camera background pixels, measured from render Depth \u003e2000 studs; geometry occlusion includes original FBX. Locked WALK camera.",
+                   "arch_bevels":  [
+                                       {
+                                           "attributes":  {
+                                                              "Cosmetic":  true,
+                                                              "Section":  "S2"
+                                                          },
+                                           "collidable":  false,
+                                           "color":  [
+                                                         112.000000923872,
+                                                         105.00000134110451,
+                                                         94.0000019967556
+                                                     ],
+                                           "material":  "Rock",
+                                           "name":  "S2_MineArchBevel",
+                                           "position":  [
+                                                            -73.486083984375,
+                                                            11.550003051757812,
+                                                            97.38291931152344
+                                                        ],
+                                           "query":  false,
+                                           "rotation":  [
+                                                            0.439208984375,
+                                                            0,
+                                                            -0.8983917236328125,
+                                                            0,
+                                                            1,
+                                                            0,
+                                                            0.8983917236328125,
+                                                            0,
+                                                            0.439208984375
+                                                        ],
+                                           "section":  "S2",
+                                           "shape":  "Wedge",
+                                           "size":  [
+                                                        0.600006103515625,
+                                                        4.1999969482421875,
+                                                        4.8000030517578125
+                                                    ],
+                                           "tags":  {
+
+                                                    },
+                                           "touch":  false,
+                                           "transparency":  0
+                                       },
+                                       {
+                                           "attributes":  {
+                                                              "Cosmetic":  true,
+                                                              "Section":  "S2"
+                                                          },
+                                           "collidable":  false,
+                                           "color":  [
+                                                         112.000000923872,
+                                                         105.00000134110451,
+                                                         94.0000019967556
+                                                     ],
+                                           "material":  "Rock",
+                                           "name":  "S2_MineArchBevel",
+                                           "position":  [
+                                                            -55.02880859375,
+                                                            11.550003051757812,
+                                                            88.35935974121094
+                                                        ],
+                                           "query":  false,
+                                           "rotation":  [
+                                                            -0.439208984375,
+                                                            0,
+                                                            0.8983917236328125,
+                                                            0,
+                                                            1,
+                                                            0,
+                                                            -0.8983917236328125,
+                                                            0,
+                                                            -0.439208984375
+                                                        ],
+                                           "section":  "S2",
+                                           "shape":  "Wedge",
+                                           "size":  [
+                                                        0.600006103515625,
+                                                        4.1999969482421875,
+                                                        4.8000030517578125
+                                                    ],
+                                           "tags":  {
+
+                                                    },
+                                           "touch":  false,
+                                           "transparency":  0
+                                       }
+                                   ]
+               },
+    "camera_misses":  [
+                          "mouth_ge18",
+                          "walk_sky_ge8"
+                      ],
+    "blind_critics":  1,
+    "final_visual_corrections":  1,
+    "visual_acceptance":  "NOT MET",
+    "live_StudioPassAll":  "UNKNOWN: all nine not run",
+    "owner_acceptance":  "UNKNOWN",
+    "commit":  "NONE",
+    "publish":  "NONE",
+    "render_limits":  "Offline materials, point lights, text, shafts and older kit proxies differ from Studio",
+    "drop_input_parity":  {
+                              "all_geometry_flags_tags_attributes_equal":  true,
+                              "all_collidable_and_query_parts_exact":  true,
+                              "all_kit_placements_exact":  true,
+                              "only_nonphysical_palette_differences":  [
+
+                                                                       ],
+                              "tested_artifact_sha256":  "80AD0169D01730DE831223D2B2E8838C11268D08F8B25BCF7D7A2C85AC6978C9",
+                              "delivered_artifact_sha256":  "80AD0169D01730DE831223D2B2E8838C11268D08F8B25BCF7D7A2C85AC6978C9",
+                              "proof":  "Tested and delivered artifact hashes are equal; all exported fields are exact."
+                          },
+    "climb":  {
+                  "CharacterMaxSlopeAngle":  89,
+                  "live_Humanoid":  "UNKNOWN",
+                  "no_new_colliding_shoulder_slopes":  true,
+                  "nonphysical_slope_shells":  2,
+                  "original_collision_core_geometry":  "exact; see REMOVED-R4.json",
+                  "unchanged_player_setting":  true
+              }
+}

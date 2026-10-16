@@ -1,0 +1,56 @@
+{
+  "locked_camera_coverage": {
+    "walk": {
+      "S2_visible_percent": 14.661458333333332,
+      "timber_lantern_percent": 3.978515625,
+      "timber_lantern_horizontal_span_percent": 39.21875,
+      "pale_grey_albedo_visible_percent": 0.8814019097222223
+    },
+    "mouth": {
+      "S2_visible_percent": 19.1328125,
+      "timber_lantern_percent": 15.494466145833332,
+      "timber_lantern_horizontal_span_percent": 80.78125,
+      "pale_grey_albedo_visible_percent": 2.011501736111111
+    },
+    "overview": {
+      "S2_visible_percent": 1.4187282986111112,
+      "timber_lantern_percent": 0.3768446180555556,
+      "timber_lantern_horizontal_span_percent": 11.875,
+      "pale_grey_albedo_visible_percent": 6.1982421875
+    }
+  },
+  "pale_grey_albedo_definition": "Occlusion-aware source-albedo mask: max RGB >=120; saturation <=20%; Rock/Slate/Concrete/SmoothPlastic; S2 props counted separately. Same renderer/cameras.",
+  "pale_grey_albedo_mouth_before_percent": 19.025173611111114,
+  "pale_grey_albedo_mouth_after_percent": 2.011501736111111,
+  "display_neutral_definition": "Full-frame rendered PNG: max channel 48..224 and (max-min)/max <=0.22; measures lit grey pixels, not source materials.",
+  "display_neutral_mouth_percent": {
+    "after": 5.634114583333334,
+    "r2-baseline": 4.722439236111111,
+    "r2-after": 0.0028211805555555555
+  },
+  "destination_bright_ROI_xyxy": [
+    560,
+    310,
+    650,
+    420
+  ],
+  "destination_bright_definition": "R>=200 G>=140 B>=70 within fixed interior destination ROI",
+  "destination_bright_pixels": 1279,
+  "facade_and_entrance_lantern_projected_bounds_xyxy": [
+    118.65921869836086,
+    45.31708645871714,
+    1153.427303836947,
+    270.26460770491576
+  ],
+  "facade_fully_inside_mouth_frustum": true,
+  "goals": {
+    "walk_S2_ge_10": true,
+    "mouth_S2_ge_18": true,
+    "mouth_timber_lantern_span_ge_25": true,
+    "pale_albedo_at_most_half": true,
+    "display_neutral_at_most_half_original_R1": true,
+    "display_neutral_at_most_half_matched_R1": true,
+    "route_end_bright": true,
+    "facade_in_frame": true
+  }
+}

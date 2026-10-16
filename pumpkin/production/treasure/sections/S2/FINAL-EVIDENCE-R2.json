@@ -1,0 +1,344 @@
+﻿{
+    "artifact_hashes":  {
+                            "slice-v2/prototype/guardian-greybox.rbxl":  "3BE9EE241A7D19E3E32F827C3E96C48EBDB73FE6CB1CD7948883B79BCAC03DFC",
+                            "slice-v2/prototype/guardian-greybox.pre-s2r2.rbxl":  "2D67D5562C3C8031089890205AA504D902079082D21727481C97907F92485C7D",
+                            "prototype/meadow-v4/Section2.luau":  "48E7326E86FC3136843C75D310FE2114BBDD81F7E1D72980B247E607179A6E94",
+                            "treasure/sections/S2/r2-rojo.rbxl":  "86D83C9E425CF34CFB36A24EBC20ECC617636BE60FE3C1F4EDB423764D151DDD",
+                            "treasure/sections/S2/r2-before.json":  "020C289C5E2906E42AAA26FE76814C0EB7F1FD48F65095AFEA4E0E351D34A712",
+                            "treasure/sections/S2/r2-after.json":  "7BDE08852D22C998104FC8B66F209AA07F9ACDD91AE57C5DCF5D8E7AC5A37C33",
+                            "treasure/sections/S2/METRICS-R2.json":  "5A52B1AFD881895D4DCB28958203B67691047C13BB094B2203756F95BE8B2615",
+                            "treasure/sections/S2/REMOVED-R2.json":  "E2E6E76907F8F028BA437D39530F326BE460C45C02E0B303A3A42AD909F1D3A1",
+                            "treasure/sections/S2/CRITIC-R2.md":  "7FDB4726B828F89D17C30CF83ED46ED730E68A20198A5C3D78EB1BF6DF91C691",
+                            "treasure/sections/S2/RESULT.md":  "B9A52B539DD00E25765C6E2014CB86AFB6B0F81630BA1A04A6DCB441D9D064A9",
+                            "treasure/sections/S2/SBS-R2.jpg":  "771603D821CEA8F42D18AC63C4AB90A9BF2175BB565C9D9D6F867CD62D70938E",
+                            "treasure/sections/S2/TARGET.png":  "6087D409E493996D8D701009A7B054E8ECFAAC591685342AF4D252A42FFFA7D8",
+                            "treasure/sections/S2/r2-build-final.log":  "F6B6F62340E50E1F2B23B835C3E525ABF9A826D0F47C443F28A428295F4281AA",
+                            "treasure/sections/S2/r2-behavior.log":  "42A4BD6C17A0C64C71F47585F02DFEA47CC068975EB37BD6DAA9203064BF18CD",
+                            "treasure/sections/S2/r2-contracts.log":  "1DA86AAE0679DBE35FE27915228F916FCA3CB45164CC193F5421DE2BAFDDAC0C",
+                            "treasure/sections/S2/r2-50-seed.log":  "5B06B44CC5B9A5BA73E41C1278ED8E73BEC9A72AC58207A4F566FF31B58266F7"
+                        },
+    "compile_and_preservation":  {
+                                     "StudioPassAll":  "UNKNOWN; nine live suites not run",
+                                     "compiled_O0_O1_O2":  72,
+                                     "physics_floor_tags_equal":  true,
+                                     "unrelated_sources_preserved":  71,
+                                     "workspace_equal":  true
+                                 },
+    "contact":  {
+                    "native_parts_checked":  271,
+                    "kits_checked":  20,
+                    "physical_penetrations":  [
+
+                                              ],
+                    "kit_physical_penetrations":  [
+
+                                                  ],
+                    "kit_support_errors":  [
+
+                                           ],
+                    "floating_assemblies":  [
+
+                                            ],
+                    "tolerance_studs":  0.035,
+                    "method":  "Conservative OBB/SAT physical penetration; assembly contact graph to physical world; botanical/assembly joints separate from unintended clipping.",
+                    "lane_buffer_errors":  [
+
+                                           ],
+                    "lane_buffer_studs":  1,
+                    "lane_headroom_studs":  7
+                },
+    "mesh":  {
+                 "value":  [
+                               {
+                                   "id":  "HarvestBarrel",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  null,
+                                   "fitted":  true,
+                                   "actual_size_studs":  [
+                                                             2.1999969482421875,
+                                                             3.4000000953674316,
+                                                             2.1999969482421875
+                                                         ]
+                               },
+                               {
+                                   "id":  "HarvestCrate",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  2.2399997222900736,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             2.0,
+                                                             2.0,
+                                                             2.0
+                                                         ]
+                               },
+                               {
+                                   "id":  "OrchardRockA",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  0.17363543986071092,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             2.0,
+                                                             1.4013596773147583,
+                                                             1.8536376953125
+                                                         ]
+                               },
+                               {
+                                   "id":  "OrchardRockB",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  0.11286303176967061,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.3000030517578125,
+                                                             0.9108837246894836,
+                                                             1.204864501953125
+                                                         ]
+                               },
+                               {
+                                   "id":  "OrchardRockC",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  0.14759012802139576,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.6999969482421875,
+                                                             1.1911557912826538,
+                                                             1.575592041015625
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock1_1",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  0.13890834508385758,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.600006103515625,
+                                                             1.1210880279541016,
+                                                             1.48291015625
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock1_2",
+                                   "base_error":  -3.8146972691777137E-07,
+                                   "uniform_scale":  0.10418126250554932,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.1999969482421875,
+                                                             0.840815544128418,
+                                                             1.1121826171875
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock1_3",
+                                   "base_error":  1.9073486257070726E-07,
+                                   "uniform_scale":  0.1736354345314273,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             2.0,
+                                                             1.4013595581054688,
+                                                             1.8536376953125
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock1_4",
+                                   "base_error":  -1.9073486257070726E-07,
+                                   "uniform_scale":  0.1215448058326019,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.399993896484375,
+                                                             0.9809513092041016,
+                                                             1.29754638671875
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock1_5",
+                                   "base_error":  3.8146972514141453E-07,
+                                   "uniform_scale":  0.15627189173484834,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.8000030517578125,
+                                                             1.2612228393554688,
+                                                             1.66827392578125
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock2_1",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  0.13890834508385758,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.600006103515625,
+                                                             1.1210875511169434,
+                                                             1.48291015625
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock2_2",
+                                   "base_error":  9.5367431729442842E-08,
+                                   "uniform_scale":  0.10418126250554932,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.1999969482421875,
+                                                             0.8408160209655762,
+                                                             1.1121826171875
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock2_3",
+                                   "base_error":  1.9073486345888568E-07,
+                                   "uniform_scale":  0.1736354345314273,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             2.0,
+                                                             1.4013595581054688,
+                                                             1.8536376953125
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock2_4",
+                                   "base_error":  -1.9073486257070726E-07,
+                                   "uniform_scale":  0.1215448058326019,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.399993896484375,
+                                                             0.9809517860412598,
+                                                             1.29754638671875
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock2_5",
+                                   "base_error":  3.8146972691777137E-07,
+                                   "uniform_scale":  0.15627189173484834,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.8000030517578125,
+                                                             1.2612237930297852,
+                                                             1.66827392578125
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock3_1",
+                                   "base_error":  0.0,
+                                   "uniform_scale":  0.13890834508385758,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.5999984741210938,
+                                                             1.1210875511169434,
+                                                             1.4829177856445312
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock3_2",
+                                   "base_error":  9.5367431729442842E-08,
+                                   "uniform_scale":  0.10418126250554932,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.1999969482421875,
+                                                             0.8408160209655762,
+                                                             1.1121826171875
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock3_3",
+                                   "base_error":  1.9073486345888568E-07,
+                                   "uniform_scale":  0.1736354345314273,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             2.0,
+                                                             1.4013595581054688,
+                                                             1.8536453247070312
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock3_4",
+                                   "base_error":  -1.9073486257070726E-07,
+                                   "uniform_scale":  0.1215448058326019,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.4000015258789062,
+                                                             0.9809517860412598,
+                                                             1.29754638671875
+                                                         ]
+                               },
+                               {
+                                   "id":  "WallRock3_5",
+                                   "base_error":  3.8146972691777137E-07,
+                                   "uniform_scale":  0.15627189173484834,
+                                   "fitted":  false,
+                                   "actual_size_studs":  [
+                                                             1.8000030517578125,
+                                                             1.2612237930297852,
+                                                             1.6682815551757812
+                                                         ]
+                               }
+                           ],
+                 "Count":  20
+             },
+    "metrics":  {
+                    "locked_camera_coverage":  {
+                                                   "walk":  {
+                                                                "S2_visible_percent":  14.661458333333332,
+                                                                "timber_lantern_percent":  3.978515625,
+                                                                "timber_lantern_horizontal_span_percent":  39.21875,
+                                                                "pale_grey_albedo_visible_percent":  0.8814019097222223
+                                                            },
+                                                   "mouth":  {
+                                                                 "S2_visible_percent":  19.1328125,
+                                                                 "timber_lantern_percent":  15.494466145833332,
+                                                                 "timber_lantern_horizontal_span_percent":  80.78125,
+                                                                 "pale_grey_albedo_visible_percent":  2.011501736111111
+                                                             },
+                                                   "overview":  {
+                                                                    "S2_visible_percent":  1.4187282986111112,
+                                                                    "timber_lantern_percent":  0.3768446180555556,
+                                                                    "timber_lantern_horizontal_span_percent":  11.875,
+                                                                    "pale_grey_albedo_visible_percent":  6.1982421875
+                                                                }
+                                               },
+                    "pale_grey_albedo_definition":  "Occlusion-aware source-albedo mask: max RGB \u003e=120; saturation \u003c=20%; Rock/Slate/Concrete/SmoothPlastic; S2 props counted separately. Same renderer/cameras.",
+                    "pale_grey_albedo_mouth_before_percent":  19.025173611111114,
+                    "pale_grey_albedo_mouth_after_percent":  2.011501736111111,
+                    "display_neutral_definition":  "Full-frame rendered PNG: max channel 48..224 and (max-min)/max \u003c=0.22; measures lit grey pixels, not source materials.",
+                    "display_neutral_mouth_percent":  {
+                                                          "after":  5.634114583333334,
+                                                          "r2-baseline":  4.722439236111111,
+                                                          "r2-after":  0.0028211805555555555
+                                                      },
+                    "destination_bright_ROI_xyxy":  [
+                                                        560,
+                                                        310,
+                                                        650,
+                                                        420
+                                                    ],
+                    "destination_bright_definition":  "R\u003e=200 G\u003e=140 B\u003e=70 within fixed interior destination ROI",
+                    "destination_bright_pixels":  1279,
+                    "facade_and_entrance_lantern_projected_bounds_xyxy":  [
+                                                                              118.65921869836086,
+                                                                              45.31708645871714,
+                                                                              1153.427303836947,
+                                                                              270.26460770491576
+                                                                          ],
+                    "facade_fully_inside_mouth_frustum":  true,
+                    "goals":  {
+                                  "walk_S2_ge_10":  true,
+                                  "mouth_S2_ge_18":  true,
+                                  "mouth_timber_lantern_span_ge_25":  true,
+                                  "pale_albedo_at_most_half":  true,
+                                  "display_neutral_at_most_half_original_R1":  true,
+                                  "display_neutral_at_most_half_matched_R1":  true,
+                                  "route_end_bright":  true,
+                                  "facade_in_frame":  true
+                              }
+                },
+    "removed_cosmetics":  188,
+    "solid_palette_edits":  139,
+    "cosmetic_palette_edits":  429,
+    "independent_blind_reviews":  2,
+    "correction_rounds":  2,
+    "sole_changed_mounted_source":  "ReplicatedStorage.MeadowV4.Section2",
+    "protected_solids_all_other_fields_equal":  true,
+    "live_StudioPassAll":  "UNKNOWN: all nine not run",
+    "owner_visual_acceptance":  "UNKNOWN",
+    "qualitative_limits":  "Broad flat walls, thin rock cladding, weak orchard; destination is a wall glow, not a newly opened exit",
+    "render_limits":  "PointLight approximation; shadow-ray transparency only for emitting lamp/glow parents; text and Beam proxies labelled; older kit substitutions use native proxies",
+    "commit":  "NONE by this agent",
+    "publish":  "NONE"
+}
