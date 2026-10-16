@@ -1,0 +1,13 @@
+# Render evidence limits
+
+Native scene parts are exported from the actual guarded builder. Offline images use Blender/Cycles. Existing imported kit substitutions remain native proxies; no claim of live imported meshes, avatar physics, device performance or actual engine light falloff. Cameras use recorded walking positions and 18-stud horizontal offsets; no live avatar is depicted. Shape/headroom/collision claims come from signatures and contracts, not an implied avatar playtest.
+
+R1–R3 initial renders omitted existing SurfaceGui labels, including the S2 SHORTCUT board. That omission was real, but it does not explain the blank inward face: S2's label uses Back/+Z and faces the outside approach. Its inside back is genuinely blank and remains unchanged. R3 blind inputs are frozen in `critic-input-r3/`; corrected R3 images use the same native geometry/cameras and include the source-authored labels with their actual face orientation. The final R4 review includes the two new inward EXIT labels. Local Comic Sans Bold approximates native UIStyle/FredokaOne. A text proxy cannot prove Studio font, text sizing, or runtime readability. Do not dismiss the critic's destination-read concern as merely a renderer defect.
+
+Overview alone hides existing roof/upper-wall batches; S3 rib frames remain visible. No roof is hidden in any player view or removed from the place. Exact protected signatures plus the existing 50-seed convex enclosure comparison check new openings separately. Existing upward closure misses are retained, not represented as a new sealed roof.
+
+The first R1 cutaway also hid S3 headers; this was corrected in the cutaway renderer without changing the scene or player views. Early blind judgments remain historical reviews of their supplied images, not retroactive reviews of repaired proxies. R4 is the final corrected renderer/review pair.
+
+PointLight conversion uses brightness ×120 watts; shadows pass through emissive glass but not retained walls/ironwork. SpotLight uses the exported bottom face direction and cone angle, with the same brightness conversion; falloff/intensity remain approximations. [Roblox SpotLight API](https://create.roblox.com/docs/reference/engine/classes/SpotLight) and [light-source guide](https://create.roblox.com/docs/effects/light-sources) were checked on 2026-10-16.
+
+The local Keystone playbook copy was absent. Connected search for “Roblox Process Playbook” returned an unrelated blank AI Roblox Game page, not that playbook. Its contents remain UNKNOWN. Supplied owner steering, section lessons/checklist and Roblox production skill were applied.

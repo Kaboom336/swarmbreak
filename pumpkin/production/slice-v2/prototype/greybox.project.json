@@ -127,6 +127,8 @@
         "$className": "Folder",
         "Outsmart": { "$path": "../../prototype/meadow-v4/Outsmart.luau" },
         "Section2": { "$path": "../../prototype/meadow-v4/Section2.luau" },
+        "Section3": { "$path": "../../prototype/meadow-v4/Section3.luau" },
+        "Section4": { "$path": "../../prototype/meadow-v4/Section4.luau" },
         "Section1": {
           "$path": "../../prototype/meadow-v4/Section1.luau"
         },

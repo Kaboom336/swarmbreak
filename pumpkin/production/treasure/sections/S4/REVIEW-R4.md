@@ -1,0 +1,7 @@
+# Final builder review — REVISIT
+
+Inspected the final R4 approach, mid-bridge, recovery and overview frames, with TARGET and the R2 comparison. Separate planks, cream court markings, rail posts and smaller iron cage lamps improve readability. Dark seams remain subtle from the distant approach. Added foliage stays small against protected square walls; the recovery ramp is still a large grey plane. The small spring fall is beyond the protected recovery loop and is not a replacement for TARGET's invented giant cascade. Final light ceilings are checked numeric constraints, not live Studio exposure approval.
+
+The next three gaps were written in GAPS-R4 after reviewing corrected R3 renders and before editing R4. All three were addressed within this final round; no R5. PRE-R4 reuses those frozen R3 frames. PRE-R3 is a board of the inspected historical R2 offline frames; Claude's supplied studio-r2-approach.jpg supplied the live comparison. PRE boards were assembled during close-out and do not claim earlier creation timestamps or fresh Studio captures. The round-3 starting place/export separately preserves the owner-tuned S2/S3 sources.
+
+Both contact audits and static camera/warning checks pass. Ring transforms/dimensions/collision and all protected gameplay parts remain exact. Thin floor finishes and retained lamp-plinth support rules are explicit in RENDER-LIMITS. This is a builder review; no independent critic, all-nine Studio suite run, avatar traversal, native asset/light/font parity or owner acceptance is claimed.

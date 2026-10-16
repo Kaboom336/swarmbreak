@@ -1,4 +1,15 @@
 -- Geometry adapter for the existing Scene.meadow entry point. Only enable after coordinate migration.
+
+-- Bound synchronous construction/scans; offline builders have no task.
+local yieldWork = 0
+local yieldDeadline = os.clock() + .01
+local function yieldBuild()
+ yieldWork += 1
+ if yieldWork % 300 == 0 and os.clock() >= yieldDeadline then
+  if task then task.wait() end
+  yieldDeadline = os.clock() + .01
+ end
+end
 -- The current guardian place is deliberately untouched.
 local Loader = {}
 local Builder = require(script.Parent.Builder)
@@ -10,19 +21,19 @@ function Loader.wrap(legacy)
         -- Preserve live handles created by Arena.build. Never import stand-in into the real Keeper place.
         local handles = {Guardian=true, ThrowArm=true, ReturnPortal=true, SafePadAndApron=true,
             SafeEntryPad=true, SafeWestApron=true}
-        for _, item in parent:GetChildren() do
+        for _, item in parent:GetChildren() do yieldBuild();
             if handles[item.Name] then
                 item.Parent = parent
             else
                 -- Live handles may have been parented under legacy chunk models.
-                for _, child in item:GetChildren() do
+                for _, child in item:GetChildren() do yieldBuild();
                     if handles[child.Name] then child.Parent = parent end
                 end
                 item:Destroy()
             end
         end
         local meadow = Builder.build(parent, origin)
-        for _, part in meadow:GetChildren() do
+        for _, part in meadow:GetChildren() do yieldBuild();
             if part:GetAttribute("MeadowV4Category") == "keeper"
                 or part.Name == "GoldenAcorn" or part.Name == "AcornCap" or part.Name == "AcornStem"
             then part:Destroy() end

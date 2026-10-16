@@ -6,6 +6,7 @@ local PhysicsService = game:GetService("PhysicsService")
 local PromptService = game:GetService("ProximityPromptService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
+local CollectionService = game:GetService("CollectionService")
 local Config = require(RS:WaitForChild("GreyboxConfig"))
 local Layout = require(RS:WaitForChild("GreyboxLayout"))
 local Rules = require(RS:WaitForChild("GreyboxLootRules"))
@@ -145,6 +146,7 @@ local function visual(item)
 		item.visual.Material = Enum.Material.Neon
 		item.visual.CanCollide, item.visual.CanQuery, item.visual.Massless = false, false, true
 		item.visual:SetAttribute("LootId", item.id)
+		item.visual:AddTag("GreyboxLoot") -- Lets conservation() find loot without scanning all of Workspace.
 		if Config.MeadowV4 then
 			require(V4.Gameplay).decorate(item.visual)
 		end
@@ -188,8 +190,10 @@ end
 local function conservation()
 	Rules.audit(rules)
 	local count = {}
-	for _, p in workspace:GetDescendants() do
-		if p:IsA("BasePart") then
+	-- Tagged loot only: a full Workspace scan every poll dropped the server to ~4 Hz on the dressed map.
+	-- Tags survive Clone, so duplicated loot is still counted.
+	for _, p in CollectionService:GetTagged("GreyboxLoot") do
+		if p:IsA("BasePart") and p:IsDescendantOf(workspace) then
 			local id = p:GetAttribute("LootId")
 			if id and rules.items[id] then
 				count[id] = (count[id] or 0) + 1

@@ -1,0 +1,9 @@
+# R3 — constrained dressing after geometry freeze
+
+Before edits: `PRE-R3.jpg` places final R2 views beside TARGET/REFS. `CRITIC-R2.md` says REVISIT. The protected 14-stud full-width floor plus one-stud margins cannot accept target-style ground footings. Freeze the tested R2 arch layout/geometry as the constrained silhouette; this is **not visual acceptance** and does not overrule the critic's remaining misses. No core rib shape changes after this freeze.
+
+1. Two directions unclear: two roof-supported physical arrow boards at the existing decision point, pointing ahead and right. Each is five parts with a story job: choose either existing exit. Boards do not create openings or claim both portals are simultaneously visible. Preserve every locked camera.
+2. Uprights look suspended: fit nine measured wall corbels to retained rock, with metal shoes and bolts; no ground footing fits the required lane margin. Retain the visible limitation on the other roof-supported bays. Each corbel/shoe/bolt group has three parts. A small extra dark collar makes existing shoring joinery read as a mine repair rather than bare blocks.
+3. Warm fixtures fail to light the track: replace raw light-study blocks with seven-piece cage assemblies, lower the sources slightly on their same overhead legs, and tune warm pools across the **unchanged** stone/dirt/edge surface. Existing exit lamps stay brighter. Do not add floor overlays or mud decals. Mud speed, lead/rumble/shadow/fall behavior and all runtime effect producers stay byte-exact.
+
+One prospective crate pocket failed interior-policy ownership; no supported, lane-clear interior cart/rail/crate pocket was established, so omit these optional props rather than crowd the shortcut. Existing native source/CC0 libraries were reused and inspected; no external asset dependency added.

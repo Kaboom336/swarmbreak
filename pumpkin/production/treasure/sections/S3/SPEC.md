@@ -1,0 +1,13 @@
+# S3 — tunnel inside
+
+Authorized 2026-10-16. One enclosed old timber-shored mine shortcut; warm dirt/stone track and existing edge definition are locked. Reuse the inspected native renderer, S2 build/contact tools and original CC0 Kenney/Quaternius kit library; no external code dependency. Named visual benchmark: 99 Nights in the Forest warm destination against dark surroundings (local promotional reference, not tested gameplay). Generated TARGET is aspiration, never geometry evidence.
+
+Ownership: interior only, S2 owns shared mouth seams. Nominal envelope -98..-40 X, -3..28 Y, -37..98 Z. Existing trunk x=-76 and branch to Policy.Exits remain authoritative. Preserve every physical/query/touch/tagged part and every lane, including exact colors/materials; no new Keeper openings or climbable solids. Width 14 / Ceiling 24 unchanged. All additions nonphysical, CanQuery=false and CanTouch=false, under existing MeadowV4 section pcall guard; local coordinates translated once.
+
+Important source finding: TunnelPolicy.Surface is the Keeper's exterior interception route, not the interior walking path (PolicyTests explicitly excludes x=-100). Provide three literal Surface-follow views AND three interior player views plus cutaway. Cameras trail their walking marker by 18 horizontal studs; name/coordinates recorded in CAMERAS.json. Both exit destinations must read where geometry permits; never invent a direct sightline through the bend. Fixed light rig and cameras per comparison.
+
+Maximum four rounds. Before each: reference/target beside latest player view in PRE-Rn.jpg, exactly three ranked gaps in GAPS-Rn.md. R1 silhouette only: spaced timber ribs, preserved enclosed shell, sources of light, exit reading. Render and lock before R2 dressing. One blind independent critic per round, SBS per round. Do not claim silhouette acceptance if the critic rejects it.
+
+Story groups, 3–7 elements each: structural timber rib (two legs, header, two braces); paired attached lantern assemblies (bracket, cage, glow); retired rail/cart and ore crates only if a genuine supported pocket clears all lanes by one stud. Delete optional props if no pocket exists. Mud and dynamic rockfall are policy-owned; no fake fixed hazard points or new overlays on lanes. Cracked ceiling cues may attach above the mud band; preserve runtime shadow visibility and rumble timing.
+
+Checks: byte-verified pre-s3 backup before Rojo; compilation; protected scene/source parity; zero contact/support/lane errors; nonzero origin and failed-section isolation; existing offline behavior contracts, 50-seed walking-floor/cliff/cover, full offline DropSample. Studio/device/play feel and owner acceptance remain UNKNOWN unless directly tested. No commit or publish.

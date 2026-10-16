@@ -1,0 +1,5 @@
+﻿# Live Studio findings on S3 round 4 (Claude, 2026-10-16)
+1. Lights washed the tunnel out live (studio-r4-middle-bright.jpg): ~52 lights within 40 studs, rib SpotLights b6 r24, PointLights b2.8 r28, S2 glow b36. Claude cut them in source (rib point x0.3 r16, rib spot b1.2 r18, S2 lamps 3/1.5 r18, S2 glow b6 r30) and turned Shadows off. Dimmed live preview: studio-r4-middle-dimmed.jpg. Rule: tune lights live in Studio; offline Blender values run 3-5x too bright.
+2. EXIT 1 / EXIT 2 boards both show the shared "> " prefix and the 3D arrow beams are not visible from the player camera, so the two exits don't read as different directions.
+3. Live run: GreyboxLoopTest passed 3/3 but with 2 legal expiries (S2 close-out build had 0), and once all 3 expired (balance gate fail) together with a PvP cargo expiry while 8 Studio windows were open. Recheck after the light fix; if expiries stay, find what slows the carrier.
+4. Walls read beige/yellow under the warm lights; the TARGET has darker brown rock with warm pools.

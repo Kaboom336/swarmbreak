@@ -1,4 +1,46 @@
-# Section craft lessons — S1
+# Section craft lessons
+
+## Carry performance follow-up — 2026-10-16
+
+1. Never scan all of Workspace per poll; tag or cache the exact lookup, because decorative instance growth can starve Heartbeat while unchanged real-time deadlines keep expiring. Preserve clone detection, Workspace filtering and every existing assertion; confirm live recovery separately.
+
+## Carry regression investigation — 2026-10-16
+
+1. When closing a section, diff duplicate-sensitive colliders, query flags and structural sight blockers against the pre-section place, because visual and DropSample passes do not prove carry timing. Rebuild each artifact's own mounted sources.
+2. When live cargo expires despite identical geometry and rules, capture waypoint/phase times and profile runtime before editing, because authored path length and offline green checks cannot identify physics, navmesh or scheduling delays. This investigation remains unresolved; see `../CARRY-REGRESSION.md`.
+3. When an offline test conditionally installs the production map from a Workspace flag, verify which branch actually ran, because the existing 50-seed command exercises legacy Layout and cannot establish MeadowV4 carry timing.
+
+## S4 — R1/R2; stop for Claude live review
+
+1. When a recovery concept suggests a switchback, inspect the actual floor route first,
+   because dressing must explain the playable straight ramp rather than invent a route.
+2. When a rail approaches a retained hill, terminate it before the obstruction,
+   because a supported foot does not prove the upper post or cable clears the wall.
+3. When a readable sign is still tiny from the approach, enlarge board and shared-style
+   type together inside the lane margin, because complete text alone does not establish readability.
+
+Evidence: `S4/RESULT.md`, R1/R2 PRE/GAPS/SBS boards, exact must-keep art and source
+audits. R1 silhouette is frozen; protected box walls still miss TARGET. R2 adds
+only warning sign, recovery lights and attached bank roots/moss. Claude's independent
+live Studio check, nine live suites and owner acceptance remain UNKNOWN. No R3/R4.
+
+## S3 — four-round cap; visual REVISIT
+
+1. When Surface names a Keeper interception route, add actual interior player cameras,
+   because a policy route name alone does not establish the walking viewpoint.
+2. When an offline beam rotation disagrees with its endpoints, use an explicit basis
+   and rerun contacts, because plausible pictures can hide an invalid orientation.
+3. When a rendered sign looks blank, inspect SurfaceGui export and face orientation,
+   because an outward label does not establish interior readability.
+
+Evidence: `S3/RESULT.md`, `CRITIC-R1.md` through `CRITIC-R4.md`, camera containment,
+duplicate-sensitive floor/protected signatures and final rendered-source parity.
+R1/R2 were silhouette/light studies; core R2 arches were frozen before constrained
+dressing. All four blind reviews say REVISIT. No target-style ground footings or
+cart/crate pocket fit the protected full-width lane/margins. Do not disguise this
+constraint with unsupported props or relabel the geometry freeze visual acceptance.
+All nine live Studio suites and owner acceptance remain UNKNOWN. Read
+`S3/FINAL-EVIDENCE.json` for actual final contract and DropSample evidence.
 
 ## S2 Close-out — REVISIT, round 3 plus cosmetic fixes
 
@@ -89,3 +131,11 @@ UI evidence: `../UI-AUDIT.md`, `../UI-SBS.jpg`, `../UI-CHECKS.json`. Post-S1 bac
 3. When a section compiles, also exercise a nonzero island origin, late kit placement and an intentional failed dressing module, because compile success cannot prove a single translation or island failure isolation.
 
 S2 evidence: `S2/RESULT.md`, matched player-camera renders, two blind critiques, source/Workspace/physics parity, native/kit support and one-stud lane margin. Existing Kenney/Quaternius CC0 sources and KitLibrary reused. Nine live StudioPassAll results remain UNKNOWN; do not inherit S1's older eight-suite wording or claim owner acceptance. The exact Keystone playbook was unavailable through this session's tools/local active-work copy; local section process and all supplied owner lessons were applied.
+# S4 rounds 3–4
+
+1. When continuing a canonical place with serialized kits, mount only the authorized Source properties and neutralize them for a full-place equality check, because a plain Rojo reconstruction can discard live KitSwap state.
+2. When adding a stone threshold to a sloped route, derive its frame from the existing floor and verify a tangent thin finish, because a world-horizontal strip can clip the slope or appear to hover.
+3. When dressing a ravine, probe the complete recovery loop and tunnel foundation before placing water/roots/rocks, because visually empty trench space can contain protected gameplay floors. Keep the final visual verdict REVISIT when offline proxies cannot establish the Studio result.
+
+Evidence: `S4/FINAL-R34-EVIDENCE.json`, `S4/MOUNT-R3.json`, `S4/MOUNT-FINAL.json`, `S4/SBS-R3.jpg`, `S4/SBS-R4.jpg`. Current S2/S3 lighting sources are preserved verbatim; Section4 is the only subsequent mounted source change. No new dependencies or external assets.
+

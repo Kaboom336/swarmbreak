@@ -1,0 +1,9 @@
+# R4 — final round, three gaps only
+
+Before game-source edits: `PRE-R4.jpg` pairs corrected latest R3 views with TARGET/REFS. R3's blind inputs remain in `critic-input-r3/`. The offline renderer omitted an existing SurfaceGui, so corrected R3 views restore label export with actual face orientation. S2's SHORTCUT faces outward; its inward blank back is real and remains unchanged. The critic's two-exit destination concern still applies. Renderer repair is not a new scene round.
+
+1. Track looks fragmented/dim: retain **all** floors, patches, edges, material and colors exactly. Add downward SpotLights to existing lantern bodies and reduce their diffuse point fill so warm pools lead across the existing path. No extra Parts, overlays or hazard telegraphs on the route. Reuse the official SpotLight Face/Angle/Range API; offline cone intensity remains approximate.
+2. Mining history/contact is weak: add three four-piece pickaxe-on-shoring groups (handle, iron head, hooked point, mounting strap), all above the reserved player envelope. Their story is tools stored on ribs to keep the escape route clear. Keep the audited nine wall corbels; no invented ground footing, cart, rail or crate pocket. Full ground-post resemblance remains limited by protected lanes/walls and is not claimed fixed.
+3. Destination identity is weak: name the two existing policy exits EXIT 1 and EXIT 2 on the existing five-part decision boards, retaining their geometric arrows. The branch heads east (+X), which reads screen-left while facing +Z; the TARGET's right bend is aspirational. Numbers correspond directly to TunnelPolicy.Exits, not invented destinations. Existing S2 shared-seam sign and frame remain untouched.
+
+No fifth round or post-critic cosmetic fix. Runtime/owner acceptance stays UNKNOWN; final critic decides visual status independently.

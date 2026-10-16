@@ -1,4 +1,15 @@
 -- Isolated native geometry; no dependency on guardian/Keeper code.
+
+-- Bound synchronous construction/scans; offline builders have no task.
+local yieldWork = 0
+local yieldDeadline = os.clock() + .01
+local function yieldBuild()
+ yieldWork += 1
+ if yieldWork % 300 == 0 and os.clock() >= yieldDeadline then
+  if task then task.wait() end
+  yieldDeadline = os.clock() + .01
+ end
+end
 local MeadowV4 = {}
 local data = require(script.Parent.Data)
 local art = require(script.Parent.Fix1Art)
@@ -11,6 +22,7 @@ function MeadowV4.build(parent: Instance, origin: Vector3?): Model
 	model.Name = "MeadowV4"
 	local offset = origin or Vector3.zero
 	for _, item in polish.transform(fix2.transform(art.transform(data, routes), routes), routes) do
+		yieldBuild()
 		local p = Instance.new(if item.shape == "Wedge" then "WedgePart" else "Part")
 		p.Name = item.name
 		p.Anchored = true
@@ -72,7 +84,7 @@ function MeadowV4.build(parent: Instance, origin: Vector3?): Model
 	deck.Parent = model
 	-- Section dressing is cosmetic: a failed prop must never take the island down with it.
 	local sections = {}
-	for _, module in script.Parent:GetChildren() do
+	for _, module in script.Parent:GetChildren() do yieldBuild();
 		if module:IsA("ModuleScript") and (module.Name:match("^Section%d+$") or module.Name == "Outsmart"
 			or module:GetAttribute("MeadowDressing") == true) then table.insert(sections, module) end
 	end
@@ -82,6 +94,8 @@ function MeadowV4.build(parent: Instance, origin: Vector3?): Model
 		return a.Name < b.Name
 	end)
 	for _, module in sections do
+		-- Yield between sections so heavy dressing cannot trip Roblox's script timeout (offline builders have no task).
+		if task then task.wait() end
 		local ok, err = pcall(function() require(module).build(model, Vector3.zero) end)
 		if not ok then warn("[MeadowV4] " .. module.Name .. " dressing skipped: " .. tostring(err)) end
 	end
@@ -91,7 +105,7 @@ function MeadowV4.build(parent: Instance, origin: Vector3?): Model
 		require(script.Parent.Section1).clearProps(model)
 	end)
 	if not clearanceOK then model:SetAttribute("PvpMapClearanceFailure", tostring(clearanceProblem)) end
-	for _, p in model:GetDescendants() do
+	for _, p in model:GetDescendants() do yieldBuild();
 		if p:IsA("BasePart") then p.CFrame = CFrame.new(offset) * p.CFrame end
 	end
 	model:SetAttribute("MeadowOrigin", offset)

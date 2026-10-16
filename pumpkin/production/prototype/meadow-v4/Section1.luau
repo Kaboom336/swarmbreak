@@ -1,4 +1,15 @@
 -- S1 presentation only. KitLibrary uses bottom-centre pivots; never alter physics.
+
+-- Bound synchronous construction/scans; offline builders have no task.
+local yieldWork = 0
+local yieldDeadline = os.clock() + .01
+local function yieldBuild()
+ yieldWork += 1
+ if yieldWork % 300 == 0 and os.clock() >= yieldDeadline then
+  if task then task.wait() end
+  yieldDeadline = os.clock() + .01
+ end
+end
 local S = {}
 local V = Vector3.new
 S.bounds = {-58,58,98,156}
@@ -47,18 +58,18 @@ function S.ground(root,x,z,w,d)
  local localize=CFrame.new(-(root:GetAttribute("MeadowOrigin") or Vector3.zero))
  local floors={}
  if not floorCache[root] then
-  local all={};for _,p in root:GetDescendants() do if p:IsA("BasePart") and p.CanCollide and math.abs(p.CFrame.UpVector.Y)>0.9999 then
+  local all={};for _,p in root:GetDescendants() do yieldBuild(); if p:IsA("BasePart") and p.CanCollide and math.abs(p.CFrame.UpVector.Y)>0.9999 then
    local top=(localize*p.CFrame).Position.Y+p.Size.Y/2;if top<=1 and top>=-3 then table.insert(all,p) end
   end end;floorCache[root]=all
  end
- for _,p in floorCache[root] do
+ for _,p in floorCache[root] do yieldBuild();
   local cf=localize*p.CFrame
   local q=cf:PointToObjectSpace(V(x,cf.Position.Y,z))
   local top=cf.Position.Y+p.Size.Y/2
   if top<=1 and top>=-3 and math.abs(q.X)<=p.Size.X/2+w/2 and math.abs(q.Z)<=p.Size.Z/2+d/2 then table.insert(floors,p) end
  end
  local lowest,highest=math.huge,-math.huge
- for ix=0,math.ceil(w) do for iz=0,math.ceil(d) do
+ for ix=0,math.ceil(w) do yieldBuild(); for iz=0,math.ceil(d) do
   local px,pz=x-w/2+w*ix/math.max(1,math.ceil(w)),z-d/2+d*iz/math.max(1,math.ceil(d))
   local top=-math.huge
   for _,p in floors do
@@ -73,6 +84,7 @@ function S.ground(root,x,z,w,d)
  return highest
 end
 local function part(root,name,x,z,size,color,base)
+ yieldBuild()
  local y=base or S.ground(root,x,z,size.X,size.Z)
  local missing=y==nil
  assert(not missing,"S1 unsupported "..name.." at "..x..","..z)
@@ -131,7 +143,7 @@ end
 local function cliffGarden(root)
  -- Hang vines on exposed east faces of the left cliff, facing arrival.
  local faces={}
- for _,p in root:GetDescendants() do
+ for _,p in root:GetDescendants() do yieldBuild();
   if p:IsA("BasePart") and p.Name=="TunnelHillEarth" then
    local v=p.CFrame.Position
    if v.X>=-100 and v.X<=-25 and v.Z>=30 and v.Z<=87 and v.Y-p.Size.Y/2<1 and p.Size.Y>15 then
@@ -230,7 +242,7 @@ function S.build(root)
  -- The old opaque upright disc blocked the required arrival camera entirely.
  -- Only nonphysical artwork rotates; the existing return trigger stays put.
  local portalTurn=CFrame.Angles(math.pi/2,0,0)
- for _,p in root:GetDescendants() do if p:IsA("BasePart") and not p.CanCollide and (p.Name=="PortalStone" or p.Name=="CyanPortalField" or p.Name=="ContinuousCyanRim" or p.Name=="PortalSpiral") then
+ for _,p in root:GetDescendants() do yieldBuild(); if p:IsA("BasePart") and not p.CanCollide and (p.Name=="PortalStone" or p.Name=="CyanPortalField" or p.Name=="ContinuousCyanRim" or p.Name=="PortalSpiral") then
   if math.abs(p.CFrame.Position.X)<20 and math.abs(p.CFrame.Position.Z-136)<8 then
    local v=p.CFrame.Position
    local height=if p.Name=="PortalStone" then .12 elseif p.Name=="CyanPortalField" then .18 elseif p.Name=="ContinuousCyanRim" then .22 else .24
@@ -240,11 +252,11 @@ function S.build(root)
    p:SetAttribute("S1PortalArt",true);p:SetAttribute("S1Coverage","Portal");p:AddTag("S1PortalVisual")
   end
  end end
- for _,p in root:GetDescendants() do if p:IsA("BasePart") and p.Name=="StonePathEdge" and not p.CanCollide and not p:GetAttribute("WalkableLaneFloor") then
+ for _,p in root:GetDescendants() do yieldBuild(); if p:IsA("BasePart") and p.Name=="StonePathEdge" and not p.CanCollide and not p:GetAttribute("WalkableLaneFloor") then
   local v=p.CFrame.Position
   if v.X*v.X+(v.Z-136)^2<11^2 and v.Y<1.3 then p.Transparency=1;p:SetAttribute("S1Cleared",true) end
  end end
- for _,p in root:GetDescendants() do if p:IsA("BasePart") and S.inside(p.CFrame.Position) and not p.CanCollide and not p:GetAttribute("WalkableLaneFloor") then
+ for _,p in root:GetDescendants() do yieldBuild(); if p:IsA("BasePart") and S.inside(p.CFrame.Position) and not p.CanCollide and not p:GetAttribute("WalkableLaneFloor") then
   if p.Name:find("Flower") or p.Name:find("Bush") or p.Name:find("Mushroom") or p.Name:find("Pebble") or p.Name:find("GrassTuft") then
    p.Transparency=1;p:SetAttribute("MeadowPolishCleared",true);p:SetAttribute("S1Cleared",true)
   end
@@ -295,7 +307,7 @@ function S.laneClear(parts,lanes,plan,apronBorder)
  -- The R3 brief reserves the central 32 studs of the 48-stud apron.
  -- Art wholly inside that apron shares this same rule across route samples;
  -- all route buffers outside it (and elevated decks) remain protected.
- for _,lane in lanes do
+ for _,lane in lanes do yieldBuild();
   local v=lane.CFrame.Position;local ext=V(0,0,0)
   for _,a in {lane.CFrame.RightVector*lane.Size.X/2,lane.CFrame.UpVector*lane.Size.Y/2,lane.CFrame.LookVector*lane.Size.Z/2} do
    ext+=V(math.abs(a.X),math.abs(a.Y),math.abs(a.Z))
@@ -325,18 +337,18 @@ function S.spawnKits(root,kit)
   end
   if m then
    m.Name="S1_"..g.id;m:SetAttribute("Section","S1");m:SetAttribute("SupportY",y);m.Parent=root;count+=1
-   for _,p in m:GetDescendants() do if p:IsA("BasePart") then p:SetAttribute("S1Coverage","Props");p:AddTag("S1FrameProp") end end
+   for _,p in m:GetDescendants() do yieldBuild(); if p:IsA("BasePart") then p:SetAttribute("S1Coverage","Props");p:AddTag("S1FrameProp") end end
   end
  end
  -- Use the licensed mine timber assets as fitted skins on supported carriers.
- for _,p in root:GetDescendants() do
+ for _,p in root:GetDescendants() do yieldBuild();
   if p:IsA("BasePart") and (p.Name=="S1_MinePost" or p.Name=="S1_MineHeader") then
    local name=if p.Name=="S1_MinePost" then "wood-support" else "wood-structure"
    local cf=p.CFrame*CFrame.new(0,-p.Size.Y/2,0)
    local m=kit.spawn("kenney_mini-dungeon__"..name,"cave",cf,p.Size)
    if m then
     assert(kit.fit(m,p.Size,cf));m.Name="S1_MineKit_"..name;m.Parent=root;p.Transparency=1
-    for _,q in m:GetDescendants() do if q:IsA("BasePart") then q:SetAttribute("S1Coverage","Props");q:AddTag("S1FrameProp") end end
+    for _,q in m:GetDescendants() do yieldBuild(); if q:IsA("BasePart") then q:SetAttribute("S1Coverage","Props");q:AddTag("S1FrameProp") end end
    end
   end
  end
@@ -349,7 +361,7 @@ function S.clearProps(root)
  local origin=root:GetAttribute("MeadowOrigin") or Vector3.zero
  local court=require(script.Parent.Gameplay).PvpCourt
  local outsmart=require(script.Parent.Outsmart)
- for _,p in root:GetDescendants() do
+ for _,p in root:GetDescendants() do yieldBuild();
   if p:IsA("BasePart") and p:GetAttribute("WalkableLaneFloor")==true then
    local cf,h=p.CFrame,p.Size/2
    local e=Vector3.zero
@@ -359,7 +371,7 @@ function S.clearProps(root)
   end
  end
  local removed={}
- for _,p in root:GetDescendants() do
+ for _,p in root:GetDescendants() do yieldBuild();
   if not p:IsA("BasePart") or p:GetAttribute("WalkableLaneFloor") or p:GetAttribute("S1PortalArt") or p:GetAttribute("GameplayCover") then continue end
   local category=p:GetAttribute("MeadowV4Category") or ""
   local dressing=p:GetAttribute("Section")=="S1" or p:HasTag("S1FrameProp")
@@ -385,7 +397,7 @@ function S.clearProps(root)
   if v.Y+e.Y>origin.Y+outsmart.Bell.Y-.1 and v.Y-e.Y<origin.Y+outsmart.Bell.Y+8
    and overlaps(CFrame.new(origin+outsmart.Bell),outsmart.BellClearSize,outsmart.BellClearSize) then blocked=true end
   if not blocked then
-   for _,lane in lanes do
+   for _,lane in lanes do yieldBuild();
     if v.Y+e.Y>lane.minY and v.Y-e.Y<lane.maxY
      and maxX>lane.minX and minX<lane.maxX and maxZ>lane.minZ and minZ<lane.maxZ
      and overlaps(lane.cf,lane.w,lane.d) then blocked=true;break end

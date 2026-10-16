@@ -1,5 +1,47 @@
 # One-section scene checklist
 
+Carry regression gate (2026-10-16): **STOP section dressing until live carry/PvP expiry is resolved.** Before calling any section done, rebuild both pre-section and delivered places from their mounted sources; diff duplicate-sensitive collidables, CanCollide/CanQuery/CanTouch, transforms, sizes, materials, floor/lane tags and Keeper sight-blocker membership. Record runner/RouteData distance and per-segment slope parity. Require fresh live solo/PvP completion and compare phase/waypoint time, hits, recoveries, navmesh detours and server performance; offline contracts/DropSample do not prove that gate. See `../CARRY-REGRESSION.md`; current offline diff is exact, cause remains UNKNOWN. Leave partial S5 unmounted.
+
+S4, owner-authorized 2026-10-16: rounds 1–2 ONLY, stop for Claude live review.
+Read `S4/RESULT.md` and final evidence before inheriting any test result. Byte-verified
+pre-s4 backup before Rojo; Section4 under existing local-coordinate pcall guard.
+R1 silhouette-only: anchors/cables, off-lane cliff faces and actual straight recovery
+rail; frozen before R2 sign, lamps and bank roots/moss. PRE/GAPS/SBS per round;
+exact warm paving, edge stones, planks, gameplay geometry/data/floor tags/colliders.
+Old S1 BRIDGE board/post replacement is explicitly owner-authorized; their S1FrameProp
+art tags are the only tagged-cosmetic exception. No gameplay-tag exception.
+All new parts collision/query/touch false. Independent Claude review, live nine
+suites, device/play feel and acceptance UNKNOWN. No R3/R4, commit or publish.
+Checked final S4: 74 compiled O0/O1/O2; 73 existing sources/Workspace exact;
+58 frozen R1 silhouette parts, 94 final S4 cosmetics, zero contact/support/lane
+errors. Origin/failure isolation and existing policy/core/coordinator/reset contracts
+PASS; fresh 50-seed walking-floor/cliff/cover PASS; fresh offline N8 DropSample
+31,824 cases / 20 routes / zero failures. Exact final source/render/place parity;
+separate R1-review.rbxl enables live comparison. See S4/FINAL-EVIDENCE.json.
+
+S3, owner-authorized 2026-10-16: **VISUAL REVISIT; four-round cap reached**.
+Byte-verified `guardian-greybox.pre-s3.rbxl` before Rojo; delivered module mounted
+under the existing island-local pcall guard. 73 sources compile O0/O1/O2; all 72
+existing sources and serialized Workspace preserved. Eight ribs at 11 studs,
+207 new native cosmetics, numbered exit cues, mounted tool groups and paired
+lanterns. All new parts query/touch/collision false; zero contact/support/lane
+errors at the existing .035 tolerance and seven-stud player envelope. Exact
+protected geometry/palette/tags, all retained floor/edge artwork and existing kit
+placements; frozen 40 R2 rib parts; final image-source/artifact parity recorded.
+Three literal Surface cameras plus five interior trailing views and cutaway;
+all eight eyes/root points clear, trailing offsets 18 studs. Surface is the
+Keeper's outside route, not the interior walk. Each round has PRE/GAPS/SBS and
+one blind critic. R1 was silhouette only; R2 core geometry freeze was constrained,
+not visual acceptance. R4 critic retains three misses: junction enclosure,
+track/mining identity and visually separate destinations. No fifth round.
+Origin/failure isolation, policy/persistence/replay/reset and existing 50-seed
+walking-floor/cliff/cover pass. Fresh final N8 DropSample: **31,824 samples /
+20 routes / zero failures**, exact disjoint complete-route coverage from three
+workers. Read `S3/FINAL-EVIDENCE.json`; no inherited S2 result.
+No new openings in 4,050 Keeper comparisons / 450 upward rays; 25 old misses
+unchanged. Nine live suites, imported light/text/mesh parity, motion/device/fun
+and owner acceptance UNKNOWN. No commit/publish. See `S3/RESULT.md`.
+
 S2 round 4: **VISUAL ACCEPTANCE NOT MET**. Byte-verified pre-s2r4 backup before
 Rojo; canonical place changes Section2 only (72 compiled / 71 preserved).
 68 hill edits, 112 cap removals; nonphysical slope shells 56.3/71.6 degrees over

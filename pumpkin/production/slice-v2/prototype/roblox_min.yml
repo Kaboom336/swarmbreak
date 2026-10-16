@@ -21,6 +21,8 @@ globals:
     any: true
   CFrame:
     any: true
+  Content:
+    any: true
   Color3:
     any: true
   UDim:

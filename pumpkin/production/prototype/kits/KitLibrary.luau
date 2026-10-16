@@ -1,4 +1,15 @@
 -- CC0 Kenney/Quaternius models; server-only, one sanitized template per island/name.
+
+-- Bound synchronous construction/scans; offline builders have no task.
+local yieldWork = 0
+local yieldDeadline = os.clock() + .01
+local function yieldBuild()
+ yieldWork += 1
+ if yieldWork % 300 == 0 and os.clock() >= yieldDeadline then
+  if task then task.wait() end
+  yieldDeadline = os.clock() + .01
+ end
+end
 local Insert = game:GetService("InsertService")
 local Storage = game:GetService("ServerStorage")
 local Tags = game:GetService("CollectionService")
@@ -40,6 +51,8 @@ function Kit.init()
  state = "loading"
  local memoryBefore = Stats:GetTotalMemoryUsageMb()
  for _, entry in manifest do
+  -- Cached asset loads may return without yielding.
+  if task then task.wait() end
   local id = key(entry.name, entry.island)
   local loaded, lastError
   for attempt = 1, 3 do
@@ -48,7 +61,7 @@ function Kit.init()
     clearWalkable(model)
     local valid, err = pcall(function()
      local count = 0
-     for _, node in model:GetDescendants() do
+     for _, node in model:GetDescendants() do yieldBuild();
       clearWalkable(node)
       if node:IsA("LuaSourceContainer") then node:Destroy()
       elseif node:IsA("BasePart") then
@@ -68,7 +81,7 @@ function Kit.init()
      model.PrimaryPart = nil
      local box, size = model:GetBoundingBox()
      local shift = CFrame.new(-box.X, -box.Y + size.Y / 2, -box.Z)
-     for _, part in model:GetDescendants() do
+     for _, part in model:GetDescendants() do yieldBuild();
       if part:IsA("BasePart") then part.CFrame = shift * part.CFrame end
      end
      model.WorldPivot = CFrame.identity
@@ -124,7 +137,7 @@ function Kit.spawn(name, island, cframe, scale)
  model:PivotTo(cframe)
  local kind = propType(name)
  local hasTrunk=false
- for _, p in model:GetDescendants() do
+ for _, p in model:GetDescendants() do yieldBuild();
   clearWalkable(p)
   if p:IsA("BasePart") then
    p.Anchored, p.CanTouch, p.CanQuery = true, false, false
@@ -155,7 +168,7 @@ function Kit.fit(model, target, frame)
  local _,size=model:GetBoundingBox()
  local ratio=target/size
  local edits={}
- for _,p in model:GetDescendants() do if p:IsA("BasePart") then
+ for _,p in model:GetDescendants() do yieldBuild(); if p:IsA("BasePart") then
   local cf=pivot:ToObjectSpace(p.CFrame)
   local axes={cf.RightVector,cf.UpVector,-cf.LookVector}
   for _,a in axes do
@@ -166,7 +179,7 @@ function Kit.fit(model, target, frame)
   table.insert(edits,{part=p,cf=CFrame.new(cf.Position*ratio)*cf.Rotation,
    size=p.Size*Vector3.new(axisScale(axes[1]),axisScale(axes[2]),axisScale(axes[3]))})
  end end
- for _,e in edits do e.part.Size=e.size;e.part.CFrame=frame*e.cf end
+ for _,e in edits do yieldBuild(); e.part.Size=e.size;e.part.CFrame=frame*e.cf end
  model.WorldPivot=frame
  model:SetAttribute("KitFittedSize",target)
  return true

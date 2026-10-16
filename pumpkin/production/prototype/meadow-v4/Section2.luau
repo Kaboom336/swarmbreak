@@ -1,4 +1,15 @@
 -- S2 exterior dressing only; local coordinates until MeadowV4 translates once.
+
+-- Bound synchronous construction/scans; offline builders have no task.
+local yieldWork = 0
+local yieldDeadline = os.clock() + .01
+local function yieldBuild()
+ yieldWork += 1
+ if yieldWork % 300 == 0 and os.clock() >= yieldDeadline then
+  if task then task.wait() end
+  yieldDeadline = os.clock() + .01
+ end
+end
 local S={kits={}}
 local V=Vector3.new
 -- R2 locked-camera ray-visible identity whitelist. Physical entries permit palette only.
@@ -218,6 +229,7 @@ local function safe(name,fn)
  local ok,err=pcall(fn);if not ok then warn('[Section2] '..name..' skipped: '..tostring(err)) end
 end
 local function part(root,name,pos,size,color,material)
+ yieldBuild()
  local p=Instance.new('Part');p.Name='S2_'..name;p.Size=size;p.CFrame=CFrame.new(pos)
  p.Color=Color3.fromRGB(unpack(color));p.Material=material or Enum.Material.Wood
  p.Anchored=true;p.CanCollide=false;p.CanQuery=false;p.CanTouch=false
@@ -244,7 +256,7 @@ local function lantern(root,pos,normal,reach)
  part(root,'LampRoof',c+V(0,.75*scale,0),V(1.3,.2,1.3)*scale,{53,47,37},Enum.Material.Metal)
  for _,dx in {-.55,.55} do for _,dz in {-.55,.55} do part(root,'LampIron',c+V(dx*scale,0,dz*scale),V(.12,1.3,.12)*scale,{53,47,37},Enum.Material.Metal) end end
  rod(root,'LampHanger',pos+normal*reach,c+V(0,.85*scale,0),.16,{53,47,37})
- local l=Instance.new('PointLight');l.Color=core.Color;l.Brightness=if pos.Z>=88 then 12 else 6;l.Range=28;l.Shadows=true;l.Parent=core
+ local l=Instance.new('PointLight');l.Color=core.Color;l.Brightness=if pos.Z>=88 then 3 else 1.5;l.Range=18;l.Shadows=false;l.Parent=core
 end
 local function mine(root)
  -- Face-mounted timbers: low grounded posts would overlap the authoritative bait lane.
@@ -263,7 +275,7 @@ local function mine(root)
  -- Three brackets tie each facing back to the actual rock courses.
  for _,pair in {{a,1},{b,-1}} do local q,side=pair[1],pair[2];for _,y in {10,11.5,13} do
   local distance=math.huge
-  for _,p in root:GetDescendants() do if p:IsA('BasePart') and p.CanCollide then
+  for _,p in root:GetDescendants() do yieldBuild(); if p:IsA('BasePart') and p.CanCollide then
    local c,h=p.CFrame,p.Size/2;local localRay=c:PointToObjectSpace(V(q.X+side*3,y,q.Z));local dir=c:VectorToObjectSpace(V(-side,0,0))
    local enter,leave=0,200
    for _,axis in {'X','Y','Z'} do
@@ -376,7 +388,7 @@ S.ground=function(root,x,z,w,d)
  return groundModule.ground(root,x,z,w,d)
 end
 function S.build(root)
- for _,p in root:GetDescendants() do if p:IsA('BasePart') then
+ for _,p in root:GetDescendants() do yieldBuild(); if p:IsA('BasePart') then
   local key=r2Key(p)
   if r2Remove[key] and not p.CanCollide and not p:GetAttribute('WalkableLaneFloor') and not p:GetAttribute('GameplayCover') then p:Destroy()
   elseif r2Stone[key] and p.CanCollide and not p:GetAttribute('WalkableLaneFloor') then
@@ -387,7 +399,7 @@ function S.build(root)
   end
  end end
  -- Remove complete revealed crystal/voxel clumps, including pieces hidden by the first ray-visible slice.
- for _,p in root:GetDescendants() do if p:IsA('BasePart') and not p.CanCollide and not p:GetAttribute('WalkableLaneFloor') and not p:GetAttribute('GameplayCover') then
+ for _,p in root:GetDescendants() do yieldBuild(); if p:IsA('BasePart') and not p.CanCollide and not p:GetAttribute('WalkableLaneFloor') and not p:GetAttribute('GameplayCover') then
   local v=p.CFrame.Position
   if v.X>=-120 and v.X<=-40 and v.Z>=0 and v.Z<=112 and v.Y<28 then
    if p.Name:find('Crystal') or p.Name:find('^TunnelExitArchShoulderVoxel') then p:Destroy()
@@ -395,12 +407,12 @@ function S.build(root)
     p.Color=Color3.fromRGB(151,119,77);p.Material=Enum.Material.Ground
    elseif p.Name:find('^TunnelMushroomGlowVoxel') or p.Name=='Fix1MushroomSpot' then
     p.Color=Color3.fromRGB(161,129,79);p.Material=Enum.Material.Rock
-    for _,light in p:GetChildren() do if light:IsA('PointLight') then light.Color=p.Color;light.Brightness=.5 end end
+    for _,light in p:GetChildren() do yieldBuild(); if light:IsA('PointLight') then light.Color=p.Color;light.Brightness=.5 end end
    end
   end
  end end
  -- Dirt/stone transition uses existing cosmetic paving only: no new floor thickness or queries.
- for _,p in root:GetDescendants() do if p:IsA('BasePart') and not p.CanCollide and not p:GetAttribute('WalkableLaneFloor') and not p:GetAttribute('GameplayCover') then
+ for _,p in root:GetDescendants() do yieldBuild(); if p:IsA('BasePart') and not p.CanCollide and not p:GetAttribute('WalkableLaneFloor') and not p:GetAttribute('GameplayCover') then
   local v=p.CFrame.Position
   if v.X>=-80 and v.X<=-40 and v.Z>=102 and v.Z<=122 and (p.Name=='WindingCobble' or p.Name=='TunnelValleyJoin_Cobble') then
    local t=math.clamp((v.Z-102)/20,0,1);local wear=(math.floor(v.X)+math.floor(v.Z))%3*5
@@ -412,14 +424,14 @@ function S.build(root)
  end end
  -- Superseded nonphysical S1 trim lies entirely in S2, below the new header.
  -- Remove only the old elevated pebble columns and their cap/moss pieces.
- for _,p in root:GetDescendants() do if p:IsA('BasePart') and not p.CanCollide and not p.CanQuery and not p.CanTouch
+ for _,p in root:GetDescendants() do yieldBuild(); if p:IsA('BasePart') and not p.CanCollide and not p.CanQuery and not p.CanTouch
   and not p:GetAttribute('WalkableLaneFloor') and not p:GetAttribute('GameplayCover') then
   local v=p.CFrame.Position
   if v.X>=-120 and v.X<=-28 and v.Z>=75 and v.Z<=140 and v.Y>1
    and (p.Name=='Round4StackedRock' or p.Name=='Round4PaleRockTop' or p.Name=='Round4RockMoss') then p:Destroy() end
  end end
  -- Explicit names + physics/tag guards preserve the bait cover, every lane and court.
- for _,p in root:GetDescendants() do if p:IsA('BasePart') and not p.CanCollide and not p:GetAttribute('WalkableLaneFloor') and not p:GetAttribute('GameplayCover') then
+ for _,p in root:GetDescendants() do yieldBuild(); if p:IsA('BasePart') and not p.CanCollide and not p:GetAttribute('WalkableLaneFloor') and not p:GetAttribute('GameplayCover') then
   local v=p.CFrame.Position
   if p.Name:find('^TunnelExitArchShoulderVoxel') and v.X< -58 and v.X>=-120 and v.Z>=96 and v.Z<=102 and v.Y<28 then p:Destroy();continue end
   if p.Name=='S1_MineHeader' or p.Name=='S1_MinePost' or p.Name=='S1_MineLanternGlow' or p.Name=='S1_MineLanternCap' then p:Destroy() end
@@ -445,7 +457,7 @@ function S.build(root)
    local x=if z>=54 then -76+(z-54)*16/28 else -76
    for _,side in {-1,1} do
     local nearest=math.huge
-    for _,p in root:GetDescendants() do if p:IsA('BasePart') and p.CanCollide and not p:GetAttribute('WalkableLaneFloor') then
+    for _,p in root:GetDescendants() do yieldBuild(); if p:IsA('BasePart') and p.CanCollide and not p:GetAttribute('WalkableLaneFloor') then
      local h=p.Size/2;local o=p.CFrame:PointToObjectSpace(V(x,11.7,wallZ));local d=p.CFrame:VectorToObjectSpace(V(side,0,0));local enter,leave=0,100
      for _,axis in {'X','Y','Z'} do
       if math.abs(d[axis])<.00001 then if math.abs(o[axis])>h[axis] then enter=101 end
@@ -459,7 +471,7 @@ function S.build(root)
   end
   -- End-wall sunlight cue; face-mounted, above the protected walking envelope.
   local glow=part(root,'RouteEndGlow',V(-111.949,6,18),V(.1,7,6),{255,221,142},Enum.Material.Neon)
-  local light=Instance.new('PointLight');light.Color=glow.Color;light.Brightness=36;light.Range=40;light.Parent=glow
+  local light=Instance.new('PointLight');light.Color=glow.Color;light.Brightness=6;light.Range=30;light.Parent=glow
  end)
  for i,t in {{-71,122,5,17},{-64.5,122,5.5,18},{-60,124,2.5,10}} do safe('orchard '..i,function() orchard(root,t[1],t[2],t[3],t[4],i) end) end
  safe('harvest shovel',function()
@@ -477,8 +489,8 @@ function S.spawnKits(root,kit)
   if m then
    if g.fit then assert(kit.fit(m,g.size,frame)) end
    m.Name='S2_'..g.id;m:SetAttribute('Section','S2');m.Parent=root
-   for _,p in m:GetDescendants() do if p:IsA('BasePart') then p.CanCollide=false;p.CanQuery=false;p.CanTouch=false;p:SetAttribute('Section','S2') end end
-   if g.color then for _,p in m:GetDescendants() do if p:IsA('BasePart') then p.Color=Color3.fromRGB(unpack(g.color));p.Material=Enum.Material.Rock end end end
+   for _,p in m:GetDescendants() do yieldBuild(); if p:IsA('BasePart') then p.CanCollide=false;p.CanQuery=false;p.CanTouch=false;p:SetAttribute('Section','S2') end end
+   if g.color then for _,p in m:GetDescendants() do yieldBuild(); if p:IsA('BasePart') then p.Color=Color3.fromRGB(unpack(g.color));p.Material=Enum.Material.Rock end end end
   end
  end) end
 end

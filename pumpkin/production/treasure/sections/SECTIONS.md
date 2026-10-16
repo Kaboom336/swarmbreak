@@ -1,6 +1,6 @@
 # Meadow scene sections
 
-Pilot only S1; Zion reviews it before any other section is rebuilt. Bounds are editing ownership envelopes, not new gameplay walls. Coordinates are Roblox XYZ; north is -Z. Shared seams belong to the lower-numbered section. Existing routes and drop surfaces remain authoritative.
+S1 is owner-reported done. S2 is REVISIT after close-out; see `S2/RESULT.md`. S3 is delivered at the four-round cap with visual REVISIT (`S3/RESULT.md`). S4 rounds 1–2 were explicitly authorized on 2026-10-16; stop for Claude's live Studio check before rounds 3–4 (`S4/RESULT.md`). Bounds are editing ownership envelopes, not new gameplay walls. Coordinates are Roblox XYZ; north is -Z. Shared seams belong to the lower-numbered section; S4's explicit old BRIDGE-sign fix is the narrow S1 seam exception. Existing routes and drop surfaces remain authoritative.
 
 | Section | Bounds X / Y / Z (studs) | Gameplay job |
 |---|---|---|
@@ -15,4 +15,4 @@ Pilot only S1; Zion reviews it before any other section is rebuilt. Bounds are e
 | S9 Home plots | Home-local -176..176 / -30..65 / -110..135 | Receive reward, read ownership and pet collection; verify actual plot boundaries before work |
 | S10 Home portal row | Home-local -176..176 / -3..45 / -176..-110 | Select destinations and understand progression locks |
 
-S9/S10 use home-local coordinates (the home world offset is not an editing bound). S2-S8 overlap vertically; interior/route/court ownership takes priority over residual terrain. Their bounds must be refined against the actual source before their own pilots. No section beyond S1 is changed here.
+S9/S10 use home-local coordinates (the home world offset is not an editing bound). S2-S8 overlap vertically; interior/route/court ownership takes priority over residual terrain. Their bounds must be refined against the actual source before their own pilots. This process has covered S1, S2, S3 and S4 rounds 1–2; S5–S10 remain outside this work.

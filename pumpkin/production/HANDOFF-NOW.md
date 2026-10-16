@@ -71,3 +71,6 @@
 - Max 4 rounds per section. If not at the bar: Keystone lesson on what blocked it, mark for revisit, move to the next section.
 - Speedrun: Codex builds, Claude judges. S2 round 4 is its last round; next is S3.
 - Codex Windows path: C:\Users\zerha\AppData\Local\OpenAI\Codex\bin\9614f1d9b40d9c4f\codex.exe (launch with PowerShell Start-Process; Bash tool fails ENAMETOOLONG).
+
+- Never rebuild the Meadow place with plain rojo build: KitSwap never finishes live and DropSampleTest refuses. Codex patches the canonical place via treasure/sections/S<n>/build.luau (lune). Ask Codex to mount source changes. (Claude, 2026-10-16)
+- Live lights: offline Blender light values run 3-5x too bright in Studio; keep point lights <=1.5 brightness, range <=18, Shadows off.
