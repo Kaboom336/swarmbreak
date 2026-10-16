@@ -1,0 +1,7 @@
+# Round 4 — recorded after inspecting the matched R3 renders
+
+1. **Wall dressing is off-camera/hidden.** Entry and mid-up remain bare. R3's new groups sit on the northern back faces; foreground cosmetic relief hides the actual wall surfaces. Retire only owned untagged foreground relief, ray-select visible physical faces from the locked cameras, then move the S6 foliage/bracket/rock groups onto those faces. Fix the late-kit string concatenation error found by the R3 offline kit harness.
+2. **Kerb still reads as stacked teeth.** The overlapping world-axis caps and narrow connectors make the mid-up rim jagged, and shelf seams remain exposed. Replace the new caps with wider tangent connector beds at consistent height; preserve all protected paving and lane geometry.
+3. **Drop cue is too close and lower patch is weak.** One post dominates the shelf foreground. Use shorter posts farther along the same cosmetic edge and brighten the existing actual lower descent paving, following its real slope instead of assuming a flat Y24 landing.
+
+Checked: r3-entry.png, r3-mid-up.png, r3-shelf-down.png, r3-overview.png, SBS-R3.jpg, PRE-R4.jpg against TARGET.png and supplied live R2 shots. Compilation and source/lane/contact scope PASS; R3 late-kit execution failed and is retained in r3-late-kits.log. No claim of Studio acceptance. Round 4 is the last round; retain REVISIT if the target bar is not reached.

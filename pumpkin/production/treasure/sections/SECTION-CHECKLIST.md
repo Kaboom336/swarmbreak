@@ -1,5 +1,14 @@
 # One-section scene checklist
 
+S6, owner-authorized 2026-10-16: R1/R2 ONLY, mounted by source-only Lune over the
+current PvP-reset-fixed canonical. Stop for Claude live review before R3/R4.
+Read `S6/RESULT.md` and `S6/FINAL-EVIDENCE.json`; do not inherit old test results.
+Warm paving, edge stones, all lane/collider fields and summit court preserved;
+new parts query/touch/collision false. Visual REVISIT: summit occlusion and hidden
+lower-path cues remain. Live carry/PvP, all nine live suites and acceptance UNKNOWN.
+This explicit owner authorization supersedes the older section-dressing STOP for
+these two rounds only; it does not declare the live regression resolved.
+
 Carry regression gate (2026-10-16): **STOP section dressing until live carry/PvP expiry is resolved.** Before calling any section done, rebuild both pre-section and delivered places from their mounted sources; diff duplicate-sensitive collidables, CanCollide/CanQuery/CanTouch, transforms, sizes, materials, floor/lane tags and Keeper sight-blocker membership. Record runner/RouteData distance and per-segment slope parity. Require fresh live solo/PvP completion and compare phase/waypoint time, hits, recoveries, navmesh detours and server performance; offline contracts/DropSample do not prove that gate. See `../CARRY-REGRESSION.md`; current offline diff is exact, cause remains UNKNOWN. Leave partial S5 unmounted.
 
 S4, owner-authorized 2026-10-16: rounds 1–2 ONLY, stop for Claude live review.

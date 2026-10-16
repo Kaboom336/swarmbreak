@@ -1,5 +1,18 @@
 # Section craft lessons
 
+## S6 — R1/R2 only; stop for Claude
+
+1. When cladding covers a finish, ray-identify its foreground producer first, because changing the backing cannot change the player image.
+2. When a lamp pocket is near a curved route, test the entire oriented horizontal margin before mounting, because physical clearance alone misses lane intrusion.
+3. When a canonical contains a reset fix, reuse its current dirty-state fixture, because an older mock can fail before exercising the reset.
+
+Evidence: `S6/RESULT.md`, generated camera-derived TARGET, PRE/GAPS/SBS R1/R2,
+duplicate-sensitive preservation, all-height margins, contact reports and final
+evidence. Fifteen R1 silhouette parts stay frozen. Protected box walls, summit
+occlusion and weak descent-cue visibility retain visual REVISIT. PRE-R1 composition
+was late after local library failures; see RENDER-LIMITS. Claude live review,
+nine suites, carry/PvP recovery and owner acceptance UNKNOWN. No R3/R4 or commit.
+
 ## PvP suite reset isolation
 
 1. When a suite passes alone but fails after another, dirty and replay the actual reset against its archived version, because a mock reset counter cannot reveal retained Keeper fields, sockets or movement.
@@ -162,4 +175,12 @@ Evidence: `S4/FINAL-R34-EVIDENCE.json`, `S4/MOUNT-R3.json`, `S4/MOUNT-FINAL.json
 3. When offline and Studio show different walls at the same camera, keep the visual verdict REVISIT, because source, collider and DropSample passes cannot establish scene parity or owner acceptance.
 
 Evidence: `S5/TARGET.png`, `S5/TARGET-PROMPT.md`, `S5/GAPS-R3.md`, `S5/GAPS-R4.md`, `S5/RESULT.md`, and the R3/R4 boards. Existing licensed kits2 rocks, Lune source-only mounting and unchanged offline tests reused. Exact Keystone Roblox Process Playbook remains unavailable in the local active-work files; its text is UNKNOWN.
+
+## S6 rounds 3–4
+
+1. When wall dressing does not appear in a matched camera, ray-select the visible faces before multiplying it, because safe attachments on the northern back wall do not improve the entry or spiral view.
+2. When grounding an overhanging path edge, inspect the whole trim footprint and preserve its original slope, because a center-only ray can miss the path and hit a shelf 24 studs below.
+3. When auditing trim against native wedges, use the actual convex wedge at the same tolerance and retain the old audit, because its enclosing box reports false slope intersections. Keep production tests unchanged and exercise deferred kits explicitly; source compilation alone missed a string-concatenation error.
+
+Evidence: `S6/GAPS-R3.md`, `S6/GAPS-R4.md`, `S6/SBS-R3.jpg`, `S6/SBS-R4.jpg`, `S6/RESULT.md`, `S6/FINAL-R34-EVIDENCE.json`. Existing CC0 kits2 and Lune source-only mounting reused. Live final Studio appearance, traversal, independent Claude review and owner acceptance remain UNKNOWN/PENDING; generated TARGET is aspiration. No new dependency, commit or publish.
 
