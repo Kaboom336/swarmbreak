@@ -1,0 +1,12 @@
+{
+  "StudioPassAll": "NOT RUN after polish",
+  "compiled_O0_O1_O2": 66,
+  "keeper_clearance": "PASS existing sampled held/flight clearance; scale unchanged; articulated glove overbounds are diagnostic only",
+  "legacy_offline_check": "PASS check.luau; mocked physics/navigation, not Studio",
+  "physics_floor_tags_equal": true,
+  "render_limits": "Native-block geometry proxy; imported kits2 meshes, Roblox post effects, particles and Highlight require Studio.",
+  "small_scenery_hidden": 0,
+  "status": "PASS",
+  "unrelated_sources_preserved": 57,
+  "workspace_byte_equal": true
+}

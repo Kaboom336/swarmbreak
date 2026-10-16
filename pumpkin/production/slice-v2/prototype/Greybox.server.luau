@@ -13,6 +13,7 @@ local Arena = require(SSS:WaitForChild("GreyboxArena"))
 local Scene = require(RS:WaitForChild("GreyboxScene"))
 local Placement = require(RS:WaitForChild("GreyboxPlacement"))
 local Traps = require(RS:WaitForChild("GreyboxTraps"))
+local Style = require(RS:WaitForChild("UIStyle"))
 local V4 = Config.MeadowV4 and RS:WaitForChild("MeadowV4")
 local TunnelPolicy = V4 and require(V4.TunnelPolicy)
 local RavinePolicy = V4 and require(V4.RavinePolicy)
@@ -50,16 +51,10 @@ local function part(parent, name, size, position, color)
 end
 
 local function label(p, text)
-	local gui = Instance.new("BillboardGui")
-	gui.Size = UDim2.fromOffset(240, 48)
-	gui.StudsOffset = Vector3.new(0, p.Size.Y / 2 + 3, 0)
-	gui.AlwaysOnTop, gui.MaxDistance = true, 180
-	gui.Parent = p
-	local t = Instance.new("TextLabel")
-	t.Size, t.BackgroundTransparency = UDim2.fromScale(1, 1), 1
-	t.Text, t.TextSize, t.TextColor3 = text, 18, Color3.new(1, 1, 1)
-	t.TextStrokeTransparency = 0
-	t.Parent = gui
+	local objective = p.Name == "ReturnPortal"
+	local t = Style.billboard(p, "GoalCaption", UDim2.new(7, 28, 1.5, 12), objective and 140 or 70, objective)
+	t.Text = "> " .. text
+	t.TextColor3 = objective and Style.Colors.Cyan or Style.Colors.Cream
 	return t
 end
 
@@ -68,7 +63,10 @@ traps.rattle = function(parent)
 	local sound = Instance.new("Sound")
 	sound.Name, sound.SoundId = "DecoyRattle", "rbxasset://sounds/electronicpingshort.wav"
 	sound.Volume, sound.PlaybackSpeed, sound.RollOffMaxDistance, sound.Parent = 0.5, 1.5, 48, parent
+	sound.Looped = true
 	sound:Play()
+	parent:SetAttribute("RattleSoundPlayed", true)
+	game:GetService("Debris"):AddItem(sound, Config.Traps.Decoy.TellSeconds)
 end
 
 local function prompt(p, action, object, hold)
@@ -170,7 +168,8 @@ local function visual(item)
 	elseif item.state == "Nest" or item.state == "Dropped" then
 		-- The resolved socket is authoritative; the bounce is anchored, not flight.
 		p.AssemblyLinearVelocity, p.AssemblyAngularVelocity = Vector3.zero, Vector3.zero
-		p.Position = item.position + Vector3.new(0, 1.4, 0)
+		-- Reset carried rotation, then keep the entire native root above its socket.
+		p.CFrame = CFrame.new(item.position + Vector3.new(0, math.max(1.4,p.Size.Y/2+.05), 0))
 		p.Transparency = item.recoverAt and 1 or 0
 	elseif item.state == "Placed" then
 		p.Size = Vector3.new(3, 3, 3)
@@ -383,12 +382,19 @@ local function check(actor, action, target, item)
 			"Bump range/sight/height"
 	end
 	local position = item.position + Vector3.new(0, 1.5, 0)
-	return (r.Position - position).Magnitude <= (action == "Steal" and 9 or 4) and Arena.sight(
-		arena,
-		r.Position,
-		position
-	),
-		"item range/sight"
+	local distance, limit = (r.Position-position).Magnitude, action == "Steal" and 9 or 4
+	local visible, obstruction = Arena.sight(arena,r.Position,position)
+	if distance <= limit and visible then return true end
+	local blocker = obstruction and obstruction.Instance:GetFullName() or "NONE"
+	local diagnostic = {action=action,itemId=item.id,itemVersion=item.version,distance=distance,limit=limit,
+		root=tostring(r.Position),socket=tostring(item.position),target=tostring(position),
+		blocker=blocker,hit=obstruction and tostring(obstruction.Position) or "NONE",visible=visible}
+	game:GetService("ServerScriptService"):SetAttribute("LootHoldLastRefusal",
+		game:GetService("HttpService"):JSONEncode(diagnostic))
+	local reason=string.format("item %s distance=%.3f limit=%.1f blocker=%s root=%s socket=%s",
+		distance>limit and "range" or "sight",distance,limit,blocker,tostring(r.Position),tostring(item.position))
+	if testLog then testLog(reason) end
+	return false,reason
 end
 local function bumpTarget(actor)
 	local r = root(actor)
@@ -1190,7 +1196,7 @@ RunService.Heartbeat:Connect(function(dt)
 	if rules.active and rules.active.state == "Dropped" and rules.active.bounceAt then
 		local item = rules.active
 		local t = math.min(1, (now - item.bounceAt) / Config.SettleSeconds)
-		item.visual.Position = item.position + Vector3.new(0, 1.4 + math.sin(t * math.pi) * 0.7, 0)
+		item.visual.Position = item.position + Vector3.new(0, math.max(1.4,item.visual.Size.Y/2+.05) + math.sin(t * math.pi) * 0.7, 0)
 		if t >= 1 then
 			item.bounceAt = nil
 		end
@@ -1397,6 +1403,10 @@ local function startTest(mode)
 			if mode == "GreyboxTrapTest" then
 				return require(SSS:WaitForChild("GreyboxTrapTestRunner")).run(player, states, api, log)
 			end
+			if mode == "OutsmartTest" then
+				assert(RunService:IsStudio(), "OutsmartTest is Studio-only")
+				return require(SSS:WaitForChild("OutsmartTestRunner")).run(api, log)
+			end
 			if mode == "GreyboxPvpTest" then
 				return runner.pvp(player, states, pens, world, api, log, function(value)
 					dummy = value
@@ -1480,6 +1490,8 @@ if RunService:IsStudio() then
 		end
 		Arena.reset(arena)
 		arena.idle, arena.hasEntrants = false, false
+		local outsmartFixtures = arena.model:FindFirstChild("OutsmartFixtures")
+		if outsmartFixtures then outsmartFixtures:Destroy() end
 		Traps.clearIsland(traps, arena)
 		for _, item in rules.items do
 			item.state, item.holder = "Retired", nil
@@ -1535,7 +1547,7 @@ if RunService:IsStudio() then
 		end,
 	})
 end
-for _, mode in { "GreyboxLoopTest", "GreyboxPvpTest", "GreyboxTrapTest", "DropSampleTest" } do
+for _, mode in { "GreyboxLoopTest", "GreyboxPvpTest", "GreyboxTrapTest", "DropSampleTest", "OutsmartTest" } do
 	SSS:GetAttributeChangedSignal(mode):Connect(function()
 		if SSS:GetAttribute(mode) and not SSS:GetAttribute("StudioPassBusy") then
 			startTest(mode)

@@ -1,0 +1,15 @@
+{
+  "StudioPassAll": "UNKNOWN; not run after S1r3",
+  "actual_route_buffers_clear": true,
+  "central_apron_corridor_studs": 32,
+  "compiled_O0_O1_O2": 71,
+  "kit_full_footprint_support": true,
+  "mounts": [
+    "Section1"
+  ],
+  "outer_apron_art_exception": true,
+  "physics_floor_tags_equal": true,
+  "status": "PASS",
+  "unrelated_sources_preserved": 70,
+  "workspace_byte_equal": true
+}

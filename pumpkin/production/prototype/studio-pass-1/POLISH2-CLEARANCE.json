@@ -1,0 +1,11 @@
+{
+  "acorn_radius": 2.963300013542175,
+  "all_yaws": true,
+  "anchor_floor": true,
+  "arrival_allowance": 3,
+  "keeper_radius": 6.084473133087158,
+  "minimum_conservative_gap": 3.6047031641006466,
+  "pose_samples": 242,
+  "status": "PASS",
+  "steal_target_unchanged": true
+}

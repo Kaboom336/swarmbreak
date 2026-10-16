@@ -41,7 +41,7 @@ function Plan.bounds(parts)
 end
 function Plan.groups(root,island)
  local parts={}
- for _,p in root:GetDescendants() do if p:IsA("BasePart") and not p:GetAttribute("KitAssetId") then table.insert(parts,p) end end
+ for _,p in root:GetDescendants() do if p:IsA("BasePart") and not p:GetAttribute("KitAssetId") and not p:GetAttribute("MeadowPolishCleared") then table.insert(parts,p) end end
  local result, claimed = {}, {}
  for _,rule in rules[island] do
   local anchors={}

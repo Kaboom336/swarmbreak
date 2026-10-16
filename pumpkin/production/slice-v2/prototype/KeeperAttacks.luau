@@ -96,7 +96,8 @@ function Kit.choose(a, target, now, actors, root)
 		return nil
 	end
 	-- Alternate the mid-range fan with a committed straight charge. No homing.
-	if kind == "fan" and distance <= 28 and (a.throws or 0) % 2 == 1 and now >= ((a.kitCooldowns or {}).dash or 0) then
+	local awayFromCorner = not a.wallBaitCorner or flat(a.guardian.Position - a.wallBaitCorner).Magnitude > 28
+	if kind == "fan" and awayFromCorner and distance <= 28 and (a.throws or 0) % 2 == 1 and now >= ((a.kitCooldowns or {}).dash or 0) then
 		kind = "dash"
 	end
 	if now < ((a.kitCooldowns or {})[kind] or 0) then
@@ -145,6 +146,10 @@ function Kit.begin(a, actor, position, now, kind, api, pose)
 		direction = toward.Unit,
 		dashOrigin = a.guardian.Position,
 	}
+	if kind == "dash" then
+		a.model:SetAttribute("DashStopReason", nil)
+		a.model:SetAttribute("DashStopCollider", nil)
+	end
 	a.kitCooldowns = a.kitCooldowns or {}
 	a.kitCooldowns[kind] = now
 		+ (
@@ -284,19 +289,45 @@ function Kit.step(a, now, actors, root, hitPlayer, api, pose)
 		local nextPoint = t.dashOrigin
 			+ t.direction * math.min(T.DashDistance, math.max(0, elapsed - T.DashTell) * T.DashSpeed)
 		local delta = nextPoint - guard.Position
-		local wall = delta.Magnitude > 0.001 and workspace:Blockcast(guard.CFrame, guard.Size, delta, a.params)
+		-- Cover carriers survive KitSwap. Floor seams are checked by floor()
+		-- below; their side faces must not consume a charge before real cover.
+		local wall = delta.Magnitude > 0.001 and workspace:Blockcast(guard.CFrame, guard.Size, delta, a.wallParams or a.params)
 		local floor = api.floor(a, nextPoint)
 		local leashed = not api.dashLegal or api.dashLegal(a, nextPoint)
+		local safe = api.safe(a, nextPoint, 3)
+		-- A tagged cover's footing may be returned by the floor probe just
+		-- before the body sweep reaches its face. Only bridge the existing
+		-- step tolerance, never an arbitrary gap or a different obstacle.
+		if not wall and delta.Magnitude > 0.001 and leashed and not safe
+			and (not floor or math.abs(floor.Y-(guard.Position.Y-5.5)) > T.FanHeight) then
+			local near = workspace:Blockcast(guard.CFrame, guard.Size, delta + t.direction*T.FanHeight, a.wallParams or a.params)
+			if near and near.Normal.Y < 0.5 and near.Instance:GetAttribute("OutsmartBaitCover")
+				and math.abs(near.Instance.CFrame.Position.Y-near.Instance.Size.Y/2-(guard.Position.Y-5.5)) <= T.FanHeight then
+				wall = near
+			end
+		end
+		a.model:SetAttribute("DashStopCollider", wall and wall.Instance:GetFullName() or nil)
 		if
 			wall
 			or not floor
 			or math.abs(floor.Y - (guard.Position.Y - 5.5)) > T.FanHeight
-			or api.safe(a, nextPoint, 3)
+			or safe
 			or not leashed
 		then
-			if wall then
+			a.model:SetAttribute("DashStopReason", wall and "collision" or not floor and "missing floor"
+				or math.abs(floor.Y - (guard.Position.Y - 5.5)) > T.FanHeight and "floor height"
+				or not leashed and "leash/tunnel" or "safe zone")
+			-- Only a vertical cover impact earns stars. Floor/lip/leash stops do not.
+			-- Keep the last fooled corner across navigation resets: waiting here
+			-- cannot refresh a stun or repeatedly select charges into this cover.
+			if wall and wall.Normal.Y < 0.5 and wall.Instance:GetAttribute("SurfaceRole") == "Cover"
+				and leashed and not safe
+				and (not a.wallBaitCorner or flat(wall.Position - a.wallBaitCorner).Magnitude > 28) then
+				a.wallBaitCorner = wall.Position
 				a.keeperStunUntil = now + T.DashStun
-				fx(api, a, "WallStun", guard.Position + t.direction * 2)
+				a.model:SetAttribute("WallBaitAt", now)
+				a.model:SetAttribute("WallBaitCorner", wall.Position)
+				fx(api, a, "WallStun", guard.Position + Vector3.new(0, 5, 0))
 			end
 			Kit.clear(a)
 			return

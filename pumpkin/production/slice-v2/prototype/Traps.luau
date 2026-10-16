@@ -1,6 +1,7 @@
 -- Server-owned entry/charge/placement lifecycle. Geometry and presentation are injected
 -- so offline tests execute the same validation without pretending to run physics.
 local Traps = {}
+Traps.RattleSignal, Traps.RattleTimeSignal = "Rattled", "RattleAt"
 function Traps.new(config, arenaAPI, make, label)
 	return {
 		config = config.Traps,
@@ -202,11 +203,17 @@ function Traps.action(t, actor, s, a, rootPosition, stage, position, now, kind)
 	part.CanCollide, part.CanQuery, part.CanTouch = false, false, false
 	part:SetAttribute("TrapOwner", actor.UserId)
 	part:SetAttribute("TrapType", "Decoy")
+	local bell = t.make(part, "Bell", Vector3.new(1.8, 2, 1.8), floor + Vector3.new(0, 1.4, 0), Color3.fromRGB(255, 204, 65))
+	bell.Shape = Enum.PartType.Ball
+	bell.Color, bell.Material = Color3.fromRGB(255, 204, 65), Enum.Material.Metal
+	bell.Anchored, bell.CanCollide, bell.CanTouch, bell.CanQuery = true, false, false, false
+	bell.Position, bell.Parent = floor + Vector3.new(0, 1.4, 0), part
 	local trap = {
 		owner = actor,
 		arena = a,
 		position = floor,
 		part = part,
+		bell = bell,
 		caption = t.label(part, "DECOY / arming 2s"),
 		armed = now + t.config.ArmSeconds,
 		expires = now + t.config.Lifetime,
@@ -247,6 +254,10 @@ function Traps.tick(t, now, states)
 		elseif trap.triggered then
 			trap.caption.Text = now < trap.tellEnd and "DECOY / RATTLE!" or "DECOY / investigating"
 			trap.part.Transparency = 0.15 + 0.2 * math.abs(math.sin(now * 12))
+			if trap.bell then
+				trap.bell.CFrame = CFrame.new(trap.position + Vector3.new(0, 1.4, 0))
+					* CFrame.Angles(0, 0, now < trap.tellEnd and math.sin(now * 28) * 0.4 or 0)
+			end
 		elseif now >= trap.armed then
 			trap.caption.Text = "DECOY / guardian only"
 			local p = a.guardian.Position - trap.position
@@ -257,11 +268,16 @@ function Traps.tick(t, now, states)
 				and Vector3.new(p.X, 0, p.Z).Magnitude <= c.TriggerRange
 			then
 				trap.triggered, trap.tellEnd = true, now + c.TellSeconds
+				-- Emit presentation before publishing attention to the guardian tick.
+				trap.caption.Text = "DECOY / RATTLE!"
+				trap.part.Transparency = 0.15
 				if t.rattle then
 					t.rattle(trap.part)
 				end
+				trap.part:SetAttribute(Traps.RattleTimeSignal, now)
+				trap.part:SetAttribute(Traps.RattleSignal, true)
 				trap.effectEnd = trap.tellEnd + c.EffectSeconds
-				a.decoy = { trap = trap, position = trap.position, tellEnd = trap.tellEnd, ends = trap.effectEnd }
+				a.decoy = { trap = trap, position = trap.position, started = now, tellEnd = trap.tellEnd, ends = trap.effectEnd }
 				a.pathVersion = (a.pathVersion or 0) + 1
 				a.points, a.index, a.nextPath = {}, 1, 0
 			end

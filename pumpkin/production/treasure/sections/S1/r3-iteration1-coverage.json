@@ -1,0 +1,15 @@
+{
+  "lower_left_pct": 24.208724569640065,
+  "lower_right_pct": 9.993153364632237,
+  "portal_frame_pct": 3.8617621527777777,
+  "roi": "bottom third of image height, outer thirds of width; visible first-hit object-index mask",
+  "goal_each_pct": 25,
+  "passed": false,
+  "camera_roblox": [
+    0,
+    5.5,
+    154
+  ],
+  "lens_mm": 24,
+  "evidence": "offline native geometry + source FBX; live Studio appearance UNKNOWN"
+}

@@ -54,7 +54,23 @@ local function attach(guard)
 			return
 		end
 		rig.model.Name, rig.model.Parent = "MeadowKeeper", guard.Parent
+		-- Fixed animation/projectile sockets: keep proven scale, strengthen silhouette.
+		local outline = Instance.new("Highlight")
+		outline.Name, outline.Adornee = "KeeperReadability", rig.model
+		outline.FillTransparency, outline.OutlineTransparency = 1, 0.08
+		outline.OutlineColor = Color3.fromRGB(255, 225, 135)
+		outline.DepthMode, outline.Parent = Enum.HighlightDepthMode.Occluded, rig.model
 		local anim = Animator.new(rig)
+		local attention = Instance.new("BillboardGui")
+		attention.Name, attention.Size = "BellAttention", UDim2.fromOffset(90, 90)
+		attention.StudsOffsetWorldSpace = Vector3.new(0, 10, 0)
+		attention.Adornee, attention.Parent = guard, rig.model
+		attention.Enabled = false
+		local question = Instance.new("TextLabel")
+		question.Size, question.BackgroundTransparency = UDim2.fromScale(1, 1), 1
+		question.Text, question.TextScaled, question.Font = "?", true, Enum.Font.GothamBlack
+		question.TextColor3, question.TextStrokeTransparency = Color3.fromRGB(255, 215, 70), 0.15
+		question.Parent = attention
 		anim.connection:Disconnect() -- The shared server timestamp drives rendering.
 		local held = Instance.new("Part")
 		held.Name, held.Shape, held.Size = "KeeperHeldRock", Enum.PartType.Ball, Vector3.new(2, 2, 2)
@@ -71,7 +87,7 @@ local function attach(guard)
 			warn("[Keeper acorn] " .. tostring(acorn))
 			acorn = nil
 		end
-		active[guard] = { rig = rig, anim = anim, held = held, cap = cap, log = log, acorn = acorn }
+		active[guard] = { rig = rig, anim = anim, held = held, cap = cap, log = log, acorn = acorn, attention = attention }
 	end)
 end
 local function observe(node)
@@ -114,6 +130,7 @@ RunService.PreSimulation:Connect(function()
 			FX.reset(guard)
 			active[guard] = nil
 		else
+			entry.attention.Enabled = guard:GetAttribute("KeeperAttention") == "Investigate"
 			entry.rig.root.CFrame = Pose.ground(guard)
 			local name = guard:GetAttribute("KeeperClip") or "idle"
 			if name ~= entry.clip then

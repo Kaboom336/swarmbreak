@@ -1,0 +1,6 @@
+{
+  "trimmed_parts": 32,
+  "arrival_all_outside_frustum": true,
+  "overview_all_outside_frustum": false,
+  "method": "All 8 oriented-box corners outside a common camera-frustum side plane. Arrival direct visibility and masks unchanged; indirect lighting may differ. Overview predates contact trim."
+}

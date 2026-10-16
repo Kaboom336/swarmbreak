@@ -94,7 +94,7 @@ if workspace and workspace:GetAttribute("UseMeadowV4") == true then
 	config.ItemName = "Golden Acorn"
 	config.IslandSize = 352
 	config.GuardianLeashRadius = 330
-	config.GuardianGuardOffset = { x = -7, y = 48, z = 99 }
+	config.GuardianGuardOffset = { x = -7, y = 48, z = 110 }
 	config.Nest = { x = 0, y = 48, z = 96 }
 	config.EntryZ = -136
 end

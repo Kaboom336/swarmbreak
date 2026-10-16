@@ -1,0 +1,31 @@
+{
+  "live": "UNKNOWN; Claude must rerun OutsmartTest",
+  "origins": [
+    {
+      "level": "wall face at 20.919998168945312",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "pre_fix_rejected": "floor change at 11",
+      "repeat_refused": true,
+      "safe_and_leash_preserved": true,
+      "stars_once": true,
+      "tolerance_tagged_only": true
+    },
+    {
+      "level": "wall face at 20.919998168945312",
+      "origin": [
+        0,
+        76,
+        -360
+      ],
+      "pre_fix_rejected": "floor change at 11",
+      "repeat_refused": true,
+      "safe_and_leash_preserved": true,
+      "stars_once": true,
+      "tolerance_tagged_only": true
+    }
+  ]
+}

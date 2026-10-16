@@ -1,0 +1,10 @@
+{
+  "StudioPassAll": "UNKNOWN; rerun after UI",
+  "compiled_O0_O1_O2": 69,
+  "constructors_and_tiered_pet": "PASS",
+  "phone_touch_gamepad_rendering": "UNKNOWN; offline mockups only",
+  "post_S1_backup": "slice-v2/prototype/guardian-greybox.pre-ui.rbxl",
+  "status": "PASS",
+  "unrelated_sources_preserved": 63,
+  "workspace_byte_equal": true
+}

@@ -4,6 +4,7 @@ local RS = game:GetService("ReplicatedStorage")
 local PromptService = game:GetService("ProximityPromptService")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
+local Style = require(RS:WaitForChild("UIStyle"))
 local remote = RS:WaitForChild("GreyboxAction")
 local world = workspace:WaitForChild("GREYBOX")
 local Config = require(RS:WaitForChild("GreyboxConfig"))
@@ -58,6 +59,9 @@ goal.Size, goal.BackgroundTransparency = UDim2.fromScale(0.9, 0.1), 0.2
 goal.BackgroundColor3, goal.TextColor3 = Color3.fromRGB(30, 35, 40), Color3.new(1, 1, 1)
 goal.TextSize, goal.TextWrapped = 20, true
 goal.Parent = gui
+goal.Name = "Objective"
+Style.panel(goal, Style.Colors.Panel, 22)
+Style.icon(goal, "route", Style.Colors.Cyan)
 local button = Instance.new("TextButton")
 button.Name = "ActionButton"
 button.AnchorPoint, button.Position = Vector2.new(0.5, 1), UDim2.fromScale(0.5, 0.82)
@@ -65,6 +69,8 @@ button.Size = UDim2.new(0.6, 0, 0, 72)
 button.BackgroundColor3, button.TextColor3 = Color3.fromRGB(255, 170, 40), Color3.fromRGB(25, 30, 35)
 button.TextSize, button.TextWrapped, button.Visible = 26, true, false
 button.Parent = gui
+Style.panel(button, Style.Colors.Gold, 26)
+Style.icon(button, "route")
 local function refresh()
 	goal.Text = (player:GetAttribute("GreyboxCarry") and "Carry 1/1 | " or "")
 		.. (player:GetAttribute("GreyboxGoal") or "Enter the central portal.")
@@ -84,6 +90,7 @@ local function placementButton(name, x, width)
 	b.Position, b.Size = UDim2.fromScale(x, 0.7), UDim2.new(width, 0, 0, 48)
 	b.BackgroundColor3, b.TextColor3 = Color3.fromRGB(40, 55, 65), Color3.new(1, 1, 1)
 	b.TextSize, b.Visible, b.Parent = 18, false, gui
+	Style.panel(b, Style.Colors.Panel, 18)
 	return b
 end
 local placeButton = placementButton("Place [E / X]", 0.15, 0.3)
@@ -169,14 +176,16 @@ countdown.AnchorPoint, countdown.Position = Vector2.new(0.5, 0.5), UDim2.fromSca
 countdown.Size, countdown.BackgroundTransparency = UDim2.fromOffset(300, 84), 1
 countdown.Font, countdown.TextStrokeTransparency = Enum.Font.GothamBold, 0.2
 countdown.Visible, countdown.Parent = false, gui
+Style.lettering(countdown, 44)
 RunService.RenderStepped:Connect(function()
 	local deadline = world:GetAttribute("EscapeDeadline")
 	local remaining = deadline and math.max(0, deadline - workspace:GetServerTimeNow())
 	countdown.Visible = player:GetAttribute("GreyboxPhase") == "Run" and remaining ~= nil
 	if remaining then
 		countdown.Text =
-			string.format("Escape ? %d:%02d", math.floor(math.ceil(remaining) / 60), math.ceil(remaining) % 60)
+			string.format("ESCAPE  %d:%02d", math.floor(math.ceil(remaining) / 60), math.ceil(remaining) % 60)
 		countdown.TextSize = remaining <= 5 and 56 or 44
+		countdown.TypeBounds.MaxTextSize = remaining <= 5 and 56 or 44
 		countdown.TextColor3 = remaining <= 5 and Color3.fromRGB(255, 70, 70)
 			or remaining <= 15 and Color3.fromRGB(255, 185, 50)
 			or Color3.new(1, 1, 1)
@@ -261,6 +270,36 @@ local trapHint = Instance.new("TextLabel")
 trapHint.Size, trapHint.Position = UDim2.fromOffset(340, 32), UDim2.fromScale(0.5, 0.78)
 trapHint.AnchorPoint, trapHint.BackgroundTransparency = Vector2.new(0.5, 1), 1
 trapHint.TextSize, trapHint.TextColor3, trapHint.Visible, trapHint.Parent = 18, Color3.new(1, 1, 1), false, gui
+Style.panel(trapHint, Style.Colors.Panel, 18)
+
+local function fitUI()
+	local camera = workspace.CurrentCamera
+	if not camera then return end
+	local v = camera.ViewportSize
+	local compact = v.Y < 520 or v.X < 600
+	goal.Size, goal.Position = UDim2.new(0.72, 0, 0, compact and 48 or 56), UDim2.new(0.5, 0, 1, compact and -64 or -22)
+	local cap = goal:FindFirstChild("WidthBounds") or Instance.new("UISizeConstraint")
+	cap.Name, cap.MaxSize, cap.Parent = "WidthBounds", Vector2.new(640, 56), goal
+	button.Size, button.Position = UDim2.new(0, math.min(440, v.X * 0.62), 0, 56), UDim2.new(0.5, 0, 1, compact and -124 or -88)
+	countdown.Size, countdown.Position = UDim2.new(0, math.min(300, v.X * 0.6), 0, compact and 56 or 84), UDim2.fromScale(0.5, 0.26)
+	trapHint.Size, trapHint.Position = UDim2.new(0.6, 0, 0, 40), UDim2.new(0.5, 0, 1, compact and -186 or -150)
+	for _, b in {placeButton, rotateButton, snapButton} do
+		b.AnchorPoint = Vector2.new(0, 1)
+		b.Position = UDim2.new(b.Position.X.Scale, 0, 1, compact and -186 or -150)
+	end
+end
+local viewportConnection
+local function bindUICamera()
+	if viewportConnection then
+		viewportConnection:Disconnect()
+	end
+	fitUI()
+	if workspace.CurrentCamera then
+		viewportConnection = workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fitUI)
+	end
+end
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(bindUICamera)
+bindUICamera()
 local previewAPI = {}
 function previewAPI.floor(a, position)
 	local hit =

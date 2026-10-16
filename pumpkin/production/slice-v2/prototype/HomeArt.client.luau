@@ -4,6 +4,7 @@ local RunService = game:GetService("RunService")
 local Blocks = require(RS:WaitForChild("NativeBlocks"))
 local Data = require(RS:WaitForChild("HomeArtGeometry"))
 local CoreConfig = require(RS:WaitForChild("TreasureCore").Config)
+local Style = require(RS:WaitForChild("UIStyle"))
 local world = workspace:WaitForChild("GREYBOX")
 local templates, pending, active = {}, {}, {}
 local PET_SCALE = 1.6 -- >=4-stud pet height, inside the existing placement footprint.
@@ -22,31 +23,23 @@ local function replaced(name)
 	return replacedHome[name] or name:match("^PortalArchStone") or name:match("^TerraceStep")
 end
 local function petCaption(root, model, kind)
-	local gui = Instance.new("BillboardGui")
-	gui.Name, gui.Adornee = "HomePetCaption", root
-	gui.Size, gui.StudsOffsetWorldSpace = UDim2.fromOffset(200, 84), Vector3.new(0, 14, 0)
-	gui.MaxDistance, gui.AlwaysOnTop, gui.Parent = 650, false, model
-	local text = Instance.new("TextLabel")
-	text.Size, text.BackgroundTransparency = UDim2.fromScale(1, 1), 1
-	text.Font, text.TextSize = Enum.Font.GothamBold, 20
+	local text, gui = Style.billboard(root, "HomePetCaption", UDim2.new(6, 36, 2.8, 18), 90, false)
+	gui.Parent = model
+	local _, bounds = model:GetBoundingBox()
+	gui.StudsOffsetWorldSpace = Vector3.new(0, bounds.Y + 1, 0)
 	text.RichText = true
-	text.TextColor3, text.TextStrokeTransparency = Color3.new(1, 1, 1), 0.15
 	local tier = root:GetAttribute("PetTier")
 	if tier then
 		local rarity = CoreConfig.Rarities[tier]
+		local color = Style.rarity(rarity)
 		text.Text = (root:GetAttribute("PetName") or kind)
-			.. "\n"
-			.. rarity.name
-			.. "\n+"
+			.. '\n<font color="#' .. color:ToHex() .. '">* ' .. rarity.name .. '</font>'
+			.. '\n<font color="#FFCF41">$ +'
 			.. tostring(root:GetAttribute("PetRate") or 0)
-			.. " Coins/s"
-		text.TextColor3 = Color3.fromRGB(table.unpack(rarity.color))
-		local _, bounds = model:GetBoundingBox()
-		gui.StudsOffsetWorldSpace = Vector3.new(0, bounds.Y + 0.5, 0)
-		gui.MaxDistance = 90
+			.. ' /s</font>'
 		if tier > 1 then
 			local outline = Instance.new("Highlight")
-			outline.FillColor, outline.OutlineColor = text.TextColor3, text.TextColor3
+			outline.FillColor, outline.OutlineColor = color, color
 			outline.FillTransparency, outline.OutlineTransparency = 0.92, 0.15
 			outline.DepthMode, outline.Adornee, outline.Parent = Enum.HighlightDepthMode.Occluded, model, model
 			local socket = Instance.new("Attachment")
@@ -56,10 +49,10 @@ local function petCaption(root, model, kind)
 			particles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
 			particles.Rate, particles.Lifetime, particles.Speed = 3, NumberRange.new(0.7, 1.2), NumberRange.new(1, 2)
 			particles.Size = NumberSequence.new(0.2)
-			particles.Color, particles.LightEmission = ColorSequence.new(text.TextColor3), 0.5
+			particles.Color, particles.LightEmission = ColorSequence.new(color), 0.5
 			particles.Parent = socket
 			local light = Instance.new("PointLight")
-			light.Color, light.Brightness, light.Range, light.Parent = text.TextColor3, 0.35, 6, socket
+			light.Color, light.Brightness, light.Range, light.Parent = color, 0.35, 6, socket
 		end
 		return
 	end
@@ -175,6 +168,34 @@ local function burst(root)
 	end)
 	return socket
 end
+local function acornGlow(model, summit)
+	local anchor = Instance.new("Part")
+	anchor.Name, anchor.Size, anchor.Transparency = "AcornGlowAnchor", Vector3.one, 1
+	anchor.Anchored, anchor.CanCollide, anchor.CanQuery, anchor.CanTouch = true, false, false, false
+	anchor.CFrame, anchor.Parent = CFrame.new(0, 2, 0), model
+	local light = Instance.new("PointLight")
+	light.Color, light.Brightness, light.Range = Color3.fromRGB(255,218,103), summit and 1.2 or 0.55, summit and 18 or 8
+	light.Parent = anchor
+	local sparkles = Instance.new("ParticleEmitter")
+	sparkles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	sparkles.Rate, sparkles.Lifetime, sparkles.Speed = summit and 9 or 3, NumberRange.new(0.8,1.6), NumberRange.new(0.5,1.5)
+	sparkles.SpreadAngle, sparkles.LightEmission = Vector2.new(180,180), 0.7
+	sparkles.Color, sparkles.Size = ColorSequence.new(light.Color), NumberSequence.new(0.22)
+	sparkles.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(0.2,0.15),NumberSequenceKeypoint.new(1,1)})
+	sparkles.Parent = anchor
+	if summit then
+		local a, b = Instance.new("Attachment"), Instance.new("Attachment")
+		a.Position, b.Position = Vector3.new(0,1,0), Vector3.new(0,66,0)
+		a.Parent, b.Parent = anchor, anchor
+		local beam = Instance.new("Beam")
+		beam.Name, beam.Attachment0, beam.Attachment1 = "SummitBeacon", a, b
+		beam.FaceCamera, beam.Width0, beam.Width1 = true, 4.4, 1.8
+		beam.Color, beam.LightEmission = ColorSequence.new(light.Color), 1
+		beam.LightInfluence, beam.Brightness = 0, 3
+		beam.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.2),NumberSequenceKeypoint.new(0.8,0.38),NumberSequenceKeypoint.new(1,1)})
+		beam.Parent = anchor
+	end
+end
 local function observe(root)
 	if not root:IsA("BasePart") or not root:GetAttribute("LootId") or active[root] then
 		return
@@ -190,6 +211,7 @@ local function observe(root)
 			oldFx:Destroy()
 		end
 		entry.model, entry.burst, entry.started, entry.kind = nil, nil, nil, nil
+		entry.hidden = nil
 		root.LocalTransparencyModifier = 0
 		for _, gui in ipairs(root:GetDescendants()) do
 			if gui:IsA("BillboardGui") then
@@ -197,7 +219,8 @@ local function observe(root)
 			end
 		end
 		local state = root:GetAttribute("LootState")
-		if state ~= "Secured" and state ~= "Placed" then
+		local meadowAcorn = state == "Nest" or state == "Carried" or state == "Dropped"
+		if state ~= "Secured" and state ~= "Placed" and not meadowAcorn then
 			return
 		end
 		local isCore = root:GetAttribute("CoreState") ~= nil
@@ -228,6 +251,11 @@ local function observe(root)
 				return
 			end
 			entry.model, entry.started = model, reveal and os.clock() or nil
+			if meadowAcorn then
+				acornGlow(model, state == "Nest")
+				model:ScaleTo(state == "Nest" and 1.8 or 1.2)
+				entry.beacon = model:FindFirstChild("SummitBeacon", true)
+			end
 			entry.fragments = {}
 			if reveal then
 				for _, piece in model:GetChildren() do
@@ -331,12 +359,8 @@ task.spawn(function()
 		anchor.Name, anchor.Size, anchor.Transparency = "HomePortalName", Vector3.one, 1
 		anchor.Anchored, anchor.CanCollide, anchor.CanQuery, anchor.CanTouch = true, false, false, false
 		anchor.Position, anchor.Parent = Vector3.new(-66 + (i - 1) * 44, 36, -145), decor
-		local gui = Instance.new("BillboardGui")
-		gui.Size, gui.Adornee, gui.MaxDistance, gui.Parent = UDim2.fromOffset(145, 26), anchor, 700, anchor
-		local text = Instance.new("TextLabel")
-		text.Size, text.BackgroundTransparency = UDim2.fromScale(1, 1), 1
-		text.Text, text.Font, text.TextSize = name, Enum.Font.GothamBold, 16
-		text.TextColor3, text.TextStrokeTransparency, text.Parent = Color3.new(1, 1, 1), 0, gui
+		local text = Style.billboard(anchor, "DestinationCaption", UDim2.new(8, 24, 1.4, 8), 180, false)
+		text.Text, text.TextColor3 = "> " .. name, Style.Colors.Cyan
 	end
 end)
 RunService.RenderStepped:Connect(function()
@@ -345,6 +369,22 @@ RunService.RenderStepped:Connect(function()
 			destroy(entry)
 			active[root] = nil
 		elseif entry.model then
+			if entry.beacon and entry.beacon.Parent then
+				-- Five-second breath; widths include the approved 1.8x nest scale.
+				local pulse = 1 + 0.07 * math.sin(os.clock() * math.pi * 2 / 5)
+				entry.beacon.Width0, entry.beacon.Width1 = 4.4 * 1.8 * pulse, 1.8 * 1.8 * pulse
+			end
+			-- Recovery temporarily hides the authoritative loot; hide its cosmetics too.
+			local hidden = root.Transparency >= 1
+			if hidden ~= entry.hidden then
+				entry.hidden = hidden
+				for _, node in entry.model:GetDescendants() do
+					if node:IsA("BasePart") then node.LocalTransparencyModifier = hidden and 1 or 0
+					elseif node:IsA("Beam") or node:IsA("ParticleEmitter") or node:IsA("PointLight") then
+						node.Enabled = not hidden
+					end
+				end
+			end
 			local t = entry.started and os.clock() - entry.started
 			local scale = t and (1 + 0.22 * math.sin(math.min(t / 0.35, 1) * math.pi)) or 1
 			if t then

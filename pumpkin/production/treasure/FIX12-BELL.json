@@ -1,0 +1,83 @@
+{
+  "cases": [
+    {
+      "checks": 26,
+      "dt": 0.016666666666666666,
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "result": "PASS",
+      "soundEvents": 2,
+      "ticks": 198
+    },
+    {
+      "checks": 26,
+      "dt": 0.05,
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "result": "PASS",
+      "soundEvents": 2,
+      "ticks": 67
+    },
+    {
+      "checks": 26,
+      "dt": 0.11,
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "result": "PASS",
+      "soundEvents": 2,
+      "ticks": 64
+    },
+    {
+      "checks": 26,
+      "dt": 0.016666666666666666,
+      "origin": [
+        0,
+        76,
+        -360
+      ],
+      "result": "PASS",
+      "soundEvents": 2,
+      "ticks": 198
+    },
+    {
+      "checks": 26,
+      "dt": 0.05,
+      "origin": [
+        0,
+        76,
+        -360
+      ],
+      "result": "PASS",
+      "soundEvents": 2,
+      "ticks": 67
+    },
+    {
+      "checks": 26,
+      "dt": 0.11,
+      "origin": [
+        0,
+        76,
+        -360
+      ],
+      "result": "PASS",
+      "soundEvents": 2,
+      "ticks": 64
+    }
+  ],
+  "engineMocks": [
+    "audio playback",
+    "pathfinding",
+    "blockcast",
+    "scheduler"
+  ],
+  "live": "UNKNOWN; Studio session unavailable"
+}

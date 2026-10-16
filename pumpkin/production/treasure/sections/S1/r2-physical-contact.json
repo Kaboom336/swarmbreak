@@ -1,0 +1,10 @@
+{
+  "native_parts_checked": 109,
+  "kits_checked": 28,
+  "physical_penetrations": [],
+  "kit_physical_penetrations": [],
+  "kit_support_errors": [],
+  "floating_assemblies": [],
+  "tolerance_studs": 0.035,
+  "method": "Conservative OBB/SAT physical penetration; assembly contact graph to physical world; botanical/assembly joints separate from unintended clipping."
+}

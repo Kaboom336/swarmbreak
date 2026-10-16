@@ -1,0 +1,453 @@
+[
+  {
+    "id": "WestTree",
+    "base_error": 0.0,
+    "uniform_scale": 0.6116590268787304,
+    "fitted": false,
+    "actual_size_studs": [
+      9.418289184570312,
+      15.869897842407227,
+      10.0
+    ]
+  },
+  {
+    "id": "EastTree",
+    "base_error": 0.0,
+    "uniform_scale": 0.6116590268787304,
+    "fitted": false,
+    "actual_size_studs": [
+      9.418289184570312,
+      15.869897842407227,
+      10.0
+    ]
+  },
+  {
+    "id": "WestBush",
+    "base_error": 0.0,
+    "uniform_scale": 0.531045285738378,
+    "fitted": false,
+    "actual_size_studs": [
+      3.6316757202148438,
+      3.0,
+      3.727081298828125
+    ]
+  },
+  {
+    "id": "EastBush",
+    "base_error": 5.9604643443123e-10,
+    "uniform_scale": 0.42745022104728925,
+    "fitted": false,
+    "actual_size_studs": [
+      2.9232177734375,
+      2.4147671312093735,
+      3.0
+    ]
+  },
+  {
+    "id": "ArrivalFlowersA",
+    "base_error": 5.9604643443123e-10,
+    "uniform_scale": 0.26396385480296325,
+    "fitted": false,
+    "actual_size_studs": [
+      1.403228759765625,
+      1.9371515363454819,
+      1.5
+    ]
+  },
+  {
+    "id": "ArrivalWaterBarrel",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      2.4000015258789062,
+      3.4000000953674316,
+      2.399993896484375
+    ]
+  },
+  {
+    "id": "EastWaterBarrel",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      2.8000030517578125,
+      3.4000000953674316,
+      2.8000030517578125
+    ]
+  },
+  {
+    "id": "ArrivalCrate",
+    "base_error": 0.0,
+    "uniform_scale": 2.2399997222900736,
+    "fitted": false,
+    "actual_size_studs": [
+      2.0,
+      2.0,
+      2.0
+    ]
+  },
+  {
+    "id": "SupplyCrate",
+    "base_error": 0.0,
+    "uniform_scale": 1.399999919891362,
+    "fitted": false,
+    "actual_size_studs": [
+      1.25,
+      1.2500003576278687,
+      2.5
+    ]
+  },
+  {
+    "id": "SeedChest",
+    "base_error": 0.0,
+    "uniform_scale": 1.399999919891362,
+    "fitted": false,
+    "actual_size_studs": [
+      2.5,
+      2.250000238418579,
+      2.5
+    ]
+  },
+  {
+    "id": "EastRock",
+    "base_error": 0.0,
+    "uniform_scale": 0.26045315979106637,
+    "fitted": false,
+    "actual_size_studs": [
+      3.0,
+      2.1020395755767822,
+      2.78045654296875
+    ]
+  },
+  {
+    "id": "WestFence",
+    "base_error": 0.0,
+    "uniform_scale": 2.434590033396277,
+    "fitted": false,
+    "actual_size_studs": [
+      8.694961547851562,
+      3.0,
+      0.608642578125
+    ]
+  },
+  {
+    "id": "EastFence",
+    "base_error": 0.0,
+    "uniform_scale": 2.240000021362305,
+    "fitted": false,
+    "actual_size_studs": [
+      8.0,
+      2.760218381881714,
+      0.55999755859375
+    ]
+  },
+  {
+    "id": "EastFenceCorner",
+    "base_error": 0.0,
+    "uniform_scale": 0.8399999519348172,
+    "fitted": false,
+    "actual_size_studs": [
+      3.0,
+      1.035082221031189,
+      3.0
+    ]
+  },
+  {
+    "id": "WestLog",
+    "base_error": 0.0,
+    "uniform_scale": 1.1830986551149747,
+    "fitted": false,
+    "actual_size_studs": [
+      0.9885711669921875,
+      0.7318531274795532,
+      3.0
+    ]
+  },
+  {
+    "id": "WestStump",
+    "base_error": 0.0,
+    "uniform_scale": 1.509434043745763,
+    "fitted": false,
+    "actual_size_studs": [
+      1.7320480346679688,
+      1.1132079362869263,
+      2.0
+    ]
+  },
+  {
+    "id": "CliffBaseRockA",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      4.0,
+      3.0,
+      4.0
+    ]
+  },
+  {
+    "id": "CliffBaseRockB",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      3.0,
+      2.5,
+      3.0
+    ]
+  },
+  {
+    "id": "BedFlower-1_1",
+    "base_error": 5.9604643443123e-10,
+    "uniform_scale": 0.2452750483110574,
+    "fitted": false,
+    "actual_size_studs": [
+      1.3038787841796875,
+      1.799999937415123,
+      1.393798828125
+    ]
+  },
+  {
+    "id": "BedFlower-1_2",
+    "base_error": 5.9604643443123e-10,
+    "uniform_scale": 0.2452750483110574,
+    "fitted": false,
+    "actual_size_studs": [
+      1.3038787841796875,
+      1.799999937415123,
+      1.393798828125
+    ]
+  },
+  {
+    "id": "BedFlower-1_3",
+    "base_error": 5.9604643443123e-10,
+    "uniform_scale": 0.2452750483110574,
+    "fitted": false,
+    "actual_size_studs": [
+      1.3038787841796875,
+      1.799999937415123,
+      1.393798828125
+    ]
+  },
+  {
+    "id": "MouthFlower-1_1",
+    "base_error": 0.0,
+    "uniform_scale": 2.0103935813795633,
+    "fitted": false,
+    "actual_size_studs": [
+      1.1423187255859375,
+      1.382145643234253,
+      1.3000030517578125
+    ]
+  },
+  {
+    "id": "MouthFlower-1_2",
+    "base_error": 0.0,
+    "uniform_scale": 2.0103935813795633,
+    "fitted": false,
+    "actual_size_studs": [
+      1.1423187255859375,
+      1.382145643234253,
+      1.3000030517578125
+    ]
+  },
+  {
+    "id": "MouthFlower-1_3",
+    "base_error": 0.0,
+    "uniform_scale": 2.0103935813795633,
+    "fitted": false,
+    "actual_size_studs": [
+      1.1423187255859375,
+      1.382145643234253,
+      1.2999954223632812
+    ]
+  },
+  {
+    "id": "BedFlower1_1",
+    "base_error": 5.9604643443123e-10,
+    "uniform_scale": 0.15837830868618546,
+    "fitted": false,
+    "actual_size_studs": [
+      0.8419380187988281,
+      1.162290796637535,
+      0.899993896484375
+    ]
+  },
+  {
+    "id": "BedFlower1_2",
+    "base_error": 5.9604643443123e-10,
+    "uniform_scale": 0.15837830868618546,
+    "fitted": false,
+    "actual_size_studs": [
+      0.8419380187988281,
+      1.162290796637535,
+      0.899993896484375
+    ]
+  },
+  {
+    "id": "BedFlower1_3",
+    "base_error": 5.9604643443123e-10,
+    "uniform_scale": 0.15837830868618546,
+    "fitted": false,
+    "actual_size_studs": [
+      0.8419342041015625,
+      1.162290796637535,
+      0.899993896484375
+    ]
+  },
+  {
+    "id": "MouthFlower1_1",
+    "base_error": 0.0,
+    "uniform_scale": 2.0103935813795633,
+    "fitted": false,
+    "actual_size_studs": [
+      1.1423187255859375,
+      1.382145643234253,
+      1.3000030517578125
+    ]
+  },
+  {
+    "id": "MouthFlower1_2",
+    "base_error": 0.0,
+    "uniform_scale": 2.0103935813795633,
+    "fitted": false,
+    "actual_size_studs": [
+      1.1423187255859375,
+      1.382145643234253,
+      1.3000030517578125
+    ]
+  },
+  {
+    "id": "MouthFlower1_3",
+    "base_error": 0.0,
+    "uniform_scale": 2.0103935813795633,
+    "fitted": false,
+    "actual_size_studs": [
+      1.1423187255859375,
+      1.382145643234253,
+      1.3000030517578125
+    ]
+  },
+  {
+    "id": "FrameTree-1",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      7.0,
+      24.0,
+      7.0
+    ]
+  },
+  {
+    "id": "FrameBush-1",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      7.0,
+      7.0,
+      7.0
+    ]
+  },
+  {
+    "id": "FrameBarrel-1",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      3.0,
+      4.0,
+      3.0
+    ]
+  },
+  {
+    "id": "FrameCrate-1",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      3.5,
+      3.5,
+      3.5
+    ]
+  },
+  {
+    "id": "FrameTree1",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      7.0,
+      24.0,
+      7.0
+    ]
+  },
+  {
+    "id": "FrameBush1",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      7.0,
+      7.0,
+      7.0
+    ]
+  },
+  {
+    "id": "FrameBarrel1",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      3.0,
+      4.0,
+      3.0
+    ]
+  },
+  {
+    "id": "FrameCrate1",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      3.5,
+      3.5,
+      3.5
+    ]
+  },
+  {
+    "id": "S1_MinePost",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      0.160003662109375,
+      12.0,
+      1.0
+    ]
+  },
+  {
+    "id": "S1_MinePost",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      0.160003662109375,
+      12.0,
+      1.0
+    ]
+  },
+  {
+    "id": "S1_MineHeader",
+    "base_error": 0.0,
+    "uniform_scale": null,
+    "fitted": true,
+    "actual_size_studs": [
+      25.139419555664062,
+      1.399993896484375,
+      11.569427490234375
+    ]
+  }
+]

@@ -28,7 +28,7 @@
 - Rough greyboxes of A/B/C in prototype/meadow-A/B/C.rbxl (not shown; programmer art; escapes only 7-16 s, too short).
 - Home island art pass 3 rounds (backup guardian-greybox.pre-home-art.rbxl), offline critic 6/10, evidence slice-v2/evidence/sbs-home-art.jpg; Studio UNTESTED (slice-v2/HOME-ART.md). Pets still a bit small.
 - Codex CANNOT drive Studio (approval not granted). All 3 Studio tests must be rerun after Keeper + home art changes (Claude after reset, or ask Zion to allow Codex Studio access).
-- Codex binary now C:/Users/zerha/AppData/Local/OpenAI/Codex/bin/8aaf1547b825b104/codex.exe. Codex used ~3%.
+- Codex binary path changes on updates: use the newest bin/*/codex.exe (C:/dev/codex-lab/codex-bin.txt). Codex used ~3%.
 
 ## 2026-10-14 ~01:00 UTC
 - Map v4 (+ tunnel through hill, underside, 57 clusters) MERGED into guardian-greybox.rbxl (backup guardian-greybox.pre-v4.rbxl); lighting presets (LightingPreset attribute, treasure/map-v4/LIGHTING.md) + rock variety (backup pre-look). Checklist: prototype/MERGE-V4-STUDIO-CHECKS.md.
@@ -50,3 +50,18 @@
 - Claude edits: LoopTest preflight yield; KitLibrary removed plugin-only RenderFidelity writes + interim MATERIAL_LOOK palette (only applies when TextureID empty); LoopTest recovery height tolerance 4.5 studs for loot.
 - Creator Store free "no scripts" crystal packs had hidden scam scripts: never use unvetted free models.
 - Next: Zion plays a run (open file, Play); side-by-side vs a top game; Crystal Cave v2 Studio pass (prototype/cave-v2.rbxl, CAVE-V2-STUDIO-CHECKS.md) with kits2; Keeper anims polish; then roadmap block 3.
+
+## 2026-10-15: Meadow look polish (uncommitted)
+- Canonical `slice-v2/prototype/guardian-greybox.rbxl` rebuilt with seven presentation mounts; byte-verified backup `guardian-greybox.pre-polish.rbxl` created before Rojo. Cave untouched.
+- GardenWarm brighter/saturated with less haze; grass/path/flower palette lifted. Approved golden acorn native asset now used at Nest 1.8x and Carried/Dropped 1.2x, soft light/sparkles, Nest-only tall beam. Keeper scale retained: fixed animation/release sockets; added occluded gold outline. 128 small nonphysical scenery parts hidden in camp/route-mouth zones; kit plan excludes these carriers.
+- VERIFIED offline: 66 scripts compile O0/O1/O2, 59 unrelated sources unchanged, serialized Workspace byte parity and rebuilt collision/floor/tag parity; existing `check.luau` and sampled `keeper-clearance.luau` pass (mock navigation/physics; articulated glove overbound diagnostics remain).
+- Proof: `prototype/studio-pass-1/POLISH-SBS.jpg`, matched portal/camp native geometry proxy. Imported kits2 meshes and Roblox lighting/glow/particles/Highlight require Studio; beam is a labelled proxy. Actual visual/runtime acceptance UNKNOWN.
+- Claude must rerun all 8 suites plus 3 shots in `prototype/studio-pass-1/POLISH-STUDIO-CHECKS.md`; do not inherit pre-polish green. No commit/publish.
+- Lesson: when rig sockets use fixed coordinates, strengthen the silhouette before scaling, because release alignment depends on the approved geometry.
+
+## 2026-10-15: section-by-section pilot S1 (uncommitted)
+- Zion's new process: ONE scene at a time; stop after S1 for his visual review. Ownership map: `treasure/sections/SECTIONS.md`; S1 story, refs, built-in generated target, matched proof and two independent blind critiques under `treasure/sections/S1/`. Reusable lessons/checklist in `treasure/sections/`.
+- Canonical place rebuilt after byte-verified `guardian-greybox.pre-section1.rbxl` backup. Only Section1, Builder and KitSwap presentation mounts changed from that backup. Portal artwork is now a low pool: required arrival camera was completely blocked by the old upright disc. Return trigger untouched. Purposeful planted beds, route signs, supported lamps, trees and watering barrels use kits2 plus native timber.
+- Offline: 67 scripts compile O0/O1/O2; 64 unrelated sources (including all eight suite implementations) preserved. Serialized Workspace parity; rebuilt physical geometry/floor tags unchanged. Full-footprint support and actual route buffer checks pass. A low bed uses the outer apron shoulder with a 32-stud central corridor reserved; apron floors/tags unchanged. No other section rebuilt.
+- Runtime UNKNOWN: no Studio connection available. Do not inherit old eight-suite green. Run `treasure/sections/S1/STUDIO-CHECKS.md` with owner account, mock persistence, and save real arrival/overview shots. Offline proof includes original S1 FBX meshes; other-section kits and Roblox effects remain proxies. No commit/publish.
+- Lesson: when detailing a scene, judge its player camera first, because a tidy overview can hide blocked sight lines and invisible detail.

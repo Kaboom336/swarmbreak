@@ -39,6 +39,11 @@ local function apply(root,island)
   for _,p in m:GetDescendants() do if p:IsA("MeshPart") then meshParts+=1 end end
  end
  for index,g in groups do
+  -- This native wall is a gameplay collider. Rejecting its kit placement must
+  -- never delete the wall with the cosmetic originals.
+  local gameplayCover=false
+  for _,p in g.parts do if p:GetAttribute("GameplayCover") or p:GetAttribute("OutsmartBaitCover") then gameplayCover=true;break end end
+  if gameplayCover then continue end
   if g.keepReason then failed+=1;warn("[KitSwap] FALLBACK "..g.anchor.Name..": "..g.keepReason);continue end
   local scale=if g.fitted then 4 else g.size
   if g.tree then
@@ -109,6 +114,18 @@ local function apply(root,island)
     warn("[KitSwap] bridge_wood does not fit ravine deck; original planks retained")
    end
   else root:SetAttribute("KitBridgeFit","kept: no deck or loaded bridge template") end
+ end
+ if island=="meadow" then
+  local ok,err=pcall(function()
+   local section=require(game:GetService("ReplicatedStorage").MeadowV4.Section1)
+   section.spawnKits(root,Kit)
+   section.clearProps(root)
+  end)
+  if not ok then warn("[KitSwap] Section1 dressing skipped: "..tostring(err)) end
+   local ok2,err2=pcall(function()
+    require(game:GetService("ReplicatedStorage").MeadowV4.Section2).spawnKits(root,Kit)
+   end)
+   if not ok2 then warn("[KitSwap] Section2 dressing skipped: "..tostring(err2)) end
  end
  root:SetAttribute("KitSwapVersion",1)
  root:SetAttribute("KitLanePlacementsDropped",dropped)

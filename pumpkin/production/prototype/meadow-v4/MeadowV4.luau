@@ -5,11 +5,12 @@ local art = require(script.Parent.Fix1Art)
 local routes = require(script.Parent.RouteData)
 local fix2 = require(script.Parent.Fix2Routes)
 local drops = require(script.Parent.ReachableDrops)
+local polish = require(script.Parent.Polish)
 function MeadowV4.build(parent: Instance, origin: Vector3?): Model
 	local model = Instance.new("Model")
 	model.Name = "MeadowV4"
 	local offset = origin or Vector3.zero
-	for _, item in fix2.transform(art.transform(data, routes), routes) do
+	for _, item in polish.transform(fix2.transform(art.transform(data, routes), routes), routes) do
 		local p = Instance.new(if item.shape == "Wedge" then "WedgePart" else "Part")
 		p.Name = item.name
 		p.Anchored = true
@@ -23,9 +24,9 @@ function MeadowV4.build(parent: Instance, origin: Vector3?): Model
 		p.Transparency = item.transparency
 		local r, v = item.rotation, item.position
 		p.CFrame = CFrame.new(
-			v[1] + offset.X,
-			v[2] + offset.Y,
-			v[3] + offset.Z,
+			v[1],
+			v[2],
+			v[3],
 			r[1],
 			r[2],
 			r[3],
@@ -37,6 +38,7 @@ function MeadowV4.build(parent: Instance, origin: Vector3?): Model
 			r[9]
 		)
 		p:SetAttribute("MeadowV4Category", item.category)
+		if item.polishCleared then p:SetAttribute("MeadowPolishCleared", true) end
 		p:SetAttribute("WalkableLaneFloor", drops.isLane(item, routes))
 		if drops.isLane(item, routes) then
 			p:AddTag("AuthoredLaneFloor")
@@ -55,6 +57,44 @@ function MeadowV4.build(parent: Instance, origin: Vector3?): Model
 			light.Parent = p
 		end
 	end
+	-- Build every section in island-local coordinates, then translate once.
+	local court = require(script.Parent.Gameplay).PvpCourt
+	local deck = Instance.new("Part")
+	deck.Name, deck.Size = "PvpCourtFloor", Vector3.new(18, 1.2, 18)
+	deck.CFrame = CFrame.new(court.x, court.y - .48, -court.z)
+	deck.Anchored, deck.CanCollide, deck.CanQuery, deck.CanTouch = true, true, true, false
+	deck.Color, deck.Material = Color3.fromRGB(101, 148, 64), Enum.Material.Grass
+	deck:SetAttribute("WalkableLaneFloor", true)
+	deck:SetAttribute("SurfaceRole", "Floor")
+	deck:SetAttribute("MeadowV4Category", "lane")
+	deck:SetAttribute("LaneId", "pvp_court")
+	deck:AddTag("AuthoredLaneFloor")
+	deck.Parent = model
+	-- Section dressing is cosmetic: a failed prop must never take the island down with it.
+	local sections = {}
+	for _, module in script.Parent:GetChildren() do
+		if module:IsA("ModuleScript") and (module.Name:match("^Section%d+$") or module.Name == "Outsmart"
+			or module:GetAttribute("MeadowDressing") == true) then table.insert(sections, module) end
+	end
+	table.sort(sections, function(a, b)
+		if a.Name == "Outsmart" then return false end
+		if b.Name == "Outsmart" then return true end
+		return a.Name < b.Name
+	end)
+	for _, module in sections do
+		local ok, err = pcall(function() require(module).build(model, Vector3.zero) end)
+		if not ok then warn("[MeadowV4] " .. module.Name .. " dressing skipped: " .. tostring(err)) end
+	end
+	-- Audit after every section, including fix8's additional authored bait lane.
+	-- Preserve section failure isolation while retaining a visible failure reason.
+	local clearanceOK, clearanceProblem = pcall(function()
+		require(script.Parent.Section1).clearProps(model)
+	end)
+	if not clearanceOK then model:SetAttribute("PvpMapClearanceFailure", tostring(clearanceProblem)) end
+	for _, p in model:GetDescendants() do
+		if p:IsA("BasePart") then p.CFrame = CFrame.new(offset) * p.CFrame end
+	end
+	model:SetAttribute("MeadowOrigin", offset)
 	model.Parent = parent
 	return model
 end

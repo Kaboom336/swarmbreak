@@ -3,8 +3,11 @@ local G = {}
 -- Regenerate test/navigation stations from the same centerlines used by Builder.
 local R = require(script.Parent.Fix2Routes).waypoints(require(script.Parent.RouteData))
 G.Nest = { x = 0, y = 48, z = 96 }
-G.Camp = { x = -7, y = 48, z = 99 }
+G.Camp = { x = -7, y = 48, z = 110 }
 G.Portal = { x = 0, y = 0, z = -136 }
+-- The existing fork is the first broad, level junction after the descent.
+-- Keep the physical court and every test station on this shared placement.
+G.PvpCourt = { x = 0, y = 0, z = 42 }
 local function point(x, y, z)
 	return { x = x, y = y, z = z, kind = "Walk" }
 end
@@ -98,52 +101,21 @@ function G.dropPoints()
 	return out
 end
 function G.pvpRoutes()
-	local court = point(-61.8671875, 0, -98.953125)
+	local court = point(G.PvpCourt.x, G.PvpCourt.y, G.PvpCourt.z)
 	local dummy = { point(0, 48, 96), point(0, 48, 108) }
 	for _, name in { "summit_radial", "spiral", "fork_link" } do
 		append(dummy, name, false)
 	end
-	-- Reach west north junction via exact cross-link, then the surface fallback.
-	local crossNorth = R.north_crosslink
-	local center
-	for i, p in crossNorth do
-		if math.abs(p.x) < 0.001 and math.abs(p.z - 42) < 0.001 then
-			center = i
-			break
-		end
-	end
-	assert(center, "north cross-link fork junction")
-	for i = center, 1, -1 do
-		table.insert(dummy, table.clone(crossNorth[i]))
-	end
-	local west = R.west
-	local started = false
-	for _, p in west do
-		if math.abs(p.x + 76) < 0.01 and math.abs(p.z - 27) < 0.01 then
-			started = true
-		end
-		if started then
-			table.insert(dummy, table.clone(p))
-			if math.abs(p.x - court.x) < 0.01 and math.abs(p.z - court.z) < 0.01 then
-				break
-			end
-		end
-	end
 	local tester = { point(0, 0, -136) }
-	-- South cross-link ends on east portal edge. Reversed path reaches the same west court.
-	local cross = R.south_crosslink
-	for i = #cross, 1, -1 do
-		table.insert(tester, table.clone(cross[i]))
-		if math.abs(cross[i].x - court.x) < 0.01 and math.abs(cross[i].z - court.z) < 0.01 then
-			break
-		end
+	for _, name in { "bridge_south", "bridge" } do
+		append(tester, name, true)
 	end
 	return {
 		Tester = tester,
 		Dummy = dummy,
-		Pacing = { court, point(-64.4228515625, 0, -95.529296875), court },
-		Mercy = { court, point(-66.8125, 0, -92.125), court },
-		Leave = { court, point(-66.8125, 0, -92.125) },
+		Pacing = { court, point(-4, 0, 42), court },
+		Mercy = { court, point(-7, 0, 42), court },
+		Leave = { court, point(-7, 0, 42) },
 		Winner = { court },
 	}
 end

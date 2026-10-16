@@ -1,0 +1,5 @@
+# Built-in imagegen target prompt
+
+Use case: stylized-concept. One wide 16:9 Roblox low-poly scene, Steal a Treasure S1 Portal Plaza. Player camera at a cosy farm gateway at the foot of a distant rocky green Keeper hill. Chunky faceted Kenney/Quaternius-like foliage, native timber and warm stone. Open tan plaza, three clear routes: west tunnel, centre ravine bridge, east ridge. Two purposeful asymmetric garden beds: low timber edging, gold flowers, a bush; maintenance grouping outside the path. Low wayfinding posts beside routes, no giant arch over the view. Cyan return portal at the near foreground edge; distant golden summit beacon against blue sky. Saturated leaf green, honey gold, brown wood, sandstone; bright daylight, cared-for farm story. Ground every base. Camera 18 studs behind portal looking north; portal must not block centre view. No UI, characters, photorealism or random dense scattering.
+
+Generated with built-in image_gen, copied into TARGET.png. Not a gameplay screenshot, no claim of matching exact map geometry.

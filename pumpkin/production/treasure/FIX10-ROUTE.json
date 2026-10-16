@@ -1,0 +1,13 @@
+{
+  "carrySpeed": 13.5,
+  "court": [
+    0,
+    0,
+    42
+  ],
+  "estimatedMovingSeconds": 18.921167391317862,
+  "lateSwapCoverPreserved": true,
+  "measuredLiveSeconds": "UNKNOWN",
+  "newDistance": 255.43575978279114,
+  "oldDistance": 485.8753756284714
+}

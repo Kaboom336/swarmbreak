@@ -216,7 +216,18 @@ function Arena.build(world, layout, make, label)
 	a.params.RespectCanCollide = true
 	a.params.FilterType, a.params.FilterDescendantsInstances = Enum.RaycastFilterType.Include, { model }
 	a.wallParams = RaycastParams.new()
+	a.wallParams.RespectCanCollide = true
 	a.wallParams.FilterType, a.wallParams.FilterDescendantsInstances = Enum.RaycastFilterType.Include, a.obstacles
+	-- Snapshot structural colliders only. Late cosmetic kit assemblies never enter
+	-- this query, even if an imported prop accidentally keeps CanQuery enabled.
+	local sightParts = {}
+	for _, p in model:GetDescendants() do
+		if p:IsA("BasePart") and p.CanCollide and not p:GetAttribute("Cosmetic")
+			and not p:FindFirstAncestor("KitDressing") then table.insert(sightParts,p) end
+	end
+	a.sightParams = RaycastParams.new()
+	a.sightParams.RespectCanCollide = true
+	a.sightParams.FilterType, a.sightParams.FilterDescendantsInstances = Enum.RaycastFilterType.Include, sightParts
 	return a
 end
 function Arena.floor(a, position)
@@ -233,7 +244,8 @@ function Arena.floor(a, position)
 	return nil
 end
 function Arena.sight(a, from, to)
-	return workspace:Raycast(from, to - from, a.params) == nil
+	local hit = workspace:Raycast(from, to - from, a.sightParams or a.params)
+	return hit == nil, hit
 end
 function Arena.safe(a, position, radius)
 	local p = position - a.origin
@@ -724,7 +736,8 @@ local function tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 		a.warning.Text = a.mode == "DecoyTell" and "! / DECOY RATTLE" or "? / investigate DECOY"
 		if a.mode == "DecoyTell" then
 			local towards = Vector3.new(a.decoy.position.X, guard.Position.Y, a.decoy.position.Z)
-			if (towards - guard.Position).Magnitude > 0.1 then
+			-- Let the head notice the sound before the body follows it.
+			if (towards - guard.Position).Magnitude > 0.1 and now - (a.decoy.started or now - 1) >= 0.3 then
 				guard.CFrame = CFrame.lookAt(guard.Position, towards)
 			end
 			return
@@ -766,7 +779,8 @@ local function tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 		a.mode, a.lostTarget = "Guard", nil
 	end
 	logState(a, root)
-	a.warning.Text = a.mode == "Warn" and "!" or (a.mode == "Search" and "?" or "GUARDIAN / " .. a.mode)
+	a.warning.Text = a.mode == "Investigate" and "? / investigate DECOY"
+		or (a.mode == "Warn" and "!" or (a.mode == "Search" and "?" or "GUARDIAN / " .. a.mode))
 	if a.mode == "Warn" then
 		if target then
 			local r = root(target)
@@ -954,7 +968,8 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 	end
 	a.guardian:SetAttribute("KeeperElapsed", math.max(0, now - a.keeperClipStart))
 	local targetRoot = a.target and root(a.target)
-	a.guardian:SetAttribute("KeeperLookTarget", targetRoot and targetRoot.Position or nil)
+	a.guardian:SetAttribute("KeeperLookTarget", a.decoy and a.decoy.position or targetRoot and targetRoot.Position or nil)
+	a.guardian:SetAttribute("KeeperAttention", a.decoy and a.mode or "")
 end
 function Arena.reset(a)
 	a.tunnelGeneration = (a.tunnelGeneration or 0) + 1

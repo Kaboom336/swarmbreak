@@ -1,0 +1,127 @@
+[
+  {
+    "id": "WestTree",
+    "base_error": 0.0,
+    "uniform_scale": 0.4625050696541255
+  },
+  {
+    "id": "EastTree",
+    "base_error": 0.0,
+    "uniform_scale": 0.42396298051628173
+  },
+  {
+    "id": "WestBush",
+    "base_error": 0.0,
+    "uniform_scale": 0.531045285738378
+  },
+  {
+    "id": "EastBush",
+    "base_error": 0.0,
+    "uniform_scale": 0.42745022104728925
+  },
+  {
+    "id": "ArrivalBush",
+    "base_error": 0.0,
+    "uniform_scale": 0.42745022104728925
+  },
+  {
+    "id": "ArrivalFlowersA",
+    "base_error": 0.0,
+    "uniform_scale": 0.34065979834531585
+  },
+  {
+    "id": "ArrivalFlowersB",
+    "base_error": 0.0,
+    "uniform_scale": 0.2725278386762527
+  },
+  {
+    "id": "ArrivalWaterBarrel",
+    "base_error": 0.0,
+    "uniform_scale": 0.8654882620924883
+  },
+  {
+    "id": "EastWaterBarrel",
+    "base_error": 0.0,
+    "uniform_scale": 0.8654882620924883
+  },
+  {
+    "id": "WestLog",
+    "base_error": 0.0,
+    "uniform_scale": 1.1830986551149747
+  },
+  {
+    "id": "WestStump",
+    "base_error": 0.0,
+    "uniform_scale": 1.509434043745763
+  },
+  {
+    "id": "BedFlower-1_1",
+    "base_error": 0.0,
+    "uniform_scale": 0.2452750483110574
+  },
+  {
+    "id": "BedFlower-1_2",
+    "base_error": 0.0,
+    "uniform_scale": 0.2452750483110574
+  },
+  {
+    "id": "BedFlower-1_3",
+    "base_error": 0.0,
+    "uniform_scale": 0.2452750483110574
+  },
+  {
+    "id": "BedFlower-1_4",
+    "base_error": 0.0,
+    "uniform_scale": 0.2452750483110574
+  },
+  {
+    "id": "MouthFlower-1_1",
+    "base_error": 0.0,
+    "uniform_scale": 2.0103935813795633
+  },
+  {
+    "id": "MouthFlower-1_2",
+    "base_error": 0.0,
+    "uniform_scale": 2.0103935813795633
+  },
+  {
+    "id": "MouthFlower-1_3",
+    "base_error": 0.0,
+    "uniform_scale": 2.0103935813795633
+  },
+  {
+    "id": "BedFlower1_1",
+    "base_error": 0.0,
+    "uniform_scale": 0.14078072465937663
+  },
+  {
+    "id": "BedFlower1_2",
+    "base_error": 0.0,
+    "uniform_scale": 0.14078072465937663
+  },
+  {
+    "id": "BedFlower1_3",
+    "base_error": 0.0,
+    "uniform_scale": 0.14078072465937663
+  },
+  {
+    "id": "BedFlower1_4",
+    "base_error": 0.0,
+    "uniform_scale": 0.14078072465937663
+  },
+  {
+    "id": "MouthFlower1_1",
+    "base_error": 0.0,
+    "uniform_scale": 2.0103935813795633
+  },
+  {
+    "id": "MouthFlower1_2",
+    "base_error": 0.0,
+    "uniform_scale": 2.0103935813795633
+  },
+  {
+    "id": "MouthFlower1_3",
+    "base_error": 0.0,
+    "uniform_scale": 2.0103935813795633
+  }
+]

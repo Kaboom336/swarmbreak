@@ -1,0 +1,25 @@
+{
+  "Studio_runtime": "UNKNOWN",
+  "compiled_O0_O1_O2": 71,
+  "full_footprint_support": true,
+  "injected_dressing_failures": 3,
+  "kit_mesh_loading": "UNKNOWN; placement stub only",
+  "late_kit_placement": true,
+  "origins": [
+    [
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      76,
+      -360
+    ]
+  ],
+  "physical_geometry_and_tags_preserved": true,
+  "pre_fix_failure_reproduced": true,
+  "status": "PASS",
+  "unrelated_sources_preserved": 67,
+  "workspace_byte_equal": true
+}

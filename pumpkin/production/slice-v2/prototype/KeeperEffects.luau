@@ -32,6 +32,10 @@ library.Name, library.Parent = "KeeperSounds_TODO", Players.LocalPlayer:WaitForC
 for _, name in ipairs(FX.SoundNames) do
 	local s = Instance.new("Sound")
 	s.Name, s.SoundId, s.Volume, s.RollOffMaxDistance = name, "", 0.6, 75
+	if name == "dashWindup" or name == "WallStun" then
+		s.SoundId = "rbxasset://sounds/electronicpingshort.wav"
+		s.PlaybackSpeed = name == "dashWindup" and 0.7 or 0.5
+	end
 	s:SetAttribute("TODO", "Assign verified Roblox free audio ID; blank is intentionally silent")
 	s.Parent = library
 end

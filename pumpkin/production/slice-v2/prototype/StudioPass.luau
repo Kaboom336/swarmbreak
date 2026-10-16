@@ -34,6 +34,7 @@ function Pass.attach(api)
 		"CoreLoopTest",
 		"RavineTest",
 		"TunnelTest",
+		"OutsmartTest",
 	}
 	local function run()
 		if running or not SSS:GetAttribute("StudioPassAll") then
@@ -45,7 +46,7 @@ function Pass.attach(api)
 		local summary = {
 			status = "RUNNING",
 			tests = rows,
-			evidence = "Studio live legacy tests; core mock store; ravine/tunnel policy assertions",
+			evidence = "Studio legacy tests + live Outsmart collision; core mock store; ravine/tunnel policy assertions",
 		}
 		local function publish()
 			summary.seconds = os.clock() - began
@@ -65,6 +66,7 @@ function Pass.attach(api)
 				local start = os.clock()
 				local passed, detail = pcall(function()
 					api.reset()
+					if name == "OutsmartTest" then SSS:SetAttribute("OutsmartTestFailureJSON", "{}") end
 					if name == "RavineTest" or name == "TunnelTest" then
 						return require(RS.MeadowV4.PolicyTests)[name](
 							require(RS.MeadowV4.RavinePolicy),
@@ -104,6 +106,9 @@ function Pass.attach(api)
 					activeThread = nil
 				end
 				local row = { name = name, pass = passed, seconds = os.clock() - start, result = tostring(detail) }
+				if name == "OutsmartTest" and not passed and SSS:GetAttribute("OutsmartTestFailureJSON") == "{}" then
+					SSS:SetAttribute("OutsmartTestFailureJSON", Http:JSONEncode({stage="harness",error=tostring(detail):sub(1,2000)}))
+				end
 				table.insert(rows, row)
 				SSS:SetAttribute(name .. "StudioPassStatus", passed and "PASS" or "FAIL")
 				SSS:SetAttribute(name .. "StudioPassSeconds", row.seconds)

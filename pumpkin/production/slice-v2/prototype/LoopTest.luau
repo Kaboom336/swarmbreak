@@ -94,7 +94,90 @@ local function homePoints(pen)
 	end
 	return points
 end
-local function driver(actor, states, api, log, checked, monitor)
+local function approachRecorder(actor, api, world, item)
+	local http = game:GetService("HttpService")
+	local started = os.clock()
+	local data = { status = "approaching", waypoints = {}, paths = {}, stuck = {}, samples = {}, blockingInstances = {}, legs = {}, phases = {} }
+	local activeLeg, activePhase
+	local function xyz(p) return { p.X, p.Y, p.Z } end
+	local function push(list, value, limit)
+		table.insert(list, value)
+		if #list > limit then table.remove(list, 1) end
+	end
+	local function record(event, goal, name, detail, observedActor)
+		local now = os.clock()
+		local root, humanoid = api.root(observedActor or actor)
+		data.elapsed = now - started
+		data.cargoElapsed = now - (item.firstPickup or started)
+		data.remaining = item.escapeDeadline - now
+		if activeLeg then activeLeg.seconds = now-activeLeg.started;activeLeg.remaining = data.remaining end
+		if activePhase then activePhase.seconds = now-activePhase.started;activePhase.remaining = data.remaining end
+		if event == "waypoint" then
+			if activeLeg then activeLeg.status = "superseded" end
+			activeLeg = { name = name, started = now, elapsed = data.elapsed, seconds = 0, remaining = data.remaining, status = "walking" }
+			push(data.legs, activeLeg, 256)
+		elseif event == "arrived" or event == "interrupted" or event == "failed" or event == "complete" then
+			if activeLeg then activeLeg.status = event;activeLeg = nil end
+		end
+		if event == "phase" then
+			if activePhase then activePhase.status = "complete" end
+			activePhase = { name = name, started = now, elapsed = data.elapsed, seconds = 0, remaining = data.remaining, status = "running" }
+			push(data.phases, activePhase, 16)
+		elseif event == "failed" or event == "secured" then
+			if activePhase then activePhase.status = event;activePhase = nil end
+		end
+		data.itemId, data.itemState = item.id, item.state
+		data.event, data.goalName = event, name
+		if detail then data.detail = detail end
+		if root then
+			data.position = xyz(root.Position)
+			local snapshot = { time = data.elapsed, position = data.position, goal = goal and xyz(goal), name = name }
+			if event == "waypoint" then push(data.waypoints, snapshot, 128)
+			elseif event == "stuck" then push(data.stuck, snapshot, 32)
+			elseif event == "sample" then push(data.samples, snapshot, 64) end
+			if event == "path" then push(data.paths, { time = data.elapsed, points = detail }, 16) end
+			data.walkSpeed, data.floorMaterial = humanoid.WalkSpeed, tostring(humanoid.FloorMaterial)
+			-- Probe the body corridor and nearby colliders, retaining full instance paths.
+			local params = RaycastParams.new()
+			params.FilterType, params.FilterDescendantsInstances = Enum.RaycastFilterType.Exclude, { (observedActor or actor).Character }
+			params.RespectCanCollide = true
+			local function blocker(part)
+				local key = part:GetFullName()
+				if not data.blockingInstances[key] then
+					local count = 0
+					for _ in data.blockingInstances do count += 1 end
+					if count >= 64 then return end
+				end
+				data.blockingInstances[key] = { time = data.elapsed, position = xyz(part.Position), size = xyz(part.Size),
+					collidable = part.CanCollide, category = part:GetAttribute("MeadowV4Category"), section = part:GetAttribute("Section") }
+			end
+			if goal then
+				local delta = Vector3.new(goal.X-root.Position.X, 0, goal.Z-root.Position.Z)
+				if delta.Magnitude > .01 then
+					for _, height in { -1.5, 0, 1.5 } do
+						local hit = workspace:Raycast(root.Position + Vector3.new(0,height,0), delta.Unit*math.min(8,delta.Magnitude), params)
+						if hit then blocker(hit.Instance) end
+					end
+				end
+			end
+			if event == "stuck" then
+				local overlap = OverlapParams.new()
+				overlap.FilterType, overlap.FilterDescendantsInstances = Enum.RaycastFilterType.Exclude, { (observedActor or actor).Character }
+				overlap.RespectCanCollide = true
+				for _, part in workspace:GetPartBoundsInBox(root.CFrame, Vector3.new(7,4,7), overlap) do blocker(part) end
+			end
+		end
+		if event == "complete" then data.approachSeconds = data.elapsed end
+		if event == "phase" then data.status = name end
+		if event == "complete" or event == "failed" or event == "secured" then data.status = event end
+		local json = http:JSONEncode(data)
+		SSS:SetAttribute("PvpTestLastApproach", json)
+		world:SetAttribute("PvpTestLastApproach", json)
+	end
+	record("start")
+	return record
+end
+local function driver(actor, states, api, log, checked, monitor, approach)
 	local character = actor.Character
 	local r, h = api.root(actor)
 	assert(r and h, "character missing")
@@ -113,6 +196,7 @@ local function driver(actor, states, api, log, checked, monitor)
 			end
 		end
 		log((jump and "Jump " or "Walk ") .. name)
+		if approach then approach("waypoint", position, name) end
 		local started, progressed, best, nextLog = os.clock(), os.clock(), 0, 0
 		local airborne, landed, launched = false, false, false
 		local expected = states[actor].run
@@ -161,6 +245,7 @@ local function driver(actor, states, api, log, checked, monitor)
 			api.audit()
 			local reason = interruption()
 			if reason then
+				if approach then approach("interrupted", position, name, reason) end
 				return false, reason
 			end
 			if os.clock() < (states[actor].slowUntil or 0) then
@@ -189,6 +274,7 @@ local function driver(actor, states, api, log, checked, monitor)
 			assert(states[actor].run == expected, "unexpected arena reset/return")
 			local now = os.clock()
 			if navigation and (navigation.blocked or now - progressed >= 3) then
+				if approach then approach("stuck", position, name, navigation.blocked and "path blocked" or "no progress") end
 				h:Move(Vector3.zero, false)
 				return false, "recompute"
 			end
@@ -221,11 +307,13 @@ local function driver(actor, states, api, log, checked, monitor)
 				best, progressed = along, now
 			end
 			if not navigation and (monitor or api.arena) and now - progressed >= 3 then
+				if approach then approach("stuck", position, name, "no progress") end
 				return false, "displaced"
 			end
 			assert(now - progressed <= 8, "stuck >8s at " .. name)
 			assert(now - started <= 30, "waypoint >30s at " .. name)
 			if now >= nextLog then
+				if approach then approach("sample", position, name) end
 				log(
 					string.format(
 						"progress %s goal=%s horizontal=%.2f route=%.2f/%.2f noProgress=%.2fs",
@@ -260,6 +348,7 @@ local function driver(actor, states, api, log, checked, monitor)
 		end
 		-- Return synchronously so the next walk replaces MoveTo without losing momentum.
 		log("arrived " .. name)
+		if approach then approach("arrived", position, name) end
 		if jump then
 			assert(airborne and landed, "no takeoff/landing")
 			SSS:SetAttribute("GreyboxLoopTestJumpObserved", true)
@@ -293,6 +382,7 @@ local function driver(actor, states, api, log, checked, monitor)
 				path:ComputeAsync(r.Position, position)
 			end)
 			if not computed or path.Status ~= Enum.PathStatus.Success then
+				if approach then approach("stuck", position, name, tostring(problem or path.Status)) end
 				updateDrop({recoverPath={}, reason="path retry: " .. tostring(problem or path.Status)})
 				log("path retry from live position / " .. name .. " / " .. tostring(problem or path.Status))
 				path:Destroy()
@@ -313,6 +403,7 @@ local function driver(actor, states, api, log, checked, monitor)
 					table.insert(points, {position={waypoint.Position.X, waypoint.Position.Y, waypoint.Position.Z}, action=tostring(waypoint.Action)})
 				end
 				updateDrop({recoverPath=points, reason="following path: " .. name})
+				if approach then approach("path", position, name, points) end
 				for i = 2, #waypoints do
 					local waypoint = waypoints[i]
 					navigation.index = i
@@ -471,16 +562,31 @@ local function recoverAttempt(api, actor, states, walk, item, log, checked)
 	return true
 end
 local function recover(api, actor, states, walk, item, log, checked)
+	local lastPosition = item.position or (item.visual and item.visual.Position)
 	local result = table.pack(pcall(recoverAttempt, api, actor, states, walk, item, log, checked))
 	if not result[1] or result[2] == false then
-		updateDrop({lootPos={item.position.X, item.position.Y, item.position.Z}, reason=tostring(result[2])})
+		local position = item.position or (item.visual and item.visual.Position) or lastPosition
+		if not position then
+			local ok, drop = pcall(function()
+				return game:GetService("HttpService"):JSONDecode(SSS:GetAttribute("GreyboxLoopTestLastDrop") or "{}")
+			end)
+			local p = ok and type(drop) == "table" and drop.lootPos
+			if type(p) == "table" and type(p[1]) == "number" and type(p[2]) == "number" and type(p[3]) == "number" then
+				position = Vector3.new(p[1], p[2], p[3])
+			end
+		end
+		local reason = tostring(if result[1] then result[3] else result[2])
+		local fields = {reason=reason, lootId=item.id, lootState=item.state}
+		if position then fields.lootPos = {position.X, position.Y, position.Z} end
+		-- Without a current position retain production's last-drop coordinates.
+		updateDrop(fields)
 		local params = RaycastParams.new()
 		params.FilterType = Enum.RaycastFilterType.Exclude
 		params.FilterDescendantsInstances = actor.Character and {actor.Character} or {}
 		params.RespectCanCollide = true
-		local h = workspace:Raycast(item.position + Vector3.new(0, 2, 0), Vector3.new(0, -30, 0), params)
+		local h = position and workspace:Raycast(position + Vector3.new(0, 2, 0), Vector3.new(0, -30, 0), params)
 		local p = h and h.Instance
-		log("RECOVER FAILURE underLoot=" .. (p and p:GetFullName() or "NONE")
+		log("RECOVER FAILURE reason=" .. reason .. " state=" .. tostring(item.state) .. " underLoot=" .. (p and p:GetFullName() or "NONE")
 			.. " landingY=" .. tostring(h and h.Position.Y) .. " Walkable=" .. tostring(p and p:GetAttribute("Walkable"))
 			.. " WalkableLaneFloor=" .. tostring(p and p:GetAttribute("WalkableLaneFloor"))
 			.. " tag=" .. tostring(p and p:HasTag("AuthoredLaneFloor")) .. " lane=" .. tostring(p and p:GetAttribute("LaneId")))
@@ -882,7 +988,10 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 	local checked, preflight = validator(world, log)
 	preflight(homePoints(pens[s.slot]))
 	local monitor = {}
-	local walk, _, _, navigate = driver(player, states, api, log, checked, monitor)
+	local record
+	local walk, _, _, navigate = driver(player, states, api, log, checked, monitor, function(event, goal, name, detail)
+		if record then record(event, goal, name, detail, player) end
+	end)
 	walk(at(nil, 0, 3, Config.HomePortalApproachZ), "home portal")
 	act(api, player, "enterRun")
 	local arena = api.arena()
@@ -909,19 +1018,32 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 	end
 	local dummy = api.dummy(at(arena, Config.Nest.x, Config.Nest.y, Config.Nest.z))
 	setDummy(dummy)
+	-- Isolate the PvP fixture before its long carrier approach, not after it.
+	-- Guardian combat/expiry are covered by the loop suite; its attacks can
+	-- consume the real 60s deadline before this suite reaches its first Bump.
+	api.pvpCourt(true)
 	hold(api, dummy, "Steal")
 	local ds = states[dummy]
 	local item = ds.item
 	local timestamp, escapeDeadline = item.firstPickup, item.escapeDeadline
 	-- Consume the real one-time shield by waiting, never altering protection state.
-	local dummyWalk, _, _, dummyNavigate = driver(dummy, states, api, log, checked)
-	for i = 2, #routes.Dummy do
-		recover(api, dummy, states, dummyNavigate, item, log, checked)
-		local p = routes.Dummy[i]
-		dummyWalk(at(arena, p.x, p.y, p.z), "dummy court approach " .. i)
-	end
-	recover(api, dummy, states, dummyNavigate, item, log, checked)
-	api.pvpCourt(true)
+	record = approachRecorder(dummy, api, world, item)
+	record("phase", nil, "dummy approach")
+	local function timedFlow()
+	local dummyWalk, _, _, dummyNavigate = driver(dummy, states, api, log, checked, nil, function(...)
+		record(...)
+	end)
+	local approachOK, approachProblem = pcall(function()
+		for i = 2, #routes.Dummy do
+			assert(recover(api, dummy, states, dummyNavigate, item, log, checked), "PvP cargo expired during dummy approach")
+			local p = routes.Dummy[i]
+			dummyWalk(at(arena, p.x, p.y, p.z), "dummy court approach " .. i)
+		end
+		assert(recover(api, dummy, states, dummyNavigate, item, log, checked), "PvP cargo expired during dummy approach")
+	end)
+	record(approachOK and "complete" or "failed", nil, "dummy approach", approachOK and "arrived" or tostring(approachProblem))
+	assert(approachOK, approachProblem)
+	record("phase", nil, "shield and Bump/drop/settle/Grab")
 	log("guardian isolated at camp for PvP court; real shield/mercy/holds unchanged")
 	-- Keep the dummy moving to avoid the production AFK drop while shield expires.
 	while os.clock() < ds.shield + 0.05 do
@@ -979,6 +1101,7 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 	SSS:SetAttribute("GreyboxPvpTestItemId", item.id)
 	SSS:SetAttribute("GreyboxPvpTestHandoffs", 1)
 	monitor.item = item
+	record("phase", nil, "return to cyan portal")
 	for attempt = 1, Config.TestRecoverRetries do
 		if s.phase == "Run" then
 			assert(recover(api, player, states, navigate, item, log, checked), "PvP cargo expired before return")
@@ -994,6 +1117,11 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 		item.securedAt < item.escapeDeadline and item.escapeDeadline == escapeDeadline and item.firstPickup == timestamp,
 		"PvP deadline refreshed/late"
 	)
+	record("secured", nil, "return to cyan portal")
+	end
+	local flowOK, flowProblem = pcall(timedFlow)
+	if not flowOK then record("failed", nil, "PvP timed flow", tostring(flowProblem));error(flowProblem, 0) end
+	record = nil -- The later deliberate-expiry test must not overwrite this cargo's timings.
 	place(player, states, pens, api, walk, log, item, initialCount)
 	monitor.item = nil
 	api.pvpCourt(false)

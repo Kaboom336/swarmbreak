@@ -1,0 +1,58 @@
+{
+  "round": "S1 R3",
+  "acceptance": "FAIL: coverage and full camera-distance goals unmet",
+  "renders": 3,
+  "coverage": {
+    "lower_left_pct": 24.17742566510172,
+    "lower_right_pct": 20.488067292644757,
+    "portal_frame_pct": 3.8617621527777777,
+    "roi": "bottom third of image height, outer thirds of width; visible first-hit object-index mask",
+    "goal_each_pct": 25,
+    "passed": false,
+    "camera_roblox": [
+      0,
+      5.5,
+      154
+    ],
+    "lens_mm": 24,
+    "evidence": "offline native geometry + source FBX; live Studio appearance UNKNOWN"
+  },
+  "contact": {
+    "native_parts_checked": 355,
+    "kits_checked": 41,
+    "physical_penetrations": [],
+    "kit_physical_penetrations": [],
+    "kit_support_errors": [],
+    "floating_assemblies": [],
+    "tolerance_studs": 0.035,
+    "method": "Conservative OBB/SAT physical penetration; assembly contact graph to physical world; botanical/assembly joints separate from unintended clipping."
+  },
+  "build": {
+    "StudioPassAll": "UNKNOWN; not run after S1r3",
+    "actual_route_buffers_clear": true,
+    "central_apron_corridor_studs": 32,
+    "compiled_O0_O1_O2": 71,
+    "kit_full_footprint_support": true,
+    "mounts": [
+      "Section1"
+    ],
+    "outer_apron_art_exception": true,
+    "physics_floor_tags_equal": true,
+    "status": "PASS",
+    "unrelated_sources_preserved": 70,
+    "workspace_byte_equal": true
+  },
+  "offscreen_trim": {
+    "trimmed_parts": 32,
+    "arrival_all_outside_frustum": true,
+    "overview_all_outside_frustum": false,
+    "method": "All 8 oriented-box corners outside a common camera-frustum side plane. Arrival direct visibility and masks unchanged; indirect lighting may differ. Overview predates contact trim."
+  },
+  "artifact": "slice-v2/prototype/guardian-greybox.rbxl",
+  "backup": "slice-v2/prototype/guardian-greybox.pre-s1r3.rbxl",
+  "sha256": "f36853174fe0c8e3dd1e424c40794de6bdb3adf3a6e34faf2f6637054e373a18",
+  "StudioPassAll": "UNKNOWN after R3",
+  "commit": false,
+  "published": false,
+  "lessons": "../LESSONS.md; R3 visible masks, frustum placement, actual wall spans"
+}
