@@ -1,5 +1,21 @@
 # Section craft lessons
 
+## PvP suite reset isolation
+
+1. When a suite passes alone but fails after another, dirty and replay the actual reset against its archived version, because a mock reset counter cannot reveal retained Keeper fields, sockets or movement.
+2. When cancelling asynchronous paths, invalidate their epoch and release their request slot together, because an old completion must neither overwrite a new path nor unlock a newer request.
+3. When a hold reports a socket-height suspicion, probe the floor and separate horizontal displacement from height, because this summit socket was on its floor while the root was horizontally out of range.
+
+Evidence: `../PVP-SUITE-FLAKE.md`, `../PVPFLAKE-BUILD.json`, `../PVPFLAKE-GEOMETRY.json`, reset negative/positive controls. Live Loop → PvP remains UNKNOWN. No assertions, distances, timers or gates relaxed.
+
+## S5 — restarted R1/R2, stop for Claude live review
+
+1. When restarting partial section work, refresh and byte-verify the current canonical backup before mounting, because an older backup can discard intervening server fixes and build yields.
+2. When the route is fixed, explain the actual climb and walking loop with supported off-lane cues, because an aspirational switchback can imply a route that does not exist.
+3. When placing a one-sided board, check its face normal against the player approach before rendering, because complete text can still face away from its audience.
+
+Evidence: `S5/RESULT.md`, fresh `S5/BACKUP.json`, PRE/GAPS/SBS for R1/R2, duplicate-sensitive source/geometry/art audits and zero-contact reports. R1 is silhouette only and its 19 rail pieces remain frozen through R2. Protected box walls and peripheral summit remain visual misses; Claude's independent live review, carry recovery, nine live suites and owner acceptance remain UNKNOWN. No R3/R4.
+
 ## Carry performance follow-up — 2026-10-16
 
 1. Never scan all of Workspace per poll; tag or cache the exact lookup, because decorative instance growth can starve Heartbeat while unchanged real-time deadlines keep expiring. Preserve clone detection, Workspace filtering and every existing assertion; confirm live recovery separately.
@@ -138,4 +154,12 @@ S2 evidence: `S2/RESULT.md`, matched player-camera renders, two blind critiques,
 3. When dressing a ravine, probe the complete recovery loop and tunnel foundation before placing water/roots/rocks, because visually empty trench space can contain protected gameplay floors. Keep the final visual verdict REVISIT when offline proxies cannot establish the Studio result.
 
 Evidence: `S4/FINAL-R34-EVIDENCE.json`, `S4/MOUNT-R3.json`, `S4/MOUNT-FINAL.json`, `S4/SBS-R3.jpg`, `S4/SBS-R4.jpg`. Current S2/S3 lighting sources are preserved verbatim; Section4 is the only subsequent mounted source change. No new dependencies or external assets.
+
+## S5 rounds 3–4
+
+1. When a schematic cannot establish the desired art, generate a target from the exact live cameras before dressing, because an overview silhouette can hide the walls and materials players actually see.
+2. When wall clusters disappear, inspect the nearer cosmetic cladding before adding more props, because foreground boxes can hide correctly positioned natural rock meshes.
+3. When offline and Studio show different walls at the same camera, keep the visual verdict REVISIT, because source, collider and DropSample passes cannot establish scene parity or owner acceptance.
+
+Evidence: `S5/TARGET.png`, `S5/TARGET-PROMPT.md`, `S5/GAPS-R3.md`, `S5/GAPS-R4.md`, `S5/RESULT.md`, and the R3/R4 boards. Existing licensed kits2 rocks, Lune source-only mounting and unchanged offline tests reused. Exact Keystone Roblox Process Playbook remains unavailable in the local active-work files; its text is UNKNOWN.
 

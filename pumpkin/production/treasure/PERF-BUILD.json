@@ -1,0 +1,9 @@
+{
+  "backup_sha256": "10523bf474b8b48b81f67ee455646d96c4e90ae0f50e10c99b51c9d8020732e2",
+  "canonical_sha256": "1d3fcdade30d6e4a421063aeb5e652b3dbe1c1f87a69080413011e4670de03ba",
+  "compiled_O0_O1_O2": 74,
+  "live": "NOT RUN",
+  "s5_unmounted": true,
+  "unrelated_sources_preserved": 73,
+  "workspace_parity": true
+}

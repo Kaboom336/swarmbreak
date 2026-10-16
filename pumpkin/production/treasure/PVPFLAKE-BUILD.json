@@ -1,0 +1,8 @@
+{
+  "backup_sha256": "c74186432189378cb1c8ca95e3692d175943a5106e54d1cef24e388ed5968ffe",
+  "canonical_sha256": "fd45b06c14f326c9a86c04a57daf376cc0d108636019fd9d4cb7017ea942466e",
+  "compiled_O0_O1_O2": 75,
+  "live": "NOT RUN",
+  "only_Greybox_and_Arena_changed": true,
+  "pvp_runner_preserved": true
+}

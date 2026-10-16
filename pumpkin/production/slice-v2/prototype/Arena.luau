@@ -418,6 +418,7 @@ end
 local function clearPath(a)
 	a.pathVersion = (a.pathVersion or 0) + 1
 	a.points, a.index, a.nextPath = {}, 1, 0
+	a.computing = false -- The invalidated worker no longer owns the request slot.
 end
 local function returnToCamp(a, now, reason)
 	a.mode, a.untilTime, a.returnReason = "Return", now + returnSeconds, reason
@@ -888,7 +889,10 @@ local function tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 			if path then
 				path:Destroy()
 			end
-			a.computing = false
+			-- A cancelled request must not unlock a newer request after reset.
+			if version == (a.pathVersion or 0) then
+				a.computing = false
+			end
 		end)
 	end
 	local waypoint = a.points[a.index]
@@ -1000,6 +1004,9 @@ function Arena.reset(a)
 	end
 	a.attack, a.target, a.lostTarget, a.searchAt, a.lastSeen = nil, nil, nil, nil, nil
 	a.mode, a.patrol, a.nextThrow = "Guard", 1, 0
+	a.untilTime, a.chaseBegan, a.targetSince = 0, nil, nil
+	a.guardCamp, a.guardedVersion, a.returnAfterAttack, a.returnReason = nil, nil, nil, nil
+	a.computing = false
 	a.kitCooldowns = nil
 	a.keeperStunUntil = nil
 	if a.keeper then

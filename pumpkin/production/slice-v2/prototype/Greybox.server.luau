@@ -1481,7 +1481,11 @@ if RunService:IsStudio() then
 			s and s.phase == "Home" and not s.item and data and not data.pending and #data.pets == 0,
 			"start a fresh Play session, empty-handed at Home with no pets"
 		)
-		baseline = { actor = actor, state = table.clone(s) }
+		-- Arena.reset is a combat cancellation, not a fresh-suite fixture reset.
+		-- Capture the complete initial arena, including counters, caches and sockets.
+		baseline = { actor = actor, state = table.clone(s), arena = table.clone(arena),
+			guardianFrame = arena.guardian.CFrame, guardianSize = arena.guardian.Size,
+			groundAction = arena.groundAction.Position }
 	end
 	local function resetPass()
 		if not baseline then
@@ -1493,21 +1497,33 @@ if RunService:IsStudio() then
 			arena.tunnel.disconnect()
 		end
 		Arena.reset(arena)
+		-- Preserve invalidation epochs: old path/intercept tasks may still resume.
+		local pathVersion, tunnelGeneration = arena.pathVersion, arena.tunnelGeneration
+		table.clear(arena)
+		for k, v in baseline.arena do arena[k] = v end
+		arena.pathVersion, arena.tunnelGeneration = pathVersion, tunnelGeneration
+		arena.points, arena.occupants, arena.tunnel = {}, {}, nil
+		arena.computing, arena.samplingDrops = false, false
+		arena.laneParams, arena.lastDropResolution = nil, nil
+		arena.guardian.CFrame, arena.guardian.Size = baseline.guardianFrame, baseline.guardianSize
+		arena.groundAction.Position = baseline.groundAction
 		arena.idle, arena.hasEntrants = false, false
 		local outsmartFixtures = arena.model:FindFirstChild("OutsmartFixtures")
 		if outsmartFixtures then outsmartFixtures:Destroy() end
 		Traps.clearIsland(traps, arena)
+		-- Detach actors before retiring cargo; removeDummy must not drop retired loot.
+		for actor, state in states do
+			if actor ~= baseline.actor then
+				state.item = nil
+				api.removeDummy(actor)
+			end
+		end
 		for _, item in rules.items do
 			item.state, item.holder = "Retired", nil
 			visual(item)
 		end
 		table.clear(rules.items)
 		rules.active, rules.respawnAt = nil, nil
-		for actor in states do
-			if actor ~= baseline.actor then
-				api.removeDummy(actor)
-			end
-		end
 		local actor, s = baseline.actor, states[baseline.actor]
 		assert(actor.Parent and s, "test player left")
 		Traps.remove(traps, actor)
@@ -1524,17 +1540,12 @@ if RunService:IsStudio() then
 		local r, h = root(actor)
 		assert(r and h and h.Health > 0, "player died; restart Play")
 		h:Move(Vector3.zero, false)
+		h.Jump, h.UseJumpPower, h.JumpHeight, h.WalkSpeed = false, false, Config.JumpHeight, Config.WalkSpeed
 		r.AssemblyLinearVelocity, r.AssemblyAngularVelocity = Vector3.zero, Vector3.zero
 		r:SetNetworkOwnershipAuto()
 		home(actor)
-		arena.guardian.CFrame = CFrame.new(
-			Arena.position(
-				arena,
-				Config.GuardianGuardOffset.x,
-				Config.GuardianGuardOffset.y + 5.5,
-				Config.GuardianGuardOffset.z
-			)
-		)
+		h:MoveTo(r.Position) -- Cancel the old destination at the restored Home position.
+		accumulator = 0
 		visual(Rules.spawn(rules, nestPosition(arena)))
 		if arena.attachTunnel then
 			arena.attachTunnel()
