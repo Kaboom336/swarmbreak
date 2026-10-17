@@ -1,5 +1,23 @@
 # Section craft lessons
 
+## Crystal Cave C8 — four rounds, 2026-10-17
+
+1. When flipping a yawed shell, preserve the selector's rotation order, because
+   a reflected oriented envelope can introduce contacts despite unchanged size.
+2. When retiring native art, trace its existing runtime producer too, because
+   Transparency does not prevent that producer from spawning another kit.
+3. When a silhouette still reads as belts and holes, resolve massing before
+   freezing it, because later small accents cannot establish one clean taper.
+
+Evidence: ../cave-sections/C8/RESULT.md; four PRE/GAPS/SBS rounds, generated
+camera-derived TARGET, independent final REVISIT, contact 0 and complete restored
+serialization. Original exception: 74 cubes + 2,050 distant noncollidable Crystal
+detail parts, Transparency only. All original sources/six suite bodies/physics
+remain exact. Fresh stock N8: 3,024 samples, zero failures, sealed with final
+artifact hash.
+No Studio Play, fifth round, commit or publish; live six suites, actual mesh
+bearing, lights, performance and Claude/owner acceptance UNKNOWN.
+
 ## Crystal Cave C7 — four rounds, 2026-10-17
 
 1. When a fixed-pixel route label appears from another approach, limit its
