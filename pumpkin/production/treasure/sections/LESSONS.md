@@ -1,5 +1,20 @@
 # Section craft lessons
 
+## Crystal Cave C4 — four rounds, 2026-10-17
+
+1. When a blank sign blocks a cart, check its face and player-camera footprint,
+   because legal bounds do not establish readable approach framing.
+2. When all-height floor reserves reject new posts, reuse existing faces and
+   read-only signals, because cosmetic cues must preserve fair recovery space.
+3. When BillboardGui uses fixed pixels, size offline proxies in screen pixels,
+   because world-size lettering exaggerates near-camera clutter.
+
+Evidence: `../cave-sections/C4/RESULT.md`, four PRE/GAPS/SBS rounds, exact
+unrelated serialization with the explicit CartSign Size/CFrame exception,
+zero contact, native bearing, mounted texture/runtime/signal fixtures. Visual
+REVISIT: protected wall planes, narrow rock pillars and peripheral flashes.
+Independent Claude/owner acceptance and six live suites UNKNOWN; no Studio play.
+
 ## Crystal Cave C3 — four rounds, 2026-10-17
 
 1. When a sign passes bounds but is cropped, project its whole face into the
