@@ -5,6 +5,7 @@ local PromptService = game:GetService("ProximityPromptService")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local Style = require(RS:WaitForChild("UIStyle"))
+local UI = require(RS:WaitForChild("TreasureCore"):WaitForChild("UIPresentation"))
 local remote = RS:WaitForChild("GreyboxAction")
 local world = workspace:WaitForChild("GREYBOX")
 local Config = require(RS:WaitForChild("GreyboxConfig"))
@@ -52,6 +53,7 @@ testControls()
 PromptService.Enabled, PromptService.MaxPromptsVisible = true, 8
 local gui = Instance.new("ScreenGui")
 gui.Name, gui.ResetOnSpawn = "GreyboxGoal", false
+gui.ScreenInsets, gui.DisplayOrder = Enum.ScreenInsets.CoreUISafeInsets, 20
 gui.Parent = player:WaitForChild("PlayerGui")
 local goal = Instance.new("TextLabel")
 goal.AnchorPoint, goal.Position = Vector2.new(0.5, 1), UDim2.fromScale(0.5, 0.96)
@@ -69,7 +71,7 @@ goal.PanelPadding.PaddingLeft = UDim.new(0, 60)
 goalIcon.Position = UDim2.new(0, -44, 0.5, 0)
 local button = Instance.new("TextButton")
 button.Name = "ActionButton"
-button.AnchorPoint, button.Position = Vector2.new(0.5, 1), UDim2.fromScale(0.5, 0.82)
+button.AnchorPoint, button.Position = Vector2.new(0.5, 0), UDim2.fromOffset(0, 8)
 button.Size = UDim2.new(0.6, 0, 0, 72)
 button.BackgroundColor3, button.TextColor3 = Color3.fromRGB(255, 170, 40), Color3.fromRGB(25, 30, 35)
 button.TextSize, button.TextWrapped, button.Visible = 26, true, false
@@ -285,7 +287,7 @@ local function fitUI()
 	goal.Size, goal.Position = UDim2.new(0.72, 0, 0, compact and 48 or 56), UDim2.new(0.5, 0, 1, compact and -64 or -22)
 	local cap = goal:FindFirstChild("WidthBounds") or Instance.new("UISizeConstraint")
 	cap.Name, cap.MaxSize, cap.Parent = "WidthBounds", Vector2.new(640, 56), goal
-	button.Size, button.Position = UDim2.new(0, math.min(280, v.X * 0.52), 0, 48), UDim2.new(0.5, 0, 1, -16)
+	button.Size, button.Position = UDim2.fromOffset(UI.bannerWidth(gui.AbsoluteSize.X), 48), UDim2.new(0.5, 0, 0, 8)
 	countdown.Size, countdown.Position = UDim2.new(0, math.min(300, v.X * 0.6), 0, compact and 56 or 84), UDim2.fromScale(0.5, 0.26)
 	trapHint.Size, trapHint.Position = UDim2.new(0.6, 0, 0, 40), UDim2.new(0.5, 0, 1, compact and -186 or -150)
 	for _, b in {placeButton, rotateButton, snapButton} do
@@ -305,6 +307,7 @@ local function bindUICamera()
 end
 workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(bindUICamera)
 bindUICamera()
+gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitUI)
 local previewAPI = {}
 function previewAPI.floor(a, position)
 	local hit =

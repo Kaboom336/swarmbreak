@@ -60,6 +60,9 @@ local function decorate(node)
 	elseif node:IsA("TextLabel") then
 		nameplate(node)
 		local gui = node.Parent
+		if gui and gui:IsA("SurfaceGui") and node.Text:upper():find("COMING SOON", 1, true) then
+			node.Visible = false
+		end
 		if not node:FindFirstChild("LetterOutline") and gui and (gui:IsA("SurfaceGui") or gui:IsA("BillboardGui")) then
 			local color = node.TextColor3
 			Style.lettering(node, node.Text == "!" and 64 or 36, 1)

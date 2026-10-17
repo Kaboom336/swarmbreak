@@ -36,6 +36,10 @@ function UI.gain(previous, current)
 	return type(previous) == "number" and type(current) == "number" and math.max(0, current - previous) or 0
 end
 function UI.plate(raw, keeper, ownSlot)
+	-- The actionable banner already names entry; empty/future destinations add no action.
+	if raw:match("^>?%s*Meadow%s*/%s*Enter%s*$") or raw:upper():find("COMING SOON", 1, true) then
+		return "", false
+	end
 	if keeper then
 		raw = raw:gsub("^>%s*", "")
 		if raw:find("CHARGE", 1, true) then
@@ -64,6 +68,11 @@ function UI.plate(raw, keeper, ownSlot)
 		return "", false
 	end
 	return tonumber(slot) == ownSlot and "Your plot" or owner .. "'s plot", true
+end
+function UI.instruction(goal, action, remaining)
+	local refused = goal:find("Action refused:", 1, true) == 1
+	return (not refused and action or goal) .. (remaining and (" · " .. tostring(math.ceil(remaining)) .. "s") or ""),
+		not refused and action ~= nil
 end
 function UI.bannerWidth(safeWidth)
 	return math.max(120, math.min(460, safeWidth - 24))

@@ -1,13 +1,13 @@
 -- Presentation policy/lifecycle. Ports own only local UI, camera and scheduling.
 local Cutscenes = {}
 Cutscenes.Beats = {
-	meadowArrival = { title = "MEADOW", duration = 3.2, path = "vista", priority = 1 },
-	caveArrival = { title = "CRYSTAL CAVE", duration = 3.2, path = "vista", priority = 1 },
+	meadowArrival = { title = "MEADOW", duration = 1, path = "vista", priority = 1 },
+	caveArrival = { title = "CRYSTAL CAVE", duration = 1, path = "vista", priority = 1 },
 	keeper = { title = "THE KEEPER IS WATCHING", duration = 2, path = "warn", priority = 2 },
-	acorn = { title = "STOLEN!", duration = 2, path = "orbit", payoff = true, priority = 3 },
-	geode = { title = "STOLEN!", duration = 2, path = "orbit", payoff = true, priority = 3 },
-	escape = { title = "ESCAPED!", duration = 2.4, path = "pull", payoff = true, priority = 5 },
-	blast = { title = "BLAST OFF!", duration = 2.4, path = "blast", payoff = true, priority = 4 },
+	acorn = { title = "STOLEN!", duration = 0.65, path = "orbit", payoff = true, priority = 3 },
+	geode = { title = "STOLEN!", duration = 0.65, path = "orbit", payoff = true, priority = 3 },
+	escape = { title = "ESCAPED!", duration = 0.9, path = "pull", payoff = true, priority = 5 },
+	blast = { title = "BLAST OFF!", duration = 0.9, path = "blast", payoff = true, priority = 4 },
 }
 Cutscenes.Watchdog = 4.5
 
@@ -24,6 +24,10 @@ function Cutscenes.new(ports)
 	function controller:request(id, state)
 		local beat = assert(Cutscenes.Beats[id], "unknown cutscene")
 		local arrival = id == "meadowArrival" or id == "caveArrival"
+		-- Real Keeper tells stay in world UI. Exposition and repeat vistas are redundant.
+		if id == "keeper" or (arrival and self.seen[id]) then
+			return false
+		end
 		if self.destroyed or not state.alive or state.capture then
 			return false
 		end
@@ -40,8 +44,8 @@ function Cutscenes.new(ports)
 		local active = {
 			id = id,
 			beat = beat,
-			duration = arrival and self.seen[id] and 2 or beat.duration,
-			titleOnly = state.reduced or state.vr or state.otherCamera or state.moving,
+			duration = beat.duration,
+			titleOnly = true, -- Keep the live view and steering through every timed escape.
 			character = state.character,
 			camera = state.camera,
 			humanoid = state.humanoid,

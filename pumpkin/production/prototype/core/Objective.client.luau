@@ -11,6 +11,7 @@ gui.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
 gui.Parent = player:WaitForChild("PlayerGui")
 local banner = Instance.new("TextLabel")
 banner.Name, banner.Text = "ObjectiveBanner", ""
+banner.Active = false -- Click/touch reaches the original action button below this caption.
 Style.panel(banner, Style.Colors.Panel, 22)
 banner.AnchorPoint, banner.Parent = Vector2.new(0.5, 0), gui
 local icon = Style.icon(banner, "route", Style.Colors.Cyan)
@@ -37,6 +38,7 @@ track.Size, track.Position = UDim2.fromScale(1, 1), UDim2.fromScale(0, 0)
 local slide = Instance.new("UIScale")
 slide.Parent = banner
 local activeTween, previous, full, timerIdentity = nil, nil, nil, nil
+local mirroredAction
 local function fit()
 	local v = gui.AbsoluteSize
 	local y = 8
@@ -110,7 +112,34 @@ local connection = Run.RenderStepped:Connect(function()
 	)
 	timer.Visible = remaining ~= nil
 	banner.PanelPadding.PaddingBottom = UDim.new(0, remaining and 10 or 5)
-	banner.Text = goal .. (remaining and (" · " .. tostring(math.ceil(remaining)) .. "s") or "")
+	-- Present the ORIGINAL action button in the goal slot. Its input/hold code owns it.
+	local action = legacyGui and legacyGui:FindFirstChild("ActionButton")
+	local actionText = action and action.Visible and action.Text or nil
+	local caption, actionable = UI.instruction(goal, actionText, remaining)
+	banner.Visible = not actionable
+	banner.Text = caption
+	if actionable then
+		-- Leave action.Text untouched: it is refreshed by the input owner every frame.
+		-- A transparent, noninteractive caption mirrors it with the shared countdown.
+		banner.Visible = true
+		banner.BackgroundTransparency = 1
+		banner.PanelEdge.Enabled = false
+		banner.PanelShadow.Enabled = false
+		icon.Visible = false
+		banner.TextColor3 = action.TextColor3
+	else
+		banner.BackgroundTransparency = 0
+		banner.PanelEdge.Enabled = true
+		banner.PanelShadow.Enabled = true
+		icon.Visible = true
+		banner.TextColor3 = Style.Colors.Cream
+	end
+	-- Show a single caption: the overlay remains noninteractive; original button receives input.
+	if action then
+		mirroredAction = action
+		action.TextTransparency = actionable and 1 or 0
+		action.LetterOutline.Enabled = not actionable
+	end
 	if remaining then
 		full = math.max(full or remaining, remaining, 1)
 		fill.Size = UDim2.fromScale(math.clamp(remaining / full, 0, 1), 1)
@@ -129,6 +158,10 @@ player:GetAttributeChangedSignal("ReducedMotion"):Connect(function()
 end)
 script.Destroying:Connect(function()
 	connection:Disconnect()
+	if mirroredAction and mirroredAction.Parent then
+		mirroredAction.TextTransparency = 0
+		mirroredAction.LetterOutline.Enabled = true
+	end
 	if activeTween then
 		activeTween:Cancel()
 		activeTween:Destroy()
