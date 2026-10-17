@@ -263,18 +263,14 @@ local function observe(root)
 			end
 			entry.model, entry.started = model, reveal and os.clock() or nil
 			if meadowAcorn then
-				-- Existing Style caption stays outside the shaft and follows carried loot.
+				-- Attach to visible cosmetic geometry, above its stem. The authoritative
+				-- root is locally hidden and its server caption is limited to 32 studs.
+				local caption, captionGui = Style.billboard(model.GoldenBody, "SummitAcornCaption", UDim2.new(6, 24, 1.2, 8), 70, false)
+				caption.Text = "Golden Acorn"
+				captionGui.StudsOffsetWorldSpace = Vector3.new(0, 4.5, 0)
 				for _, gui in root:GetDescendants() do
-					if gui:IsA('BillboardGui') then
-						gui.StudsOffsetWorldSpace=Vector3.new(0,6.8,0)
-						gui.AlwaysOnTop=true
-						for _, text in gui:GetDescendants() do
-							if text:IsA('TextLabel') then
-								text.TextColor3=Style.Colors.Cream
-								text.BackgroundColor3=Color3.fromRGB(34,39,46)
-								text.BackgroundTransparency=.15
-							end
-						end
+					if gui:IsA('BillboardGui') and gui.Name == 'GoalCaption' then
+						gui.Enabled=false
 					end
 				end
 				acornGlow(model, state == "Nest")

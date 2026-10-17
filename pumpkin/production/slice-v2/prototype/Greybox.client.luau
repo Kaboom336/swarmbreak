@@ -61,7 +61,10 @@ goal.TextSize, goal.TextWrapped = 20, true
 goal.Parent = gui
 goal.Name = "Objective"
 Style.panel(goal, Style.Colors.Panel, 22)
-Style.icon(goal, "route", Style.Colors.Cyan)
+local goalIcon = Style.icon(goal, "route", Style.Colors.Cyan)
+-- UIPadding also offsets children: keep the icon inside the reserved gutter.
+goal.PanelPadding.PaddingLeft = UDim.new(0, 60)
+goalIcon.Position = UDim2.new(0, -44, 0.5, 0)
 local button = Instance.new("TextButton")
 button.Name = "ActionButton"
 button.AnchorPoint, button.Position = Vector2.new(0.5, 1), UDim2.fromScale(0.5, 0.82)

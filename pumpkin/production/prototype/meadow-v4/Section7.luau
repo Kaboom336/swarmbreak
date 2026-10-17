@@ -68,11 +68,17 @@ function S.build(model,origin)
  for i,text in {'SHELF  >','SPIRAL  >'} do
   local frame=CFrame.new(21.64,52.2-(i-1)*1.4,-94)*CFrame.Angles(0,math.pi/2,0)
   local board=part('ExitBoard'..i,V(3.1,1.2,.22),frame,wood)
-  board:SetAttribute('RouteLabel',text);board:SetAttribute('LabelFace','Front');board:SetAttribute('LabelSize',.35)
-  local gui=Instance.new('SurfaceGui');gui.Face=Enum.NormalId.Front;gui.PixelsPerStud=96;gui.LightInfluence=.15;gui.Parent=board
-  local label=Instance.new('TextLabel');label.Size=UDim2.fromScale(.9,.84);label.Position=UDim2.fromScale(.05,.08)
-  label.BackgroundTransparency=1;label.Text=text;label.Parent=gui
-  require(game:GetService('ReplicatedStorage').UIStyle).lettering(label,80,12)
+  -- Own both faces at construction; late RouteLabel replication must not leave
+  -- the arrival (+X / Back) face blank or let UIWorld replace these captions.
+  board:SetAttribute('S7Caption',text);board:SetAttribute('LabelFace','Back');board:SetAttribute('LabelSize',.35)
+  require(game:GetService('ReplicatedStorage').UIStyle).sign(board,text)
+  for _,gui in board:GetChildren() do
+   if gui:IsA('SurfaceGui') then
+    gui.AlwaysOnTop=true;gui.MaxDistance=70 -- Keep lettering clear of the overlapping post.
+    local label=gui:FindFirstChildOfClass('TextLabel')
+    label.Text=text;label.Size=UDim2.fromScale(.9,.84);label.Position=UDim2.fromScale(.05,.08)
+   end
+  end
   part('ExitBolt'..i,V(.12,.12,.12),frame*CFrame.new(-1.3,0,-.17),{159,149,116},'Metal')
  end
  -- Refinish only the existing nonphysical nest stones; preserve every field
