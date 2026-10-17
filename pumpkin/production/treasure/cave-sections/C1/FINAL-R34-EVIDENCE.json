@@ -1,0 +1,131 @@
+{
+  "artifact": {
+    "checker_sha256": "e0f2d1e64e2f4b46929366de3bea53229bb32bce1bf0734e4ffb7127b06b9982",
+    "expected_loader": "unchanged pre-C1 mounted cave loader",
+    "loader_sha256": "641f35008ac92245d98e943c9ebe6ef93787027da0eb2409fb03e3bee870cfd7",
+    "mode": "artifact-only",
+    "place_sha256": "0aee510e523b4df49998a649b1ab792728f807396eed5816eaba05857ed7227c",
+    "test_assertions_changed": false,
+    "working_tree_loader_differs": true
+  },
+  "backup_sha256": "103d16d05bf9fedee826968b2ddbf66e1d2c3b479544e0ab52bd8b4bd0590340",
+  "dense_sweep": {
+    "failures": 0,
+    "fresh_r4_run": false,
+    "physical_query_state_preserved": true,
+    "samples": 3024,
+    "source": "R1/R2 FINAL-EVIDENCE.json and DENSE-FINAL.json",
+    "state": "HISTORICAL PASS"
+  },
+  "hashes": {
+    "CAMERAS.json": "cb418aa990c43c8d829a00f4c94f58919709a5652975b84a4492787cd111e2c6",
+    "GAPS-R4.md": "f7b3925b54b09a3a59a2187a5c7b2abdd28da9b9451a4d274943dcd3549c6c7b",
+    "RESULT.md": "0eac2e05c64146e24a421be94f66d09a451e8eefb95e15d55ef43f9aa954c7f0",
+    "SBS-R3.jpg": "36a62ae004c1cf4fbe55c11269931d0a18828e74b2f4f89a849ddd2710be1176",
+    "SBS-R4-phone.jpg": "f7a08dace0befa52285b908037b0a44d67e170d808ed5078155d1971b028ce7f",
+    "SBS-R4.jpg": "e3b544816f2412950abe0f2bb28232722deaae4ddcfa4abf81d035da18337181",
+    "TARGET.png": "c2415c7c4cfd5a67972a180e8db72303ce0226531c8b980fdcd643500b8f2217",
+    "presentation.luau": "17a83fa14f1c670424a7bb756a6bbe4324fa66f03a689e2522ca14506db76478",
+    "r3-arrival.png": "079358e5a2caedd0f8258b201dbf04b41ae9eb330831dbf8dd76f2c20ff6a530",
+    "r3-outgoing.png": "d379b285185f9dcb4e4453f22a8312fdc6fd77393410251c97d69e61a5ef2ad1",
+    "r3-plan.json": "2e924663d90745f18d15edd890568c5708cbca1083284e1c3f95a954ded5644b",
+    "r3.json": "05babd92fd3a8d75f7715715a8b0b45cde2356499ea4c2856f15fde84c5510c0",
+    "r34-artifact-final.log": "0dbbd8003a922b129b61d920ecbeadea1717cd0e420e99ff7fa02f52a481c8cc",
+    "r34-selene.log": "a8929a225e184bb7a0b2e43badbbddabe1e4c46f3d68e97267f96b35aaeca834",
+    "r4-arrival.png": "bfe6ecff003b4b9249d0e7940e4a93917b8ff1d6000f54a39f1bae78c7c9b94f",
+    "r4-outgoing.png": "b1ed943bf3881fa069282da8af10b9231b73253aae517367cb475e76491deaf6",
+    "r4-plan.json": "947d4880b8282e38ffcddde63416a0fb876da1d4f583551acfbb93e6e9e73f7f",
+    "r4.json": "0083381e9e2700fe5c6c1154754256397944e64114a692408f94c83ebd8236b1",
+    "verify-r34.luau": "fc0cff55d9b87818467d17f9ee864c16aa26459ccce6e22e1dea55c7b9ba41d9"
+  },
+  "independent_claude_review": "UNKNOWN",
+  "owner_acceptance": "UNKNOWN",
+  "place_sha256": "0aee510e523b4df49998a649b1ab792728f807396eed5816eaba05857ed7227c",
+  "r3": {
+    "audit": {
+      "flags": true,
+      "lane_errors": {},
+      "lanes": 47,
+      "parts": 15,
+      "support_errors": {}
+    },
+    "contact": {
+      "contact": 0,
+      "cosmetic_envelopes": 15,
+      "errors": {},
+      "method": "OBB SAT, conservative wedge boxes; intentional cosmetic-cluster overlap is nonphysical",
+      "protected_solids": 14409,
+      "state": "PASS",
+      "tolerance": 0.035
+    },
+    "mount": {
+      "backup_sha256": "e783e67ad1f852ae0f50495bd1d1a35798902ce5a59a668fe17cb6077f6a612b",
+      "compiled": 30,
+      "cosmetics": 15,
+      "place_sha256": "6aa13ee4eba5cd5d7770213491210115a20010b71cce445f462397356536d410",
+      "unrelated_serialized_state_exact": true
+    },
+    "presentation": {
+      "hidden_crystal_parts": 35,
+      "panel": 1,
+      "quiet_crystal_parts": 18,
+      "rock_faces": 146,
+      "round": "r3"
+    }
+  },
+  "r4": {
+    "audit": {
+      "flags": true,
+      "lane_errors": {},
+      "lanes": 47,
+      "parts": 15,
+      "support_errors": {}
+    },
+    "contact": {
+      "contact": 0,
+      "cosmetic_envelopes": 15,
+      "errors": {},
+      "method": "OBB SAT, conservative wedge boxes; intentional cosmetic-cluster overlap is nonphysical",
+      "protected_solids": 14409,
+      "state": "PASS",
+      "tolerance": 0.035
+    },
+    "mount": {
+      "backup_sha256": "e783e67ad1f852ae0f50495bd1d1a35798902ce5a59a668fe17cb6077f6a612b",
+      "compiled": 30,
+      "cosmetics": 15,
+      "place_sha256": "0aee510e523b4df49998a649b1ab792728f807396eed5816eaba05857ed7227c",
+      "unrelated_serialized_state_exact": true
+    },
+    "presentation": {
+      "hidden_crystal_parts": 35,
+      "panel": 3,
+      "quiet_crystal_parts": 18,
+      "rock_faces": 146,
+      "round": "r4"
+    }
+  },
+  "rounds": 4,
+  "runtime": {
+    "failed_fit_cleanup_retry": true,
+    "idempotence": true,
+    "original_serialization_exact": true,
+    "place_sha256": "0aee510e523b4df49998a649b1ab792728f807396eed5816eaba05857ed7227c",
+    "pre_r3_sha256": "103d16d05bf9fedee826968b2ddbf66e1d2c3b479544e0ab52bd8b4bd0590340",
+    "presentation": {
+      "hidden_crystal_parts": 35,
+      "panel": 3,
+      "quiet_crystal_parts": 18,
+      "rock_faces": 146,
+      "round": "r4"
+    },
+    "presentation_only_whitelisted_visuals": true,
+    "runtime_rocks": 11,
+    "state": "PASS",
+    "studio_play": "NOT RUN",
+    "texture_clear": true,
+    "yields": 1974
+  },
+  "state": "PASS offline; visual REVISIT",
+  "studio_play": "NOT RUN"
+}

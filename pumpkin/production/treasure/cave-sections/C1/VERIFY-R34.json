@@ -1,0 +1,20 @@
+{
+  "failed_fit_cleanup_retry": true,
+  "idempotence": true,
+  "original_serialization_exact": true,
+  "place_sha256": "0aee510e523b4df49998a649b1ab792728f807396eed5816eaba05857ed7227c",
+  "pre_r3_sha256": "103d16d05bf9fedee826968b2ddbf66e1d2c3b479544e0ab52bd8b4bd0590340",
+  "presentation": {
+    "hidden_crystal_parts": 35,
+    "panel": 3,
+    "quiet_crystal_parts": 18,
+    "rock_faces": 146,
+    "round": "r4"
+  },
+  "presentation_only_whitelisted_visuals": true,
+  "runtime_rocks": 11,
+  "state": "PASS",
+  "studio_play": "NOT RUN",
+  "texture_clear": true,
+  "yields": 1974
+}

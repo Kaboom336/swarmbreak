@@ -1,0 +1,306 @@
+[
+  {
+    "c": [
+      -182,
+      13.03,
+      127
+    ],
+    "color": [
+      81,
+      96,
+      120
+    ],
+    "kit": true,
+    "name": "C1_WestRockA",
+    "s": [
+      12,
+      30,
+      12
+    ],
+    "shape": "Wedge"
+  },
+  {
+    "c": [
+      -183,
+      2.53,
+      138
+    ],
+    "color": [
+      91,
+      91,
+      118
+    ],
+    "kit": true,
+    "name": "C1_WestRockB",
+    "s": [
+      10,
+      9,
+      10
+    ],
+    "shape": "Wedge"
+  },
+  {
+    "c": [
+      -183,
+      1.53,
+      147
+    ],
+    "color": [
+      65,
+      74,
+      99
+    ],
+    "kit": true,
+    "name": "C1_WestRockC",
+    "s": [
+      10,
+      7,
+      8
+    ],
+    "shape": "Wedge"
+  },
+  {
+    "c": [
+      -113,
+      2.03,
+      143
+    ],
+    "color": [
+      70,
+      78,
+      103
+    ],
+    "kit": true,
+    "name": "C1_EastRockA",
+    "s": [
+      14,
+      20,
+      12
+    ],
+    "shape": "Wedge"
+  },
+  {
+    "c": [
+      -113,
+      -1.97,
+      134
+    ],
+    "color": [
+      88,
+      88,
+      114
+    ],
+    "kit": true,
+    "name": "C1_EastRockB",
+    "s": [
+      8,
+      12,
+      8
+    ],
+    "shape": "Wedge"
+  },
+  {
+    "c": [
+      -119,
+      -3.97,
+      151
+    ],
+    "color": [
+      61,
+      70,
+      95
+    ],
+    "kit": true,
+    "name": "C1_EastRockC",
+    "s": [
+      10,
+      8,
+      6
+    ],
+    "shape": "Wedge"
+  },
+  {
+    "apronShoulder": true,
+    "c": [
+      -130,
+      2,
+      114
+    ],
+    "color": [
+      79,
+      84,
+      109
+    ],
+    "kit": true,
+    "name": "C1_ApronRockA",
+    "s": [
+      6,
+      4,
+      6
+    ],
+    "shape": "Wedge"
+  },
+  {
+    "apronShoulder": true,
+    "c": [
+      -130,
+      2.5,
+      123
+    ],
+    "color": [
+      76,
+      92,
+      116
+    ],
+    "kit": true,
+    "name": "C1_ApronRockB",
+    "s": [
+      6,
+      5,
+      8
+    ],
+    "shape": "Wedge"
+  },
+  {
+    "apronShoulder": true,
+    "c": [
+      -130,
+      3.5,
+      132
+    ],
+    "color": [
+      99,
+      112,
+      136
+    ],
+    "kit": true,
+    "name": "C1_ApronRockC",
+    "s": [
+      6,
+      7,
+      8
+    ],
+    "shape": "Wedge"
+  },
+  {
+    "apronShoulder": true,
+    "c": [
+      -130,
+      0.5,
+      137
+    ],
+    "color": [
+      65,
+      73,
+      97
+    ],
+    "name": "C1_LampBearing",
+    "s": [
+      2,
+      1,
+      2
+    ]
+  },
+  {
+    "apronShoulder": true,
+    "c": [
+      -130,
+      1.15,
+      137
+    ],
+    "color": [
+      35,
+      37,
+      46
+    ],
+    "material": "Metal",
+    "name": "C1_LampBase",
+    "s": [
+      1.5,
+      0.3,
+      1.5
+    ]
+  },
+  {
+    "apronShoulder": true,
+    "c": [
+      -130,
+      2,
+      137
+    ],
+    "color": [
+      255,
+      187,
+      88
+    ],
+    "light": true,
+    "material": "Neon",
+    "name": "C1_LampGlass",
+    "s": [
+      1,
+      1.4,
+      1
+    ]
+  },
+  {
+    "apronShoulder": true,
+    "c": [
+      -130,
+      2.85,
+      137
+    ],
+    "color": [
+      35,
+      37,
+      46
+    ],
+    "material": "Metal",
+    "name": "C1_LampCap",
+    "s": [
+      1.6,
+      0.3,
+      1.6
+    ]
+  },
+  {
+    "c": [
+      -107,
+      4.03,
+      132
+    ],
+    "color": [
+      70,
+      83,
+      107
+    ],
+    "kit": true,
+    "name": "C1_EastWalkRock",
+    "s": [
+      8,
+      24,
+      8
+    ],
+    "shape": "Wedge"
+  },
+  {
+    "apronShoulder": true,
+    "c": [
+      -130,
+      1,
+      114
+    ],
+    "color": [
+      101,
+      113,
+      135
+    ],
+    "kit": true,
+    "name": "C1_NearRockCrown",
+    "s": [
+      6,
+      2,
+      6
+    ],
+    "shape": "Wedge"
+  }
+]

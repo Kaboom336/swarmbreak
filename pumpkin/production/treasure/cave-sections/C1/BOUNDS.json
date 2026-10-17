@@ -1,0 +1,24 @@
+{
+  "C1_max": [
+    -100,
+    36,
+    164
+  ],
+  "C1_min": [
+    -192,
+    -24,
+    96
+  ],
+  "coordinates": "Roblox X,Y,Z",
+  "native_map_max": [
+    559,
+    292.5,
+    239
+  ],
+  "native_map_min": [
+    -479,
+    -251.8306427001953,
+    -701.75
+  ],
+  "source": "all transformed original native BasePart corners, not generated concept"
+}

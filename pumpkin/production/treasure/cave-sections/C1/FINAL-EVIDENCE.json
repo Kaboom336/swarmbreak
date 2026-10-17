@@ -1,0 +1,97 @@
+{
+  "AUDIT-r1": {
+    "flags": true,
+    "lane_errors": {},
+    "lanes": 47,
+    "parts": 6,
+    "support_errors": {}
+  },
+  "AUDIT-r2": {
+    "flags": true,
+    "lane_errors": {},
+    "lanes": 47,
+    "parts": 13,
+    "support_errors": {}
+  },
+  "CONTACT-r1": {
+    "contact": 0,
+    "cosmetic_envelopes": 6,
+    "errors": {},
+    "method": "OBB SAT, conservative wedge boxes; intentional cosmetic-cluster overlap is nonphysical",
+    "protected_solids": 14409,
+    "state": "PASS",
+    "tolerance": 0.035
+  },
+  "CONTACT-r2": {
+    "contact": 0,
+    "cosmetic_envelopes": 13,
+    "errors": {},
+    "method": "OBB SAT, conservative wedge boxes; intentional cosmetic-cluster overlap is nonphysical",
+    "protected_solids": 14409,
+    "state": "PASS",
+    "tolerance": 0.035
+  },
+  "RUNTIME": {
+    "expected_failure_warnings": 3,
+    "failure_cleanup_retry": true,
+    "idempotence": true,
+    "place_sha256": "103d16d05bf9fedee826968b2ddbf66e1d2c3b479544e0ab52bd8b4bd0590340",
+    "r1_frozen": 6,
+    "rocks": 9,
+    "state": "PASS",
+    "textured_fixture": true,
+    "yields": 32
+  },
+  "artifact_hashes": {
+    "CAMERAS.json": "cb418aa990c43c8d829a00f4c94f58919709a5652975b84a4492787cd111e2c6",
+    "DENSE-FINAL.json": "96a399018882475805ab24f3455974a4092ad46b1c35af9315f4162cc55b3d3a",
+    "PROMPT.md": "20f36f56550682005c15f0e5eaace8c7ef204fff3006e1e17d533df9c6114623",
+    "REFS.jpg": "681c8e4831433dc7d0f5ecb9b4aaadd93d40ea0b5d49a0d2e22ebc07a42df922",
+    "SBS-R1.jpg": "a3a62940078a4fb51d32fdc9b5ea7ee2eedf204cf3d0ef8bf1ab87158a0e0bbd",
+    "SBS-R2-phone.jpg": "482eb64c358ae8e1012717d0cc0fa546e8c91cdab31b6989bb395742b79af99f",
+    "SBS-R2.jpg": "ad4fc934f1abb188acfc84f0d31c6d9712f70265fe8a6844605b347c26805bf8",
+    "TARGET.png": "c2415c7c4cfd5a67972a180e8db72303ce0226531c8b980fdcd643500b8f2217",
+    "before.json": "21997b1e7e114e159845831567bde4aa37547351d0158140184dbd59696a14c2",
+    "r1-plan.json": "b19eb02d4df05e04fe3a9d7190abd9bc9705e790eea20e4436409111db3d52e6",
+    "r1.json": "3e5ac8e768aa13c7abf4ac673ef310af138160bb6189b315e39f9bbbb971c95f",
+    "r2-arrival.png": "2c3b96d2ee779dfb089b70165162543b231b0f860870e1abf6c9dbdd64fcf530",
+    "r2-outgoing.png": "fbf773fc3b0bbeed3531fc869f2c8531cf2d0c37aa2c3e99670cb15acb6135fe",
+    "r2-plan.json": "694662e93be39dc1f130f8fe34fbae44c5b9eb0666d905360b38d8f364b97e41",
+    "r2.json": "572c98b980ff9eac5794c86f731d5d35a7186d5ba06c1a6569b07dad31445e5f",
+    "render.py": "91559ad55bdaf093c91408161a2747a234fbb1faab52c6707d1841f3ef828797",
+    "selene.log": "a8929a225e184bb7a0b2e43badbbddabe1e4c46f3d68e97267f96b35aaeca834"
+  },
+  "artifact_only": {
+    "checker_sha256": "e0f2d1e64e2f4b46929366de3bea53229bb32bce1bf0734e4ffb7127b06b9982",
+    "expected_loader": "unchanged pre-C1 mounted cave loader",
+    "loader_sha256": "641f35008ac92245d98e943c9ebe6ef93787027da0eb2409fb03e3bee870cfd7",
+    "mode": "artifact-only",
+    "place_sha256": "103d16d05bf9fedee826968b2ddbf66e1d2c3b479544e0ab52bd8b4bd0590340",
+    "test_assertions_changed": false,
+    "working_tree_loader_differs": true
+  },
+  "backup_sha256": "e783e67ad1f852ae0f50495bd1d1a35798902ce5a59a668fe17cb6077f6a612b",
+  "compiled_sources": 29,
+  "dense": {
+    "N": 8,
+    "failures": 0,
+    "final_gameplay_and_original_state_exact": true,
+    "log": "dense-drop-mounted.log",
+    "native_ray": "unchanged; no memo cache",
+    "samples": 3024,
+    "state": "PASS",
+    "tested_artifact_sha256": "311703f28b8e1e02a9fce9285b33f0172191e8dddfc9467e82c17cf2d26c2b92"
+  },
+  "full_unrelated_serialization_exact": true,
+  "independent_claude_review": "PENDING",
+  "lights": 411,
+  "new_lights": 1,
+  "owner_acceptance": "UNKNOWN",
+  "place_sha256": "103d16d05bf9fedee826968b2ddbf66e1d2c3b479544e0ab52bd8b4bd0590340",
+  "protected_solids": 14409,
+  "rounds": 2,
+  "six_suite_bodies_exact": true,
+  "state": "PASS offline conservation",
+  "studio_play": "NOT RUN",
+  "visual": "REVISIT"
+}

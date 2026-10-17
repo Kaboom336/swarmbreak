@@ -1,0 +1,33 @@
+{
+  "coordinates": "Roblox X,Y,Z",
+  "eye_height": 5.5,
+  "views": [
+    {
+      "name": "arrival",
+      "eye": [
+        -145,
+        5.5,
+        136
+      ],
+      "target": [
+        -105,
+        18,
+        70
+      ]
+    },
+    {
+      "name": "outgoing",
+      "eye": [
+        -137,
+        5.5,
+        110
+      ],
+      "target": [
+        -100,
+        20,
+        55
+      ]
+    }
+  ],
+  "lighting": "fixed offline approximation"
+}

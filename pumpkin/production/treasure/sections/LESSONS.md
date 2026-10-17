@@ -1,5 +1,23 @@
 # Section craft lessons
 
+## Crystal Cave C1 — rounds 1 and 2, 2026-10-17
+
+1. When a canonical place contains later runtime repairs, preserve its complete
+   serialized state before adding section art, because a historical native build
+   can discard repaired suite and cart mounts.
+2. When safe outer shoulder art is invisible, check the actual player frustum
+   before adding detail, because lane-safe placement alone does not create useful
+   framing. Keep a clear apron corridor and reduce art that blocks the cart vista.
+3. When a shared loader has changed for another biome, exercise the exact
+   preserved mounted version, because blindly remounting the working-tree loader
+   can import unrelated changes into a cosmetic-only pass.
+
+Evidence: `../cave-sections/C1/RESULT.md`, R1/R2 matched player/phone boards,
+contact/support/runtime fixtures and complete unrelated serialization parity.
+Visual REVISIT; independent Claude/live Studio/owner acceptance UNKNOWN.
+No Studio play, commit or publish; R1/R2 only. Dense sweep verdict is in its log,
+not implied by this lesson entry.
+
 ## Meadow rock pass — 2026-10-17
 
 1. When selecting visible walls behind ramps, intersect the actual wedge half-space,
@@ -317,4 +335,20 @@ Evidence: `../rock4/README.md`, `../rock4/CONTRACT.json`, `../rock4/RUNTIME.json
 `../rock4/SIGHT.json`, `../rock4/CRITIC-VISUAL.md`, `../rock4/CRITIC-TECHNICAL.md`
 and S6/S7/S8 `SBS-ROCK4.jpg`. Final artifact checks are sealed separately in
 `../rock4/FINAL-EVIDENCE.json`; this lesson entry alone is not a test result.
+
+## Crystal Cave C1 final rounds 3–4
+
+1. When safe rock pockets fall outside the player camera, test their projected
+   silhouette before detailing them, because larger off-camera assets cannot
+   supply the requested foreground frame. Keep REVISIT when lane buffers prevent it.
+2. When a central crystal pile competes with the route, hide the smallest whole
+   crystal recipes and retain a few glowing groups, because reducing component
+   noise helps the stairs and distant crown read without moving gameplay props.
+3. When original scene checks require exact conservation, mount reversible
+   cosmetic presentation and verify its full nonvisual state independently,
+   because a passing stock checker alone does not exercise runtime appearance.
+
+Evidence: `../cave-sections/C1/GAPS-R4.md`, `SBS-R3.jpg`, `SBS-R4.jpg`,
+`VERIFY-R34.json`, `FINAL-R34-EVIDENCE.json` and `RESULT.md`. Final two rounds
+complete; visual REVISIT. No Studio play, existing test edits, commit or publish.
 

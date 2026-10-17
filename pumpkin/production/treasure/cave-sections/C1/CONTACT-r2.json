@@ -1,0 +1,9 @@
+{
+  "state": "PASS",
+  "tolerance": 0.035,
+  "cosmetic_envelopes": 13,
+  "protected_solids": 14409,
+  "contact": 0,
+  "errors": [],
+  "method": "OBB SAT, conservative wedge boxes; intentional cosmetic-cluster overlap is nonphysical"
+}

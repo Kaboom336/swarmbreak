@@ -1,5 +1,11 @@
 -- Offline native-part builder. Reuses Meadow v4's manifest/CFrame/slab pattern;
 -- source modules are mounted from prototype/core, never copied into source.
+-- Section entrypoint: preserve the current six-suite place; never run the
+-- historical baseline generator below for section work.
+if (require('@lune/process').args[1] or ''):match('^c1%-') then
+ require('../../treasure/cave-sections/C1/build')()
+ return
+end
 local fs, rb, serde, luau = require('@lune/fs'), require('@lune/roblox'), require('@lune/serde'), require('@lune/luau')
 local V, C = rb.Vector3, rb.CFrame
 local stage=tonumber(require('@lune/process').args[1] or '4')

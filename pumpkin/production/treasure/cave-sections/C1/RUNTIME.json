@@ -1,0 +1,11 @@
+{
+  "expected_failure_warnings": 3,
+  "failure_cleanup_retry": true,
+  "idempotence": true,
+  "place_sha256": "103d16d05bf9fedee826968b2ddbf66e1d2c3b479544e0ab52bd8b4bd0590340",
+  "r1_frozen": 6,
+  "rocks": 9,
+  "state": "PASS",
+  "textured_fixture": true,
+  "yields": 32
+}

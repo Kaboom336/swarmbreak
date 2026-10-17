@@ -1,0 +1,9 @@
+{
+  "checker_sha256": "e0f2d1e64e2f4b46929366de3bea53229bb32bce1bf0734e4ffb7127b06b9982",
+  "expected_loader": "unchanged pre-C1 mounted cave loader",
+  "loader_sha256": "641f35008ac92245d98e943c9ebe6ef93787027da0eb2409fb03e3bee870cfd7",
+  "mode": "8-memo",
+  "place_sha256": "103d16d05bf9fedee826968b2ddbf66e1d2c3b479544e0ab52bd8b4bd0590340",
+  "test_assertions_changed": false,
+  "working_tree_loader_differs": true
+}
