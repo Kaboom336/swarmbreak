@@ -94,6 +94,13 @@ local function template(name)
 				or section.name == "Cyan"
 				or section.name == "LampLight"
 				or section.name == "Lava"
+			-- S8: this decorative home-vista seam reads as a stray orange pole
+			-- from below Meadow. Retain geometry; mute only its cosmetic finish.
+			if name == "Decor" and section.name == "Lava" then
+				section = table.clone(section)
+				section.color = { 143, 105, 69 }
+				neon = false
+			end
 			local material = Enum.Material.SmoothPlastic
 			if name == "Decor" then
 				local id = section.name:lower()
@@ -349,6 +356,9 @@ task.spawn(function()
 		return
 	end
 	decor.Name, decor.Parent = "HomeArtDecor", world
+	-- S9 decor finish only; pet/loot presentation and authoritative state are unchanged.
+	local finishOK, finishError = pcall(function() require(RS.MeadowV4.Section9).finishDecor(decor) end)
+	if not finishOK then warn("[HomeArt] S9 decor finish skipped: " .. tostring(finishError)) end
 	for _, p in ipairs(world:GetDescendants()) do
 		if
 			p:IsA("BasePart")

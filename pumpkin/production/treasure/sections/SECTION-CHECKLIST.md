@@ -1,5 +1,16 @@
 # One-section scene checklist
 
+S8 owner-authorized final R3/R4: byte-verified pre-s8r3 backup, source-only Lune,
+four-round cap reached. Read S8/RESULT.md and fresh FINAL-R34-EVIDENCE.json;
+R1/R2 history remains in RESULT-R2.md. Claude's live three gaps drive R3;
+GAPS-R4 follows the R3 render. 303 final cosmetics, 76 rock facets; 285/285
+rock/plant parts connected and nine water-source joints attached. Contact 0
+at .035; protected lanes/solids/gameplay/tests/S1–S7 art exact. New deep geology
+is below -58 and projects under lane footprints: actual lane volumes/headroom
+clear, older all-height horizontal reserve NOT MET. Two Lava cosmetic producers
+restyled; destination/gameplay markers unchanged. Visual REVISIT; final Claude
+Studio review pending and nine live suites/carry/PvP/acceptance UNKNOWN.
+
 S7 final R3/R4 owner authorization (2026-10-16) is complete. Source-only Lune
 mount preserves unrelated serialized state, all gameplay sources and all native
 fields except twenty cosmetic nest-stone color/material fields. New camp props

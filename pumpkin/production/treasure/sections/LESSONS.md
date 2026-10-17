@@ -1,5 +1,18 @@
 # Section craft lessons
 
+## S8 — R1/R2 only; stop for Claude live Studio check
+
+1. When warm backing stays hidden, inspect the foreground producer before changing more parts, because the original R5 face cladding masked the recolored core.
+2. When an old underside box overlaps a deep collider, exclude its replacement instead of moving gameplay, because inherited cosmetic overlap does not authorize a new contact error.
+3. When a strict section bound cuts through an older taper, preserve its out-of-scope tail and report the seam, because palette coherence is not permission to expand ownership.
+
+Evidence: `S8/RESULT.md`, generated TARGET, PRE/GAPS/SBS for R1/R2, independent
+image reviews and separate technical critic, duplicate-sensitive preservation,
+zero new-art contact/margin errors. All 237 R1 facets remain frozen. Broad slabs,
+blunt feet and the warm/cool lower seam retain visual REVISIT. No dressing was
+added while silhouette remained unresolved. Claude live review, nine live suites,
+carry/PvP and owner acceptance UNKNOWN/PENDING. No R3/R4, commit or publish.
+
 ## S7 — R1/R2 only; stop for Claude live check
 
 1. When a fixed hero cannot move, test the light hierarchy at arrival before dressing, because a lit fixture can outshine the reward.
@@ -203,4 +216,12 @@ Evidence: `S6/GAPS-R3.md`, `S6/GAPS-R4.md`, `S6/SBS-R3.jpg`, `S6/SBS-R4.jpg`, `S
 3. When a shaft shares space with a caption, separate their vertical ranges and reduce brightness as well as opacity, because a real Beam can still wash out styled text.
 
 Evidence: `S7/GAPS-R3.md`, `S7/GAPS-R4.md`, `S7/SBS-R3.jpg`, `S7/SBS-R4.jpg`, `S7/RESULT.md`, `S7/FINAL-R34-EVIDENCE.json`. Reused the existing Lune source-only pipeline and native primitives; no new dependency. Both rounds pass zero-contact checks and 575 full-footprint bearing probes each. Visual verdict remains REVISIT; final independent Claude Studio review and live carry/PvP are pending/UNKNOWN. No commit or publish.
+
+## S8 rounds 3–4
+
+1. When replacing a deep cosmetic tail, trace the lowest real collider first and check the resulting convex attachment graph, because a clean screen silhouette can still hide a detached tip or root.
+2. When a cosmetic fixture is covered by an existing contract, preserve the required field and restyle the permitted size/color instead, because a visual cleanup must not require changing tests. Volcano LavaFall retains Neon.
+3. When a native wedge union still reads as blades beside the reference, keep REVISIT at the round cap, because passing contact and DropSample checks does not establish faceted boulder quality or Studio appearance.
+
+Evidence: `S8/GAPS-R3.md`, `S8/GAPS-R4.md`, `S8/SBS-R3.jpg`, `S8/SBS-R4.jpg`, `S8/AUDIT-r4.json`, `S8/SUPPORT-r4.json`, `S8/RESULT.md`. Existing Lune exporter, native primitives, contracts and N8 lattice reused; no new asset or dependency. Final live Claude review remains pending.
 

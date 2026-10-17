@@ -481,9 +481,9 @@ function Scene.skyIslands(parent, make)
 				make(
 					model,
 					"LavaFall",
-					Vector3.new(8, 66, 3),
+						Vector3.new(3, 24, 0.4),
 					o + Vector3.new(0, -10, -d[5] / 2),
-					Color3.fromRGB(255, 110, 25)
+						Color3.fromRGB(176, 112, 62)
 				)
 			).Material =
 				Enum.Material.Neon
