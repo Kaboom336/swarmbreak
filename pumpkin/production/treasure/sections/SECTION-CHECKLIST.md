@@ -1,5 +1,19 @@
 # One-section scene checklist
 
+S7 final R3/R4 owner authorization (2026-10-16) is complete. Source-only Lune
+mount preserves unrelated serialized state, all gameplay sources and all native
+fields except twenty cosmetic nest-stone color/material fields. New camp props
+are collision/query/touch false; contact zero, one-stud margins and 575 bearing
+probes pass in both rounds. Read S7/RESULT.md and FINAL-R34-EVIDENCE.json.
+Visual REVISIT; independent final Claude Studio review, live carry/PvP and owner
+acceptance remain PENDING/UNKNOWN. The R1/R2 stop note below is historical.
+
+S7, owner-authorized 2026-10-16: rounds 1–2 ONLY are mounted by source-only Lune.
+Stop for Claude live Studio review before R3/R4 (`S7/RESULT.md`). Warm paving,
+edge stones and every original gameplay/art field remain exact. Visual REVISIT:
+reward hierarchy, sparse tent and outgoing marker visibility remain unresolved.
+Offline technical evidence is not live carry/PvP or owner acceptance.
+
 S6, owner-authorized 2026-10-16: R1/R2 ONLY, mounted by source-only Lune over the
 current PvP-reset-fixed canonical. Stop for Claude live review before R3/R4.
 Read `S6/RESULT.md` and `S6/FINAL-EVIDENCE.json`; do not inherit old test results.

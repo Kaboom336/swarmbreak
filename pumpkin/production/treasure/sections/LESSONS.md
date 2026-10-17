@@ -1,5 +1,17 @@
 # Section craft lessons
 
+## S7 — R1/R2 only; stop for Claude live check
+
+1. When a fixed hero cannot move, test the light hierarchy at arrival before dressing, because a lit fixture can outshine the reward.
+2. When a shelter reads as a panel, check its entrance orientation before adding details, because an overview silhouette does not establish player readability.
+3. When both escapes share one throat, name the actual fork instead of inventing separate gaps, because cosmetic openings can imply nonexistent routes.
+
+Evidence: `S7/RESULT.md`, PRE/GAPS/SBS R1/R2, generated camera-derived TARGET,
+exact original art/geometry audit, 300 R2 bearing probes and independent technical
+critic. Visual REVISIT: dull acorn, sparse shelter, marker absent from outgoing
+views. Claude live Studio review, all nine suites and carry/PvP acceptance UNKNOWN.
+Only R1/R2 authorized here; no R3/R4, commit or publish.
+
 ## S6 — R1/R2 only; stop for Claude
 
 1. When cladding covers a finish, ray-identify its foreground producer first, because changing the backing cannot change the player image.
@@ -183,4 +195,12 @@ Evidence: `S5/TARGET.png`, `S5/TARGET-PROMPT.md`, `S5/GAPS-R3.md`, `S5/GAPS-R4.m
 3. When auditing trim against native wedges, use the actual convex wedge at the same tolerance and retain the old audit, because its enclosing box reports false slope intersections. Keep production tests unchanged and exercise deferred kits explicitly; source compilation alone missed a string-concatenation error.
 
 Evidence: `S6/GAPS-R3.md`, `S6/GAPS-R4.md`, `S6/SBS-R3.jpg`, `S6/SBS-R4.jpg`, `S6/RESULT.md`, `S6/FINAL-R34-EVIDENCE.json`. Existing CC0 kits2 and Lune source-only mounting reused. Live final Studio appearance, traversal, independent Claude review and owner acceptance remain UNKNOWN/PENDING; generated TARGET is aspiration. No new dependency, commit or publish.
+
+## S7 rounds 3–4
+
+1. When a client replaces map art, inspect that client path first, because native builder proxies can hide the actual block silhouette and overbright Beam.
+2. When grounding camp props, probe the full bearing footprint, because a supported center can still leave a coin or charm over a lower pillar or lane margin.
+3. When a shaft shares space with a caption, separate their vertical ranges and reduce brightness as well as opacity, because a real Beam can still wash out styled text.
+
+Evidence: `S7/GAPS-R3.md`, `S7/GAPS-R4.md`, `S7/SBS-R3.jpg`, `S7/SBS-R4.jpg`, `S7/RESULT.md`, `S7/FINAL-R34-EVIDENCE.json`. Reused the existing Lune source-only pipeline and native primitives; no new dependency. Both rounds pass zero-contact checks and 575 full-footprint bearing probes each. Visual verdict remains REVISIT; final independent Claude Studio review and live carry/PvP are pending/UNKNOWN. No commit or publish.
 

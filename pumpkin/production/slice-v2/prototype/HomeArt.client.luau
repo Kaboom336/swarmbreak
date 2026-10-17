@@ -175,6 +175,7 @@ local function acornGlow(model, summit)
 	anchor.CFrame, anchor.Parent = CFrame.new(0, 2, 0), model
 	local light = Instance.new("PointLight")
 	light.Color, light.Brightness, light.Range = Color3.fromRGB(255,218,103), summit and 1.2 or 0.55, summit and 18 or 8
+	light.Shadows = false
 	light.Parent = anchor
 	local sparkles = Instance.new("ParticleEmitter")
 	sparkles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
@@ -185,14 +186,14 @@ local function acornGlow(model, summit)
 	sparkles.Parent = anchor
 	if summit then
 		local a, b = Instance.new("Attachment"), Instance.new("Attachment")
-		a.Position, b.Position = Vector3.new(0,1,0), Vector3.new(0,66,0)
+		a.Position, b.Position = Vector3.new(0,4.8,0), Vector3.new(0,66,0)
 		a.Parent, b.Parent = anchor, anchor
 		local beam = Instance.new("Beam")
 		beam.Name, beam.Attachment0, beam.Attachment1 = "SummitBeacon", a, b
-		beam.FaceCamera, beam.Width0, beam.Width1 = true, 4.4, 1.8
+		beam.FaceCamera, beam.Width0, beam.Width1 = true, 1.8, 3
 		beam.Color, beam.LightEmission = ColorSequence.new(light.Color), 1
-		beam.LightInfluence, beam.Brightness = 0, 3
-		beam.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.2),NumberSequenceKeypoint.new(0.8,0.38),NumberSequenceKeypoint.new(1,1)})
+		beam.LightInfluence, beam.Brightness = 0.4, 0.45
+		beam.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(0.15,0.92),NumberSequenceKeypoint.new(0.75,0.97),NumberSequenceKeypoint.new(1,1)})
 		beam.Parent = anchor
 	end
 end
@@ -241,7 +242,10 @@ local function observe(root)
 		entry.isPet = isPet
 		entry.previous = state
 		task.spawn(function()
-			local ok, model = pcall(clone, reveal and "OpenAcorn" or kind)
+			local ok, model = pcall(function()
+				if meadowAcorn then return require(RS.MeadowV4.SummitAcorn).build() end
+				return clone(reveal and "OpenAcorn" or kind)
+			end)
 			if not ok then
 				warn("[HomeArt] mesh loader failed: " .. tostring(model))
 				return
@@ -252,6 +256,20 @@ local function observe(root)
 			end
 			entry.model, entry.started = model, reveal and os.clock() or nil
 			if meadowAcorn then
+				-- Existing Style caption stays outside the shaft and follows carried loot.
+				for _, gui in root:GetDescendants() do
+					if gui:IsA('BillboardGui') then
+						gui.StudsOffsetWorldSpace=Vector3.new(0,6.8,0)
+						gui.AlwaysOnTop=true
+						for _, text in gui:GetDescendants() do
+							if text:IsA('TextLabel') then
+								text.TextColor3=Style.Colors.Cream
+								text.BackgroundColor3=Color3.fromRGB(34,39,46)
+								text.BackgroundTransparency=.15
+							end
+						end
+					end
+				end
 				acornGlow(model, state == "Nest")
 				model:ScaleTo(state == "Nest" and 1.8 or 1.2)
 				entry.beacon = model:FindFirstChild("SummitBeacon", true)
@@ -372,7 +390,7 @@ RunService.RenderStepped:Connect(function()
 			if entry.beacon and entry.beacon.Parent then
 				-- Five-second breath; widths include the approved 1.8x nest scale.
 				local pulse = 1 + 0.07 * math.sin(os.clock() * math.pi * 2 / 5)
-				entry.beacon.Width0, entry.beacon.Width1 = 4.4 * 1.8 * pulse, 1.8 * 1.8 * pulse
+				entry.beacon.Width0, entry.beacon.Width1 = 1.8 * 1.8 * pulse, 3 * 1.8 * pulse
 			end
 			-- Recovery temporarily hides the authoritative loot; hide its cosmetics too.
 			local hidden = root.Transparency >= 1
