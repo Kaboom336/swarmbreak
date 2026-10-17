@@ -451,12 +451,32 @@ local function act(api, actor, name, ...)
 	local ok, why = api[name](actor, ...)
 	assert(ok, "illegal refusal " .. name .. ": " .. tostring(why))
 end
-local function hold(api, actor, action)
-	local _, humanoid = api.root(actor)
-	if humanoid then
-		humanoid:Move(Vector3.zero, false)
+local function approachItem(api, actor, navigate, checked)
+	local started = os.clock()
+	while true do
+		local item = assert(api.rules.active, "approach missing live item")
+		local r, humanoid = api.root(actor)
+		assert(r and humanoid and item.position, "approach missing root/socket")
+		-- A route arrival is not action range. Hits can also move an actor
+		-- during a hold, so every retry must approach the current socket again.
+		-- The walk driver stops within 3 horizontal studs of a floor goal.
+		-- Four in 3D includes root height while retaining margin inside Steal's 9.
+		if (r.Position - (item.position + Vector3.new(0, 1.5, 0))).Magnitude <= 4 then
+			humanoid:MoveTo(r.Position) -- Cancel the previous segment's destination.
+			humanoid:Move(Vector3.zero, false)
+			return
+		end
+		assert(os.clock() - started < 8, "cannot close to live item within 4 studs >8s")
+		local floor = assert(api.floor(item.position), "live item floor missing")
+		local position = checked(floor + Vector3.new(0, 3, 0), "live item approach")
+		local reached, reason = navigate(position, "live item approach")
+		assert(reached, "live item approach interrupted: " .. tostring(reason))
+		-- Re-read after yielding movement; never act against a cached socket.
 	end
+end
+local function hold(api, actor, action, navigate, checked)
 	for attempt = 1, Config.TestHoldRetries do
+		approachItem(api, actor, navigate, checked)
 		act(api, actor, "holdAction", action, "begin")
 		task.wait(Config.HoldSeconds[action] + 0.05)
 		local ok, why = api.holdAction(actor, action, "finish")
@@ -711,7 +731,7 @@ local function expiryTest(player, states, pens, world, api, log, walk, navigate)
 	for _, p in arena.layout.routes.Quick do
 		walk(at(arena, p.x, p.y, p.z), "expiry approach")
 	end
-	hold(api, player, "Steal")
+	hold(api, player, "Steal", navigate, checked)
 	local item = assert(s.item, "expiry missing cargo")
 	-- Put the empty-return regression on the terrace before waiting. Hits may
 	-- drop cargo; its original deadline and the actor's location remain legal.
@@ -846,7 +866,7 @@ function Test.run(player, states, pens, world, api, log)
 	for _, p in arena.layout.routes.Quick do
 		walk(at(arena, p.x, p.y, p.z), p.kind .. " approach")
 	end
-	hold(api, player, "Steal")
+	hold(api, player, "Steal", navigate, checked)
 	local item = s.item
 	assert(item and item.state == "Carried", "missing nest loot")
 	monitor.item = item
@@ -1022,7 +1042,10 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 	-- Guardian combat/expiry are covered by the loop suite; its attacks can
 	-- consume the real 60s deadline before this suite reaches its first Bump.
 	api.pvpCourt(true)
-	hold(api, dummy, "Steal")
+	local dummyWalk, _, _, dummyNavigate = driver(dummy, states, api, log, checked, nil, function(...)
+		if record then record(...) end
+	end)
+	hold(api, dummy, "Steal", dummyNavigate, checked)
 	local ds = states[dummy]
 	local item = ds.item
 	local timestamp, escapeDeadline = item.firstPickup, item.escapeDeadline
@@ -1030,9 +1053,6 @@ function Test.pvp(player, states, pens, world, api, log, setDummy)
 	record = approachRecorder(dummy, api, world, item)
 	record("phase", nil, "dummy approach")
 	local function timedFlow()
-	local dummyWalk, _, _, dummyNavigate = driver(dummy, states, api, log, checked, nil, function(...)
-		record(...)
-	end)
 	local approachOK, approachProblem = pcall(function()
 		for i = 2, #routes.Dummy do
 			assert(recover(api, dummy, states, dummyNavigate, item, log, checked), "PvP cargo expired during dummy approach")
