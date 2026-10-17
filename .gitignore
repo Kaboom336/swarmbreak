@@ -2,3 +2,10 @@ game/out.rbxl
 tools/.upload_cache.json
 tools/__pycache__/
 pumpkin/out.rbxl
+pumpkin/garden-test.rbxl
+pumpkin/garden-isolated.rbxl
+pumpkin/garden-legacy-compat.rbxl
+
+# Large offline scene dumps from section renders
+pumpkin/production/treasure/cave-sections/*/before.json
+pumpkin/production/treasure/cave-sections/*/r[0-9]*.json
