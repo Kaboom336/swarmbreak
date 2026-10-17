@@ -184,6 +184,7 @@ function Arena.build(world, layout, make, label)
 	a.guardian.Transparency, a.arm.Transparency = 1, 1
 	a.guardian.CanTouch, a.arm.CanTouch = false, false
 	a.guardian:SetAttribute("MeadowKeeper", true)
+	a.guardian:SetAttribute("KeeperMode", a.mode)
 	a.guardian:SetAttribute("KeeperClip", "idle")
 	a.guardian:SetAttribute("KeeperElapsed", 0)
 	a.keeper = true
@@ -940,6 +941,11 @@ end
 function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 	local before = a.guardian.Position
 	tick(a, dt, now, actors, root, hitPlayer, goal, loot)
+	-- Presentation signal uses gameplay mode, independent of attack animation clips.
+	if a.keeperMode ~= a.mode then
+		a.keeperMode = a.mode
+		a.guardian:SetAttribute("KeeperMode", a.mode)
+	end
 	if not a.keeper then
 		return
 	end
@@ -1004,6 +1010,8 @@ function Arena.reset(a)
 	end
 	a.attack, a.target, a.lostTarget, a.searchAt, a.lastSeen = nil, nil, nil, nil, nil
 	a.mode, a.patrol, a.nextThrow = "Guard", 1, 0
+	a.keeperMode = "Guard"
+	a.guardian:SetAttribute("KeeperMode", "Guard")
 	a.untilTime, a.chaseBegan, a.targetSince = 0, nil, nil
 	a.guardCamp, a.guardedVersion, a.returnAfterAttack, a.returnReason = nil, nil, nil, nil
 	a.computing = false

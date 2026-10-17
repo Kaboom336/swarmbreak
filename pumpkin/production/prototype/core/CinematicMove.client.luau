@@ -85,21 +85,30 @@ end
 local settings = button("Settings", "Motion settings", 112)
 local reduced = button("ReducedMotion", "", 164)
 local shake = button("CameraShake", "", 216)
+local music = button("MusicMute", "", 268)
+local sfx = button("SFXMute", "", 320)
+music.Visible, sfx.Visible = false, false
 reduced.Visible, shake.Visible = false, false
 settings.NextSelectionDown, reduced.NextSelectionUp = reduced, settings
 reduced.NextSelectionDown, shake.NextSelectionUp = shake, reduced
+shake.NextSelectionDown, music.NextSelectionUp = music, shake
+music.NextSelectionDown, sfx.NextSelectionUp = sfx, music
+sfx.NextSelectionDown = settings
 local function refresh()
 	reduced.Text = "Reduced motion: " .. (player:GetAttribute("ReducedMotion") and "ON" or "OFF")
 	shake.Text = "Camera shake: " .. (player:GetAttribute("CameraShakeEnabled") == true and "ON" or "OFF")
+	music.Text = "Music: " .. (player:GetAttribute("MusicMuted") == true and "OFF" or "ON")
+	sfx.Text = "SFX: " .. (player:GetAttribute("SFXMuted") == true and "OFF" or "ON")
 	-- Notifications update labels only. Effective suppression is sampled below;
 	-- repeated replicated carry/preference notifications must not erase run age.
 end
 trove:Connect(settings.Activated, function()
 	reduced.Visible = not reduced.Visible
 	shake.Visible = reduced.Visible
+	music.Visible, sfx.Visible = reduced.Visible, reduced.Visible
 	if not reduced.Visible then
 		local selection = game:GetService("GuiService")
-		if selection.SelectedObject == reduced or selection.SelectedObject == shake then
+		if selection.SelectedObject == reduced or selection.SelectedObject == shake or selection.SelectedObject == music or selection.SelectedObject == sfx then
 			selection.SelectedObject = settings
 		end
 	end
@@ -110,7 +119,13 @@ end)
 trove:Connect(shake.Activated, function()
 	player:SetAttribute("CameraShakeEnabled", player:GetAttribute("CameraShakeEnabled") ~= true)
 end)
-for _, name in { "ReducedMotion", "CameraShakeEnabled", "GreyboxCarry", "CaveItemID" } do
+trove:Connect(music.Activated, function()
+	player:SetAttribute("MusicMuted", player:GetAttribute("MusicMuted") ~= true)
+end)
+trove:Connect(sfx.Activated, function()
+	player:SetAttribute("SFXMuted", player:GetAttribute("SFXMuted") ~= true)
+end)
+for _, name in { "ReducedMotion", "CameraShakeEnabled", "GreyboxCarry", "CaveItemID", "MusicMuted", "SFXMuted" } do
 	trove:Connect(player:GetAttributeChangedSignal(name), refresh)
 end
 refresh()
