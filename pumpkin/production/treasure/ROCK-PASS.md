@@ -1,5 +1,84 @@
 # Meadow rock pass — 2026-10-17
 
+## Colour correction — Claude live report, 2026-10-17
+
+**Mounted through Lune; cosmetic conservation and texture fixtures PASS.**
+Claude's supplied Studio screenshots [S6](rock-live-s6.jpg) and
+[S2](rock-live-s2.jpg) report pale mint rock shells. The reported live count
+of **587 textured rock MeshParts** is owner-supplied evidence, not a new
+engine measurement. Inspection confirms that the shell code assigned Color
+and Slate while retaining the imported texture atlas. The S6 screenshot also
+shows thin blue cosmetic rock-cap shelves.
+
+Immediate byte-verified backup:
+`slice-v2/prototype/guardian-greybox.pre-rockcolor.rbxl`, SHA256
+`2981027387b051a4a6afd30aa7b4a9b1e4a388850e63c5b132cbdc35c8cdb2e3`.
+The existing pinned Lune 0.10.5 mount replaces only **KitLibrary** and
+**ZRockShells** source bodies and adds **ZRockColor** under the existing
+MeadowDressing guard. No plain Rojo, Studio play, commit or publish.
+
+- Every rock-pass shell explicitly clears TextureID and removes
+  SurfaceAppearance before publication. The existing **500-shell plan and
+  four warm grey-brown/tan tones** remain exact.
+- KitLibrary clears those appearance overrides on **11 Meadow rock/cliff/
+  stone/pebble kit entries** at spawn and assigns Slate with deterministic
+  warm stone/tan variation. Section-specific shell/rock palettes still apply.
+  The other **63 catalogue entries**, including cave assets, remain unchanged.
+  Imported templates are retained; only spawned rock appearance changes.
+- ZRockColor recolours **224 nonphysical S6 LookLightRockTop and
+  Round4PaleRockTop caps** to warm Slate. They stay in place, including the
+  thin shelves; no cosmetic geometry is deleted.
+
+[Mounted conservation contract](rockcolor/MOUNT-deliver.json): **PASS**.
+Restoring the two named sources and removing the new module restores exact
+complete serialized-place equality to the backup. Fresh Builder trees are
+also exactly equal after restoring only the listed shelf Color/Material
+changes: **35,176 native parts, 7,991 colliders and 79 lights** preserved.
+Sizes, positions, rotations, collisions, queries, touch, groups, tags,
+attributes, reshaped walls, lane floors and all other source bodies stay exact.
+All **88 mounted sources compile at O0/O1/O2**. For audit serialization only,
+Lune's generated TextLabel FontFace aliases are normalized identically on
+both trees; those audit trees are never mounted.
+
+[Texture contracts](rockcolor/TEXTURES.json): **PASS**. Actual mounted sources
+are exercised with textured MeshPart/SurfaceAppearance fixtures: every shell
+loses its atlas and keeps its planned tone, geometry and nonphysical flags;
+nonzero origin and idempotence pass. All 11 rock catalogue entries lose their
+overrides; all 63 controls retain their appearance. These are deterministic
+offline service/mesh fixtures, not 587 real imported meshes or an engine render.
+Fresh [origin/late-kit/failure-isolation contracts](rockcolor/ORIGIN-CONTRACTS.json),
+[round-3 runtime contracts](rockcolor/runtime-contracts.log),
+[KitLibrary contracts](rockcolor/library-contracts.log),
+[behavior contracts](rockcolor/behavior.log) and
+[50-seed check](rockcolor/50-seed.log) **PASS**. The seed check uses legacy Layout;
+it does not establish Meadow timing or live physics.
+
+Final canonical SHA256:
+`6c2ad8f3cd5c7c72c5c1d649249f73781a7174f14c87cd92da8e1dc500121b6d`.
+Fresh final-artifact production N8 [DropSample](rockcolor/DROPS.json):
+**PASS — 31,824 samples / 20 exact-once routes / zero failures**.
+Worker counts are **14,904 + 8,280 + 8,640**, with identical final canonical
+hashes; each reports 194 kit swaps, zero fallbacks and 59 rejected pre-existing
+kit placements. The sampler, resolver, lattice, route shards and tolerances
+are unchanged. [Final evidence seal](rockcolor/FINAL-EVIDENCE.json) records
+the canonical, backup, sources, documentation and check artifact hashes.
+Actual corrected Studio colour, lighting and owner visual acceptance remain
+**UNKNOWN**; no Studio play was launched. The existing Grow a Garden /
+Pet Simulator 99 chunky geology bar remains the reference, not new visual
+acceptance. Existing CC0 Kenney/Quaternius licences and production code were
+reused; no new asset or dependency. Local project PLAYBOOK was read; the exact
+separately titled Keystone playbook remains unavailable, as recorded in earlier rounds.
+
+Reproduce: `rockcolor-build.luau backup` once, then `candidate` and `deliver`;
+run `rockcolor-textures.luau`, `rockcolor-offline.luau`, `rock3-runtime.luau`,
+`pvpflake-tests.luau`, and `slice-v2/prototype/check.luau` from its own directory.
+Run `rockcolor-drop.luau 1`, `2`, `3`, then `rockcolor/merge.py`; adapters retain
+the inspected existing harnesses. Evidence lives in `treasure/rockcolor/`.
+
+Lessons: when an atlas overrides stone tint, clear TextureID and
+SurfaceAppearance before judging Color; when a cosmetic shelf reads as timber,
+recolour the existing cap before changing geometry.
+
 ## Round 3 — final conditional collision pass, 2026-10-17
 
 **Mounted; offline checks PASS; visual REVISIT.** The owner explicitly

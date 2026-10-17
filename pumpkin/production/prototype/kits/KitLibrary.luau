@@ -136,6 +136,12 @@ function Kit.spawn(name, island, cframe, scale)
  model:ScaleTo(template:GetAttribute("KitNativeScale") * factor)
  model:PivotTo(cframe)
  local kind = propType(name)
+ -- Meadow geology uses material and tint, never the imported palette atlas.
+ -- Other islands and wood/foliage/infrastructure retain their authored look.
+ local rockName = name:lower()
+ local warmStone = island == 'meadow' and (rockName:find('rock',1,true)
+  or rockName:find('cliff',1,true) or rockName:find('stone_large',1,true)
+  or rockName:find('pebble',1,true))
  local hasTrunk=false
  for _, p in model:GetDescendants() do yieldBuild();
   clearWalkable(p)
@@ -145,6 +151,15 @@ function Kit.spawn(name, island, cframe, scale)
    p.CanCollide = false
    if p.CanCollide then hasTrunk=true end
    p.CastShadow = kind ~= "small"
+   if warmStone then
+    if p:IsA('MeshPart') then p.TextureID = '' end
+    for _,a in p:GetChildren() do if a:IsA('SurfaceAppearance') then a:Destroy() end end
+    -- Stable world-space strata; section/shell palettes can refine this tint.
+    local band = (math.floor(cframe.X/7)+math.floor(cframe.Z/7))%5
+    p.Color = if band == 4 then Color3.fromRGB(157,143,119)
+     else Color3.fromRGB(120+band*7,111+band*6,95+band*5)
+    p.Material = Enum.Material.Slate
+   end
    -- RenderFidelity left at its imported default (plugin-only property).
   end
  end

@@ -43,6 +43,9 @@ function S.spawnKits(root,kit)
     if p:IsA('BasePart')then
      p.Anchored=true;p.CanCollide=false;p.CanQuery=false;p.CanTouch=false
      p.Color=Color3.fromRGB(unpack(g.color));p.Material=Enum.Material.Slate
+     -- Atlas pixels override the intended stone tint in Studio.
+     if p:IsA('MeshPart')then p.TextureID='' end
+     for _,a in p:GetChildren()do if a:IsA('SurfaceAppearance')then a:Destroy()end end
      p:SetAttribute('Cosmetic',true);p:SetAttribute('RockShell',true);p:SetAttribute('RockSection',g.section)
      p.CastShadow=true
     end
