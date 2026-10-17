@@ -1,5 +1,21 @@
 # Section craft lessons
 
+## Crystal Cave C2 — rounds 1 and 2, 2026-10-17
+
+1. When a supported framing rock stays behind existing scenery, inspect every
+   locked player view before multiplying it, because legal placement can have
+   little visible return. Keep the missed framing explicit.
+2. When ornamental crystals compete with the treasure, quiet complete bounded
+   groups before adding glow, because fewer coherent groups improve focus without
+   changing geode behavior or adding lights.
+3. When the largest crown crosses a section boundary, preserve it and record the
+   hierarchy gap, because cosmetic scope cannot silently expand to reach a target.
+
+Evidence: `../cave-sections/C2/RESULT.md`, R1/R2 matched six-view boards,
+contact/support, complete serialization and actual mounted runtime fixtures.
+Visual REVISIT; Claude/owner and six live Studio suites remain UNKNOWN.
+No Studio play, commit or publish; only rounds 1–2.
+
 ## Crystal Cave C1 — rounds 1 and 2, 2026-10-17
 
 1. When a canonical place contains later runtime repairs, preserve its complete
@@ -351,4 +367,20 @@ and S6/S7/S8 `SBS-ROCK4.jpg`. Final artifact checks are sealed separately in
 Evidence: `../cave-sections/C1/GAPS-R4.md`, `SBS-R3.jpg`, `SBS-R4.jpg`,
 `VERIFY-R34.json`, `FINAL-R34-EVIDENCE.json` and `RESULT.md`. Final two rounds
 complete; visual REVISIT. No Studio play, existing test edits, commit or publish.
+
+## Crystal Cave C2 final rounds 3–4
+
+1. When a loot root is frozen, author its shell, cavity and pedestal as removable
+   cosmetic children and compare the root serialization after removing them,
+   because metadata preservation must be proved separately from appearance.
+2. When a camp shelf changes height, ray-check every rock bearing before fitting,
+   because a nearby +48 floor does not imply the next shoulder is also +48.
+3. When small camp props disappear behind the treasure or old scenery, inspect
+   the locked player camera before multiplying them, because visible silhouette
+   and grouping matter more than the new-part count. Keep REVISIT when coarse
+   native facets and protected box walls still miss the reference.
+
+Evidence: `../cave-sections/C2/GAPS-R4.md`, `SBS-R3.jpg`, `SBS-R4.jpg`,
+`AUDIT-r3/r4.json`, `CONTACT-r3/r4.json`, `VERIFY-R34.json`, `RUNTIME-R34.json`,
+`FINAL-R34-EVIDENCE.json`, `RESULT.md`. Four-round cap; no Studio play or commit.
 

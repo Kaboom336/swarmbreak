@@ -2,6 +2,10 @@
 -- source modules are mounted from prototype/core, never copied into source.
 -- Section entrypoint: preserve the current six-suite place; never run the
 -- historical baseline generator below for section work.
+if (require('@lune/process').args[1] or ''):match('^c2%-') then
+ require('../../treasure/cave-sections/C2/build')()
+ return
+end
 if (require('@lune/process').args[1] or ''):match('^c1%-') then
  require('../../treasure/cave-sections/C1/build')()
  return
