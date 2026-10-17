@@ -1,4 +1,8 @@
 -- Offline native-part builder. Reuses Meadow v4's manifest/CFrame/slab pattern;
+if require('@lune/process').args[1]=='ui-pass' then
+ require('../../treasure/ui-pass-build')('cave')
+ return
+end
 if require('@lune/process').args[1]=='sound' then
  require('../../treasure/sound-build')('cave')
  return

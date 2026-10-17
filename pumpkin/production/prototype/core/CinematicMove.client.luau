@@ -4,6 +4,7 @@ local RS = game:GetService("ReplicatedStorage")
 local VR = game:GetService("VRService")
 local Run = game:GetService("RunService")
 local player = Players.LocalPlayer
+local Style = require(RS:WaitForChild("UIStyle"))
 local core = RS:WaitForChild("TreasureCore")
 local Move = require(core:WaitForChild("CinematicMove"))
 local Trove = require(core.Packages.Trove)
@@ -68,32 +69,60 @@ end
 
 -- Session preferences: Activated handles mouse, touch and selected gamepad activation.
 local gui = Instance.new("ScreenGui")
-gui.Name, gui.ResetOnSpawn, gui.DisplayOrder = "MovementSettings", false, 5
+gui.Name, gui.ResetOnSpawn, gui.DisplayOrder = "MovementSettings", false, 25
+gui.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
 gui.Parent = player:WaitForChild("PlayerGui")
 trove:Add(gui)
+local panel = Instance.new("TextLabel")
+panel.Name, panel.Text = "SettingsPanel", ""
+panel.AnchorPoint, panel.Position, panel.Size =
+	Vector2.new(0.5, 0.5), UDim2.fromScale(0.5, 0.5), UDim2.fromOffset(300, 324)
+Style.panel(panel, Style.Colors.Panel, 24)
+panel.Visible, panel.Parent = false, gui
+local title = Instance.new("TextLabel")
+title.Text, title.Size, title.BackgroundTransparency, title.Parent = "Settings", UDim2.new(1, 0, 0, 32), 1, panel
+Style.lettering(title, 24)
 local function button(name, text, y)
 	local b = Instance.new("TextButton")
 	b.Name, b.Text = name, text
-	b.AnchorPoint, b.Position, b.Size = Vector2.new(1, 0), UDim2.new(1, -12, 0, y), UDim2.fromOffset(200, 48)
+	b.Position, b.Size = UDim2.fromOffset(0, y), UDim2.new(1, 0, 0, 48)
 	b.BackgroundColor3, b.TextColor3 = Color3.fromRGB(31, 42, 58), Color3.fromRGB(255, 245, 218)
-	b.Font, b.TextSize, b.Selectable, b.Parent = Enum.Font.GothamBold, 15, true, gui
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 10)
-	corner.Parent = b
+	b.Selectable, b.Parent = true, panel
+	Style.panel(b, Style.Colors.Cyan, 18)
 	return b
 end
-local settings = button("Settings", "Motion settings", 112)
-local reduced = button("ReducedMotion", "", 164)
-local shake = button("CameraShake", "", 216)
-local music = button("MusicMute", "", 268)
-local sfx = button("SFXMute", "", 320)
+local settings = button("Settings", "⚙", 0)
+settings.Parent, settings.AnchorPoint = gui, Vector2.new(1, 0)
+settings.Position, settings.Size = UDim2.new(1, -12, 0, 112), UDim2.fromOffset(48, 48)
+settings.Text = ""
+Style.gear(settings)
+local reduced = button("ReducedMotion", "", 40)
+local shake = button("CameraShake", "", 94)
+local music = button("MusicMute", "", 148)
+local sfx = button("SFXMute", "", 202)
+local closeSettings = button("Close", "Close", 256)
+local function fitSettings()
+	local v = gui.AbsoluteSize
+	-- Keep 48px row targets even in phone landscape: scroll the panel instead of shrinking buttons.
+	panel.Size = UDim2.fromOffset(math.min(300, v.X - 24), math.min(324, v.Y - 24))
+end
+local scroller = Instance.new("ScrollingFrame")
+scroller.Name, scroller.Size, scroller.BackgroundTransparency = "Rows", UDim2.fromScale(1, 1), 1
+scroller.CanvasSize, scroller.ScrollBarThickness, scroller.BorderSizePixel = UDim2.fromOffset(0, 314), 4, 0
+scroller.Selectable, scroller.Parent = false, panel
+for _, row in { title, reduced, shake, music, sfx, closeSettings } do
+	row.Parent = scroller
+end
+trove:Connect(gui:GetPropertyChangedSignal("AbsoluteSize"), fitSettings)
+fitSettings()
 music.Visible, sfx.Visible = false, false
 reduced.Visible, shake.Visible = false, false
 settings.NextSelectionDown, reduced.NextSelectionUp = reduced, settings
 reduced.NextSelectionDown, shake.NextSelectionUp = shake, reduced
 shake.NextSelectionDown, music.NextSelectionUp = music, shake
 music.NextSelectionDown, sfx.NextSelectionUp = sfx, music
-sfx.NextSelectionDown = settings
+sfx.NextSelectionDown, closeSettings.NextSelectionUp = closeSettings, sfx
+closeSettings.NextSelectionDown = reduced
 local function refresh()
 	reduced.Text = "Reduced motion: " .. (player:GetAttribute("ReducedMotion") and "ON" or "OFF")
 	shake.Text = "Camera shake: " .. (player:GetAttribute("CameraShakeEnabled") == true and "ON" or "OFF")
@@ -103,15 +132,30 @@ local function refresh()
 	-- repeated replicated carry/preference notifications must not erase run age.
 end
 trove:Connect(settings.Activated, function()
-	reduced.Visible = not reduced.Visible
+	panel.Visible = not panel.Visible
+	reduced.Visible = panel.Visible
 	shake.Visible = reduced.Visible
 	music.Visible, sfx.Visible = reduced.Visible, reduced.Visible
+	if panel.Visible and game:GetService("UserInputService").GamepadEnabled then
+		game:GetService("GuiService").SelectedObject = reduced
+	end
 	if not reduced.Visible then
 		local selection = game:GetService("GuiService")
-		if selection.SelectedObject == reduced or selection.SelectedObject == shake or selection.SelectedObject == music or selection.SelectedObject == sfx then
+		if
+			selection.SelectedObject == reduced
+			or selection.SelectedObject == shake
+			or selection.SelectedObject == music
+			or selection.SelectedObject == sfx
+			or selection.SelectedObject == closeSettings
+		then
 			selection.SelectedObject = settings
 		end
 	end
+end)
+trove:Connect(closeSettings.Activated, function()
+	panel.Visible = false
+	reduced.Visible, shake.Visible, music.Visible, sfx.Visible = false, false, false, false
+	game:GetService("GuiService").SelectedObject = settings
 end)
 trove:Connect(reduced.Activated, function()
 	player:SetAttribute("ReducedMotion", not player:GetAttribute("ReducedMotion"))
@@ -161,9 +205,19 @@ trove:BindToRenderStep("TreasureCinematicMovement", Enum.RenderPriority.Camera.V
 		or player:GetAttribute("ReducedMotion")
 	then
 		reset()
-		debugState(0, not hum and "humanoid" or not root and "root" or not current and "camera"
-			or current.CameraType ~= Enum.CameraType.Custom and "camera-type"
-			or current.CameraSubject ~= hum and "camera-subject" or VR.VREnabled and "vr" or "reduced", intent, speed, hum)
+		debugState(
+			0,
+			not hum and "humanoid"
+				or not root and "root"
+				or not current and "camera"
+				or current.CameraType ~= Enum.CameraType.Custom and "camera-type"
+				or current.CameraSubject ~= hum and "camera-subject"
+				or VR.VREnabled and "vr"
+				or "reduced",
+			intent,
+			speed,
+			hum
+		)
 		return
 	end
 	if current ~= camera then
@@ -185,9 +239,19 @@ trove:BindToRenderStep("TreasureCinematicMovement", Enum.RenderPriority.Camera.V
 		intent = intent,
 		speed = speed,
 	})
-	debugState(blend, running and "running" or carry and "carry" or blocked and "blocked"
-		or hum.Health <= 0 and "dead" or hum.WalkSpeed < 16 and "slow"
-		or not grounded and "air" or "idle", intent, speed, hum)
+	debugState(
+		blend,
+		running and "running"
+			or carry and "carry"
+			or blocked and "blocked"
+			or hum.Health <= 0 and "dead"
+			or hum.WalkSpeed < 16 and "slow"
+			or not grounded and "air"
+			or "idle",
+		intent,
+		speed,
+		hum
+	)
 	local eligible = not carry and not blocked and hum.WalkSpeed >= 16 and hum.Health > 0
 	local air = state == Enum.HumanoidStateType.Freefall
 	if wasAir and grounded and eligible and player:GetAttribute("CameraShakeEnabled") == true then

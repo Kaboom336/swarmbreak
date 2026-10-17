@@ -60,6 +60,8 @@ goal.BackgroundColor3, goal.TextColor3 = Color3.fromRGB(30, 35, 40), Color3.new(
 goal.TextSize, goal.TextWrapped = 20, true
 goal.Parent = gui
 goal.Name = "Objective"
+-- Legacy text remains the existing feedback source; TreasureObjective presents it at the top.
+goal.Visible = false
 Style.panel(goal, Style.Colors.Panel, 22)
 local goalIcon = Style.icon(goal, "route", Style.Colors.Cyan)
 -- UIPadding also offsets children: keep the icon inside the reserved gutter.
@@ -183,7 +185,7 @@ Style.lettering(countdown, 44)
 RunService.RenderStepped:Connect(function()
 	local deadline = world:GetAttribute("EscapeDeadline")
 	local remaining = deadline and math.max(0, deadline - workspace:GetServerTimeNow())
-	countdown.Visible = player:GetAttribute("GreyboxPhase") == "Run" and remaining ~= nil
+	countdown.Visible = false -- The carry bar beside the objective replaces this centre overlay.
 	if remaining then
 		countdown.Text =
 			string.format("ESCAPE  %d:%02d", math.floor(math.ceil(remaining) / 60), math.ceil(remaining) % 60)
@@ -283,7 +285,7 @@ local function fitUI()
 	goal.Size, goal.Position = UDim2.new(0.72, 0, 0, compact and 48 or 56), UDim2.new(0.5, 0, 1, compact and -64 or -22)
 	local cap = goal:FindFirstChild("WidthBounds") or Instance.new("UISizeConstraint")
 	cap.Name, cap.MaxSize, cap.Parent = "WidthBounds", Vector2.new(640, 56), goal
-	button.Size, button.Position = UDim2.new(0, math.min(440, v.X * 0.62), 0, 56), UDim2.new(0.5, 0, 1, compact and -124 or -88)
+	button.Size, button.Position = UDim2.new(0, math.min(280, v.X * 0.52), 0, 48), UDim2.new(0.5, 0, 1, -16)
 	countdown.Size, countdown.Position = UDim2.new(0, math.min(300, v.X * 0.6), 0, compact and 56 or 84), UDim2.fromScale(0.5, 0.26)
 	trapHint.Size, trapHint.Position = UDim2.new(0.6, 0, 0, 40), UDim2.new(0.5, 0, 1, compact and -186 or -150)
 	for _, b in {placeButton, rotateButton, snapButton} do
