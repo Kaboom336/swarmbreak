@@ -1,5 +1,20 @@
 # Section craft lessons
 
+## Crystal Cave C5 — four rounds, 2026-10-17
+
+1. When a safe side pocket is hidden by a pier, test native visibility and the
+   locked player frame before dressing, because contact clearance cannot show it.
+2. When a vein must touch fitted art, derive joints from source mesh faces,
+   because an envelope position can bury the glow inside the rock.
+3. When a preserved pier masks the event, retain REVISIT, because a distant
+   cosmetic relay does not establish a near-camera shatter clip.
+
+Evidence: `../cave-sections/C5/RESULT.md`, four PRE/GAPS/SBS rounds, complete
+unrelated serialization, zero contact, native bearing and actual mounted
+atlas/signal fixtures. Visual REVISIT: broad flat piers, small distant chamber
+relay and weak visible vein/light coverage. Independent Claude/owner acceptance
+and six live Studio suites UNKNOWN; no Studio play or fifth round.
+
 ## Crystal Cave C4 — four rounds, 2026-10-17
 
 1. When a blank sign blocks a cart, check its face and player-camera footprint,
