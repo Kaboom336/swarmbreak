@@ -1,4 +1,9 @@
 -- Offline native-part builder. Reuses Meadow v4's manifest/CFrame/slab pattern;
+if (require('@lune/process').args[1] or ''):match('^c[67]%-') then
+ local id=require('@lune/process').args[1]:sub(2,2)
+ if id=='6' then require('../../treasure/cave-sections/C6/build')() else require('../../treasure/cave-sections/C7/build')() end
+ return
+end
 -- source modules are mounted from prototype/core, never copied into source.
 -- Section entrypoint: preserve the current six-suite place; never run the
 -- historical baseline generator below for section work.

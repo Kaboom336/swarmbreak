@@ -1,5 +1,34 @@
 # Section craft lessons
 
+## Crystal Cave C7 — four rounds, 2026-10-17
+
+1. When a fixed-pixel route label appears from another approach, limit its
+   distance using the locked views, because route names can collapse into a stack.
+2. When previewing lettering, match TextScaled and MaxDistance, because an
+   inaccurate proxy can invent clipping or clutter absent from the build.
+3. When tall shells read as fingers, start the next section with shorter
+   aspect ratios, because grounded masses preserve a calmer silhouette.
+
+Evidence: ../cave-sections/C7/RESULT.md, four PRE/GAPS/SBS rounds; complete
+unrelated and combined pre-C6 serialization, zero physical contact, mounted
+atlas/runtime/GUI fixtures and standing-floor cameras. Visual REVISIT; protected
+flat walls remain. Six live suites and independent Claude/owner acceptance
+UNKNOWN. No Studio play or fifth round.
+
+## Crystal Cave C6 — four rounds, 2026-10-17
+
+1. When a cue stands on lower rock beside the route, set its height from the
+   player's floor, because a supported lamp can still sit below the fence.
+2. When checking visibility, include new cosmetic rocks, because a native-solid
+   ray alone misses art introduced by the same pass.
+3. When safe shells read as spires, retain REVISIT, because zero contact does not
+   establish connected faceted geology.
+
+Evidence: ../cave-sections/C6/RESULT.md, four PRE/GAPS/SBS rounds; frozen R1,
+complete unrelated serialization, zero physical contact, mounted atlas/runtime,
+native bearing and player-floor cameras. Visual REVISIT. Six live Studio suites
+and independent Claude/owner acceptance UNKNOWN; no Studio play or fifth round.
+
 ## Crystal Cave C5 — four rounds, 2026-10-17
 
 1. When a safe side pocket is hidden by a pier, test native visibility and the
