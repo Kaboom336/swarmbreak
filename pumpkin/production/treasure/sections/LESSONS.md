@@ -1,5 +1,19 @@
 # Section craft lessons
 
+## Meadow rock pass — 2026-10-17
+
+1. When selecting visible walls behind ramps, intersect the actual wedge half-space,
+   because its bounding box fills empty space and hides the largest real wall faces.
+2. When fitting cosmetic rock shells, check their full envelopes against the rock
+   union and lane reserve, because a safe centre can hide protruding edges. Validate
+   actual cloned component corners before publishing the complete assembly.
+3. When a wall face overlaps the protected lane buffer, record the uncovered face,
+   because passing geometry contracts cannot turn incomplete relief into natural-rock
+   acceptance. Keep the before/after boards and the independent critic's rejection.
+
+Evidence: `../ROCK-PASS.md`, `../rock/CRITIC-R1.md`, per-section GAPS-ROCK and
+SBS-ROCK boards. No Studio play was launched; Claude's final live check is pending.
+
 ## S10 — rounds 1 and 2; stop for Claude live check
 
 1. When a custom board caches live labels, keep it out of generic RouteLabel
@@ -262,6 +276,22 @@ Evidence: `S7/GAPS-R3.md`, `S7/GAPS-R4.md`, `S7/SBS-R3.jpg`, `S7/SBS-R4.jpg`, `S
 3. When a native wedge union still reads as blades beside the reference, keep REVISIT at the round cap, because passing contact and DropSample checks does not establish faceted boulder quality or Studio appearance.
 
 Evidence: `S8/GAPS-R3.md`, `S8/GAPS-R4.md`, `S8/SBS-R3.jpg`, `S8/SBS-R4.jpg`, `S8/AUDIT-r4.json`, `S8/SUPPORT-r4.json`, `S8/RESULT.md`. Existing Lune exporter, native primitives, contracts and N8 lattice reused; no new asset or dependency. Final live Claude review remains pending.
+
+## Rock pass round 3
+
+1. When reshaping a Keeper blocker, preserve the original corpus as a prefix and add dense standing/crouch root and upper-body rays along every adjacent lane, because route vertices alone miss visibility changes beside a wall. Revert each wall on any changed verdict.
+2. When changing JSON geometry with NumPy, convert dimensions to floats before assigning fractional cuts, because integer arrays silently truncate a 1.25-stud subtraction. Verify the actual emitted core thickness and transforms before mounting.
+3. When a wall fails sight or clearance, retain its exact collider and bound far-side cosmetic dressing independently, because a safe inset carve does not make a separate outward fallback safe. Judge the matched player-camera delta too, because a replacement count can overstate visible rock improvement. Passing offline safety still leaves live visual acceptance UNKNOWN.
+
+Evidence: `../rock3/README.md`, `../rock3/DECISIONS.json`, `../rock3/CONTRACT.json`, `../rock3/SIGHT.json`, `../rock3/FINAL-EVIDENCE.json` and S2/S5/S6/S4/S3 `SBS-ROCK3.jpg`. The final seal, when present, records completed checks; this lesson entry alone is not a test result. No Studio play, commit or publish is authorized or claimed.
+
+## Rock pass round 2
+
+1. When an owner exempts Keeper sight blockers from reshaping, inspect the complete snapshot predicate before editing, because this map includes every structural wall collider even without a special blocker tag.
+2. When the dominant wall is a nonphysical ramp underlay or cliff cladding, carve strata inside its original envelope and preserve all flags/groups/tags/attributes, because outward cosmetic shells can consume the lane buffer while inset geometry adds no new intrusion.
+3. When an offline-safe rock pass reads as regular panels, stagger the course lengths and use actual sloping wedge faces, because tone variation alone does not remove a tile grid. Keep REVISIT when the protected foreground silhouette remains flat.
+
+Evidence: `../rock2/REFERENCES.json`, `../rock2/CONTRACT.json`, `../rock2/SIGHT.json`, `../rock2/FINAL-EVIDENCE.json` and each S2/S5/S6/S4/S3 `SBS-ROCK2.jpg`. No structural collider or floor changed; exact Keeper blocker geometry is stronger evidence than sample verdicts alone. No pre-existing named standard Keeper sample set was found: the frozen route-based corpus is explicitly identified. Studio play, commit and publish were not run.
 
 # S10 final rounds 3–4
 
