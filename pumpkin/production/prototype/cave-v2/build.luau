@@ -2,6 +2,10 @@
 -- source modules are mounted from prototype/core, never copied into source.
 -- Section entrypoint: preserve the current six-suite place; never run the
 -- historical baseline generator below for section work.
+if (require('@lune/process').args[1] or ''):match('^c3%-') then
+ require('../../treasure/cave-sections/C3/build')()
+ return
+end
 if require('@lune/process').args[1]=='c2-geode' then
  local fs,rb,luau,serde=require('@lune/fs'),require('@lune/roblox'),require('@lune/luau'),require('@lune/serde')
  local target,backup='prototype/cave-v2.rbxl','prototype/cave-v2.pre-c2geode.rbxl'

@@ -1,5 +1,19 @@
 # Section craft lessons
 
+## Crystal Cave C3 — four rounds, 2026-10-17
+
+1. When a sign passes bounds but is cropped, project its whole face into the
+   locked player camera before dressing, because an overview hides the miss.
+2. When Lune FontFace serialization materializes defaults in unrelated labels,
+   create the new GUI at runtime, because cosmetic work must preserve originals.
+3. When lane reserves pass, still inspect bearing and player frusta separately,
+   because safe placements can overhang terrain or vanish from the seat.
+
+Evidence: `../cave-sections/C3/RESULT.md`, four PRE/GAPS/SBS rounds, exact
+unrelated serialization, zero physical contact and mounted texture/GUI fixtures.
+REVISIT: partial rock bearing, peripheral station, clipped mid flash and retained
+box geology. Independent Claude and six live suites UNKNOWN. No Studio play.
+
 ## Crystal Cave C2 — rounds 1 and 2, 2026-10-17
 
 1. When a supported framing rock stays behind existing scenery, inspect every
