@@ -117,6 +117,9 @@ local function capture()
 		if not camera then
 			return
 		end
+		local cutscenes = player.PlayerGui:FindFirstChild("TreasureCutscenes")
+		local release = cutscenes and cutscenes:FindFirstChild("ReleaseCamera")
+		if release then release:Invoke() end -- Local presentation only; save the released camera.
 		local saved = { camera.CameraType, camera.CFrame, camera.FieldOfView, camera.CameraSubject }
 		local shots = {
 			{ "portal", Vector3.new(0, 5.5, 130), Vector3.new(0, 53, -96), 70 },

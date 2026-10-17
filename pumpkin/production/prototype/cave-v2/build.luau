@@ -1,4 +1,12 @@
 -- Offline native-part builder. Reuses Meadow v4's manifest/CFrame/slab pattern;
+if require('@lune/process').args[1]=='cutfix' then
+ require('../../treasure/cutscenes-build')('cave', true)
+ return
+end
+if require('@lune/process').args[1]=='cutscenes' then
+ require('../../treasure/cutscenes-build')('cave')
+ return
+end
 if require('@lune/process').args[1]=='cinematic' then
  require('../../treasure/cinematic-build')('cave')
  return
@@ -434,7 +442,8 @@ require('./readability-art')({model=model,parts=parts,lights=lights,routes=route
 require('./balance-art')({model=model,parts=parts,lights=lights,routes=routes,part=part,box=box,slab=slab,frame=frame,xyz=xyz,nearest=nearest,crystal=crystal,glow=glow,V=V,C=C})
 require('./connect-art')({model=model,parts=parts,part=part,V=V,C=C})
 local spawn=rb.Instance.new('SpawnLocation');spawn.Name='PortalSpawn';spawn.Size=V.new(10,1,10);spawn.CFrame=C.new(-150,.5,120);spawn.Anchored=true;spawn.Neutral=true;spawn.Parent=ws
-local rep=rb.Instance.new('ReplicatedStorage');rep.Parent=place;local core=rb.Instance.new('Folder');core.Name='TreasureCore';core.Parent=rep
+ local rep=rb.Instance.new('ReplicatedStorage');rep.Parent=place;local core=rb.Instance.new('Folder');core.Name='TreasureCore';core.Parent=rep
+ local style=rb.Instance.new('ModuleScript');style.Name='UIStyle';style.Source=fs.readFile('prototype/core/UIStyle.luau');style.Parent=rep
 for _,name in {'Config','Domain','Profiles','Runtime','Service','Tests','MockStore','StudioStoreTest','Feel','CinematicMove'} do local m=rb.Instance.new('ModuleScript');m.Name=name;m.Source=fs.readFile('prototype/core/'..name..'.luau');m.Parent=core end
 local packages=rb.Instance.new('Folder');packages.Name='Packages';packages.Parent=core
 for _,name in {'ProfileStore','Shake','Spring','Signal','Trove'} do local m=rb.Instance.new('ModuleScript');m.Name=name;m.Source=fs.readFile('prototype/core/Packages/'..name..'.luau');m.Parent=packages end

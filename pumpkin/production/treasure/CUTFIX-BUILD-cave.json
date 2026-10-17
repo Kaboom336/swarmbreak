@@ -1,0 +1,12 @@
+{
+  "Studio": "NOT RUN",
+  "backup": "prototype/cave-v2.pre-cutfix.rbxl",
+  "backup_sha256": "9951d0902539be3acb0bbd8c14b4c6a9b5f4d5abe9b4adb26c9f5febb2f47bdf",
+  "compiled_O0_O1_O2": 48,
+  "complete_unrelated_serialization_exact": true,
+  "input_sha256": "9951d0902539be3acb0bbd8c14b4c6a9b5f4d5abe9b4adb26c9f5febb2f47bdf",
+  "place": "prototype/cave-v2.rbxl",
+  "place_sha256": "7c07e8bf6d1454088bcc24f3259b09f17e614d43307f87b36804f01c379d830c",
+  "server_and_physics_and_existing_tests_exact": true,
+  "state": "PASS"
+}

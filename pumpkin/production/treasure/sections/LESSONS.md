@@ -1,5 +1,19 @@
 # Section craft lessons
 
+## Cutscenes / roadmap 15
+
+1. When a capture tool saves camera ownership, release the cinematic lease
+   synchronously first, because otherwise capture can restore Scriptable forever.
+2. When success attributes and phase replicate separately, observe both orders,
+   because a valid escape count can arrive before or after the Home phase.
+3. When a shot runs during a chase, keep control live and use camera presentation
+   only, because pauses or extra shields would change the gameplay contract.
+
+Evidence: `../CUTSCENES.md`, `../CUTSCENES-CONTRACT.json`, build reports and
+`../CUTSCENES-FINAL.json` when present. All seven actual-client normal and
+stalled-render watchdog fixtures restore their leased camera within five seconds.
+Studio Play was not launched; Claude's live framing/device/TikTok check is UNKNOWN.
+
 ## Cinematic movement / roadmap 14
 
 1. When chase timing must stay fixed, ramp camera presentation because physical
