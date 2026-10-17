@@ -1,0 +1,2350 @@
+{
+  "routes": {
+    "bridge": {
+      "before_after_equal": true,
+      "length": 85.29822128134704,
+      "segments": [
+        {
+          "length": 12,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 12.649110640673518,
+          "rise": 4,
+          "slope_degrees": 18.43494882292201
+        },
+        {
+          "length": 36,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 12.649110640673518,
+          "rise": -4,
+          "slope_degrees": -18.43494882292201
+        },
+        {
+          "length": 12,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "bridge_south": {
+      "before_after_equal": true,
+      "length": 76.26522046947657,
+      "segments": [
+        {
+          "length": 1.8719992467438575,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.5118527769694117,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.992881276150105,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.3137576037146648,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.4777651646080323,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.4921484482051675,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.3704014284925425,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.138139186964577,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.033025477230982,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.137338009486163,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.2491703441671134,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.3344566042065855,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.375665952182997,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.36830350786834,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.3195624727328115,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.24932296743554,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.39644029181786,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.6625559623530894,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.7803290640685767,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.743919274478748,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.5502281975271113,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.197560011932102,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.6851331357430004,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.0132640643972075,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "east": {
+      "before_after_equal": true,
+      "length": 119.40547856520483,
+      "segments": [
+        {
+          "length": 3.4773339262193437,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.779064302199043,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.705203578970907,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 6.254179586981284,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 6.429910648965063,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 6.241729222974362,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.7095313474130505,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.880056351039284,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.28881990896655,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.197453526142485,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.199192632549594,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.208154781569877,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.168282894748078,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.052200407218131,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.8592754150391984,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.6198011805274404,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.43977003570872,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.3118760582957654,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.188318783184644,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.070024549653249,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.9581124308319287,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.8539109683996378,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.758966220805167,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.6750344675285627,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.6913190808180643,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.76694401036489,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.7735922326995035,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.697452303912854,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.5302498807881637,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.267107038167754,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.90568258877243,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.4469282037498061,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "east_climb": {
+      "before_after_equal": true,
+      "length": 82,
+      "segments": [
+        {
+          "length": 9,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 26,
+          "rise": 10,
+          "slope_degrees": 22.619864948040426
+        },
+        {
+          "length": 26,
+          "rise": 10,
+          "slope_degrees": 22.619864948040426
+        },
+        {
+          "length": 21,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "east_descent": {
+      "before_after_equal": true,
+      "length": 136.5050823450824,
+      "segments": [
+        {
+          "length": 0.95674915051284,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.186967004826208,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.3899693183807935,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.560115314163828,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.696695012457821,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.8014812061986225,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.8781235592137298,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.9321880206360456,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.9714733141918914,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.0063927812276825,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.050143693967951,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.1182532873262074,
+          "rise": -0.002330531378088807,
+          "slope_degrees": -0.0630376167596077
+        },
+        {
+          "length": 2.2761544549096837,
+          "rise": -0.05836265244612093,
+          "slope_degrees": -1.4692764730310635
+        },
+        {
+          "length": 2.4913409094705243,
+          "rise": -0.14982180629771236,
+          "slope_degrees": -3.447677365253348
+        },
+        {
+          "length": 2.692673609304235,
+          "rise": -0.2560261083617945,
+          "slope_degrees": -5.456067565342496
+        },
+        {
+          "length": 2.875228687342346,
+          "rise": -0.3724880379022224,
+          "slope_degrees": -7.443632758479938
+        },
+        {
+          "length": 3.0354666851513703,
+          "rise": -0.49371549603131015,
+          "slope_degrees": -9.360684846691525
+        },
+        {
+          "length": 3.170414251685626,
+          "rise": -0.6137687219348251,
+          "slope_degrees": -11.162518623805711
+        },
+        {
+          "length": 3.2773084842238984,
+          "rise": -0.7267447394668558,
+          "slope_degrees": -12.811868115182202
+        },
+        {
+          "length": 3.3535165000526463,
+          "rise": -0.8271906085323373,
+          "slope_degrees": -14.280171403926813
+        },
+        {
+          "length": 3.396606466138691,
+          "rise": -0.9104393406804103,
+          "slope_degrees": -15.547895290425451
+        },
+        {
+          "length": 3.4044840741660964,
+          "rise": -0.9728612679795816,
+          "slope_degrees": -16.604210764702415
+        },
+        {
+          "length": 3.3755352470194837,
+          "rise": -1.012025501109088,
+          "slope_degrees": -17.446303357174607
+        },
+        {
+          "length": 3.3087380524966745,
+          "rise": -1.0267693775803046,
+          "slope_degrees": -18.078548746150556
+        },
+        {
+          "length": 3.3316783938385988,
+          "rise": -1.058141290536815,
+          "slope_degrees": -18.517849206726925
+        },
+        {
+          "length": 3.449617415076294,
+          "rise": -1.1103833094348232,
+          "slope_degrees": -18.777016338763893
+        },
+        {
+          "length": 3.534552818421118,
+          "rise": -1.1418335669597521,
+          "slope_degrees": -18.84741287351087
+        },
+        {
+          "length": 3.5848115888746035,
+          "rise": -1.1502105938927745,
+          "slope_degrees": -18.714738617982473
+        },
+        {
+          "length": 3.6002897562777196,
+          "rise": -1.1346341936721016,
+          "slope_degrees": -18.369917634943192
+        },
+        {
+          "length": 3.582420490057612,
+          "rise": -1.0956763668990748,
+          "slope_degrees": -17.809192661164616
+        },
+        {
+          "length": 3.5341891236722986,
+          "rise": -1.0353025900778663,
+          "slope_degrees": -17.03400478422828
+        },
+        {
+          "length": 3.460190722313399,
+          "rise": -0.9566948599140246,
+          "slope_degrees": -16.050599434125324
+        },
+        {
+          "length": 3.3667499807680157,
+          "rise": -0.8639526131157993,
+          "slope_degrees": -14.869198112918873
+        },
+        {
+          "length": 3.2621313534440803,
+          "rise": -0.7616671565292288,
+          "slope_degrees": -13.502487571874978
+        },
+        {
+          "length": 3.1568436998592238,
+          "rise": -0.6543574168955124,
+          "slope_degrees": -11.963127915296745
+        },
+        {
+          "length": 3.0639620148680047,
+          "rise": -0.5457391154814828,
+          "slope_degrees": -10.26001200743657
+        },
+        {
+          "length": 3.135244158517201,
+          "rise": -0.4551980817108081,
+          "slope_degrees": -8.348133729947795
+        },
+        {
+          "length": 3.3474629796754516,
+          "rise": -0.35658412327139954,
+          "slope_degrees": -6.1149602158418634
+        },
+        {
+          "length": 3.524585761397475,
+          "rise": -0.21439350697837645,
+          "slope_degrees": -3.4873405579442713
+        },
+        {
+          "length": 3.65127979316318,
+          "rise": -0.0426870249295086,
+          "slope_degrees": -0.6698588508642296
+        },
+        {
+          "length": 3.715304831176015,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.703431171704103,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.6106767905844297,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.4340122837167097,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.171581530009455,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.82251483464213,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.387158898000015,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.8683728699603597,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "fork_link": {
+      "before_after_equal": true,
+      "length": 16.589173484705295,
+      "segments": [
+        {
+          "length": 1.0836588052749814,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.544426724143946,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.8088594904662993,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.9401443647960839,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.4674640638213963,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.984743105570394,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.8157099737455207,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.9441669568866764,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "jump_access": {
+      "before_after_equal": true,
+      "length": 122,
+      "segments": [
+        {
+          "length": 18.80000000000001,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 60,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 19.19999999999999,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 24,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "jump_recovery": {
+      "before_after_equal": true,
+      "length": 90.770329614269,
+      "segments": [
+        {
+          "length": 9,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 10.770329614269007,
+          "rise": -4,
+          "slope_degrees": -21.80140948635181
+        },
+        {
+          "length": 9,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 23,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 12,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 15,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 12,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "north_crosslink": {
+      "before_after_equal": true,
+      "length": 160.16144581625994,
+      "segments": [
+        {
+          "length": 1.4840877857411714,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.9763390938776821,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.3540889310802533,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.6119733653791717,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.763232559495571,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.8361073172512037,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.8782413289338695,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.961514942559784,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.314411259725653,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.7968851725124146,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.1754479128019275,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.437206957100284,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.575808931970059,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.587959324763683,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.472040525474564,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.2276040308157565,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.037914946878537,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.0285835614741545,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.048004228499243,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.072280261701813,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.089396134359372,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.099006015963955,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.112189659769184,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.15122016066682,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.24176484139875,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.371414895485964,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.482538890765652,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.540818628119445,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.536071317027992,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.479637700826269,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.405697618855505,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.374555292688511,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.718750101051582,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.255233426848564,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.570535149745779,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.627806323749882,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.40933201429542,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.906134245655041,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.114273574693875,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.0353373862555837,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "portal_north": {
+      "before_after_equal": true,
+      "length": 58.94836463213147,
+      "segments": [
+        {
+          "length": 1.4221808136104082,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.8920812121778923,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.2527686145416848,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.5036137212116136,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.6461694058419734,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.6837756943416604,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.622420724083297,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.4729771217555903,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.4086371136726528,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.485349068331263,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.55592731407105,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.606470741785375,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.6296324045866095,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.6234162412126296,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.5907398819615852,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.539787306403349,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.6436569594296127,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.833455999374373,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.9101798447030083,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.8714152668615567,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.7158580614173533,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.4427839862574063,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.0518561171267895,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.5432110173727458,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "ravine_floor_loop": {
+      "before_after_equal": true,
+      "length": 182,
+      "segments": [
+        {
+          "length": 4,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 83,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 8,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 83,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "ravine_ramp": {
+      "before_after_equal": true,
+      "length": 131.05824765394993,
+      "segments": [
+        {
+          "length": 18,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 76.96752561957543,
+          "rise": 32,
+          "slope_degrees": 24.567171320601314
+        },
+        {
+          "length": 14,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 22.090722034374522,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "shelf": {
+      "before_after_equal": true,
+      "length": 257.8891031783377,
+      "segments": [
+        {
+          "length": 27,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 30.463092423455635,
+          "rise": -12,
+          "slope_degrees": -23.19859051364819
+        },
+        {
+          "length": 13,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.8408935028645403,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.5811388300842122,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.4337208778404158,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.4337208778404356,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.5811388300841898,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.8408935028645521,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 8,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.8408935028645534,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.5811388300841942,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.4337208778404191,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.433720877840447,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.5811388300841898,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.840893502864538,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 8,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.8408935028645521,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.581138830084185,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.433720877840444,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.4337208778404356,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.5811388300841898,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.8408935028645521,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 10,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 30.463092423455635,
+          "rise": -12,
+          "slope_degrees": -23.19859051364819
+        },
+        {
+          "length": 6.5,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.6874857109591503,
+          "rise": 3.552713678800501e-15,
+          "slope_degrees": 1.206265026670751e-13
+        },
+        {
+          "length": 1.4493772609105102,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.3142441380204182,
+          "rise": -3.552713678800501e-15,
+          "slope_degrees": -1.5488408410957098e-13
+        },
+        {
+          "length": 1.3142441380203866,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.449377260910537,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.6874857109591517,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.5,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 30.463092423455635,
+          "rise": -12,
+          "slope_degrees": -23.19859051364819
+        },
+        {
+          "length": 11,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 30.463092423455635,
+          "rise": -12,
+          "slope_degrees": -23.19859051364819
+        },
+        {
+          "length": 9,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "shelf_link": {
+      "before_after_equal": true,
+      "length": 53.66421092169462,
+      "segments": [
+        {
+          "length": 2.9559972936388164,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.231387479302739,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.854259984796867,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.8302049645951755,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.179109953088102,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.5968430602404657,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.4491970080005614,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.287454942657009,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.1361632610564096,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.0303531147376224,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.2765249884595735,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.6810520235389226,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.6894574126827915,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.219301787655206,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.246903647244357,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "south_crosslink": {
+      "before_after_equal": true,
+      "length": 133.65716922174227,
+      "segments": [
+        {
+          "length": 4.375292631989265,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.223794026908804,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.136746990910742,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.1147542926022656,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.159285619908899,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.272472098199708,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 39.880930109837976,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.00195264839553,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.930811347355817,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.713363301255181,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.4555644531245715,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.29079870440557,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.542171811817163,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.008401297532867,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.332605709668131,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.444256673329947,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.3085039256105535,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.907087315344017,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.230291107477582,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.2742822690539994,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.2851364265299354,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.5801448171377968,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.0852878740648884,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 0.8106439371477916,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 0.7014689971533205,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 0.6363299534293099,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 0.5320114961113425,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 0.4227793854393109,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "spiral": {
+      "before_after_equal": true,
+      "length": 196.84658528260942,
+      "segments": [
+        {
+          "length": 1.4921924828596407,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.502318582378614,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.5124460196000478,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.5225747678306303,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.5327048010793203,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.542836094034382,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.5529686220415408,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.5631023610827723,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 1.5884776257137618,
+          "rise": -0.21951219512195053,
+          "slope_degrees": -7.94314005012277
+        },
+        {
+          "length": 1.696724419771496,
+          "rise": -0.6097560975609682,
+          "slope_degrees": -21.06166414463774
+        },
+        {
+          "length": 1.7061883170932797,
+          "rise": -0.6097560975609824,
+          "slope_degrees": -20.939326443359015
+        },
+        {
+          "length": 1.7156609549409705,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -20.818325663027437
+        },
+        {
+          "length": 1.7251421893336352,
+          "rise": -0.6097560975609682,
+          "slope_degrees": -20.69864131971313
+        },
+        {
+          "length": 1.7346318793090891,
+          "rise": -0.6097560975609824,
+          "slope_degrees": -20.580253315140485
+        },
+        {
+          "length": 1.7441298868485786,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -20.46314192857603
+        },
+        {
+          "length": 1.753636076803911,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -20.347287808888204
+        },
+        {
+          "length": 1.763150316826264,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -20.23267196676993
+        },
+        {
+          "length": 1.7726724772973248,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -20.11927576712639
+        },
+        {
+          "length": 1.7822024312622078,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -20.007080921624524
+        },
+        {
+          "length": 1.7917400543642306,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -19.896069481401955
+        },
+        {
+          "length": 1.8012852247814242,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -19.786223829933117
+        },
+        {
+          "length": 1.8108378231650364,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -19.677526676046362
+        },
+        {
+          "length": 1.8203977325796605,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -19.56996104709308
+        },
+        {
+          "length": 1.8299648384446017,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -19.46351028226969
+        },
+        {
+          "length": 1.83953902847774,
+          "rise": -0.6097560975609824,
+          "slope_degrees": -19.358158026075476
+        },
+        {
+          "length": 1.8491201926398557,
+          "rise": -0.6097560975609682,
+          "slope_degrees": -19.25388822192378
+        },
+        {
+          "length": 1.8587082230815266,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -19.150685105886527
+        },
+        {
+          "length": 1.8683030140905506,
+          "rise": -0.6097560975609824,
+          "slope_degrees": -19.04853320057846
+        },
+        {
+          "length": 1.8779044620414735,
+          "rise": -0.6097560975609682,
+          "slope_degrees": -18.947417309175194
+        },
+        {
+          "length": 1.8875124653462572,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -18.847322509565924
+        },
+        {
+          "length": 1.8971269244060265,
+          "rise": -0.6097560975609824,
+          "slope_degrees": -18.74823414863188
+        },
+        {
+          "length": 1.9067477415645726,
+          "rise": -0.6097560975609682,
+          "slope_degrees": -18.650137836653016
+        },
+        {
+          "length": 1.916374821062816,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -18.553019441841826
+        },
+        {
+          "length": 1.9260080689945607,
+          "rise": -0.6097560975609824,
+          "slope_degrees": -18.45686508499192
+        },
+        {
+          "length": 1.935647393263361,
+          "rise": -0.6097560975609717,
+          "slope_degrees": -18.361661134252437
+        },
+        {
+          "length": 1.945292703540791,
+          "rise": -0.6097560975609788,
+          "slope_degrees": -18.267394200015833
+        },
+        {
+          "length": 1.9549439112254348,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -18.174051129918332
+        },
+        {
+          "length": 1.9646009294033073,
+          "rise": -0.6097560975609717,
+          "slope_degrees": -18.081619003955282
+        },
+        {
+          "length": 1.9742636728091734,
+          "rise": -0.6097560975609788,
+          "slope_degrees": -17.99008512970267
+        },
+        {
+          "length": 1.9839320577887927,
+          "rise": -0.6097560975609824,
+          "slope_degrees": -17.899437037646685
+        },
+        {
+          "length": 1.9936060022624533,
+          "rise": -0.6097560975609646,
+          "slope_degrees": -17.80966247661619
+        },
+        {
+          "length": 2.0032854256890746,
+          "rise": -0.6097560975609788,
+          "slope_degrees": -17.720749409322526
+        },
+        {
+          "length": 2.0129702490315577,
+          "rise": -0.6097560975609824,
+          "slope_degrees": -17.63268600798879
+        },
+        {
+          "length": 2.022660394722941,
+          "rise": -0.6097560975609646,
+          "slope_degrees": -17.545460650086575
+        },
+        {
+          "length": 2.0323557866333166,
+          "rise": -0.6097560975609788,
+          "slope_degrees": -17.459061914166085
+        },
+        {
+          "length": 2.0420563500378495,
+          "rise": -0.6097560975609824,
+          "slope_degrees": -17.373478575771614
+        },
+        {
+          "length": 2.0517620115851907,
+          "rise": -0.6097560975609682,
+          "slope_degrees": -17.288699603460554
+        },
+        {
+          "length": 2.0614726992674575,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -17.204714154901083
+        },
+        {
+          "length": 2.071188342390105,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -17.121511573061106
+        },
+        {
+          "length": 2.0809088715431354,
+          "rise": -0.6097560975609824,
+          "slope_degrees": -17.039081382483552
+        },
+        {
+          "length": 2.0906342185728573,
+          "rise": -0.6097560975609717,
+          "slope_degrees": -16.957413285640836
+        },
+        {
+          "length": 2.1003643165543804,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -16.87649715937534
+        },
+        {
+          "length": 2.1100990997650184,
+          "rise": -0.6097560975609788,
+          "slope_degrees": -16.796323051411775
+        },
+        {
+          "length": 2.11983850365768,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -16.716881176957045
+        },
+        {
+          "length": 2.129582464835967,
+          "rise": -0.6097560975609717,
+          "slope_degrees": -16.638161915365796
+        },
+        {
+          "length": 2.1393309210290052,
+          "rise": -0.6097560975609824,
+          "slope_degrees": -16.560155806886883
+        },
+        {
+          "length": 2.1490838110671677,
+          "rise": -0.6097560975609717,
+          "slope_degrees": -16.482853549478314
+        },
+        {
+          "length": 2.1588410748589246,
+          "rise": -0.6097560975609717,
+          "slope_degrees": -16.406245995693443
+        },
+        {
+          "length": 2.1686026533673175,
+          "rise": -0.6097560975609824,
+          "slope_degrees": -16.330324149637512
+        },
+        {
+          "length": 2.1783684885877013,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -16.25507916398884
+        },
+        {
+          "length": 2.188138523526047,
+          "rise": -0.6097560975609717,
+          "slope_degrees": -16.180502337087642
+        },
+        {
+          "length": 2.1979127021772453,
+          "rise": -0.6097560975609806,
+          "slope_degrees": -16.106585110089267
+        },
+        {
+          "length": 2.207690969504597,
+          "rise": -0.6097560975609735,
+          "slope_degrees": -16.03331906417605
+        },
+        {
+          "length": 2.2174732714192436,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -15.960695917837732
+        },
+        {
+          "length": 2.227259554760494,
+          "rise": -0.6097560975609788,
+          "slope_degrees": -15.888707524203797
+        },
+        {
+          "length": 2.2370497672764795,
+          "rise": -0.6097560975609735,
+          "slope_degrees": -15.817345868438403
+        },
+        {
+          "length": 2.246843857605208,
+          "rise": -0.6097560975609735,
+          "slope_degrees": -15.74660306519278
+        },
+        {
+          "length": 2.256641775256169,
+          "rise": -0.6097560975609788,
+          "slope_degrees": -15.676471356110643
+        },
+        {
+          "length": 2.266443470592383,
+          "rise": -0.6097560975609753,
+          "slope_degrees": -15.606943107389085
+        },
+        {
+          "length": 2.2762488948129276,
+          "rise": -0.6097560975609717,
+          "slope_degrees": -15.53801080739308
+        },
+        {
+          "length": 2.286057999935713,
+          "rise": -0.6097560975609806,
+          "slope_degrees": -15.469667064321554
+        },
+        {
+          "length": 2.2958707387806507,
+          "rise": -0.6097560975609735,
+          "slope_degrees": -15.401904603923445
+        },
+        {
+          "length": 2.305687064953798,
+          "rise": -0.6097560975609735,
+          "slope_degrees": -15.334716267262722
+        },
+        {
+          "length": 2.3155069328309494,
+          "rise": -0.6097560975609806,
+          "slope_degrees": -15.268095008533823
+        },
+        {
+          "length": 2.3253302975421044,
+          "rise": -0.6097560975609735,
+          "slope_degrees": -15.202033892922692
+        },
+        {
+          "length": 2.335157114956743,
+          "rise": -0.6097560975609735,
+          "slope_degrees": -15.136526094512465
+        },
+        {
+          "length": 2.3449873416685207,
+          "rise": -0.6097560975609806,
+          "slope_degrees": -15.071564894237154
+        },
+        {
+          "length": 2.354820934980965,
+          "rise": -0.6097560975609726,
+          "slope_degrees": -15.007143677876382
+        },
+        {
+          "length": 2.364657852893365,
+          "rise": -0.6097560975609735,
+          "slope_degrees": -14.94325593409575
+        },
+        {
+          "length": 2.374498054086894,
+          "rise": -0.6097560975609797,
+          "slope_degrees": -14.87989525252606
+        },
+        {
+          "length": 2.3843414979111777,
+          "rise": -0.6097560975609744,
+          "slope_degrees": -14.817055321884846
+        },
+        {
+          "length": 2.394188144371057,
+          "rise": -0.609756097560973,
+          "slope_degrees": -14.754729928139383
+        },
+        {
+          "length": 2.404037954113623,
+          "rise": -0.6097560975609801,
+          "slope_degrees": -14.692912952706608
+        },
+        {
+          "length": 2.413890888415944,
+          "rise": -0.6097560975609735,
+          "slope_degrees": -14.631598370689423
+        },
+        {
+          "length": 2.4237469091723907,
+          "rise": -0.609756097560973,
+          "slope_degrees": -14.57078024915653
+        },
+        {
+          "length": 2.4336059788829036,
+          "rise": -0.6097560975609801,
+          "slope_degrees": -14.510452745451358
+        },
+        {
+          "length": 2.4434680606410715,
+          "rise": -0.6097560975609735,
+          "slope_degrees": -14.45061010554072
+        },
+        {
+          "length": 2.3864673670034993,
+          "rise": -0.21951219512195141,
+          "slope_degrees": -5.277644095216312
+        },
+        {
+          "length": 2.38653666162018,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.3967233271145583,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.406910322051977,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.417097642266821,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.4272852836635175,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.437473242215097,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.44766151396096,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 2.4578500950065134,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "summit_radial": {
+      "before_after_equal": true,
+      "length": 30,
+      "segments": [
+        {
+          "length": 30,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "tunnel_south": {
+      "before_after_equal": true,
+      "length": 49.304670424941726,
+      "segments": [
+        {
+          "length": 32.2490309931942,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 17.05563943174753,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "tunnel_trunk": {
+      "before_after_equal": true,
+      "length": 105,
+      "segments": [
+        {
+          "length": 81,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 24,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    },
+    "west": {
+      "before_after_equal": true,
+      "length": 280.72402642514476,
+      "segments": [
+        {
+          "length": 3.4470938231799937,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.697168779861842,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.603691771096453,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 6.164445717699989,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 6.384941726454496,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 6.277944881424502,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.869297100399569,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.214550590132927,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.826335291332374,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.84060763903288,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.8916149173492585,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.955916234981117,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.014427160861639,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.0523664991587145,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.058685184079552,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.025392712482563,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.171558658571457,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.445632728125479,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.60055733019067,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.641075475568212,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.574176405897552,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.410429909736056,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.166271574029334,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.867884308975394,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.726070359515484,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.78922359824118,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.870829240826056,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.9401294129134925,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.974293237832122,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.956952947384412,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.876632221558318,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.725505313394425,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.636650978370817,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.671997170780579,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.707331604298204,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.728894879881889,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.726869683490302,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.694940891889111,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.629962321018949,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.5318608365556345,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.375292631989265,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.223794026908804,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.136746990910742,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.1147542926022656,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.159285619908899,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.272472098199708,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.45674847868469,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.714455071004083,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.308237317872249,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.985691812123855,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 6.352846435804509,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 6.40594630568264,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 6.143209985883932,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 5.563730168132623,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 4.667105699504948,
+          "rise": 0,
+          "slope_degrees": 0
+        },
+        {
+          "length": 3.4534983713586085,
+          "rise": 0,
+          "slope_degrees": 0
+        }
+      ]
+    }
+  },
+  "storage_exact": true,
+  "workspace": {
+    "before": {
+      "children": {},
+      "descendants": 0,
+      "parts": 0,
+      "solids": 0
+    },
+    "current": {
+      "children": {},
+      "descendants": 0,
+      "parts": 0,
+      "solids": 0
+    }
+  },
+  "workspace_exact": true
+}

@@ -1,4 +1,8 @@
 -- Offline native-part builder. Reuses Meadow v4's manifest/CFrame/slab pattern;
+if require('@lune/process').args[1]=='cinematic' then
+ require('../../treasure/cinematic-build')('cave')
+ return
+end
 if (require('@lune/process').args[1] or ''):match('^c8%-') then
  require('../../treasure/cave-sections/C8/build')()
  return
@@ -431,12 +435,13 @@ require('./balance-art')({model=model,parts=parts,lights=lights,routes=routes,pa
 require('./connect-art')({model=model,parts=parts,part=part,V=V,C=C})
 local spawn=rb.Instance.new('SpawnLocation');spawn.Name='PortalSpawn';spawn.Size=V.new(10,1,10);spawn.CFrame=C.new(-150,.5,120);spawn.Anchored=true;spawn.Neutral=true;spawn.Parent=ws
 local rep=rb.Instance.new('ReplicatedStorage');rep.Parent=place;local core=rb.Instance.new('Folder');core.Name='TreasureCore';core.Parent=rep
-for _,name in {'Config','Domain','Profiles','Runtime','Service','Tests','MockStore','StudioStoreTest','Feel'} do local m=rb.Instance.new('ModuleScript');m.Name=name;m.Source=fs.readFile('prototype/core/'..name..'.luau');m.Parent=core end
+for _,name in {'Config','Domain','Profiles','Runtime','Service','Tests','MockStore','StudioStoreTest','Feel','CinematicMove'} do local m=rb.Instance.new('ModuleScript');m.Name=name;m.Source=fs.readFile('prototype/core/'..name..'.luau');m.Parent=core end
 local packages=rb.Instance.new('Folder');packages.Name='Packages';packages.Parent=core
 for _,name in {'ProfileStore','Shake','Spring','Signal','Trove'} do local m=rb.Instance.new('ModuleScript');m.Name=name;m.Source=fs.readFile('prototype/core/Packages/'..name..'.luau');m.Parent=packages end
 local sp=rb.Instance.new('StarterPlayer');sp.Parent=place
 local clients=rb.Instance.new('StarterPlayerScripts');clients.Parent=sp
 local feel=rb.Instance.new('LocalScript');feel.Name='TreasureFeel';feel.Source=fs.readFile('prototype/core/Feel.client.luau');feel.Parent=clients
+local movement=rb.Instance.new('LocalScript');movement.Name='CinematicMovement';movement.Source=fs.readFile('prototype/core/CinematicMove.client.luau');movement.Parent=clients
 local function lua(value)
  if type(value)=='table' then local fields={};for key,child in value do table.insert(fields,'['..lua(key)..']='..lua(child)) end;return '{'..table.concat(fields,',')..'}' end
  if type(value)=='string' then return string.format('%q',value) end

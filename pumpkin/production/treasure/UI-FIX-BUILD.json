@@ -1,0 +1,26 @@
+{
+  "acorn_caption_constructor": "PASS",
+  "all_unrelated_serialized_state_exact": true,
+  "backup": "slice-v2/prototype/guardian-greybox.pre-uifix.rbxl",
+  "backup_sha256": "d611899d5a7b80af92235439c8c2f69f38332b7556dff98494a665f9d605b527",
+  "canonical_sha256": "5ee7eff93109e87c614cc7f813b58bd0b4369bde74bef56110be54aac0399d81",
+  "changed_sources": [
+    [
+      "StarterPlayer.StarterPlayerScripts.Greybox",
+      "slice-v2/prototype/Greybox.client.luau"
+    ],
+    [
+      "StarterPlayer.StarterPlayerScripts.HomeArt",
+      "slice-v2/prototype/HomeArt.client.luau"
+    ],
+    [
+      "ReplicatedStorage.MeadowV4.Section7",
+      "prototype/meadow-v4/Section7.luau"
+    ]
+  ],
+  "compiled_O0_O1_O2": 81,
+  "live_Studio": "UNKNOWN",
+  "objective_icon_clearance_pixels": 20,
+  "status": "PASS",
+  "summit_signs_both_faces_decorator_repeat": "PASS"
+}

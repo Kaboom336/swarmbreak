@@ -1,5 +1,19 @@
 # Section craft lessons
 
+## Cinematic movement / roadmap 14
+
+1. When chase timing must stay fixed, ramp camera presentation because physical
+   acceleration changes the time available to escape even below the speed cap.
+2. When layering camera effects, test both restore/apply callbacks together
+   because separately correct effects can accumulate each other's offsets.
+3. When a landing effect uses Humanoid states, retain the fall latch through
+   Landed because Freefall does not always transition directly to Running.
+
+Evidence: `../CINEMATIC-MOVE.md`, `../CINEMATIC-CONTRACT.json` and the final seal
+when present. Four archival check failures reproduce unchanged against the
+pre-cine backup and final; see `../CINEMATIC-LEGACY-FAILURES.json`. Live camera,
+phone/gamepad feel and Claude acceptance remain UNKNOWN. No Studio play/commit.
+
 ## Crystal Cave C8 — four rounds, 2026-10-17
 
 1. When flipping a yawed shell, preserve the selector's rotation order, because

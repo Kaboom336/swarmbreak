@@ -1,0 +1,12 @@
+{
+  "Studio": "NOT RUN",
+  "backup": "slice-v2/prototype/guardian-greybox.pre-cine-bindingfix.rbxl",
+  "backup_sha256": "7e674364a19056df5b053781a813e61e55d66640fa9dfe9713deccfa7a31fdc9",
+  "compiled_O0_O1_O2": 92,
+  "complete_unrelated_serialization_exact": true,
+  "input_sha256": "7e674364a19056df5b053781a813e61e55d66640fa9dfe9713deccfa7a31fdc9",
+  "place": "slice-v2/prototype/guardian-greybox.rbxl",
+  "place_sha256": "6bc8159f6fde0afef318eecbc2f81dec13bd9071a08663eaba4d64c24646f5a1",
+  "server_WalkSpeed_values_and_all_test_sources_unchanged": true,
+  "state": "PASS"
+}

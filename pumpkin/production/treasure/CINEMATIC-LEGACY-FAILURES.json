@@ -1,0 +1,25 @@
+{
+  "checks": [
+    {
+      "baseline_failure": "[string \"luau.load(...)\"]:309: attempt to index nil with 'GetFullName'",
+      "check": "kit-check",
+      "final_failure": "[string \"luau.load(...)\"]:309: attempt to index nil with 'GetFullName'",
+      "unchanged": true
+    },
+    {
+      "baseline_failure": "[string \"luau.load(...)\"]:100: pre-art runtime source changed GreyboxTraps",
+      "check": "home-art-check",
+      "final_failure": "[string \"luau.load(...)\"]:100: pre-art runtime source changed GreyboxTraps",
+      "unchanged": true
+    },
+    {
+      "baseline_failure": "[string \"luau.load(...)\"]:23: warm HOME lighting missing",
+      "check": "home-round3-check",
+      "final_failure": "[string \"luau.load(...)\"]:23: warm HOME lighting missing",
+      "unchanged": true
+    }
+  ],
+  "core_alias_equality_failed_before_and_after": true,
+  "state": "PRE-EXISTING FAILURES REPRODUCED",
+  "test_assertions_changed": false
+}

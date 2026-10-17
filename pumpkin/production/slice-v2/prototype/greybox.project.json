@@ -118,6 +118,9 @@
         },
         "Feel": {
           "$path": "../../prototype/core/Feel.luau"
+        },
+        "CinematicMove": {
+          "$path": "../../prototype/core/CinematicMove.luau"
         }
       },
       "LightingPresets": {
@@ -323,6 +326,9 @@
         },
         "TreasureFeel": {
           "$path": "../../prototype/core/Feel.client.luau"
+        },
+        "CinematicMovement": {
+          "$path": "../../prototype/core/CinematicMove.client.luau"
         },
         "LightingPresetController": {
           "$path": "LightingPreset.client.luau"

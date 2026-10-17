@@ -6,13 +6,22 @@ function Feel.new()
 	local self={trove=Trove.new(), springs={}, impacts=Signal.new()}
 	self.trove:Add(self.impacts)
 	local shake=Shake.new()
+	local player=game.Players.LocalPlayer
+	local function shakeAllowed()
+		local camera=workspace.CurrentCamera
+		return player:GetAttribute("CameraShakeEnabled")==true
+			and not player:GetAttribute("ReducedMotion")
+			and not player:GetAttribute("GreyboxCarry") and player:GetAttribute("CaveItemID")==nil
+			and camera and camera.CameraType==Enum.CameraType.Custom
+			and not game:GetService("VRService").VREnabled
+	end
 	shake.FadeInTime=0;shake.FadeOutTime=.3;shake.SustainTime=.04
 	shake.Frequency=18;shake.PositionInfluence=Vector3.new(.12,.12,0)
 	shake.RotationInfluence=Vector3.new(.012,.012,.004)
 	self.trove:Add(shake)
 	self.trove:Connect(self.impacts,function(position, strength)
 		local camera=workspace.CurrentCamera
-		if not camera or game.Players.LocalPlayer:GetAttribute("ReducedMotion") then return end
+		if not camera or not shakeAllowed() then return end
 		local falloff=math.clamp(1-(camera.CFrame.Position-position).Magnitude/100,0,1)
 		if falloff<=0 then return end
 		shake.Amplitude=math.min(2,strength)*falloff
@@ -25,6 +34,7 @@ function Feel.new()
 	end)
 	self.trove:BindToRenderStep(Shake.NextRenderName(),Enum.RenderPriority.Camera.Value+1,function()
 		local camera=workspace.CurrentCamera
+		if not shakeAllowed() then shake:Stop();return end
 		if camera and shake:IsShaking() then
 			local pos,rot=shake:Update()
 			baseCamera,baseFrame=camera,camera.CFrame

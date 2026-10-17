@@ -1,0 +1,12 @@
+{
+  "Studio": "NOT RUN",
+  "backup": "prototype/cave-v2.pre-cine-bindingfix.rbxl",
+  "backup_sha256": "e96dc227f3af25ad735c41ed9f6262ac16dc6ff1452b74ce5951241c51602fa5",
+  "compiled_O0_O1_O2": 45,
+  "complete_unrelated_serialization_exact": true,
+  "input_sha256": "e96dc227f3af25ad735c41ed9f6262ac16dc6ff1452b74ce5951241c51602fa5",
+  "place": "prototype/cave-v2.rbxl",
+  "place_sha256": "08b366d74a8c7fa66db2f494e6a1c05e496808f0e55ce4439154135c13c74bac",
+  "server_WalkSpeed_values_and_all_test_sources_unchanged": true,
+  "state": "PASS"
+}

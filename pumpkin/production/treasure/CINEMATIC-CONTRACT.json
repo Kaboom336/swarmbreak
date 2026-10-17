@@ -1,0 +1,37 @@
+{
+  "actual_client_guarded_runtime": "PASS",
+  "cleanup_objects": 9,
+  "clears": 78,
+  "emitted_particles": 134,
+  "late_and_detached_descendants": "PASS",
+  "live_Studio": "UNKNOWN",
+  "live_character_rebinding": "PASS",
+  "live_independent_replacement_inputs": "PASS",
+  "live_notification_churn": "PASS (old client failed)",
+  "places": [
+    {
+      "all_unrelated_saved_state_exact": true,
+      "place": "slice-v2/prototype/guardian-greybox.rbxl",
+      "server_speed_and_rules_exact": true,
+      "sha256": "6bc8159f6fde0afef318eecbc2f81dec13bd9071a08663eaba4d64c24646f5a1"
+    },
+    {
+      "all_unrelated_saved_state_exact": true,
+      "place": "prototype/cave-v2.rbxl",
+      "server_speed_and_rules_exact": true,
+      "sha256": "08b366d74a8c7fa66db2f494e6a1c05e496808f0e55ce4439154135c13c74bac"
+    }
+  ],
+  "policy_fps": [
+    30,
+    60,
+    144
+  ],
+  "state": "PASS",
+  "studio_debug_opt_in": "PASS",
+  "studio_debug_values": [
+    "CineIntent",
+    "CineSpeed",
+    "CineHum"
+  ]
+}
