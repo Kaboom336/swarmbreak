@@ -1,5 +1,32 @@
 # One-section scene checklist
 
+S10 rounds 1–2 ONLY: source-only Lune mount from byte-verified pre-s10 backup;
+Section10 under existing MeadowV4 pcall, home-local parenting. S9 privately managed
+owner faces avoid UIWorld invalidation; staged-face and original source-signal
+checks include a failing negative control. Warm paving/edge stones, gameplay,
+HomeArt, lanes/tags/colliders/tests exact. 12 R1 crowns frozen, 28 final cosmetics,
+120 client finish/lettering changes and no new lights. Read S10/RESULT.md and
+FINAL-EVIDENCE.json. REVISIT: partially occluded names and inherited terrace face.
+Claude live review and owner acceptance UNKNOWN; no R3/R4 until new authorization.
+
+S9 owner-authorized final R3/R4 are mounted; four-round cap reached. Read
+S9/RESULT.md and FINAL-R34-EVIDENCE.json. Only Section9 Source changes from
+the byte-verified pre-s9r3 backup. HomeArt/gameplay/tests/placement rules and
+unrelated serialized state remain exact. Warm mat finishes, planted borders,
+shadowless corner lights, live-source wooden owner boards and translucent
+portal swirl are cosmetic. Visual REVISIT: inherited dark edge and thin borders
+remain below TARGET. Claude final live Studio review/acceptance UNKNOWN.
+The older R1/R2 stop note below is historical.
+
+S9 owner-authorized R1/R2 pilot is mounted; stop for Claude live review before
+R3/R4. Read S9/RESULT.md and FINAL-EVIDENCE.json. Source-verified 64×48 plots,
+home offset (0,0,0), north S10 seam preserved. 92 frozen R1 forms; 220 final
+cosmetics, six client-platform Color/Material-only finishes; no new lights.
+Canonical source-only Lune; exact gameplay/tests/paving/edges/ownership/pets.
+Zero native physical contact, unsupported assembly, path-margin or legal pet-
+envelope errors. Full client mesh/runtime contact remains UNKNOWN. Visual
+REVISIT: dark upper strip, heavy fences, small signs and hidden flowers.
+
 S8 owner-authorized final R3/R4: byte-verified pre-s8r3 backup, source-only Lune,
 four-round cap reached. Read S8/RESULT.md and fresh FINAL-R34-EVIDENCE.json;
 R1/R2 history remains in RESULT-R2.md. Claude's live three gaps drive R3;

@@ -1,0 +1,7 @@
+# Generated target / aspiration
+
+Built-in imagegen generated TARGET.png from the four actual BEFORE cameras (spawn, pen, path, overview). Prompt requested the same eight raised rectangular yards, existing cyan portal and warm beige paving/edges; cosy timber plot numbers, open gates, warm foundation, three-flower welcome groups, empty collection floors. No invented pets, relocated portal, new stairs or changed placement layout. TARGET's central fascia, sign proportions and dense planted corners are aspiration, not approved gameplay geometry.
+
+Local references inspected: `_Steal_a_Brainrot_2.png` (large owner sign and display hierarchy), `_Grow_a_Garden__4.png` (fenced productive plots and warm timber), `_BLOOD_MOON_Pet_Simulator_99__1.png` (reward silhouette/collection emphasis). These are promotional images, not verified live base screenshots. Best specific ownership bar: Steal a Brainrot. TARGET and four-view SBS provide the side-by-side comparison; no claim of matching the reference.
+
+Web cross-checks: [Grow a Garden official experience](https://www.roblox.com/games/126884695634066/Grow-a-Garden), [BIG Games pet index](https://db.biggames.io/database/pets), [Brainrot base reference](https://stealabrainrot.wiki/wiki/base/). Current base details not independently played. Existing native constructors, NativeBlocks, UIStyle and Lune pipeline reused; CC0 Quaternius licence inspected, no new external asset/dependency.

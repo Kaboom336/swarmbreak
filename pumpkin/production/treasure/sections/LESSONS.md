@@ -1,5 +1,43 @@
 # Section craft lessons
 
+## S10 — rounds 1 and 2; stop for Claude live check
+
+1. When a custom board caches live labels, keep it out of generic RouteLabel
+   rebuilding and test both decorator orders, because deferred UI decoration can
+   destroy the cached faces after binding. Use a failing negative control and
+   wait for both faces before creating owner rows.
+2. When camera height comes from a physical floor, test containment against client
+   cosmetics too, because the inherited terrace's nonphysical grass shell hides
+   an otherwise legal player eye. Record the obstruction; never move gameplay.
+3. When progression has no implemented threshold, say COMING SOON, because an
+   invented coin/escape requirement would misrepresent the actual locked state.
+
+Evidence: S10/PRE/SBS R1/R2, GAPS-R1/R2, independent critics, owner decorator
+negative/positive controls and RESULT.md. Crown parts frozen; names still partly
+occluded and arrival terrace remains REVISIT. Claude live Studio review pending.
+Only R1/R2 authorized; no R3/R4, commit or publish.
+
+## S9 — final rounds 3 and 4; visual REVISIT
+
+1. When a portal stays opaque after changing its front surface, inspect every layer behind it, because a second broad green panel can hide transparency and wash out a swirl.
+2. When replacing a debug ownership caption, observe the original replicated TextLabel and test vacant/name/vacant plus delayed arrival, because a static board can look correct while losing the live source or racing replication.
+3. When matching border art under fixed placement envelopes, improve material and off-envelope planting first, because thickening a display pad or adding interior props can quietly change legal placement presentation. Keep REVISIT when the inherited dark strip and thin stone borders still miss TARGET.
+
+Evidence: S9/GAPS-R3.md, GAPS-R4.md, SBS-R3.jpg, SBS-R4.jpg, CRITIC-R3.md, CRITIC-R4.md and RESULT.md. Immediate pre-s9r3 backup byte-verified; only Section9 Source changes from R2. Existing HomeArt, gameplay, tests, placement and serialized place state remain exact. Native/client contact and legal pet-envelope audits pass; live final Studio review and acceptance remain UNKNOWN. No fifth round, commit or publish.
+
+## S9 — rounds 1 and 2 history
+
+1. When new foundations remain hidden, trace the client replacement geometry before adding more facing, because the original NativeBlocks Slate platform occupies the foreground.
+2. When identifying a yard, keep static plot numbers separate from the existing dynamic owner label, because decorative text must never imply ownership or replace live pet/coin counts.
+3. When home art runs from the Meadow guard, test home coordinates with a nonzero Meadow offset, because parenting the art to the island would translate it to the wrong world.
+
+Evidence: S9/RESULT.md, source-verified BOUNDS, generated camera-derived TARGET,
+PRE/GAPS/SBS R1/R2, independent critic, exact source-only mount and native contact/
+placement audits. R1's 92 parts frozen; 220 final native cosmetics and six client
+platform Color/Material-only finishes. Visual REVISIT: dark upper strip, dominant
+rails, small labels and barely visible flowers. Claude live review and owner
+acceptance UNKNOWN/PENDING. No R3/R4, commit or publish.
+
 ## S8 — R1/R2 only; stop for Claude live Studio check
 
 1. When warm backing stays hidden, inspect the foreground producer before changing more parts, because the original R5 face cladding masked the recolored core.

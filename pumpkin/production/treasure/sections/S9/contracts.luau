@@ -1,0 +1,5 @@
+local fs,luau=require('@lune/fs'),require('@lune/luau')
+local source=fs.readFile('treasure/sections/S2/contracts.luau')
+source=source:gsub("elseif name=='RunService' then return {} end", "elseif name=='RunService' then return {} elseif name=='Workspace' then return p.Workspace end")
+source=source:gsub('treasure/sections/S2/CONTRACTS.json','treasure/sections/S9/CONTRACTS.json')
+luau.load(source,{environment=getfenv(),injectGlobals=true})()
