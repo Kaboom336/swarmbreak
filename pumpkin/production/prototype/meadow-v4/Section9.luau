@@ -9,11 +9,15 @@ local function yieldBuild()
  operations += 1
  if operations % 300 == 0 then if task then task.wait() end end
 end
-function Section9.build(_meadow, _origin)
+function Section9.build(_meadow, _origin, fallback)
  local world = game:GetService('Workspace'):FindFirstChild('GREYBOX')
  -- Standalone Meadow test/builds have no home. This is deliberately a no-op.
- if not world or not world:FindFirstChild('HomePlot8') or world:FindFirstChild('HomeYardsS9') then return end
- local group=Instance.new('Model');group.Name='HomeYardsS9';group.Parent=world
+ local name=fallback and 'HomeYardsS9Fallback' or 'HomeYardsS9'
+ if not world or not world:FindFirstChild('HomePlot8') then return end
+ local previous=world:FindFirstChild(name)
+ if previous and previous:GetAttribute('S9Complete')then return end
+ -- Publish a complete assembly; an interrupted model must not block retries.
+ local group=Instance.new('Model');group.Name=name
  local wood=Color3.fromRGB(133,82,43)
  local stone=Color3.fromRGB(178,151,113)
  local function part(name,size,position,color,material,rotation)
@@ -52,12 +56,12 @@ function Section9.build(_meadow, _origin)
   board:SetAttribute('S9Caption','PLOT '..slot);board:SetAttribute('LabelFace','Front');board:SetAttribute('LabelSize',.85)
   for _,gui in board:GetChildren()do
    local text=gui:FindFirstChildOfClass('TextLabel')
-   text.Text='PLOT '..slot;text.Size=UDim2.fromScale(1,.55)
+   if text then text.Text='PLOT '..slot;text.Size=UDim2.fromScale(1,.55)end
   end
   local banner=part('NumberBanner'..slot,Vector3.new(2.3,3.1,.16),Vector3.new(gateX,y+9.25,gateZ+9.3),wood,Enum.Material.Wood,CFrame.Angles(0,side*math.pi/2,0))
   Style.sign(banner,tostring(slot));banner.Color=Color3.fromRGB(50,105,74)
   banner:SetAttribute('S9Caption',tostring(slot));banner:SetAttribute('LabelSize',.85)
-  for _,gui in banner:GetChildren()do gui:FindFirstChildOfClass('TextLabel').Text=tostring(slot) end
+  for _,gui in banner:GetChildren()do local text=gui:FindFirstChildOfClass('TextLabel');if text then text.Text=tostring(slot)end end
   -- Open frame at the outer edge, beyond the usable +/-28 placement rectangle.
   local outerX=side*82.4
   for _,dz in {-10,10}do
@@ -110,6 +114,9 @@ function Section9.build(_meadow, _origin)
   -- A visible hanger joins the number banner to the same board standard.
   part('BannerHanger'..slot,Vector3.new(.45,.45,10),Vector3.new(gateX,y+10.9,gateZ+4.5),wood)
  end
+ group:SetAttribute('S9Complete',true)
+ if previous then previous:Destroy()end
+ group.Parent=world
 end
 -- Called only by the decor-loader's isolated cosmetic hook. Home-local; no state,
 -- ownership, loot, placement, persistence, prompts, geometry or physics changes.
@@ -188,8 +195,18 @@ function Section9.finishDecor(decor)
   -- Server art and replicated owner labels can arrive after the client decor.
   -- This worker never blocks input, decor installation or any gameplay path.
   task.spawn(function()
-   for _attempt=1,240 do
-    if Section9.bindOwners()==8 then return end
+   for attempt=1,240 do
+    local world=game:GetService('Workspace'):FindFirstChild('GREYBOX')
+    local server=world and world:FindFirstChild('HomeYardsS9')
+    local fallback=world and world:FindFirstChild('HomeYardsS9Fallback')
+    if server and server:GetAttribute('S9Complete')and #server:GetChildren()>=1720 then
+     if fallback then fallback:Destroy()end
+     if Section9.bindOwners()==8 then return end
+    elseif attempt>=16 and world and world:FindFirstChild('HomePlot8')then
+     -- Client-local cosmetic recovery; retire when server dressing arrives.
+     local ok,err=pcall(function()Section9.build(nil,nil,true);Section9.bindOwners()end)
+     if not ok then warn('[Section9] cosmetic recovery retry: '..tostring(err))end
+    end
     task.wait(.25)
    end
    warn('[Section9] plot boards did not finish replicating; live labels retained')
@@ -201,7 +218,7 @@ end
 -- writes and no HomeArt edits: the server keeps its existing live source.
 function Section9.bindOwners()
  local world=game:GetService('Workspace'):FindFirstChild('GREYBOX')
- local group=world and world:FindFirstChild('HomeYardsS9');if not group then return 0 end
+ local group=world and (world:FindFirstChild('HomeYardsS9Fallback')or world:FindFirstChild('HomeYardsS9'));if not group then return 0 end
  local bound=0
  for slot=1,8 do
   yieldBuild()
@@ -226,7 +243,8 @@ function Section9.bindOwners()
    end
    -- Publish the bound state only after both readable faces exist.
    if #labels==2 then
-    refresh();source:GetPropertyChangedSignal('Text'):Connect(refresh)
+    refresh();local connection=source:GetPropertyChangedSignal('Text'):Connect(refresh)
+    if task and task.defer then board.Destroying:Once(function()connection:Disconnect()end)end
     board:SetAttribute('S9OwnerBound',true);gui.Enabled=false
    end
   end

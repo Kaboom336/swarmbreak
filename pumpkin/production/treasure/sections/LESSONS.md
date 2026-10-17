@@ -263,3 +263,11 @@ Evidence: `S7/GAPS-R3.md`, `S7/GAPS-R4.md`, `S7/SBS-R3.jpg`, `S7/SBS-R4.jpg`, `S
 
 Evidence: `S8/GAPS-R3.md`, `S8/GAPS-R4.md`, `S8/SBS-R3.jpg`, `S8/SBS-R4.jpg`, `S8/AUDIT-r4.json`, `S8/SUPPORT-r4.json`, `S8/RESULT.md`. Existing Lune exporter, native primitives, contracts and N8 lattice reused; no new asset or dependency. Final live Claude review remains pending.
 
+# S10 final rounds 3–4
+
+1. When a cosmetic module can fail during construction, publish its model only after completion and recover incomplete assemblies, because an existence-only guard can permanently retain a partial build. Do not label a plausible recovery flaw as the proven live cause without Studio Output.
+2. When a later section must preserve accepted dressing, compare every part to the accepted manifest and test a deliberate count drop, because a successful render/export alone can conceal missing planters, lamps or boards. Keep live owner faces tied to the original text source and disconnect retired fallback listeners.
+3. When pale stairs or blank portal faces survive a finish pass, trace the visible producer and camera occluders first, because styling small decorative steps cannot change broad native flights. Use tangent cosmetic veneers while preserving colliders, and never turn generated target names into unapproved game worlds.
+
+Evidence: `S10/GAPS-R3.md`, `S10/GAPS-R4.md`, `S10/HOME-R34.json`, `S10/CRITIC-R34.md`, `S10/SBS-R3.jpg`, `S10/SBS-R4.jpg`, `S10/FINAL-R34-EVIDENCE.json`. Four-round cap reached; REVISIT. The exact first live S9 failure, final Studio appearance/replication and owner acceptance remain UNKNOWN. No commit or publish.
+

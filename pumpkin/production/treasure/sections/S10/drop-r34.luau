@@ -1,0 +1,8 @@
+-- Existing production N8 lattice unchanged; separate R34 evidence filenames.
+local fs,luau=require('@lune/fs'),require('@lune/luau')
+local source=fs.readFile('treasure/sections/S7/drop.luau'):gsub('sections/S7','sections/S10')
+source=source:gsub("elseif name=='RunService' then return {} end", "elseif name=='RunService' then return {} elseif name=='Workspace' then return place.Workspace end")
+source=source:gsub('luau.load%(src,',"src=src:gsub('final%%-DROPS','r34-DROPS')\nluau.load(src,")
+local ray=require('../../../prototype/meadow-v4/OfflineRay');local nativeRequire=require
+local env=table.clone(getfenv());env.require=function(p)if p=='../../../prototype/meadow-v4/OfflineRay'then return ray end;return nativeRequire(p)end
+luau.load(source,{environment=env,injectGlobals=true})()

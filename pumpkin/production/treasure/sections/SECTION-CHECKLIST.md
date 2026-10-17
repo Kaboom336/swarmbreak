@@ -1,5 +1,15 @@
 # One-section scene checklist
 
+S10 owner-authorized final R3/R4 mounted; four-round cap reached. Read
+S10/RESULT.md and FINAL-R34-EVIDENCE.json. Backup pre-s10r3 is byte-verified.
+Only Section9/Section10 sources change; HomeArt/gameplay/tests and unrelated
+serialized state remain exact. S9's 1720-part accepted manifest, missing/partial/
+late recovery and live-source owner-face contracts pass offline. Invented names
+removed; Crystal/Meadow named, extra arches neutral Coming soon. Requested stair/
+rail cosmetics cross the old seam explicitly; native solids stay exact. Final
+visual REVISIT and live Studio/owner acceptance UNKNOWN. Older R1/R2 stop below
+is historical; no fifth round, commit or publish.
+
 S10 rounds 1–2 ONLY: source-only Lune mount from byte-verified pre-s10 backup;
 Section10 under existing MeadowV4 pcall, home-local parenting. S9 privately managed
 owner faces avoid UIWorld invalidation; staged-face and original source-signal

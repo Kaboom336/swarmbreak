@@ -1,5 +1,13 @@
 # S9 Home plots — final rounds 3 and 4
 
+S10 follow-up: the authorized blank-live-owner-text defect is repaired in the
+canonical Section9 source; see ../S10/RESULT.md and owners.log. Private board
+caption metadata avoids UIWorld rebuilding its live faces; both faces must be
+ready before binding. Actual decorator-order and negative-control checks pass;
+HomeArt/ownership logic and all S9 geometry stay exact. Live Studio confirmation
+is PENDING. This is the S10-authorized bug repair, not a fifth S9 art round.
+The R3/R4 historical record below remains unchanged.
+
 **REVISIT. Four-round cap reached.** Final canonical: `slice-v2/prototype/guardian-greybox.rbxl`. Compare `SBS-R3.jpg` and `SBS-R4.jpg` with supplied TARGET. Independent CRITIC-R4 confirms improvement but still finds thin stone borders, a dark path-edge strip and insufficient portal depth. Final Claude Studio appearance, prompt visibility, device performance, carry/PvP and owner acceptance remain **UNKNOWN/PENDING**. No fifth round, commit, publish, purchase or new asset/dependency.
 
 Read and inspected: previous RESULT (preserved as RESULT-R2.md), SBS-R2, TARGET, and Claude's live studio-r2-pen/path shots. Cameras remain world/home-local: pen (-25,9,46) toward (-61,5,32); path (0,6,68) toward (0,9,-95). Named best references remain Steal a Brainrot's ownership hierarchy and Grow a Garden's planted yards; TARGET is generated aspiration. Reused existing native constructors, UIStyle and Lune pipeline after reading their code and existing licence ledger. Local root PLAYBOOK read; exact separately titled Keystone playbook unavailable/UNKNOWN.
