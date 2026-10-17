@@ -370,6 +370,21 @@ complete; visual REVISIT. No Studio play, existing test edits, commit or publish
 
 ## Crystal Cave C2 final rounds 3–4
 
+### C2 live correction — 2026-10-17
+
+1. When building hero loot, hero loot art must wrap outside the loot part; check
+   live, because a preserved Neon ball can hide internal shell pieces and the
+   offline proxy can miss the engine's sphere silhouette and bloom.
+2. When reducing a camp's glow, count inherited lights and all dressing folders
+   together, because individually modest lights can overlap into an orange floor.
+3. When a scene checker freezes loot appearance, keep those properties and mask
+   the root with opaque cosmetic facets, because weakening preservation tests
+   would hide a dependency instead of fixing the art.
+
+Evidence: `../cave-sections/C2/studio-r4-geode.jpg` (Claude/owner live finding),
+`C2FIX-BUILD.json`, `C2FIX-CHECK.json`, `CONTACT-c2fix.json`, `C2FIX-FINAL.json`,
+and the new entry in `RESULT.md`. New live acceptance remains UNKNOWN.
+
 1. When a loot root is frozen, author its shell, cavity and pedestal as removable
    cosmetic children and compare the root serialization after removing them,
    because metadata preservation must be proved separately from appearance.

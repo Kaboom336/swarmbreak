@@ -2,6 +2,58 @@
 -- source modules are mounted from prototype/core, never copied into source.
 -- Section entrypoint: preserve the current six-suite place; never run the
 -- historical baseline generator below for section work.
+if require('@lune/process').args[1]=='c2-geode' then
+ local fs,rb,luau,serde=require('@lune/fs'),require('@lune/roblox'),require('@lune/luau'),require('@lune/serde')
+ local target,backup='prototype/cave-v2.rbxl','prototype/cave-v2.pre-c2geode.rbxl'
+ local bytes=fs.readFile(target)
+ if not fs.isFile(backup)then fs.writeFile(backup,bytes)end
+ local original=fs.readFile(backup)
+ local p=rb.deserializePlace(original)
+ local scripts=p.StarterPlayer.StarterPlayerScripts
+ assert(not scripts:FindFirstChild('CaveGeodeArt'),'client already exists in backup')
+ local client=rb.Instance.new('LocalScript');client.Name='CaveGeodeArt'
+ client.Source=fs.readFile('prototype/cave-v2/GeodeArt.client.luau');client.Parent=scripts
+ local compiled=0
+ for _,n in p:GetDescendants()do if n:IsA('LuaSourceContainer')then
+  for level=0,2 do luau.compile(n.Source,{optimizationLevel=level})end
+  compiled+=1
+ end end
+ local output=rb.serializePlace(p)
+ client:Destroy()
+ assert(rb.serializePlace(p)==rb.serializePlace(rb.deserializePlace(original)),'existing saved state changed')
+ assert(fs.readFile(backup)==original,'backup changed')
+ fs.writeFile(target,output)
+ fs.writeFile('treasure/cave-sections/C2/C2GEODE-BUILD.json',serde.encode('json',{
+  backup_sha256=serde.hash('sha256',original),place_sha256=serde.hash('sha256',output),
+  only_added_client=true,compiled_O0_O1_O2=compiled},true))
+ print('PASS C2 client geode: backup verified; all existing state exact; compiled',compiled)
+ return
+end
+if require('@lune/process').args[1]=='c2-fix' then
+ local fs,rb,luau,serde=require('@lune/fs'),require('@lune/roblox'),require('@lune/luau'),require('@lune/serde')
+ local target,backup='prototype/cave-v2.rbxl','prototype/cave-v2.pre-c2fix.rbxl'
+ local bytes=fs.readFile(target)
+ if not fs.isFile(backup)then fs.writeFile(backup,bytes)end
+ local original=fs.readFile(backup);local p=rb.deserializePlace(original)
+ local node=p.ServerScriptService.CaveGeodeC2.Dress
+ local previous=node.Source
+ node.Source=fs.readFile('treasure/cave-sections/C2/dress.luau')
+ local compiled=0
+ for _,n in p:GetDescendants()do if n:IsA('LuaSourceContainer')then
+  for level=0,2 do luau.compile(n.Source,{optimizationLevel=level})end
+  compiled+=1
+ end end
+ local output=rb.serializePlace(p)
+ node.Source=previous
+ assert(rb.serializePlace(p)==rb.serializePlace(rb.deserializePlace(original)),'non-Dress state changed')
+ assert(fs.readFile(backup)==original,'backup changed')
+ fs.writeFile(target,output)
+ fs.writeFile('treasure/cave-sections/C2/C2FIX-BUILD.json',serde.encode('json',{
+  backup_sha256=serde.hash('sha256',original),place_sha256=serde.hash('sha256',output),
+  only_mounted_dress_changed=true,compiled_O0_O1_O2=compiled},true))
+ print('PASS C2 live fix: backup verified; only mounted Dress changed; compiled',compiled)
+ return
+end
 if (require('@lune/process').args[1] or ''):match('^c2%-') then
  require('../../treasure/cave-sections/C2/build')()
  return

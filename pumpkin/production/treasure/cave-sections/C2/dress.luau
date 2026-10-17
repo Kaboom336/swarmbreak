@@ -1,7 +1,19 @@
--- C2 R3/R4 visual children only. No authoritative loot or cart field is assigned.
+-- C2 visual children only. Geode appearance is frozen by studio-check.luau.
 return function(map,root,round)
  local final=round=='r4'
  local geode=assert(map:FindFirstChild('Geode'))
+ -- Include inherited lamps, not just new dressing lights. Their overlapping
+ -- live falloff washed the camp orange despite the offline proxy looking safe.
+ for i,n in map:GetDescendants()do
+  if i%200==0 then task.wait()end
+  if n:IsA('Light')then
+   local host=n.Parent
+   if host:IsA('Attachment')then host=host.Parent end
+   if host:IsA('BasePart')and(host.CFrame.Position-Vector3.new(160,51,-120)).Magnitude<=40 then
+    n.Brightness=math.min(n.Brightness,.55);n.Range=math.min(n.Range,14);n.Shadows=false
+   end
+  end
+ end
  if root:FindFirstChild('CampDress')then return {already_complete=true}end
  local camp=Instance.new('Folder');camp.Name='CampDress'
  local jewel=Instance.new('Model');jewel.Name='C2_GeodeArt'
@@ -28,43 +40,45 @@ return function(map,root,round)
  end
  -- A low octagonal cut plinth. All bearings sit above the unchanged +48 floor.
  for i=0,(final and 1 or 3)do
-  piece(jewel,'Pedestal',{160,48.24,-120},final and {5.8,.42,5.8}or{6.6,.42,4.4},rock,'Slate',{0,i*math.pi/4,0})
+  piece(jewel,'Pedestal',{160,48.42,-120},final and {6.4,.76,6.4}or{6.6,.76,4.4},rock,'Slate',{0,i*math.pi/4,0})
  end
- piece(jewel,'PedestalInset',{160,48.52,-120},{5.4,.14,5.4},edge,'Slate',{0,math.pi/4,0})
+ piece(jewel,'PedestalInset',{160,48.86,-120},{5.8,.12,5.8},{94,88,111},'Slate',{0,math.pi/4,0})
  -- Broken outer rind: staggered angular plates, open on the southwest face.
  for row=0,2 do for i=0,11 do
   local a=i*math.pi/6+row*.11
-  local front=math.cos(a)<-.1 and math.sin(a)>.1
-  if not front or row==0 then
-   local r=final and (row==2 and 2.25 or 2.6)or(row==2 and 1.65 or 2.08)
-   piece(jewel,'BrokenRockShell',{160+math.cos(a)*r,49.35+row*1.55,-120+math.sin(a)*r},final and {1.7,1.8,1.2}or{1.32,1.95,.85},i%3==0 and edge or rock,'Slate',{.12*(i%3-1),-a+.5,.22*(i%2==0 and 1 or -1)},'Wedge')
+  local front=math.cos(a)<.15 and math.sin(a)>-.1
+  if not front then
+   local r=final and (row==1 and 2.8 or 2.65)or(row==2 and 1.65 or 2.08)
+   piece(jewel,'BrokenRockShell',{160+math.cos(a)*r,49.65+row*1.35,-120+math.sin(a)*r},final and {1.7,1.8,1.2}or{1.32,1.95,.85},i%3==0 and {83,78,99}or rock,'Slate',{.12*(i%3-1),-a+.5,.22*(i%2==0 and 1 or -1)},'Wedge')
   end
  end;task.wait()end
  -- Front quartz facets cover the smooth loot surface without changing that part.
- local crystals=final and {{-1.8,.1,1.5,3.6,.85},{1,.1,1.9,3.4,.7}}or{{-1.25,.2,1.45,3.9,.9},{-.3,.05,1.95,4.8,1.1},{.9,.1,1.65,3.4,.85},{-1.8,.1,.45,3.2,.8},{.5,.2,-.3,5.4,1.0}}
+ local crystals=final and {{-2.25,.45,1.3,3.9,.72},{.5,.45,2.35,3.5,.65},{1.7,.5,-1.7,4.8,.7}}or{{-1.25,.2,1.45,3.9,.9},{-.3,.05,1.95,4.8,1.1},{.9,.1,1.65,3.4,.85},{-1.8,.1,.45,3.2,.8},{.5,.2,-.3,5.4,1.0}}
  for i,g in crystals do
   shard(jewel,'TreasureCrystal'..i,160+g[1],48.8+g[2],-120+g[3],g[4],g[5],i%2==0 and pink or violet)
  end
  if final then
   -- An actual eight-sided prism assembled from two bars and four triangular
   -- corner sectors; no smooth egg silhouette or oversized square gem face.
-  piece(jewel,'CavityCrystal',{160,51.2,-120},{4.2,5.5,2.1},{151,52,206},'Neon')
-  piece(jewel,'CavityCrystal',{160,51.2,-120},{2.1,5.5,4.2},{169,63,219},'Neon')
+  -- Opaque, non-emissive octagonal facets enclose the radius-two Neon ball.
+  -- Only exposed points/fractures glow. Keep the tested root properties exact.
+  piece(jewel,'CavityCrystal',{160,51.2,-120},{4.3,4.5,2.3},{120,85,160},'SmoothPlastic')
+  piece(jewel,'CavityCrystal',{160,51.2,-120},{2.3,4.5,4.3},{150,111,183},'SmoothPlastic')
   for i=0,3 do
    local a=i*math.pi/2
-   local corner=piece(jewel,'CavityFacet',{160,51.2,-120},{5.5,1.05,1.05},i%2==0 and{137,47,192}or{188,82,227},'Neon',nil,'Wedge')
-   corner.CFrame=CFrame.new(160,51.2,-120)*CFrame.Angles(0,a,0)*CFrame.new(-1.575,0,-1.575)*CFrame.Angles(0,0,math.pi/2)
+   local corner=piece(jewel,'CavityFacet',{160,51.2,-120},{4.5,1,1},i%2==0 and{111,72,147}or{171,125,198},'SmoothPlastic',nil,'Wedge')
+   corner.CFrame=CFrame.new(160,51.2,-120)*CFrame.Angles(0,a,0)*CFrame.new(-1.65,0,-1.65)*CFrame.Angles(0,0,math.pi/2)
   end
   for i=0,3 do
-   local tip=piece(jewel,'CavityCrown',{160,54.15,-120},{4.1,.9,2.05},{194,89,235},'Neon',nil,'Wedge')
-   tip.CFrame=CFrame.new(160,54.15,-120)*CFrame.Angles(0,.35+i*math.pi/2,0)*CFrame.new(0,0,-1.025)
+   local tip=piece(jewel,'CavityCrown',{160,53.9,-120},{4.3,.9,2.15},{179,132,204},'SmoothPlastic',nil,'Wedge')
+   tip.CFrame=CFrame.new(160,53.9,-120)*CFrame.Angles(0,i*math.pi/2,0)*CFrame.new(0,0,-1.075)
   end
   for i=0,3 do
-   piece(jewel,'CrystalFracture',{158.4+i*.65,50.2+i*.85,-117.7},{.07,.95,.08},{238,164,255},'Neon',{0,0,i%2==0 and .6 or -.6})
+   piece(jewel,'CrystalFracture',{158.4+i*.65,50.2+i*.85,-117.82},{.07,.95,.08},{216,156,236},'Neon',{0,0,i%2==0 and .6 or -.6})
   end
  end
  local glow=piece(jewel,'GeodeGlow',{158.8,51,-117.6},{.12,.12,.12},pink,'Neon');glow.Transparency=1
- local l=Instance.new('PointLight');l.Name='C2_SoftGlow';l.Brightness=.85;l.Range=12;l.Shadows=false;l.Color=Color3.fromRGB(222,119,255);l.Parent=glow
+ local l=Instance.new('PointLight');l.Name='C2_SoftGlow';l.Brightness=.55;l.Range=10;l.Shadows=false;l.Color=Color3.fromRGB(205,143,229);l.Parent=glow
  for i,g in {{-2.7,53,1.6},{1.5,54.6,.5},{-.8,55.1,1.2},{2.5,51.8,1.2}}do
   piece(jewel,'FloatingSparkle'..i,{160+g[1],g[2],-120+g[3]},{.14,.28,.14},pink,'Neon',{0,0,.7})
  end
@@ -91,7 +105,7 @@ return function(map,root,round)
   piece(camp,'LampPost',{x,51.7,-146.5},{.55,7.3,.55},wood,'Wood')
   piece(camp,'LampCap',{x,55.6,-146.5},{1.8,.25,1.8},iron,'Metal')
   local lamp=piece(camp,'LampGlass',{x,54.7,-146.5},{1.2,1.5,1.2},{255,183,76},'Neon')
-  local light=Instance.new('PointLight');light.Brightness=.65;light.Range=10;light.Shadows=false;light.Color=lamp.Color;light.Parent=lamp
+  local light=Instance.new('PointLight');light.Brightness=.55;light.Range=10;light.Shadows=false;light.Color=lamp.Color;light.Parent=lamp
  end
  for i=0,3 do
   shard(camp,'RockVein'..i,138+i*1.2,49.5+i%2*2,-146.3,2+i%2,.42,{75,171,195})

@@ -1,3 +1,105 @@
+# C2 final client geode fix — 2026-10-17
+
+Claude's live trial is owner-reported: setting only the Geode root's client
+`LocalTransparencyModifier = 0.85` reveals the cracked shell, crystals and
+pedestal and removes the orange floor flood (`studio-geode-trial.jpg`). This
+supersedes the earlier pending-review note below; no fresh live run is claimed.
+
+Added `prototype/cave-v2/GeodeArt.client.luau`, mounted only by
+`prototype/cave-v2/build.luau c2-geode` into the cave's
+`StarterPlayer.StarterPlayerScripts.CaveGeodeArt`. It scans existing BaseParts
+and listens to Workspace.DescendantAdded for recreated/carried roots and late
+`C2_GeodeArt` children. Only a BasePart with that direct child receives 0.85;
+art descendants are untouched. No polling or server property writes.
+
+Delivery: `prototype/cave-v2.rbxl`, SHA256
+`a50a0f8cefc6d7c78d26610ba2988057a017e72a754d088a9d76ed209f35b3a7`.
+Byte-verified backup: `prototype/cave-v2.pre-c2geode.rbxl`, SHA256
+`b03077de16297f681131d924ebfc42512b42dffd9605572a1394bd5db11b63f7`.
+`C2GEODE-BUILD.json` records compilation of all 34 mounted sources at O0/O1/O2
+and exact full-place serialization after removing only the new LocalScript.
+Thus all existing server parts, Transparency/Material/Color/Size/CFrame,
+prompts, attributes, scripts and tests remain unchanged.
+
+Pre-edit search of prototype sources and treasure cave checks/tests found no
+LocalTransparencyModifier reads. Existing cave shared-domain, cart-board,
+cart-drive, rider, ride-contract and runner offline checks PASS; individual
+`c2geode-*.log` files record results. Artifact-only checker PASS: mounted source
+parity, scene scope, kit bounds/query/fence joints, SelfTest, strict floor seams
+and policy (`c2geode-artifact-only.log`, matching `OFFLINE-INPUT-artifact-only.json`).
+The existing source-aware wrapper uses the unchanged mounted cave KitLibrary
+because the shared working-tree library has later Meadow changes.
+Studio play, publish and commit were not performed. The installed Rokit shim
+failed with `home directory not found`; checks used its installed Lune 0.10.5
+binary directly. Earlier dense-sweep evidence belongs to the previous hash.
+
+Lesson: hide the loot part client-side with LocalTransparencyModifier when hero art must show.
+
+# C2 live fix — 2026-10-17: offline PASS; live review pending
+
+This entry supersedes the R3/R4 appearance claims below. Claude's live Studio
+finding is owner-reported; `studio-r4-geode.jpg` and the locked `TARGET.png` were
+inspected here. The live image shows an unbroken glowing ball and orange floor;
+the target has readable facets and separate pools of light. Offline proxies did
+not predict the live occlusion/bloom. No new visual acceptance is claimed.
+
+Built only through `lune run prototype/cave-v2/build.luau c2-fix`.
+Delivery: `prototype/cave-v2.rbxl`; immediate byte-verified backup:
+`prototype/cave-v2.pre-c2fix.rbxl`, SHA256
+`c65ffb935ee49b1f3c9bbb37f911c68281ff68f2042c50f98c372d752a2f1e40`.
+Final SHA256: `b03077de16297f681131d924ebfc42512b42dffd9605572a1394bd5db11b63f7`.
+The saved place changes only `ServerScriptService.CaveGeodeC2.Dress.Source`.
+
+Dependency audit: the unchanged `prototype/cave-v2/studio-check.luau` explicitly
+requires exact Geode Material, Transparency and Color (scene property loop).
+Therefore all three stay original under the requested fallback. Mounted
+CaveLoop/carry/StudioPass sources were inspected; none reads those three Geode
+properties. The on-disk HomeArt client/geometry contain no Geode references;
+neither is mounted in this cave. No test assertions or gameplay sources changed.
+Geode Size, CFrame, Anchored, collision/query/touch, prompts, original children,
+tags and attributes remain exact, including after runtime art removal.
+
+The existing native art recipe is reused: 26 dark Slate shell wedges now have
+horizontal centre radii 2.65–2.8 studs and an open west/southwest camera face.
+Twelve glowing crystal points extend outside the radius-two ball. Opaque
+SmoothPlastic octagonal cavity facets cover the preserved Neon root; broad
+Neon cavity bars/crown are removed. The visible plinth spans y48.04–48.80,
+above the unchanged y48.02 floor, with an inset at y48.86. Existing camp/cart
+art and the licensed CC0 Quaternius rock pipeline remain in use; no new assets.
+
+Inherited lights within 40 studs of (160,51,-120) are capped at brightness .55,
+range 14, shadows false. Added lamps use .55/range 10 and the soft core light
+uses .55/range 10, all shadowless. Both complete runtime dressings are measured
+in `C2FIX-CHECK.json`: 15 lights, total enabled brightness 34.55 → 8.25.
+This measures configured brightness, not Roblox luminance.
+
+Offline evidence: `C2FIX-BUILD.json`, `C2FIX-CHECK.json`, `CONTACT-c2fix.json`,
+`C2FIX-FINAL.json` and `c2fix-*.log`. Checks cover exact unrelated saved state,
+exact loot root, cosmetic flags, locked-eye clearance, pedestal support height,
+shell radii/opening, crystal points, full camp light caps, idempotence and
+reversibility. Contact is zero for 184 cosmetic envelopes against 14,409
+protected solids. Native convex-face segment checks mask all 285 arrival and 252
+close-geode sampled visible sphere points; this is geometry evidence, not bloom
+or visual approval. Contact uses the existing conservative OBB SAT with the same
+.035 tolerance, translated to Lune because Python is unavailable in this shell.
+
+Existing artifact-only cave, cart-board, cart-drive, rider, ride-contract,
+runner, shared cave tests, kit library and mounted runtime fixture pass.
+All 33 mounted sources compile at O0/O1/O2. Selene on Dress: zero errors,
+zero parse errors, 51 style warnings; no suppressions. Fresh dense N=8 PASS:
+3,024 samples, zero failures. `C2FIX-FINAL.json` seals the completed sweep,
+all check logs and current sources to the final place hash above.
+Historical R34 reports/boards below do not prove the new artifact's appearance.
+Current checker/test files have no tracked diff; their fresh source hashes are
+sealed separately because at least one old R34 test hash predates the current file.
+
+Claude must recheck arrival/geode cameras in live Studio for shell silhouette,
+facet/crack glow, exposed points, pedestal and orange-floor reduction.
+Live suite results, bloom, carry appearance and owner acceptance remain UNKNOWN.
+Studio was not launched or played; no commit or publish.
+
+Lesson: hero loot art must wrap outside the loot part; check live.
+
 # C2 Geode camp — final rounds 3 and 4: REVISIT
 
 Canonical delivery: `prototype/cave-v2.rbxl`, built only with
