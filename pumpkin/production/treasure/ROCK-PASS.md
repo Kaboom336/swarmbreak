@@ -1,5 +1,97 @@
 # Meadow rock pass — 2026-10-17
 
+## Round 4 — S6 shelves, S7 summit, S8 island revisit
+
+**Mounted through Lune; S6 shelf removal ACCEPT offline; S7/S8 REVISIT.**
+Read rounds 1–3 and the colour fix, `rock-live-s6.jpg`, S7/S8 RESULT and all
+their supplied `studio-r4-*.jpg` shots before edits. Reused the existing local
+CC0 Quaternius Rock_Medium_1, inspected its licence and existing code, and kept
+the Grow a Garden / Pet Simulator 99 chunky-geology comparison bar.
+
+Immediate byte-verified backup:
+`slice-v2/prototype/guardian-greybox.pre-rock4.rbxl`, SHA256
+`6c2ad8f3cd5c7c72c5c1d649249f73781a7174f14c87cd92da8e1dc500121b6d`.
+Only new **ZRock4 and Rock4Plan** are mounted. Removing them restores exact
+complete serialized-place equality; all **88 original source bodies** remain
+exact. **90 sources compile at O0/O1/O2**. No plain Rojo, Studio play, commit,
+publish, purchase or new external asset/dependency.
+
+- **S6:** verified all 224 scoped thin LookLightRockTop/Round4PaleRockTop caps
+  are collision/query/touch false and untagged as lanes, then removed them.
+  Existing thick wall rock and collision remain. The named projecting stone
+  planks visibly disappear at entry and mid-up.
+- **S7:** 24 actual CC0 boulders replace the visible finish of 20 AcornNest
+  stones and four existing cosmetic cliff blocks inside their old envelopes.
+  Old cladding stays visible until the replacement group fits successfully.
+  The pedestal gains irregular warm stone; its square backing remains.
+  Cliff-edge improvement is not demonstrated by the player-camera boards.
+- **S8:** 208 actual CC0 boulders include 76 large lower wraps around retained
+  connected S8_Boulder cores, replacements inside 121 original cosmetic rim
+  envelopes and eleven camera-selected outward shells. Exact roots, moss,
+  waterfalls and their original supporting cores remain. Warm tan strata use
+  the existing S8 palette. The underside gains rounded faceted mass; broad
+  left shoulder columns/grey rim and sparse tan chips remain. Plaza/bridge
+  show little delta because their top/deck occludes most requested faces.
+
+Every tinted new mesh clears TextureID and SurfaceAppearance, uses only
+Color/Material, and is anchored with CanCollide/CanQuery/CanTouch false.
+Build scans and creation yield. **232 meshes + 232 model wrappers + one group
+and two modules = 467 gross additions; minus 224 removed caps = net +243
+instances**, within +800. 145 old cosmetic backings are hidden only after
+complete staged success; they remain available on kit failure. Native export
+contains **34,952 parts** before the deferred meshes, with all **7,991 original
+colliders and 79 lights exact**. Keeper, court, bait cover, Outsmart, blockers,
+lane floors, jump geometry and their sources/metadata stay exact.
+
+[Final geometry contract](rock4/CONTRACT.json): **PASS — contact 0** at unchanged
+.035 tolerance. Full replacement envelopes stay inside listed old cosmetic
+envelopes; lower wraps retain exact wedge bounds entirely below -58. The eleven
+outward envelopes clear strict all-height lane/one-stud, jump, court, cover and
+bait reserves. Existing lower art under lane footprints is disclosed as such;
+it is not relabeled as a new clear horizontal reserve. Actual mesh/vegetation
+surface contact remains an offline limitation.
+
+The independent technical critic caught integer-array truncation to zero width
+and premature retirement before asynchronous kit success. Both were corrected:
+float dimensions, positive-size assertions, staged fitting and deferred hiding.
+Initial candidate/fixture results are rejected. Fresh mounted texture/flags/
+origin/idempotence/failure-cleanup/retry fixtures pass for all 232 shells.
+Final origin/late-kit/failure-isolation, retained round-three runtime, behavior
+and unchanged **50-seed checks PASS**. The seed suite exercises legacy Layout;
+it does not establish live Meadow carry/PvP timing.
+
+[Keeper corpus](rock4/SIGHT.json): **PASS — 149,613 verdicts unchanged**, with
+20,725 visible / 128,888 occluded / zero changed. The identical frozen round-3
+corpus is recomputed over both actual Builder trees. Duplicate-sensitive
+collider equality additionally preserves the complete native blocker geometry.
+These are offline convex intersections, not engine raycasts.
+Final-artifact production N8 [DropSample](rock4/DROPS.json): **PASS — 31,824
+samples / 20 exact-once routes / zero failures**. Complete disjoint shards
+are 14,904 + 8,280 + 8,640. Each reports the final canonical hash, 194 production
+kit swaps, zero fallbacks and 59 rejected pre-existing placements. All new
+Rock4 kits are explicitly staged before the unchanged production sampler runs.
+The sampler, lattice, resolver and tolerances are unchanged. Earlier candidates
+and interrupted workers are not inherited as final evidence.
+
+| Section | Exact matched player-camera board | Independent final judgment |
+|---|---|---|
+| S6 | [SBS-ROCK4](sections/S6/SBS-ROCK4.jpg) | ACCEPT for named plank removal, offline. |
+| S7 | [SBS-ROCK4](sections/S7/SBS-ROCK4.jpg) | REVISIT; pedestal improves, cliff relief unproven. |
+| S8 | [SBS-ROCK4](sections/S8/SBS-ROCK4.jpg) | REVISIT; underside improves, boxy rim remains. |
+
+All 22 before/after frames use unchanged cameras and lighting. Renderer uses
+actual local CC0 rock geometry; inherited client-art/Keeper/acorn proxies,
+Roblox textures, GUI and atmosphere remain approximate. Independent internal
+[visual](rock4/CRITIC-VISUAL.md) and [technical](rock4/CRITIC-TECHNICAL.md) reviews
+are recorded; neither is Claude/live owner acceptance. No art edits follow the
+final review. Live fitting, performance and owner acceptance remain **UNKNOWN**.
+
+Canonical SHA256:
+`29d35d4230ee0ecb7ecf0c6ab85bcccb89782564701e734465375e0b115ae248`.
+See [reproduction/limits](rock4/README.md) and [final evidence](rock4/FINAL-EVIDENCE.json).
+The local PLAYBOOK was read; the separately titled Keystone playbook remains
+unavailable/UNKNOWN after a fresh connected search. See [lessons](sections/LESSONS.md).
+
 ## Colour correction — Claude live report, 2026-10-17
 
 **Mounted through Lune; cosmetic conservation and texture fixtures PASS.**

@@ -301,3 +301,20 @@ Evidence: `../rock2/REFERENCES.json`, `../rock2/CONTRACT.json`, `../rock2/SIGHT.
 
 Evidence: `S10/GAPS-R3.md`, `S10/GAPS-R4.md`, `S10/HOME-R34.json`, `S10/CRITIC-R34.md`, `S10/SBS-R3.jpg`, `S10/SBS-R4.jpg`, `S10/FINAL-R34-EVIDENCE.json`. Four-round cap reached; REVISIT. The exact first live S9 failure, final Studio appearance/replication and owner acceptance remain UNKNOWN. No commit or publish.
 
+## Rock pass round 4
+
+1. When a thin wall shelf is purely cosmetic, verify its flags and remove the
+   plank, because recolouring leaves the same timber-like silhouette.
+2. When scaling kit envelopes, force float arrays and assert positive sizes;
+   keep original cladding visible until the entire staged group succeeds,
+   because integer truncation or kit failure must not erase the old scene.
+3. When a boxy island dominates the camera, spend relief budget on its large
+   masses and judge that camera, because sparse rim chips cannot fix its
+   silhouette. Keep REVISIT when plaza/bridge hide the requested surfaces or
+   the remaining rim still reads as boxes.
+
+Evidence: `../rock4/README.md`, `../rock4/CONTRACT.json`, `../rock4/RUNTIME.json`,
+`../rock4/SIGHT.json`, `../rock4/CRITIC-VISUAL.md`, `../rock4/CRITIC-TECHNICAL.md`
+and S6/S7/S8 `SBS-ROCK4.jpg`. Final artifact checks are sealed separately in
+`../rock4/FINAL-EVIDENCE.json`; this lesson entry alone is not a test result.
+
