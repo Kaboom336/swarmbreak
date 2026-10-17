@@ -1,0 +1,12 @@
+{
+  "Studio": "NOT RUN",
+  "backup": "treasure/ui-pass-backup-20261017/slice-v2__prototype__guardian-greybox.rbxl",
+  "backup_sha256": "4baecab0f07b9b96a62c64262bc237a15352ee6686432bdb588976f0d7d9b909",
+  "compiled_O0_O1_O2": 98,
+  "place": "slice-v2/prototype/guardian-greybox.rbxl",
+  "place_sha256": "5dcbcc6a43aecac18473dd394d6ea88b60cdb7a428b112f7d9036e82bba4927e",
+  "serialized_undo_exact": true,
+  "server_tree_exact": true,
+  "status": "PASS",
+  "workspace_exact": true
+}

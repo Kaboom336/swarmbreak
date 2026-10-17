@@ -1,0 +1,18 @@
+{
+  "StudioPassAll_suite_names": [
+    "GreyboxSelfTest",
+    "DropSampleTest",
+    "GreyboxLoopTest",
+    "GreyboxPvpTest",
+    "GreyboxTrapTest",
+    "CoreLoopTest",
+    "RavineTest",
+    "TunnelTest",
+    "OutsmartTest"
+  ],
+  "cosmetic_query_false": true,
+  "failed_section_warns_and_keeps_island": true,
+  "late_kits_origin_once": true,
+  "live_results": "UNKNOWN",
+  "offset_origin_once": true
+}

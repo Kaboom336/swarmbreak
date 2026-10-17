@@ -1,0 +1,15 @@
+{
+  "Studio": "NOT RUN",
+  "backup": "slice-v2/prototype/guardian-greybox.pre-sound.rbxl",
+  "backup_sha256": "d094f7eb4599c49f1e26b67be9880b2044bab3e585acccf3e0afea962f94ea5f",
+  "compiled_O0_O1_O2": 96,
+  "complete_unrelated_serialization_exact": true,
+  "input_sha256": "a8a688888919adb2580d46c9b626112ef40472850410f65d61a866ec8cfe616d",
+  "live_asset_loading": "OWNER-REPORTED PASS (13 IDs, Claude 2026-10-17)",
+  "place": "slice-v2/prototype/guardian-greybox.rbxl",
+  "place_sha256": "9956324fa091a2ba991e270860c743d6d76ac005510fb5542812455d00475362",
+  "server_change": "KeeperMode presentation attribute only",
+  "stack_fix_backup": "treasure/sound-stack-backup-20261017/slice-v2__prototype__guardian-greybox.rbxl",
+  "stack_fix_backup_sha256": "a8a688888919adb2580d46c9b626112ef40472850410f65d61a866ec8cfe616d",
+  "state": "PASS"
+}

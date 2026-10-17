@@ -1,0 +1,25 @@
+{
+  "actual_client_guarded_runtime": "PASS",
+  "cleanup_objects": 9,
+  "clears": 78,
+  "emitted_particles": 134,
+  "late_and_detached_descendants": "PASS",
+  "live_Studio": "UNKNOWN",
+  "live_character_rebinding": "PASS",
+  "live_independent_replacement_inputs": "PASS",
+  "live_notification_churn": "PASS (old client failed)",
+  "music_sfx_Activated_toggle_labels_visibility_and_selection": "PASS",
+  "places": {},
+  "policy_fps": [
+    30,
+    60,
+    144
+  ],
+  "state": "PASS",
+  "studio_debug_opt_in": "PASS",
+  "studio_debug_values": [
+    "CineIntent",
+    "CineSpeed",
+    "CineHum"
+  ]
+}

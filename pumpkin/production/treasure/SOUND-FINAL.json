@@ -1,0 +1,29 @@
+{
+  "Studio_Play": "NOT RUN",
+  "commit": "NOT RUN",
+  "hashes": {
+    "SOUND-KIT.md": "3411dc0535e42398c2c0269cf87c20e24ddef86d7364934cc1dc9312a7696bfa",
+    "prototype/cave-v2.rbxl": "215ffc1f49bc3f6403d3e809b730e3698b04e63b6ab3da7045e63ec2e94a7d65",
+    "prototype/core/Audio.client.luau": "6dfc4a65634d298596100df28db2b6437a31edfb6641563a92ab126c9f4c5b48",
+    "prototype/core/Audio.luau": "a7b835d801dc1b81cedb64e1937f31800579453ad4dbbf7f1b6ffcd2244f6514",
+    "prototype/core/CinematicMove.client.luau": "a72cfbb48631012255fc069e3b6b14ceae132a1ad51a84ddb0c6b3fb32f62e88",
+    "slice-v2/prototype/Arena.luau": "23d53617dfda119623f17045f781df88385b9664cd5da1dff148a4dc50e8997a",
+    "slice-v2/prototype/guardian-greybox.rbxl": "9956324fa091a2ba991e270860c743d6d76ac005510fb5542812455d00475362",
+    "treasure/sound-build.luau": "5b31878aeae58bf0233e092cde6cc20e26a047c843bda45ca5ce2a0dd3e2deef",
+    "treasure/sound-check.luau": "456714bf47470669d4832d7ee72c237d92684ae7be8ae9f94949a99a735c9a16",
+    "treasure/sound-existing-checks.luau": "3f148c173201eaedc41fbd6ea949d011d854c4f7b44837510c285dd5b0d0e681",
+    "treasure/sound-live-check.luau": "9b8706d13c4bbd2a1707af241b32c2352583664039885f007ca4223c651204f8"
+  },
+  "notes": "Stack fix: actual audio client in both biomes, Keeper behavior/reset, movement and cutscenes pass. Selene audio clean; Arena has one pre-existing multiple_statements warning at line 227.",
+  "offline_only": true,
+  "post_fix_live_listening": "UNKNOWN",
+  "prior_live_check": "OWNER-REPORTED: Claude 2026-10-17, 13 IDs load; Meadow music/ambience play",
+  "report_hashes": {
+    "treasure/SOUND-BUILD-cave.json": "17945a07350ed67f8ee86d3860aa701433acac801da307606cbf14ce27d9ef8c",
+    "treasure/SOUND-BUILD-meadow.json": "bf595ecee40ad51407cde5a8cce6b83c8bdfbcc61db75d9abd47f0e2f955eb4b",
+    "treasure/SOUND-CONTRACT.json": "98eecfa271f2398ea2f53b3ac88512d5463ccee3cc98c96dd707c679a33d426d",
+    "treasure/SOUND-CUTSCENES.json": "ad2df2d3dd2e743a41879fb62b58e5140779b5556628c69b9c5867e7571b31a3",
+    "treasure/SOUND-MOVEMENT.json": "3d712f5228fde983bb78e91c2264adad65de60cef872d5246c79e38f4942900d"
+  },
+  "state": "PASS"
+}

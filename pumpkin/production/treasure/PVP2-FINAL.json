@@ -1,0 +1,41 @@
+{
+  "after": {
+    "cases": 864,
+    "handoff_sequences": 40,
+    "refusals": 0,
+    "stale_socket": "PASS"
+  },
+  "backup_sha256": "9956324fa091a2ba991e270860c743d6d76ac005510fb5542812455d00475362",
+  "before": {
+    "cases": 864,
+    "exact_distance": 12.261937141418455,
+    "refusals": 144
+  },
+  "commit": "NONE",
+  "compiled_O0_O1_O2": 96,
+  "evidence_sha256": {
+    "treasure/PVP-SUITE-FLAKE.md": "fdc5e20a055e9e092b8841c53035c1d86b1056d516157b55bf80eaeff98e1678",
+    "treasure/PVP2-AFTER-CASES.json": "2f302886730ca2426202863eb0273bfa3cdf79a538754a2ce24e0e10b8852d6e",
+    "treasure/PVP2-AFTER.json": "eccc761642b844501da5c097c412229d7f32e7f2be40a68c1632ffae1819fadb",
+    "treasure/PVP2-BEFORE-CASES.json": "f5d9b8f9fa124c920fb65bea0d304413eaafe2e7dd43cc201a800642cfd77590",
+    "treasure/PVP2-BEFORE.json": "298cf5c0f3a51f5beabe6dd127c62278260d814af32c00ffbeef5fc3b8139a58",
+    "treasure/PVP2-BUILD.json": "00b977a56f65ca0c527e62a98bcd72af6d2fb143203e33a225424218ecb891ea",
+    "treasure/PVP2-CONTRACTS.json": "190f77fdff042f611ee04843fe535352c28dc528938813c8ad0a64d2b86715c6",
+    "treasure/pvp2-50-seed.log": "151a472fb5895ee5eff0f239d57050763a8fa163887ad0eac9f98af5618ead09",
+    "treasure/pvp2-after.log": "cd63f0a8e91ca1c3ac63f2040f4571e69e55d1d6035074cffbfbce66a149621f",
+    "treasure/pvp2-before.log": "3551552ebf56c442c94fa8f6fab16596ab8016597d196f4a10d2cf471badb6aa",
+    "treasure/pvp2-behavior.log": "0d2e120468e6179d3dac90ede049adfa3ba0a15ea5bbd188a64780d9326a4cd2",
+    "treasure/pvp2-build.log": "9e46d8b4d7793267319725f8cd5e1d08c070e9fa11e8d2fea25ad02de07e9bbb",
+    "treasure/pvp2-build.luau": "63e4b4d17d20cefd6972429a33e1d390c9499bb01fe333e6bc57692a3b050685",
+    "treasure/pvp2-checks.luau": "27a3c12e2a2e9a3b294d0968f492f57951b9719aef153f05b500582dfc0741d1",
+    "treasure/pvp2-contracts.log": "1da86aae0679dbe35fe27915228f916fca3cb45164cc193f5421de2bafddac0c",
+    "treasure/pvp2-repro.luau": "d12329970766dc3c61d12ee6aa6dfab1248122b909c18a9c8dc6e063dbb37b2c"
+  },
+  "existing_assertion_lines_preserved": true,
+  "live_cause_attribution": "INFERRED; deterministic interrupted-hold mechanism reproduced",
+  "live_physics_navmesh": "UNKNOWN",
+  "mounted_sha256": "4baecab0f07b9b96a62c64262bc237a15352ee6686432bdb588976f0d7d9b909",
+  "result": "PASS",
+  "source_only_mount": true,
+  "studio_play": "NOT RUN"
+}

@@ -1,0 +1,15 @@
+{
+  "Studio": "NOT RUN",
+  "backup": "prototype/cave-v2.pre-sound.rbxl",
+  "backup_sha256": "7c07e8bf6d1454088bcc24f3259b09f17e614d43307f87b36804f01c379d830c",
+  "compiled_O0_O1_O2": 50,
+  "complete_unrelated_serialization_exact": true,
+  "input_sha256": "7bbf1d557feb0ad638834ede2eb5d6020120ded574499b5702fae34831ab2618",
+  "live_asset_loading": "OWNER-REPORTED PASS (13 IDs, Claude 2026-10-17)",
+  "place": "prototype/cave-v2.rbxl",
+  "place_sha256": "215ffc1f49bc3f6403d3e809b730e3698b04e63b6ab3da7045e63ec2e94a7d65",
+  "server_change": "NONE",
+  "stack_fix_backup": "treasure/sound-stack-backup-20261017/prototype__cave-v2.rbxl",
+  "stack_fix_backup_sha256": "7bbf1d557feb0ad638834ede2eb5d6020120ded574499b5702fae34831ab2618",
+  "state": "PASS"
+}

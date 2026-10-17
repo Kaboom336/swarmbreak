@@ -1,0 +1,10 @@
+{
+  "artifact_sha256": "e0ceacb5b71e83b5f6a2bbd328f2352506e4051d997353a5967fee989b6eff2c",
+  "cases": [
+    "keyboard native JumpRequest forwarding and warning/readiness lifecycle",
+    "touch native JumpRequest forwarding and warning/readiness lifecycle",
+    "gamepad native JumpRequest forwarding and warning/readiness lifecycle"
+  ],
+  "evidence": "actual mounted client with deterministic input/services; real devices UNKNOWN",
+  "status": "PASS"
+}

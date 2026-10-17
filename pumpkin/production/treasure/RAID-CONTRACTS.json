@@ -1,0 +1,13 @@
+{
+  "artifact_sha256": "e0ceacb5b71e83b5f6a2bbd328f2352506e4051d997353a5967fee989b6eff2c",
+  "committed_hit": true,
+  "coordinator": true,
+  "despawn": true,
+  "lanes_and_bypass": true,
+  "late_warning_and_mercy": true,
+  "live_physics_and_devices": "UNKNOWN; run RaidSliceTest in Studio",
+  "other_lane_miss": true,
+  "status": "PASS",
+  "tell_minimum": true,
+  "vault_intent_location_landing_cooldown": true
+}

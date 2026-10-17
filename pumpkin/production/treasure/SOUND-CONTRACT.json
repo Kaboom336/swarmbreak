@@ -1,0 +1,22 @@
+{
+  "Studio": "NOT RUN",
+  "actual_client_biome_fixtures": 2,
+  "keeper_state_edge_six_second_cooldown_single_voice_fade_stale_cleanup": true,
+  "live_loading_and_listening": "UNKNOWN",
+  "no_gameplay_writes_or_remote_sends": true,
+  "places": [
+    {
+      "complete_preservation": true,
+      "place": "slice-v2/prototype/guardian-greybox.rbxl",
+      "sha256": "9956324fa091a2ba991e270860c743d6d76ac005510fb5542812455d00475362"
+    },
+    {
+      "complete_preservation": true,
+      "place": "prototype/cave-v2.rbxl",
+      "sha256": "215ffc1f49bc3f6403d3e809b730e3698b04e63b6ab3da7045e63ec2e94a7d65"
+    }
+  ],
+  "pool_duck_mute_crossfade_cues_cart_explosion_cleanup": true,
+  "reveal_duplicate_paths_explosion_per_source_cart_single_loop": true,
+  "state": "PASS"
+}

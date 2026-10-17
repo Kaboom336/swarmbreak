@@ -1,5 +1,21 @@
 # Section craft lessons
 
+## Island Raid slice 1 — 2026-10-17
+
+1. When ground can sit inside a hill, audit occupied body volumes and complete
+   sweeps, because floor rays can return a surface underneath solid earth.
+2. When a timed lane hazard can stream late, require each client's complete
+   warning before accepting its hit, because a server timer alone does not prove visibility.
+3. When a movement shortcut owns the character, cancel on shared hit/cargo changes
+   and restore ownership, because interpolation must not erase the existing Bump.
+
+Evidence: `../RAID-SLICE-1.md`, `../RAID-CONTRACTS.json`, `../RAID-VAULT.json`,
+`../RAID-CLIENT.json`, build and final seal when present. The first mouth-side
+placement was rejected by the volume audit; the delivered pocket is on S2's
+surface path. Native seven-part sprouts and existing hit/drop rules are reused.
+No new external dependency, Studio play, commit or publish. All ten live
+StudioPassAll results and Claude/owner visual acceptance remain UNKNOWN.
+
 ## Cutscenes / roadmap 15
 
 1. When a capture tool saves camera ownership, release the cinematic lease

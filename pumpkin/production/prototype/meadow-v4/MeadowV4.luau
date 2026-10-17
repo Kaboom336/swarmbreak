@@ -99,6 +99,9 @@ function MeadowV4.build(parent: Instance, origin: Vector3?): Model
 		local ok, err = pcall(function() require(module).build(model, Vector3.zero) end)
 		if not ok then warn("[MeadowV4] " .. module.Name .. " dressing skipped: " .. tostring(err)) end
 	end
+	-- One owner-approved gameplay slice; shared local frame before translation.
+	local raid = script.Parent:FindFirstChild("RaidSlice")
+	if raid then require(raid).build(model, Vector3.zero) end
 	-- Audit after every section, including fix8's additional authored bait lane.
 	-- Preserve section failure isolation while retaining a visible failure reason.
 	local clearanceOK, clearanceProblem = pcall(function()

@@ -1,0 +1,12 @@
+{
+  "Studio": "NOT RUN",
+  "backup": "treasure/ui-pass-backup-20261017/prototype__cave-v2.rbxl",
+  "backup_sha256": "215ffc1f49bc3f6403d3e809b730e3698b04e63b6ab3da7045e63ec2e94a7d65",
+  "compiled_O0_O1_O2": 54,
+  "place": "prototype/cave-v2.rbxl",
+  "place_sha256": "8b88cdca4791e0026831c2134a1a9bf482bbd0da498b6a0b2a166259c85f80fb",
+  "serialized_undo_exact": true,
+  "server_tree_exact": true,
+  "status": "PASS",
+  "workspace_exact": true
+}

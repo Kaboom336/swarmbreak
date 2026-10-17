@@ -35,6 +35,7 @@ function Pass.attach(api)
 		"RavineTest",
 		"TunnelTest",
 		"OutsmartTest",
+		"RaidSliceTest",
 	}
 	local function run()
 		if running or not SSS:GetAttribute("StudioPassAll") then

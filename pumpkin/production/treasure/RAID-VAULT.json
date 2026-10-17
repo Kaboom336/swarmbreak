@@ -1,0 +1,15 @@
+{
+  "artifact_sha256": "e0ceacb5b71e83b5f6a2bbd328f2352506e4051d997353a5967fee989b6eff2c",
+  "blocked_path": true,
+  "endpoint": true,
+  "evidence": "Actual mounted server and module; conservative native convex collision proxy; Studio/device physics UNKNOWN",
+  "explicit_Jump": true,
+  "marked_wall": true,
+  "native_colliders": 7991,
+  "ownership_restored": true,
+  "production_request_and_interpolation": true,
+  "shared_hit_cancels": true,
+  "standing_body_lane_and_connection_clearance": true,
+  "status": "PASS",
+  "wall_grounded": true
+}

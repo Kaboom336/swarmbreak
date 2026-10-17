@@ -1,0 +1,12 @@
+{
+  "Studio": "NOT RUN",
+  "backup": "slice-v2/prototype/guardian-greybox.pre-raid1.rbxl",
+  "backup_sha256": "5dcbcc6a43aecac18473dd394d6ea88b60cdb7a428b112f7d9036e82bba4927e",
+  "compiled_O0_O1_O2": 101,
+  "existing_suite_bodies_exact": true,
+  "place": "slice-v2/prototype/guardian-greybox.rbxl",
+  "place_sha256": "e0ceacb5b71e83b5f6a2bbd328f2352506e4051d997353a5967fee989b6eff2c",
+  "status": "PASS",
+  "undo_exact": true,
+  "workspace_exact": true
+}

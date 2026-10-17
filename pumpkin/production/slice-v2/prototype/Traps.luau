@@ -263,6 +263,7 @@ function Traps.tick(t, now, states)
 			local p = a.guardian.Position - trap.position
 			if
 				not a.attack
+				and not a.raidBusy
 				and not a.decoy
 				and now >= (a.decoyImmuneUntil or 0)
 				and Vector3.new(p.X, 0, p.Z).Magnitude <= c.TriggerRange

@@ -1,0 +1,106 @@
+{
+  "Claude_review": "PENDING",
+  "commit": "NONE",
+  "compiled_O0_O1_O2": 101,
+  "drop_input_only_diff_is_nonexecuted_client_Source": true,
+  "drop_input_sha256": "8dd5d6d501ccf9ef4601b2bec05516f46593218c02059201f84d48b29be1d27f",
+  "drop_routes": [
+    "bridge",
+    "bridge_south",
+    "east",
+    "east_climb",
+    "east_descent",
+    "fork_link",
+    "jump_access",
+    "jump_recovery",
+    "north_crosslink",
+    "portal_north",
+    "ravine_floor_loop",
+    "ravine_ramp",
+    "shelf",
+    "shelf_link",
+    "south_crosslink",
+    "spiral",
+    "summit_radial",
+    "tunnel_south",
+    "tunnel_trunk",
+    "west"
+  ],
+  "drop_samples": 31824,
+  "evidence": "Offline only; no Studio play",
+  "existing_nine_suite_bodies_preserved": true,
+  "hashes": {
+    "slice-v2/prototype/guardian-greybox.pre-raid1.rbxl": "5dcbcc6a43aecac18473dd394d6ea88b60cdb7a428b112f7d9036e82bba4927e",
+    "slice-v2/prototype/guardian-greybox.rbxl": "e0ceacb5b71e83b5f6a2bbd328f2352506e4051d997353a5967fee989b6eff2c",
+    "treasure/RAID-BUILD.json": "ab1bcb07ec29c5fc5652d69d799b0887c307707dee5ac2d634055c020ca62abc",
+    "treasure/RAID-CLIENT.json": "b7ad1081ed218810f84de4ab0d71359bfd9860bfe44472e61ea50cbe1f09b189",
+    "treasure/RAID-CONTRACTS.json": "c636c464ed03b2480ae30510d660fb2c364e2b6c349d21748e5055b895de6f20",
+    "treasure/RAID-DROPS.json": "44aa3536f52918006d6704a1a48ff776b9976594aa2618c558656bb14ad9c941",
+    "treasure/RAID-EXISTING-CONTRACTS.json": "190f77fdff042f611ee04843fe535352c28dc528938813c8ad0a64d2b86715c6",
+    "treasure/RAID-SLICE-1.md": "c800df073c099f07da39373711916d137d3c4f9d4d339fe6d3d94b26e2c0c317",
+    "treasure/RAID-VAULT.json": "943c4aa9e9e0ccda442f849e6bc791c8a674aa6c0733664c9faed8b3502efd6a",
+    "treasure/raid-50-seed.log": "67e80b23da6a24a67425ac42cae8ef7cef42a4c798b4a08a3b1338425cce898b",
+    "treasure/raid-behavior.log": "0d2e120468e6179d3dac90ede049adfa3ba0a15ea5bbd188a64780d9326a4cd2",
+    "treasure/raid-client.log": "93468d4329c28e2ca7e1b50f1dfe9ab06247e062b4f7e487b3de5303a38d0cb2",
+    "treasure/raid-contracts-fresh.log": "2089cb1c7fff930c6ac1f0b91242779e3b19eca28c3a1210ef77e46799630164",
+    "treasure/raid-drop-input.rbxl": "8dd5d6d501ccf9ef4601b2bec05516f46593218c02059201f84d48b29be1d27f",
+    "treasure/raid-existing-contracts.log": "1da86aae0679dbe35fe27915228f916fca3cb45164cc193f5421de2bafddac0c",
+    "treasure/raid-vault.log": "a2ae48d3ff27f99548fe594e2e8101be5f2c62eb09b3128369d7e08683143405",
+    "treasure/sections/LESSONS.md": "896ef1b1cdb71813bddb8a2431386ef5482daec4c6ba6498ccc04f3bd09ee1e2"
+  },
+  "intentional_original_source_changes": [
+    "ReplicatedStorage.GreyboxTraps",
+    "ServerScriptService.StudioPass",
+    "ServerScriptService.GreyboxArena",
+    "ServerScriptService.Greybox",
+    "ReplicatedStorage.MeadowV4.Builder"
+  ],
+  "live_StudioPassAll": [
+    {
+      "name": "GreyboxSelfTest",
+      "result": "UNKNOWN; Claude live check pending"
+    },
+    {
+      "name": "DropSampleTest",
+      "result": "UNKNOWN; Claude live check pending"
+    },
+    {
+      "name": "GreyboxLoopTest",
+      "result": "UNKNOWN; Claude live check pending"
+    },
+    {
+      "name": "GreyboxPvpTest",
+      "result": "UNKNOWN; Claude live check pending"
+    },
+    {
+      "name": "GreyboxTrapTest",
+      "result": "UNKNOWN; Claude live check pending"
+    },
+    {
+      "name": "CoreLoopTest",
+      "result": "UNKNOWN; Claude live check pending"
+    },
+    {
+      "name": "RavineTest",
+      "result": "UNKNOWN; Claude live check pending"
+    },
+    {
+      "name": "TunnelTest",
+      "result": "UNKNOWN; Claude live check pending"
+    },
+    {
+      "name": "OutsmartTest",
+      "result": "UNKNOWN; Claude live check pending"
+    },
+    {
+      "name": "RaidSliceTest",
+      "result": "UNKNOWN; Claude live check pending"
+    }
+  ],
+  "native_body_and_vault_collision_proxy": "PASS; actual Roblox physics UNKNOWN",
+  "original_sources_unchanged": 93,
+  "place": "slice-v2/prototype/guardian-greybox.rbxl",
+  "place_sha256": "e0ceacb5b71e83b5f6a2bbd328f2352506e4051d997353a5967fee989b6eff2c",
+  "publish": "NONE",
+  "status": "PASS"
+}

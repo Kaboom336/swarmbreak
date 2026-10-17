@@ -1,0 +1,11 @@
+{
+  "backup": "slice-v2/prototype/guardian-greybox.pre-pvp2.rbxl",
+  "backup_byte_verified": true,
+  "backup_sha256": "9956324fa091a2ba991e270860c743d6d76ac005510fb5542812455d00475362",
+  "commit": "NONE",
+  "compiled_O0_O1_O2": 96,
+  "limits_timers_assertions_gameplay_geometry_preserved": true,
+  "mounted_sha256": "4baecab0f07b9b96a62c64262bc237a15352ee6686432bdb588976f0d7d9b909",
+  "only_runner_source_changed": true,
+  "studio_play": "NOT RUN"
+}

@@ -18,6 +18,10 @@ local Style = require(RS:WaitForChild("UIStyle"))
 local V4 = Config.MeadowV4 and RS:WaitForChild("MeadowV4")
 local TunnelPolicy = V4 and require(V4.TunnelPolicy)
 local RavinePolicy = V4 and require(V4.RavinePolicy)
+local Raid = V4 and require(V4:WaitForChild("RaidSlice"))
+local raidRemote = Instance.new("RemoteEvent")
+raidRemote.Name, raidRemote.Parent = "RaidSliceEvent", RS
+local vaults, vaultLast = {}, {}
 local function nestPosition(a)
 	return Arena.position(a, Config.Nest.x, Config.Nest.y, Config.Nest.z)
 end
@@ -1064,6 +1068,55 @@ Players.PlayerRemoving:Connect(function(actor)
 	pens[s.slot].occupied = {}
 	slots[s.slot], states[actor], lastAction[actor] = nil, nil, nil
 end)
+local function stopVault(actor)
+ local v=vaults[actor];if not v then return end
+ vaults[actor]=nil
+ if v.root.Parent then pcall(function() v.root:SetNetworkOwnershipAuto() end) end
+end
+local function requestVault(actor,jump,intent)
+ local s=states[actor];local r,h=root(actor)
+ if not Raid or not s or s.phase~="Run" or s.run~=arena or not r or not h or h.Health<=0
+  or vaults[actor] or typeof(intent)~="Vector3" or intent.Magnitude>1.1 or intent.Magnitude~=intent.Magnitude then return false end
+ local now=os.clock()
+ local target=Raid.vaultTarget(arena,r.Position,intent,jump,now,vaultLast[actor],{
+  vaultClear=function(a,p,q) return Raid.vaultClear(a,p,q,actor.Character) end,
+ })
+ if not target then return false end
+ local floor=Arena.floor(arena,r.Position)
+ if not floor or math.abs(r.Position.Y-floor.Y-3)>1.7 then return false end
+ vaultLast[actor]=now
+ r:SetNetworkOwner(nil)
+ vaults[actor]={root=r,character=actor.Character,start=r.Position,target=target,began=now,catches=s.catches,mercy=s.mercy,item=s.item}
+ return true
+end
+raidRemote.OnServerEvent:Connect(function(actor,action,value)
+ if testRunning or not arena or not Raid then return end
+ local s=states[actor];if not s or s.run~=arena or s.phase~="Run" then return end
+ if action=="Ready" and type(value)=="number" then Raid.ready(arena,actor,value,os.clock())
+ elseif action=="Jump" then requestVault(actor,true,value) end
+end)
+local function stepVaults(now)
+ for actor in vaultLast do if not states[actor] then vaultLast[actor]=nil end end
+ for actor,v in vaults do
+  local s=states[actor]
+  if not s or s.phase~="Run" or actor.Character~=v.character or not v.root.Parent
+   or s.catches~=v.catches or s.mercy~=v.mercy or s.item~=v.item then
+   stopVault(actor);continue
+  end
+  local t=math.clamp((now-v.began)/Raid.Tuning.VaultSeconds,0,1)
+  local p=Raid.vaultPoint(v.start,v.target,t)
+  local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude
+  params.FilterDescendantsInstances={v.character,arena.v4.RaidJunction.JumpVaultWall}
+  local delta=p-v.root.Position
+  if delta.Magnitude>0 and workspace:Blockcast(v.root.CFrame,Vector3.new(2,4,2),delta,params) then stopVault(actor);continue end
+  v.root.CFrame=CFrame.new(p)*v.root.CFrame.Rotation
+  v.root.AssemblyLinearVelocity=Vector3.zero
+  if t>=1 then stopVault(actor) end
+ end
+end
+local function raidStep(dt,now,actors,getRoot,acceptHit,loot)
+ return Raid and Raid.tick(arena,dt,now,actors,getRoot,acceptHit,Arena,loot)
+end
 local accumulator = 0
 RunService.Heartbeat:Connect(function(dt)
 	if not testRunning then
@@ -1075,6 +1128,7 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 	local step, now = math.min(accumulator, 0.15), os.clock()
 	accumulator = 0
+	stepVaults(now)
 	for _, item in rules.items do
 		if item.state == "Placed" and item.visual then
 			local drift = Config.PetsWander and Vector3.new(math.sin(now * 0.7) * 0.25, 0, math.cos(now * 0.7) * 0.25)
@@ -1207,7 +1261,9 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 	Traps.tick(traps, now, states)
 	if not pvpCourtPaused then
-		Arena.tick(arena, step, now, states, root, hit, goal, rules.active)
+		if not raidStep(step, now, states, root, hit, rules.active) then
+			Arena.tick(arena, step, now, states, root, hit, goal, rules.active)
+		end
 	end
 	refreshLoot()
 	local ok, why = pcall(conservation)
@@ -1248,6 +1304,11 @@ game:BindToClose(function()
 	end
 end)
 local api = {
+	hit = hit,
+	raidStep = raidStep,
+	requestVault = requestVault,
+	stepVaults = stepVaults,
+	stopVault = stopVault,
 	traps = traps,
 	trapAction = trapAction,
 	enterRun = enterRun,
@@ -1411,6 +1472,10 @@ local function startTest(mode)
 				assert(RunService:IsStudio(), "OutsmartTest is Studio-only")
 				return require(SSS:WaitForChild("OutsmartTestRunner")).run(api, log)
 			end
+			if mode == "RaidSliceTest" then
+				assert(RunService:IsStudio(), "RaidSliceTest is Studio-only")
+				return require(SSS:WaitForChild("RaidSliceTestRunner")).run(api, log)
+			end
 			if mode == "GreyboxPvpTest" then
 				return runner.pvp(player, states, pens, world, api, log, function(value)
 					dummy = value
@@ -1496,6 +1561,8 @@ if RunService:IsStudio() then
 		if arena.tunnel then
 			arena.tunnel.disconnect()
 		end
+		for actor in vaults do stopVault(actor) end
+		table.clear(vaultLast)
 		Arena.reset(arena)
 		-- Preserve invalidation epochs: old path/intercept tasks may still resume.
 		local pathVersion, tunnelGeneration = arena.pathVersion, arena.tunnelGeneration
@@ -1562,7 +1629,7 @@ if RunService:IsStudio() then
 		end,
 	})
 end
-for _, mode in { "GreyboxLoopTest", "GreyboxPvpTest", "GreyboxTrapTest", "DropSampleTest", "OutsmartTest" } do
+for _, mode in { "GreyboxLoopTest", "GreyboxPvpTest", "GreyboxTrapTest", "DropSampleTest", "OutsmartTest", "RaidSliceTest" } do
 	SSS:GetAttributeChangedSignal(mode):Connect(function()
 		if SSS:GetAttribute(mode) and not SSS:GetAttribute("StudioPassBusy") then
 			startTest(mode)

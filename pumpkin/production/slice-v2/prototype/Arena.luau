@@ -982,6 +982,7 @@ function Arena.tick(a, dt, now, actors, root, hitPlayer, goal, loot)
 	a.guardian:SetAttribute("KeeperAttention", a.decoy and a.mode or "")
 end
 function Arena.reset(a)
+	if a.raidCleanup then a.raidCleanup() end
 	a.tunnelGeneration = (a.tunnelGeneration or 0) + 1
 	a.tunnelGuard = nil
 	if Config.MeadowV4 then
