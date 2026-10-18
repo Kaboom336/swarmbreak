@@ -1,0 +1,47 @@
+﻿[
+    {
+        "File":  "01-hub-hideout.png",
+        "Bytes":  1696283,
+        "SHA256":  "2AF46C43776E53B87AF8B9BEAC01A6A54FACF25D47B644D86C597F671450E5FC"
+    },
+    {
+        "File":  "02-heist-board.png",
+        "Bytes":  1626324,
+        "SHA256":  "A0E387E6D1ACF6684070A12917E1B10B9303C834AE2FC88117FCBE5E68AA114C"
+    },
+    {
+        "File":  "03-roll-up-vault.png",
+        "Bytes":  1638533,
+        "SHA256":  "56D16F79DCF3A5FCBB9F0ECF5156830680073372C719FEC3597292F1CC4F6E26"
+    },
+    {
+        "File":  "04-kings-bed.png",
+        "Bytes":  1660235,
+        "SHA256":  "7AB4077DDB8E55707BC5239D75EC72486BE92F8AD5DE140A55E72449BECCB692"
+    },
+    {
+        "File":  "05-guardian-turnaround.png",
+        "Bytes":  1569245,
+        "SHA256":  "CE1512BC632A90DC4DD3EE61ECECF84BD49DF72E823414C6D734D6A6F2892C6E"
+    },
+    {
+        "File":  "06-treasure-toys.png",
+        "Bytes":  1628342,
+        "SHA256":  "58702CCA179C839282567CD8EA04AFDC2BBB490E797529CE0CF903A2C2019345"
+    },
+    {
+        "File":  "07-hud.png",
+        "Bytes":  1657396,
+        "SHA256":  "1F41E8CB4FFC1F8B86302F987E72ACE13F242AE59478C6AA9D7388E0E125B7B1"
+    },
+    {
+        "File":  "BOARD.jpg",
+        "Bytes":  851953,
+        "SHA256":  "CE9DB9A0BCE125068947B7F4CCD9C28FFF48068BBB404F2762F026A15F92D37E"
+    },
+    {
+        "File":  "REFERENCE-COMPARE.jpg",
+        "Bytes":  1221843,
+        "SHA256":  "BCDF8622F0B28B4FFC8ACB5A4D6ABC8C4141B1E811762C4BC7DD9BF98E022E51"
+    }
+]

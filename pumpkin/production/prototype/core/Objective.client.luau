@@ -99,7 +99,7 @@ local connection = Run.RenderStepped:Connect(function()
 		end
 	end
 	local phase = player:GetAttribute("GreyboxPhase")
-	local deadline = world and world:GetAttribute("EscapeDeadline")
+	local deadline = player:GetAttribute("CrownRoadDeadline") or (world and world:GetAttribute("EscapeDeadline"))
 	local identity = cave and player:GetAttribute("CaveItemID") or (phase == "Run" and deadline or nil)
 	if identity ~= timerIdentity then
 		full, timerIdentity = nil, identity

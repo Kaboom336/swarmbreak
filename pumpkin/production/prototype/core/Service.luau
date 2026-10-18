@@ -69,7 +69,7 @@ function Service:canEnter(actor)
 end
 function Service:secure(actor, item, state)
 	return self.profiles:transaction(self.keys[actor], function(data)
-		return self.domain.secure(data, self.config, item.id, item.rollTier, state)
+		return self.domain.secure(data, self.config, item.id, item.rollTier, state, item.reward)
 	end)
 end
 function Service:place(actor, item, position, rotation, slot)
@@ -104,11 +104,12 @@ function Service:decorate(actor, item, opened)
 	end
 	local rarity = self.config.Rarities[pet.tier]
 	root:SetAttribute("CoreOwner", actor.UserId)
-	root:SetAttribute("PetModel", rarity.model)
-	root:SetAttribute("PetName", rarity.pet)
+	root:SetAttribute("PetModel", pet.reward and pet.reward.model or rarity.model)
+	root:SetAttribute("PetName", pet.reward and pet.reward.name or rarity.pet)
+	root:SetAttribute("RewardKind", pet.reward and pet.reward.kind or "Pet")
 	root:SetAttribute("PetRarity", rarity.name)
 	root:SetAttribute("PetTier", pet.tier)
-	local rate = rarity.rate
+	local rate = pet.reward and pet.reward.rate or rarity.rate
 	if opened and data.feed and data.pets[1].id == pet.id then
 		rate += 1
 	end
@@ -175,7 +176,7 @@ function Service:decorate(actor, item, opened)
 				self.hooks.event:FireClient(
 					player,
 					"Reveal",
-					rarity.pet,
+					pet.reward and pet.reward.name or rarity.pet,
 					rarity.name,
 					rate,
 					item.id

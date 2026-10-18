@@ -26,6 +26,8 @@ function Domain.default()
 		feed = false,
 		shieldUsed = false,
 		firstHitUsed = false,
+		crownStamps = {},
+		awardReceipts = {},
 	}
 end
 function Domain.validate(data, config)
@@ -46,6 +48,12 @@ function Domain.validate(data, config)
 		return false, "invalid collection"
 	end
 	local seen = {}
+	for _, field in { "crownStamps", "awardReceipts" } do
+		if data[field] ~= nil and type(data[field]) ~= "table" then return false, "invalid " .. field end
+		for key, value in data[field] or {} do
+			if type(key) ~= "string" or value ~= true then return false, "invalid receipt/stamp" end
+		end
+	end
 	local function validPet(pet)
 		if type(pet) ~= "table" or type(pet.id) ~= "string" or seen[pet.id] then
 			return false
@@ -54,6 +62,14 @@ function Domain.validate(data, config)
 			return false
 		end
 		seen[pet.id] = true
+		if pet.reward then
+			local reward = pet.reward
+			if type(reward) ~= "table" or reward.version ~= 1
+				or type(reward.map) ~= "string" or not Domain.finite(reward.zone) or reward.zone < 1
+				or reward.zone % 1 ~= 0 or (reward.kind ~= "Pet" and reward.kind ~= "Relic")
+				or type(reward.name) ~= "string" or type(reward.model) ~= "string"
+				or not Domain.finite(reward.rate) or reward.rate <= 0 then return false end
+		end
 		if
 			pet.x ~= nil
 			and (not Domain.finite(pet.x) or not Domain.finite(pet.z) or not Domain.finite(pet.yaw))
@@ -89,7 +105,8 @@ function Domain.roll(config, unit)
 	end
 	error("unreachable roll")
 end
-function Domain.secure(data, config, id, tier, flags)
+function Domain.secure(data, config, id, tier, flags, reward)
+	if data.awardReceipts and data.awardReceipts[id] then return true end
 	if data.pending and data.pending.id == id then
 		return true
 	end
@@ -105,6 +122,17 @@ function Domain.secure(data, config, id, tier, flags)
 		return false, "invalid award"
 	end
 	data.pending = { id = id, tier = #data.pets == 0 and 1 or tier, placed = false }
+	if reward then
+		data.pending.reward = Domain.copy(reward)
+		-- First successful ever earner retains the existing guaranteed Common Pup.
+		if data.escapes == 0 then
+			data.pending.reward.kind, data.pending.reward.name, data.pending.reward.model = "Pet", "Pup", "Pup"
+			data.pending.reward.rate = reward.baseRate or 1
+		end
+		data.crownStamps, data.awardReceipts = data.crownStamps or {}, data.awardReceipts or {}
+		data.crownStamps[reward.map .. ":" .. reward.zone] = true
+		data.awardReceipts[id] = true
+	end
 	data.escapes += 1
 	data.shieldUsed, data.firstHitUsed = flags.shieldUsed == true, flags.firstHitUsed == true
 	return true
@@ -130,13 +158,13 @@ function Domain.open(data, config, id)
 	end
 	data.pending = nil
 	table.insert(data.pets, cargo)
-	data.discovered[config.Rarities[cargo.tier].pet] = true
+	data.discovered[cargo.reward and cargo.reward.name or config.Rarities[cargo.tier].pet] = true
 	return true, cargo
 end
 function Domain.rate(data, config)
 	local rate = 0
 	for i, pet in data.pets do
-		rate += config.Rarities[pet.tier].rate + (data.feed and i == 1 and 1 or 0)
+		rate += (pet.reward and pet.reward.rate or config.Rarities[pet.tier].rate) + (data.feed and i == 1 and 1 or 0)
 	end
 	return rate
 end
