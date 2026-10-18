@@ -28,6 +28,25 @@ return function(place)
 		check(not plot.Lock.LockPrompt.Enabled,"lock initially gated")
 	end
 	check(#world.Earners:GetChildren()>=1,"initial carpet earner")
+	local factory=require(shared.EarnerModel)(C,R)
+	local expected
+	for mutation=1,3 do
+		local root=factory.create(world.Earners,"MutationCheck",1,mutation,Vector3.new(0,2,-8),"Carpet")
+		check(root.Transparency==1 and root.Visual:IsA("Model"),"def 1 voxel hook")
+		local n=1
+		check(root.Anchored and not root.CanCollide,"authority root anchored/non-colliding")
+		for _,part in root:GetDescendants() do
+			if part:IsA("BasePart") then
+				n+=1; check(part.Anchored and not part.CanCollide,"voxel anchored/non-colliding after serialization")
+			end
+		end
+		check(n<250,"whole earner including both roots below 250")
+		expected=expected or n; check(n==expected,"factory mutation count unchanged")
+		root:Destroy()
+	end
+	local placeholder=factory.create(world.Earners,"PlaceholderCheck",2,1,Vector3.new(0,2,-8),"Carpet")
+	check(placeholder.Transparency==0 and not placeholder:FindFirstChild("Visual"),"other defs keep placeholders")
+	placeholder:Destroy()
 	for _,part in world.Earners:GetChildren() do
 		check(part.Anchored and part:GetAttribute("ServerOwned")==true,"anchored earner: no client physics owner")
 		check(part.BuyPrompt.ActionText=="Buy" and part.BuyPrompt.KeyboardKeyCode==Enum.KeyCode.E,"buy prompt")

@@ -1,4 +1,4 @@
--- Identical greybox silhouette per rarity; swap this factory for real models later.
+local visualFor=require(script.Parent.Earners.Registry)
 return function(C,R)
 	local F={}
 	function F.create(parent,uid,def,mutation,pos,state)
@@ -7,10 +7,15 @@ return function(C,R)
 		p.Anchored=true; p.CanCollide=false; p.CFrame=CFrame.new(pos)
 		local color=C.Mutations[mutation].color or {170,170,170}
 		p.Color=Color3.fromRGB(color[1],color[2],color[3])
+		local visual=visualFor(def,mutation,pos-Vector3.new(0,1.7,0))
+		if visual then
+			p.Transparency=1; p.CanTouch=false; p.CanQuery=false
+			visual.Name="Visual"; visual.Parent=p
+		end
 		p:SetAttribute("Def",def); p:SetAttribute("Mutation",mutation); p:SetAttribute("State",state)
 		p:SetAttribute("ServerOwned",true)
 		local g=Instance.new("BillboardGui"); g.Name="Label"; g.Size=UDim2.fromOffset(220,110)
-		g.StudsOffset=Vector3.new(0,4,0); g.AlwaysOnTop=true; g.MaxDistance=110; g.Parent=p
+		g.StudsOffset=Vector3.new(0,visual and 5.2 or 4,0); g.AlwaysOnTop=true; g.MaxDistance=110; g.Parent=p
 		for i,text in {d.name,rarity.name.." / "..C.Mutations[mutation].name,"$"..R.price(def,mutation).." / $"..R.income(def,mutation).."/s"} do
 			local t=Instance.new("TextLabel"); t.Name="Line"..i
 			t.Size=UDim2.fromScale(1,1/3); t.Position=UDim2.fromScale(0,(i-1)/3)

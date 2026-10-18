@@ -20,6 +20,13 @@ local function mount(class,name,file,parent)
 	local p=node(class,name,parent); p.Source=fs.readFile(base..file); return p
 end
 for _,name in {"Config","Rules","SaveDomain","EarnerModel"} do mount("ModuleScript",name,name..".luau",shared) end
+local earners=node("Folder","Earners",shared)
+for _,name in {"VoxelKit","CopperCompass","Registry","Walk"} do
+	luau.compile(fs.readFile(base.."earners/"..name..".luau")); compiled+=1
+	mount("ModuleScript",name,"earners/"..name..".luau",earners)
+end
+luau.compile(fs.readFile(base.."earners/EarnerVisual.client.luau")); compiled+=1
+mount("LocalScript","EarnerVisual","earners/EarnerVisual.client.luau",scripts)
 for _,name in {"Profiles","MockStore","BaseTest"} do mount("ModuleScript",name,name..".luau",sss) end
 mount("Script","BaseServer","Base.server.luau",sss)
 mount("LocalScript","BaseClient","Base.client.luau",scripts)
@@ -29,21 +36,23 @@ for _,name in {"Action","State","Toast","Pop"} do node("RemoteEvent",name,shared
 local env={Instance=rb.Instance,Vector3=rb.Vector3,Color3=rb.Color3,CFrame=rb.CFrame,
 	UDim2=rb.UDim2,Enum=rb.Enum}
 local function load(file) return luau.load(fs.readFile(base..file),{environment=env,injectGlobals=true})() end
+-- Use the same instance-based imports as Roblox, including nested earner modules.
+local cache={}
+local function moduleRequire(module)
+	if cache[module] then return cache[module] end
+	local moduleEnv=table.clone(env); moduleEnv.script=module; moduleEnv.require=moduleRequire
+	local value=luau.load(module.Source,{environment=moduleEnv,injectGlobals=true})()
+	cache[module]=value; return value
+end
 local C=require("./Config"); local R=require("./Rules")(C)
 local world=load("Scene.luau")(ws,C)
-load("EarnerModel.luau")(C,R).create(world.Earners,"StarterPreview",1,1,rb.Vector3.new(0,2,-8),"Carpet")
+moduleRequire(shared.EarnerModel)(C,R).create(world.Earners,"StarterPreview",1,1,rb.Vector3.new(0,2,-8),"Carpet")
 assert(#world.Plots:GetChildren()==8)
 local bytes=rb.serializePlace(place)
 local roundtrip=rb.deserializePlace(bytes)
 assert(roundtrip.ServerScriptService.BaseServer.Source==fs.readFile(base.."Base.server.luau"))
 assert(#roundtrip.Workspace.TreasureBase.Plots:GetChildren()==8)
 -- Execute the actual EDIT test with a local require shim against the serialized place.
-local cache={}
-local function moduleRequire(module)
-	if cache[module] then return cache[module] end
-	local value=luau.load(module.Source,{environment=env,injectGlobals=true})()
-	cache[module]=value; return value
-end
 local testEnv=table.clone(env); testEnv.require=moduleRequire
 local test=luau.load(fs.readFile(base.."BaseTest.luau"),{environment=testEnv,injectGlobals=true})()
 local assertions=test(roundtrip)

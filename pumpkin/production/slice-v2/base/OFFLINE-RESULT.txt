@@ -1,4 +1,4 @@
-PASS 275 offline assertions; 13 Luau sources compile.
+PASS 680 offline assertions; 20 Luau sources compile.
 Deterministic 600s simulation, seed 20261018, plot 1, active collect/buy policy:
 First buy 2.00s; first earner placed 10.75s; first collected reward 13.50s; first pedestal unlock 31.50s.
 Banked cash at 2/5/10 min: $436.25 / $530.00 / $7271.25. Final rate $25.00/s; purchases 5.

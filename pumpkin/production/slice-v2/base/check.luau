@@ -2,9 +2,13 @@ local fs,luau,serde=require("@lune/fs"),require("@lune/luau"),require("@lune/ser
 local path="slice-v2/base/"
 local C=require("./Config"); local R=require("./Rules")(C); local D=require("./SaveDomain")(C,R)
 local assertions,compiled=0,0
+assertions+=require("./earners/check")()
 local function check(ok,why) assert(ok,why); assertions+=1 end
 local function eq(a,b,why) check(a==b,(why or "equal")..": "..tostring(a).." / "..tostring(b)) end
 for _,file in fs.readDir(path) do if file:match("%.luau$") then luau.compile(fs.readFile(path..file)); compiled+=1 end end
+for _,file in fs.readDir(path.."earners/") do
+	if file:match("%.luau$") then luau.compile(fs.readFile(path.."earners/"..file)); compiled+=1 end
+end
 eq(#C.Earners,25,"definitions")
 eq(#C.Rarities,5,"rarities")
 local rolls={0,0,0,0,0}

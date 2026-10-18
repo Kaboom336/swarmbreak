@@ -21,6 +21,8 @@ From production: `lune run slice-v2/base/check.luau`, then `lune run slice-v2/ba
 
 ## Placeholder and known gaps
 
+Def 1 now has one script-built Copper Compass voxel character with Gold/Diamond recolours and a client-only two-frame leg bob. Other definitions remain placeholders. See [the comparison](earners/SBS-copper-compass.jpg), [self-judge and reproduction steps](earners/JUDGE.md), and [model checks](earners/CHECK-RESULT.txt). Offline render proof is not a Studio or runtime pass. Zion checks this one before expansion.
+
 - Plain parts only, no imported art, sound, polished movement animation, reveal, carry vignette or final map. Walking earners translate anchored blocks. Claude owns the Terrain/CC0 kit look pass. The arrow is one billboard marker, not ground chevrons. Final giant countdown presentation is pending.
 - Shop is intentionally inert. No rebirth, selling/replacement, paid products, zone expansion or other late systems. A full ten-slot base cannot replace earners yet. Offline income is capped per absence, not a daily allowance.
 - Cross-profile theft is not crash-atomic. No transfer journal yet: public persistence with valuable inventories is blocked. Save outages warn; expired leases block actions and kick. A crash can lose changes since the last successful save (periodic interval 45s; mutation-triggered saves also attempted). No claim of production-grade ProfileStore equivalence.
