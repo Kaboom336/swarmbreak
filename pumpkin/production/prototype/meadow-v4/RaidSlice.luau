@@ -1,4 +1,4 @@
--- One authored surface fork. No navigation service, player attacks or health.
+-- Authored surface forks share one state machine. No player attacks or health.
 local R = {}
 local V = Vector3.new
 R.Tuning = {
@@ -23,6 +23,33 @@ R.Connectors = {
 	{ V(-92, 0, 58), V(-98, 0, 58) },
 	{ V(-92, 0, 58), V(-88, 0, 66) },
 }
+R.Encounters = {
+ {name='RaidJunction', lanes=R.Lanes, wall=R.Wall, bypass=R.Bypass, connectors=R.Connectors,
+  approach=V(-94,3,40), min=V(-108,-1,36), max=V(-84,7,70), escapes=0},
+ {name='RaidJunctionEast', markLift=0.44,
+  lanes={{V(116,20,43),V(106,20,43)},{V(116,20,53),V(106,20,53)}},
+  wall=V(106,21.12,48), bypass={V(106,20,43),V(112,20,43),V(112,20,53),V(106,20,53)},
+  connectors={{V(108,20,42),V(116,20,42)},{V(116,20,42),V(116,20,43)},
+   {V(116,20,43),V(116,20,53)},{V(106,20,43),V(112,20,43)},
+   {V(112,20,43),V(112,20,53)},{V(112,20,53),V(106,20,53)}},
+  approach=V(106,23,42), min=V(102,19,41), max=V(119,27,60), escapes=1},
+}
+function R.encounterAt(p)
+ for _,e in R.Encounters do
+  if p.X>=e.min.X and p.X<=e.max.X and p.Y>=e.min.Y and p.Y<=e.max.Y
+   and p.Z>=e.min.Z and p.Z<=e.max.Z then return e end
+ end
+ return nil
+end
+function R.wallFor(a,p)
+ local selected,dist=nil,math.huge
+ for _,e in R.Encounters do
+  local d=(p-a.origin-e.wall).Magnitude
+  if d<dist then selected,dist=e,d end
+ end
+ local map=selected and a.v4:FindFirstChild(selected.name)
+ return map and map:FindFirstChild('JumpVaultWall'),selected
+end
 local amber, green = Color3.fromRGB(255, 190, 65), Color3.fromRGB(108, 163, 66)
 local function part(parent, name, size, p, color, solid)
 	local q = Instance.new("Part")
@@ -31,42 +58,44 @@ local function part(parent, name, size, p, color, solid)
 	q.Material, q.Parent = Enum.Material.SmoothPlastic, parent
 	return q
 end
-function R.build(map, origin)
-	local old = map:FindFirstChild("RaidJunction")
+local function buildEncounter(map, origin, e)
+	local markLift=e.markLift or 0
+	local old = map:FindFirstChild(e.name)
 	if old then
 		return old
 	end
 	local m = Instance.new("Model")
-	m.Name = "RaidJunction"
+	m.Name = e.name
 	m.ModelStreamingMode = Enum.ModelStreamingMode.Persistent
-	for i, lane in R.Lanes do
+	for i, lane in e.lanes do
 		local mid = (lane[1] + lane[2]) / 2 + origin
 		local stripe = part(
 			m,
 			"Lane" .. i,
 			V((lane[2] - lane[1]).Magnitude, 0.06, 5),
-			mid + V(0, 0.18, 0),
+			mid + V(0, 0.18+markLift, 0),
 			Color3.fromRGB(152, 128, 89)
 		)
 		stripe:SetAttribute("RaidLane", i)
-		for x = -90, -98, -4 do
-			local arrow = part(m, "Arrow" .. i, V(1.6, 0.08, 1.6), origin + V(x, 0.26, lane[1].Z), amber)
+		for step = 2, 10, 4 do
+			local x = lane[1].X-step
+			local arrow = part(m, "Arrow" .. i, V(1.6, 0.08, 1.6), origin + V(x, lane[1].Y+0.26+markLift, lane[1].Z), amber)
 			arrow.Size = V(1.8, 0.08, 0.3)
 			arrow.CFrame *= CFrame.Angles(0, math.rad(40), 0)
 			local wing = arrow:Clone()
-			wing.CFrame = CFrame.new(origin + V(x, 0.26, lane[1].Z + 0.95))
+			wing.CFrame = CFrame.new(origin + V(x, lane[1].Y+0.26+markLift, lane[1].Z + 0.95))
 				* CFrame.Angles(0, math.rad(-40), 0)
 			wing.Parent = m
 			arrow.Material, arrow.Transparency = Enum.Material.Neon, 0.75
 		end
 	end
-	for _, edge in R.Connectors do
+	for _, edge in e.connectors do
 		local d = edge[2] - edge[1]
-		local mid = (edge[1] + edge[2]) / 2 + origin + V(0, 0.18, 0)
+		local mid = (edge[1] + edge[2]) / 2 + origin + V(0, 0.18+markLift, 0)
 		local path = part(m, "ForkPath", V(3, 0.05, d.Magnitude), mid, Color3.fromRGB(152, 128, 89))
 		path.CFrame = CFrame.lookAt(mid, mid + d)
 	end
-	local wall = part(m, "JumpVaultWall", V(2.8, 2, 1), origin + R.Wall, Color3.fromRGB(115, 79, 47), true)
+	local wall = part(m, "JumpVaultWall", V(2.8, 2, 1), origin + e.wall, Color3.fromRGB(115, 79, 47), true)
 	wall:SetAttribute("RaidVaultWall", true)
 	wall:SetAttribute("SurfaceRole", "Cover")
 	local sign = Instance.new("SurfaceGui")
@@ -85,6 +114,10 @@ function R.build(map, origin)
 	m.Parent = map
 	return m
 end
+function R.build(map,origin)
+ for _,e in R.Encounters do buildEncounter(map,origin,e) end
+ return map:FindFirstChild('RaidJunction')
+end
 local function flat(p)
 	return V(p.X, 0, p.Z)
 end
@@ -99,13 +132,15 @@ function R.clear(a)
 		a.raid.model:Destroy()
 		a.raid = nil
 	end
-	local map = a.v4 and a.v4:FindFirstChild("RaidJunction")
+	for _,e in R.Encounters do
+	local map = a.v4 and a.v4:FindFirstChild(e.name)
 	if map then
 		for _, q in map:GetChildren() do
 			if q:IsA("BasePart") and q.Name:match("^Arrow") then
 				q.Transparency = 0.75
 			end
 		end
+	end
 	end
 	a.raidBusy = false
 end
@@ -134,13 +169,14 @@ local function creature(parent, index, p)
 	m.PrimaryPart = body
 	return m
 end
-local function begin(a, now, api)
+local function begin(a, now, api, e)
 	local model = Instance.new("Model")
 	model.Name = "RaidSquad"
 	model.ModelStreamingMode = Enum.ModelStreamingMode.Persistent
+	model:SetAttribute('Encounter',e.name)
 	model.Parent = a.model
-	local r = { model = model, start = now, index = 0, nextAt = now, units = {}, serial = 0 }
-	for i, lane in R.Lanes do
+	local r = { model = model, encounter=e, start = now, index = 0, nextAt = now, units = {}, serial = 0 }
+	for i, lane in e.lanes do
 		r.units[i] = creature(model, i, a.origin + lane[1])
 	end
 	a.raid = r
@@ -150,9 +186,9 @@ local function begin(a, now, api)
 	-- Persistent lifetime key: cargo drop, handoff and recovery never spawn a second pair.
 	a.raidItem = api.itemId
 end
-local function corridor(a, api)
+local function corridor(a, api, e)
 	-- Both lanes and the walking switch must be legal before any reservation.
-	for _, lane in R.Lanes do
+	for _, lane in e.lanes do
 		for t = 0, 16 do
 			local p = a.origin + lane[1]:Lerp(lane[2], t / 16)
 			local floor = api.floor(a, p + V(0, 3, 0))
@@ -210,14 +246,15 @@ function R.tick(a, dt, now, actors, root, hit, api, loot)
 			return false
 		end
 		local p = q.Position - a.origin
-		if p.X < -108 or p.X > -84 or p.Z < 36 or p.Z > 70 or math.abs(p.Y - 3) > 4 then
+		local e=R.encounterAt(p)
+		if not e or (s.meadowEscapes or 0)<e.escapes then
 			return false
 		end
-		if not corridor(a, api) then
+		if not corridor(a, api, e) then
 			return false
 		end
 		-- No spawning on entrants, dropped loot or the player's recovery space.
-		for _, lane in R.Lanes do
+		for _, lane in e.lanes do
 			local spawn = a.origin + lane[1]
 			for actor, state in actors do
 				local rr = root(actor)
@@ -229,7 +266,7 @@ function R.tick(a, dt, now, actors, root, hit, api, loot)
 				return false
 			end
 		end
-		begin(a, now, { itemId = loot.id })
+		begin(a, now, { itemId = loot.id },e)
 		r = a.raid
 	end
 	if now - r.start > R.Tuning.Lifetime then
@@ -266,9 +303,9 @@ function R.tick(a, dt, now, actors, root, hit, api, loot)
 		a.guardian:SetAttribute("KeeperClip", "warn")
 		a.guardian:SetAttribute("KeeperElapsed", 0)
 		a.guardian:SetAttribute("KeeperStartedAt", workspace:GetServerTimeNow())
-		a.guardian:SetAttribute("KeeperLookTarget", a.origin + R.Lanes[c.lane][1])
+		a.guardian:SetAttribute("KeeperLookTarget", a.origin + r.encounter.lanes[c.lane][1])
 		a.warning.Text = "! / SQUAD: CHOOSE THE OTHER LANE"
-		local map = a.v4:FindFirstChild("RaidJunction")
+		local map = a.v4:FindFirstChild(r.encounter.name)
 		if map then
 			for _, q in map:GetChildren() do
 				if q:IsA("BasePart") and q.Name == "Arrow" .. c.lane then
@@ -281,7 +318,7 @@ function R.tick(a, dt, now, actors, root, hit, api, loot)
 		return true
 	end
 	local age = now - c.start
-	local lane = R.Lanes[c.lane]
+	local lane = r.encounter.lanes[c.lane]
 	local start, finish = a.origin + lane[1], a.origin + lane[2]
 	local t = math.clamp((age - R.Tuning.Tell) / R.Tuning.Charge, 0, 1)
 	local unit = r.units[c.lane]
@@ -318,7 +355,7 @@ function R.tick(a, dt, now, actors, root, hit, api, loot)
 	if age >= R.Tuning.Tell + R.Tuning.Charge + R.Tuning.Recover then
 		r.model:SetAttribute("Charging", false)
 		r.model:SetAttribute("TellLane", nil)
-		local map = a.v4:FindFirstChild("RaidJunction")
+		local map = a.v4:FindFirstChild(r.encounter.name)
 		if map then
 			for _, q in map:GetChildren() do
 				if q:IsA("BasePart") and q.Name == "Arrow" .. c.lane then
@@ -337,17 +374,20 @@ function R.vaultTarget(a, p, intent, jump, now, last, api)
 		return nil
 	end
 	local localP = p - a.origin
-	local side = localP.Z < R.Wall.Z and 1 or -1
+	local e=R.encounterAt(localP)
+	if not e then return nil end
+	local wall=e.wall
+	local side = localP.Z < wall.Z and 1 or -1
 	if
-		math.abs(localP.X - R.Wall.X) > 0.9
-		or math.abs(localP.Z - R.Wall.Z) > 4.5
-		or math.abs(localP.Z - R.Wall.Z) < 1.3
-		or math.abs(localP.Y - 3.12) > 2
+		math.abs(localP.X - wall.X) > 0.9
+		or math.abs(localP.Z - wall.Z) > 4.5
+		or math.abs(localP.Z - wall.Z) < 1.3
+		or math.abs(localP.Y - wall.Y - 2) > 2
 		or intent.Unit:Dot(V(0, 0, side)) < 0.65
 	then
 		return nil
 	end
-	local target = a.origin + V(localP.X, 3.12, R.Wall.Z + side * 4)
+	local target = a.origin + V(localP.X, wall.Y+2, wall.Z + side * 4)
 	if not api.vaultClear(a, p, target) then
 		return nil
 	end
@@ -357,11 +397,7 @@ function R.vaultPoint(start, target, t)
 	return start:Lerp(target, t) + V(0, math.sin(t * math.pi) * 3, 0)
 end
 function R.vaultClear(a, start, target, character)
-	local map = a.v4:FindFirstChild("RaidJunction")
-	if not map then
-		return false
-	end
-	local wall = map:FindFirstChild("JumpVaultWall")
+	local wall = R.wallFor(a,start)
 	if not wall then
 		return false
 	end

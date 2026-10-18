@@ -128,6 +128,42 @@ function Test.run(api, log)
 			walk += (R.Bypass[i + 1] - R.Bypass[i]).Magnitude
 		end
 		check(R.Tuning.VaultSeconds < walk / Config.CarrySpeed, "vault faster than walking bypass")
+		-- Reclaim the same real cargo; unlock state is per player, never a timer.
+		root.CFrame=CFrame.new(item.position+Vector3.new(0,3,0))
+		task.wait(math.max(0,(item.settle or 0)-os.clock())+0.1)
+		check(api.holdAction(dummy,'Grab','begin'),'production recovery begins for east encounter')
+		task.wait(Config.HoldSeconds.Grab+0.05)
+		check(api.holdAction(dummy,'Grab','finish'),'production recovery completes for east encounter')
+		task.wait(math.max(0,(state.mercy or 0)-os.clock())+0.55)
+		local east=R.Encounters[2]
+		state.meadowEscapes=0
+		put(east.approach-Vector3.new(0,3,0));a.raidItem=nil
+		check(not tick() and not a.raid,'east stays unarmed before first successful escape')
+		state.meadowEscapes=1
+		tick()
+		check(a.raid and a.raid.encounter==east and #a.raid.units==2,'east arms after first successful escape')
+		local eastCommit=a.raid.commit
+		R.ready(a,dummy,eastCommit.serial,os.clock())
+		put((east.lanes[2][1]+east.lanes[2][2])/2)
+		while a.raid do tick();task.wait(0.03) end
+		check(state.item==item and item.id==id and item.escapeDeadline==deadline,'east keeps cargo identity deadline and full client-warning protection')
+		check(not tick(),'east retires once per cargo')
+		for _,e in R.Encounters do
+		 for i=1,#e.bypass-1 do
+		  for j=0,20 do
+		   local sample=floor(e.bypass[i]:Lerp(e.bypass[i+1],j/20))
+		   check(not workspace:Blockcast(CFrame.new(sample+Vector3.new(0,3,0)),Vector3.new(2,4,2),Vector3.new(0,.01,0),bypassParams),e.name..' walking bypass body clearance')
+		  end
+		 end
+		end
+		put(Vector3.new(east.wall.X,east.wall.Y-1.12,east.wall.Z-4))
+		local eastStart=root.Position
+		root.Anchored=false
+		check(api.requestVault(dummy,true,Vector3.zAxis),'east production Jump starts vault')
+		local eastUntil=os.clock()+R.Tuning.VaultSeconds+0.3
+		repeat api.stepVaults(os.clock());task.wait(.02) until os.clock()>eastUntil
+		root.Anchored=true
+		check(root.Position.Z>eastStart.Z+6 and math.abs(root.Position.X-eastStart.X)<.5,'east production vault reaches opposite floor')
 	end)
 	api.stopVault(dummy)
 	R.clear(a)

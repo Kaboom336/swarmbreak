@@ -108,6 +108,8 @@ function MeadowV4.build(parent: Instance, origin: Vector3?): Model
 		require(script.Parent.Section1).clearProps(model)
 	end)
 	if not clearanceOK then model:SetAttribute("PvpMapClearanceFailure", tostring(clearanceProblem)) end
+	local visual = script.Parent:FindFirstChild("VisualSimplify")
+	if visual then require(visual).apply(model) end
 	for _, p in model:GetDescendants() do yieldBuild();
 		if p:IsA("BasePart") then p.CFrame = CFrame.new(offset) * p.CFrame end
 	end

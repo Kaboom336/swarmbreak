@@ -1,5 +1,21 @@
 # Section craft lessons
 
+## Visual simplification and raid 2 — 2026-10-18
+
+1. When pruning cosmetic recipes, freeze all collidable/query/touch/tagged
+   parts with multiplicity before editing, because a small prop or a decorative
+   label is not proof that it is safe to delete. Preserve tagged S1 framing.
+2. When placing a second route encounter, run full standing-body sweeps after
+   floor rays, because S5's climb wedge overlapped the first candidate despite
+   valid ground hits. Move the encounter; never carve protected geometry to fit.
+3. When reusing an encounter, carry its identity through cues and per-step vault
+   collision filters, because a generic lifecycle can still contain a hardcoded
+   first wall. Keep the first-success gate and per-client full warning tests.
+
+Evidence: `../VISUAL-SIMPLIFY.md`, `../RAID-REVIEW.md`,
+`../visual-simplify/COLLIDABLE-CONTRACT.json`, matched player-camera images
+and the final offline seal. No Studio play, commit, publish or owner acceptance.
+
 ## Island Raid slice 1 — 2026-10-17
 
 1. When ground can sit inside a hill, audit occupied body volumes and complete

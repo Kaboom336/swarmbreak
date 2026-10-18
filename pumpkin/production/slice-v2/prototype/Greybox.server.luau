@@ -1106,7 +1106,9 @@ local function stepVaults(now)
   local t=math.clamp((now-v.began)/Raid.Tuning.VaultSeconds,0,1)
   local p=Raid.vaultPoint(v.start,v.target,t)
   local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude
-  params.FilterDescendantsInstances={v.character,arena.v4.RaidJunction.JumpVaultWall}
+  local wall=Raid.wallFor(arena,v.start)
+  if not wall then stopVault(actor);continue end
+  params.FilterDescendantsInstances={v.character,wall}
   local delta=p-v.root.Position
   if delta.Magnitude>0 and workspace:Blockcast(v.root.CFrame,Vector3.new(2,4,2),delta,params) then stopVault(actor);continue end
   v.root.CFrame=CFrame.new(p)*v.root.CFrame.Rotation

@@ -18,7 +18,8 @@ UIS.JumpRequest:Connect(function()
 	local origin = Vector3.new(0, 76, -360) -- Match canonical config, never infer a wall from arbitrary parts.
 	local config = require(RS.GreyboxConfig)
 	origin = Vector3.new(config.MeadowX, config.MeadowHeight, config.MeadowZ)
-	if (root.Position - origin - R.Wall).Magnitude < 8 then
+	local e=R.encounterAt(root.Position-origin)
+	if e and (root.Position - origin - e.wall).Magnitude < 8 then
 		remote:FireServer("Jump", h.MoveDirection)
 	end
 end)
@@ -33,7 +34,7 @@ Run.Heartbeat:Connect(function(dt)
 	local island = world and world:FindFirstChild("SharedIsland")
 	local squad = island and island:FindFirstChild("RaidSquad")
 	local map = island and island:FindFirstChild("MeadowV4")
-	local junction = map and map:FindFirstChild("RaidJunction")
+	local junction = map and map:FindFirstChild(squad and squad:GetAttribute('Encounter') or 'RaidJunction')
 	if not squad or not junction then
 		for _, sound in voices do
 			sound:Destroy()
