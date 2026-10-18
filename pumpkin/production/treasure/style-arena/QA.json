@@ -1,0 +1,68 @@
+﻿{
+    "date":  "2026-10-18",
+    "status":  "PASS artifact checks only",
+    "conceptCount":  9,
+    "summaryLines":  15,
+    "board":  "2508x1503; rows styles, columns arrival/fork/summit",
+    "linkChecks":  20,
+    "generation":  "built-in image_gen, nine separate calls",
+    "visualInspection":  "Nine generated images and assembled BOARD.jpg inspected; geometry/scale drift documented",
+    "runtime":  "UNKNOWN; no Studio or game testing",
+    "writes":  "Design documentation, PNG copies, JPEG contact sheets/boards and assembly scripts only",
+    "files":  [
+                  {
+                      "path":  "treasure/style-arena/studded-blocks/view1.png",
+                      "width":  1672,
+                      "height":  941,
+                      "sha256":  "55E2AD34DF2ADA03F0C6450E22A0222AB8739B32727082C0ECC590871031110E"
+                  },
+                  {
+                      "path":  "treasure/style-arena/studded-blocks/view2.png",
+                      "width":  1672,
+                      "height":  941,
+                      "sha256":  "0F55C72F0A29BB3C792ED2347A956ADBBE3ADD26E20F045C6E19AB6911B4CF31"
+                  },
+                  {
+                      "path":  "treasure/style-arena/studded-blocks/view3.png",
+                      "width":  1672,
+                      "height":  941,
+                      "sha256":  "1B0D2E653761BEB943CC0D45FC28049BCC8BCAB0BCD42B28309E4B2DEB71972B"
+                  },
+                  {
+                      "path":  "treasure/style-arena/toy-meadow/view1.png",
+                      "width":  1672,
+                      "height":  941,
+                      "sha256":  "E59B658C8FF15A62ED857711CA6B7CE05B3CCA8ED0D75EF182657964A5D0148F"
+                  },
+                  {
+                      "path":  "treasure/style-arena/toy-meadow/view2.png",
+                      "width":  1672,
+                      "height":  941,
+                      "sha256":  "359F2B48B67207E458DF99062BAA75EFB565EE549E2AD8FE9BC21E0F3771A97D"
+                  },
+                  {
+                      "path":  "treasure/style-arena/toy-meadow/view3.png",
+                      "width":  1672,
+                      "height":  941,
+                      "sha256":  "A60186A77AB6EEB19887287EE6A59EE7DD075A1CB0F4DB32AE380C4F6812A217"
+                  },
+                  {
+                      "path":  "treasure/style-arena/faceted-woodland/view1.png",
+                      "width":  1672,
+                      "height":  941,
+                      "sha256":  "5AF0898A16475C02B47A8856496A59C7B655036E8EE179641F91D59540D0C9D4"
+                  },
+                  {
+                      "path":  "treasure/style-arena/faceted-woodland/view2.png",
+                      "width":  1672,
+                      "height":  941,
+                      "sha256":  "6BA904F1D3351F2D05707AC99E972D274A69F0DE4883A8EDBD1BE2D7BB5EA5FA"
+                  },
+                  {
+                      "path":  "treasure/style-arena/faceted-woodland/view3.png",
+                      "width":  1672,
+                      "height":  941,
+                      "sha256":  "4395579196D4D5F4F4F2F1E8350EDCA29A34925FDD17461CC6E551B858BCA31E"
+                  }
+              ]
+}
