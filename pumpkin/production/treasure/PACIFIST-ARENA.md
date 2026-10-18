@@ -1,3 +1,5 @@
+> **2026-10-18 — OWNER-APPROVED UPDATE:** Zion approved Crown Road zones + one warned guardian PARRY/STUN move, then steal and escape; **no general player attacks, damage/kill combat or kill rewards**. Two maps at release. This supersedes older no-parry/input recommendations below; other new tuning/reward choices remain INFERRED. See [Difficulty + rewards arena](DIFFICULTY-ARENA.md) and [phone summary](DIFFICULTY-ARENA-SUMMARY.md). Design only; no place edits or Studio Play.
+
 # Pacifist arena — Steal a Treasure
 
 2026-10-15 · Design only · No implementation or commit
