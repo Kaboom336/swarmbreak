@@ -1,0 +1,3 @@
+PASS build: 13 Luau sources compile; 266 serialized-place structure assertions; 25611 bytes.
+Studio EDIT execution: NOT RUN (same module run offline against serialized DataModel).
+Studio Play, multiplayer, live DataStore, visual/fun: NOT RUN.
