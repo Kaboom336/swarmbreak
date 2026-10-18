@@ -1,0 +1,30 @@
+﻿[
+    {
+        "name":  "01-hub-hideout.png",
+        "width":  1672,
+        "height":  941,
+        "bytes":  1585148,
+        "sha256":  "62D7125DA251838C7994FFA05DADCBB146F322FF7947D56766140DE817309B35"
+    },
+    {
+        "name":  "02-guardian-states.png",
+        "width":  1671,
+        "height":  941,
+        "bytes":  1807099,
+        "sha256":  "DA4C823546C6D4624A041A91455B8817503DEB1091D6C3D311B220C4EDE187E5"
+    },
+    {
+        "name":  "03-roll-up-vault-buildable.png",
+        "width":  1672,
+        "height":  941,
+        "bytes":  1653590,
+        "sha256":  "68B3BD2C003262DF1EF3F6D150FDDC7A5CD3C06D834C0EF6A1B4AB1E43B44599"
+    },
+    {
+        "name":  "04-baron-turnaround.png",
+        "width":  1672,
+        "height":  941,
+        "bytes":  1389460,
+        "sha256":  "0D197B4E646DAD9489A51001B3EB5931D8D6D5C9F68D3C6934B96FA9D9CB037B"
+    }
+]
