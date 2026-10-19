@@ -74,3 +74,61 @@
 
 - Never rebuild the Meadow place with plain rojo build: KitSwap never finishes live and DropSampleTest refuses. Codex patches the canonical place via treasure/sections/S<n>/build.luau (lune). Ask Codex to mount source changes. (Claude, 2026-10-16)
 - Live lights: offline Blender light values run 3-5x too bright in Studio; keep point lights <=1.5 brightness, range <=18, Shadows off.
+
+## Owner rule (Zion, 2026-10-17)
+- Stop playing the game over and over: no repeated Studio playtest launches. Use offline checks per round and ONE live Studio check (shots + StudioPassAll) per milestone; close Studio windows/play sessions you open.
+- Next: rock pass (Zion picked A): replace flat box walls with real rock shapes across Meadow sections, CC0 kits first, section method + side-by-side, all 9 tests passing, gallery shots.
+
+## Owner rule update (Zion, 2026-10-17 21:49)
+- 'Simplify and smooth out the game and stop playing it over and over.' No Studio play launches except one right before handing Zion a playtest build. Offline checks only otherwise.
+
+## Owner rule (Zion, 2026-10-18 08:32): 'leave the game testing to me stop playing it'. Claude/Codex never start Studio Play. Offline checks only; Zion tests.
+
+## Owner direction (Zion, 2026-10-18 08:49): no launch until truly playable; aim 2-3 maps at release (Meadow + Cave first); core loop = 'portal heist'; map visuals in 2 parallel Codex lanes (one per map) after Zion picks a style.
+
+## Owner decision (Zion, 2026-10-18 15:36): Crown Road zones + parry/stun the guardian (no general combat); 2 maps at release; rewards not always pets; deciding difficulty sources (DIFFICULTY-ARENA).
+
+## Owner feedback (Zion, 2026-10-18 16:31): 'review the whole loops again, ask me questions, think what would actually be fun and stand out; your ideas don't sound that fun'. Crown Road Z1 build stopped mid-way (partial files under slice-v2/crown-road may exist; not mounted into Meadow). Fun-first review in progress.
+
+## Owner direction (Zion, 2026-10-18 17:06): heist game with treasure-toy mechanics (FUN-REVIEW), build toward a real game; visuals redone to a higher standard. Lane 1: HEIST-GAME.md + first playable Roll Up the Vault in slice-v2/heists/. Lane 2: art-v2 target board + 2D concepts (ART-V2.md).
+
+## STATE 2026-10-18 19:05 (Claude handoff)
+- Owner: maps first ("get really good at making maps that are actually good, then gameplay; maps now look worse than top games"). Art should be more defined/buildable.
+- Opened 'Steal a Treasure - Heists playtest.rbxl' (Desktop) in Studio for Zion to play. Zion tests; Claude/Codex never start Play.
+- Running: Codex job art-defined (task C:\dev\codex-lab\art-defined-task.md -> treasure/ART-V2-BUILD-SPEC.md, art-v2/defined/). Output C:\dev\codex-lab\art-defined.last.txt.
+- Next: map recipe track. Pick ONE top game map as target (Steal a Brainrot or Pixel Blade), capture matching angles side by side; build with Terrain + textured CC0 kits (assets/kits2) + proper lighting, not code-built blocks; section method (one area, max 4 rounds, 3 gaps/round), blind critic must say 'matches' before showing Zion; save the map recipe to Keystone.
+- Laptop may be loaded while Zion plays: one Codex job at a time.
+
+## STATE 2026-10-18 20:40 (Claude handoff to "Steal a Treasure, part 4")
+- NEW DIRECTION, locked 2 weeks (Zion picked "Brainrot + heist", 2026-10-18 20:26Z, in thread "Rethink our Roblox approach"). Plan doc: https://claude.ai/code/artifact/252adbc4-e958-4f23-b633-d36f62dad76c
+  1. Rebuild on the Steal a Brainrot / Steal an Egg base loop (bible recipe 3a): carpet of walking items, buy, place in base, earns $/s, upgrades, steal from other players, base lock.
+  2. Simple flat steal-style map: Terrain + ONE CC0 kit, one palette, good lighting.
+  3. One model method for 20-30 earners: 5 rarities, recolour mutations.
+  4. Roll Up the Vault (slice-v2/heists/) = week-2 twist, only after base loop works.
+  5. Lighter process: 1 reference per screen, 1 judge, max 2 rounds. Use the official Roblox Studio MCP (mcp__Roblox_Studio__*: screen_capture, execute_luau) for shots/automated tests in EDIT mode. Zion still does all playing: never start_stop_play.
+  6. Target: playable publish in ~1 week (Zion presses Publish), then weekly updates judged by D1 + playtime.
+  7. New ideas go to an idea bank, not the build.
+- NOT YET DONE: Keystone decision for this direction (iris_record_decision) - do it first.
+- Codex jobs in flight: NONE (art-defined finished + committed; codex.exe PIDs 13188/15632 date from 10/15 = desktop app, not jobs).
+- Reference sheets ready: C:\dev\codex-lab\refs\videos\brainrot-servers-sheets (2), pixelblade-w5-sheets (14). Tool: refs/tools/study.sh search|get|clean (run via Git bash).
+- Places: Meadow slice-v2/prototype/guardian-greybox.rbxl (lune build only, never plain rojo), Cave prototype/cave-v2.rbxl, Heists slice-v2/heists/steal-a-treasure-heists.rbxl (offline test: its lune assertion suite, 651 pass). Desktop playtest copies exist; Heists copy open in Studio for Zion - don't close it.
+- Branch pumpkin/patch-panic, all work committed+pushed. Commit as Claude with Co-Authored-By trailer; rbxl via git hash-object + update-index.
+- Codex launch: Start-Process codex.exe -ArgumentList "exec --sandbox workspace-write -C <prod> -o <last.txt> --json -" -RedirectStandardInput <task.md>; wait on PID. One Codex job at a time while Zion plays.
+
+## STATE 2026-10-18 21:40Z (thread "Steal a Treasure, part 5" took over)
+- Keystone decision logged: decision-20261018-1168bf17 (Brainrot base loop, locked 2 weeks).
+- Running: Codex base-loop greybox (task C:\dev\codex-lab\base-loop-task.md -> base-loop.last.txt, PID 37148, output slice-v2/base/). Gameplay + offline tests only; no art.
+- Studio MCP connected (one instance: "Steal a Treasure - Heists playtest.rbxl", Zion's; don't touch or close).
+- Next: review Codex output, run BaseTest in EDIT mode via Studio MCP on a separate Studio window, commit; then map look lane (Terrain + one CC0 kit, 1 ref, 1 judge, 2 rounds), then earner models lane. Codex weekly used ~8%.
+- Hermes delivered treasure/hermes/AI-BUILDERS.md (useful: built-in Studio MCP default; MSayib/roblox-dev-skill MIT as Luau/security guardrail candidate, read code before use). CAVE-REFS.md parked (locked direction).
+
+## 2026-10-18 ~22:15Z
+- Base loop committed 28b6ef4 (+ lock-file removal). Offline 275 + 266 pass; Studio EDIT BaseTest PASS 266 via MCP; shot slice-v2/base/overview-greybox.jpg. Claude fix: victim banks uncollected pile on theft. Economy: bible-bounded but slow (5 buys/10 min); tune after Zion's play.
+- Running: Codex earner #1 Copper Compass voxel kit + Gold/Diamond (earner1-task.md -> earner1.last.txt, PID 56740). Then show Zion SBS (one question: ok/change), then 24 more.
+- Next for Claude: map look via Studio MCP (Terrain + one CC0 kit, 1 SaB ref, 2 rounds).
+- 22:40Z earner #1 done + committed 5524dcf (36 parts, check 680 / build 384 pass). SBS on Desktop 'Steal a Treasure - earner 1 Copper Compass.jpg'. Asked Zion OK/change (my view: reads as pocket watch, needs arms/needle/funnier face). Waiting. Map look pass next (Claude, Studio MCP).
+- 2026-10-19 ~03:00Z laptop restarted; all pushed (f220425). Running: Codex map look R1 (map-look-task.md -> map-look.last.txt, PID 5200); refs slice-v2/base/look/ref-*.png (SaB frames, parts not Terrain since SaB is plain parts). Then Claude Studio shot + judge, max 2 rounds.
+- Look R1 done (895 parts, tests pass; Studio BaseTest 782 PASS after Brightness bound 3.5 fix). Shots look/r1-*.jpg. Running R2 (last round): label clutter, narrower carpet, red interior. PID 15316 -> map-look-r2.last.txt.
+- 2026-10-19 Look R2 done, committed 6dd9108 (Studio BaseTest 927 PASS; shots look/r2-*.jpg). Desktop: 'Steal a Treasure - map look vs Brainrot.jpg' and 'Steal a Treasure - base loop playtest.rbxl' (ready for Zion's first base-loop play; 2-player needs Studio Test > Local Server 2 players). Pending Zion: Copper Compass ok/change. Known: base name sign hidden while unclaimed; economy slow. Lesson recorded (steal-genre maps plain parts).
+
+## PAUSED 2026-10-19 16:15Z (Zion: pause Roblox until money). Resume from HANDOFF-PAUSED.md.
