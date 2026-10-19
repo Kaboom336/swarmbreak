@@ -52,6 +52,7 @@ local function setState(item,value)
 	item.part:SetAttribute("OwnerId",item.owner and item.owner.UserId or 0)
 	item.part.BuyPrompt.Enabled=value=="Carpet"
 	item.part.StealPrompt.Enabled=value=="Placed"
+	item.part.Label.Enabled=value=="Carpet"
 end
 local function pedestal(s,slot) return s.plot.Pedestals["Pedestal"..slot] end
 local function snapshot(player)
@@ -81,13 +82,19 @@ local function refresh(s)
 	for _,v in s.data.owned do pile+=v.pile end
 	s.plot.Collect.Sign.Text.Text=string.format("Collect $%.1f",pile)
 	local cost=R.unlockCost(s.data.unlocked)
-	s.plot.Unlock.Sign.Text.Text=cost and ("Unlock pedestal\n$"..cost) or "All pedestals unlocked"
+	s.plot.Unlock.Sign.Text.Text=cost and ("Unlock $"..cost) or "All unlocked"
 	local upgrade=R.upgradeCost(s.data.upgrades)
 	s.plot.Upgrade.Sign.Text.Text=upgrade and ("Speed +2\n$"..upgrade) or "Speed MAX"
 	for n=1,C.PedestalCount do
 		local p=pedestal(s,n); p:SetAttribute("Unlocked",n<=s.data.unlocked)
 		p.Color=n<=s.data.unlocked and Color3.fromRGB(170,170,170) or Color3.fromRGB(90,90,90)
-		if p:FindFirstChild("Sign") then p.Sign.Enabled=n>s.data.unlocked end
+		if p:FindFirstChild("Sign") then p.Sign.Enabled=n==s.data.unlocked+1 end
+		local placed
+		for _,item in items do
+			if item.owner==s.player and item.slot==n and item.state=="Placed" then placed=item.record; break end
+		end
+		p.CollectPad.PadLabel.Enabled=placed~=nil
+		p.CollectPad.PadLabel.Text.Text=string.format("Collect $%.1f",placed and placed.pile or 0)
 	end
 end
 local function save(s,ending)
@@ -206,6 +213,8 @@ end
 local function register(part)
 	local item={uid=part.Name,part=part,def=part:GetAttribute("Def"),mutation=part:GetAttribute("Mutation"),state=part:GetAttribute("State")}
 	items[item.uid]=item
+	part.Label.AlwaysOnTop=false; part.Label.MaxDistance=45
+	part.Label.Enabled=item.state=="Carpet"
 	part.BuyPrompt.Triggered:Connect(function(player) buy(player,item) end)
 	part.StealPrompt.PromptButtonHoldBegan:Connect(function(player)
 		if validSteal(player,item,C.StealHold) then holds[player]={uid=item.uid,started=os.clock()} end
@@ -293,6 +302,10 @@ local function leave(player)
 	sessions[player]=nil; claims[s.plot]=nil; s.plot:SetAttribute("OwnerId",0)
 	s.plot.Barrier.CanCollide=false; s.plot.Barrier.Transparency=1
 	s.plot.Floor.Sign.Text.Text="Unclaimed base"
+	for _,ped in s.plot.Pedestals:GetChildren() do
+		ped.CollectPad.PadLabel.Enabled=false
+		if ped:FindFirstChild("Sign") then ped.Sign.Enabled=ped:GetAttribute("Slot")==C.StartUnlocked+1 end
+	end
 	s.plot:SetAttribute("PvPEnabled",false)
 end
 Players.PlayerAdded:Connect(join); Players.PlayerRemoving:Connect(leave)

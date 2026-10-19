@@ -48,7 +48,7 @@ button("Index",UDim2.fromScale(0.01,0.46),function() panel.Visible=not panel.Vis
 local drop=button("Drop",UDim2.fromScale(0.45,0.79),function() shared.Action:FireServer("Drop") end)
 drop.BackgroundColor3=Color3.fromRGB(210,40,40); drop.Visible=false
 local arrow=Instance.new("BillboardGui"); arrow.Name="GoalArrow"; arrow.Size=UDim2.fromOffset(80,75)
-arrow.StudsOffset=Vector3.new(0,7,0); arrow.AlwaysOnTop=true; arrow.Parent=gui
+arrow.StudsOffset=Vector3.new(0,7,0); arrow.AlwaysOnTop=false; arrow.MaxDistance=45; arrow.Parent=gui
 local glyph=Instance.new("TextLabel"); glyph.Size=UDim2.fromScale(1,1); glyph.BackgroundTransparency=1
 glyph.Text="▼"; glyph.TextScaled=true; glyph.TextColor3=Color3.fromRGB(240,50,50); glyph.Parent=arrow
 local last
@@ -84,7 +84,7 @@ shared.Toast.OnClientEvent:Connect(toast)
 shared.Pop.OnClientEvent:Connect(function(pos,amount)
 	local anchor=Instance.new("Part"); anchor.Anchored=true; anchor.CanCollide=false; anchor.CanTouch=false
 	anchor.Transparency=1; anchor.Position=pos; anchor.Size=Vector3.new(0.1,0.1,0.1); anchor.Parent=workspace
-	local g=Instance.new("BillboardGui"); g.Size=UDim2.fromOffset(120,40); g.AlwaysOnTop=true; g.MaxDistance=100; g.Parent=anchor
+	local g=Instance.new("BillboardGui"); g.Size=UDim2.fromOffset(60,20); g.AlwaysOnTop=false; g.MaxDistance=30; g.Parent=anchor
 	local t=Instance.new("TextLabel"); t.Size=UDim2.fromScale(1,1); t.BackgroundTransparency=1
 	t.Text=string.format("+$%.1f",amount); t.TextScaled=true; t.TextColor3=Color3.fromRGB(58,255,33)
 	t.TextStrokeTransparency=0; t.Parent=g
